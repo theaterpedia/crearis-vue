@@ -1,0 +1,412 @@
+<template>
+    <Teleport to="body">
+        <Transition name="modal">
+            <div v-if="isOpen" class="modal-overlay" @click="handleOverlayClick">
+                <div class="modal-container" @click.stop>
+                    <div class="modal-header">
+                        <h2 class="modal-title">
+                            {{ task ? 'Edit Task' : 'Create New Task' }}
+                        </h2>
+                        <button class="close-btn" @click="$emit('close')" title="Close">
+                            ×
+                        </button>
+                    </div>
+
+                    <form class="modal-body" @submit.prevent="handleSubmit">
+                        <!-- Title -->
+                        <div class="form-group">
+                            <label for="task-title" class="form-label required">
+                                Title
+                            </label>
+                            <input id="task-title" v-model="formData.title" type="text" class="form-input"
+                                placeholder="Enter task title..." required />
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="task-description" class="form-label">
+                                Description
+                            </label>
+                            <textarea id="task-description" v-model="formData.description" class="form-textarea"
+                                rows="4" placeholder="Enter task description..." />
+                        </div>
+
+                        <!-- Priority & Status Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-priority" class="form-label">
+                                    Priority
+                                </label>
+                                <select id="task-priority" v-model="formData.priority" class="form-select">
+                                    <option value="low">🟢 Low</option>
+                                    <option value="medium">🟡 Medium</option>
+                                    <option value="high">🟠 High</option>
+                                    <option value="urgent">🔴 Urgent</option>
+                                </select>
+                            </div>
+
+                            <div v-if="task" class="form-group">
+                                <label for="task-status" class="form-label">
+                                    Status
+                                </label>
+                                <select id="task-status" v-model="formData.status" class="form-select">
+                                    <option value="todo">To Do</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Record Type & Record ID Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-record-type" class="form-label">
+                                    Record Type
+                                </label>
+                                <select id="task-record-type" v-model="formData.record_type" class="form-select">
+                                    <option value="">None</option>
+                                    <option value="event">Event</option>
+                                    <option value="post">Post</option>
+                                    <option value="location">Location</option>
+                                    <option value="instructor">Instructor</option>
+                                    <option value="participant">Participant</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="task-record-id" class="form-label">
+                                    Record ID
+                                </label>
+                                <input id="task-record-id" v-model="formData.record_id" type="text" class="form-input"
+                                    placeholder="Enter record ID..." :disabled="!formData.record_type" />
+                            </div>
+                        </div>
+
+                        <!-- Assigned To & Due Date Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-assigned" class="form-label">
+                                    Assigned To
+                                </label>
+                                <input id="task-assigned" v-model="formData.assigned_to" type="text" class="form-input"
+                                    placeholder="Enter assignee..." />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="task-due-date" class="form-label">
+                                    Due Date
+                                </label>
+                                <input id="task-due-date" v-model="formData.due_date" type="date" class="form-input" />
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" @click="$emit('close')">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" :disabled="!formData.title">
+                                {{ task ? 'Update Task' : 'Create Task' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+
+interface Task {
+    id?: string
+    title: string
+    description?: string
+    status?: 'todo' | 'in-progress' | 'done' | 'archived'
+    priority?: 'low' | 'medium' | 'high' | 'urgent'
+    record_type?: string
+    record_id?: string
+    assigned_to?: string
+    due_date?: string
+}
+
+const props = defineProps<{
+    isOpen: boolean
+    task?: Task | null
+}>()
+
+const emit = defineEmits<{
+    close: []
+    save: [task: Partial<Task>]
+}>()
+
+const formData = ref<Task>({
+    title: '',
+    description: '',
+    priority: 'medium',
+    status: 'todo',
+    record_type: '',
+    record_id: '',
+    assigned_to: '',
+    due_date: ''
+})
+
+// Watch for task changes to populate form
+watch(() => props.task, (newTask) => {
+    if (newTask) {
+        formData.value = {
+            title: newTask.title || '',
+            description: newTask.description || '',
+            priority: newTask.priority || 'medium',
+            status: newTask.status || 'todo',
+            record_type: newTask.record_type || '',
+            record_id: newTask.record_id || '',
+            assigned_to: newTask.assigned_to || '',
+            due_date: newTask.due_date ? formatDateForInput(newTask.due_date) : ''
+        }
+    } else {
+        // Reset form for new task
+        formData.value = {
+            title: '',
+            description: '',
+            priority: 'medium',
+            status: 'todo',
+            record_type: '',
+            record_id: '',
+            assigned_to: '',
+            due_date: ''
+        }
+    }
+}, { immediate: true })
+
+function formatDateForInput(dateString: string): string {
+    try {
+        const date = new Date(dateString)
+        return date.toISOString().split('T')[0]
+    } catch {
+        return ''
+    }
+}
+
+function handleOverlayClick() {
+    emit('close')
+}
+
+function handleSubmit() {
+    // Clean up empty strings to null
+    const taskData: Partial<Task> = {
+        title: formData.value.title,
+        description: formData.value.description || undefined,
+        priority: formData.value.priority,
+        status: formData.value.status,
+        record_type: formData.value.record_type || undefined,
+        record_id: formData.value.record_id || undefined,
+        assigned_to: formData.value.assigned_to || undefined,
+        due_date: formData.value.due_date || undefined
+    }
+
+    emit('save', taskData)
+}
+</script>
+
+<style scoped>
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: oklch(0% 0 0 / 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Modal Container */
+.modal-container {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-button);
+    box-shadow: 0 20px 60px oklch(0% 0 0 / 0.3);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-contrast);
+    margin: 0;
+}
+
+.close-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--color-contrast);
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: var(--color-muted-bg);
+    border-color: var(--color-negative-base);
+    color: var(--color-negative-base);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1.5rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-contrast);
+    margin-bottom: 0.5rem;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: var(--color-negative-base);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    background: var(--color-bg);
+    color: var(--color-contrast);
+    font-family: var(--font);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary-bg);
+    box-shadow: 0 0 0 3px var(--color-ring);
+}
+
+.form-input:disabled {
+    background: var(--color-muted-bg);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: oklch(from var(--color-primary-bg) calc(l * 0.9) c h);
+}
+
+.btn-secondary {
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
+    border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-bg);
+}
+
+/* Modal Transitions */
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-container,
+.modal-leave-active .modal-container {
+    transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+    transform: scale(0.9) translateY(-20px);
+}
+</style>
