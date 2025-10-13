@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { addTasksAndVersioning } from './migrations/001_tasks_versioning.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -116,6 +117,9 @@ export function initDatabase() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `)
+
+  // Run migrations
+  addTasksAndVersioning(db)
 }
 
 // Initialize on module load
