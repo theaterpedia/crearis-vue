@@ -1,0 +1,55 @@
+{
+  "name": "crearis-demo-data",
+  "version": "0.1.0",
+  "description": "Standalone server application providing Vue UI components and demo data API endpoints",
+  "author": "theaterpedia",
+  "license": "MIT",
+  "homepage": "https://github.com/theaterpedia/demo-data#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theaterpedia/demo-data.git"
+  },
+  "bugs": {
+    "url": "https://github.com/theaterpedia/demo-data/issues"
+  },
+  "keywords": [
+    "vue",
+    "nitro",
+    "server",
+    "demo-data",
+    "sqlite",
+    "api",
+    "theaterpedia",
+    "crearis"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "nitro dev",
+    "build": "nitro build",
+    "start": "node .output/server/index.mjs",
+    "preview": "nitro preview",
+    "prepare": "nitro prepare"
+  },
+  "dependencies": {
+    "@vueuse/core": "^10.11.0",
+    "better-sqlite3": "8.7.0",
+    "focus-trap": "^7",
+    "nanoid": "^5.0.7",
+    "nitro": "^3.0.0",
+    "swiper": "^11.1.8",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.14.12",
+    "@vitejs/plugin-vue": "^5.1.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.5",
+    "vue-tsc": "^2.1.10"
+  }
+}

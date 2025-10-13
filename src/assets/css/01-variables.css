@@ -1,0 +1,48 @@
+:root {
+  --theme-shadow: 0.2rem 0.2rem 0.6rem hsla(110, 10%, 0%, 0.65);
+  --radius-none: 0rem;
+  --radius-small: 0.25rem;
+  --radius-medium: 0.5rem;
+  --radius-large: 1rem;
+  --border-none: none;
+  --border-small: 0.0625rem;
+  --border-medium: 0.125rem;
+  --border-large: 0.25rem;
+  --bottomline-none: 0rem;
+  --bottomline-small: 0.25rem;
+  --bottomline-medium: 0.5rem;
+  --bottomline-large: 1rem;
+  --transparency-none: 1;
+  --transparency-small: 0.85;
+  --transparency-medium: 0.7;
+  --transparency-large: 0.5;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration: 150ms;
+  --transition: all var(--duration) var(--ease);
+  /*--radius: var(--radius-medium) ... and a lot more
+  -> 00-theme.ts > shall not be expoted here,
+  -> export via package/themes/theme.ts */
+}
+
+.dark {
+  --color-bg: 234 16.7% 11.8%;
+  --color-contrast: 0 0% 98%;
+  --color-card-bg: 231 16.7% 16.5%;
+  --color-card-contrast: 0 0% 98%;
+  --color-popover-bg: 231 16.7% 16.5%;
+  --color-popover-contrast: 0 0% 98%;
+  --color-primary-base: 0 0% 98%;
+  --color-primary-contrast: 240 5.9% 10%;
+  --color-secondary-base: 231 16.7% 24%;
+  --color-secondary-contrast: 0 0% 98%;
+  --color-muted-bg: 231 16.7% 24%;
+  --color-muted-contrast: 231 10% 57.4%;
+  --color-accent-bg: 231 16.7% 24%;
+  --color-accent-contrast: 0 0% 98%;
+  --color-negative-base: 7.41 84.2% 60.4%;
+  --color-negative-contrast: 0 0% 98%;
+  --color-dimmed: 0 0% 45%;
+  --color-border: 231 16.7% 24%;
+  --color-input: 231 16.7% 32%;
+  --color-ring: 240 4.9% 83.9%;
+}
