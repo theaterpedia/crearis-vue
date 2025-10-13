@@ -3,8 +3,21 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue()],
-  
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          // Enable dev tools in development
+          isCustomElement: (tag) => false,
+        },
+      },
+      script: {
+        defineModel: true,
+        propsDestructure: true,
+      },
+    }),
+  ],
+
   // Build configuration for SPA
   build: {
     outDir: 'dist',
@@ -15,7 +28,7 @@ export default defineConfig({
       }
     }
   },
-  
+
   // Development server
   server: {
     port: 3001,
@@ -27,7 +40,7 @@ export default defineConfig({
       }
     }
   },
-  
+
   // Path resolution
   resolve: {
     alias: {

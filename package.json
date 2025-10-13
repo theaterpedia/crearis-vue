@@ -29,7 +29,11 @@
   "type": "module",
   "scripts": {
     "dev": "nitro dev",
-    "build": "nitro build",
+    "dev:frontend": "vite",
+    "dev:backend": "nitro dev",
+    "build": "vite build && nitro build",
+    "build:vite": "vite build",
+    "build:nitro": "nitro build",
     "start": "node .output/server/index.mjs",
     "preview": "nitro preview",
     "prepare": "nitro prepare"
@@ -45,9 +49,11 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.6",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.12",
     "@vitejs/plugin-vue": "^5.1.0",
+    "@vue/tsconfig": "^0.8.1",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
     "vue-tsc": "^2.1.10"
