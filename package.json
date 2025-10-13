@@ -28,7 +28,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "nitro dev",
+    "dev": "concurrently \"pnpm:dev:backend\" \"pnpm:dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
     "dev:frontend": "vite",
     "dev:backend": "nitro dev",
     "build": "vite build && nitro build",
@@ -54,6 +54,7 @@
     "@types/node": "^20.14.12",
     "@vitejs/plugin-vue": "^5.1.0",
     "@vue/tsconfig": "^0.8.1",
+    "concurrently": "^9.2.1",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
     "vue-tsc": "^2.1.10"
