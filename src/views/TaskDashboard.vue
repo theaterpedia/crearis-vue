@@ -2,13 +2,22 @@
     <div class="dashboard-wrapper">
         <!-- Navbar -->
         <Navbar :is-authenticated="isAuthenticated" :user="user" @toggle-view-menu="toggleViewMenu"
-            @logout="handleLogout" />
+            @toggle-admin-menu="toggleAdminMenu" @logout="handleLogout" />
 
         <!-- View Menu (ToggleMenu) -->
         <div v-if="showViewMenu" class="view-menu-overlay" @click="showViewMenu = false">
             <div class="view-menu-container" @click.stop>
                 <ToggleMenu v-model="viewState" :placement="'left'" :header="'Ansicht'" :toggle-options="viewOptions"
                     @update:model-value="handleViewChange" />
+            </div>
+        </div>
+
+        <!-- Admin Menu -->
+        <div v-if="showAdminMenu" class="admin-menu-overlay" @click="showAdminMenu = false">
+            <div class="admin-menu-container" @click.stop>
+                <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :current-route="currentRoute"
+                    :is-on-dashboard="currentRoute === '/'" @close="showAdminMenu = false" @set-mode="setAdminMode"
+                    @toggle-settings="toggleSettingsMode" @action="handleAdminAction" />
             </div>
         </div>
 
@@ -203,16 +212,22 @@
 
                     <!-- Admin Sections -->
                     <div v-if="user?.role === 'admin'">
-                        <!-- Releases Table -->
-                        <ReleasesTable :releases="releases" :loading="releasesLoading" @create="createRelease"
-                            @edit="editRelease" @delete="deleteRelease" />
+                        <!-- CRUD Tables (visible when settingsMode is ON) -->
+                        <div v-if="settingsMode">
+                            <!-- Releases Table -->
+                            <ReleasesTable :releases="releases" :loading="releasesLoading" @create="createRelease"
+                                @edit="editRelease" @delete="deleteRelease" />
 
-                        <!-- Projects Table -->
-                        <ProjectsTable :projects="projects" :loading="projectsLoading" @create="createProject"
-                            @edit="editProject" @delete="deleteProject" />
+                            <!-- Projects Table -->
+                            <ProjectsTable :projects="projects" :loading="projectsLoading" @create="createProject"
+                                @edit="editProject" @delete="deleteProject" />
+                        </div>
 
-                        <!-- Admin Tasks List -->
-                        <AdminTasksList :tasks="adminTasks" :loading="adminTasksLoading" @execute="executeAdminTask" />
+                        <!-- Admin Tasks List (visible when settingsMode is OFF) -->
+                        <div v-if="!settingsMode">
+                            <AdminTasksList :tasks="adminTasks" :loading="adminTasksLoading"
+                                @execute="executeAdminTask" />
+                        </div>
                     </div>
                 </div>
                 <!-- End of authenticated content -->
@@ -237,8 +252,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import Container from '@/components/Container.vue'
 import Section from '@/components/Section.vue'
@@ -247,6 +262,7 @@ import TaskCard from '@/components/TaskCard.vue'
 import TaskEditModal from '@/components/TaskEditModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import ToggleMenu from '@/components/ToggleMenu.vue'
+import AdminMenu from '@/components/AdminMenu.vue'
 import Toast from '@/components/Toast.vue'
 import ProjectsTable from '@/components/ProjectsTable.vue'
 import AdminTasksList from '@/components/AdminTasksList.vue'
@@ -300,6 +316,12 @@ const draggedTask = ref<Task | null>(null)
 // View menu state
 const showViewMenu = ref(false)
 const viewState = ref('only-main') // 'only-release' | 'only-main' | 'all-tasks'
+
+// Admin menu state (global, persisted across routes)
+const showAdminMenu = ref(false)
+const adminMode = ref<'base-release' | 'version-release'>('base-release')
+const settingsMode = ref(false)
+const currentRoute = computed(() => router.currentRoute.value.path)
 
 // View settings
 const viewSettings = ref({
@@ -566,6 +588,64 @@ function handleViewChange(newState: string) {
     showViewMenu.value = false
 }
 
+// Admin menu handlers
+function toggleAdminMenu() {
+    showAdminMenu.value = !showAdminMenu.value
+}
+
+function setAdminMode(mode: 'base-release' | 'version-release') {
+    adminMode.value = mode
+    
+    // Apply filters based on mode
+    if (mode === 'base-release') {
+        // Hide tasks that relate to projects
+        adminFilters.value.showProject = false
+        // Show tasks that relate to base
+        adminFilters.value.showBase = true
+        // Set to only main tasks
+        viewState.value = 'only-main'
+    } else {
+        // version-release mode
+        // Show tasks that relate to projects
+        adminFilters.value.showProject = true
+        // Hide tasks that relate to base
+        adminFilters.value.showBase = false
+        // Set to only tasks of one release
+        viewState.value = 'only-release'
+    }
+    
+    showToastNotification(
+        mode === 'base-release' ? 
+            'Modus: Basis-Release (nur Haupt-Tasks ohne Projekte)' : 
+            'Modus: Version-Release (Tasks eines Releases mit Projekten)',
+        'info'
+    )
+}
+
+function toggleSettingsMode() {
+    settingsMode.value = !settingsMode.value
+    
+    if (settingsMode.value) {
+        // Settings mode ON: Lock navigation to /
+        if (currentRoute.value !== '/') {
+            router.push('/')
+        }
+        showToastNotification('Einstellungsmodus aktiviert - Navigation gesperrt, CRUD sichtbar', 'info')
+    } else {
+        showToastNotification('Einstellungsmodus deaktiviert - Navigation frei, Admin-Tasks sichtbar', 'info')
+    }
+}
+
+function handleAdminAction(action: string) {
+    const messages: Record<string, string> = {
+        export: '📤 Daten werden exportiert...',
+        backup: '💾 Backup wird erstellt...',
+        sync: '🔄 Synchronisation gestartet...',
+        report: '📊 Bericht wird generiert...'
+    }
+    showToastNotification(messages[action] || `Aktion "${action}" ausgeführt`, 'info')
+}
+
 // Toast notification
 function showToastNotification(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
     toastMessage.value = message
@@ -772,6 +852,18 @@ async function loadReleases() {
     }
 }
 
+// Block navigation when settings mode is active
+onBeforeRouteLeave((to, from) => {
+    if (settingsMode.value && to.path !== '/') {
+        showToastNotification(
+            '⚠️ Navigation gesperrt im Einstellungsmodus. Deaktivieren Sie den Einstellungsmodus um zu navigieren.',
+            'warning'
+        )
+        return false
+    }
+    return true
+})
+
 // Load data on mount
 onMounted(async () => {
     await checkSession()
@@ -812,6 +904,25 @@ onMounted(async () => {
     background: var(--color-card-bg);
     border-radius: var(--radius-button);
     box-shadow: 0 10px 40px oklch(0% 0 0 / 0.3);
+    max-width: 400px;
+}
+
+/* Admin Menu Overlay */
+.admin-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: oklch(0% 0 0 / 0.5);
+    z-index: 999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 5rem 2rem 2rem 2rem;
+}
+
+.admin-menu-container {
     max-width: 400px;
 }
 
