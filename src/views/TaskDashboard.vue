@@ -1,7 +1,8 @@
 <template>
     <div class="dashboard-wrapper">
         <!-- Navbar -->
-        <Navbar :is-authenticated="isAuthenticated" :user="user" @toggle-view-menu="toggleViewMenu" @logout="handleLogout" />
+        <Navbar :is-authenticated="isAuthenticated" :user="user" @toggle-view-menu="toggleViewMenu"
+            @logout="handleLogout" />
 
         <!-- View Menu (ToggleMenu) -->
         <div v-if="showViewMenu" class="view-menu-overlay" @click="showViewMenu = false">
@@ -31,7 +32,8 @@
                                 <span v-if="user?.role === 'guest'">👤 Gast</span>
                                 <span v-else-if="user?.role === 'admin'">👑 Admin</span>
                                 <span v-else-if="user?.role === 'base'">📦 Basis</span>
-                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">🎯 Projekt</span>
+                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">🎯
+                                    Projekt</span>
                                 <span v-else>{{ user?.role }}</span>
                             </h1>
                             <p class="header-description">
@@ -39,7 +41,8 @@
                                     System-Einstellungen. Sie haben vollständigen Zugriff auf alle Funktionen.</span>
                                 <span v-else-if="user?.role === 'base'">Bearbeiten Sie Basis-Aufgaben und verwalten Sie
                                     Standard-Inhalte. Ihr Fokus liegt auf den Kern-Funktionen.</span>
-                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">Verwalten Sie Ihre
+                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">Verwalten Sie
+                                    Ihre
                                     projekt-spezifischen Aufgaben und Inhalte. Sie arbeiten an Ihrem eigenen
                                     Projekt-Bereich.</span>
                                 <span v-else>Willkommen im Task-Dashboard.</span>
@@ -116,94 +119,109 @@
 
                     <!-- Tasks Board (3 Main Columns + Optional) -->
                     <div v-if="!loading && !error" class="tasks-board">
-                    <!-- Idea Column -->
-                    <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
-                        <h3 class="column-title">
-                            <span class="column-icon">�</span>
-                            Idea
-                            <span class="column-count">{{ ideaTasks.length }}</span>
-                        </h3>
-                        <div class="task-list">
-                            <TaskCard v-for="task in ideaTasks" :key="task.id" :task="task" @edit="editTask"
-                                @delete="deleteTask" @drag-start="handleDragStart" />
-                            <div v-if="ideaTasks.length === 0" class="empty-column">
-                                No tasks in this column
+                        <!-- Idea Column -->
+                        <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
+                            <h3 class="column-title">
+                                <span class="column-icon">�</span>
+                                Idea
+                                <span class="column-count">{{ ideaTasks.length }}</span>
+                            </h3>
+                            <div class="task-list">
+                                <TaskCard v-for="task in ideaTasks" :key="task.id" :task="task" @edit="editTask"
+                                    @delete="deleteTask" @drag-start="handleDragStart" />
+                                <div v-if="ideaTasks.length === 0" class="empty-column">
+                                    No tasks in this column
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Column -->
+                        <div class="task-column column-new" @dragover.prevent @drop="handleDrop($event, 'new')">
+                            <h3 class="column-title">
+                                <span class="column-icon">📋</span>
+                                New
+                                <span class="column-count">{{ newTasks.length }}</span>
+                            </h3>
+                            <div class="task-list">
+                                <TaskCard v-for="task in newTasks" :key="task.id" :task="task" @edit="editTask"
+                                    @delete="deleteTask" @drag-start="handleDragStart" />
+                                <div v-if="newTasks.length === 0" class="empty-column">
+                                    No tasks in this column
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Draft Column -->
+                        <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, 'draft')">
+                            <h3 class="column-title">
+                                <span class="column-icon">⚡</span>
+                                Draft
+                                <span class="column-count">{{ draftTasks.length }}</span>
+                            </h3>
+                            <div class="task-list">
+                                <TaskCard v-for="task in draftTasks" :key="task.id" :task="task" @edit="editTask"
+                                    @delete="deleteTask" @drag-start="handleDragStart" />
+                                <div v-if="draftTasks.length === 0" class="empty-column">
+                                    No tasks in this column
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final/Reopen Column (Main - Combined) -->
+                        <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, 'final')">
+                            <h3 class="column-title">
+                                <span class="column-icon">✓</span>
+                                Fertig / Reopen
+                                <span class="column-count">{{ finalReopenTasks.length }}</span>
+                            </h3>
+                            <div class="task-list">
+                                <TaskCard v-for="task in finalReopenTasks" :key="task.id" :task="task" @edit="editTask"
+                                    @delete="deleteTask" @drag-start="handleDragStart" />
+                                <div v-if="finalReopenTasks.length === 0" class="empty-column">
+                                    Keine Aufgaben
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trash Column (optional) -->
+                        <div v-if="viewSettings.showTrash" class="task-column column-trash" @dragover.prevent
+                            @drop="handleDrop($event, 'trash')">
+                            <h3 class="column-title">
+                                <span class="column-icon">🗑</span>
+                                Papierkorb
+                                <span class="column-count">{{ trashTasks.length }}</span>
+                            </h3>
+                            <div class="task-list">
+                                <TaskCard v-for="task in trashTasks" :key="task.id" :task="task" @edit="editTask"
+                                    @delete="deleteTask" @drag-start="handleDragStart" />
+                                <div v-if="trashTasks.length === 0" class="empty-column">
+                                    Keine Aufgaben
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- New Column -->
-                    <div class="task-column column-new" @dragover.prevent @drop="handleDrop($event, 'new')">
-                        <h3 class="column-title">
-                            <span class="column-icon">📋</span>
-                            New
-                            <span class="column-count">{{ newTasks.length }}</span>
-                        </h3>
-                        <div class="task-list">
-                            <TaskCard v-for="task in newTasks" :key="task.id" :task="task" @edit="editTask"
-                                @delete="deleteTask" @drag-start="handleDragStart" />
-                            <div v-if="newTasks.length === 0" class="empty-column">
-                                No tasks in this column
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Admin Sections -->
+                    <div v-if="user?.role === 'admin'">
+                        <!-- Projects Table -->
+                        <ProjectsTable :projects="projects" :loading="projectsLoading" @create="createProject"
+                            @edit="editProject" @delete="deleteProject" />
 
-                    <!-- Draft Column -->
-                    <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, 'draft')">
-                        <h3 class="column-title">
-                            <span class="column-icon">⚡</span>
-                            Draft
-                            <span class="column-count">{{ draftTasks.length }}</span>
-                        </h3>
-                        <div class="task-list">
-                            <TaskCard v-for="task in draftTasks" :key="task.id" :task="task" @edit="editTask"
-                                @delete="deleteTask" @drag-start="handleDragStart" />
-                            <div v-if="draftTasks.length === 0" class="empty-column">
-                                No tasks in this column
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Final Column -->
-                    <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, 'final')">
-                        <h3 class="column-title">
-                            <span class="column-icon">✓</span>
-                            Final
-                            <span class="column-count">{{ finalTasks.length }}</span>
-                        </h3>
-                        <div class="task-list">
-                            <TaskCard v-for="task in finalTasks" :key="task.id" :task="task" @edit="editTask"
-                                @delete="deleteTask" @drag-start="handleDragStart" />
-                            <div v-if="finalTasks.length === 0" class="empty-column">
-                                No tasks in this column
-                            </div>
-                        </div>
+                        <!-- Admin Tasks List -->
+                        <AdminTasksList :tasks="adminTasks" :loading="adminTasksLoading" @execute="executeAdminTask" />
                     </div>
                 </div>
+                <!-- End of authenticated content -->
+            </Section>
 
-                <!-- Quick Links Section -->
-                <div class="quick-links-section">
-                    <h2 class="section-subtitle">Quick Links</h2>
-                    <div class="quick-links">
-                        <Button @click="$router.push('/demo')" variant="plain">
-                            View Demo Data
-                        </Button>
-                        <Button @click="$router.push('/heroes')" variant="plain">
-                            Manage Heroes
-                        </Button>
-                        <Button @click="clearCompletedTasks" variant="plain" :disabled="finalTasks.length === 0">
-                            Clear Completed ({{ finalTasks.length }})
-                        </Button>
-                    </div>
-                </div>
-            </div>
-            <!-- End of authenticated content -->
-        </Section>
+            <!-- Task Edit Modal -->
+            <TaskEditModal v-if="showTaskModal" :is-open="showTaskModal" :task="currentTask" :releases="releases"
+                @close="closeTaskModal" @save="saveTask" />
 
-        <!-- Task Edit Modal -->
-        <TaskEditModal v-if="showTaskModal" :is-open="showTaskModal" :task="currentTask" :releases="releases"
-            @close="closeTaskModal" @save="saveTask" />
-    </Container>
+            <!-- Toast Notifications -->
+            <Toast v-if="showToast" :message="toastMessage" :type="toastType" @close="closeToast" />
+        </Container>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -212,10 +230,14 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import Container from '@/components/Container.vue'
 import Section from '@/components/Section.vue'
-import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
 import TaskCard from '@/components/TaskCard.vue'
 import TaskEditModal from '@/components/TaskEditModal.vue'
+import Navbar from '@/components/Navbar.vue'
+import ToggleMenu from '@/components/ToggleMenu.vue'
+import Toast from '@/components/Toast.vue'
+import ProjectsTable from '@/components/ProjectsTable.vue'
+import AdminTasksList from '@/components/AdminTasksList.vue'
 
 interface Task {
     id: string
@@ -254,15 +276,40 @@ const { user, isAuthenticated, checkSession, logout } = useAuth()
 
 const tasks = ref<Task[]>([])
 const releases = ref<Release[]>([])
-const filterStatus = ref('')
-const filterCategory = ref('')
-const filterRelease = ref('')
-const filterType = ref('')
 const showTaskModal = ref(false)
 const currentTask = ref<Task | null>(null)
 const loading = ref(false)
 const error = ref('')
 const draggedTask = ref<Task | null>(null)
+
+// View menu state
+const showViewMenu = ref(false)
+const viewState = ref('only-main') // 'only-release' | 'only-main' | 'all-tasks'
+
+// View settings
+const viewSettings = ref({
+    showStats: true,
+    showNew: false,
+    showTrash: false
+})
+
+// Admin filters (admin only)
+const adminFilters = ref({
+    showProject: false,
+    showBase: true,
+    showAdmin: true
+})
+
+// Admin data
+const projects = ref<any[]>([])
+const projectsLoading = ref(false)
+const adminTasks = ref<Task[]>([])
+const adminTasksLoading = ref(false)
+
+// Toast state
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'warning' | 'info'>('info')
+const showToast = ref(false)
 
 // Navigate to login
 const goToLogin = () => {
@@ -274,29 +321,70 @@ const handleLogout = async () => {
     await logout()
 }
 
-// Computed: Statistics
-const stats = computed(() => ({
-    total: tasks.value.length,
-    idea: tasks.value.filter((t: Task) => t.status === 'idea').length,
-    new: tasks.value.filter((t: Task) => t.status === 'new').length,
-    draft: tasks.value.filter((t: Task) => t.status === 'draft').length,
-    final: tasks.value.filter((t: Task) => t.status === 'final').length,
-    reopen: tasks.value.filter((t: Task) => t.status === 'reopen').length,
-    trash: tasks.value.filter((t: Task) => t.status === 'trash').length
-}))
+// View menu options
+const viewOptions = [
+    {
+        text: 'Aufgabenumfang',
+        children: [
+            {
+                text: 'Nur Hauptaufgaben',
+                state: 'only-main',
+                icon: { template: '📋' }
+            },
+            {
+                text: 'Nur Release-Aufgaben',
+                state: 'only-release',
+                icon: { template: '🎯' }
+            },
+            {
+                text: 'Alle Aufgaben',
+                state: 'all-tasks',
+                icon: { template: '📊' }
+            }
+        ]
+    }
+]
 
-// Computed: Filtered tasks
+// Computed: Filtered tasks based on view state and admin filters
 const filteredTasks = computed(() => {
-    return tasks.value.filter((task: Task) => {
-        if (filterStatus.value && task.status !== filterStatus.value) return false
-        if (filterCategory.value && task.category !== filterCategory.value) return false
-        if (filterRelease.value && task.release_id !== filterRelease.value) return false
-        if (filterType.value && task.record_type !== filterType.value) return false
-        return true
-    })
+    let result = tasks.value
+
+    // Apply task scope filter (release/main/all)
+    if (viewState.value === 'only-release') {
+        result = result.filter((task: Task) => task.release_id !== null && task.release_id !== undefined)
+    } else if (viewState.value === 'only-main') {
+        result = result.filter((task: Task) => task.category === 'main')
+    }
+    // 'all-tasks' shows everything
+
+    // Apply admin category filters (admin only)
+    if (user.value?.role === 'admin') {
+        const categoryFilters: Array<'admin' | 'main' | 'release'> = []
+        if (adminFilters.value.showProject) categoryFilters.push('release')
+        if (adminFilters.value.showBase) categoryFilters.push('main')
+        if (adminFilters.value.showAdmin) categoryFilters.push('admin')
+
+        if (categoryFilters.length > 0 && categoryFilters.length < 3) {
+            result = result.filter((task: Task) => categoryFilters.includes(task.category))
+        }
+    }
+
+    return result
 })
 
-// Computed: Tasks by status (new status values)
+// Computed: Statistics
+const stats = computed(() => {
+    const filtered = filteredTasks.value
+    return {
+        total: filtered.length,
+        idea: filtered.filter((t: Task) => t.status === 'idea').length,
+        draft: filtered.filter((t: Task) => t.status === 'draft').length,
+        final: filtered.filter((t: Task) => t.status === 'final').length,
+        reopen: filtered.filter((t: Task) => t.status === 'reopen').length
+    }
+})
+
+// Computed: Tasks by status
 const ideaTasks = computed(() =>
     filteredTasks.value.filter((t: Task) => t.status === 'idea')
 )
@@ -306,8 +394,11 @@ const newTasks = computed(() =>
 const draftTasks = computed(() =>
     filteredTasks.value.filter((t: Task) => t.status === 'draft')
 )
-const finalTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'final')
+const finalReopenTasks = computed(() =>
+    filteredTasks.value.filter((t: Task) => t.status === 'final' || t.status === 'reopen')
+)
+const trashTasks = computed(() =>
+    filteredTasks.value.filter((t: Task) => t.status === 'trash')
 )
 
 // Load tasks from API
@@ -441,23 +532,74 @@ function handleDrop(event: DragEvent, newStatus: Task['status']) {
     draggedTask.value = null
 }
 
-// Clear completed tasks
-async function clearCompletedTasks() {
-    if (!confirm(`Delete all ${finalTasks.value.length} completed tasks?`)) {
-        return
-    }
+// View menu handlers
+function toggleViewMenu() {
+    showViewMenu.value = !showViewMenu.value
+}
 
+function handleViewChange(newState: string) {
+    viewState.value = newState
+    showViewMenu.value = false
+}
+
+// Toast notification
+function showToastNotification(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+    toastMessage.value = message
+    toastType.value = type
+    showToast.value = true
+}
+
+function closeToast() {
+    showToast.value = false
+}
+
+// Load projects (admin only)
+async function loadProjects() {
+    if (user.value?.role !== 'admin') return
+    projectsLoading.value = true
     try {
-        const deletePromises = finalTasks.value.map((task: Task) =>
-            fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
-        )
-
-        await Promise.all(deletePromises)
-        await loadTasks()
+        // TODO: Replace with actual projects API when available
+        projects.value = []
     } catch (err) {
-        error.value = 'Failed to clear completed tasks'
-        console.error('Error clearing tasks:', err)
+        console.error('Failed to load projects:', err)
+    } finally {
+        projectsLoading.value = false
     }
+}
+
+// Load admin tasks (admin only)
+async function loadAdminTasks() {
+    if (user.value?.role !== 'admin') return
+    adminTasksLoading.value = true
+    try {
+        const response = await fetch('/api/tasks?category=admin')
+        if (response.ok) {
+            const data = await response.json()
+            adminTasks.value = data.tasks || []
+        }
+    } catch (err) {
+        console.error('Failed to load admin tasks:', err)
+    } finally {
+        adminTasksLoading.value = false
+    }
+}
+
+// Project CRUD handlers
+function createProject() {
+    showToastNotification('Projekt-Erstellung wird implementiert', 'info')
+}
+
+function editProject(project: any) {
+    showToastNotification(`Projekt "${project.name}" bearbeiten`, 'info')
+}
+
+function deleteProject(project: any) {
+    showToastNotification(`Projekt "${project.name}" löschen?`, 'warning')
+}
+
+// Execute admin task
+function executeAdminTask(task: Task) {
+    showToastNotification(`${task.display_title || task.title} ausgeführt`, 'success')
 }
 
 // Load releases from API
@@ -474,16 +616,153 @@ async function loadReleases() {
     }
 }
 
-// Load tasks and releases on mount
+// Load data on mount
 onMounted(async () => {
     await checkSession()
     if (isAuthenticated.value) {
-        await Promise.all([loadTasks(), loadReleases()])
+        await Promise.all([
+            loadTasks(),
+            loadReleases(),
+            loadProjects(),
+            loadAdminTasks()
+        ])
     }
 })
 </script>
 
 <style scoped>
+/* Dashboard Wrapper */
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: var(--color-bg);
+}
+
+/* View Menu Overlay */
+.view-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: oklch(0% 0 0 / 0.5);
+    z-index: 999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 5rem 2rem 2rem 2rem;
+}
+
+.view-menu-container {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-button);
+    box-shadow: 0 10px 40px oklch(0% 0 0 / 0.3);
+    max-width: 400px;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.header-role {
+    max-width: 800px;
+}
+
+.header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-contrast);
+    margin: 0 0 0.75rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-description {
+    font-size: 1.125rem;
+    color: var(--color-dimmed);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Admin Filters */
+.admin-filters {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-button);
+    margin-bottom: 2rem;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--color-contrast);
+    user-select: none;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+}
+
+/* Kanban Header */
+.kanban-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.kanban-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-contrast);
+    margin: 0;
+}
+
+.kanban-toggles {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    color: var(--color-dimmed);
+    font-family: var(--font);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    background: var(--color-card-bg);
+    border-color: var(--color-primary-bg);
+}
+
+.toggle-btn.active {
+    background: var(--color-primary-bg);
+    border-color: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
 /* Stats Grid */
 .stats-grid {
     display: grid;
@@ -523,7 +802,11 @@ onMounted(async () => {
 }
 
 .stat-final {
-    border-color: var(--color-primary-bg);
+    border-color: var(--color-positive-bg);
+}
+
+.stat-reopen {
+    border-color: var(--color-secondary-bg);
 }
 
 .stat-value {
@@ -772,5 +1055,18 @@ onMounted(async () => {
 .logout-btn-header {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
+}
+
+/* Trash Column Styling */
+.column-trash {
+    opacity: 0.8;
+}
+
+.column-trash .column-title {
+    color: var(--color-negative-bg);
+}
+
+.column-trash:hover {
+    opacity: 1;
 }
 </style>
