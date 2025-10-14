@@ -1,14 +1,20 @@
 <template>
     <div class="task-card" :class="[`priority-${task.priority}`, { 'is-dragging': isDragging }]" draggable="true"
         @dragstart="handleDragStart" @dragend="handleDragEnd">
-        <!-- Priority Indicator -->
-        <div class="priority-badge" :class="`priority-${task.priority}`">
-            {{ priorityLabel }}
+        <!-- Preview Image -->
+        <div v-if="task.image" class="task-image">
+            <img :src="task.image" :alt="displayTitle" />
+        </div>
+
+        <!-- Status & Category Badges -->
+        <div class="task-badges">
+            <StatusBadge v-if="task.status" :status="task.status" />
+            <CategoryBadge v-if="task.category" :category="task.category" />
         </div>
 
         <!-- Task Header -->
         <div class="task-header">
-            <h4 class="task-title">{{ task.title }}</h4>
+            <h4 class="task-title">{{ displayTitle }}</h4>
             <div class="task-actions">
                 <button class="action-btn edit-btn" @click="$emit('edit', task)" title="Edit task">
                     ✎
@@ -24,6 +30,11 @@
             {{ truncatedDescription }}
         </p>
 
+        <!-- Priority Indicator -->
+        <div v-if="task.priority" class="priority-badge" :class="`priority-${task.priority}`">
+            {{ priorityLabel }}
+        </div>
+
         <!-- Task Meta Information -->
         <div class="task-meta">
             <!-- Record Type Badge -->
@@ -31,9 +42,14 @@
                 {{ recordTypeLabel }}
             </span>
 
+            <!-- Entity Name -->
+            <span v-if="task.entity_name" class="meta-badge entity-badge">
+                � {{ task.entity_name }}
+            </span>
+
             <!-- Due Date -->
             <span v-if="task.due_date" class="meta-badge due-date-badge" :class="dueDateClass">
-                📅 {{ formattedDueDate }}
+                � {{ formattedDueDate }}
             </span>
 
             <!-- Assigned To -->
@@ -41,35 +57,30 @@
                 👤 {{ task.assigned_to }}
             </span>
         </div>
-
-        <!-- Task Footer -->
-        <div class="task-footer">
-            <span class="task-timestamp">
-                {{ formattedTimestamp }}
-            </span>
-            <span v-if="task.completed_at" class="completed-badge">
-                ✓ Completed
-            </span>
-        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import StatusBadge from './StatusBadge.vue'
+import CategoryBadge from './CategoryBadge.vue'
 
 interface Task {
-    id: string
+    id?: string
     title: string
     description?: string
-    status: 'todo' | 'in-progress' | 'done' | 'archived'
-    priority: 'low' | 'medium' | 'high' | 'urgent'
+    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    category?: 'admin' | 'base' | 'project' | 'release'
+    priority?: 'low' | 'medium' | 'high' | 'urgent'
     record_type?: string
     record_id?: string
     assigned_to?: string
     due_date?: string
-    completed_at?: string
-    created_at: string
-    updated_at: string
+    release_id?: string
+    image?: string
+    prompt?: string
+    entity_name?: string
+    display_title?: string
 }
 
 const props = defineProps<{
@@ -84,15 +95,31 @@ const emit = defineEmits<{
 
 const isDragging = ref(false)
 
+// Display title with entity name inheritance
+const displayTitle = computed(() => {
+    // Use display_title if available (already processed by API)
+    if (props.task.display_title) {
+        return props.task.display_title
+    }
+
+    // Fallback: Replace {{main-title}} in title with entity_name
+    if (props.task.title && props.task.title.includes('{{main-title}}') && props.task.entity_name) {
+        return props.task.title.replace(/\{\{main-title\}\}/g, props.task.entity_name)
+    }
+
+    // Default: Use title as is
+    return props.task.title || 'Untitled Task'
+})
+
 // Priority label
 const priorityLabel = computed(() => {
-    const labels = {
+    const labels: Record<string, string> = {
         urgent: '🔴 Urgent',
         high: '🟠 High',
         medium: '🟡 Medium',
         low: '🟢 Low'
     }
-    return labels[props.task.priority]
+    return labels[props.task.priority || 'medium']
 })
 
 // Record type label
@@ -199,6 +226,29 @@ function handleDragEnd() {
 .task-card.is-dragging {
     opacity: 0.5;
     cursor: grabbing;
+}
+
+/* Task Image */
+.task-image {
+    width: 100%;
+    height: 180px;
+    margin: -1rem -1rem 1rem -1rem;
+    overflow: hidden;
+    border-radius: var(--radius-button) var(--radius-button) 0 0;
+}
+
+.task-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Status & Category Badges */
+.task-badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 /* Priority border accent */
@@ -358,6 +408,12 @@ function handleDragEnd() {
     background: oklch(65.74% 0.2393 304.41 / 0.1);
     border-color: oklch(65.74% 0.2393 304.41 / 0.3);
     color: oklch(65.74% 0.2393 304.41);
+}
+
+.entity-badge {
+    background: oklch(72.21% 0.2812 144.53 / 0.1);
+    border-color: oklch(72.21% 0.2812 144.53 / 0.3);
+    color: oklch(72.21% 0.2812 144.53);
 }
 
 /* Task Footer */

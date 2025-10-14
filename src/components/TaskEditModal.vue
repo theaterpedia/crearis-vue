@@ -31,8 +31,27 @@
                                 rows="4" placeholder="Enter task description..." />
                         </div>
 
-                        <!-- Priority & Status Row -->
+                        <!-- Status Toggler -->
+                        <div v-if="task" class="form-group">
+                            <label class="form-label">Status</label>
+                            <StatusToggler v-model="formData.status"
+                                :allowed-statuses="['idea', 'new', 'draft', 'final', 'reopen', 'trash']" />
+                        </div>
+
+                        <!-- Category & Priority Row -->
                         <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-category" class="form-label">
+                                    Category
+                                </label>
+                                <select id="task-category" v-model="formData.category" class="form-select">
+                                    <option value="admin">Admin</option>
+                                    <option value="base">Base</option>
+                                    <option value="project">Project</option>
+                                    <option value="release">Release</option>
+                                </select>
+                            </div>
+
                             <div class="form-group">
                                 <label for="task-priority" class="form-label">
                                     Priority
@@ -44,22 +63,22 @@
                                     <option value="urgent">🔴 Urgent</option>
                                 </select>
                             </div>
-
-                            <div v-if="task" class="form-group">
-                                <label for="task-status" class="form-label">
-                                    Status
-                                </label>
-                                <select id="task-status" v-model="formData.status" class="form-select">
-                                    <option value="todo">To Do</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="done">Done</option>
-                                    <option value="archived">Archived</option>
-                                </select>
-                            </div>
                         </div>
 
-                        <!-- Record Type & Record ID Row -->
+                        <!-- Release & Record Type Row -->
                         <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-release" class="form-label">
+                                    Release
+                                </label>
+                                <select id="task-release" v-model="formData.release_id" class="form-select">
+                                    <option value="">None</option>
+                                    <option v-for="release in releases" :key="release.id" :value="release.id">
+                                        {{ release.version }} {{ release.name ? `- ${release.name}` : '' }}
+                                    </option>
+                                </select>
+                            </div>
+
                             <div class="form-group">
                                 <label for="task-record-type" class="form-label">
                                     Record Type
@@ -73,7 +92,10 @@
                                     <option value="participant">Participant</option>
                                 </select>
                             </div>
+                        </div>
 
+                        <!-- Record ID & Image Row -->
+                        <div class="form-row">
                             <div class="form-group">
                                 <label for="task-record-id" class="form-label">
                                     Record ID
@@ -81,6 +103,23 @@
                                 <input id="task-record-id" v-model="formData.record_id" type="text" class="form-input"
                                     placeholder="Enter record ID..." :disabled="!formData.record_type" />
                             </div>
+
+                            <div class="form-group">
+                                <label for="task-image" class="form-label">
+                                    Image URL
+                                </label>
+                                <input id="task-image" v-model="formData.image" type="text" class="form-input"
+                                    placeholder="Enter image URL..." />
+                            </div>
+                        </div>
+
+                        <!-- Prompt -->
+                        <div class="form-group">
+                            <label for="task-prompt" class="form-label">
+                                AI Prompt
+                            </label>
+                            <textarea id="task-prompt" v-model="formData.prompt" class="form-textarea" rows="3"
+                                placeholder="Enter AI generation prompt..." />
                         </div>
 
                         <!-- Assigned To & Due Date Row -->
@@ -119,22 +158,35 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import StatusToggler from './StatusToggler.vue'
+import CategoryBadge from './CategoryBadge.vue'
 
 interface Task {
     id?: string
     title: string
     description?: string
-    status?: 'todo' | 'in-progress' | 'done' | 'archived'
+    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    category?: 'admin' | 'base' | 'project' | 'release'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     record_type?: string
     record_id?: string
     assigned_to?: string
     due_date?: string
+    release_id?: string
+    image?: string
+    prompt?: string
+}
+
+interface Release {
+    id: string
+    version: string
+    name?: string
 }
 
 const props = defineProps<{
     isOpen: boolean
     task?: Task | null
+    releases?: Release[]
 }>()
 
 const emit = defineEmits<{
@@ -146,25 +198,33 @@ const formData = ref<Task>({
     title: '',
     description: '',
     priority: 'medium',
-    status: 'todo',
+    status: 'new',
+    category: 'base',
     record_type: '',
     record_id: '',
     assigned_to: '',
-    due_date: ''
+    due_date: '',
+    release_id: '',
+    image: '',
+    prompt: ''
 })
 
 // Watch for task changes to populate form
-watch(() => props.task, (newTask) => {
+watch(() => props.task, (newTask: Task | null | undefined) => {
     if (newTask) {
         formData.value = {
             title: newTask.title || '',
             description: newTask.description || '',
             priority: newTask.priority || 'medium',
-            status: newTask.status || 'todo',
+            status: newTask.status || 'new',
+            category: newTask.category || 'base',
             record_type: newTask.record_type || '',
             record_id: newTask.record_id || '',
             assigned_to: newTask.assigned_to || '',
-            due_date: newTask.due_date ? formatDateForInput(newTask.due_date) : ''
+            due_date: newTask.due_date ? formatDateForInput(newTask.due_date) : '',
+            release_id: newTask.release_id || '',
+            image: newTask.image || '',
+            prompt: newTask.prompt || ''
         }
     } else {
         // Reset form for new task
@@ -172,11 +232,15 @@ watch(() => props.task, (newTask) => {
             title: '',
             description: '',
             priority: 'medium',
-            status: 'todo',
+            status: 'new',
+            category: 'base',
             record_type: '',
             record_id: '',
             assigned_to: '',
-            due_date: ''
+            due_date: '',
+            release_id: '',
+            image: '',
+            prompt: ''
         }
     }
 }, { immediate: true })
@@ -184,7 +248,8 @@ watch(() => props.task, (newTask) => {
 function formatDateForInput(dateString: string): string {
     try {
         const date = new Date(dateString)
-        return date.toISOString().split('T')[0]
+        const result = date.toISOString().split('T')[0]
+        return result || ''
     } catch {
         return ''
     }
@@ -201,10 +266,14 @@ function handleSubmit() {
         description: formData.value.description || undefined,
         priority: formData.value.priority,
         status: formData.value.status,
+        category: formData.value.category,
         record_type: formData.value.record_type || undefined,
         record_id: formData.value.record_id || undefined,
         assigned_to: formData.value.assigned_to || undefined,
-        due_date: formData.value.due_date || undefined
+        due_date: formData.value.due_date || undefined,
+        release_id: formData.value.release_id || undefined,
+        image: formData.value.image || undefined,
+        prompt: formData.value.prompt || undefined
     }
 
     emit('save', taskData)

@@ -193,9 +193,9 @@
             <!-- End of authenticated content -->
         </Section>
 
-        <!-- Task Edit Modal (placeholder - will be created separately) -->
-        <TaskEditModal v-if="showTaskModal" :is-open="showTaskModal" :task="currentTask" @close="closeTaskModal"
-            @save="saveTask" />
+        <!-- Task Edit Modal -->
+        <TaskEditModal v-if="showTaskModal" :is-open="showTaskModal" :task="currentTask" :releases="releases"
+            @close="closeTaskModal" @save="saveTask" />
     </Container>
 </template>
 
