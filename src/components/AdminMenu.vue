@@ -6,30 +6,40 @@
         </div>
 
         <div class="admin-menu-body">
-            <!-- Admin Mode Display (Always visible) -->
-            <div class="admin-section">
+            <!-- Base Mode Toggle (Always available on dashboard) -->
+            <div v-if="isOnDashboard" class="admin-section base-mode-section">
+                <h4 class="section-title">Ansichtsmodus</h4>
+                <label class="toggle-label">
+                    <input type="checkbox" :checked="baseMode" @change="$emit('toggle-base-mode')" />
+                    <span class="toggle-switch toggle-switch-base"></span>
+                    <span class="toggle-text">Basis-Modus</span>
+                </label>
+                <p class="settings-description">
+                    {{ baseMode ?
+                        '👤 Als Basis-Benutzer anzeigen (Admin-Funktionen ausgeblendet)' :
+                        '👑 Als Admin anzeigen (Volle Kontrolle)'
+                    }}
+                </p>
+            </div>
+
+            <!-- Admin Mode Display (Only visible when NOT in base mode) -->
+            <div v-if="!baseMode" class="admin-section">
                 <h4 class="section-title">Aktueller Modus</h4>
                 <div class="mode-badge" :class="`mode-${adminMode}`">
                     {{ adminMode === 'base-release' ? '📦 Basis-Release' : '🎯 Version-Release' }}
                 </div>
             </div>
 
-            <!-- Mode Toggle (Only on / route) -->
-            <div v-if="isOnDashboard" class="admin-section">
+            <!-- Mode Toggle (Only on / route and NOT in base mode) -->
+            <div v-if="isOnDashboard && !baseMode" class="admin-section">
                 <h4 class="section-title">Modus wechseln</h4>
                 <div class="button-group">
-                    <button 
-                        class="mode-button" 
-                        :class="{ active: adminMode === 'base-release' }"
-                        @click="$emit('set-mode', 'base-release')"
-                    >
+                    <button class="mode-button" :class="{ active: adminMode === 'base-release' }"
+                        @click="$emit('set-mode', 'base-release')">
                         📦 Basis-Release
                     </button>
-                    <button 
-                        class="mode-button" 
-                        :class="{ active: adminMode === 'version-release' }"
-                        @click="$emit('set-mode', 'version-release')"
-                    >
+                    <button class="mode-button" :class="{ active: adminMode === 'version-release' }"
+                        @click="$emit('set-mode', 'version-release')">
                         🎯 Version-Release
                     </button>
                 </div>
@@ -45,22 +55,18 @@
                 </p>
             </div>
 
-            <!-- Settings Toggle (Only on / route) -->
-            <div v-if="isOnDashboard" class="admin-section">
+            <!-- Settings Toggle (Only on / route and NOT in base mode) -->
+            <div v-if="isOnDashboard && !baseMode" class="admin-section">
                 <h4 class="section-title">Einstellungen</h4>
                 <label class="toggle-label">
-                    <input 
-                        type="checkbox" 
-                        :checked="settingsMode" 
-                        @change="$emit('toggle-settings')"
-                    />
+                    <input type="checkbox" :checked="settingsMode" @change="$emit('toggle-settings')" />
                     <span class="toggle-switch"></span>
                     <span class="toggle-text">Einstellungsmodus</span>
                 </label>
                 <p class="settings-description">
-                    {{ settingsMode ? 
-                        '✅ CRUD-Verwaltung aktiv (Releases & Projekte)' : 
-                        '❌ CRUD-Verwaltung inaktiv (Admin-Tasks sichtbar)' 
+                    {{ settingsMode ?
+                        '✅ CRUD-Verwaltung aktiv (Releases & Projekte)' :
+                        '❌ CRUD-Verwaltung inaktiv (Admin-Tasks sichtbar)'
                     }}
                 </p>
             </div>
@@ -106,6 +112,7 @@
 defineProps<{
     adminMode: 'base-release' | 'version-release'
     settingsMode: boolean
+    baseMode: boolean
     currentRoute: string
     isOnDashboard: boolean
 }>()
@@ -114,6 +121,7 @@ defineEmits<{
     close: []
     'set-mode': [mode: 'base-release' | 'version-release']
     'toggle-settings': []
+    'toggle-base-mode': []
     action: [action: string]
 }>()
 </script>
@@ -185,6 +193,17 @@ defineEmits<{
     color: var(--color-text-secondary);
     margin: 0 0 0.75rem 0;
     letter-spacing: 0.5px;
+}
+
+.base-mode-section {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #9c27b0;
+}
+
+.base-mode-section .section-title {
+    color: #6a1b9a;
 }
 
 .mode-badge {
@@ -283,12 +302,20 @@ defineEmits<{
     transition: transform 0.3s;
 }
 
-input[type="checkbox"]:checked + .toggle-switch {
+input[type="checkbox"]:checked+.toggle-switch {
     background: var(--color-accent);
 }
 
-input[type="checkbox"]:checked + .toggle-switch::after {
+input[type="checkbox"]:checked+.toggle-switch::after {
     transform: translateX(24px);
+}
+
+.toggle-switch-base {
+    background: #ce93d8;
+}
+
+input[type="checkbox"]:checked+.toggle-switch-base {
+    background: #9c27b0;
 }
 
 .toggle-text {

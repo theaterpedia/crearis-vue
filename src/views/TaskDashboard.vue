@@ -15,9 +15,10 @@
         <!-- Admin Menu -->
         <div v-if="showAdminMenu" class="admin-menu-overlay" @click="showAdminMenu = false">
             <div class="admin-menu-container" @click.stop>
-                <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :current-route="currentRoute"
-                    :is-on-dashboard="currentRoute === '/'" @close="showAdminMenu = false" @set-mode="setAdminMode"
-                    @toggle-settings="toggleSettingsMode" @action="handleAdminAction" />
+                <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :base-mode="baseMode"
+                    :current-route="currentRoute" :is-on-dashboard="currentRoute === '/'" @close="showAdminMenu = false"
+                    @set-mode="setAdminMode" @toggle-settings="toggleSettingsMode" @toggle-base-mode="toggleBaseMode"
+                    @action="handleAdminAction" />
             </div>
         </div>
 
@@ -39,15 +40,20 @@
                         <div class="header-role">
                             <h1 class="header-title">
                                 <span v-if="user?.role === 'guest'">👤 Gast</span>
-                                <span v-else-if="user?.role === 'admin'">👑 Admin</span>
+                                <span v-else-if="user?.role === 'admin' && !baseMode">👑 Admin</span>
+                                <span v-else-if="user?.role === 'admin' && baseMode">📦 Basis (Admin-Ansicht)</span>
                                 <span v-else-if="user?.role === 'base'">📦 Basis</span>
                                 <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">🎯
                                     Projekt</span>
                                 <span v-else>{{ user?.role }}</span>
                             </h1>
                             <p class="header-description">
-                                <span v-if="user?.role === 'admin'">Verwalten Sie alle Aufgaben, Projekte und
+                                <span v-if="user?.role === 'admin' && !baseMode">Verwalten Sie alle Aufgaben, Projekte
+                                    und
                                     System-Einstellungen. Sie haben vollständigen Zugriff auf alle Funktionen.</span>
+                                <span v-else-if="user?.role === 'admin' && baseMode">Sie sehen die Ansicht als
+                                    Basis-Benutzer.
+                                    Admin-Funktionen sind ausgeblendet. Nutzen Sie das Admin-Menü zum Wechseln.</span>
                                 <span v-else-if="user?.role === 'base'">Bearbeiten Sie Basis-Aufgaben und verwalten Sie
                                     Standard-Inhalte. Ihr Fokus liegt auf den Kern-Funktionen.</span>
                                 <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">Verwalten Sie
@@ -83,8 +89,8 @@
                         </div>
                     </div>
 
-                    <!-- Admin Filter Bar -->
-                    <div v-if="user?.role === 'admin'" class="admin-filters">
+                    <!-- Admin Filter Bar (hidden in base mode) -->
+                    <div v-if="user?.role === 'admin' && !baseMode" class="admin-filters">
                         <label class="filter-checkbox">
                             <input type="checkbox" v-model="adminFilters.showProject" />
                             <span>Projekt-Aufgaben anzeigen</span>
@@ -210,8 +216,8 @@
                         </div>
                     </div>
 
-                    <!-- Admin Sections -->
-                    <div v-if="user?.role === 'admin'">
+                    <!-- Admin Sections (hidden in base mode) -->
+                    <div v-if="user?.role === 'admin' && !baseMode">
                         <!-- CRUD Tables (visible when settingsMode is ON) -->
                         <div v-if="settingsMode">
                             <!-- Releases Table -->
@@ -321,6 +327,7 @@ const viewState = ref('only-main') // 'only-release' | 'only-main' | 'all-tasks'
 const showAdminMenu = ref(false)
 const adminMode = ref<'base-release' | 'version-release'>('base-release')
 const settingsMode = ref(false)
+const baseMode = ref(false) // When true, admin sees base user view
 const currentRoute = computed(() => router.currentRoute.value.path)
 
 // View settings
@@ -595,7 +602,7 @@ function toggleAdminMenu() {
 
 function setAdminMode(mode: 'base-release' | 'version-release') {
     adminMode.value = mode
-    
+
     // Apply filters based on mode
     if (mode === 'base-release') {
         // Hide tasks that relate to projects
@@ -613,10 +620,10 @@ function setAdminMode(mode: 'base-release' | 'version-release') {
         // Set to only tasks of one release
         viewState.value = 'only-release'
     }
-    
+
     showToastNotification(
-        mode === 'base-release' ? 
-            'Modus: Basis-Release (nur Haupt-Tasks ohne Projekte)' : 
+        mode === 'base-release' ?
+            'Modus: Basis-Release (nur Haupt-Tasks ohne Projekte)' :
             'Modus: Version-Release (Tasks eines Releases mit Projekten)',
         'info'
     )
@@ -624,7 +631,7 @@ function setAdminMode(mode: 'base-release' | 'version-release') {
 
 function toggleSettingsMode() {
     settingsMode.value = !settingsMode.value
-    
+
     if (settingsMode.value) {
         // Settings mode ON: Lock navigation to /
         if (currentRoute.value !== '/') {
@@ -633,6 +640,36 @@ function toggleSettingsMode() {
         showToastNotification('Einstellungsmodus aktiviert - Navigation gesperrt, CRUD sichtbar', 'info')
     } else {
         showToastNotification('Einstellungsmodus deaktiviert - Navigation frei, Admin-Tasks sichtbar', 'info')
+    }
+}
+
+function toggleBaseMode() {
+    baseMode.value = !baseMode.value
+
+    if (baseMode.value) {
+        // Entering Base Mode
+        // Turn off settings mode if it's on
+        if (settingsMode.value) {
+            settingsMode.value = false
+        }
+
+        // Reset to default base user state
+        viewState.value = 'only-main'
+        adminFilters.value.showProject = false
+        adminFilters.value.showBase = true
+        // Don't touch showAdmin
+
+        showToastNotification('👤 Basis-Modus aktiviert - Ansicht als Basis-Benutzer', 'info')
+    } else {
+        // Exiting Base Mode - return to default admin state
+        adminMode.value = 'base-release'
+        settingsMode.value = false
+        viewState.value = 'only-main'
+        adminFilters.value.showProject = false
+        adminFilters.value.showBase = true
+        adminFilters.value.showAdmin = true
+
+        showToastNotification('👑 Admin-Modus wiederhergestellt - Volle Kontrolle', 'info')
     }
 }
 
