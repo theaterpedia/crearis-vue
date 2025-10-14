@@ -1,0 +1,146 @@
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+interface User {
+    id: string
+    username: string
+    role: 'admin' | 'base' | 'project'
+}
+
+const user = ref<User | null>(null)
+const isAuthenticated = ref(false)
+const isLoading = ref(false)
+
+export function useAuth() {
+    const router = useRouter()
+
+    // Computed properties for role checks
+    const isAdmin = computed(() => user.value?.role === 'admin')
+    const isBase = computed(() => user.value?.role === 'base')
+    const isProject = computed(() => user.value?.role === 'project')
+
+    // Get current state
+    const authState = computed(() => {
+        if (!isAuthenticated.value) return 'unauthenticated'
+        return user.value?.role || 'unauthenticated'
+    })
+
+    // Check session
+    const checkSession = async () => {
+        isLoading.value = true
+        try {
+            const response = await fetch('/api/auth/session')
+            const data = await response.json()
+
+            if (data.authenticated && data.user) {
+                user.value = data.user
+                isAuthenticated.value = true
+            } else {
+                user.value = null
+                isAuthenticated.value = false
+            }
+        } catch (error) {
+            console.error('Session check failed:', error)
+            user.value = null
+            isAuthenticated.value = false
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Login
+    const login = async (username: string, password: string) => {
+        isLoading.value = true
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.message || 'Login failed')
+            }
+
+            const data = await response.json()
+
+            if (data.success && data.user) {
+                user.value = data.user
+                isAuthenticated.value = true
+                return { success: true }
+            }
+
+            throw new Error('Login failed')
+        } catch (error) {
+            console.error('Login error:', error)
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Login failed'
+            }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Logout
+    const logout = async () => {
+        isLoading.value = true
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST'
+            })
+
+            user.value = null
+            isAuthenticated.value = false
+            router.push('/login')
+        } catch (error) {
+            console.error('Logout error:', error)
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Require authentication
+    const requireAuth = async () => {
+        if (!isAuthenticated.value) {
+            await checkSession()
+            if (!isAuthenticated.value) {
+                router.push('/login')
+                return false
+            }
+        }
+        return true
+    }
+
+    // Require specific role
+    const requireRole = (role: 'admin' | 'base' | 'project') => {
+        if (!isAuthenticated.value || user.value?.role !== role) {
+            router.push('/login')
+            return false
+        }
+        return true
+    }
+
+    return {
+        // State
+        user,
+        isAuthenticated,
+        isLoading,
+        authState,
+
+        // Role checks
+        isAdmin,
+        isBase,
+        isProject,
+
+        // Methods
+        checkSession,
+        login,
+        logout,
+        requireAuth,
+        requireRole
+    }
+}

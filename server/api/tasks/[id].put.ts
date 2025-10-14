@@ -4,9 +4,13 @@ import db from '../../database/db'
 interface UpdateTaskBody {
     title?: string
     description?: string
-    status?: 'todo' | 'in-progress' | 'done' | 'archived'
+    category?: 'admin' | 'main' | 'release'
+    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
+    release_id?: string | null
     assigned_to?: string
+    image?: string
+    prompt?: string
     due_date?: string
     completed_at?: string
 }
@@ -33,11 +37,26 @@ export default defineEventHandler(async (event) => {
 
         const body = await readBody<UpdateTaskBody>(event)
 
-        // Validate status if provided
-        if (body.status && !['todo', 'in-progress', 'done', 'archived'].includes(body.status)) {
+        if (!body) {
             throw createError({
                 statusCode: 400,
-                message: 'Invalid status. Must be: todo, in-progress, done, or archived'
+                message: 'Request body is required'
+            })
+        }
+
+        // Validate category if provided
+        if (body.category && !['admin', 'main', 'release'].includes(body.category)) {
+            throw createError({
+                statusCode: 400,
+                message: 'Invalid category. Must be: admin, main, or release'
+            })
+        }
+
+        // Validate status if provided
+        if (body.status && !['idea', 'new', 'draft', 'final', 'reopen', 'trash'].includes(body.status)) {
+            throw createError({
+                statusCode: 400,
+                message: 'Invalid status. Must be: idea, new, draft, final, reopen, or trash'
             })
         }
 
@@ -47,6 +66,17 @@ export default defineEventHandler(async (event) => {
                 statusCode: 400,
                 message: 'Invalid priority. Must be: low, medium, high, or urgent'
             })
+        }
+
+        // Validate release_id if provided
+        if (body.release_id !== undefined && body.release_id !== null) {
+            const release = db.prepare('SELECT id FROM releases WHERE id = ?').get(body.release_id)
+            if (!release) {
+                throw createError({
+                    statusCode: 400,
+                    message: 'Invalid release_id. Release does not exist'
+                })
+            }
         }
 
         const updates: string[] = []
@@ -68,18 +98,23 @@ export default defineEventHandler(async (event) => {
             values.push(body.description || null)
         }
 
+        if (body.category !== undefined) {
+            updates.push('category = ?')
+            values.push(body.category)
+        }
+
         if (body.status !== undefined) {
             updates.push('status = ?')
             values.push(body.status)
 
-            // Auto-set completed_at when marking as done
-            if (body.status === 'done' && !body.completed_at) {
+            // Auto-set completed_at when marking as final
+            if (body.status === 'final' && !body.completed_at) {
                 updates.push('completed_at = ?')
                 values.push(new Date().toISOString())
             }
 
-            // Clear completed_at when unmarking as done
-            if (body.status !== 'done') {
+            // Clear completed_at when not final
+            if (body.status !== 'final') {
                 updates.push('completed_at = NULL')
             }
         }
@@ -89,9 +124,24 @@ export default defineEventHandler(async (event) => {
             values.push(body.priority)
         }
 
+        if (body.release_id !== undefined) {
+            updates.push('release_id = ?')
+            values.push(body.release_id || null)
+        }
+
         if (body.assigned_to !== undefined) {
             updates.push('assigned_to = ?')
             values.push(body.assigned_to || null)
+        }
+
+        if (body.image !== undefined) {
+            updates.push('image = ?')
+            values.push(body.image || null)
+        }
+
+        if (body.prompt !== undefined) {
+            updates.push('prompt = ?')
+            values.push(body.prompt || null)
         }
 
         if (body.due_date !== undefined) {

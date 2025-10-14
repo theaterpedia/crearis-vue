@@ -10,7 +10,16 @@ import type Database from 'better-sqlite3'
  * - Extends existing tables with version tracking columns
  */
 export function addTasksAndVersioning(db: Database.Database) {
-    // Tasks table for tracking work items
+    // Check if tasks table already has the new Stage 2 schema (has 'category' column)
+    const tasksColumns = db.prepare('PRAGMA table_info(tasks)').all() as any[]
+    const hasNewSchema = tasksColumns.some((col: any) => col.name === 'category')
+    
+    if (hasNewSchema) {
+        console.log('ℹ️  Tasks table already has Stage 2 schema, skipping old migration')
+        return
+    }
+
+    // Tasks table for tracking work items (OLD SCHEMA - only used if Stage 2 not run yet)
     db.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,

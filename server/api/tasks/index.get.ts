@@ -5,44 +5,100 @@ interface Task {
     id: string
     title: string
     description?: string
-    status: 'todo' | 'in-progress' | 'done' | 'archived'
+    category: 'admin' | 'main' | 'release'
+    status: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
     priority: 'low' | 'medium' | 'high' | 'urgent'
+    release_id?: string
     record_type?: string
     record_id?: string
     assigned_to?: string
+    image?: string
+    prompt?: string
     created_at: string
     updated_at: string
     due_date?: string
     completed_at?: string
-    version_id?: string
+    entity_name?: string
+    display_title?: string
 }
 
 export default defineEventHandler((event) => {
     try {
         const query = getQuery(event)
         const status = query.status as string | undefined
+        const category = query.category as string | undefined
+        const releaseId = query.release_id as string | undefined
         const recordType = query.record_type as string | undefined
         const recordId = query.record_id as string | undefined
 
-        let sql = 'SELECT * FROM tasks WHERE 1=1'
+        // Build query with entity joins for title inheritance
+        let sql = `
+            SELECT 
+                tasks.*,
+                CASE tasks.record_type
+                    WHEN 'event' THEN events.name
+                    WHEN 'post' THEN posts.name
+                    WHEN 'location' THEN locations.name
+                    WHEN 'instructor' THEN instructors.name
+                    WHEN 'participant' THEN participants.name
+                END as entity_name,
+                CASE 
+                    WHEN tasks.title = '{{main-title}}' THEN 
+                        COALESCE(
+                            CASE tasks.record_type
+                                WHEN 'event' THEN events.name || ' - Main Task'
+                                WHEN 'post' THEN posts.name || ' - Main Task'
+                                WHEN 'location' THEN locations.name || ' - Main Task'
+                                WHEN 'instructor' THEN instructors.name || ' - Main Task'
+                                WHEN 'participant' THEN participants.name || ' - Main Task'
+                            END,
+                            tasks.title
+                        )
+                    ELSE tasks.title
+                END as display_title
+            FROM tasks
+            LEFT JOIN events ON tasks.record_type = 'event' AND tasks.record_id = events.id
+            LEFT JOIN posts ON tasks.record_type = 'post' AND tasks.record_id = posts.id
+            LEFT JOIN locations ON tasks.record_type = 'location' AND tasks.record_id = locations.id
+            LEFT JOIN instructors ON tasks.record_type = 'instructor' AND tasks.record_id = instructors.id
+            LEFT JOIN participants ON tasks.record_type = 'participant' AND tasks.record_id = participants.id
+            WHERE 1=1
+        `
         const params: any[] = []
 
         if (status) {
-            sql += ' AND status = ?'
+            sql += ' AND tasks.status = ?'
             params.push(status)
         }
 
+        if (category) {
+            sql += ' AND tasks.category = ?'
+            params.push(category)
+        }
+
+        if (releaseId) {
+            sql += ' AND tasks.release_id = ?'
+            params.push(releaseId)
+        }
+
         if (recordType) {
-            sql += ' AND record_type = ?'
+            sql += ' AND tasks.record_type = ?'
             params.push(recordType)
         }
 
         if (recordId) {
-            sql += ' AND record_id = ?'
+            sql += ' AND tasks.record_id = ?'
             params.push(recordId)
         }
 
-        sql += ' ORDER BY CASE priority WHEN \'urgent\' THEN 1 WHEN \'high\' THEN 2 WHEN \'medium\' THEN 3 WHEN \'low\' THEN 4 END, created_at DESC'
+        sql += ` ORDER BY 
+            CASE tasks.priority 
+                WHEN 'urgent' THEN 1 
+                WHEN 'high' THEN 2 
+                WHEN 'medium' THEN 3 
+                WHEN 'low' THEN 4 
+            END, 
+            tasks.created_at DESC`
 
         const tasks = db.prepare(sql).all(...params) as Task[]
 
@@ -51,10 +107,17 @@ export default defineEventHandler((event) => {
             tasks,
             counts: {
                 total: tasks.length,
-                todo: tasks.filter(t => t.status === 'todo').length,
-                inProgress: tasks.filter(t => t.status === 'in-progress').length,
-                done: tasks.filter(t => t.status === 'done').length,
-                archived: tasks.filter(t => t.status === 'archived').length
+                idea: tasks.filter(t => t.status === 'idea').length,
+                new: tasks.filter(t => t.status === 'new').length,
+                draft: tasks.filter(t => t.status === 'draft').length,
+                final: tasks.filter(t => t.status === 'final').length,
+                reopen: tasks.filter(t => t.status === 'reopen').length,
+                trash: tasks.filter(t => t.status === 'trash').length,
+                byCategory: {
+                    admin: tasks.filter(t => t.category === 'admin').length,
+                    main: tasks.filter(t => t.category === 'main').length,
+                    release: tasks.filter(t => t.category === 'release').length
+                }
             }
         }
     } catch (error) {
