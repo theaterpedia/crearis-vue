@@ -220,6 +220,10 @@
 
             <!-- Toast Notifications -->
             <Toast v-if="showToast" :message="toastMessage" :type="toastType" @close="closeToast" />
+
+            <!-- Project Modal -->
+            <ProjectModal v-if="showProjectModal" :is-open="showProjectModal" :project="currentProject"
+                @close="closeProjectModal" @save="saveProject" />
         </Container>
     </div>
 </template>
@@ -238,6 +242,7 @@ import ToggleMenu from '@/components/ToggleMenu.vue'
 import Toast from '@/components/Toast.vue'
 import ProjectsTable from '@/components/ProjectsTable.vue'
 import AdminTasksList from '@/components/AdminTasksList.vue'
+import ProjectModal from '@/components/ProjectModal.vue'
 
 interface Task {
     id: string
@@ -305,6 +310,10 @@ const projects = ref<any[]>([])
 const projectsLoading = ref(false)
 const adminTasks = ref<Task[]>([])
 const adminTasksLoading = ref(false)
+
+// Project modal state
+const showProjectModal = ref(false)
+const currentProject = ref<any>(null)
 
 // Toast state
 const toastMessage = ref('')
@@ -558,8 +567,11 @@ async function loadProjects() {
     if (user.value?.role !== 'admin') return
     projectsLoading.value = true
     try {
-        // TODO: Replace with actual projects API when available
-        projects.value = []
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+            const data = await response.json()
+            projects.value = data.projects || []
+        }
     } catch (err) {
         console.error('Failed to load projects:', err)
     } finally {
@@ -586,15 +598,68 @@ async function loadAdminTasks() {
 
 // Project CRUD handlers
 function createProject() {
-    showToastNotification('Projekt-Erstellung wird implementiert', 'info')
+    currentProject.value = null
+    showProjectModal.value = true
 }
 
 function editProject(project: any) {
-    showToastNotification(`Projekt "${project.name}" bearbeiten`, 'info')
+    currentProject.value = { ...project }
+    showProjectModal.value = true
 }
 
-function deleteProject(project: any) {
-    showToastNotification(`Projekt "${project.name}" löschen?`, 'warning')
+function closeProjectModal() {
+    showProjectModal.value = false
+    currentProject.value = null
+}
+
+async function saveProject(projectData: any) {
+    try {
+        const isEdit = currentProject.value?.id
+        const url = isEdit ? `/api/projects/${currentProject.value.id}` : '/api/projects'
+        const method = isEdit ? 'PUT' : 'POST'
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(projectData)
+        })
+
+        if (response.ok) {
+            await loadProjects()
+            closeProjectModal()
+            showToastNotification(
+                isEdit ? 'Projekt aktualisiert' : 'Projekt erstellt',
+                'success'
+            )
+        } else {
+            throw new Error('Fehler beim Speichern')
+        }
+    } catch (err) {
+        console.error('Error saving project:', err)
+        showToastNotification('Fehler beim Speichern', 'error')
+    }
+}
+
+async function deleteProject(project: any) {
+    if (!confirm(`Projekt "${project.name}" wirklich löschen?`)) {
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/projects/${project.id}`, {
+            method: 'DELETE'
+        })
+
+        if (response.ok) {
+            await loadProjects()
+            showToastNotification('Projekt gelöscht', 'success')
+        } else {
+            throw new Error('Fehler beim Löschen')
+        }
+    } catch (err) {
+        console.error('Error deleting project:', err)
+        showToastNotification('Fehler beim Löschen', 'error')
+    }
 }
 
 // Execute admin task
