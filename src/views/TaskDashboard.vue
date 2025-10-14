@@ -1,114 +1,121 @@
 <template>
-    <Container>
-        <Section>
-            <Heading headline="Task Management Dashboard" />
+    <div class="dashboard-wrapper">
+        <!-- Navbar -->
+        <Navbar :is-authenticated="isAuthenticated" :user="user" @toggle-view-menu="toggleViewMenu" @logout="handleLogout" />
 
-            <!-- Not Authenticated State -->
-            <div v-if="!isAuthenticated" class="auth-prompt">
-                <div class="auth-card">
-                    <h2>🔒 Authentication Required</h2>
-                    <p>Please log in to access the Task Management Dashboard.</p>
-                    <Button @click="goToLogin" class="login-btn">Go to Login</Button>
-                </div>
+        <!-- View Menu (ToggleMenu) -->
+        <div v-if="showViewMenu" class="view-menu-overlay" @click="showViewMenu = false">
+            <div class="view-menu-container" @click.stop>
+                <ToggleMenu v-model="viewState" :placement="'left'" :header="'Ansicht'" :toggle-options="viewOptions"
+                    @update:model-value="handleViewChange" />
             </div>
+        </div>
 
-            <!-- Authenticated Content -->
-            <div v-else>
-                <!-- User Info -->
-                <div class="user-info">
-                    <span>Logged in as: <strong>{{ user?.username }}</strong> ({{ user?.role }})</span>
-                    <Button @click="handleLogout" class="logout-btn-header">Logout</Button>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card stat-total">
-                        <div class="stat-value">{{ stats.total }}</div>
-                        <div class="stat-label">Total Tasks</div>
-                    </div>
-                    <div class="stat-card stat-idea">
-                        <div class="stat-value">{{ stats.idea }}</div>
-                        <div class="stat-label">Idea</div>
-                    </div>
-                    <div class="stat-card stat-new">
-                        <div class="stat-value">{{ stats.new }}</div>
-                        <div class="stat-label">New</div>
-                    </div>
-                    <div class="stat-card stat-draft">
-                        <div class="stat-value">{{ stats.draft }}</div>
-                        <div class="stat-label">Draft</div>
-                    </div>
-                    <div class="stat-card stat-final">
-                        <div class="stat-value">{{ stats.final }}</div>
-                        <div class="stat-label">Final</div>
+        <Container>
+            <Section>
+                <!-- Not Authenticated State -->
+                <div v-if="!isAuthenticated" class="auth-prompt">
+                    <div class="auth-card">
+                        <h2>🔒 Anmeldung erforderlich</h2>
+                        <p>Bitte melden Sie sich an, um das Task-Dashboard zu nutzen.</p>
+                        <Button @click="goToLogin" class="login-btn">Zur Anmeldung</Button>
                     </div>
                 </div>
 
-                <!-- Filter Bar -->
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <label for="category-filter" class="filter-label">Category:</label>
-                        <select id="category-filter" v-model="filterCategory" class="filter-select">
-                            <option value="">All Categories</option>
-                            <option value="admin">Admin</option>
-                            <option value="main">Main</option>
-                            <option value="release">Release</option>
-                        </select>
+                <!-- Authenticated Content -->
+                <div v-else>
+                    <!-- Dashboard Header -->
+                    <div class="dashboard-header">
+                        <div class="header-role">
+                            <h1 class="header-title">
+                                <span v-if="user?.role === 'guest'">👤 Gast</span>
+                                <span v-else-if="user?.role === 'admin'">👑 Admin</span>
+                                <span v-else-if="user?.role === 'base'">📦 Basis</span>
+                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">🎯 Projekt</span>
+                                <span v-else>{{ user?.role }}</span>
+                            </h1>
+                            <p class="header-description">
+                                <span v-if="user?.role === 'admin'">Verwalten Sie alle Aufgaben, Projekte und
+                                    System-Einstellungen. Sie haben vollständigen Zugriff auf alle Funktionen.</span>
+                                <span v-else-if="user?.role === 'base'">Bearbeiten Sie Basis-Aufgaben und verwalten Sie
+                                    Standard-Inhalte. Ihr Fokus liegt auf den Kern-Funktionen.</span>
+                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">Verwalten Sie Ihre
+                                    projekt-spezifischen Aufgaben und Inhalte. Sie arbeiten an Ihrem eigenen
+                                    Projekt-Bereich.</span>
+                                <span v-else>Willkommen im Task-Dashboard.</span>
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="status-filter" class="filter-label">Status:</label>
-                        <select id="status-filter" v-model="filterStatus" class="filter-select">
-                            <option value="">All Statuses</option>
-                            <option value="idea">Idea</option>
-                            <option value="new">New</option>
-                            <option value="draft">Draft</option>
-                            <option value="final">Final</option>
-                            <option value="reopen">Reopen</option>
-                            <option value="trash">Trash</option>
-                        </select>
+                    <!-- Stats Cards (conditionally shown) -->
+                    <div v-if="viewSettings.showStats" class="stats-grid">
+                        <div class="stat-card stat-total">
+                            <div class="stat-value">{{ stats.total }}</div>
+                            <div class="stat-label">Gesamt</div>
+                        </div>
+                        <div class="stat-card stat-idea">
+                            <div class="stat-value">{{ stats.idea }}</div>
+                            <div class="stat-label">Ideen</div>
+                        </div>
+                        <div class="stat-card stat-draft">
+                            <div class="stat-value">{{ stats.draft }}</div>
+                            <div class="stat-label">Entwürfe</div>
+                        </div>
+                        <div class="stat-card stat-final">
+                            <div class="stat-value">{{ stats.final }}</div>
+                            <div class="stat-label">Fertig</div>
+                        </div>
+                        <div class="stat-card stat-reopen">
+                            <div class="stat-value">{{ stats.reopen }}</div>
+                            <div class="stat-label">Reopen</div>
+                        </div>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="release-filter" class="filter-label">Release:</label>
-                        <select id="release-filter" v-model="filterRelease" class="filter-select">
-                            <option value="">All Releases</option>
-                            <option v-for="release in releases" :key="release.id" :value="release.id">
-                                {{ release.version }} - {{ release.state }}
-                            </option>
-                        </select>
+                    <!-- Admin Filter Bar -->
+                    <div v-if="user?.role === 'admin'" class="admin-filters">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" v-model="adminFilters.showProject" />
+                            <span>Projekt-Aufgaben anzeigen</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" v-model="adminFilters.showBase" />
+                            <span>Basis-Aufgaben anzeigen</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" v-model="adminFilters.showAdmin" />
+                            <span>Admin-Aufgaben anzeigen</span>
+                        </label>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="type-filter" class="filter-label">Entity Type:</label>
-                        <select id="type-filter" v-model="filterType" class="filter-select">
-                            <option value="">All Types</option>
-                            <option value="event">Events</option>
-                            <option value="post">Posts</option>
-                            <option value="location">Locations</option>
-                            <option value="instructor">Instructors</option>
-                            <option value="participant">Participants</option>
-                        </select>
+                    <!-- Loading State -->
+                    <div v-if="loading" class="loading-state">
+                        <p>Lädt Aufgaben...</p>
                     </div>
 
-                    <Button @click="openNewTaskModal" class="new-task-btn">
-                        + New Task
-                    </Button>
-                </div>
+                    <!-- Error State -->
+                    <div v-else-if="error" class="error-state">
+                        <p>{{ error }}</p>
+                        <Button @click="loadTasks">Erneut versuchen</Button>
+                    </div>
 
-                <!-- Loading State -->
-                <div v-if="loading" class="loading-state">
-                    <p>Loading tasks...</p>
-                </div>
+                    <!-- Kanban Board Header with Toggle Buttons -->
+                    <div v-else class="kanban-header">
+                        <h2 class="kanban-title">Aufgaben-Board</h2>
+                        <div class="kanban-toggles">
+                            <button :class="['toggle-btn', { active: viewSettings.showNew }]"
+                                @click="viewSettings.showNew = !viewSettings.showNew" title="Neu Spalte ein/ausblenden">
+                                {{ viewSettings.showNew ? '👁' : '👁‍🗨' }} Neu
+                            </button>
+                            <button :class="['toggle-btn', { active: viewSettings.showTrash }]"
+                                @click="viewSettings.showTrash = !viewSettings.showTrash"
+                                title="Papierkorb Spalte ein/ausblenden">
+                                {{ viewSettings.showTrash ? '👁' : '👁‍🗨' }} Papierkorb
+                            </button>
+                        </div>
+                    </div>
 
-                <!-- Error State -->
-                <div v-else-if="error" class="error-state">
-                    <p>{{ error }}</p>
-                    <Button @click="loadTasks">Retry</Button>
-                </div>
-
-                <!-- Tasks Board -->
-                <div v-else class="tasks-board">
+                    <!-- Tasks Board (3 Main Columns + Optional) -->
+                    <div v-if="!loading && !error" class="tasks-board">
                     <!-- Idea Column -->
                     <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
                         <h3 class="column-title">
