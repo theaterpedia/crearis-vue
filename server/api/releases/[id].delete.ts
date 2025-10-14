@@ -23,7 +23,7 @@ export default defineEventHandler((event) => {
 
         // Check if there are tasks linked to this release
         const linkedTasks = db.prepare('SELECT COUNT(*) as count FROM tasks WHERE release_id = ?').get(id) as { count: number }
-        
+
         if (linkedTasks.count > 0) {
             // Set release_id to NULL for all linked tasks (due to ON DELETE SET NULL)
             // This is handled automatically by the foreign key constraint

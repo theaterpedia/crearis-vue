@@ -10,17 +10,17 @@ import type Database from 'better-sqlite3'
  * - Extends existing tables with version tracking columns
  */
 export function addTasksAndVersioning(db: Database.Database) {
-    // Check if tasks table already has the new Stage 2 schema (has 'category' column)
-    const tasksColumns = db.prepare('PRAGMA table_info(tasks)').all() as any[]
-    const hasNewSchema = tasksColumns.some((col: any) => col.name === 'category')
-    
-    if (hasNewSchema) {
-        console.log('ℹ️  Tasks table already has Stage 2 schema, skipping old migration')
-        return
-    }
+  // Check if tasks table already has the new Stage 2 schema (has 'category' column)
+  const tasksColumns = db.prepare('PRAGMA table_info(tasks)').all() as any[]
+  const hasNewSchema = tasksColumns.some((col: any) => col.name === 'category')
 
-    // Tasks table for tracking work items (OLD SCHEMA - only used if Stage 2 not run yet)
-    db.exec(`
+  if (hasNewSchema) {
+    console.log('ℹ️  Tasks table already has Stage 2 schema, skipping old migration')
+    return
+  }
+
+  // Tasks table for tracking work items (OLD SCHEMA - only used if Stage 2 not run yet)
+  db.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -39,8 +39,8 @@ export function addTasksAndVersioning(db: Database.Database) {
     )
   `)
 
-    // Versions table for snapshots
-    db.exec(`
+  // Versions table for snapshots
+  db.exec(`
     CREATE TABLE IF NOT EXISTS versions (
       id TEXT PRIMARY KEY,
       version_number TEXT NOT NULL UNIQUE,  -- e.g., 'v1.0.0', 'v1.1.0'
@@ -55,8 +55,8 @@ export function addTasksAndVersioning(db: Database.Database) {
     )
   `)
 
-    // Version history for tracking changes to records
-    db.exec(`
+  // Version history for tracking changes to records
+  db.exec(`
     CREATE TABLE IF NOT EXISTS record_versions (
       id TEXT PRIMARY KEY,
       version_id TEXT NOT NULL,
@@ -68,31 +68,31 @@ export function addTasksAndVersioning(db: Database.Database) {
     )
   `)
 
-    // Check if columns already exist before adding them
-    const tables = ['events', 'posts', 'locations', 'instructors', 'participants']
+  // Check if columns already exist before adding them
+  const tables = ['events', 'posts', 'locations', 'instructors', 'participants']
 
-    tables.forEach(table => {
-        // Get existing columns
-        const columns = db.prepare(`PRAGMA table_info(${table})`).all() as any[]
-        const columnNames = columns.map((col: any) => col.name)
+  tables.forEach(table => {
+    // Get existing columns
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all() as any[]
+    const columnNames = columns.map((col: any) => col.name)
 
-        // Only add columns if they don't exist
-        // Note: SQLite ALTER TABLE doesn't support DEFAULT with functions, so we use NULL and set values in triggers
-        if (!columnNames.includes('version_id')) {
-            db.exec(`ALTER TABLE ${table} ADD COLUMN version_id TEXT`)
-        }
-        if (!columnNames.includes('created_at')) {
-            db.exec(`ALTER TABLE ${table} ADD COLUMN created_at TEXT`)
-        }
-        if (!columnNames.includes('updated_at')) {
-            db.exec(`ALTER TABLE ${table} ADD COLUMN updated_at TEXT`)
-        }
-        if (!columnNames.includes('status')) {
-            db.exec(`ALTER TABLE ${table} ADD COLUMN status TEXT DEFAULT 'active'`)
-        }
+    // Only add columns if they don't exist
+    // Note: SQLite ALTER TABLE doesn't support DEFAULT with functions, so we use NULL and set values in triggers
+    if (!columnNames.includes('version_id')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN version_id TEXT`)
+    }
+    if (!columnNames.includes('created_at')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN created_at TEXT`)
+    }
+    if (!columnNames.includes('updated_at')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN updated_at TEXT`)
+    }
+    if (!columnNames.includes('status')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN status TEXT DEFAULT 'active'`)
+    }
 
-        // Create triggers to set timestamps automatically for new inserts
-        db.exec(`
+    // Create triggers to set timestamps automatically for new inserts
+    db.exec(`
       CREATE TRIGGER IF NOT EXISTS ${table}_created_at_trigger
       AFTER INSERT ON ${table}
       WHEN NEW.created_at IS NULL
@@ -101,17 +101,17 @@ export function addTasksAndVersioning(db: Database.Database) {
       END;
     `)
 
-        db.exec(`
+    db.exec(`
       CREATE TRIGGER IF NOT EXISTS ${table}_updated_at_trigger
       AFTER UPDATE ON ${table}
       BEGIN
         UPDATE ${table} SET updated_at = datetime('now') WHERE id = NEW.id;
       END;
     `)
-    })
+  })
 
-    // Create indexes for performance
-    db.exec(`
+  // Create indexes for performance
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
     CREATE INDEX IF NOT EXISTS idx_tasks_record ON tasks(record_type, record_id);
     CREATE INDEX IF NOT EXISTS idx_tasks_version ON tasks(version_id);
@@ -119,5 +119,5 @@ export function addTasksAndVersioning(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_record_versions_lookup ON record_versions(version_id, record_type, record_id);
   `)
 
-    console.log('✅ Tasks and versioning tables created successfully')
+  console.log('✅ Tasks and versioning tables created successfully')
 }

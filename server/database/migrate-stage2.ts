@@ -106,14 +106,14 @@ const eventsColumns = db.prepare("PRAGMA table_info(events)").all() as Array<{ n
 const hasIsBase = eventsColumns.some(col => col.name === 'isBase')
 
 if (!hasIsBase) {
-  db.exec(`
+    db.exec(`
     ALTER TABLE events ADD COLUMN isBase INTEGER DEFAULT 0
   `)
-  console.log('✅ Added isBase column to events')
-  console.log('ℹ️  Note: isBase values should be set during CSV import based on xml_id patterns')
-  console.log('    (Records with id starting with "_demo." should have isBase=1)')
+    console.log('✅ Added isBase column to events')
+    console.log('ℹ️  Note: isBase values should be set during CSV import based on xml_id patterns')
+    console.log('    (Records with id starting with "_demo." should have isBase=1)')
 } else {
-  console.log('⏭️  isBase column already exists')
+    console.log('⏭️  isBase column already exists')
 }// ============================================================================
 // 3. REFACTOR TASKS TABLE
 // ============================================================================
