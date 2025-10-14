@@ -203,6 +203,10 @@
 
                     <!-- Admin Sections -->
                     <div v-if="user?.role === 'admin'">
+                        <!-- Releases Table -->
+                        <ReleasesTable :releases="releases" :loading="releasesLoading" @create="createRelease"
+                            @edit="editRelease" @delete="deleteRelease" />
+
                         <!-- Projects Table -->
                         <ProjectsTable :projects="projects" :loading="projectsLoading" @create="createProject"
                             @edit="editProject" @delete="deleteProject" />
@@ -224,6 +228,10 @@
             <!-- Project Modal -->
             <ProjectModal v-if="showProjectModal" :is-open="showProjectModal" :project="currentProject"
                 @close="closeProjectModal" @save="saveProject" />
+
+            <!-- Release Modal -->
+            <ReleaseModal v-if="showReleaseModal" :is-open="showReleaseModal" :release="currentRelease"
+                @close="closeReleaseModal" @save="saveRelease" />
         </Container>
     </div>
 </template>
@@ -243,6 +251,8 @@ import Toast from '@/components/Toast.vue'
 import ProjectsTable from '@/components/ProjectsTable.vue'
 import AdminTasksList from '@/components/AdminTasksList.vue'
 import ProjectModal from '@/components/ProjectModal.vue'
+import ReleasesTable from '@/components/ReleasesTable.vue'
+import ReleaseModal from '@/components/ReleaseModal.vue'
 
 interface Task {
     id: string
@@ -306,6 +316,7 @@ const adminFilters = ref({
 })
 
 // Admin data
+const releasesLoading = ref(false)
 const projects = ref<any[]>([])
 const projectsLoading = ref(false)
 const adminTasks = ref<Task[]>([])
@@ -314,6 +325,10 @@ const adminTasksLoading = ref(false)
 // Project modal state
 const showProjectModal = ref(false)
 const currentProject = ref<any>(null)
+
+// Release modal state
+const showReleaseModal = ref(false)
+const currentRelease = ref<any>(null)
 
 // Toast state
 const toastMessage = ref('')
@@ -662,6 +677,78 @@ async function deleteProject(project: any) {
     }
 }
 
+// Release CRUD handlers
+function createRelease() {
+    currentRelease.value = null
+    showReleaseModal.value = true
+}
+
+function editRelease(release: any) {
+    currentRelease.value = { ...release }
+    showReleaseModal.value = true
+}
+
+function closeReleaseModal() {
+    showReleaseModal.value = false
+    currentRelease.value = null
+}
+
+async function saveRelease(releaseData: any) {
+    try {
+        const isEdit = currentRelease.value?.id
+        const url = isEdit ? `/api/releases/${currentRelease.value.id}` : '/api/releases'
+        const method = isEdit ? 'PUT' : 'POST'
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(releaseData)
+        })
+
+        if (response.ok) {
+            await loadReleases()
+            closeReleaseModal()
+            showToastNotification(
+                isEdit ? 'Release aktualisiert' : 'Release erstellt',
+                'success'
+            )
+        } else {
+            const error = await response.json()
+            throw new Error(error.message || 'Fehler beim Speichern')
+        }
+    } catch (err: any) {
+        console.error('Error saving release:', err)
+        showToastNotification(err.message || 'Fehler beim Speichern', 'error')
+    }
+}
+
+async function deleteRelease(release: any) {
+    const taskCount = release.task_count || 0
+    const confirmMsg = taskCount > 0
+        ? `Release "v${release.version}" hat ${taskCount} Task(s). Wirklich löschen?`
+        : `Release "v${release.version}" wirklich löschen?`
+
+    if (!confirm(confirmMsg)) {
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/releases/${release.id}`, {
+            method: 'DELETE'
+        })
+
+        if (response.ok) {
+            await loadReleases()
+            showToastNotification('Release gelöscht', 'success')
+        } else {
+            throw new Error('Fehler beim Löschen')
+        }
+    } catch (err) {
+        console.error('Error deleting release:', err)
+        showToastNotification('Fehler beim Löschen', 'error')
+    }
+}
+
 // Execute admin task
 function executeAdminTask(task: Task) {
     showToastNotification(`${task.display_title || task.title} ausgeführt`, 'success')
@@ -669,6 +756,7 @@ function executeAdminTask(task: Task) {
 
 // Load releases from API
 async function loadReleases() {
+    releasesLoading.value = true
     try {
         const response = await fetch('/api/releases')
         if (!response.ok) {
@@ -678,6 +766,9 @@ async function loadReleases() {
         releases.value = data.releases || []
     } catch (err) {
         console.error('Error loading releases:', err)
+        releases.value = []
+    } finally {
+        releasesLoading.value = false
     }
 }
 
