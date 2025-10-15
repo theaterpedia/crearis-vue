@@ -7,6 +7,7 @@ Complete documentation for the demo-data project including database management, 
 ## 📚 Documentation Index
 
 ### Database Schema Migrations
+- **[Automatic Initialization](./AUTOMATIC_INITIALIZATION.md)** - 🚀 Smart database startup (NEW!)
 - **[Schema Migration Complete](./SCHEMA_MIGRATION_COMPLETE.md)** - 🎉 Complete overview of all 4 phases
 - [Database Migrations Guide](./DATABASE_MIGRATIONS.md) - 📖 Comprehensive developer guide (784 lines)
 - [Migration Plan](./SCHEMA_MIGRATION_PLAN.md) - Original 4-phase plan (SCHEM-A through SCHEM-D)
