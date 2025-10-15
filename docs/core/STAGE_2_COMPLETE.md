@@ -422,27 +422,6 @@ All new endpoints work seamlessly with existing Stage 1 authentication:
 
 ---
 
-## Credentials Reminder
-
-```
-Username: admin
-Password: nEumJ7uq1qFNMMom
-Role:     admin
-------------------------------------------------------------
-Username: base
-Password: yl-x3fn5ScB1aBQP
-Role:     base
-------------------------------------------------------------
-Username: project1
-Password: lXuRK_oAAvMkHLTC
-Role:     project
-------------------------------------------------------------
-Username: project2
-Password: xrCQQ77wN0CGJj6e
-Role:     project
-```
-
----
 
 ## Commands to Test
 

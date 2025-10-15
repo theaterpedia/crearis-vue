@@ -8,10 +8,6 @@ import { nanoid } from 'nanoid'
 import bcrypt from 'bcryptjs'
 
 const users = [
-    { username: 'admin', password: 'nEumJ7uq1qFNMMom', role: 'admin' },
-    { username: 'base', password: 'yl-x3fn5ScB1aBQP', role: 'base' },
-    { username: 'project1', password: 'lXuRK_oAAvMkHLTC', role: 'project' },
-    { username: 'project2', password: 'xrCQQ77wN0CGJj6e', role: 'project' },
 ]
 
 async function updateUsers() {

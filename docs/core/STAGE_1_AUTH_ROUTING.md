@@ -55,7 +55,7 @@ CREATE TABLE projects (
 ```json
 {
   "username": "admin",
-  "password": "nEumJ7uq1qFNMMom"
+  "password": ""
 }
 ```
 
@@ -411,7 +411,7 @@ const requireRole = (role: 'admin' | 'base' | 'project') => {
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"nEumJ7uq1qFNMMom"}' \
+  -d '{"username":"admin","password":""}' \
   -c cookies.txt
 ```
 
@@ -439,19 +439,19 @@ curl -X POST http://localhost:3000/api/auth/logout \
 **Test Admin Login:**
 1. Open http://localhost:3001/login
 2. Username: `admin`
-3. Password: `nEumJ7uq1qFNMMom`
+3. Password: ``
 4. Should redirect to `/` (TaskDashboard)
 
 **Test Base Login:**
 1. Open http://localhost:3001/login
 2. Username: `base`
-3. Password: `yl-x3fn5ScB1aBQP`
+3. Password: ``
 4. Should redirect to `/base`
 
 **Test Project Login:**
 1. Open http://localhost:3001/login
 2. Username: `project1`
-3. Password: `lXuRK_oAAvMkHLTC`
+3. Password: ``
 4. Should redirect to `/project`
 
 **Test Protected Routes:**
