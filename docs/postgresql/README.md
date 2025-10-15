@@ -19,8 +19,12 @@ The project is implementing PostgreSQL support in stages:
 - One-by-one test execution capability
 - Visual test results
 
-### Stage C: TBD 🔄 PENDING
-- TBD
+### Stage C: Automated PostgreSQL Setup ✅ COMPLETED
+- Interactive setup script for PostgreSQL configuration
+- Automated environment file creation
+- Connection testing and validation
+- Database and user creation with permissions
+- [Read Setup Guide](./STAGE-C-SETUP-GUIDE.md)
 
 ### Stage D: Coverage & Validation 🔄 PENDING
 - Analyze db.ts usage throughout project
@@ -33,7 +37,21 @@ The project is implementing PostgreSQL support in stages:
 ### Using SQLite (Default)
 No configuration needed. The project works out of the box with SQLite.
 
-### Using PostgreSQL
+### Using PostgreSQL (Automated Setup)
+**Recommended:** Use the automated setup script:
+```bash
+bash scripts/setup-postgresql.sh
+```
+
+The script will:
+- Check PostgreSQL installation and status
+- Create your `.env` file interactively
+- Test the database connection
+- Create database and user if needed
+
+**See:** [Stage C Setup Guide](./STAGE-C-SETUP-GUIDE.md) for complete instructions.
+
+### Using PostgreSQL (Manual Setup)
 1. Install dependencies:
    ```bash
    npm install pg @types/pg

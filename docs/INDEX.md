@@ -19,8 +19,11 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 - [Completion](./vitest/stage-b-complete.md) - What was delivered
 - [Presentation](./vitest/STAGE-B-PRESENTATION.md) - Review summary
 
-### Stage C: TBD
-- *Coming after Stage B approval*
+### Stage C: PostgreSQL Automated Setup
+- [Quick Reference](./postgresql/STAGE-C-QUICK-REFERENCE.md) - Fast command reference
+- [Setup Guide](./postgresql/STAGE-C-SETUP-GUIDE.md) - Complete automated setup instructions
+- [Completion](./postgresql/stage-c-complete.md) - What was delivered
+- [Setup Script](../scripts/setup-postgresql.sh) - Interactive bash script for PostgreSQL configuration
 
 ### Stage D: Coverage & Validation
 - *Coming after Stage C approval*
@@ -57,14 +60,14 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 |-------|--------|---------------|
 | **Stage A** | ✅ Complete | Database infrastructure with dual-logic |
 | **Stage B** | ✅ Complete | Vitest testing infrastructure |
-| **Stage C** | ⏳ Pending | TBD |
+| **Stage C** | ✅ Complete | PostgreSQL automated setup |
 | **Stage D** | ⏳ Pending | Coverage & validation |
 
 ---
 
 ## 🎯 Project Goals
 
-### Completed (Stages A & B)
+### Completed (Stages A, B & C)
 - ✅ Dual database support (SQLite & PostgreSQL)
 - ✅ Environment-based configuration
 - ✅ Unified database adapter interface
@@ -73,10 +76,9 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 - ✅ Batch test execution
 - ✅ Individual test execution
 - ✅ Visual test results
+- ✅ Automated PostgreSQL setup script
+- ✅ Interactive configuration wizard
 - ✅ Complete documentation
-
-### Pending (Stage C)
-- ⏳ TBD
 
 ### Pending (Stage D)
 - ⏳ Analyze all db.ts usage in codebase
@@ -231,10 +233,33 @@ See [CI/CD Integration](./vitest/README.md#cicd-integration) for details.
 
 ---
 
-## 🎯 Stage C Preview
+## 🎯 Stage C: PostgreSQL Automated Setup ✅
 
-After Stage B approval, Stage C will:
-- TBD
+Stage C delivers a complete automated setup solution:
+
+### 1. Automated Setup Script
+- Interactive bash script for PostgreSQL configuration
+- Checks PostgreSQL installation and status
+- Creates and validates `.env` file
+- Tests database connections
+- Creates database and user with permission
+
+### 2. Comprehensive Documentation
+- Single-file setup guide with all instructions
+- Installation guides for all major platforms
+- Troubleshooting section
+- Security best practices
+- Testing procedures
+
+### 3. Smart Configuration Wizard
+- Prompts for all required settings with defaults
+- Password confirmation
+- Connection validation
+- Automatic retry logic
+
+**Time to Setup:** 2-5 minutes  
+**Files:** 2 (1 script, 1 guide)  
+**Status:** ✅ Complete
 
 ---
 
@@ -329,6 +354,6 @@ After Stage C approval, Stage D will:
 
 ---
 
-**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ⏳ | Stage D ⏳  
+**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ✅ | Stage D ⏳  
 **Last Updated:** October 15, 2025  
-**Ready For:** Stage C (awaiting approval)
+**Ready For:** Stage D (awaiting approval)

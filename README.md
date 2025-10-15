@@ -12,13 +12,15 @@ Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://gith
 
 - 🎭 **Vue 3 SPA** - Interactive demo interface with Vue Router
 - ⚡ **Nitro Server** - Fast, modern server with hot reload
-- 💾 **SQLite Database** - Persistent storage with better-sqlite3
+- 💾 **Dual Database Support** - SQLite (default) or PostgreSQL with automated setup
 - 📊 **CSV Import** - Sync database from CSV files
 - 🔌 **REST API** - Three main endpoints for data operations
 - 🎨 **UI Components** - Reusable Vue components library
+- 🔧 **Automated Setup** - One-command PostgreSQL configuration
 
 ## 🚀 Quick Start
 
+### SQLite (Default)
 ```bash
 # Install dependencies
 pnpm install
@@ -29,6 +31,23 @@ pnpm run dev
 # Initialize database (in another terminal)
 curl -X POST http://localhost:3000/api/demo/sync
 ```
+
+### PostgreSQL (Automated Setup)
+```bash
+# Install dependencies
+pnpm install
+
+# Run automated PostgreSQL setup (creates .env and database)
+bash setup-postgresql.sh
+
+# Start development server
+pnpm run dev
+
+# Initialize database (in another terminal)
+curl -X POST http://localhost:3000/api/demo/sync
+```
+
+See [PostgreSQL Setup Guide](docs/postgresql/STAGE-C-SETUP-GUIDE.md) for detailed instructions.
 
 Visit `http://localhost:3000` to see the application.
 
@@ -123,6 +142,18 @@ demo-data/
 ```
 
 ## 💾 Database
+
+### Database Options
+
+**SQLite** (Default)
+- No setup required
+- Works out of the box
+- Perfect for development
+
+**PostgreSQL** (Production-ready)
+- Automated setup script: `bash setup-postgresql.sh`
+- See [Setup Guide](docs/postgresql/STAGE-C-SETUP-GUIDE.md)
+- Production-ready configuration
 
 ### Schema
 

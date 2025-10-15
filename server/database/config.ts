@@ -33,10 +33,24 @@ export function getDatabaseConfig(): DatabaseConfig {
             path: process.env.SQLITE_PATH || './demo-data.db'
         }
     } else if (type === 'postgresql') {
-        const connectionString = process.env.DATABASE_URL
+        // First check if DATABASE_URL is provided directly
+        let connectionString = process.env.DATABASE_URL
+
+        // If not, construct it from individual components
         if (!connectionString) {
-            throw new Error('DATABASE_URL environment variable is required for PostgreSQL')
+            const dbUser = process.env.DB_USER
+            const dbPassword = process.env.DB_PASSWORD
+            const dbName = process.env.DB_NAME
+            const dbHost = process.env.DB_HOST || 'localhost'
+            const dbPort = process.env.DB_PORT || '5432'
+
+            if (!dbUser || !dbPassword || !dbName) {
+                throw new Error('PostgreSQL requires either DATABASE_URL or DB_USER, DB_PASSWORD, and DB_NAME environment variables')
+            }
+
+            connectionString = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`
         }
+
         config.postgresql = {
             connectionString
         }
