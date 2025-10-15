@@ -1,28 +1,27 @@
 <template>
     <div class="dashboard-wrapper">
-        <!-- Navbar -->
-        <Navbar :is-authenticated="isAuthenticated" :user="user" @toggle-view-menu="toggleViewMenu"
-            @toggle-admin-menu="toggleAdminMenu" @logout="handleLogout" />
+        <!-- Navbar with menu slots -->
+        <Navbar :user="user" :full-width="true" :logo-text="navbarLogoText" @logout="handleLogout">
+            <template #menus>
+                <!-- View Menu (ToggleMenu) - always visible when authenticated -->
+                <div v-if="isAuthenticated" class="navbar-item">
+                    <ToggleMenu v-model="viewState" :placement="'left'" :header="'Ansicht'" :button-text="'Ansicht'"
+                        :toggle-options="viewOptions" @update:model-value="handleViewChange" />
+                </div>
 
-        <!-- View Menu (ToggleMenu) -->
-        <div v-if="showViewMenu" class="view-menu-overlay" @click="showViewMenu = false">
-            <div class="view-menu-container" @click.stop>
-                <ToggleMenu v-model="viewState" :placement="'left'" :header="'Ansicht'" :toggle-options="viewOptions"
-                    @update:model-value="handleViewChange" />
-            </div>
-        </div>
+                <!-- Admin Menu - visible for admin users only -->
+                <div v-if="isAuthenticated && user?.role === 'admin'" class="navbar-item">
+                    <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :base-mode="baseMode"
+                        :current-route="currentRoute" :is-on-dashboard="currentRoute === '/'" :placement="'right'"
+                        :button-text="'Admin'" @close="() => { }" @set-mode="setAdminMode"
+                        @toggle-settings="toggleSettingsMode" @toggle-base-mode="toggleBaseMode"
+                        @action="handleAdminAction" />
+                </div>
+            </template>
+        </Navbar>
 
-        <!-- Admin Menu -->
-        <div v-if="showAdminMenu" class="admin-menu-overlay" @click="showAdminMenu = false">
-            <div class="admin-menu-container" @click.stop>
-                <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :base-mode="baseMode"
-                    :current-route="currentRoute" :is-on-dashboard="currentRoute === '/'" @close="showAdminMenu = false"
-                    @set-mode="setAdminMode" @toggle-settings="toggleSettingsMode" @toggle-base-mode="toggleBaseMode"
-                    @action="handleAdminAction" />
-            </div>
-        </div>
-
-        <Container>
+        <div class="dashboard-content">
+            <!-- Overview and Stats -->
             <Section>
                 <!-- Not Authenticated State -->
                 <div v-if="!isAuthenticated" class="auth-prompt">
@@ -35,186 +34,177 @@
 
                 <!-- Authenticated Content -->
                 <div v-else>
-                    <!-- Dashboard Header -->
-                    <div class="dashboard-header">
-                        <div class="header-role">
-                            <h1 class="header-title">
-                                <span v-if="user?.role === 'guest'">👤 Gast</span>
-                                <span v-else-if="user?.role === 'admin' && !baseMode">👑 Admin</span>
-                                <span v-else-if="user?.role === 'admin' && baseMode">📦 Basis (Admin-Ansicht)</span>
-                                <span v-else-if="user?.role === 'base'">📦 Basis</span>
-                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">🎯
-                                    Projekt</span>
-                                <span v-else>{{ user?.role }}</span>
-                            </h1>
-                            <p class="header-description">
-                                <span v-if="user?.role === 'admin' && !baseMode">Verwalten Sie alle Aufgaben, Projekte
-                                    und
-                                    System-Einstellungen. Sie haben vollständigen Zugriff auf alle Funktionen.</span>
-                                <span v-else-if="user?.role === 'admin' && baseMode">Sie sehen die Ansicht als
-                                    Basis-Benutzer.
-                                    Admin-Funktionen sind ausgeblendet. Nutzen Sie das Admin-Menü zum Wechseln.</span>
-                                <span v-else-if="user?.role === 'base'">Bearbeiten Sie Basis-Aufgaben und verwalten Sie
-                                    Standard-Inhalte. Ihr Fokus liegt auf den Kern-Funktionen.</span>
-                                <span v-else-if="user?.role === 'project1' || user?.role === 'project2'">Verwalten Sie
-                                    Ihre
-                                    projekt-spezifischen Aufgaben und Inhalte. Sie arbeiten an Ihrem eigenen
-                                    Projekt-Bereich.</span>
-                                <span v-else>Willkommen im Task-Dashboard.</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Stats Cards (conditionally shown) -->
-                    <div v-if="viewSettings.showStats" class="stats-grid">
-                        <div class="stat-card stat-total">
-                            <div class="stat-value">{{ stats.total }}</div>
-                            <div class="stat-label">Gesamt</div>
-                        </div>
-                        <div class="stat-card stat-idea">
-                            <div class="stat-value">{{ stats.idea }}</div>
-                            <div class="stat-label">Ideen</div>
-                        </div>
-                        <div class="stat-card stat-draft">
-                            <div class="stat-value">{{ stats.draft }}</div>
-                            <div class="stat-label">Entwürfe</div>
-                        </div>
-                        <div class="stat-card stat-final">
-                            <div class="stat-value">{{ stats.final }}</div>
-                            <div class="stat-label">Fertig</div>
-                        </div>
-                        <div class="stat-card stat-reopen">
-                            <div class="stat-value">{{ stats.reopen }}</div>
-                            <div class="stat-label">Reopen</div>
-                        </div>
-                    </div>
-
-                    <!-- Admin Filter Bar (hidden in base mode) -->
-                    <div v-if="user?.role === 'admin' && !baseMode" class="admin-filters">
-                        <label class="filter-checkbox">
-                            <input type="checkbox" v-model="adminFilters.showProject" />
-                            <span>Projekt-Aufgaben anzeigen</span>
-                        </label>
-                        <label class="filter-checkbox">
-                            <input type="checkbox" v-model="adminFilters.showBase" />
-                            <span>Basis-Aufgaben anzeigen</span>
-                        </label>
-                        <label class="filter-checkbox">
-                            <input type="checkbox" v-model="adminFilters.showAdmin" />
-                            <span>Admin-Aufgaben anzeigen</span>
-                        </label>
-                    </div>
-
-                    <!-- Loading State -->
-                    <div v-if="loading" class="loading-state">
-                        <p>Lädt Aufgaben...</p>
-                    </div>
-
-                    <!-- Error State -->
-                    <div v-else-if="error" class="error-state">
-                        <p>{{ error }}</p>
-                        <Button @click="loadTasks">Erneut versuchen</Button>
-                    </div>
-
-                    <!-- Kanban Board Header with Toggle Buttons -->
-                    <div v-else class="kanban-header">
-                        <h2 class="kanban-title">Aufgaben-Board</h2>
-                        <div class="kanban-toggles">
-                            <button :class="['toggle-btn', { active: viewSettings.showNew }]"
-                                @click="viewSettings.showNew = !viewSettings.showNew" title="Neu Spalte ein/ausblenden">
-                                {{ viewSettings.showNew ? '👁' : '👁‍🗨' }} Neu
-                            </button>
-                            <button :class="['toggle-btn', { active: viewSettings.showTrash }]"
-                                @click="viewSettings.showTrash = !viewSettings.showTrash"
-                                title="Papierkorb Spalte ein/ausblenden">
-                                {{ viewSettings.showTrash ? '👁' : '👁‍🗨' }} Papierkorb
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Tasks Board (3 Main Columns + Optional) -->
-                    <div v-if="!loading && !error" class="tasks-board">
-                        <!-- Idea Column -->
-                        <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
-                            <h3 class="column-title">
-                                <span class="column-icon">�</span>
-                                Idea
-                                <span class="column-count">{{ ideaTasks.length }}</span>
-                            </h3>
-                            <div class="task-list">
-                                <TaskCard v-for="task in ideaTasks" :key="task.id" :task="task" @edit="editTask"
-                                    @delete="deleteTask" @drag-start="handleDragStart" />
-                                <div v-if="ideaTasks.length === 0" class="empty-column">
-                                    No tasks in this column
+                    <!-- Kanban Section -->
+                    <div class="kanban-section">
+                        <!-- Admin Filter Bar (hidden in base mode) -->
+                        <div v-if="user?.role === 'admin' && !baseMode" class="admin-filters-container">
+                            <div class="admin-filters-left">
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" v-model="adminFilters.showProject" />
+                                    <span>Projekt-Aufgaben anzeigen</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" v-model="adminFilters.showBase" />
+                                    <span>Basis-Aufgaben anzeigen</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" v-model="adminFilters.showAdmin" />
+                                    <span>Admin-Aufgaben anzeigen</span>
+                                </label>
+                            </div>
+                            <div v-if="viewSettings.showStats" class="admin-filters-stats">
+                                <div class="stat-card-mini stat-total">
+                                    <div class="stat-value-mini">{{ stats.total }}</div>
+                                    <div class="stat-label-mini">Gesamt</div>
+                                </div>
+                                <div class="stat-card-mini stat-idea">
+                                    <div class="stat-value-mini">{{ stats.idea }}</div>
+                                    <div class="stat-label-mini">Ideen</div>
+                                </div>
+                                <div class="stat-card-mini stat-draft">
+                                    <div class="stat-value-mini">{{ stats.draft }}</div>
+                                    <div class="stat-label-mini">Entwürfe</div>
+                                </div>
+                                <div class="stat-card-mini stat-final">
+                                    <div class="stat-value-mini">{{ stats.final }}</div>
+                                    <div class="stat-label-mini">Fertig</div>
+                                </div>
+                                <div class="stat-card-mini stat-reopen">
+                                    <div class="stat-value-mini">{{ stats.reopen }}</div>
+                                    <div class="stat-label-mini">Reopen</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- New Column -->
-                        <div class="task-column column-new" @dragover.prevent @drop="handleDrop($event, 'new')">
-                            <h3 class="column-title">
-                                <span class="column-icon">📋</span>
-                                New
-                                <span class="column-count">{{ newTasks.length }}</span>
-                            </h3>
-                            <div class="task-list">
-                                <TaskCard v-for="task in newTasks" :key="task.id" :task="task" @edit="editTask"
-                                    @delete="deleteTask" @drag-start="handleDragStart" />
-                                <div v-if="newTasks.length === 0" class="empty-column">
-                                    No tasks in this column
-                                </div>
+                        <!-- Loading State -->
+                        <div v-if="loading" class="loading-state">
+                            <p>Lädt Aufgaben...</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div v-else-if="error" class="error-state">
+                            <p>{{ error }}</p>
+                            <Button @click="loadTasks">Erneut versuchen</Button>
+                        </div>
+
+                        <!-- Kanban Board Header with Toggle Buttons -->
+                        <div v-else class="kanban-header">
+                            <h2 class="kanban-title">Aufgaben-Board</h2>
+                            <div class="kanban-toggles">
+                                <button :class="['toggle-btn', { active: viewSettings.showNew }]"
+                                    @click="viewSettings.showNew = !viewSettings.showNew"
+                                    title="Neu Spalte ein/ausblenden">
+                                    {{ viewSettings.showNew ? '👁' : '👁‍🗨' }} Neu
+                                </button>
+                                <button :class="['toggle-btn', { active: viewSettings.showTrash }]"
+                                    @click="viewSettings.showTrash = !viewSettings.showTrash"
+                                    title="Papierkorb Spalte ein/ausblenden">
+                                    {{ viewSettings.showTrash ? '👁' : '👁‍🗨' }} Papierkorb
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Draft Column -->
-                        <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, 'draft')">
-                            <h3 class="column-title">
-                                <span class="column-icon">⚡</span>
-                                Draft
-                                <span class="column-count">{{ draftTasks.length }}</span>
-                            </h3>
-                            <div class="task-list">
-                                <TaskCard v-for="task in draftTasks" :key="task.id" :task="task" @edit="editTask"
-                                    @delete="deleteTask" @drag-start="handleDragStart" />
-                                <div v-if="draftTasks.length === 0" class="empty-column">
-                                    No tasks in this column
+                        <!-- Tasks Board (4 Main Columns + Optional) -->
+                        <div v-if="!loading && !error" class="tasks-board">
+                            <!-- Idea Column -->
+                            <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">�</span>
+                                    Idea
+                                    <span class="column-count">{{ ideaTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in ideaTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="ideaTasks.length === 0" class="empty-column">
+                                        No tasks in this column
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Final/Reopen Column (Main - Combined) -->
-                        <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, 'final')">
-                            <h3 class="column-title">
-                                <span class="column-icon">✓</span>
-                                Fertig / Reopen
-                                <span class="column-count">{{ finalReopenTasks.length }}</span>
-                            </h3>
-                            <div class="task-list">
-                                <TaskCard v-for="task in finalReopenTasks" :key="task.id" :task="task" @edit="editTask"
-                                    @delete="deleteTask" @drag-start="handleDragStart" />
-                                <div v-if="finalReopenTasks.length === 0" class="empty-column">
-                                    Keine Aufgaben
+                            <!-- New Column -->
+                            <div class="task-column column-new" @dragover.prevent @drop="handleDrop($event, 'new')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">📋</span>
+                                    New
+                                    <span class="column-count">{{ newTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in newTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="newTasks.length === 0" class="empty-column">
+                                        No tasks in this column
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Trash Column (optional) -->
-                        <div v-if="viewSettings.showTrash" class="task-column column-trash" @dragover.prevent
-                            @drop="handleDrop($event, 'trash')">
-                            <h3 class="column-title">
-                                <span class="column-icon">🗑</span>
-                                Papierkorb
-                                <span class="column-count">{{ trashTasks.length }}</span>
-                            </h3>
-                            <div class="task-list">
-                                <TaskCard v-for="task in trashTasks" :key="task.id" :task="task" @edit="editTask"
-                                    @delete="deleteTask" @drag-start="handleDragStart" />
-                                <div v-if="trashTasks.length === 0" class="empty-column">
-                                    Keine Aufgaben
+                            <!-- Draft Column -->
+                            <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, 'draft')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">⚡</span>
+                                    Draft
+                                    <span class="column-count">{{ draftTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in draftTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="draftTasks.length === 0" class="empty-column">
+                                        No tasks in this column
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Final Column -->
+                            <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, 'final')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">✓</span>
+                                    Final
+                                    <span class="column-count">{{ finalTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in finalTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="finalTasks.length === 0" class="empty-column">
+                                        Keine Aufgaben
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reopen Column -->
+                            <div class="task-column column-reopen" @dragover.prevent
+                                @drop="handleDrop($event, 'reopen')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">🔄</span>
+                                    Reopen
+                                    <span class="column-count">{{ reopenTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in reopenTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="reopenTasks.length === 0" class="empty-column">
+                                        Keine Aufgaben
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trash Column (optional) -->
+                            <div v-if="viewSettings.showTrash" class="task-column column-trash" @dragover.prevent
+                                @drop="handleDrop($event, 'trash')">
+                                <h3 class="column-title">
+                                    <span class="column-icon">🗑</span>
+                                    Papierkorb
+                                    <span class="column-count">{{ trashTasks.length }}</span>
+                                </h3>
+                                <div class="task-list">
+                                    <TaskCard v-for="task in trashTasks" :key="task.id" :task="task" @edit="editTask"
+                                        @delete="deleteTask" @drag-start="handleDragStart" />
+                                    <div v-if="trashTasks.length === 0" class="empty-column">
+                                        Keine Aufgaben
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div><!-- End Kanban Section -->
 
                     <!-- Admin Sections (hidden in base mode) -->
                     <div v-if="user?.role === 'admin' && !baseMode">
@@ -253,7 +243,7 @@
             <!-- Release Modal -->
             <ReleaseModal v-if="showReleaseModal" :is-open="showReleaseModal" :release="currentRelease"
                 @close="closeReleaseModal" @save="saveRelease" />
-        </Container>
+        </div>
     </div>
 </template>
 
@@ -261,7 +251,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import Container from '@/components/Container.vue'
 import Section from '@/components/Section.vue'
 import Button from '@/components/Button.vue'
 import TaskCard from '@/components/TaskCard.vue'
@@ -319,16 +308,22 @@ const loading = ref(false)
 const error = ref('')
 const draggedTask = ref<Task | null>(null)
 
-// View menu state
-const showViewMenu = ref(false)
+// View state
 const viewState = ref('only-main') // 'only-release' | 'only-main' | 'all-tasks'
 
-// Admin menu state (global, persisted across routes)
-const showAdminMenu = ref(false)
+// Admin state (global, persisted across routes)
 const adminMode = ref<'base-release' | 'version-release'>('base-release')
 const settingsMode = ref(false)
 const baseMode = ref(false) // When true, admin sees base user view
 const currentRoute = computed(() => router.currentRoute.value.path)
+
+// Navbar logo text
+const navbarLogoText = computed(() => {
+    if (user.value?.role === 'admin') {
+        return '📋 Task Manager (Admin)'
+    }
+    return '📋 Task Manager'
+})
 
 // View settings
 const viewSettings = ref({
@@ -447,8 +442,11 @@ const newTasks = computed(() =>
 const draftTasks = computed(() =>
     filteredTasks.value.filter((t: Task) => t.status === 'draft')
 )
-const finalReopenTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'final' || t.status === 'reopen')
+const finalTasks = computed(() =>
+    filteredTasks.value.filter((t: Task) => t.status === 'final')
+)
+const reopenTasks = computed(() =>
+    filteredTasks.value.filter((t: Task) => t.status === 'reopen')
 )
 const trashTasks = computed(() =>
     filteredTasks.value.filter((t: Task) => t.status === 'trash')
@@ -585,19 +583,9 @@ function handleDrop(event: DragEvent, newStatus: Task['status']) {
     draggedTask.value = null
 }
 
-// View menu handlers
-function toggleViewMenu() {
-    showViewMenu.value = !showViewMenu.value
-}
-
+// View change handler
 function handleViewChange(newState: string) {
     viewState.value = newState
-    showViewMenu.value = false
-}
-
-// Admin menu handlers
-function toggleAdminMenu() {
-    showAdminMenu.value = !showAdminMenu.value
 }
 
 function setAdminMode(mode: 'base-release' | 'version-release') {
@@ -922,84 +910,44 @@ onMounted(async () => {
     background: var(--color-bg);
 }
 
-/* View Menu Overlay */
-.view-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: oklch(0% 0 0 / 0.5);
-    z-index: 999;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 5rem 2rem 2rem 2rem;
+/* Dashboard Content - Full Width with Padding */
+.dashboard-content {
+    width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
-.view-menu-container {
-    background: var(--color-card-bg);
-    border-radius: var(--radius-button);
-    box-shadow: 0 10px 40px oklch(0% 0 0 / 0.3);
-    max-width: 400px;
-}
-
-/* Admin Menu Overlay */
-.admin-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: oklch(0% 0 0 / 0.5);
-    z-index: 999;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding: 5rem 2rem 2rem 2rem;
-}
-
-.admin-menu-container {
-    max-width: 400px;
-}
-
-/* Dashboard Header */
-.dashboard-header {
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid var(--color-border);
-}
-
-.header-role {
-    max-width: 800px;
-}
-
-.header-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-contrast);
-    margin: 0 0 0.75rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.header-description {
-    font-size: 1.125rem;
-    color: var(--color-dimmed);
-    line-height: 1.6;
-    margin: 0;
+@media (max-width: 768px) {
+    .dashboard-content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 /* Admin Filters */
-.admin-filters {
+.admin-filters-container {
     display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    padding: 1rem 1.5rem;
+    gap: 2rem;
+    padding: 1.5rem;
     background: var(--color-muted-bg);
     border-radius: var(--radius-button);
     margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.admin-filters-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 0 0 auto;
+}
+
+.admin-filters-stats {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    margin-left: auto;
+    flex: 0 0 auto;
 }
 
 .filter-checkbox {
@@ -1016,6 +964,60 @@ onMounted(async () => {
     width: 1.125rem;
     height: 1.125rem;
     cursor: pointer;
+}
+
+/* Mini Stats Cards */
+.stat-card-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-card-bg);
+    border-radius: var(--radius-button);
+    border: 2px solid var(--color-border);
+    transition: all 0.2s ease;
+    min-width: 120px;
+}
+
+.stat-card-mini:hover {
+    transform: translateX(-2px);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.1);
+}
+
+.stat-value-mini {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-contrast);
+    line-height: 1;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.stat-label-mini {
+    font-size: 0.8125rem;
+    color: var(--color-dimmed);
+    font-weight: 500;
+}
+
+@media (max-width: 968px) {
+    .admin-filters-container {
+        flex-direction: column;
+    }
+
+    .admin-filters-stats {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .stat-card-mini {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-filters-stats {
+        display: none;
+    }
 }
 
 /* Kanban Header */
@@ -1070,6 +1072,7 @@ onMounted(async () => {
 /* Stats Grid */
 .stats-grid {
     display: grid;
+    background: var(--color-muted-bg);
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin: 2rem 0 3rem;
@@ -1199,12 +1202,18 @@ onMounted(async () => {
 /* Tasks Board */
 .tasks-board {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin: 2rem 0;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
+    .tasks-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
     .tasks-board {
         grid-template-columns: 1fr;
     }
@@ -1260,6 +1269,10 @@ onMounted(async () => {
 
 .column-done .column-title {
     color: var(--color-primary-bg);
+}
+
+.column-reopen .column-title {
+    color: var(--color-secondary-bg);
 }
 
 .task-list {
@@ -1372,5 +1385,27 @@ onMounted(async () => {
 
 .column-trash:hover {
     opacity: 1;
+}
+
+/* Section Styling */
+.overview-section {
+    background: var(--color-muted-bg);
+    padding: 2rem;
+    border-radius: var(--radius-button);
+    margin-bottom: 2rem;
+}
+
+.kanban-section {
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .overview-section {
+        padding: 1rem;
+    }
+
+    .kanban-section {
+        padding: 0 1rem;
+    }
 }
 </style>

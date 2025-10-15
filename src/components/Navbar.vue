@@ -1,41 +1,32 @@
 <template>
     <nav class="navbar">
-        <div class="navbar-container">
+        <div class="navbar-container" :class="{ 'navbar-container-full': fullWidth }">
             <div class="navbar-brand">
-                <router-link to="/" class="navbar-logo">
-                    📋 Task Manager
+                <router-link to="/" class="navbar-logo" :class="{ 'navbar-logo-long': isLogoTextLong }">
+                    {{ logoText || '📋 Task Manager' }}
                 </router-link>
             </div>
 
+            <div class="navbar-center">
+                <!-- Navigation Routes -->
+                <!-- Debug: {{ visibleRoutes.length }} routes -->
+                <div v-if="visibleRoutes.length > 0" class="navbar-routes">
+                    <router-link v-for="route in visibleRoutes" :key="route.path" :to="route.path" class="navbar-route"
+                        :class="{ 'navbar-route-active': isActiveRoute(route.path) }">
+                        {{ route.name }}
+                    </router-link>
+                </div>
+            </div>
+
             <div class="navbar-menu">
-                <div class="navbar-item">
-                    <button class="navbar-button" @click="$emit('toggle-view-menu')">
-                        <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z">
-                            </path>
-                        </svg>
-                        Ansicht
-                    </button>
-                </div>
+                <!-- Slot for menus (ToggleMenu, AdminMenu) -->
+                <slot name="menus"></slot>
 
-                <div v-if="isAuthenticated && user?.role === 'admin'" class="navbar-item">
-                    <button class="navbar-button navbar-admin" @click="$emit('toggle-admin-menu')">
-                        <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-11.55,39.29c-4.79,5-9.75,10.17-12.38,16.52-2.52,6.1-2.63,13.07-2.73,19.82-.1,7-.21,14.33-3.32,17.43s-10.39,3.22-17.43,3.32c-6.75.1-13.72.21-19.82,2.73-6.35,2.63-11.52,7.59-16.52,12.38S132,224,128,224s-9.15-4.92-14.11-9.69-10.17-9.75-16.52-12.38c-6.1-2.52-13.07-2.63-19.82-2.73-7-.1-14.33-.21-17.43-3.32s-3.22-10.39-3.32-17.43c-.1-6.75-.21-13.72-2.73-19.82-2.63-6.35-7.59-11.52-12.38-16.52S32,132,32,128s4.92-9.15,9.69-14.11,9.75-10.17,12.38-16.52c2.52-6.1,2.63-13.07,2.73-19.82.1-7,.21-14.33,3.32-17.43S70.51,56.9,77.55,56.8c6.75-.1,13.72-.21,19.82-2.73,6.35-2.63,11.52-7.59,16.52-12.38S124,32,128,32s9.15,4.92,14.11,9.69,10.17,9.75,16.52,12.38c6.1,2.52,13.07,2.63,19.82,2.73,7,.1,14.33.21,17.43,3.32s3.22,10.39,3.32,17.43c.1,6.75.21,13.72,2.73,19.82,2.63,6.35,7.59,11.52,12.38,16.52S224,124,224,128,219.08,137.15,214.31,142.11Z">
-                            </path>
-                        </svg>
-                        Admin
-                    </button>
-                </div>
-
-                <div v-if="isAuthenticated && user" class="navbar-item navbar-user">
+                <div v-if="user" class="navbar-item navbar-user">
                     <span class="navbar-username">{{ user.username }}</span>
                     <button class="navbar-button navbar-logout" @click="$emit('logout')">
-                        Abmelden
+                        <span class="logout-icon">🚪</span>
+                        <span class="logout-text">Abmelden</span>
                     </button>
                 </div>
             </div>
@@ -44,21 +35,100 @@
 </template>
 
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { defaultNavRoutes, type NavRoute } from '@/settings'
+
 interface User {
     username: string
     role: string
 }
 
-defineProps<{
-    isAuthenticated: boolean
+const props = withDefaults(defineProps<{
     user?: User | null
-}>()
+    fullWidth?: boolean
+    logoText?: string
+    useDefaultRoutes?: boolean
+    customRoutes?: NavRoute[]
+}>(), {
+    fullWidth: false,
+    useDefaultRoutes: true,
+    customRoutes: () => []
+})
 
 defineEmits<{
-    'toggle-view-menu': []
-    'toggle-admin-menu': []
     logout: []
 }>()
+
+const route = useRoute()
+
+// Check if logo text is longer than 18 characters
+const isLogoTextLong = computed(() => {
+    const text = props.logoText || '📋 Task Manager'
+    return text.length > 18
+})
+
+// Combine default and custom routes
+const allRoutes = computed(() => {
+    const routes = props.useDefaultRoutes ? [...defaultNavRoutes] : []
+    if (props.customRoutes && props.customRoutes.length > 0) {
+        routes.push(...props.customRoutes)
+    }
+    return routes
+})
+
+// Filter routes based on authentication and role
+const visibleRoutes = computed(() => {
+    return allRoutes.value.filter((navRoute: NavRoute) => {
+        // If route is not protected, always show it
+        if (!navRoute.protected) {
+            return true
+        }
+
+        // If route requires auth, check if user is authenticated
+        if (navRoute.requiresAuth && !props.user) {
+            return false
+        }
+
+        // If route requires specific role(s)
+        if (navRoute.requiresRole && props.user) {
+            const requiredRoles = Array.isArray(navRoute.requiresRole)
+                ? navRoute.requiresRole
+                : [navRoute.requiresRole]
+
+            return requiredRoles.includes(props.user.role)
+        }
+
+        // If protected but no specific requirements, show if authenticated
+        return !!props.user
+    })
+})
+
+// Check if route is currently active
+function isActiveRoute(path: string): boolean {
+    return route.path === path
+}
+
+// Debug logging (can be removed later)
+if (import.meta.env.DEV) {
+    console.log('Navbar Debug:', {
+        useDefaultRoutes: props.useDefaultRoutes,
+        allRoutesCount: allRoutes.value.length,
+        visibleRoutesCount: visibleRoutes.value.length,
+        allRoutes: allRoutes.value,
+        visibleRoutes: visibleRoutes.value,
+        user: props.user,
+    })
+}
+
+// Watch for changes to help debug
+watch(visibleRoutes, (newVal) => {
+    console.log('visibleRoutes changed:', newVal)
+}, { immediate: true })
+
+watch(() => props.user, (newVal) => {
+    console.log('user prop changed:', newVal)
+})
 </script>
 
 <style scoped>
@@ -76,14 +146,62 @@ defineEmits<{
     margin: 0 auto;
     padding: 0 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 2rem;
     height: 4rem;
 }
 
+.navbar-container-full {
+    max-width: 100%;
+}
+
 .navbar-brand {
+    flex-shrink: 0;
+}
+
+.navbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.navbar-routes {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.navbar-route {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-button);
+    color: var(--color-dimmed);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.navbar-route:hover {
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
+}
+
+.navbar-route-active {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.navbar-route-active:hover {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.navbar-menu {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
+    gap: 1.5rem;
 }
 
 .navbar-logo {
@@ -133,16 +251,6 @@ defineEmits<{
     border-color: var(--color-primary-bg);
 }
 
-.navbar-admin {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-}
-
-.navbar-admin:hover {
-    background: var(--color-accent);
-    color: white;
-}
-
 .navbar-user {
     display: flex;
     align-items: center;
@@ -155,13 +263,88 @@ defineEmits<{
     font-weight: 500;
 }
 
-.navbar-logout {
-    border-color: var(--color-negative-bg);
-    color: var(--color-negative-bg);
+.logout-icon {
+    font-size: 1.125rem;
 }
 
-.navbar-logout:hover {
-    background: var(--color-negative-bg);
-    color: var(--color-negative-contrast);
+.logout-text {
+    display: inline;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .navbar-container {
+        gap: 1rem;
+    }
+
+    .navbar-routes {
+        gap: 0.25rem;
+    }
+
+    .navbar-route {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-container {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 1rem;
+        gap: 0.5rem;
+    }
+
+    .navbar-brand {
+        order: 1;
+        flex: 0 0 auto;
+    }
+
+    .navbar-logo-long {
+        font-size: 0.9375rem;
+    }
+
+    .navbar-menu {
+        order: 2;
+        flex: 0 0 auto;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .navbar-center {
+        order: 3;
+        flex: 0 0 100%;
+        width: 100%;
+        margin-top: 0.75rem;
+        justify-content: flex-start;
+    }
+
+    .navbar-routes {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .navbar-route {
+        flex: 0 0 auto;
+    }
+
+    .navbar-username {
+        display: none;
+    }
+
+    /* Hide text in menu buttons, show only icons */
+    .logout-text {
+        display: none;
+    }
+
+    .navbar-button {
+        padding: 0.5rem;
+        min-width: 2.5rem;
+        justify-content: center;
+    }
+
+    .logout-icon {
+        font-size: 1.25rem;
+    }
 }
 </style>

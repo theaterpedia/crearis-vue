@@ -1,15 +1,12 @@
 <template>
     <div class="base-view">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1 class="topbar-title">📦 Basis-Daten</h1>
-            </div>
-
-            <div class="topbar-center">
-                <!-- Events Dropdown -->
-                <div class="events-selector" ref="eventsSelectorRef">
-                    <button class="events-toggle-btn" @click="toggleEventsDropdown" :aria-expanded="isEventsOpen">
+        <!-- Navbar -->
+        <Navbar :user="user" :full-width="false" logo-text="📦 Basis-Daten" @logout="logout">
+            <template #menus>
+                <!-- Events Dropdown (center content) -->
+                <div class="navbar-item events-selector" ref="eventsSelectorRef">
+                    <button class="navbar-button events-toggle-btn" @click="toggleEventsDropdown"
+                        :aria-expanded="isEventsOpen">
                         <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -44,11 +41,9 @@
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="topbar-right">
-                <!-- View/Edit Mode Toggle (renamed from csv/sql) -->
-                <div class="mode-toggle">
+                <!-- View/Edit Mode Toggle -->
+                <div class="navbar-item mode-toggle">
                     <button :class="['mode-btn', { active: dataSource === 'csv' }]" @click="setViewMode"
                         title="Ansicht (alte Daten)">
                         view/old
@@ -60,7 +55,7 @@
                 </div>
 
                 <!-- Save/Cancel Buttons (only visible when hasActiveEdits) -->
-                <div v-if="hasActiveEdits" class="action-buttons">
+                <div v-if="hasActiveEdits" class="navbar-item action-buttons">
                     <button class="action-btn cancel-btn" @click="handleCancel" title="Änderungen verwerfen">
                         <svg fill="currentColor" height="18" viewBox="0 0 256 256" width="18"
                             xmlns="http://www.w3.org/2000/svg">
@@ -80,8 +75,8 @@
                         Speichern
                     </button>
                 </div>
-            </div>
-        </div>
+            </template>
+        </Navbar>
 
         <!-- Main Content: 2-Column Layout -->
         <div class="main-content">
@@ -493,8 +488,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useDemoData } from '@/composables/useDemoData'
 import { useAuth } from '@/composables/useAuth'
+import Navbar from '@/components/Navbar.vue'
 
-const { user, requireAuth } = useAuth()
+const { user, requireAuth, logout: authLogout } = useAuth()
+
+// Logout handler
+const logout = () => {
+    authLogout()
+}
 
 // Demo data composable
 const {
@@ -845,68 +846,11 @@ onUnmounted(() => {
     flex-direction: column;
 }
 
-/* ===== TOP BAR ===== */
-.topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--color-card-bg);
-    border-bottom: var(--border) solid var(--color-border);
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.05);
-}
-
-.topbar-left {
-    flex-shrink: 0;
-}
-
-.topbar-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-contrast);
-    margin: 0;
-}
-
-.topbar-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
-
-.topbar-right {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
+/* ===== NAVBAR SLOT COMPONENTS ===== */
 
 /* Events Selector */
 .events-selector {
     position: relative;
-}
-
-.events-toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--color-muted-bg);
-    border: var(--border) solid var(--color-border);
-    border-radius: var(--radius-button);
-    color: var(--color-contrast);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.events-toggle-btn:hover {
-    background: var(--color-primary-bg);
-    color: var(--color-primary-contrast);
 }
 
 .events-dropdown {

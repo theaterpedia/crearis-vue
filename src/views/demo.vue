@@ -1,15 +1,11 @@
 <template>
   <div class="demo-page">
-    <!-- Top Bar -->
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1 class="topbar-title">🎭 Demo</h1>
-      </div>
-
-      <div class="topbar-center">
-        <!-- Events Dropdown -->
-        <div class="events-selector" ref="eventsSelectorRef">
-          <button class="events-toggle-btn" @click="toggleEventsDropdown" :aria-expanded="isEventsOpen">
+    <!-- Navbar -->
+    <Navbar :user="user" :full-width="false" logo-text="🎭 Demo" @logout="logout">
+      <template #menus>
+        <!-- Events Dropdown (center content) -->
+        <div class="navbar-item events-selector" ref="eventsSelectorRef">
+          <button class="navbar-button events-toggle-btn" @click="toggleEventsDropdown" :aria-expanded="isEventsOpen">
             <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z">
@@ -41,11 +37,9 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <div class="topbar-right">
         <!-- Data Source Toggle -->
-        <div class="mode-toggle">
+        <div class="navbar-item mode-toggle">
           <button :class="['mode-btn', { active: dataSource === 'csv' }]" @click="dataSource = 'csv'"
             title="CSV Daten (alte Daten)">
             view/old
@@ -54,8 +48,8 @@
             edit/create
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </Navbar>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -172,7 +166,18 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useDemoData } from '../composables/useDemoData'
+import { useAuth } from '@/composables/useAuth'
+import Navbar from '@/components/Navbar.vue'
 
+// Auth
+const { user, logout: authLogout } = useAuth()
+
+// Logout handler
+const logout = () => {
+  authLogout()
+}
+
+// Demo data
 const {
   events,
   currentEvent,
@@ -252,68 +257,11 @@ const switchToSql = async () => {
   flex-direction: column;
 }
 
-/* ===== TOP BAR ===== */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--color-card-bg);
-  border-bottom: var(--border) solid var(--color-border);
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  box-shadow: 0 2px 8px oklch(0% 0 0 / 0.05);
-}
-
-.topbar-left {
-  flex-shrink: 0;
-}
-
-.topbar-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-contrast);
-  margin: 0;
-}
-
-.topbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.topbar-right {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+/* ===== NAVBAR SLOT COMPONENTS ===== */
 
 /* Events Selector */
 .events-selector {
   position: relative;
-}
-
-.events-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--color-muted-bg);
-  border: var(--border) solid var(--color-border);
-  border-radius: var(--radius-button);
-  color: var(--color-contrast);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.events-toggle-btn:hover {
-  background: var(--color-primary-bg);
-  color: var(--color-primary-contrast);
 }
 
 .events-dropdown {
