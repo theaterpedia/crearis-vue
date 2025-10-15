@@ -55,6 +55,7 @@ node_modules/.tmp/
 # Test coverage
 coverage/
 .nyc_output/
+test-results/
 
 # Build artifacts
 *.node

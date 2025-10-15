@@ -26,7 +26,8 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 - [Setup Script](../scripts/setup-postgresql.sh) - Interactive bash script for PostgreSQL configuration
 
 ### Stage D: Coverage & Validation
-- *Coming after Stage C approval*
+- [Preparation Report](./postgresql/STAGE-D-PREPARATION.md) - Database usage analysis & compatibility testing
+- *Full implementation coming after Stage C approval*
 
 ---
 
