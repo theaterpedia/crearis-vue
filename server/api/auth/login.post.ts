@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody, createError, setCookie, getCookie } from 'h3'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 // In-memory session store (for development - use Redis in production)
 const sessions = new Map<string, { userId: string; username: string; role: string; expiresAt: number }>()
@@ -28,12 +28,12 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Find user
-    const user = db.prepare(`
+    // Find user (using projects table as user accounts)
+    const user = await db.get(`
     SELECT id, username, password_hash, role
     FROM projects
     WHERE username = ?
-  `).get(username) as { id: string; username: string; password_hash: string; role: string } | undefined
+  `, [username]) as { id: string; username: string; password_hash: string; role: string } | undefined
 
     if (!user) {
         throw createError({

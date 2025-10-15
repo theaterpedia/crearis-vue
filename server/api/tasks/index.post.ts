@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface CreateTaskBody {
     title: string
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
 
         // Validate release_id if provided
         if (body.release_id) {
-            const release = db.prepare('SELECT id FROM releases WHERE id = ?').get(body.release_id)
+            const release = await db.get('SELECT id FROM releases WHERE id = ?', [body.release_id])
             if (!release) {
                 throw createError({
                     statusCode: 400,
@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
             now
         )
 
-        const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)
+        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
 
         return {
             success: true,

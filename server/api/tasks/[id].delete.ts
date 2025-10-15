@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     try {
         const id = event.context.params?.id
 
@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
         }
 
         // Check if task exists
-        const existingTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)
+        const existingTask = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
         if (!existingTask) {
             throw createError({
                 statusCode: 404,
@@ -22,7 +22,7 @@ export default defineEventHandler((event) => {
         }
 
         // Delete the task
-        db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
+        await db.run('DELETE FROM tasks WHERE id = ?', [id])
 
         return {
             success: true,

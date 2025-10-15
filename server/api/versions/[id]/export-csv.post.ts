@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import db from '../../../database/db'
+import { db } from '../../../database/db-new'
 
 interface DbRow {
   [key: string]: any
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Get version
-    const version = db.prepare('SELECT * FROM versions WHERE id = ?').get(versionId) as any
+    const version = await db.get('SELECT * FROM versions WHERE id = ?', [versionId]) as any
 
     if (!version) {
       throw createError({
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update version to mark as exported
-    db.prepare('UPDATE versions SET csv_exported = 1 WHERE id = ?').run(versionId)
+    await db.run('UPDATE versions SET csv_exported = 1 WHERE id = ?', [versionId])
 
     return {
       success: true,

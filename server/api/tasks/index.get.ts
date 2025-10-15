@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface Task {
     id: string
@@ -22,7 +22,7 @@ interface Task {
     display_title?: string
 }
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
         const status = query.status as string | undefined
@@ -100,7 +100,7 @@ export default defineEventHandler((event) => {
             END, 
             tasks.created_at DESC`
 
-        const tasks = db.prepare(sql).all(...params) as Task[]
+        const tasks = await db.all(sql, params) as Task[]
 
         return {
             success: true,

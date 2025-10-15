@@ -1,5 +1,5 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 // DELETE /api/projects/[id] - Delete project
 export default defineEventHandler(async (event) => {
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check if project exists
-        const existing = db.prepare('SELECT * FROM projects WHERE id = ?').get(id)
+        const existing = await db.get('SELECT * FROM projects WHERE id = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Delete project
-        db.prepare('DELETE FROM projects WHERE id = ?').run(id)
+        await db.run('DELETE FROM projects WHERE id = ?', [id])
 
         return {
             success: true,

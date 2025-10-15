@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface CreateReleaseBody {
     version: string
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
         const version_minor = parseInt(versionMatch[2], 10)
 
         // Check if version already exists
-        const existingRelease = db.prepare('SELECT id FROM releases WHERE version = ?').get(body.version.trim())
+        const existingRelease = await db.get('SELECT id FROM releases WHERE version = ?', [body.version.trim()])
         if (existingRelease) {
             throw createError({
                 statusCode: 409,
@@ -60,8 +60,8 @@ export default defineEventHandler(async (event) => {
         const id = nanoid()
         const now = new Date().toISOString()
 
-        const stmt = db.prepare(`
-            INSERT INTO releases (
+        await db.run(
+            `INSERT INTO releases (
                 id,
                 version,
                 version_major,
@@ -72,22 +72,21 @@ export default defineEventHandler(async (event) => {
                 created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `)
-
-        stmt.run(
-            id,
-            body.version.trim(),
-            version_major,
-            version_minor,
-            body.description || null,
-            body.state || 'idea',
-            body.release_date || null,
-            now,
-            now
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id,
+                body.version.trim(),
+                version_major,
+                version_minor,
+                body.description || null,
+                body.state || 'idea',
+                body.release_date || null,
+                now,
+                now
+            ]
         )
 
-        const release = db.prepare('SELECT * FROM releases WHERE id = ?').get(id)
+        const release = await db.get('SELECT * FROM releases WHERE id = ?', [id])
 
         return {
             success: true,

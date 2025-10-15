@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     try {
         const id = event.context.params?.id
 
@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
         }
 
         // Check if release exists
-        const existingRelease = db.prepare('SELECT * FROM releases WHERE id = ?').get(id)
+        const existingRelease = await db.get('SELECT * FROM releases WHERE id = ?', [id])
         if (!existingRelease) {
             throw createError({
                 statusCode: 404,
@@ -22,7 +22,7 @@ export default defineEventHandler((event) => {
         }
 
         // Check if there are tasks linked to this release
-        const linkedTasks = db.prepare('SELECT COUNT(*) as count FROM tasks WHERE release_id = ?').get(id) as { count: number }
+        const linkedTasks = await db.get('SELECT COUNT(*) as count FROM tasks WHERE release_id = ?', [id]) as { count: number }
 
         if (linkedTasks.count > 0) {
             // Set release_id to NULL for all linked tasks (due to ON DELETE SET NULL)
@@ -30,7 +30,7 @@ export default defineEventHandler((event) => {
         }
 
         // Delete the release
-        db.prepare('DELETE FROM releases WHERE id = ?').run(id)
+        await db.run('DELETE FROM releases WHERE id = ?', [id])
 
         return {
             success: true,

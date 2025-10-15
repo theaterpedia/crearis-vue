@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 // POST /api/projects - Create new project
 export default defineEventHandler(async (event) => {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         stmt.run(id, name, description || null, status)
 
         // Return created project
-        const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id)
+        const project = await db.get('SELECT * FROM projects WHERE id = ?', [id])
 
         return {
             success: true,

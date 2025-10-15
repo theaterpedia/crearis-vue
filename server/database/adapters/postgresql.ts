@@ -3,6 +3,29 @@ import type { DatabaseAdapter, PreparedStatement, QueryResult } from '../adapter
 
 const { Pool } = pg
 
+/**
+ * Convert string numbers from PostgreSQL COUNT/SUM/etc to actual numbers
+ * This makes PostgreSQL behave like SQLite for consistency
+ */
+function convertNumericFields(row: any): any {
+    if (!row || typeof row !== 'object') return row
+
+    const converted: any = {}
+    for (const [key, value] of Object.entries(row)) {
+        // Convert string numbers to actual numbers for common aggregate fields
+        if (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value)) {
+            const numValue = Number(value)
+            // Only convert if it's a reasonable number (not NaN, not too large)
+            if (!isNaN(numValue) && isFinite(numValue)) {
+                converted[key] = numValue
+                continue
+            }
+        }
+        converted[key] = value
+    }
+    return converted
+}
+
 class PostgreSQLPreparedStatement implements PreparedStatement {
     constructor(
         private pool: pg.Pool,
@@ -20,12 +43,17 @@ class PostgreSQLPreparedStatement implements PreparedStatement {
 
     async get(...params: any[]): Promise<any> {
         const result = await this.pool.query(this.sql, params)
-        return result.rows[0] || null
+        const row = result.rows[0]
+        // Convert null to undefined to match SQLite behavior
+        if (!row) return undefined
+        // Convert string numbers from COUNT/aggregations to actual numbers
+        return convertNumericFields(row)
     }
 
     async all(...params: any[]): Promise<any[]> {
         const result = await this.pool.query(this.sql, params)
-        return result.rows
+        // Convert string numbers from COUNT/aggregations to actual numbers
+        return result.rows.map(row => convertNumericFields(row))
     }
 }
 
@@ -45,6 +73,8 @@ export class PostgreSQLAdapter implements DatabaseAdapter {
     }
 
     async exec(sql: string): Promise<void> {
+        // For PostgreSQL, execute the SQL directly
+        // pg driver can handle multiple statements
         await this.pool.query(sql)
     }
 
@@ -74,7 +104,11 @@ export class PostgreSQLAdapter implements DatabaseAdapter {
         const convertedSql = sql.replace(/\?/g, () => `$${++paramIndex}`)
 
         const result = await this.pool.query(convertedSql, params)
-        return result.rows[0] || null
+        const row = result.rows[0]
+        // Convert null to undefined to match SQLite behavior
+        if (!row) return undefined
+        // Convert string numbers from COUNT/aggregations to actual numbers
+        return convertNumericFields(row)
     }
 
     async all(sql: string, params: any[] = []): Promise<any[]> {
@@ -82,7 +116,8 @@ export class PostgreSQLAdapter implements DatabaseAdapter {
         const convertedSql = sql.replace(/\?/g, () => `$${++paramIndex}`)
 
         const result = await this.pool.query(convertedSql, params)
-        return result.rows
+        // Convert string numbers from COUNT/aggregations to actual numbers
+        return result.rows.map(row => convertNumericFields(row))
     }
 
     async transaction<T>(fn: () => Promise<T>): Promise<T> {

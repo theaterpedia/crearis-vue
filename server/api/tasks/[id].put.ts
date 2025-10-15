@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface UpdateTaskBody {
     title?: string
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check if task exists
-        const existingTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)
+        const existingTask = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
         if (!existingTask) {
             throw createError({
                 statusCode: 404,
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
 
         // Validate release_id if provided
         if (body.release_id !== undefined && body.release_id !== null) {
-            const release = db.prepare('SELECT id FROM releases WHERE id = ?').get(body.release_id)
+            const release = await db.get('SELECT id FROM releases WHERE id = ?', [body.release_id])
             if (!release) {
                 throw createError({
                     statusCode: 400,
@@ -171,9 +171,9 @@ export default defineEventHandler(async (event) => {
 
         const sql = `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`
 
-        db.prepare(sql).run(...values)
+        await db.run(sql, [...values])
 
-        const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)
+        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
 
         return {
             success: true,

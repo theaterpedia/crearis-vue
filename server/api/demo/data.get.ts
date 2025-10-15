@@ -1,25 +1,25 @@
 import { defineEventHandler, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
-export default defineEventHandler(() => {
+export default defineEventHandler(async () => {
   try {
     // Get all events
-    const events = db.prepare('SELECT * FROM events').all()
-    
+    const events = await db.all('SELECT * FROM events')
+
     // Get all posts
-    const posts = db.prepare('SELECT * FROM posts').all()
-    
+    const posts = await db.all('SELECT * FROM posts')
+
     // Get all locations
-    const locations = db.prepare('SELECT * FROM locations').all()
-    
+    const locations = await db.all('SELECT * FROM locations')
+
     // Get all instructors
-    const instructors = db.prepare('SELECT * FROM instructors').all()
-    
+    const instructors = await db.all('SELECT * FROM instructors')
+
     // Get all participants
-    const participants = db.prepare('SELECT * FROM participants').all()
-    
+    const participants = await db.all('SELECT * FROM participants')
+
     // Get hero overrides
-    const heroOverrides = db.prepare('SELECT * FROM hero_overrides').all()
+    const heroOverrides = await db.all('SELECT * FROM hero_overrides')
 
     return {
       events,

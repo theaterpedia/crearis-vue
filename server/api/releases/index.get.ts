@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface Release {
     id: string
@@ -14,7 +14,7 @@ interface Release {
     task_count?: number
 }
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
         const state = query.state as string | undefined
@@ -38,7 +38,7 @@ export default defineEventHandler((event) => {
         sql += ' GROUP BY releases.id'
         sql += ' ORDER BY releases.version_major ASC, releases.version_minor ASC'
 
-        const releases = db.prepare(sql).all(...params) as Release[]
+        const releases = await db.all(sql, params) as Release[]
 
         return {
             success: true,

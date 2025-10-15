@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, getRouterParam, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 // PUT /api/projects/[id] - Update project
 export default defineEventHandler(async (event) => {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check if project exists
-        const existing = db.prepare('SELECT * FROM projects WHERE id = ?').get(id)
+        const existing = await db.get('SELECT * FROM projects WHERE id = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
         stmt.run(...values)
 
         // Return updated project
-        const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id)
+        const project = await db.get('SELECT * FROM projects WHERE id = ?', [id])
 
         return {
             success: true,

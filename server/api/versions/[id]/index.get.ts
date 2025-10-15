@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
-import db from '../../../database/db'
+import { db } from '../../../database/db-new'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const versionId = event.context.params?.id
 
   if (!versionId) {
@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
 
   try {
     // Get version with full snapshot data
-    const version = db.prepare('SELECT * FROM versions WHERE id = ?').get(versionId) as any
+    const version = await db.get('SELECT * FROM versions WHERE id = ?', [versionId]) as any
 
     if (!version) {
       throw createError({

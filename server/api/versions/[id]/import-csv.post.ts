@@ -2,7 +2,7 @@ import { defineEventHandler, createError } from 'h3'
 import { readFile, access } from 'node:fs/promises'
 import { join } from 'node:path'
 import { constants } from 'node:fs'
-import db from '../../../database/db'
+import { db } from '../../../database/db-new'
 
 interface DbRow {
   [key: string]: any
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Get version
-    const version = db.prepare('SELECT * FROM versions WHERE id = ?').get(versionId) as any
+    const version = await db.get('SELECT * FROM versions WHERE id = ?', [versionId]) as any
 
     if (!version) {
       throw createError({
@@ -124,11 +124,13 @@ export default defineEventHandler(async (event) => {
           const placeholders = columns.map(() => '?').join(',')
           const values = columns.map(col => record[col])
 
-          // Use INSERT OR REPLACE to handle existing records
-          db.prepare(`
-            INSERT OR REPLACE INTO ${file.table} (${columns.join(',')})
-            VALUES (${placeholders})
-          `).run(...values)
+          // Use INSERT ... ON CONFLICT to handle existing records
+          await db.run(
+            `INSERT INTO ${file.table} (${columns.join(',')})
+             VALUES (${placeholders})
+             ON CONFLICT(id) DO UPDATE SET ${columns.map(col => `${col} = excluded.${col}`).join(', ')}`,
+            values
+          )
         }
 
         updates[file.table] = data.length
@@ -144,19 +146,16 @@ export default defineEventHandler(async (event) => {
     newSnapshot.timestamp = new Date().toISOString()
 
     // Update version snapshot with imported data
-    db.prepare('UPDATE versions SET snapshot_data = ? WHERE id = ?')
-      .run(JSON.stringify(newSnapshot), versionId)
+    await db.run(
+      'UPDATE versions SET snapshot_data = ? WHERE id = ?',
+      [JSON.stringify(newSnapshot), versionId]
+    )
 
     // Update record_versions table with new data
     // First, delete old record_versions for this version
-    db.prepare('DELETE FROM record_versions WHERE version_id = ?').run(versionId)
+    await db.run('DELETE FROM record_versions WHERE version_id = ?', [versionId])
 
     // Insert new record_versions
-    const insertRecordVersion = db.prepare(`
-      INSERT INTO record_versions (id, version_id, record_type, record_id, data)
-      VALUES (?, ?, ?, ?, ?)
-    `)
-
     const { nanoid } = await import('nanoid')
 
     for (const [recordType, records] of Object.entries(newSnapshot)) {
@@ -164,12 +163,16 @@ export default defineEventHandler(async (event) => {
 
       for (const record of records as DbRow[]) {
         if (record.id) {
-          insertRecordVersion.run(
-            nanoid(),
-            versionId,
-            recordType,
-            record.id,
-            JSON.stringify(record)
+          await db.run(
+            `INSERT INTO record_versions (id, version_id, record_type, record_id, data)
+             VALUES (?, ?, ?, ?, ?)`,
+            [
+              nanoid(),
+              versionId,
+              recordType,
+              record.id,
+              JSON.stringify(record)
+            ]
           )
         }
       }

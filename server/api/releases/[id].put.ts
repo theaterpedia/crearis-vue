@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface UpdateReleaseBody {
     version?: string
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check if release exists
-        const existingRelease = db.prepare('SELECT * FROM releases WHERE id = ?').get(id)
+        const existingRelease = await db.get('SELECT * FROM releases WHERE id = ?', [id])
         if (!existingRelease) {
             throw createError({
                 statusCode: 404,
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
             const version_minor = parseInt(versionMatch[2], 10)
 
             // Check if version already exists (excluding current release)
-            const existingVersion = db.prepare('SELECT id FROM releases WHERE version = ? AND id != ?').get(body.version.trim(), id) as any
+            const existingVersion = await db.get('SELECT id FROM releases WHERE version = ? AND id != ?', [body.version.trim(), id]) as any
             if (existingVersion) {
                 throw createError({
                     statusCode: 409,
@@ -115,9 +115,9 @@ export default defineEventHandler(async (event) => {
 
         const sql = `UPDATE releases SET ${updates.join(', ')} WHERE id = ?`
 
-        db.prepare(sql).run(...values)
+        await db.run(sql, [...values])
 
-        const release = db.prepare('SELECT * FROM releases WHERE id = ?').get(id)
+        const release = await db.get('SELECT * FROM releases WHERE id = ?', [id])
 
         return {
             success: true,

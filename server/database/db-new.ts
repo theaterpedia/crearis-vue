@@ -9,22 +9,22 @@ const __dirname = dirname(__filename)
 
 // Lazy-load PostgreSQL adapter to avoid requiring pg when not needed
 async function loadPostgreSQLAdapter(): Promise<typeof import('./adapters/postgresql')> {
-    return await import('./adapters/postgresql')
+  return await import('./adapters/postgresql')
 }
 
 // Initialize database adapter based on configuration
 let dbAdapter: DatabaseAdapter
 
 if (dbConfig.type === 'sqlite') {
-    const dbPath = dbConfig.sqlite?.path || join(__dirname, '../../demo-data.db')
-    dbAdapter = new SQLiteAdapter(dbPath)
-    console.log(`✅ Connected to SQLite database at: ${dbPath}`)
+  const dbPath = dbConfig.sqlite?.path || join(__dirname, '../../demo-data.db')
+  dbAdapter = new SQLiteAdapter(dbPath)
+  console.log(`✅ Connected to SQLite database at: ${dbPath}`)
 } else if (dbConfig.type === 'postgresql') {
-    const { PostgreSQLAdapter } = await loadPostgreSQLAdapter()
-    dbAdapter = new PostgreSQLAdapter(dbConfig.postgresql!.connectionString)
-    console.log('✅ Connected to PostgreSQL database')
+  const { PostgreSQLAdapter } = await loadPostgreSQLAdapter()
+  dbAdapter = new PostgreSQLAdapter(dbConfig.postgresql!.connectionString)
+  console.log('✅ Connected to PostgreSQL database')
 } else {
-    throw new Error(`Unsupported database type: ${dbConfig.type}`)
+  throw new Error(`Unsupported database type: ${dbConfig.type}`)
 }
 
 /**
@@ -38,19 +38,19 @@ export const db = dbAdapter
  * Creates all tables with the current state (no migrations needed)
  */
 export async function initDatabase() {
-    // Determine SQL dialect
-    const isPostgres = db.type === 'postgresql'
+  // Determine SQL dialect
+  const isPostgres = db.type === 'postgresql'
 
-    // Helper to convert SQLite types to PostgreSQL
-    const TEXT = isPostgres ? 'TEXT' : 'TEXT'
-    const INTEGER = isPostgres ? 'INTEGER' : 'INTEGER'
-    const TIMESTAMP = isPostgres ? 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' : "TEXT DEFAULT (datetime('now'))"
-    const CHECK_STATUS = isPostgres
-        ? "CHECK(status IN ('active', 'archived', 'deleted'))"
-        : "CHECK(status IN ('active', 'archived', 'deleted'))"
+  // Helper to convert SQLite types to PostgreSQL
+  const TEXT = isPostgres ? 'TEXT' : 'TEXT'
+  const INTEGER = isPostgres ? 'INTEGER' : 'INTEGER'
+  const TIMESTAMP = isPostgres ? 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' : "TEXT DEFAULT (datetime('now'))"
+  const CHECK_STATUS = isPostgres
+    ? "CHECK(status IN ('active', 'archived', 'deleted'))"
+    : "CHECK(status IN ('active', 'archived', 'deleted'))"
 
-    // Events table
-    await db.exec(`
+  // Events table
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS events (
       id ${TEXT} PRIMARY KEY,
       name ${TEXT} NOT NULL,
@@ -70,8 +70,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Posts table
-    await db.exec(`
+  // Posts table
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS posts (
       id ${TEXT} PRIMARY KEY,
       name ${TEXT} NOT NULL,
@@ -93,8 +93,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Locations table
-    await db.exec(`
+  // Locations table
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS locations (
       id ${TEXT} PRIMARY KEY,
       name ${TEXT} NOT NULL,
@@ -119,8 +119,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Instructors table
-    await db.exec(`
+  // Instructors table
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS instructors (
       id ${TEXT} PRIMARY KEY,
       name ${TEXT} NOT NULL,
@@ -138,8 +138,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Participants table (combined children, teens, adults)
-    await db.exec(`
+  // Participants table (combined children, teens, adults)
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS participants (
       id ${TEXT} PRIMARY KEY,
       name ${TEXT} NOT NULL,
@@ -157,8 +157,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Hero overrides table (for non-event heroes)
-    await db.exec(`
+  // Hero overrides table (for non-event heroes)
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS hero_overrides (
       id ${TEXT} PRIMARY KEY,
       cimg ${TEXT},
@@ -170,8 +170,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Users table (for authentication)
-    await db.exec(`
+  // Users table (for authentication)
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id ${TEXT} PRIMARY KEY,
       username ${TEXT} UNIQUE NOT NULL,
@@ -181,21 +181,21 @@ export async function initDatabase() {
     )
   `)
 
-    // Tasks table (Stage 2 schema with category)
-    await db.exec(`
+  // Tasks table (Stage 2 schema with category)
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
       id ${TEXT} PRIMARY KEY,
       title ${TEXT} NOT NULL,
       description ${TEXT},
       status ${TEXT} DEFAULT 'idea' ${isPostgres
-            ? "CHECK(status IN ('idea', 'draft', 'final', 'reopen', 'trash'))"
-            : "CHECK(status IN ('idea', 'draft', 'final', 'reopen', 'trash'))"},
+      ? "CHECK(status IN ('idea', 'draft', 'final', 'reopen', 'trash'))"
+      : "CHECK(status IN ('idea', 'draft', 'final', 'reopen', 'trash'))"},
       category ${TEXT} DEFAULT 'project' ${isPostgres
-            ? "CHECK(category IN ('project', 'base', 'admin'))"
-            : "CHECK(category IN ('project', 'base', 'admin'))"},
+      ? "CHECK(category IN ('project', 'base', 'admin'))"
+      : "CHECK(category IN ('project', 'base', 'admin'))"},
       priority ${TEXT} DEFAULT 'medium' ${isPostgres
-            ? "CHECK(priority IN ('low', 'medium', 'high', 'urgent'))"
-            : "CHECK(priority IN ('low', 'medium', 'high', 'urgent'))"},
+      ? "CHECK(priority IN ('low', 'medium', 'high', 'urgent'))"
+      : "CHECK(priority IN ('low', 'medium', 'high', 'urgent'))"},
       record_type ${TEXT},
       record_id ${TEXT},
       assigned_to ${TEXT},
@@ -207,8 +207,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Versions table for data snapshots
-    await db.exec(`
+  // Versions table for data snapshots
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS versions (
       id ${TEXT} PRIMARY KEY,
       version_number ${TEXT} NOT NULL UNIQUE,
@@ -223,8 +223,8 @@ export async function initDatabase() {
     )
   `)
 
-    // Version history for tracking changes to records
-    await db.exec(`
+  // Version history for tracking changes to records
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS record_versions (
       id ${TEXT} PRIMARY KEY,
       version_id ${TEXT} NOT NULL,
@@ -235,10 +235,46 @@ export async function initDatabase() {
     )
   `)
 
-    // Create indexes for performance (only for non-unique indexes)
-    if (isPostgres) {
-        // PostgreSQL syntax for IF NOT EXISTS on CREATE INDEX
-        await db.exec(`
+  // Projects table (also serves as user accounts)
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id ${TEXT} PRIMARY KEY,
+      username ${TEXT} UNIQUE NOT NULL,
+      password_hash ${TEXT} NOT NULL,
+      role ${TEXT} NOT NULL ${isPostgres
+      ? "CHECK(role IN ('admin', 'base', 'project'))"
+      : "CHECK(role IN ('admin', 'base', 'project'))"},
+      name ${TEXT},
+      description ${TEXT},
+      status ${TEXT} DEFAULT 'draft' ${isPostgres
+      ? "CHECK(status IN ('draft', 'active', 'archived'))"
+      : "CHECK(status IN ('draft', 'active', 'archived'))"},
+      created_at ${TIMESTAMP},
+      updated_at ${TEXT}
+    )
+  `)
+
+  // Releases table
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS releases (
+      id ${TEXT} PRIMARY KEY,
+      version ${TEXT} NOT NULL UNIQUE,
+      version_major ${INTEGER} NOT NULL,
+      version_minor ${INTEGER} NOT NULL,
+      description ${TEXT},
+      state ${TEXT} DEFAULT 'idea' ${isPostgres
+      ? "CHECK(state IN ('idea', 'draft', 'final', 'trash'))"
+      : "CHECK(state IN ('idea', 'draft', 'final', 'trash'))"},
+      release_date ${TEXT},
+      created_at ${TIMESTAMP},
+      updated_at ${TEXT}
+    )
+  `)
+
+  // Create indexes for performance (only for non-unique indexes)
+  if (isPostgres) {
+    // PostgreSQL syntax for IF NOT EXISTS on CREATE INDEX
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_tasks_record ON tasks(record_type, record_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_version ON tasks(version_id);
@@ -246,9 +282,9 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_versions_active ON versions(is_active);
       CREATE INDEX IF NOT EXISTS idx_record_versions_lookup ON record_versions(version_id, record_type, record_id);
     `)
-    } else {
-        // SQLite syntax
-        await db.exec(`
+  } else {
+    // SQLite syntax
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_tasks_record ON tasks(record_type, record_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_version ON tasks(version_id);
@@ -256,24 +292,24 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_versions_active ON versions(is_active);
       CREATE INDEX IF NOT EXISTS idx_record_versions_lookup ON record_versions(version_id, record_type, record_id);
     `)
-    }
+  }
 
-    // Create triggers for timestamp updates (SQLite only - PostgreSQL uses different approach)
-    if (!isPostgres) {
-        const tables = ['events', 'posts', 'locations', 'instructors', 'participants', 'tasks']
+  // Create triggers for timestamp updates (SQLite only - PostgreSQL uses different approach)
+  if (!isPostgres) {
+    const tables = ['events', 'posts', 'locations', 'instructors', 'participants', 'tasks']
 
-        for (const table of tables) {
-            await db.exec(`
+    for (const table of tables) {
+      await db.exec(`
         CREATE TRIGGER IF NOT EXISTS ${table}_updated_at_trigger
         AFTER UPDATE ON ${table}
         BEGIN
           UPDATE ${table} SET updated_at = datetime('now') WHERE id = NEW.id;
         END;
       `)
-        }
-    } else {
-        // For PostgreSQL, we'll use a function and trigger
-        await db.exec(`
+    }
+  } else {
+    // For PostgreSQL, we'll use a function and trigger
+    await db.exec(`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -283,19 +319,19 @@ export async function initDatabase() {
       $$ language 'plpgsql';
     `)
 
-        const tables = ['events', 'posts', 'locations', 'instructors', 'participants', 'tasks']
-        for (const table of tables) {
-            await db.exec(`
+    const tables = ['events', 'posts', 'locations', 'instructors', 'participants', 'tasks']
+    for (const table of tables) {
+      await db.exec(`
         DROP TRIGGER IF EXISTS ${table}_updated_at_trigger ON ${table};
         CREATE TRIGGER ${table}_updated_at_trigger
         BEFORE UPDATE ON ${table}
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
       `)
-        }
     }
+  }
 
-    console.log(`✅ Database tables initialized successfully (${db.type})`)
+  console.log(`✅ Database tables initialized successfully (${db.type})`)
 }
 
 // Initialize on module load

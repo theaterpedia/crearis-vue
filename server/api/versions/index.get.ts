@@ -1,10 +1,10 @@
 import { defineEventHandler } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
-export default defineEventHandler(() => {
+export default defineEventHandler(async () => {
   try {
     // Get all versions, ordered by creation date (newest first)
-    const versions = db.prepare(`
+    const versions = await db.all(`
       SELECT 
         id,
         version_number,
@@ -17,12 +17,12 @@ export default defineEventHandler(() => {
         notes
       FROM versions
       ORDER BY created_at DESC
-    `).all()
+    `, [])
 
     // For each version, get record counts from snapshot_data
-    const versionsWithCounts = versions.map((version: any) => {
+    const versionsWithCounts = await Promise.all(versions.map(async (version: any) => {
       try {
-        const snapshotData = db.prepare('SELECT snapshot_data FROM versions WHERE id = ?').get(version.id) as any
+        const snapshotData = await db.get('SELECT snapshot_data FROM versions WHERE id = ?', [version.id]) as any
 
         if (snapshotData?.snapshot_data) {
           const snapshot = JSON.parse(snapshotData.snapshot_data)
@@ -49,7 +49,7 @@ export default defineEventHandler(() => {
         console.error('Error parsing snapshot for version:', version.id, err)
         return version
       }
-    })
+    }))
 
     return {
       success: true,

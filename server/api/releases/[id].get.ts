@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     try {
         const id = event.context.params?.id
 

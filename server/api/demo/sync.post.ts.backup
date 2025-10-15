@@ -13,27 +13,27 @@ const csvDir = join(process.cwd(), 'src/assets/csv')
 function parseCSV(csvText: string): any[] {
   const lines = csvText.trim().split('\n')
   const headers = lines[0].split(',').map(h => h.replace(/"/g, ''))
-
+  
   return lines.slice(1).map(line => {
     const values: string[] = []
     let current = ''
     let inQuotes = false
-
+    
     for (let i = 0; i < line.length; i++) {
       const char = line[i]
-      if (char === '"' && (i === 0 || line[i - 1] === ',')) {
+      if (char === '"' && (i === 0 || line[i-1] === ',')) {
         inQuotes = true
-      } else if (char === '"' && (i === line.length - 1 || line[i + 1] === ',')) {
+      } else if (char === '"' && (i === line.length - 1 || line[i+1] === ',')) {
         inQuotes = false
       } else if (char === ',' && !inQuotes) {
         values.push(current)
         current = ''
-      } else if (!(char === '"' && (i === 0 || line[i - 1] === ',' || i === line.length - 1 || line[i + 1] === ','))) {
+      } else if (!(char === '"' && (i === 0 || line[i-1] === ',' || i === line.length - 1 || line[i+1] === ','))) {
         current += char
       }
     }
     values.push(current)
-
+    
     const obj: any = {}
     headers.forEach((header, index) => {
       obj[header] = values[index] || ''
@@ -64,7 +64,7 @@ export default defineEventHandler(async () => {
     const teens = parseCSV(teensCSV)
     const adults = parseCSV(adultsCSV)
 
-    // Insert events using UPSERT (compatible with both SQLite and PostgreSQL)
+    // Insert events
     for (const event of events) {
       await db.run(`
         INSERT INTO events 
@@ -97,25 +97,13 @@ export default defineEventHandler(async () => {
     }
 
     // Insert posts
+    const postStmt = db.prepare(`
+      INSERT OR REPLACE INTO posts 
+      (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
     for (const post of posts) {
-      await db.run(`
-        INSERT INTO posts 
-        (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          subtitle = excluded.subtitle,
-          teaser = excluded.teaser,
-          author_id = excluded.author_id,
-          blog_id = excluded.blog_id,
-          tag_ids = excluded.tag_ids,
-          website_published = excluded.website_published,
-          is_published = excluded.is_published,
-          post_date = excluded.post_date,
-          cover_properties = excluded.cover_properties,
-          event_id = excluded.event_id,
-          cimg = excluded.cimg
-      `, [
+      postStmt.run(
         post.id,
         post.name,
         post.subtitle,
@@ -129,32 +117,17 @@ export default defineEventHandler(async () => {
         post.cover_properties,
         post['event_id/id'] || post.event_id,
         post.cimg
-      ])
+      )
     }
 
     // Insert locations
+    const locationStmt = db.prepare(`
+      INSERT OR REPLACE INTO locations 
+      (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
     for (const location of locations) {
-      await db.run(`
-        INSERT INTO locations 
-        (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          phone = excluded.phone,
-          email = excluded.email,
-          city = excluded.city,
-          zip = excluded.zip,
-          street = excluded.street,
-          country_id = excluded.country_id,
-          is_company = excluded.is_company,
-          category_id = excluded.category_id,
-          cimg = excluded.cimg,
-          header_type = excluded.header_type,
-          header_size = excluded.header_size,
-          md = excluded.md,
-          is_location_provider = excluded.is_location_provider,
-          event_id = excluded.event_id
-      `, [
+      locationStmt.run(
         location.id,
         location.name,
         location.phone,
@@ -171,25 +144,17 @@ export default defineEventHandler(async () => {
         location.md,
         location.is_location_provider,
         location.event_id
-      ])
+      )
     }
 
     // Insert instructors
+    const instructorStmt = db.prepare(`
+      INSERT OR REPLACE INTO instructors 
+      (id, name, email, phone, city, country_id, cimg, description, event_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
     for (const instructor of instructors) {
-      await db.run(`
-        INSERT INTO instructors 
-        (id, name, email, phone, city, country_id, cimg, description, event_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          email = excluded.email,
-          phone = excluded.phone,
-          city = excluded.city,
-          country_id = excluded.country_id,
-          cimg = excluded.cimg,
-          description = excluded.description,
-          event_id = excluded.event_id
-      `, [
+      instructorStmt.run(
         instructor.id,
         instructor.name,
         instructor.email,
@@ -199,25 +164,18 @@ export default defineEventHandler(async () => {
         instructor.cimg,
         instructor.description,
         instructor['event_id/id'] || instructor.event_id
-      ])
+      )
     }
 
-    // Insert participants (children, teens, adults)
+    // Insert participants
+    const participantStmt = db.prepare(`
+      INSERT OR REPLACE INTO participants 
+      (id, name, age, city, country_id, cimg, description, event_id, type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    
     for (const child of children) {
-      await db.run(`
-        INSERT INTO participants 
-        (id, name, age, city, country_id, cimg, description, event_id, type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          age = excluded.age,
-          city = excluded.city,
-          country_id = excluded.country_id,
-          cimg = excluded.cimg,
-          description = excluded.description,
-          event_id = excluded.event_id,
-          type = excluded.type
-      `, [
+      participantStmt.run(
         child.id,
         child.name,
         parseInt(child.age) || 0,
@@ -227,24 +185,11 @@ export default defineEventHandler(async () => {
         child.description,
         child['event_id/id'] || child.event_id,
         'child'
-      ])
+      )
     }
-
+    
     for (const teen of teens) {
-      await db.run(`
-        INSERT INTO participants 
-        (id, name, age, city, country_id, cimg, description, event_id, type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          age = excluded.age,
-          city = excluded.city,
-          country_id = excluded.country_id,
-          cimg = excluded.cimg,
-          description = excluded.description,
-          event_id = excluded.event_id,
-          type = excluded.type
-      `, [
+      participantStmt.run(
         teen.id,
         teen.name,
         parseInt(teen.age) || 0,
@@ -254,24 +199,11 @@ export default defineEventHandler(async () => {
         teen.description,
         teen['event_id/id'] || teen.event_id,
         'teen'
-      ])
+      )
     }
-
+    
     for (const adult of adults) {
-      await db.run(`
-        INSERT INTO participants 
-        (id, name, age, city, country_id, cimg, description, event_id, type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          age = excluded.age,
-          city = excluded.city,
-          country_id = excluded.country_id,
-          cimg = excluded.cimg,
-          description = excluded.description,
-          event_id = excluded.event_id,
-          type = excluded.type
-      `, [
+      participantStmt.run(
         adult.id,
         adult.name,
         parseInt(adult.age) || 0,
@@ -281,10 +213,10 @@ export default defineEventHandler(async () => {
         adult.description,
         adult['event_id/id'] || adult.event_id,
         'adult'
-      ])
+      )
     }
 
-    return {
+    return { 
       success: true,
       message: 'Database synchronized from CSV files',
       counts: {

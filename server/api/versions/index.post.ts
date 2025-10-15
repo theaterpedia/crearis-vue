@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
-import db from '../../database/db'
+import { db } from '../../database/db-new'
 
 interface VersionCreateRequest {
   version_number: string
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Check if version_number already exists
-  const existingVersion = db.prepare('SELECT id FROM versions WHERE version_number = ?').get(version_number)
+  const existingVersion = await db.get('SELECT id FROM versions WHERE version_number = ?', [version_number])
   if (existingVersion) {
     throw createError({
       statusCode: 409,
@@ -34,11 +34,11 @@ export default defineEventHandler(async (event) => {
   try {
     // Create snapshot of all current data
     // Note: status column might not exist in older schemas, so we select all records
-    const events = db.prepare('SELECT * FROM events').all()
-    const posts = db.prepare('SELECT * FROM posts').all()
-    const locations = db.prepare('SELECT * FROM locations').all()
-    const instructors = db.prepare('SELECT * FROM instructors').all()
-    const participants = db.prepare('SELECT * FROM participants').all()
+    const events = await db.all('SELECT * FROM events', [])
+    const posts = await db.all('SELECT * FROM posts', [])
+    const locations = await db.all('SELECT * FROM locations', [])
+    const instructors = await db.all('SELECT * FROM instructors', [])
+    const participants = await db.all('SELECT * FROM participants', [])
 
     const snapshot = {
       events,
@@ -52,21 +52,20 @@ export default defineEventHandler(async (event) => {
     const id = nanoid()
 
     // Deactivate previous active version
-    db.prepare('UPDATE versions SET is_active = 0 WHERE is_active = 1').run()
+    await db.run('UPDATE versions SET is_active = 0 WHERE is_active = 1', [])
 
     // Create new version
-    const insertVersion = db.prepare(`
-      INSERT INTO versions (id, version_number, name, description, created_by, is_active, snapshot_data)
-      VALUES (?, ?, ?, ?, ?, 1, ?)
-    `)
-
-    insertVersion.run(
-      id,
-      version_number,
-      name,
-      description || null,
-      created_by || null,
-      JSON.stringify(snapshot)
+    await db.run(
+      `INSERT INTO versions (id, version_number, name, description, created_by, is_active, snapshot_data)
+       VALUES (?, ?, ?, ?, ?, 1, ?)`,
+      [
+        id,
+        version_number,
+        name,
+        description || null,
+        created_by || null,
+        JSON.stringify(snapshot)
+      ]
     )
 
     // Store individual record versions
@@ -78,25 +77,24 @@ export default defineEventHandler(async (event) => {
       { type: 'participants', records: participants }
     ]
 
-    const insertRecordVersion = db.prepare(`
-      INSERT INTO record_versions (id, version_id, record_type, record_id, data)
-      VALUES (?, ?, ?, ?, ?)
-    `)
-
     for (const { type, records } of recordTypes) {
       for (const record of records) {
-        insertRecordVersion.run(
-          nanoid(),
-          id,
-          type,
-          record.id,
-          JSON.stringify(record)
+        await db.run(
+          `INSERT INTO record_versions (id, version_id, record_type, record_id, data)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            nanoid(),
+            id,
+            type,
+            record.id,
+            JSON.stringify(record)
+          ]
         )
       }
     }
 
     // Fetch the created version
-    const version = db.prepare('SELECT * FROM versions WHERE id = ?').get(id)
+    const version = await db.get('SELECT * FROM versions WHERE id = ?', [id])
 
     // Don't send the full snapshot_data in response (could be large)
     const responseVersion = {
