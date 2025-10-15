@@ -3,11 +3,13 @@
  * Run with: DATABASE_TYPE=postgresql DB_NAME=crearis_admin_dev DB_USER=crearis_admin DB_PASSWORD=7uqf9nE0umJmMMo npx tsx server/database/update-users.ts
  */
 
-import { db } from './db-new.js'
+import { db } from './init.js'
 import { nanoid } from 'nanoid'
 import bcrypt from 'bcryptjs'
 
 const users = [
+    { username: 'admin', password: 'nE7uq1qFumJNMMom', role: 'admin' },
+    { username: 'base', password: 'yl5ScB1x3fnaBQP', role: 'base' },
 ]
 
 async function updateUsers() {

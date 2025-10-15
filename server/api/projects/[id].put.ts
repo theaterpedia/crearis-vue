@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, getRouterParam, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 // PUT /api/projects/[id] - Update project
 export default defineEventHandler(async (event) => {

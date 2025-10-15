@@ -1,5 +1,5 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 // DELETE /api/projects/[id] - Delete project
 export default defineEventHandler(async (event) => {

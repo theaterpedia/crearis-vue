@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { db } from '../../../database/db-new'
+import { db } from '../../../database/init'
 
 interface DbRow {
   [key: string]: any

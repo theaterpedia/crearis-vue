@@ -112,12 +112,21 @@ WHERE p.id IS NULL OR u.id IS NULL;
 
 After initial seeding and update:
 
+### PostgreSQL (crearis_admin_dev)
+
 | Username | Role | Password |
 |----------|------|----------|
-| admin | admin |  |
-| base | base |  |
-| project1 | project |  |
-| project2 | project |  |
+| admin | admin | nE7uq1qFumJNMMom |
+| base | base | yl5ScB1x3fnaBQP |
+| project1 | project | lXuRK_oAAvMkHLTC |
+| project2 | project | xrCQQ77wN0CGJj6e |
+
+### SQLite (demo-data.db)
+
+| Username | Role | Password |
+|----------|------|----------|
+| admin | admin | nE7uq1qFumJNMMom |
+| base | base | yl5ScB1x3fnaBQP |
 
 **Note**: These passwords are bcrypt hashed (10 rounds) before storage.
 

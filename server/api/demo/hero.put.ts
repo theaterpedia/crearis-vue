@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 export default defineEventHandler(async (event) => {
   const { id, cimg, heading, description, event_ids } = await readBody(event)

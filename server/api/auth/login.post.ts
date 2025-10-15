@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody, createError, setCookie, getCookie } from 'h3'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 // In-memory session store (for development - use Redis in production)
 const sessions = new Map<string, { userId: string; username: string; role: string; expiresAt: number }>()

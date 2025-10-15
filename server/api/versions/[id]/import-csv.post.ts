@@ -2,7 +2,7 @@ import { defineEventHandler, createError } from 'h3'
 import { readFile, access } from 'node:fs/promises'
 import { join } from 'node:path'
 import { constants } from 'node:fs'
-import { db } from '../../../database/db-new'
+import { db } from '../../../database/init'
 
 interface DbRow {
   [key: string]: any

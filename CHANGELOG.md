@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.1] - 2025-10-15
+
+### Added
+- **Database Structure Validation System**
+  - Schema definition system with versioned JSON files
+  - `check-structure.ts` - Automated validation tool for PostgreSQL and SQLite
+  - Version 0.0.1 schema definition with 12 core tables
+  - Validation of table existence, column definitions, and constraints
+  - Support for database-specific differences (PostgreSQL vs SQLite)
+  - NPM scripts: `db:check-structure` and `db:check-structure:version`
+
+- **Multi-Database Support**
+  - PostgreSQL adapter with async API
+  - SQLite adapter with async API
+  - Unified database interface supporting both engines
+  - Environment-based database selection
+
+- **Authentication System**
+  - User authentication via projects table (dual-purpose design)
+  - Bcrypt password hashing (10 rounds)
+  - Session management with in-memory storage
+  - Admin, base, and project roles
+  - User seeding scripts: `seed-users.ts`, `update-users.ts`
+  - Database sync script: `sync-projects-to-users.ts`
+
+- **Projects and Users Tables**
+  - Projects table serves as user accounts (Phase 1 architecture)
+  - Users table mirrors projects for future many-to-many relationship
+  - Username/password authentication
+  - Role-based access control
+
+- **Database Management Scripts**
+  - `update-users.ts` - Update/create users with new credentials
+  - `update-users-sqlite-direct.ts` - Direct SQLite user management
+  - `sync-projects-to-users.ts` - Sync projects to users table
+  - `test-credentials.ts` - Validate stored credentials
+  - `test-both-databases.ts` - Test credentials in both databases
+
+- **Documentation**
+  - `docs/postgresql/USER-AUTH-ARCHITECTURE.md` - Authentication design
+  - `docs/postgresql/USERS-PROJECTS-SYNC.md` - Sync process and maintenance
+  - Schema definition documentation in JSON format
+
+### Fixed
+- SQLite and PostgreSQL role constraints aligned
+- Async/await patterns in all database operations
+- Portable SQL syntax (INSERT ... ON CONFLICT ... DO UPDATE)
+
+### Changed
+- Version reset to 0.0.1 for schema baseline
+- Database initialization with proper async patterns
+- All API endpoints converted to async database calls
+
+### Database Schema (v0.0.1)
+- **Core Tables**: projects, users, releases, versions, tasks
+- **Content Tables**: events, locations, participants, instructors, posts
+- **System Tables**: hero_overrides, record_versions
+- **Total Tables**: 12
+
 ### Added
 - **Task Management System (Phase 1 & 2)**
   - Database schema for tasks, versions, and record tracking

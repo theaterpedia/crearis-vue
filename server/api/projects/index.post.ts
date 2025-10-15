@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 // POST /api/projects - Create new project
 export default defineEventHandler(async (event) => {

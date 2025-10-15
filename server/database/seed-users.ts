@@ -3,7 +3,7 @@
  * Run with: npx tsx server/database/seed-users.ts
  */
 
-import { db } from './db-new.js'
+import { db } from './init.js'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 

@@ -1,6 +1,6 @@
 {
   "name": "crearis-demo-data",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Standalone server application providing Vue UI components and demo data API endpoints",
   "author": "theaterpedia",
   "license": "MIT",
@@ -45,7 +45,11 @@
     "test:pg": "TEST_DATABASE_TYPE=postgresql vitest run",
     "test:pgintegration": "tsx tests/scripts/run-pg-integration.ts",
     "test:pgintegration:batch": "TEST_DATABASE_TYPE=postgresql vitest run --grep='@pgintegration'",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "db:migrate": "tsx server/database/migrations/run.ts",
+    "db:check-structure": "tsx server/database/check-structure.ts",
+    "db:check-structure:version": "tsx server/database/check-structure.ts",
+    "db:update-version": "tsx server/database/update-version.ts"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.0",

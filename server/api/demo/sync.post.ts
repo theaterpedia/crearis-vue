@@ -2,7 +2,7 @@ import { defineEventHandler, createError } from 'h3'
 import { readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { db, initDatabase } from '../../database/db-new'
+import { db } from '../../database/init'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -44,8 +44,8 @@ function parseCSV(csvText: string): any[] {
 
 export default defineEventHandler(async () => {
   try {
-    // Reinitialize database (clears existing data)
-    await initDatabase()
+    // Note: Database is initialized by migration system on startup
+    // This endpoint imports CSV data into existing tables
 
     // Read and parse CSV data
     const eventsCSV = await readFile(join(csvDir, 'events.csv'), 'utf-8')

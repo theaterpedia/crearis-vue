@@ -1,5 +1,5 @@
 import { defineEventHandler, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 export default defineEventHandler(async () => {
   try {

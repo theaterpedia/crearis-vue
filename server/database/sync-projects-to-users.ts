@@ -4,7 +4,7 @@
  * Run with: DATABASE_TYPE=postgresql DB_NAME=crearis_admin_dev DB_USER=crearis_admin DB_PASSWORD=7uqf9nE0umJmMMo npx tsx server/database/sync-projects-to-users.ts
  */
 
-import { db } from './db-new.js'
+import { db } from './init.js'
 
 async function syncProjectsToUsers() {
     console.log('🔄 Syncing projects to users table...\n')

@@ -1,0 +1,721 @@
+{
+  "version": "0.0.1",
+  "schemaVersion": 1,
+  "generatedAt": "2025-10-15T12:52:38.391Z",
+  "description": "Database schema for crearis-demo-data system v0.0.1",
+  "tables": {
+    "events": {
+      "description": "Events table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "date_begin": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "date_end": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "address_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "seats_max": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "rectitle": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "teaser": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'active'::text"
+        },
+        "isBase": {
+          "type": "INTEGER",
+          "nullable": true,
+          "primaryKey": false,
+          "default": "0"
+        }
+      }
+    },
+    "hero_overrides": {
+      "description": "Hero_overrides table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "heading": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_ids": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "instructors": {
+      "description": "Instructors table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "email": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "phone": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'active'::text"
+        }
+      }
+    },
+    "locations": {
+      "description": "Locations table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "phone": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "email": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "zip": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "street": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_company": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "category_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_size": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_location_provider": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'active'::text"
+        }
+      }
+    },
+    "participants": {
+      "description": "Participants table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "age": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'active'::text"
+        }
+      }
+    },
+    "posts": {
+      "description": "Posts table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "subtitle": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "teaser": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "author_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "blog_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "tag_ids": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "website_published": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_published": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "post_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cover_properties": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'active'::text"
+        }
+      }
+    },
+    "projects": {
+      "description": "Projects table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "username": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "password_hash": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "role": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'draft'::text"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "record_versions": {
+      "description": "Record_versions table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "record_type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "record_id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "data": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "releases": {
+      "description": "Releases table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "version": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "version_major": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version_minor": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "state": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'idea'::text"
+        },
+        "release_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "tasks": {
+      "description": "Tasks table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "title": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'idea'::text"
+        },
+        "category": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'project'::text"
+        },
+        "priority": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'medium'::text"
+        },
+        "record_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "record_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "assigned_to": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "due_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "release_id": {
+          "type": "TEXT",
+          "nullable": true,
+          "primaryKey": false
+        },
+        "image": {
+          "type": "TEXT",
+          "nullable": true,
+          "primaryKey": false
+        },
+        "prompt": {
+          "type": "TEXT",
+          "nullable": true,
+          "primaryKey": false
+        }
+      }
+    },
+    "users": {
+      "description": "Users table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "username": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "password": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "role": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "versions": {
+      "description": "Versions table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "primaryKey": true
+        },
+        "version_number": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_by": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "snapshot_data": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "csv_exported": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "notes": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    }
+  },
+  "databaseDifferences": {
+    "postgresql": {
+      "projects": {
+        "additionalColumns": [
+          "name",
+          "description",
+          "status"
+        ],
+        "description": "PostgreSQL has additional columns"
+      },
+      "tasks": {
+        "additionalColumns": [
+          "version_id"
+        ],
+        "description": "PostgreSQL has additional columns"
+      }
+    },
+    "sqlite": {
+      "events": {
+        "additionalColumns": [
+          "isBase"
+        ]
+      },
+      "projects": {
+        "missingColumns": [
+          "name",
+          "description",
+          "status"
+        ],
+        "description": "SQLite is missing these columns"
+      },
+      "tasks": {
+        "missingColumns": [
+          "version_id"
+        ],
+        "description": "SQLite is missing these columns",
+        "additionalColumns": [
+          "release_id",
+          "image",
+          "prompt"
+        ]
+      }
+    }
+  }
+}

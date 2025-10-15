@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
-import { db } from '../../database/db-new'
+import { db } from '../../database/init'
 
 interface Release {
     id: string
