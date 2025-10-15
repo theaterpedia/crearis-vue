@@ -162,7 +162,8 @@ const event = await stmt.get(eventId)
 
 ## Next Steps
 - **Stage B**: Create Vitest setup with PostgreSQL integration tests
-- **Stage C**: Analyze db.ts usage throughout project, add coverage for uncertain areas
+- **Stage C**: TBD
+- **Stage D**: Analyze db.ts usage throughout project, add coverage for uncertain areas
 
 ## Files Modified
 - Created: `server/database/config.ts`

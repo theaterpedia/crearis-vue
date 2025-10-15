@@ -212,6 +212,13 @@ tsx tests/scripts/run-test.ts "test name"
 ## 🚀 Next Steps (Stage C)
 
 After Stage B approval:
+- TBD
+
+---
+
+## 🚀 Next Steps (Stage D)
+
+After Stage C approval:
 
 1. Analyze all `db.ts` usage in codebase
 2. Identify PostgreSQL compatibility concerns

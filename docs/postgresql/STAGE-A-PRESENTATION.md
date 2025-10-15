@@ -227,6 +227,9 @@ await db.transaction(async () => {
 - [ ] One-by-one test execution
 
 ### Stage C (Future)
+- [ ] TBD
+
+### Stage D (Future)
 - [ ] Analyze all db.ts usage
 - [ ] Identify compatibility concerns
 - [ ] Add comprehensive test coverage
@@ -323,7 +326,10 @@ Upon approval of Stage A:
 4. Add visual test results
 5. Enable one-by-one execution
 
-### Stage C: Coverage & Validation
+### Stage C: TBD
+1. TBD
+
+### Stage D: Coverage & Validation
 1. Analyze all db.ts usage in codebase
 2. Identify PostgreSQL compatibility issues
 3. Add comprehensive test coverage

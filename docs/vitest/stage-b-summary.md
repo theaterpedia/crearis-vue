@@ -532,6 +532,13 @@ tsx tests/scripts/run-test.ts "specific test name"
 ## 📚 Next Steps (Stage C)
 
 After Stage B approval:
+- TBD
+
+---
+
+## 📚 Next Steps (Stage D)
+
+After Stage C approval:
 
 1. **Analyze db.ts Usage**
    - Search for all imports of `db.ts`

@@ -19,8 +19,11 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 - [Completion](./vitest/stage-b-complete.md) - What was delivered
 - [Presentation](./vitest/STAGE-B-PRESENTATION.md) - Review summary
 
-### Stage C: Coverage & Validation
+### Stage C: TBD
 - *Coming after Stage B approval*
+
+### Stage D: Coverage & Validation
+- *Coming after Stage C approval*
 
 ---
 
@@ -54,7 +57,8 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 |-------|--------|---------------|
 | **Stage A** | ✅ Complete | Database infrastructure with dual-logic |
 | **Stage B** | ✅ Complete | Vitest testing infrastructure |
-| **Stage C** | ⏳ Pending | Coverage & validation |
+| **Stage C** | ⏳ Pending | TBD |
+| **Stage D** | ⏳ Pending | Coverage & validation |
 
 ---
 
@@ -72,6 +76,9 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 - ✅ Complete documentation
 
 ### Pending (Stage C)
+- ⏳ TBD
+
+### Pending (Stage D)
 - ⏳ Analyze all db.ts usage in codebase
 - ⏳ Identify PostgreSQL compatibility concerns
 - ⏳ Add comprehensive test coverage
@@ -227,6 +234,13 @@ See [CI/CD Integration](./vitest/README.md#cicd-integration) for details.
 ## 🎯 Stage C Preview
 
 After Stage B approval, Stage C will:
+- TBD
+
+---
+
+## 🎯 Stage D Preview
+
+After Stage C approval, Stage D will:
 
 ### 1. Code Analysis
 - Search for all db.ts imports
@@ -315,6 +329,6 @@ After Stage B approval, Stage C will:
 
 ---
 
-**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ⏳  
+**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ⏳ | Stage D ⏳  
 **Last Updated:** October 15, 2025  
 **Ready For:** Stage C (awaiting approval)
