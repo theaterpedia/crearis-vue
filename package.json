@@ -36,7 +36,16 @@
     "build:nitro": "nitro build",
     "start": "node .output/server/index.mjs",
     "preview": "nitro preview",
-    "prepare": "nitro prepare"
+    "prepare": "nitro prepare",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:sqlite": "TEST_DATABASE_TYPE=sqlite vitest run",
+    "test:pg": "TEST_DATABASE_TYPE=postgresql vitest run",
+    "test:pgintegration": "tsx tests/scripts/run-pg-integration.ts",
+    "test:pgintegration:batch": "TEST_DATABASE_TYPE=postgresql vitest run --grep='@pgintegration'",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.0",
@@ -54,12 +63,16 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.12",
+    "@types/pg": "^8.11.10",
     "@vitejs/plugin-vue": "^5.1.0",
+    "@vitest/ui": "^2.1.8",
     "@vue/tsconfig": "^0.8.1",
     "concurrently": "^9.2.1",
+    "pg": "^8.13.1",
     "tsx": "^4.20.6",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
+    "vitest": "^2.1.8",
     "vue-tsc": "^2.1.10"
   }
 }
