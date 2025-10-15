@@ -6,6 +6,7 @@
 import type { DatabaseAdapter } from '../adapter'
 import { runBaseSchemaMigration, metadata as baseMeta } from './000_base_schema'
 import { runConfigTableMigration, metadata as configMeta } from './001_init_schema'
+import { runSchemaAlignmentMigration, metadata as alignMeta } from './002_align_schema'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -21,6 +22,7 @@ interface Migration {
 const migrations: Migration[] = [
     { run: runBaseSchemaMigration, metadata: baseMeta },
     { run: runConfigTableMigration, metadata: configMeta },
+    { run: runSchemaAlignmentMigration, metadata: alignMeta },
 ]
 
 /**
@@ -43,29 +45,39 @@ async function getMigrationsRun(db: DatabaseAdapter): Promise<string[]> {
  * Mark a migration as run
  */
 async function markMigrationRun(db: DatabaseAdapter, migrationId: string) {
-    const isPostgres = db.type === 'postgresql'
-    const migrationsRun = await getMigrationsRun(db)
+    try {
+        const isPostgres = db.type === 'postgresql'
+        const migrationsRun = await getMigrationsRun(db)
 
-    if (!migrationsRun.includes(migrationId)) {
-        migrationsRun.push(migrationId)
-    }
+        if (!migrationsRun.includes(migrationId)) {
+            migrationsRun.push(migrationId)
+        }
 
-    if (isPostgres) {
-        await db.run(
-            `UPDATE crearis_config 
-       SET config = jsonb_set(config, '{migrations_run}', $1::jsonb)
-       WHERE id = 1`,
-            [JSON.stringify(migrationsRun)]
-        )
-    } else {
-        const result = await db.get('SELECT config FROM crearis_config WHERE id = 1', [])
-        const config = JSON.parse((result as any).config)
-        config.migrations_run = migrationsRun
+        if (isPostgres) {
+            await db.run(
+                `UPDATE crearis_config 
+         SET config = jsonb_set(config, '{migrations_run}', $1::jsonb)
+         WHERE id = 1`,
+                [JSON.stringify(migrationsRun)]
+            )
+        } else {
+            const result = await db.get('SELECT config FROM crearis_config WHERE id = 1', [])
+            const config = JSON.parse((result as any).config)
+            config.migrations_run = migrationsRun
 
-        await db.run(
-            'UPDATE crearis_config SET config = ? WHERE id = 1',
-            [JSON.stringify(config)]
-        )
+            await db.run(
+                'UPDATE crearis_config SET config = ? WHERE id = 1',
+                [JSON.stringify(config)]
+            )
+        }
+    } catch (error: any) {
+        // If crearis_config doesn't exist yet (e.g., during first migration),
+        // silently skip tracking. The config table migration will initialize tracking.
+        if (error.code === '42P01' || error.message?.includes('no such table')) {
+            console.log(`  ⚠️  Skipping migration tracking (config table not yet created)`)
+            return
+        }
+        throw error
     }
 }
 

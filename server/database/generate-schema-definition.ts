@@ -180,9 +180,11 @@ async function generateSchemaDefinition(version: string) {
 }
 
 // Main
+import { readFileSync } from 'fs'
+
 const version = process.argv[2] || (() => {
     const packageJson = JSON.parse(
-        require('fs').readFileSync(join(__dirname, '../../package.json'), 'utf-8')
+        readFileSync(join(__dirname, '../../package.json'), 'utf-8')
     )
     return packageJson.version
 })()

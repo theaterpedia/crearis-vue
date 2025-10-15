@@ -1,9 +1,23 @@
 {
   "version": "0.0.1",
   "schemaVersion": 1,
-  "generatedAt": "2025-10-15T12:52:38.391Z",
+  "generatedAt": "2025-10-15T14:00:09.056Z",
   "description": "Database schema for crearis-demo-data system v0.0.1",
   "tables": {
+    "crearis_config": {
+      "description": "Crearis_config table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('crearis_config_id_seq'::regclass)"
+        },
+        "config": {
+          "type": "JSONB",
+          "nullable": false
+        }
+      }
+    },
     "events": {
       "description": "Events table",
       "columns": {
@@ -70,10 +84,9 @@
           "nullable": true,
           "default": "'active'::text"
         },
-        "isBase": {
+        "isbase": {
           "type": "INTEGER",
           "nullable": true,
-          "primaryKey": false,
           "default": "0"
         }
       }
@@ -582,18 +595,15 @@
         },
         "release_id": {
           "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
+          "nullable": true
         },
         "image": {
           "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
+          "nullable": true
         },
         "prompt": {
           "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
+          "nullable": true
         }
       }
     },
@@ -676,6 +686,12 @@
   },
   "databaseDifferences": {
     "postgresql": {
+      "events": {
+        "additionalColumns": [
+          "isbase"
+        ],
+        "description": "PostgreSQL has additional columns"
+      },
       "projects": {
         "additionalColumns": [
           "name",
@@ -693,9 +709,10 @@
     },
     "sqlite": {
       "events": {
-        "additionalColumns": [
-          "isBase"
-        ]
+        "missingColumns": [
+          "isbase"
+        ],
+        "description": "SQLite is missing these columns"
       },
       "projects": {
         "missingColumns": [
@@ -709,12 +726,7 @@
         "missingColumns": [
           "version_id"
         ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "release_id",
-          "image",
-          "prompt"
-        ]
+        "description": "SQLite is missing these columns"
       }
     }
   }

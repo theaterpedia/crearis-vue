@@ -342,10 +342,10 @@ export async function createIndexes(db: DatabaseAdapter) {
       CREATE INDEX IF NOT EXISTS idx_record_versions_lookup ON record_versions(version_id, record_type, record_id);
     `)
     } else {
+        // SQLite doesn't have tasks.version_id column (expected difference)
         await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_tasks_record ON tasks(record_type, record_id);
-      CREATE INDEX IF NOT EXISTS idx_tasks_version ON tasks(version_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category);
       CREATE INDEX IF NOT EXISTS idx_versions_active ON versions(is_active);
       CREATE INDEX IF NOT EXISTS idx_record_versions_lookup ON record_versions(version_id, record_type, record_id);
