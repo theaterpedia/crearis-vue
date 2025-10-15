@@ -1,10 +1,19 @@
-# PostgreSQL Integration - All Stages
+# Demo-Data Project Documentation
 
-Complete documentation for PostgreSQL database integration in demo-data project.
+Complete documentation for the demo-data project including database management, testing, and schema migrations.
 
 ---
 
 ## 📚 Documentation Index
+
+### Database Schema Migrations
+- **[Schema Migration Complete](./SCHEMA_MIGRATION_COMPLETE.md)** - 🎉 Complete overview of all 4 phases
+- [Database Migrations Guide](./DATABASE_MIGRATIONS.md) - 📖 Comprehensive developer guide (784 lines)
+- [Migration Plan](./SCHEMA_MIGRATION_PLAN.md) - Original 4-phase plan (SCHEM-A through SCHEM-D)
+- [SCHEM-A & B Complete](./SCHEM-A-B-COMPLETE.md) - Centralization & decoupling implementation
+- [SCHEM-C Complete](./SCHEM-C-COMPLETE.md) - Schema validation & alignment
+- [SCHEM-D Complete](./SCHEM-D-COMPLETE.md) - Version management integration
+- [Migration Template](../server/database/migrations/003_example.ts) - Example migration file (321 lines)
 
 ### Stage A: Database Infrastructure
 - [Overview](./postgresql/README.md) - Architecture and quick start
@@ -34,11 +43,19 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 
 ## 🚀 Quick Access
 
+### For Database Migrations
+- **[Database Migrations Guide](./DATABASE_MIGRATIONS.md)** - Start here for migrations
+- Check migration status: `pnpm db:migrate:status`
+- Run migrations: `pnpm db:migrate`
+- Validate schema: `pnpm version:check`
+- Update version: `pnpm version:bump`
+
 ### For First-Time Setup
 1. Read [PostgreSQL Quick Start](./postgresql/README.md#quick-start)
 2. Read [Vitest Quick Start](./vitest/QUICK-START.md)
 3. Run `pnpm install`
-4. Run `pnpm test`
+4. Run `pnpm db:migrate` (initializes databases)
+5. Run `pnpm test`
 
 ### For Writing Tests
 - [Testing Guide](./vitest/README.md)
@@ -48,6 +65,7 @@ Complete documentation for PostgreSQL database integration in demo-data project.
 ### For Configuration
 - [Database Config](./postgresql/README.md#configuration)
 - [Test Config](./vitest/README.md#configuration)
+- [Migration System](./DATABASE_MIGRATIONS.md)
 - [Environment Variables](./.env.database.example)
 
 ### For Troubleshooting

@@ -47,9 +47,11 @@
     "test:pgintegration:batch": "TEST_DATABASE_TYPE=postgresql vitest run --grep='@pgintegration'",
     "test:watch": "vitest watch",
     "db:migrate": "tsx server/database/migrations/run.ts",
+    "db:migrate:status": "tsx server/database/migrations/run.ts --status",
     "db:check-structure": "tsx server/database/check-structure.ts",
     "db:check-structure:version": "tsx server/database/check-structure.ts",
-    "db:update-version": "tsx server/database/update-version.ts"
+    "version:check": "tsx server/database/check-structure.ts",
+    "version:bump": "tsx server/database/update-version.ts"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.0",
