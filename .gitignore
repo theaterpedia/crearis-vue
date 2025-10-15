@@ -17,6 +17,7 @@ dist/
 *.db-shm
 *.db-wal
 demo-data.db
+projectnames_and_users.csv
 
 # Logs
 logs/

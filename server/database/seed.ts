@@ -1,0 +1,462 @@
+/**
+ * Database Seeding Module
+ * Automatically seeds database with CSV data and user/project information
+ */
+
+import fs from 'fs'
+import path from 'path'
+import readline from 'readline'
+import bcrypt from 'bcryptjs'
+import type { DatabaseAdapter } from './adapter'
+
+const CSV_DIR = path.resolve(process.cwd(), 'src/assets/csv')
+const USERS_CSV_PATH = path.resolve(process.cwd(), 'projectnames_and_users.csv')
+
+interface UserProjectData {
+    name: string
+    password: string
+}
+
+/**
+ * Parse CSV file
+ */
+function parseCSV(csvText: string): any[] {
+    const lines = csvText.trim().split('\n')
+    if (lines.length === 0) return []
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+
+    return lines.slice(1).map(line => {
+        const values: string[] = []
+        let current = ''
+        let inQuotes = false
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i]
+            if (char === '"' && (i === 0 || line[i - 1] === ',')) {
+                inQuotes = true
+            } else if (char === '"' && (i === line.length - 1 || line[i + 1] === ',')) {
+                inQuotes = false
+            } else if (char === ',' && !inQuotes) {
+                values.push(current.trim())
+                current = ''
+            } else if (!(char === '"' && (i === 0 || line[i - 1] === ',' || i === line.length - 1 || line[i + 1] === ','))) {
+                current += char
+            }
+        }
+        values.push(current.trim())
+
+        const obj: any = {}
+        headers.forEach((header, index) => {
+            obj[header] = values[index] || ''
+        })
+        return obj
+    })
+}
+
+/**
+ * Prompt for user input
+ */
+async function prompt(question: string): Promise<string> {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+    return new Promise<string>(resolve => rl.question(question, answer => { rl.close(); resolve(answer) }))
+}
+
+/**
+ * Ensure the projectnames_and_users.csv file exists.
+ * If it doesn't exist, create it with default passwords.
+ */
+async function ensureUsersProjectsFile(): Promise<UserProjectData[]> {
+    const filePath = path.join(process.cwd(), 'projectnames_and_users.csv')
+
+    // If file exists, read and parse it
+    if (fs.existsSync(filePath)) {
+        console.log('� Reading projectnames_and_users.csv...')
+        const csvText = fs.readFileSync(filePath, 'utf-8')
+        const data = parseCSV(csvText)
+
+        // Convert to UserProjectData format
+        return data.map((row: any) => ({
+            name: row.name || row.username, // Support both column names
+            password: row.password || 'password123', // Default if missing
+        }))
+    }
+
+    // File doesn't exist - create it with default passwords
+    console.log('📝 projectnames_and_users.csv not found - creating with default passwords...')
+    console.log('   Default password for all users: "password123"')
+    console.log('   You can edit this file to change passwords before reseeding.\n')
+
+    const defaultUsers = ['admin', 'base', 'project1', 'project2']
+    const userData: UserProjectData[] = defaultUsers.map(name => ({
+        name,
+        password: 'password123'
+    }))
+
+    // Write to CSV file
+    const csvContent = 'name,password\n' +
+        userData.map(u => `${u.name},${u.password}`).join('\n')
+
+    fs.writeFileSync(filePath, csvContent, 'utf-8')
+    console.log(`✅ Created projectnames_and_users.csv with ${userData.length} entries\n`)
+
+    return userData
+}
+
+/**
+ * Seed users and projects
+ */
+async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectData[]) {
+    console.log('👥 Seeding users and projects...')
+
+    for (const user of userData) {
+        // Hash password
+        const hashedPassword = await bcrypt.hash(user.password, 10)
+
+        // Generate IDs (TEXT type, so we use username as ID for simplicity)
+        const userId = user.name
+        const projectId = user.name
+
+        // Insert user
+        await db.run(`
+            INSERT INTO users (id, username, password, role)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                password = excluded.password,
+                role = excluded.role
+        `, [userId, user.name, hashedPassword, user.name === 'admin' ? 'admin' : 'user'])
+
+        // Insert project with same name
+        // Projects table has: id, username, password_hash, role, name, description, status
+        await db.run(`
+            INSERT INTO projects (id, username, password_hash, role, name, description, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                name = excluded.name,
+                description = excluded.description,
+                status = excluded.status
+        `, [
+            projectId,
+            user.name,
+            hashedPassword,
+            user.name === 'admin' ? 'admin' : user.name === 'base' ? 'base' : 'project',
+            user.name,
+            `Project for ${user.name}`,
+            'active'
+        ])
+    }
+
+    console.log(`   ✅ Created ${userData.length} users and projects`)
+}
+
+/**
+ * Seed CSV data into database
+ */
+async function seedCSVData(db: DatabaseAdapter) {
+    console.log('📊 Seeding CSV data...')
+
+    try {
+        // Read all CSV files
+        const eventsCSV = fs.readFileSync(path.join(CSV_DIR, 'events.csv'), 'utf-8')
+        const postsCSV = fs.readFileSync(path.join(CSV_DIR, 'posts.csv'), 'utf-8')
+        const locationsCSV = fs.readFileSync(path.join(CSV_DIR, 'locations.csv'), 'utf-8')
+        const instructorsCSV = fs.readFileSync(path.join(CSV_DIR, 'instructors.csv'), 'utf-8')
+        const childrenCSV = fs.readFileSync(path.join(CSV_DIR, 'children.csv'), 'utf-8')
+        const teensCSV = fs.readFileSync(path.join(CSV_DIR, 'teens.csv'), 'utf-8')
+        const adultsCSV = fs.readFileSync(path.join(CSV_DIR, 'adults.csv'), 'utf-8')
+
+        // Parse CSV data
+        const events = parseCSV(eventsCSV)
+        const posts = parseCSV(postsCSV)
+        const locations = parseCSV(locationsCSV)
+        const instructors = parseCSV(instructorsCSV)
+        const children = parseCSV(childrenCSV)
+        const teens = parseCSV(teensCSV)
+        const adults = parseCSV(adultsCSV)
+
+        // Seed events first (they are referenced by other tables)
+        console.log('   📅 Seeding events...')
+        for (const event of events) {
+            await db.run(`
+                INSERT INTO events 
+                (id, name, date_begin, date_end, address_id, user_id, seats_max, cimg, header_type, rectitle, teaser)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    date_begin = excluded.date_begin,
+                    date_end = excluded.date_end,
+                    address_id = excluded.address_id,
+                    user_id = excluded.user_id,
+                    seats_max = excluded.seats_max,
+                    cimg = excluded.cimg,
+                    header_type = excluded.header_type,
+                    rectitle = excluded.rectitle,
+                    teaser = excluded.teaser
+            `, [
+                event.id,
+                event.name,
+                event.date_begin,
+                event.date_end,
+                event['address_id/id'] || event.address_id,
+                event['user_id/id'] || event.user_id,
+                event.seats_max || 0,
+                event.cimg,
+                event.header_type,
+                event.rectitle,
+                event.teaser
+            ])
+        }
+        console.log(`   ✅ Seeded ${events.length} events`)
+
+        // Seed locations
+        console.log('   📍 Seeding locations...')
+        for (const location of locations) {
+            await db.run(`
+                INSERT INTO locations 
+                (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    phone = excluded.phone,
+                    email = excluded.email,
+                    city = excluded.city,
+                    zip = excluded.zip,
+                    street = excluded.street,
+                    country_id = excluded.country_id,
+                    is_company = excluded.is_company,
+                    category_id = excluded.category_id,
+                    cimg = excluded.cimg,
+                    header_type = excluded.header_type,
+                    header_size = excluded.header_size,
+                    md = excluded.md,
+                    is_location_provider = excluded.is_location_provider,
+                    event_id = excluded.event_id
+            `, [
+                location.id,
+                location.name,
+                location.phone,
+                location.email,
+                location.city,
+                location.zip,
+                location.street,
+                location['country_id/id'] || location.country_id,
+                location.is_company,
+                location['category_id/id'] || location.category_id,
+                location.cimg,
+                location.header_type,
+                location.header_size,
+                location.md,
+                location.is_location_provider,
+                location.event_id
+            ])
+        }
+        console.log(`   ✅ Seeded ${locations.length} locations`)
+
+        // Seed instructors
+        console.log('   👨‍🏫 Seeding instructors...')
+        for (const instructor of instructors) {
+            await db.run(`
+                INSERT INTO instructors 
+                (id, name, email, phone, city, country_id, cimg, description, event_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    email = excluded.email,
+                    phone = excluded.phone,
+                    city = excluded.city,
+                    country_id = excluded.country_id,
+                    cimg = excluded.cimg,
+                    description = excluded.description,
+                    event_id = excluded.event_id
+            `, [
+                instructor.id,
+                instructor.name,
+                instructor.email,
+                instructor.phone,
+                instructor.city,
+                instructor['country_id/id'] || instructor.country_id,
+                instructor.cimg,
+                instructor.description,
+                instructor['event_id/id'] || instructor.event_id
+            ])
+        }
+        console.log(`   ✅ Seeded ${instructors.length} instructors`)
+
+        // Seed participants (children, teens, adults)
+        console.log('   👶 Seeding participants...')
+        let participantCount = 0
+
+        for (const child of children) {
+            await db.run(`
+                INSERT INTO participants 
+                (id, name, age, city, country_id, cimg, description, event_id, type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    age = excluded.age,
+                    city = excluded.city,
+                    country_id = excluded.country_id,
+                    cimg = excluded.cimg,
+                    description = excluded.description,
+                    event_id = excluded.event_id,
+                    type = excluded.type
+            `, [
+                child.id,
+                child.name,
+                child.age || null,
+                child.city,
+                child['country_id/id'] || child.country_id,
+                child.cimg,
+                child.description,
+                child['event_id/id'] || child.event_id,
+                'child'
+            ])
+            participantCount++
+        }
+
+        for (const teen of teens) {
+            await db.run(`
+                INSERT INTO participants 
+                (id, name, age, city, country_id, cimg, description, event_id, type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    age = excluded.age,
+                    city = excluded.city,
+                    country_id = excluded.country_id,
+                    cimg = excluded.cimg,
+                    description = excluded.description,
+                    event_id = excluded.event_id,
+                    type = excluded.type
+            `, [
+                teen.id,
+                teen.name,
+                teen.age || null,
+                teen.city,
+                teen['country_id/id'] || teen.country_id,
+                teen.cimg,
+                teen.description,
+                teen['event_id/id'] || teen.event_id,
+                'teen'
+            ])
+            participantCount++
+        }
+
+        for (const adult of adults) {
+            await db.run(`
+                INSERT INTO participants 
+                (id, name, age, city, country_id, cimg, description, event_id, type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    age = excluded.age,
+                    city = excluded.city,
+                    country_id = excluded.country_id,
+                    cimg = excluded.cimg,
+                    description = excluded.description,
+                    event_id = excluded.event_id,
+                    type = excluded.type
+            `, [
+                adult.id,
+                adult.name,
+                adult.age || null,
+                adult.city,
+                adult['country_id/id'] || adult.country_id,
+                adult.cimg,
+                adult.description,
+                adult['event_id/id'] || adult.event_id,
+                'adult'
+            ])
+            participantCount++
+        }
+        console.log(`   ✅ Seeded ${participantCount} participants`)
+
+        // Seed posts
+        console.log('   📰 Seeding posts...')
+        for (const post of posts) {
+            await db.run(`
+                INSERT INTO posts 
+                (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    subtitle = excluded.subtitle,
+                    teaser = excluded.teaser,
+                    author_id = excluded.author_id,
+                    blog_id = excluded.blog_id,
+                    tag_ids = excluded.tag_ids,
+                    website_published = excluded.website_published,
+                    is_published = excluded.is_published,
+                    post_date = excluded.post_date,
+                    cover_properties = excluded.cover_properties,
+                    event_id = excluded.event_id,
+                    cimg = excluded.cimg
+            `, [
+                post.id,
+                post.name,
+                post.subtitle,
+                post.teaser,
+                post['author_id/id'] || post.author_id,
+                post['blog_id/id'] || post.blog_id,
+                post['tag_ids/id'] || post.tag_ids,
+                post.website_published,
+                post.is_published,
+                post.post_date,
+                post.cover_properties,
+                post['event_id/id'] || post.event_id,
+                post.cimg
+            ])
+        }
+        console.log(`   ✅ Seeded ${posts.length} posts`)
+
+        console.log('✅ CSV data seeding complete!')
+    } catch (error: any) {
+        console.error('❌ Error seeding CSV data:', error.message)
+        throw error
+    }
+}
+
+/**
+ * Check if database needs seeding (no data in key tables)
+ */
+async function needsSeeding(db: DatabaseAdapter): Promise<boolean> {
+    try {
+        const result = await db.get('SELECT COUNT(*) as count FROM events', [])
+        return (result as any).count === 0
+    } catch (error) {
+        // If query fails, assume seeding is needed
+        return true
+    }
+}
+
+/**
+ * Main seeding function
+ * Called after fresh database initialization
+ */
+export async function seedDatabase(db: DatabaseAdapter): Promise<void> {
+    // Check if seeding is needed
+    const needs = await needsSeeding(db)
+    if (!needs) {
+        console.log('ℹ️  Database already has data - skipping seeding')
+        return
+    }
+
+    console.log('\n🌱 Starting database seeding...\n')
+
+    try {
+        // Step 1: Ensure users/projects file exists and get data
+        const userData = await ensureUsersProjectsFile()
+
+        // Step 2: Seed users and projects
+        await seedUsersAndProjects(db, userData)
+
+        // Step 3: Seed CSV data
+        await seedCSVData(db)
+
+        console.log('\n🎉 Database seeding completed successfully!\n')
+    } catch (error: any) {
+        console.error('\n❌ Database seeding failed:', error.message)
+        throw error
+    }
+}

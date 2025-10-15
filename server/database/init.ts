@@ -14,6 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { db } from './db-new'
 import { runMigrations } from './migrations/index'
+import { seedDatabase } from './seed'
 
 interface ConfigData {
     version: string
@@ -70,6 +71,10 @@ async function initializeDatabase() {
         await runMigrations(db, true)
 
         console.log('✅ Database schema created successfully!\n')
+
+        // Seed database with CSV data and users/projects
+        await seedDatabase(db)
+
         return
     }
 

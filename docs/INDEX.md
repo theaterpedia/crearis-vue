@@ -6,17 +6,20 @@ Complete documentation for the demo-data project including database management, 
 
 ## 📚 Documentation Index
 
-### Database Schema Migrations
-- **[Automatic Initialization](./AUTOMATIC_INITIALIZATION.md)** - 🚀 Smart database startup (NEW!)
-- **[Schema Migration Complete](./SCHEMA_MIGRATION_COMPLETE.md)** - 🎉 Complete overview of all 4 phases
+### Database Setup & Operations
+- **[Database Setup Guide](./postgresql/database-setup.md)** - 🎯 **START HERE** - Complete setup, migration & seeding guide
+- **[Automatic Initialization](./AUTOMATIC_INITIALIZATION.md)** - 🚀 Smart database startup (technical deep-dive)
 - [Database Migrations Guide](./DATABASE_MIGRATIONS.md) - 📖 Comprehensive developer guide (784 lines)
+
+### Database Schema Migrations (Technical Reference)
+- **[Schema Migration Complete](./SCHEMA_MIGRATION_COMPLETE.md)** - 🎉 Complete overview of all 4 phases
 - [Migration Plan](./SCHEMA_MIGRATION_PLAN.md) - Original 4-phase plan (SCHEM-A through SCHEM-D)
 - [SCHEM-A & B Complete](./SCHEM-A-B-COMPLETE.md) - Centralization & decoupling implementation
 - [SCHEM-C Complete](./SCHEM-C-COMPLETE.md) - Schema validation & alignment
 - [SCHEM-D Complete](./SCHEM-D-COMPLETE.md) - Version management integration
 - [Migration Template](../server/database/migrations/003_example.ts) - Example migration file (321 lines)
 
-### Stage A: Database Infrastructure
+### Stage A: Database Infrastructure (Technical Reference)
 - [Overview](./postgresql/README.md) - Architecture and quick start
 - [Technical Summary](./postgresql/stage-a-summary.md) - Implementation details
 - [Completion](./postgresql/stage-a-complete.md) - What was delivered
@@ -44,19 +47,23 @@ Complete documentation for the demo-data project including database management, 
 
 ## 🚀 Quick Access
 
+### For First-Time Setup (Database)
+1. **Read [Database Setup Guide](./postgresql/database-setup.md)** - Complete walkthrough
+2. Create PostgreSQL database: `sudo -u postgres psql -c "CREATE DATABASE crearis_admin_dev OWNER persona;"`
+3. Run `pnpm dev` - Automatic initialization, migrations & seeding!
+4. Login with: `admin` / `password123`
+
 ### For Database Migrations
-- **[Database Migrations Guide](./DATABASE_MIGRATIONS.md)** - Start here for migrations
+- **[Database Setup Guide](./postgresql/database-setup.md)** - Comprehensive guide
 - Check migration status: `pnpm db:migrate:status`
 - Run migrations: `pnpm db:migrate`
 - Validate schema: `pnpm version:check`
 - Update version: `pnpm version:bump`
 
-### For First-Time Setup
-1. Read [PostgreSQL Quick Start](./postgresql/README.md#quick-start)
-2. Read [Vitest Quick Start](./vitest/QUICK-START.md)
-3. Run `pnpm install`
-4. Run `pnpm db:migrate` (initializes databases)
-5. Run `pnpm test`
+### For First-Time Setup (Testing)
+1. Read [Vitest Quick Start](./vitest/QUICK-START.md)
+2. Run `pnpm install`
+3. Run `pnpm test`
 
 ### For Writing Tests
 - [Testing Guide](./vitest/README.md)
@@ -153,14 +160,24 @@ demo-data/
 
 ## 🔧 Commands Reference
 
-### Database
+### Database Setup & Operations
 ```bash
-# SQLite (default)
-DATABASE_TYPE=sqlite
+# First-time setup (creates database, runs migrations, seeds data)
+pnpm dev
 
-# PostgreSQL
-DATABASE_TYPE=postgresql
-DATABASE_URL=postgresql://localhost:5432/demo_data
+# Check migration status
+pnpm db:migrate:status
+
+# Run pending migrations
+pnpm db:migrate
+
+# Check/update version
+pnpm version:check
+pnpm version:bump
+
+# Database inspection
+sudo -u postgres psql -d crearis_admin_dev -c "\dt"  # List tables
+sudo -u postgres psql -d crearis_admin_dev -c "SELECT * FROM users;"  # View users
 ```
 
 ### Testing
@@ -220,10 +237,10 @@ When something goes wrong:
 ## 🎓 Learning Path
 
 ### Beginner (Never used this setup)
-1. Read [PostgreSQL Quick Start](./postgresql/README.md#quick-start)
+1. Read [Database Setup Guide](./postgresql/database-setup.md) - Start here!
 2. Read [Vitest Quick Start](./vitest/QUICK-START.md)
-3. Run `pnpm test` to see tests in action
-4. Read one sample test to understand structure
+3. Run `pnpm dev` to initialize database
+4. Run `pnpm test` to see tests in action
 
 ### Intermediate (Writing tests)
 1. Read [Testing Guide](./vitest/README.md)
@@ -282,30 +299,6 @@ Stage C delivers a complete automated setup solution:
 
 ---
 
-## 🎯 Stage D Preview
-
-After Stage C approval, Stage D will:
-
-### 1. Code Analysis
-- Search for all db.ts imports
-- Identify files using database
-- Check for async/await requirements
-- Find compatibility concerns
-
-### 2. Coverage Tests
-- Test all API endpoints
-- Verify query patterns work
-- Test edge cases
-- Validate error handling
-
-### 3. Performance & Validation
-- Benchmark both databases
-- Test under load
-- Verify production readiness
-- Create migration guide
-
----
-
 ## 📊 Project Statistics
 
 **Stage A:**
@@ -353,26 +346,26 @@ After Stage C approval, Stage D will:
 
 ## ✅ Checklist: Are You Ready?
 
-### For SQLite Testing
+### For Database Development
+- [ ] PostgreSQL installed and running
+- [ ] Database created (`sudo -u postgres psql -c "CREATE DATABASE crearis_admin_dev OWNER persona;"`)
+- [ ] Run `pnpm dev` (automatic initialization + seeding)
+- [ ] Verify users created: `sudo -u postgres psql -d crearis_admin_dev -c "SELECT * FROM users;"`
+- [ ] Login works: `admin` / `password123`
+
+### For Testing
 - [ ] Run `pnpm install`
 - [ ] Run `pnpm test`
 - [ ] Check `test-results/index.html`
 
-### For PostgreSQL Testing
-- [ ] PostgreSQL installed and running
-- [ ] Test database created (`createdb demo_data_test`)
-- [ ] Connection verified (`psql demo_data_test -c "SELECT 1"`)
-- [ ] Run `pnpm test:pgintegration`
-- [ ] Check test results
-
 ### For Development
-- [ ] Read testing guide
-- [ ] Understand test utilities
-- [ ] Know how to run specific tests
-- [ ] Familiar with watch mode
+- [ ] Read [Database Setup Guide](./postgresql/database-setup.md)
+- [ ] Understand migration system
+- [ ] Know how to create migrations
+- [ ] Familiar with seeding process
 
 ---
 
-**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ✅ | Stage D ⏳  
-**Last Updated:** October 15, 2025  
-**Ready For:** Stage D (awaiting approval)
+**Current Status:** Stage A ✅ | Stage B ✅ | Stage C ✅ | Stage D ✅  
+**Database Setup:** Automatic initialization, migrations & seeding ✅  
+**Last Updated:** October 15, 2025
