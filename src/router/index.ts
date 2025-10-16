@@ -9,7 +9,7 @@ const router = createRouter({
     // Protected routes
     { path: '/', component: () => import('../views/TaskDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
-    { path: '/project', component: () => import('../views/ProjectView.vue'), meta: { requiresAuth: true, role: 'project' } },
+    { path: '/project', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
 
     // Other routes
     { path: '/home', component: () => import('../views/index.vue') },
