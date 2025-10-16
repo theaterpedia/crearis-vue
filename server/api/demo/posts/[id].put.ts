@@ -17,13 +17,11 @@ export default defineEventHandler(async (event) => {
         const result = await db.run(
             `UPDATE posts SET 
         name = ?,
-        subtitle = ?,
         teaser = ?,
         cimg = ?
       WHERE id = ?`,
             [
                 body.name,
-                body.subtitle,
                 body.teaser,
                 body.cimg,
                 id

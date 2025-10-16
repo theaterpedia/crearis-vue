@@ -14,7 +14,9 @@
 
         <!-- Task Header -->
         <div class="task-header">
-            <h4 class="task-title">{{ displayTitle }}</h4>
+            <div class="task-title">
+                <HeadingParser :content="displayTitle" as="h4" />
+            </div>
             <div class="task-actions">
                 <button class="action-btn edit-btn" @click="$emit('edit', task)" title="Edit task">
                     ✎
@@ -64,6 +66,7 @@
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import CategoryBadge from './CategoryBadge.vue'
+import HeadingParser from './HeadingParser.vue'
 
 interface Task {
     id?: string

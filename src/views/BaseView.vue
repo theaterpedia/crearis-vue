@@ -27,8 +27,7 @@
                             <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="event-option-image" />
 
                             <div class="event-option-label">
-                                <strong>{{ event.name }}</strong>
-                                <span v-if="event.rectitle" class="event-option-desc">{{ event.rectitle }}</span>
+                                <HeadingParser :content="event.name" as="p" />
                             </div>
 
                             <svg v-if="currentEventId === event.id" fill="currentColor" height="16"
@@ -99,8 +98,7 @@
                     </div>
 
                     <div class="hero-content">
-                        <h2>{{ currentEvent.name }}</h2>
-                        <p v-if="currentEvent.rectitle" class="hero-subtitle">{{ currentEvent.rectitle }}</p>
+                        <HeadingParser :content="currentEvent.name" as="h2" />
                         <p v-if="currentEvent.teaser" class="hero-teaser">{{ currentEvent.teaser }}</p>
                         <div class="hero-dates">
                             {{ formatEventDate(currentEvent.date_begin) }} – {{ formatEventDate(currentEvent.date_end)
@@ -129,8 +127,7 @@
                             <img v-if="post.cimg" :src="post.cimg" :alt="post.name" class="entity-image" />
 
                             <div class="entity-content">
-                                <h4>{{ post.name }}</h4>
-                                <p v-if="post.subtitle" class="entity-subtitle">{{ post.subtitle }}</p>
+                                <HeadingParser :content="post.name" as="h4" />
                                 <p v-if="post.teaser" class="entity-teaser">{{ post.teaser }}</p>
                             </div>
                         </div>
@@ -152,7 +149,7 @@
                         <div v-if="getAdditionalTasks('post').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -183,7 +180,7 @@
                             <img v-if="location.cimg" :src="location.cimg" :alt="location.name" class="entity-image" />
 
                             <div class="entity-content">
-                                <h4>{{ location.name }}</h4>
+                                <HeadingParser :content="location.name" as="h4" />
                                 <p v-if="location.street" class="entity-info">{{ location.street }}</p>
                                 <p v-if="location.zip || location.city" class="entity-info">{{ location.zip }} {{
                                     location.city }}</p>
@@ -207,7 +204,7 @@
                         <div v-if="getAdditionalTasks('location').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -239,7 +236,7 @@
                                 class="entity-image" />
 
                             <div class="entity-content">
-                                <h4>{{ instructor.name }}</h4>
+                                <HeadingParser :content="instructor.name" as="h4" />
                                 <p v-if="instructor.description" class="entity-info">{{ instructor.description }}</p>
                             </div>
                         </div>
@@ -262,7 +259,7 @@
                         <div v-if="getAdditionalTasks('instructor').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -372,10 +369,6 @@
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
                             </div>
                             <div class="form-group">
-                                <label>Untertitel</label>
-                                <input type="text" v-model="entityForm.rectitle" @input="markAsEdited" />
-                            </div>
-                            <div class="form-group">
                                 <label>Teaser</label>
                                 <textarea v-model="entityForm.teaser" rows="3" @input="markAsEdited"></textarea>
                             </div>
@@ -400,10 +393,6 @@
                             <div class="form-group">
                                 <label>Titel</label>
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
-                            </div>
-                            <div class="form-group">
-                                <label>Untertitel</label>
-                                <input type="text" v-model="entityForm.subtitle" @input="markAsEdited" />
                             </div>
                             <div class="form-group">
                                 <label>Teaser</label>
@@ -492,6 +481,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useDemoData } from '@/composables/useDemoData'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 
 const { user, requireAuth, logout: authLogout } = useAuth()
 

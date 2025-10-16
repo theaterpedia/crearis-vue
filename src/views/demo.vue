@@ -24,8 +24,7 @@
               <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="event-option-image" />
 
               <div class="event-option-label">
-                <strong>{{ event.name }}</strong>
-                <span v-if="event.rectitle" class="event-option-desc">{{ event.rectitle }}</span>
+                <HeadingParser :content="event.name" as="p" />
               </div>
 
               <svg v-if="currentEventId === event.id" fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
@@ -60,8 +59,7 @@
         </div>
 
         <div class="hero-content">
-          <h2>{{ currentEvent.name }}</h2>
-          <p v-if="currentEvent.rectitle" class="hero-subtitle">{{ currentEvent.rectitle }}</p>
+          <HeadingParser :content="currentEvent.name" as="h2" />
           <p v-if="currentEvent.teaser" class="hero-teaser">{{ currentEvent.teaser }}</p>
           <div class="hero-dates">
             {{ formatEventDate(currentEvent.date_begin) }} – {{ formatEventDate(currentEvent.date_end) }}
@@ -77,8 +75,7 @@
             <img v-if="post.cimg" :src="post.cimg" :alt="post.name" class="entity-image" />
 
             <div class="entity-content">
-              <h4>{{ post.name }}</h4>
-              <p v-if="post.subtitle" class="entity-subtitle">{{ post.subtitle }}</p>
+              <HeadingParser :content="post.name" as="h4" />
               <p v-if="post.teaser" class="entity-teaser">{{ post.teaser }}</p>
             </div>
           </div>
@@ -93,7 +90,7 @@
             <img v-if="location.cimg" :src="location.cimg" :alt="location.name" class="entity-image" />
 
             <div class="entity-content">
-              <h4>{{ location.name }}</h4>
+              <HeadingParser :content="location.name" as="h4" />
               <p v-if="location.street" class="entity-info">{{ location.street }}</p>
               <p v-if="location.zip || location.city" class="entity-info">{{ location.zip }} {{ location.city }}</p>
             </div>
@@ -109,7 +106,7 @@
             <img v-if="instructor.cimg" :src="instructor.cimg" :alt="instructor.name" class="entity-image" />
 
             <div class="entity-content">
-              <h4>{{ instructor.name }}</h4>
+              <HeadingParser :content="instructor.name" as="h4" />
               <p v-if="instructor.description" class="entity-info">{{ instructor.description }}</p>
             </div>
           </div>
@@ -126,7 +123,7 @@
             <div v-for="participant in currentEventChildren.slice(0, 4)" :key="participant.id" class="entity-card">
               <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
               <div class="entity-content">
-                <h5>{{ participant.name }}</h5>
+                <HeadingParser :content="participant.name" as="h5" />
                 <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
               </div>
             </div>
@@ -139,7 +136,7 @@
             <div v-for="participant in currentEventTeens.slice(0, 4)" :key="participant.id" class="entity-card">
               <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
               <div class="entity-content">
-                <h5>{{ participant.name }}</h5>
+                <HeadingParser :content="participant.name" as="h5" />
                 <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
               </div>
             </div>
@@ -152,7 +149,7 @@
             <div v-for="participant in currentEventAdults.slice(0, 4)" :key="participant.id" class="entity-card">
               <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
               <div class="entity-content">
-                <h5>{{ participant.name }}</h5>
+                <HeadingParser :content="participant.name" as="h5" />
                 <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
               </div>
             </div>
@@ -168,6 +165,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useDemoData } from '../composables/useDemoData'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 
 // Auth
 const { user, logout: authLogout } = useAuth()

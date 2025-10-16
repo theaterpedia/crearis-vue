@@ -454,6 +454,10 @@ export async function seedDatabase(db: DatabaseAdapter): Promise<void> {
         // Step 3: Seed CSV data
         await seedCSVData(db)
 
+        // Step 4: Seed admin watch tasks
+        const { seedAdminWatchTasks } = await import('./migrations/seed-admin-watch-tasks')
+        await seedAdminWatchTasks(db)
+
         console.log('\n🎉 Database seeding completed successfully!\n')
     } catch (error: any) {
         console.error('\n❌ Database seeding failed:', error.message)

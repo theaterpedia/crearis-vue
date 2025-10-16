@@ -196,9 +196,16 @@
                                     <span class="column-count">{{ trashTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
+                                    <!-- Regular tasks -->
                                     <TaskCard v-for="task in trashTasks" :key="task.id" :task="task" @edit="editTask"
                                         @delete="deleteTask" @drag-start="handleDragStart" />
-                                    <div v-if="trashTasks.length === 0" class="empty-column">
+
+                                    <!-- Trashed watch tasks -->
+                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.status === 'trash')"
+                                        :key="task.id" :task="task" @restore="restoreWatchTask" />
+
+                                    <div v-if="trashTasks.length === 0 && watchTasks.filter((t: any) => t.status === 'trash').length === 0"
+                                        class="empty-column">
                                         Keine Aufgaben
                                     </div>
                                 </div>
@@ -221,7 +228,18 @@
 
                         <!-- Admin Tasks List (visible when settingsMode is OFF) -->
                         <div v-if="!settingsMode">
-                            <AdminTasksList :tasks="adminTasks" :loading="adminTasksLoading"
+                            <!-- Watch Tasks Section -->
+                            <div v-if="watchTasks.length > 0" class="watch-tasks-section">
+                                <h3 class="section-title">Watch Tasks</h3>
+                                <div class="watch-tasks-grid">
+                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.status !== 'trash')"
+                                        :key="task.id" :task="task" @execute="executeWatchTask" @trash="trashWatchTask"
+                                        @restore="restoreWatchTask" />
+                                </div>
+                            </div>
+
+                            <!-- Regular Admin Tasks -->
+                            <AdminTasksList :tasks="regularAdminTasks" :loading="adminTasksLoading"
                                 @execute="executeAdminTask" />
                         </div>
                     </div>
@@ -261,6 +279,7 @@ import AdminMenu from '@/components/AdminMenu.vue'
 import Toast from '@/components/Toast.vue'
 import ProjectsTable from '@/components/ProjectsTable.vue'
 import AdminTasksList from '@/components/AdminTasksList.vue'
+import AdminTaskCard from '@/components/AdminTaskCard.vue'
 import ProjectModal from '@/components/ProjectModal.vue'
 import ReleasesTable from '@/components/ReleasesTable.vue'
 import ReleaseModal from '@/components/ReleaseModal.vue'
@@ -278,6 +297,11 @@ interface Task {
     assigned_to?: string
     image?: string
     prompt?: string
+    logic?: string
+    filter?: string
+    updatedFiles?: string[]
+    updatedEntities?: string[]
+    lastChecked?: string
     due_date?: string
     completed_at?: string
     created_at: string
@@ -345,6 +369,8 @@ const projects = ref<any[]>([])
 const projectsLoading = ref(false)
 const adminTasks = ref<Task[]>([])
 const adminTasksLoading = ref(false)
+const watchTasks = ref<any[]>([])
+const regularAdminTasks = ref<Task[]>([])
 
 // Project modal state
 const showProjectModal = ref(false)
@@ -708,11 +734,135 @@ async function loadAdminTasks() {
         if (response.ok) {
             const data = await response.json()
             adminTasks.value = data.tasks || []
+            // Separate watch tasks from regular admin tasks
+            watchTasks.value = adminTasks.value.filter(t => t.logic)
+            regularAdminTasks.value = adminTasks.value.filter(t => !t.logic)
         }
     } catch (err) {
         console.error('Failed to load admin tasks:', err)
     } finally {
         adminTasksLoading.value = false
+    }
+}
+
+// Check watch tasks for updates
+async function checkWatchTasks() {
+    if (user.value?.role !== 'admin' || watchTasks.value.length === 0) return
+
+    try {
+        // Check CSV watch
+        const csvResponse = await fetch('/api/admin/watch/csv/base')
+        if (csvResponse.ok) {
+            const csvData = await csvResponse.json()
+
+            // Update CSV watch tasks
+            for (const task of watchTasks.value) {
+                if (task.logic === 'watchcsv_base' && task.status !== 'trash') {
+                    if (csvData.hasUpdates) {
+                        task.status = 'draft'
+                        task.updatedFiles = csvData.updatedFiles
+                        task.lastChecked = csvData.currentCheck
+                    } else {
+                        task.status = 'reopen'
+                        task.updatedFiles = []
+                        task.lastChecked = csvData.currentCheck
+                    }
+                }
+            }
+        }
+
+        // Check DB watch
+        const dbResponse = await fetch('/api/admin/watch/db/base')
+        if (dbResponse.ok) {
+            const dbData = await dbResponse.json()
+
+            // Update DB watch tasks
+            for (const task of watchTasks.value) {
+                if (task.logic === 'watchdb_base' && task.status !== 'trash') {
+                    if (dbData.hasUpdates) {
+                        task.status = 'draft'
+                        task.updatedEntities = dbData.updatedEntities
+                        task.lastChecked = dbData.currentCheck
+                    } else {
+                        task.status = 'reopen'
+                        task.updatedEntities = []
+                        task.lastChecked = dbData.currentCheck
+                    }
+                }
+            }
+        }
+
+        console.log('✅ Watch tasks checked:', watchTasks.value)
+    } catch (error) {
+        console.error('❌ Failed to check watch tasks:', error)
+    }
+}
+
+// Execute watch task
+async function executeWatchTask(task: any, filter: string) {
+    try {
+        const response = await fetch('/api/admin/watch/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                taskId: task.id,
+                logic: task.logic,
+                filter
+            })
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            showToastNotification(data.toastMessage, data.toastType || 'info')
+
+            // Refresh tasks
+            await loadAdminTasks()
+            await checkWatchTasks()
+        } else {
+            showToastNotification('Failed to execute watch task', 'error')
+        }
+    } catch (error) {
+        console.error('❌ Execute watch task error:', error)
+        showToastNotification('Failed to execute watch task', 'error')
+    }
+}
+
+// Trash/restore watch task
+async function trashWatchTask(task: any) {
+    try {
+        const response = await fetch(`/api/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...task, status: 'trash' })
+        })
+
+        if (response.ok) {
+            showToastNotification('Watch task moved to trash', 'info')
+            await loadAdminTasks()
+            await checkWatchTasks()
+        }
+    } catch (error) {
+        console.error('❌ Trash watch task error:', error)
+        showToastNotification('Failed to trash watch task', 'error')
+    }
+}
+
+async function restoreWatchTask(task: any) {
+    try {
+        const response = await fetch(`/api/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...task, status: 'reopen' })
+        })
+
+        if (response.ok) {
+            showToastNotification('Watch task restored', 'success')
+            await loadAdminTasks()
+            await checkWatchTasks()
+        }
+    } catch (error) {
+        console.error('❌ Restore watch task error:', error)
+        showToastNotification('Failed to restore watch task', 'error')
     }
 }
 
@@ -899,6 +1049,8 @@ onMounted(async () => {
             loadProjects(),
             loadAdminTasks()
         ])
+        // Check watch tasks after admin tasks are loaded
+        await checkWatchTasks()
     }
 })
 </script>
@@ -1399,6 +1551,24 @@ onMounted(async () => {
     padding: 0 2rem;
 }
 
+/* Watch Tasks Section */
+.watch-tasks-section {
+    margin-bottom: 2rem;
+}
+
+.watch-tasks-section .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--color-contrast);
+}
+
+.watch-tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
 @media (max-width: 768px) {
     .overview-section {
         padding: 1rem;
@@ -1406,6 +1576,10 @@ onMounted(async () => {
 
     .kanban-section {
         padding: 0 1rem;
+    }
+
+    .watch-tasks-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>

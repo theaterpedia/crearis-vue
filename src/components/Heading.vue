@@ -1,10 +1,7 @@
 <template>
   <Prose>
-    <component
-      :is="is"
-      class="heading"
-      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '']"
-    >
+    <component :is="is" class="heading"
+      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '']">
       <span v-if="fancyShortCode" class="shortcode-float">{{ shortcode }}</span>
       <template v-if="hasOverline">
         <span v-if="extLineShortCode" class="shortcode">{{ shortcode }}</span>
@@ -29,7 +26,7 @@
 
 <script lang="ts" setup>
 import Prose from './Prose.vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
 import type { PropType } from 'vue'
 
 const props = defineProps({
@@ -90,11 +87,11 @@ const props = defineProps({
 // const isMobile = false
 
 // TODO:  maybe refactor towards crearis 1.0 once runnung to have less computations
-const hasOverline = ref(props.overline || (!props.subline && props.tags))
-const hasSubline = ref(!hasOverline.value && (props.subline || props.tags))
-const mainLineShortCode = ref(props.shortcode && !hasOverline.value && !hasSubline.value)
-const extLineShortCode = ref(props.shortcode && props.isMobile && !mainLineShortCode.value)
-const fancyShortCode = ref(props.shortcode && !props.isMobile && (hasOverline.value || hasSubline.value))
+const hasOverline = computed(() => props.overline || (!props.subline && props.tags))
+const hasSubline = computed(() => !hasOverline.value && (props.subline || props.tags))
+const mainLineShortCode = computed(() => props.shortcode && !hasOverline.value && !hasSubline.value)
+const extLineShortCode = computed(() => props.shortcode && props.isMobile && !mainLineShortCode.value)
+const fancyShortCode = computed(() => props.shortcode && !props.isMobile && (hasOverline.value || hasSubline.value))
 </script>
 
 <style scoped>
@@ -119,32 +116,52 @@ const fancyShortCode = ref(props.shortcode && !props.isMobile && (hasOverline.va
   margin-right: 0.15em;
   line-height: 0.9;
 }
+
 :where(h1, h2, h3).heading.twoliner :where(strong) {
   line-height: 1.05;
 }
 
-:where(h1, .h1) > span.shortcode-float {
+:where(h1, .h1)>span.shortcode-float {
   font-size: 4.4em;
 }
 
-:where(h2, .h2) > span.shortcode-float {
+:where(h2, .h2)>span.shortcode-float {
   font-size: 3.8em;
 }
 
-:where(h3, .h3) > span.shortcode-float {
+:where(h3, .h3)>span.shortcode-float {
   font-size: 3em;
 }
 
-.overline {
+.overline,
+.subline {
+  display: block;
   font-weight: 300;
   text-decoration-line: none;
 }
 
-.twoliner {
+/* Size overline and subline relative to the heading level */
+:where(h1, .h1) .overline,
+:where(h1, .h1) .subline {
+  font-size: 0.875em;
+  line-height: 1.3;
 }
 
-.oneliner {
+:where(h2, .h2) .overline,
+:where(h2, .h2) .subline {
+  font-size: 0.75em;
+  line-height: 1.3;
 }
+
+:where(h3, .h3) .overline,
+:where(h3, .h3) .subline {
+  font-size: 0.7em;
+  line-height: 1.3;
+}
+
+.twoliner {}
+
+.oneliner {}
 
 /* Add your styles here / deactivated
 .heading {

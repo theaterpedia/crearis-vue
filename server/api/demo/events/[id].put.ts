@@ -17,7 +17,6 @@ export default defineEventHandler(async (event) => {
         const result = await db.run(
             `UPDATE events SET 
         name = ?,
-        rectitle = ?,
         teaser = ?,
         date_begin = ?,
         date_end = ?,
@@ -25,7 +24,6 @@ export default defineEventHandler(async (event) => {
       WHERE id = ?`,
             [
                 body.name,
-                body.rectitle,
                 body.teaser,
                 body.date_begin,
                 body.date_end,
