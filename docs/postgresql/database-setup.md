@@ -32,14 +32,33 @@ This project features a **zero-configuration** database setup system. When you r
 
 ### First Time Setup
 
+#### Option 1: Automated Setup (Recommended)
+
+Run the setup script which handles everything:
+
+```bash
+./scripts/setup-database.sh
+```
+
+This will:
+- Create the database
+- Install required extensions (pgcrypto)
+- Set up proper permissions
+
+#### Option 2: Manual Setup
+
 1. **Ensure PostgreSQL is running**
    ```bash
    sudo systemctl status postgresql
    ```
 
-2. **Create the database** (if it doesn't exist)
+2. **Create the database and extensions**
    ```bash
-   sudo -u postgres psql -c "CREATE DATABASE crearis_admin_dev OWNER persona;"
+   # Create database
+   sudo -u postgres psql -c "CREATE DATABASE crearis_admin_dev;"
+   
+   # Install required extensions (requires superuser)
+   sudo -u postgres psql -d crearis_admin_dev -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
    ```
 
 3. **Start the development server**
@@ -603,6 +622,35 @@ Error: Cannot find module 'src/assets/csv/events.csv'
 - Subsequent migrations are tracked normally
 
 **No action needed** - this is expected behavior.
+
+---
+
+### Problem: "permission denied to create extension pgcrypto"
+
+**Error:**
+```
+error: permission denied to create extension "pgcrypto"
+hint: Must be superuser to create this extension.
+```
+
+**Cause:** The application user doesn't have superuser privileges to create PostgreSQL extensions.
+
+**Solution 1 (Recommended):** Use the setup script
+```bash
+./scripts/setup-database.sh
+```
+
+**Solution 2:** Create extension manually as superuser
+```bash
+sudo -u postgres psql -d crearis_admin_dev -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+```
+
+**Solution 3:** Grant user superuser (not recommended for production)
+```bash
+sudo -u postgres psql -c "ALTER USER your_user WITH SUPERUSER;"
+```
+
+**Why pgcrypto?** Required for PostgreSQL triggers to generate UUIDs with `gen_random_uuid()`.
 
 ---
 

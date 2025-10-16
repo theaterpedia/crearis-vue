@@ -189,10 +189,5 @@ export const defaultNavRoutes: NavRoute[] = [
     path: '/demo',
     name: 'Demo',
     protected: false,
-  },
-  {
-    path: '/demos',
-    name: 'Demos',
-    protected: false,
-  },
+  }
 ]

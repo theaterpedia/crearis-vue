@@ -7,6 +7,7 @@ import type { DatabaseAdapter } from '../adapter'
 import { runBaseSchemaMigration, metadata as baseMeta } from './000_base_schema'
 import { runConfigTableMigration, metadata as configMeta } from './001_init_schema'
 import { runSchemaAlignmentMigration, metadata as alignMeta } from './002_align_schema'
+import { migration as migration003 } from './003_entity_task_triggers'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -23,6 +24,7 @@ const migrations: Migration[] = [
     { run: runBaseSchemaMigration, metadata: baseMeta },
     { run: runConfigTableMigration, metadata: configMeta },
     { run: runSchemaAlignmentMigration, metadata: alignMeta },
+    { run: migration003.up, metadata: { id: migration003.id, description: migration003.description, version: '0.0.1', date: '2025-10-16' } },
 ]
 
 /**

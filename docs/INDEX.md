@@ -10,6 +10,10 @@ Complete documentation for the demo-data project including database management, 
 - **[Database Setup Guide](./postgresql/database-setup.md)** - 🎯 **START HERE** - Complete setup, migration & seeding guide
 - **[Automatic Initialization](./AUTOMATIC_INITIALIZATION.md)** - 🚀 Smart database startup (technical deep-dive)
 - [Database Migrations Guide](./DATABASE_MIGRATIONS.md) - 📖 Comprehensive developer guide (784 lines)
+- **[Data Rules Validation](./DATA_RULES_VALIDATION.md)** - ✅ Validation report for data integrity rules
+- **[Main Task Auto-Creation](./MAIN_TASK_AUTO_CREATION.md)** - 📋 How entity-task relationships work
+- **[PostgreSQL Main Tasks Fix](./POSTGRESQL_MAIN_TASKS_FIX.md)** - 🔧 Trigger implementation for PostgreSQL
+- **[Schema Updates Permanent](./SCHEMA_UPDATES_PERMANENT.md)** - 🛡️ Making schema changes survive database recreation
 
 ### Database Schema Migrations (Technical Reference)
 - **[Schema Migration Complete](./SCHEMA_MIGRATION_COMPLETE.md)** - 🎉 Complete overview of all 4 phases
