@@ -813,6 +813,13 @@ async function executeWatchTask(task: any, filter: string) {
 
         if (response.ok) {
             const data = await response.json()
+
+            // Check if conflict resolution is required
+            if (data.requiresConflictResolution && data.conflicts) {
+                await handleWatchTaskConflict(task, filter, data.conflicts)
+                return
+            }
+
             showToastNotification(data.toastMessage, data.toastType || 'info')
 
             // Refresh tasks
@@ -825,6 +832,85 @@ async function executeWatchTask(task: any, filter: string) {
         console.error('❌ Execute watch task error:', error)
         showToastNotification('Failed to execute watch task', 'error')
     }
+}
+
+// Handle conflict resolution for watch task
+async function handleWatchTaskConflict(task: any, filter: string, conflicts: string[]) {
+    // For each conflicting entity, show a dialog
+    for (const entity of conflicts) {
+        const action = await showConflictDialog(entity)
+
+        if (action === 'cancel') {
+            showToastNotification(`Cancelled operation for ${entity}`, 'info')
+            continue
+        }
+
+        // Execute with conflict resolution
+        try {
+            const response = await fetch('/api/admin/watch/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taskId: task.id,
+                    logic: task.logic,
+                    filter: entity,  // Process only this entity
+                    conflictResolution: action,
+                    conflictEntity: entity
+                })
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                showToastNotification(data.toastMessage, data.toastType || 'info')
+            } else {
+                showToastNotification(`Failed to resolve conflict for ${entity}`, 'error')
+            }
+        } catch (error) {
+            console.error(`❌ Conflict resolution error for ${entity}:`, error)
+            showToastNotification(`Failed to resolve conflict for ${entity}`, 'error')
+        }
+    }
+
+    // Refresh tasks after all conflicts resolved
+    await loadAdminTasks()
+    await checkWatchTasks()
+}
+
+// Show conflict dialog and return user choice
+function showConflictDialog(entity: string): Promise<'cancel' | 'overwrite_csv' | 'reset_db'> {
+    return new Promise((resolve) => {
+        const message = `Conflict detected for ${entity}:\n\nBoth CSV file and database have been modified.\n\nWhat would you like to do?`
+
+        // Use browser's confirm/prompt for now - could be replaced with a custom modal
+        const userChoice = window.confirm(
+            `${message}\n\n` +
+            `Click OK to choose between:\n` +
+            `1. Overwrite CSV (use database version)\n` +
+            `2. Reset Database (use CSV version)\n` +
+            `Click Cancel to skip this entity.`
+        )
+
+        if (!userChoice) {
+            resolve('cancel')
+            return
+        }
+
+        // Ask user which action to take
+        const action = window.prompt(
+            `Choose action for ${entity}:\n\n` +
+            `Type 'csv' to use CSV version (reset database)\n` +
+            `Type 'db' to use database version (overwrite CSV)\n` +
+            `Or click Cancel to skip`
+        )?.toLowerCase().trim()
+
+        if (action === 'csv') {
+            resolve('reset_db')
+        } else if (action === 'db') {
+            resolve('overwrite_csv')
+        } else {
+            resolve('cancel')
+        }
+    })
 }
 
 // Trash/restore watch task
