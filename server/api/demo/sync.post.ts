@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // CSV file paths - resolve from project root  
-const csvDir = join(process.cwd(), 'src/assets/csv')
+const csvDir = join(process.cwd(), 'server/data/base')
 
 function parseCSV(csvText: string): any[] {
   const lines = csvText.trim().split('\n')

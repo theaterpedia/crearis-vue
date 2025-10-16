@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
 
     // Parse snapshot data
     const snapshot = JSON.parse(version.snapshot_data)
-    const csvDir = join(process.cwd(), 'src/assets/csv')
+    const csvDir = join(process.cwd(), 'server/data')
     const versionDir = join(csvDir, `version_${version.version_number}`)
 
     // Create version directory

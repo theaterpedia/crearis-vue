@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const versionDir = join(process.cwd(), 'src/assets/csv', `version_${version.version_number}`)
+    const versionDir = join(process.cwd(), 'server/data', `version_${version.version_number}`)
 
     // Check if directory exists
     try {
