@@ -44,11 +44,20 @@ export const migration = {
             }
         })
 
-        await db.run(
-            `INSERT OR IGNORE INTO system_config (key, value, description)
-             VALUES (?, ?, ?)`,
-            ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
-        )
+        if (db.type === 'postgresql') {
+            await db.run(
+                `INSERT INTO system_config (key, value, description)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (key) DO NOTHING`,
+                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
+            )
+        } else {
+            await db.run(
+                `INSERT OR IGNORE INTO system_config (key, value, description)
+                 VALUES (?, ?, ?)`,
+                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
+            )
+        }
 
         // Insert watchdb configuration
         // Watchdb monitors the main entity tables
@@ -59,11 +68,20 @@ export const migration = {
             }
         })
 
-        await db.run(
-            `INSERT OR IGNORE INTO system_config (key, value, description)
-             VALUES (?, ?, ?)`,
-            ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
-        )
+        if (db.type === 'postgresql') {
+            await db.run(
+                `INSERT INTO system_config (key, value, description)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (key) DO NOTHING`,
+                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
+            )
+        } else {
+            await db.run(
+                `INSERT OR IGNORE INTO system_config (key, value, description)
+                 VALUES (?, ?, ?)`,
+                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
+            )
+        }
 
         console.log('✅ Migration 007 completed: system_config table created with watch configs')
     }
