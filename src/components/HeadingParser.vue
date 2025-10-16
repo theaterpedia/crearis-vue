@@ -1,6 +1,6 @@
 <template>
     <Heading :is="as" :headline="parsedHeadline" :overline="parsedOverline" :subline="parsedSubline" :tags="tags"
-        :shortcode="shortcode" :is-mobile="isMobile" />
+        :shortcode="shortcode" :is-mobile="isMobile" :compact="compact" />
 </template>
 
 <script lang="ts" setup>
@@ -44,6 +44,13 @@ const props = defineProps({
      * Mobile flag to pass through to Heading component
      */
     isMobile: {
+        type: Boolean,
+        default: false,
+    },
+    /**
+     * Compact mode to pass through to Heading component
+     */
+    compact: {
         type: Boolean,
         default: false,
     },

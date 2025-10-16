@@ -1461,10 +1461,11 @@ onMounted(async () => {
     background: var(--color-muted-bg);
     border-radius: var(--radius-button);
     padding: 1rem;
-    min-height: 500px;
     display: flex;
     flex-direction: column;
     transition: all 0.2s ease;
+    max-height: calc(100vh - 280px);
+    overflow: hidden;
 }
 
 .task-column:hover {
@@ -1518,6 +1519,25 @@ onMounted(async () => {
     flex-direction: column;
     gap: 1rem;
     flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.task-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-dimmed);
 }
 
 .empty-column {

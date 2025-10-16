@@ -1,7 +1,7 @@
 <template>
   <Prose>
     <component :is="is" class="heading"
-      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '']">
+      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '']">
       <span v-if="fancyShortCode" class="shortcode-float">{{ shortcode }}</span>
       <template v-if="hasOverline">
         <span v-if="extLineShortCode" class="shortcode">{{ shortcode }}</span>
@@ -78,6 +78,14 @@ const props = defineProps({
   },
   isMobile: {
     // for development purposes only > has to be removed
+    type: Boolean,
+    default: false,
+  },
+  /**
+   * Compact mode - scales down overline/subline by one step
+   * Useful for cards and smaller containers
+   */
+  compact: {
     type: Boolean,
     default: false,
   },
@@ -159,9 +167,36 @@ const fancyShortCode = computed(() => props.shortcode && !props.isMobile && (has
   line-height: 1.3;
 }
 
-.twoliner {}
+/* Compact mode - scale down overline/subline slightly */
+:where(h1, .h1).compact .overline,
+:where(h1, .h1).compact .subline {
+  font-size: 0.85em;
+  line-height: 1.3;
+}
 
-.oneliner {}
+:where(h2, .h2).compact .overline,
+:where(h2, .h2).compact .subline {
+  font-size: 0.8em;
+  line-height: 1.3;
+}
+
+:where(h3, .h3).compact .overline,
+:where(h3, .h3).compact .subline {
+  font-size: 0.75em;
+  line-height: 1.3;
+}
+
+:where(h4, .h4).compact .overline,
+:where(h4, .h4).compact .subline {
+  font-size: 0.7em;
+  line-height: 1.3;
+}
+
+:where(h5, .h5).compact .overline,
+:where(h5, .h5).compact .subline {
+  font-size: 0.65em;
+  line-height: 1.3;
+}
 
 /* Add your styles here / deactivated
 .heading {

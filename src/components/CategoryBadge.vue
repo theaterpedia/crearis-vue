@@ -29,8 +29,8 @@ const colorClass = computed(() => `category-${categoryMap[props.category]?.color
 .category-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-button);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;

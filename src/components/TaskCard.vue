@@ -6,18 +6,23 @@
             <img :src="task.image" :alt="displayTitle" />
         </div>
 
-        <!-- Status & Category Badges -->
-        <div class="task-badges">
-            <StatusBadge v-if="task.status" :status="task.status" />
-            <CategoryBadge v-if="task.category" :category="task.category" />
-        </div>
+        <!-- Entity Type Badge (Top-left corner) -->
+        <span v-if="task.record_type" class="record-badge-corner">
+            {{ recordTypeLabel }}
+        </span>
 
-        <!-- Task Header -->
+        <!-- Task Header with Status Badges, Priority, and Actions -->
         <div class="task-header">
-            <div class="task-title">
-                <HeadingParser :content="displayTitle" as="h4" />
+            <div class="task-header-left">
+                <!-- Status & Category Badges -->
+                <StatusBadge v-if="task.status" :status="task.status" />
+                <CategoryBadge v-if="task.category" :category="task.category" />
             </div>
-            <div class="task-actions">
+            <div class="task-header-right">
+                <!-- Priority Dot -->
+                <span v-if="task.priority" class="priority-dot" :class="`priority-${task.priority}`"
+                    :title="priorityLabel"></span>
+                <!-- Action Buttons -->
                 <button class="action-btn edit-btn" @click="$emit('edit', task)" title="Edit task">
                     ✎
                 </button>
@@ -27,31 +32,21 @@
             </div>
         </div>
 
+        <!-- Task Title -->
+        <div class="task-title">
+            <HeadingParser :content="cardTitle" as="h5" :compact="true" />
+        </div>
+
         <!-- Task Description -->
         <p v-if="task.description" class="task-description">
             {{ truncatedDescription }}
         </p>
 
-        <!-- Priority Indicator -->
-        <div v-if="task.priority" class="priority-badge" :class="`priority-${task.priority}`">
-            {{ priorityLabel }}
-        </div>
-
         <!-- Task Meta Information -->
         <div class="task-meta">
-            <!-- Record Type Badge -->
-            <span v-if="task.record_type" class="meta-badge record-badge">
-                {{ recordTypeLabel }}
-            </span>
-
-            <!-- Entity Name -->
-            <span v-if="task.entity_name" class="meta-badge entity-badge">
-                � {{ task.entity_name }}
-            </span>
-
             <!-- Due Date -->
             <span v-if="task.due_date" class="meta-badge due-date-badge" :class="dueDateClass">
-                � {{ formattedDueDate }}
+                📅 {{ formattedDueDate }}
             </span>
 
             <!-- Assigned To -->
@@ -98,7 +93,24 @@ const emit = defineEmits<{
 
 const isDragging = ref(false)
 
-// Display title with entity name inheritance
+// Card title - replace {{main-title}} with entity name
+const cardTitle = computed(() => {
+    // Use display_title if available (already processed by API)
+    // API replaces {{main-title}} with entity name for main tasks
+    if (props.task.display_title) {
+        return props.task.display_title
+    }
+
+    // Fallback: Replace {{main-title}} in title with entity_name
+    if (props.task.title && props.task.title.includes('{{main-title}}') && props.task.entity_name) {
+        return props.task.title.replace(/\{\{main-title\}\}/g, props.task.entity_name)
+    }
+
+    // Default: Use title as is
+    return props.task.title || 'Untitled Task'
+})
+
+// Full display title (kept for backwards compatibility if needed elsewhere)
 const displayTitle = computed(() => {
     // Use display_title if available (already processed by API)
     if (props.task.display_title) {
@@ -208,12 +220,16 @@ function handleDragEnd() {
 .task-card {
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-button);
-    padding: 1rem;
+    border-radius: 0;
+    padding: 0 1rem 1rem 1rem;
     cursor: grab;
     transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    min-height: fit-content;
+    height: auto;
 }
 
 .task-card:hover {
@@ -246,12 +262,86 @@ function handleDragEnd() {
     object-fit: cover;
 }
 
-/* Status & Category Badges */
-.task-badges {
+/* Task Header */
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+    padding-top: 0;
+    min-height: 2rem;
+}
+
+.task-header-left {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
+    align-items: center;
+    margin-left: 5.5rem;
+    padding-top: 0;
+}
+
+.task-header-right {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    margin-right: -1rem;
+}
+
+.action-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    background: oklch(95% 0 0);
+    border-radius: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--color-contrast);
+    transition: all 0.2s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.action-btn:hover {
+    background: var(--color-muted-bg);
+}
+
+.edit-btn:hover {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.delete-btn:hover {
+    background: oklch(63.68% 0.2078 25.33);
+    color: white;
+}
+
+/* Record Badge in Corner */
+.record-badge-corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+    background: oklch(72.21% 0.2812 240 / 0.1);
+    border: none;
+    border-bottom-right-radius: 0;
+    color: oklch(72.21% 0.2812 240);
+    line-height: 1;
+    margin: 0;
+    z-index: 10;
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Priority border accent */
@@ -271,90 +361,47 @@ function handleDragEnd() {
     border-left: 4px solid var(--color-dimmed);
 }
 
-/* Priority Badge */
-.priority-badge {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-weight: 600;
-    background: var(--color-muted-bg);
+/* Priority Dot */
+.priority-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
 }
 
-.priority-badge.priority-urgent {
-    color: oklch(63.68% 0.2078 25.33);
+.priority-dot.priority-urgent {
+    background: oklch(63.68% 0.2078 25.33);
 }
 
-.priority-badge.priority-high {
-    color: oklch(72.21% 0.2812 60);
+.priority-dot.priority-high {
+    background: oklch(72.21% 0.2812 60);
 }
 
-.priority-badge.priority-medium {
-    color: oklch(72.21% 0.2812 144.53);
+.priority-dot.priority-medium {
+    background: oklch(72.21% 0.2812 144.53);
+    /* Yellow */
 }
 
-.priority-badge.priority-low {
-    color: var(--color-dimmed);
+.priority-dot.priority-low {
+    background: var(--color-dimmed);
 }
 
-/* Task Header */
-.task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    padding-right: 5rem;
-    /* Space for priority badge */
-}
-
+/* Task Title */
 .task-title {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--color-contrast);
-    margin: 0;
+    margin: 0 0 0.75rem 0;
     line-height: 1.4;
     word-break: break-word;
 }
 
-.task-actions {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.task-card:hover .task-actions {
-    opacity: 1;
-}
-
-.action-btn {
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg);
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    color: var(--color-contrast);
-    transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-    background: var(--color-muted-bg);
-    border-color: var(--color-primary-bg);
-}
-
-.delete-btn:hover {
-    background: oklch(63.68% 0.2078 25.33 / 0.1);
-    border-color: oklch(63.68% 0.2078 25.33);
-    color: oklch(63.68% 0.2078 25.33);
+.task-title :deep(h5) {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin: 0;
 }
 
 /* Task Description */
@@ -370,7 +417,8 @@ function handleDragEnd() {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
 }
 
 .meta-badge {
@@ -381,12 +429,6 @@ function handleDragEnd() {
     background: var(--color-muted-bg);
     color: var(--color-contrast);
     border: 1px solid var(--color-border);
-}
-
-.record-badge {
-    background: oklch(72.21% 0.2812 240 / 0.1);
-    border-color: oklch(72.21% 0.2812 240 / 0.3);
-    color: oklch(72.21% 0.2812 240);
 }
 
 .due-date-badge {
@@ -411,12 +453,6 @@ function handleDragEnd() {
     background: oklch(65.74% 0.2393 304.41 / 0.1);
     border-color: oklch(65.74% 0.2393 304.41 / 0.3);
     color: oklch(65.74% 0.2393 304.41);
-}
-
-.entity-badge {
-    background: oklch(72.21% 0.2812 144.53 / 0.1);
-    border-color: oklch(72.21% 0.2812 144.53 / 0.3);
-    color: oklch(72.21% 0.2812 144.53);
 }
 
 /* Task Footer */
