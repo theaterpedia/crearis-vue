@@ -52,8 +52,19 @@ export default defineEventHandler(async (event) => {
 
         for (const entityTable of entities) {
             // Check if table has isbase column
-            const tableInfo = await db.all(`PRAGMA table_info(${entityTable})`)
-            const hasIsbaseColumn = tableInfo.some((col: any) => col.name === 'isbase')
+            let hasIsbaseColumn = false
+            
+            if (db.type === 'postgresql') {
+                const tableInfo = await db.all(`
+                    SELECT column_name as name
+                    FROM information_schema.columns
+                    WHERE table_name = $1
+                `, [entityTable])
+                hasIsbaseColumn = tableInfo.some((col: any) => col.name === 'isbase')
+            } else {
+                const tableInfo = await db.all(`PRAGMA table_info(${entityTable})`)
+                hasIsbaseColumn = tableInfo.some((col: any) => col.name === 'isbase')
+            }
 
             if (!hasIsbaseColumn) {
                 console.warn(`⚠️ Table '${entityTable}' doesn't have isbase column`)

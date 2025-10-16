@@ -1,60 +1,63 @@
 <template>
-    <div class="task-card" :class="[`priority-${task.priority}`, { 'is-dragging': isDragging }]" draggable="true"
-        @dragstart="handleDragStart" @dragend="handleDragEnd">
-        <!-- Preview Image -->
-        <div v-if="task.image" class="task-image">
-            <img :src="task.image" :alt="displayTitle" />
-        </div>
+    <div class="task-card"
+        :class="[`priority-${task.priority}`, { 'is-dragging': isDragging, 'has-background': cardBackgroundImage }]"
+        draggable="true" @dragstart="handleDragStart" @dragend="handleDragEnd"
+        :style="cardBackgroundImage ? { backgroundImage: `url('${cardBackgroundImage}')` } : {}">
+        <!-- Background Fade Overlay -->
+        <div v-if="cardBackgroundImage" class="card-background-fade"></div>
 
         <!-- Entity Type Badge (Top-left corner) -->
         <span v-if="task.record_type" class="record-badge-corner">
             {{ recordTypeLabel }}
         </span>
 
-        <!-- Task Header with Status Badges, Priority, and Actions -->
-        <div class="task-header">
-            <div class="task-header-left">
-                <!-- Status & Category Badges -->
-                <StatusBadge v-if="task.status" :status="task.status" />
-                <CategoryBadge v-if="task.category" :category="task.category" />
+        <!-- Card Content -->
+        <div class="card-content">
+            <!-- Task Header with Status Badges, Priority, and Actions -->
+            <div class="task-header">
+                <div class="task-header-left">
+                    <!-- Status & Category Badges -->
+                    <StatusBadge v-if="task.status" :status="task.status" />
+                    <CategoryBadge v-if="task.category" :category="task.category" />
+                </div>
+                <div class="task-header-right">
+                    <!-- Priority Dot -->
+                    <span v-if="task.priority" class="priority-dot" :class="`priority-${task.priority}`"
+                        :title="priorityLabel"></span>
+                    <!-- Action Buttons -->
+                    <button class="action-btn edit-btn" @click="$emit('edit', task)" title="Edit task">
+                        ✎
+                    </button>
+                    <button class="action-btn delete-btn" @click="$emit('delete', task)" title="Delete task">
+                        ×
+                    </button>
+                </div>
             </div>
-            <div class="task-header-right">
-                <!-- Priority Dot -->
-                <span v-if="task.priority" class="priority-dot" :class="`priority-${task.priority}`"
-                    :title="priorityLabel"></span>
-                <!-- Action Buttons -->
-                <button class="action-btn edit-btn" @click="$emit('edit', task)" title="Edit task">
-                    ✎
-                </button>
-                <button class="action-btn delete-btn" @click="$emit('delete', task)" title="Delete task">
-                    ×
-                </button>
+
+            <!-- Task Title -->
+            <div class="task-title">
+                <HeadingParser :content="cardTitle" as="h5" :compact="true" />
             </div>
-        </div>
 
-        <!-- Task Title -->
-        <div class="task-title">
-            <HeadingParser :content="cardTitle" as="h5" :compact="true" />
-        </div>
+            <!-- Task Description -->
+            <p v-if="task.description" class="task-description">
+                {{ truncatedDescription }}
+            </p>
 
-        <!-- Task Description -->
-        <p v-if="task.description" class="task-description">
-            {{ truncatedDescription }}
-        </p>
+            <!-- Task Meta Information -->
+            <div class="task-meta">
+                <!-- Due Date -->
+                <span v-if="task.due_date" class="meta-badge due-date-badge" :class="dueDateClass">
+                    📅 {{ formattedDueDate }}
+                </span>
 
-        <!-- Task Meta Information -->
-        <div class="task-meta">
-            <!-- Due Date -->
-            <span v-if="task.due_date" class="meta-badge due-date-badge" :class="dueDateClass">
-                📅 {{ formattedDueDate }}
-            </span>
-
-            <!-- Assigned To -->
-            <span v-if="task.assigned_to" class="meta-badge assigned-badge">
-                👤 {{ task.assigned_to }}
-            </span>
-        </div>
-    </div>
+                <!-- Assigned To -->
+                <span v-if="task.assigned_to" class="meta-badge assigned-badge">
+                    👤 {{ task.assigned_to }}
+                </span>
+            </div>
+        </div><!-- .card-content -->
+    </div><!-- .task-card -->
 </template>
 
 <script setup lang="ts">
@@ -79,6 +82,7 @@ interface Task {
     prompt?: string
     entity_name?: string
     display_title?: string
+    entity_image?: string
 }
 
 const props = defineProps<{
@@ -92,6 +96,11 @@ const emit = defineEmits<{
 }>()
 
 const isDragging = ref(false)
+
+// Background image for the whole card - uses entity_image (computed in API)
+const cardBackgroundImage = computed(() => {
+    return props.task.entity_image || null
+})
 
 // Card title - replace {{main-title}} with entity name
 const cardTitle = computed(() => {
@@ -221,15 +230,45 @@ function handleDragEnd() {
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: 0;
-    padding: 0 1rem 1rem 1rem;
+    padding: 0;
     cursor: grab;
     transition: all 0.2s ease;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: fit-content;
+    min-height: 6.875rem;
     height: auto;
+}
+
+.task-card.has-background {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.card-background-fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right,
+            oklch(100% 0 0 / 0) 0%,
+            oklch(100% 0 0 / 0.7) 50%,
+            oklch(100% 0 0 / 1) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card-content {
+    position: relative;
+    z-index: 1;
+    padding: 0 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: fit-content;
 }
 
 .task-card:hover {
@@ -396,6 +435,9 @@ function handleDragEnd() {
     margin: 0 0 0.75rem 0;
     line-height: 1.4;
     word-break: break-word;
+    background: oklch(100% 0 0 / 0.4);
+    padding: 0.5rem;
+    max-width: 20rem;
 }
 
 .task-title :deep(h5) {

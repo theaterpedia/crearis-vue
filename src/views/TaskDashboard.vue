@@ -1520,7 +1520,7 @@ onMounted(async () => {
     gap: 1rem;
     flex: 1;
     overflow-y: auto;
-    padding-right: 0.5rem;
+    padding-right: 0.75rem;
 }
 
 .task-list::-webkit-scrollbar {

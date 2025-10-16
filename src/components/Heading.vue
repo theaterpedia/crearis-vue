@@ -1,7 +1,8 @@
 <template>
   <Prose>
     <component :is="is" class="heading"
-      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '']">
+      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '']"
+      :style="{ opacity: opacity }">
       <span v-if="fancyShortCode" class="shortcode-float">{{ shortcode }}</span>
       <template v-if="hasOverline">
         <span v-if="extLineShortCode" class="shortcode">{{ shortcode }}</span>
@@ -88,6 +89,14 @@ const props = defineProps({
   compact: {
     type: Boolean,
     default: false,
+  },
+  /**
+   * Opacity of the heading content (0-1)
+   * @default 1
+   */
+  opacity: {
+    type: Number,
+    default: 1,
   },
 })
 

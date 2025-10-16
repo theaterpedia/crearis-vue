@@ -20,6 +20,12 @@ interface Task {
     completed_at?: string
     entity_name?: string
     display_title?: string
+    entity_image?: string
+}
+
+interface ApiResponse {
+    tasks: Task[]
+    count: number
 }
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +37,7 @@ export default defineEventHandler(async (event) => {
         const recordType = query.record_type as string | undefined
         const recordId = query.record_id as string | undefined
 
-        // Build query with entity joins for title inheritance
+        // Build query with entity joins for title inheritance and image fallback
         let sql = `
             SELECT 
                 tasks.*,
@@ -55,7 +61,17 @@ export default defineEventHandler(async (event) => {
                             tasks.title
                         )
                     ELSE tasks.title
-                END as display_title
+                END as display_title,
+                COALESCE(
+                    tasks.image,
+                    CASE tasks.record_type
+                        WHEN 'event' THEN events.cimg
+                        WHEN 'post' THEN posts.cimg
+                        WHEN 'location' THEN locations.cimg
+                        WHEN 'instructor' THEN instructors.cimg
+                        WHEN 'participant' THEN participants.cimg
+                    END
+                ) as entity_image
             FROM tasks
             LEFT JOIN events ON tasks.record_type = 'event' AND tasks.record_id = events.id
             LEFT JOIN posts ON tasks.record_type = 'post' AND tasks.record_id = posts.id

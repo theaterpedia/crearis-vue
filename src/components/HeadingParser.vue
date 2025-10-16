@@ -1,6 +1,6 @@
 <template>
     <Heading :is="as" :headline="parsedHeadline" :overline="parsedOverline" :subline="parsedSubline" :tags="tags"
-        :shortcode="shortcode" :is-mobile="isMobile" :compact="compact" />
+        :shortcode="shortcode" :is-mobile="isMobile" :compact="compact" :opacity="opacity" />
 </template>
 
 <script lang="ts" setup>
@@ -53,6 +53,13 @@ const props = defineProps({
     compact: {
         type: Boolean,
         default: false,
+    },
+    /**
+     * Opacity to pass through to Heading component (0-1)
+     */
+    opacity: {
+        type: Number,
+        default: 1,
     },
 })
 
