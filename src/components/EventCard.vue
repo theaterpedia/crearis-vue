@@ -1,5 +1,13 @@
 <template>
     <div class="event-card">
+        <button class="delete-btn" @click.stop="handleDelete" title="Event löschen">
+            <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z">
+                </path>
+            </svg>
+        </button>
+
         <div v-if="event.cimg" class="event-card-image">
             <img :src="event.cimg" :alt="event.name" />
         </div>
@@ -19,20 +27,32 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import HeadingParser from './HeadingParser.vue'
+import type { Event, Instructor } from '@/types'
 
 const props = defineProps<{
-    event: any
-    instructors?: any[]
+    event: Event
+    instructors?: Instructor[]
+}>()
+
+const emit = defineEmits<{
+    delete: [eventId: string]
 }>()
 
 const instructor = computed(() => {
     if (!props.event.public_user || !props.instructors) return null
-    return props.instructors.find((i: any) => i.id === props.event.public_user)
+    return props.instructors.find((i: Instructor) => i.id === props.event.public_user)
 })
+
+const handleDelete = () => {
+    if (confirm(`Event "${props.event.name}" wirklich löschen?`)) {
+        emit('delete', props.event.id)
+    }
+}
 </script>
 
 <style scoped>
 .event-card {
+    position: relative;
     background: var(--color-background-soft);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -42,6 +62,35 @@ const instructor = computed(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.event-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: #fee;
+    border-color: #fcc;
+    color: #c33;
+    transform: scale(1.1);
 }
 
 .event-card:hover {

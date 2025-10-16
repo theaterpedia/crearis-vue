@@ -173,7 +173,7 @@
             <!-- Right Column: Step Components (60%) -->
             <div class="right-column">
                 <div class="right-column-content">
-                    <ProjectStepEvents v-if="currentStep === 0" @next="nextStep" />
+                    <ProjectStepEvents v-if="currentStep === 0" :project-id="projectId" @next="nextStep" />
                     <ProjectStepData v-else-if="currentStep === 1" @next="nextStep" @prev="prevStep" />
                     <ProjectStepTheme v-else-if="currentStep === 2" @next="nextStep" @prev="prevStep" />
                     <ProjectStepViews v-else-if="currentStep === 3" @next="nextStep" @prev="prevStep" />
@@ -198,6 +198,14 @@ import ProjectStepLanding from './ProjectStepLanding.vue'
 
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
+
+// Project ID - defaults to username for project users, or 'project1' as fallback
+const projectId = computed(() => {
+    if (user.value?.role === 'project' && user.value.username) {
+        return user.value.username
+    }
+    return 'project1' // Fallback for testing/admin
+})
 
 // Current step (0-4)
 const currentStep = ref(0)

@@ -5,7 +5,23 @@
             <p class="step-subtitle">Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen</p>
         </div>
 
-        <div class="step-content-container">
+        <!-- Error State -->
+        <div v-if="error" class="error-banner">
+            <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z">
+                </path>
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-container">
+            <div class="spinner"></div>
+            <p>Events werden geladen...</p>
+        </div>
+
+        <div v-else class="step-content-container">
             <!-- Left: Events Gallery -->
             <div class="events-gallery">
                 <div v-if="projectEvents.length === 0" class="empty-state">
@@ -21,13 +37,13 @@
 
                 <div v-else class="events-grid">
                     <EventCard v-for="event in projectEvents" :key="event.id" :event="event"
-                        :instructors="allInstructors" />
+                        :instructors="allInstructors" @delete="handleEventDelete" />
                 </div>
             </div>
 
             <!-- Right: Add Event Panel -->
             <div class="add-panel-container">
-                <AddEventPanel :project-id="projectId" :base-events="baseEvents" :all-instructors="allInstructors"
+                <AddEventPanel :project-id="props.projectId" :base-events="baseEvents" :all-instructors="allInstructors"
                     @event-added="handleEventAdded" />
             </div>
         </div>
@@ -50,57 +66,92 @@
 import { ref, onMounted } from 'vue'
 import EventCard from '@/components/EventCard.vue'
 import AddEventPanel from '@/components/AddEventPanel.vue'
+import type { Event, Instructor } from '@/types'
+
+interface Props {
+    projectId: string
+}
 
 interface Emits {
     (e: 'next'): void
 }
 
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Temporary hardcoded projectId - will be passed from parent later
-const projectId = ref('project1')
-
-const baseEvents = ref<any[]>([])
-const projectEvents = ref<any[]>([])
-const allInstructors = ref<any[]>([])
+const baseEvents = ref<Event[]>([])
+const projectEvents = ref<Event[]>([])
+const allInstructors = ref<Instructor[]>([])
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 
 async function loadBaseEvents() {
     try {
+        error.value = null
         const response = await fetch('/api/events?isbase=1')
-        if (response.ok) {
-            baseEvents.value = await response.json()
+        if (!response.ok) {
+            throw new Error(`Failed to load base events: ${response.statusText}`)
         }
-    } catch (error) {
-        console.error('Error loading base events:', error)
+        baseEvents.value = await response.json()
+    } catch (err) {
+        console.error('Error loading base events:', err)
+        error.value = 'Fehler beim Laden der Basis-Events'
     }
 }
 
 async function loadProjectEvents() {
     try {
-        const response = await fetch(`/api/events?project=${projectId.value}&isbase=0`)
-        if (response.ok) {
-            projectEvents.value = await response.json()
+        error.value = null
+        const response = await fetch(`/api/events?project=${props.projectId}&isbase=0`)
+        if (!response.ok) {
+            throw new Error(`Failed to load project events: ${response.statusText}`)
         }
-    } catch (error) {
-        console.error('Error loading project events:', error)
+        projectEvents.value = await response.json()
+    } catch (err) {
+        console.error('Error loading project events:', err)
+        error.value = 'Fehler beim Laden der Projekt-Events'
     }
 }
 
 async function loadInstructors() {
     try {
+        error.value = null
         const response = await fetch('/api/instructors')
-        if (response.ok) {
-            allInstructors.value = await response.json()
+        if (!response.ok) {
+            throw new Error(`Failed to load instructors: ${response.statusText}`)
         }
-    } catch (error) {
-        console.error('Error loading instructors:', error)
+        allInstructors.value = await response.json()
+    } catch (err) {
+        console.error('Error loading instructors:', err)
+        error.value = 'Fehler beim Laden der Kursleiter'
     }
 }
 
 async function handleEventAdded(eventId: string) {
-    console.log('Event added:', eventId)
-    // Reload project events
+    console.log('✅ Event added:', eventId)
+    // Reload project events to show the new one
     await loadProjectEvents()
+}
+
+async function handleEventDelete(eventId: string) {
+    try {
+        error.value = null
+        const response = await fetch(`/api/events/${eventId}`, {
+            method: 'DELETE'
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete event: ${response.statusText}`)
+        }
+
+        console.log('✅ Event deleted:', eventId)
+        // Reload project events to remove the deleted one
+        await loadProjectEvents()
+    } catch (err) {
+        console.error('Error deleting event:', err)
+        error.value = 'Fehler beim Löschen des Events'
+        alert('Fehler beim Löschen des Events')
+    }
 }
 
 function handleNext() {
@@ -108,11 +159,16 @@ function handleNext() {
 }
 
 onMounted(async () => {
-    await Promise.all([
-        loadBaseEvents(),
-        loadProjectEvents(),
-        loadInstructors()
-    ])
+    isLoading.value = true
+    try {
+        await Promise.all([
+            loadBaseEvents(),
+            loadProjectEvents(),
+            loadInstructors()
+        ])
+    } finally {
+        isLoading.value = false
+    }
 })
 </script>
 
@@ -135,6 +191,52 @@ onMounted(async () => {
     font-size: 0.875rem;
     color: var(--color-dimmed);
     margin: 0;
+}
+
+/* Error Banner */
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 6px;
+    color: #c33;
+}
+
+.error-banner svg {
+    flex-shrink: 0;
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-primary, #3b82f6);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-container p {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
 }
 
 .step-content-container {

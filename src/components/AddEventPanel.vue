@@ -69,11 +69,12 @@
             </div>
 
             <div class="action-buttons">
-                <button class="cancel-btn" @click="handleCancel">
+                <button class="cancel-btn" @click="handleCancel" :disabled="isSubmitting">
                     Abbrechen
                 </button>
-                <button class="apply-btn" @click="handleApply" :disabled="!canApply">
-                    Hinzufügen
+                <button class="apply-btn" @click="handleApply" :disabled="!canApply || isSubmitting">
+                    <span v-if="isSubmitting" class="btn-spinner"></span>
+                    <span>{{ isSubmitting ? 'Wird erstellt...' : 'Hinzufügen' }}</span>
                 </button>
             </div>
         </div>
@@ -84,11 +85,12 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import EventCard from '@/components/EventCard.vue'
+import type { Event, Instructor } from '@/types'
 
 const props = defineProps<{
     projectId: string
-    baseEvents: any[]
-    allInstructors: any[]
+    baseEvents: Event[]
+    allInstructors: Instructor[]
 }>()
 
 const emit = defineEmits<{
@@ -97,10 +99,11 @@ const emit = defineEmits<{
 
 const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
-const selectedEvent = ref<any | null>(null)
+const selectedEvent = ref<Event | null>(null)
 const selectedInstructor = ref('')
 const customName = ref('')
 const customTeaser = ref('')
+const isSubmitting = ref(false)
 
 const previewEvent = computed(() => {
     if (!selectedEvent.value) return null
@@ -121,7 +124,7 @@ const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const selectBaseEvent = (event: any) => {
+const selectBaseEvent = (event: Event) => {
     selectedEvent.value = event
     customName.value = event.name
     customTeaser.value = event.teaser || ''
@@ -137,11 +140,20 @@ const handleCancel = () => {
 }
 
 const handleApply = async () => {
-    if (!canApply.value || !selectedEvent.value) return
+    if (!canApply.value || !selectedEvent.value || isSubmitting.value) return
 
+    isSubmitting.value = true
     try {
+        // Construct XML-ID based on template ID
+        // Replace the project prefix: _demo.eventX → _projectN.eventX
+        // Or if template has different prefix, construct: _projectN.eventX
+        const templatePrefix = selectedEvent.value.id.split('.')[0] // e.g., "_demo"
+        const eventSuffix = selectedEvent.value.id.split('.')[1] // e.g., "event1"
+        const newXmlId = `_${props.projectId}.${eventSuffix}`
+
         // Construct the new event object
         const newEvent = {
+            id: newXmlId,
             name: customName.value,
             teaser: customTeaser.value,
             isbase: 0,
@@ -152,6 +164,8 @@ const handleApply = async () => {
             // Copy other fields from template
             cimg: selectedEvent.value.cimg,
             description: selectedEvent.value.description,
+            date_begin: selectedEvent.value.date_begin,
+            date_end: selectedEvent.value.date_end,
             start_time: selectedEvent.value.start_time,
             end_time: selectedEvent.value.end_time,
             event_type: selectedEvent.value.event_type
@@ -167,21 +181,26 @@ const handleApply = async () => {
         })
 
         if (!response.ok) {
-            throw new Error('Failed to create event')
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
         }
 
         const createdEvent = await response.json()
+
+        // Show success message (you could replace with a toast notification)
+        console.log('✅ Event created:', createdEvent.id)
 
         // Emit the new event ID
         emit('eventAdded', createdEvent.id)
 
         // Reset the form
         handleCancel()
-
-        console.log('✅ Event created:', createdEvent.id)
     } catch (error) {
         console.error('Error creating event:', error)
-        alert('Fehler beim Erstellen der Veranstaltung')
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
+        alert(`Fehler beim Erstellen der Veranstaltung:\n${errorMessage}`)
+    } finally {
+        isSubmitting.value = false
     }
 }
 
@@ -418,5 +437,28 @@ onBeforeUnmount(() => {
 .apply-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.apply-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>
