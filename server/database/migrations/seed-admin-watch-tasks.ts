@@ -18,6 +18,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
             priority: 'high',
             logic: 'watchcsv_base',
             filter: 'entities_or_all',
+            entity_name: 'CSV Files', // Human-readable entity name for admin UI
             record_type: null,
             record_id: null,
             assigned_to: 'system',
@@ -34,6 +35,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
             priority: 'high',
             logic: 'watchdb_base',
             filter: 'entities_or_all',
+            entity_name: 'Database Entities', // Human-readable entity name for admin UI
             record_type: null,
             record_id: null,
             assigned_to: 'system',
@@ -45,14 +47,14 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
 
     for (const task of tasks) {
         const isPostgres = db.type === 'postgresql'
-        
+
         if (isPostgres) {
             await db.run(`
                 INSERT INTO tasks (
                     id, title, description, status, category, priority,
-                    logic, filter, record_type, record_id,
+                    logic, filter, entity_name, record_type, record_id,
                     assigned_to, due_date, release_id, image
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title,
                     description = EXCLUDED.description,
@@ -61,6 +63,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
                     priority = EXCLUDED.priority,
                     logic = EXCLUDED.logic,
                     filter = EXCLUDED.filter,
+                    entity_name = EXCLUDED.entity_name,
                     record_type = EXCLUDED.record_type,
                     record_id = EXCLUDED.record_id,
                     assigned_to = EXCLUDED.assigned_to,
@@ -69,19 +72,19 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
                     image = EXCLUDED.image
             `, [
                 task.id, task.title, task.description, task.status, task.category, task.priority,
-                task.logic, task.filter, task.record_type, task.record_id,
+                task.logic, task.filter, task.entity_name, task.record_type, task.record_id,
                 task.assigned_to, task.due_date, task.release_id, task.image
             ])
         } else {
             await db.run(`
                 INSERT OR REPLACE INTO tasks (
                     id, title, description, status, category, priority,
-                    logic, filter, record_type, record_id,
+                    logic, filter, entity_name, record_type, record_id,
                     assigned_to, due_date, release_id, image
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 task.id, task.title, task.description, task.status, task.category, task.priority,
-                task.logic, task.filter, task.record_type, task.record_id,
+                task.logic, task.filter, task.entity_name, task.record_type, task.record_id,
                 task.assigned_to, task.due_date, task.release_id, task.image
             ])
         }

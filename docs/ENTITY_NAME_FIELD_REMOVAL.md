@@ -156,11 +156,26 @@ Add a flexible metadata JSON field:
 5. Create migration 010 if required
 
 ## Status
-🟡 **TEMPORARY FIX** - Field removed to unblock testing. May need to be restored with proper migration later.
+✅ **RESOLVED** - Migration 010 created to add entity_name field to tasks table.
+
+### Resolution (October 16, 2025)
+
+Created migration 010_add_entity_name_to_tasks.ts which:
+- Adds `entity_name TEXT DEFAULT NULL` column to tasks table
+- Supports both PostgreSQL and SQLite
+- Includes rollback capability (PostgreSQL only)
+
+Restored entity_name field in seed-admin-watch-tasks.ts:
+- Reset Base task: `entity_name: 'CSV Files'`
+- Save Base task: `entity_name: 'Database Entities'`
+
+Updated INSERT statements to include entity_name in both PostgreSQL and SQLite versions.
 
 ---
 
 **Created**: October 16, 2025
-**Last Updated**: October 16, 2025
-**Related Migration**: 009_add_project_relationships
-**Blocked Testing**: PostgreSQL seeding cycle
+**Last Updated**: October 16, 2025 (Resolved)
+**Related Migrations**: 
+- 009_add_project_relationships (blocked by this issue)
+- 010_add_entity_name_to_tasks (resolves this issue)
+**Status**: ✅ Complete

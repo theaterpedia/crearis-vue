@@ -12,6 +12,7 @@ import { migration as migration006 } from './006_add_watch_task_fields'
 import { migration as migration007 } from './007_create_config_table'
 import { migration as migration008 } from './008_add_isbase_to_entities'
 import { migration as migration009 } from './009_add_project_relationships'
+import { migration as migration010 } from './010_add_entity_name_to_tasks'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -33,6 +34,7 @@ const migrations: Migration[] = [
     { run: migration007.up, metadata: { id: migration007.id, description: migration007.description, version: '0.0.1', date: '2025-10-16' } },
     { run: migration008.up, metadata: { id: migration008.id, description: migration008.description, version: '0.0.2', date: '2025-10-16' } },
     { run: migration009.up, metadata: { id: migration009.id, description: migration009.description, version: '0.0.3', date: '2025-10-16' } },
+    { run: migration010.up, metadata: { id: migration010.id, description: migration010.description, version: '0.0.3', date: '2025-10-16' } },
 ]
 
 /**
