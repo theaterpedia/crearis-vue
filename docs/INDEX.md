@@ -8,6 +8,7 @@ Complete documentation for the demo-data project including database management, 
 
 ### Project Features & UI Components
 - **[Project Route Implementation](./PROJECT_ROUTE_IMPLEMENTATION.md)** - 🎯 Complete project editor with stepper interface
+- **[Project Events Step](./PROJECT_EVENTS_STEP.md)** - 📅 Events step implementation (gallery + add panel)
 - **[Project Config Dropdown](./PROJECT_CONFIG_DROPDOWN.md)** - ⚙️ Configuration controls (7 settings)
 - **[Project Config Summary](./PROJECT_CONFIG_SUMMARY.md)** - 📋 Quick overview of config dropdown
 - **[TaskDashboard Auth States](./TASKDASHBOARD_AUTH_STATES.md)** - 🔐 User roles and authentication
