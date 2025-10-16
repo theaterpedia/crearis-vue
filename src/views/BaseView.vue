@@ -86,8 +86,8 @@
                 <div v-if="currentEvent" class="demo-hero">
                     <!-- Edit button (only visible in edit mode) -->
                     <button v-if="dataSource === 'sql'" class="hero-edit-btn"
-                        @click="activateEntity('event', currentEvent)" title="Event bearbeiten"
-                        :class="{ 'is-active': activeEntityType === 'event' }">
+                        @click.stop="activateEntity('event', currentEvent)" title="Event bearbeiten"
+                        :class="{ 'is-active': activeEntityType === 'event' && activeEntityId === currentEvent.id }">
                         <svg viewBox="0 0 20 20" fill="currentColor">
                             <path
                                 d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -118,7 +118,8 @@
                             :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
                             <!-- Edit button (only visible in edit mode) -->
                             <button v-if="dataSource === 'sql'" class="entity-edit-btn"
-                                @click="activateEntity('post', post)" title="Beitrag bearbeiten">
+                                @click.stop="activateEntity('post', post)" title="Beitrag bearbeiten"
+                                :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
                                     <path
                                         d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -151,7 +152,7 @@
                         <div v-if="getAdditionalTasks('post').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -171,7 +172,8 @@
                             :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
                             <!-- Edit button (only visible in edit mode) -->
                             <button v-if="dataSource === 'sql'" class="entity-edit-btn"
-                                @click="activateEntity('location', location)" title="Ort bearbeiten">
+                                @click.stop="activateEntity('location', location)" title="Ort bearbeiten"
+                                :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
                                     <path
                                         d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -205,7 +207,7 @@
                         <div v-if="getAdditionalTasks('location').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -225,7 +227,8 @@
                             :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
                             <!-- Edit button (only visible in edit mode) -->
                             <button v-if="dataSource === 'sql'" class="entity-edit-btn"
-                                @click="activateEntity('instructor', instructor)" title="Kursleiter bearbeiten">
+                                @click.stop="activateEntity('instructor', instructor)" title="Kursleiter bearbeiten"
+                                :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
                                     <path
                                         d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -259,7 +262,7 @@
                         <div v-if="getAdditionalTasks('instructor').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -601,9 +604,18 @@ const activateEntity = async (type: 'event' | 'post' | 'location' | 'instructor'
 const loadMainTask = async (recordType: string, recordId: string) => {
     try {
         // Fetch main task for this entity
-        const response = await fetch(`/api/tasks?category=main&record_type=${recordType}&record_id=${recordId}`)
+        const url = `/api/tasks?category=main&record_type=${recordType}&record_id=${recordId}`
+        console.log('🔍 Loading main task:', { recordType, recordId, url })
+
+        const response = await fetch(url)
         if (response.ok) {
-            const tasks = await response.json()
+            const data = await response.json()
+            console.log('📋 API response:', data)
+
+            // API returns { success, tasks: [...], counts }
+            const tasks = data.tasks || []
+            console.log('📋 Tasks array:', tasks)
+
             if (tasks && tasks.length > 0) {
                 const task = tasks[0]
                 mainTaskForm.value = {
@@ -616,15 +628,18 @@ const loadMainTask = async (recordType: string, recordId: string) => {
                     image: task.image || '',
                     category: 'main'
                 }
+                console.log('✅ Main task loaded:', mainTaskForm.value)
             } else {
                 // No main task exists, create empty form
+                console.log('⚠️ No main task found, resetting form')
                 resetMainTaskForm()
             }
         } else {
+            console.error('❌ API response not ok:', response.status)
             resetMainTaskForm()
         }
     } catch (error) {
-        console.error('Error loading main task:', error)
+        console.error('❌ Error loading main task:', error)
         resetMainTaskForm()
     }
 }
@@ -648,28 +663,36 @@ const markAsEdited = () => {
 
 const handleSave = async () => {
     try {
+        console.log('💾 Starting save...', {
+            activeEntityType: activeEntityType.value,
+            activeEntityId: activeEntityId.value,
+            entityForm: entityForm.value,
+            mainTaskForm: mainTaskForm.value
+        })
+
         // Save entity data
         if (activeEntityType.value && activeEntityId.value) {
+            console.log('💾 Saving entity...')
             await saveEntity()
+            console.log('✅ Entity saved')
         }
 
         // Save main task
+        console.log('💾 Saving main task...')
         await saveMainTask()
+        console.log('✅ Main task saved')
 
-        // Refresh data
+        // Refresh data from database (this updates the left column display)
+        console.log('🔄 Refreshing data from database...')
         await refreshSqlData()
+        console.log('✅ Data refreshed')
 
-        // Reset state
+        // Reset edit state - the forms keep their current values which are the saved values
         hasActiveEdits.value = false
 
-        // If in subEntity mode, return to event
-        if (activeEntityType.value !== 'event' && currentEvent.value) {
-            await activateEntity('event', currentEvent.value)
-        }
-
-        console.log('✅ Änderungen gespeichert')
+        console.log('✅ Save complete!')
     } catch (error) {
-        console.error('Error saving:', error)
+        console.error('❌ Error saving:', error)
         alert('Fehler beim Speichern!')
     }
 }
@@ -716,19 +739,35 @@ const getOriginalEntity = () => {
 
 const saveEntity = async () => {
     const tableName = getTableName(activeEntityType.value!)
-    const response = await fetch(`/api/demo/${tableName}/${activeEntityId.value}`, {
+    const url = `/api/demo/${tableName}/${activeEntityId.value}`
+
+    console.log('📤 Saving entity to:', url)
+    console.log('📤 Entity data:', entityForm.value)
+
+    const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entityForm.value)
     })
 
+    console.log('📥 Save response status:', response.status)
+
     if (!response.ok) {
-        throw new Error(`Failed to save ${activeEntityType.value}`)
+        const errorText = await response.text()
+        console.error('❌ Save failed:', errorText)
+        throw new Error(`Failed to save ${activeEntityType.value}: ${response.status}`)
     }
+
+    const result = await response.json()
+    console.log('✅ Save result:', result)
+    return result
 }
 
 const saveMainTask = async () => {
-    if (!activeEntityType.value || !activeEntityId.value) return
+    if (!activeEntityType.value || !activeEntityId.value) {
+        console.log('⚠️ No active entity, skipping main task save')
+        return
+    }
 
     const taskData = {
         ...mainTaskForm.value,
@@ -745,15 +784,25 @@ const saveMainTask = async () => {
     const method = taskData.id ? 'PUT' : 'POST'
     const url = taskData.id ? `/api/tasks/${taskData.id}` : '/api/tasks'
 
+    console.log('📤 Saving main task:', { method, url, taskData })
+
     const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData)
     })
 
+    console.log('📥 Main task response status:', response.status)
+
     if (!response.ok) {
-        throw new Error('Failed to save main task')
+        const errorText = await response.text()
+        console.error('❌ Main task save failed:', errorText)
+        throw new Error(`Failed to save main task: ${response.status}`)
     }
+
+    const result = await response.json()
+    console.log('✅ Main task save result:', result)
+    return result
 }
 
 const getTableName = (entityType: string): string => {
@@ -784,14 +833,29 @@ const loadAllTasks = async () => {
     try {
         const response = await fetch('/api/tasks')
         if (response.ok) {
-            allTasks.value = await response.json()
+            const data = await response.json()
+            // API returns { success, tasks: [...], counts }
+            const tasks = data.tasks || []
+            // Ensure we always set an array
+            allTasks.value = Array.isArray(tasks) ? tasks : []
+            console.log('📋 Loaded tasks:', allTasks.value.length)
+        } else {
+            console.error('❌ Failed to load tasks:', response.status)
+            allTasks.value = []
         }
     } catch (error) {
-        console.error('Error loading tasks:', error)
+        console.error('❌ Error loading tasks:', error)
+        allTasks.value = []
     }
 }
 
 const getAdditionalTasks = (recordType: string) => {
+    // Ensure allTasks.value is always an array before filtering
+    if (!Array.isArray(allTasks.value)) {
+        console.warn('⚠️ allTasks.value is not an array:', allTasks.value)
+        return []
+    }
+
     // Filter tasks that are:
     // 1. Not main tasks (category !== 'main')
     // 2. Match the record type
@@ -1183,7 +1247,8 @@ onUnmounted(() => {
     z-index: 10;
 }
 
-.entity-edit-btn:hover {
+.entity-edit-btn:hover,
+.entity-edit-btn.is-active {
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     transform: translateY(-1px);
