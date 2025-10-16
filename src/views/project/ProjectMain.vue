@@ -174,7 +174,8 @@
             <div class="right-column">
                 <div class="right-column-content">
                     <ProjectStepEvents v-if="currentStep === 0" :project-id="projectId" @next="nextStep" />
-                    <ProjectStepData v-else-if="currentStep === 1" @next="nextStep" @prev="prevStep" />
+                    <ProjectStepData v-else-if="currentStep === 1" :project-id="projectId" @next="nextStep"
+                        @prev="prevStep" />
                     <ProjectStepTheme v-else-if="currentStep === 2" @next="nextStep" @prev="prevStep" />
                     <ProjectStepViews v-else-if="currentStep === 3" @next="nextStep" @prev="prevStep" />
                     <ProjectStepLanding v-else-if="currentStep === 4" @prev="prevStep" @complete="completeProject" />

@@ -1,0 +1,454 @@
+<template>
+    <div class="add-post-panel">
+        <!-- Component Header -->
+        <div class="panel-header">
+            <div class="dropdown-wrapper" ref="dropdownRef">
+                <button class="add-post-btn" @click="toggleDropdown" :disabled="!basePosts.length">
+                    <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z">
+                        </path>
+                    </svg>
+                    <span>Add Post</span>
+                </button>
+
+                <div v-if="isDropdownOpen" class="posts-dropdown">
+                    <div class="posts-dropdown-header">
+                        <span>Basis-Beitrag wählen</span>
+                    </div>
+
+                    <button v-for="post in basePosts" :key="post.id" class="post-option" @click="selectBasePost(post)">
+                        <img v-if="post.cimg" :src="post.cimg" :alt="post.name" class="post-option-image" />
+
+                        <div class="post-option-label">
+                            <HeadingParser :content="post.name" as="p" />
+                        </div>
+
+                        <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                            xmlns="http://www.w3.org/2000/svg" class="post-option-check">
+                            <path
+                                d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Card (disabled by default) -->
+        <div v-if="selectedPost" class="preview-section">
+            <div class="section-label">Vorschau</div>
+            <PostCard :post="previewPost" :instructors="allInstructors" />
+        </div>
+
+        <!-- Action Area (disabled by default) -->
+        <div v-if="selectedPost" class="action-section">
+            <div class="section-label">Anpassen</div>
+
+            <div class="form-group">
+                <label class="form-label">Autor</label>
+                <select v-model="selectedInstructor" class="form-select">
+                    <option value="">Autor wählen</option>
+                    <option v-for="instructor in allInstructors" :key="instructor.id" :value="instructor.id">
+                        {{ instructor.name }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Titel</label>
+                <input v-model="customName" type="text" class="form-input" placeholder="Post-Titel" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Teaser</label>
+                <textarea v-model="customTeaser" class="form-textarea" rows="3"
+                    placeholder="Post-Beschreibung"></textarea>
+            </div>
+
+            <div class="action-buttons">
+                <button class="cancel-btn" @click="handleCancel" :disabled="isSubmitting">
+                    Abbrechen
+                </button>
+                <button class="apply-btn" @click="handleApply" :disabled="!canApply || isSubmitting">
+                    <span v-if="isSubmitting" class="btn-spinner"></span>
+                    <span>{{ isSubmitting ? 'Wird erstellt...' : 'Hinzufügen' }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script lang="ts" setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import HeadingParser from '@/components/HeadingParser.vue'
+import PostCard from '@/components/PostCard.vue'
+import type { Post, Instructor } from '@/types'
+
+const props = defineProps<{
+    projectId: string
+    basePosts: Post[]
+    allInstructors: Instructor[]
+}>()
+
+const emit = defineEmits<{
+    postAdded: [postId: string]
+}>()
+
+const dropdownRef = ref<HTMLElement | null>(null)
+const isDropdownOpen = ref(false)
+const selectedPost = ref<Post | null>(null)
+const selectedInstructor = ref('')
+const customName = ref('')
+const customTeaser = ref('')
+const isSubmitting = ref(false)
+
+const previewPost = computed(() => {
+    if (!selectedPost.value) return null
+
+    return {
+        ...selectedPost.value,
+        name: customName.value || selectedPost.value.name,
+        teaser: customTeaser.value || selectedPost.value.teaser,
+        public_user: selectedInstructor.value || selectedPost.value.public_user
+    }
+})
+
+const canApply = computed(() => {
+    return selectedPost.value && selectedInstructor.value && customName.value
+})
+
+const toggleDropdown = () => {
+    isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const selectBasePost = (post: Post) => {
+    selectedPost.value = post
+    customName.value = post.name
+    customTeaser.value = post.teaser || ''
+    selectedInstructor.value = post.public_user || ''
+    isDropdownOpen.value = false
+}
+
+const handleCancel = () => {
+    selectedPost.value = null
+    selectedInstructor.value = ''
+    customName.value = ''
+    customTeaser.value = ''
+}
+
+const handleApply = async () => {
+    if (!canApply.value || !selectedPost.value || isSubmitting.value) return
+
+    isSubmitting.value = true
+    try {
+        // Construct XML-ID based on template ID
+        // Replace the project prefix: _demo.postX → _projectN.postX
+        const templatePrefix = selectedPost.value.id.split('.')[0] // e.g., "_demo"
+        const postSuffix = selectedPost.value.id.split('.')[1] // e.g., "post1"
+        const newXmlId = `_${props.projectId}.${postSuffix}`
+
+        // Construct the new post object
+        const newPost = {
+            id: newXmlId,
+            name: customName.value,
+            teaser: customTeaser.value,
+            isbase: 0,
+            project: props.projectId,
+            template: selectedPost.value.id,
+            public_user: selectedInstructor.value,
+            // Copy other fields from template
+            cimg: selectedPost.value.cimg,
+            content: selectedPost.value.content,
+            date_published: selectedPost.value.date_published
+        }
+
+        // Call API to create the post
+        const response = await fetch('/api/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newPost)
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const createdPost = await response.json()
+
+        // Show success message
+        console.log('✅ Post created:', createdPost.id)
+
+        // Emit the new post ID
+        emit('postAdded', createdPost.id)
+
+        // Reset the form
+        handleCancel()
+    } catch (error) {
+        console.error('Error creating post:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
+        alert(`Fehler beim Erstellen des Beitrags:\n${errorMessage}`)
+    } finally {
+        isSubmitting.value = false
+    }
+}
+
+// Click outside to close dropdown
+const handleClickOutside = (event: MouseEvent) => {
+    if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+        isDropdownOpen.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
+<style scoped>
+.add-post-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+/* Panel Header */
+.panel-header {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.add-post-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.add-post-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover, #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.add-post-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.add-post-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Posts Dropdown */
+.posts-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.posts-dropdown-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    color: var(--color-heading);
+    background: var(--color-background-soft);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.post-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+.post-option:hover {
+    background: var(--color-background-soft);
+}
+
+.post-option-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.post-option-label {
+    flex: 1;
+    font-size: 0.875rem;
+}
+
+.post-option-check {
+    flex-shrink: 0;
+    color: var(--color-primary, #3b82f6);
+}
+
+/* Preview Section */
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.section-label {
+    font-weight: 600;
+    color: var(--color-heading);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Action Section */
+.action-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-heading);
+}
+
+.form-select,
+.form-input,
+.form-textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: var(--color-background);
+    color: var(--color-text);
+    transition: border-color 0.2s ease;
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary, #3b82f6);
+}
+
+.form-textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.cancel-btn,
+.apply-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background: var(--color-background-soft);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.cancel-btn:hover {
+    background: var(--color-background-mute);
+}
+
+.apply-btn {
+    background: var(--color-primary, #3b82f6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.apply-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover, #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.apply-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+</style>
