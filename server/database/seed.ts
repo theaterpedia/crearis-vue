@@ -8,8 +8,8 @@ import path from 'path'
 import readline from 'readline'
 import bcrypt from 'bcryptjs'
 import type { DatabaseAdapter } from './adapter'
+import { getFileset, validateFileInFileset, getFilesetFilePath } from '../settings'
 
-const CSV_DIR = path.resolve(process.cwd(), 'src/assets/csv')
 const USERS_CSV_PATH = path.resolve(process.cwd(), 'projectnames_and_users.csv')
 
 interface UserProjectData {
@@ -152,19 +152,24 @@ async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectDa
 
 /**
  * Seed CSV data into database
+ * @param db - Database adapter
+ * @param filesetId - ID of the fileset to use (defaults to 'base')
  */
-async function seedCSVData(db: DatabaseAdapter) {
-    console.log('📊 Seeding CSV data...')
+async function seedCSVData(db: DatabaseAdapter, filesetId: string = 'base') {
+    console.log(`📊 Seeding CSV data from fileset '${filesetId}'...`)
 
     try {
+        const fileset = getFileset(filesetId)
+        console.log(`   Using fileset: ${fileset.name} (${fileset.path})`)
+
         // Read all CSV files
-        const eventsCSV = fs.readFileSync(path.join(CSV_DIR, 'events.csv'), 'utf-8')
-        const postsCSV = fs.readFileSync(path.join(CSV_DIR, 'posts.csv'), 'utf-8')
-        const locationsCSV = fs.readFileSync(path.join(CSV_DIR, 'locations.csv'), 'utf-8')
-        const instructorsCSV = fs.readFileSync(path.join(CSV_DIR, 'instructors.csv'), 'utf-8')
-        const childrenCSV = fs.readFileSync(path.join(CSV_DIR, 'children.csv'), 'utf-8')
-        const teensCSV = fs.readFileSync(path.join(CSV_DIR, 'teens.csv'), 'utf-8')
-        const adultsCSV = fs.readFileSync(path.join(CSV_DIR, 'adults.csv'), 'utf-8')
+        const eventsCSV = fs.readFileSync(getFilesetFilePath('events.csv', filesetId), 'utf-8')
+        const postsCSV = fs.readFileSync(getFilesetFilePath('posts.csv', filesetId), 'utf-8')
+        const locationsCSV = fs.readFileSync(getFilesetFilePath('locations.csv', filesetId), 'utf-8')
+        const instructorsCSV = fs.readFileSync(getFilesetFilePath('instructors.csv', filesetId), 'utf-8')
+        const childrenCSV = fs.readFileSync(getFilesetFilePath('children.csv', filesetId), 'utf-8')
+        const teensCSV = fs.readFileSync(getFilesetFilePath('teens.csv', filesetId), 'utf-8')
+        const adultsCSV = fs.readFileSync(getFilesetFilePath('adults.csv', filesetId), 'utf-8')
 
         // Parse CSV data
         const events = parseCSV(eventsCSV)
@@ -178,10 +183,13 @@ async function seedCSVData(db: DatabaseAdapter) {
         // Seed events first (they are referenced by other tables)
         console.log('   📅 Seeding events...')
         for (const event of events) {
+            // Determine if this is a base record (starts with _demo.)
+            const isBase = event.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO events 
-                (id, name, date_begin, date_end, address_id, user_id, seats_max, cimg, header_type, rectitle, teaser)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, date_begin, date_end, address_id, user_id, seats_max, cimg, header_type, rectitle, teaser, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     date_begin = excluded.date_begin,
@@ -192,7 +200,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     cimg = excluded.cimg,
                     header_type = excluded.header_type,
                     rectitle = excluded.rectitle,
-                    teaser = excluded.teaser
+                    teaser = excluded.teaser,
+                    isbase = excluded.isbase
             `, [
                 event.id,
                 event.name,
@@ -204,7 +213,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                 event.cimg,
                 event.header_type,
                 event.rectitle,
-                event.teaser
+                event.teaser,
+                isBase
             ])
         }
         console.log(`   ✅ Seeded ${events.length} events`)
@@ -212,10 +222,12 @@ async function seedCSVData(db: DatabaseAdapter) {
         // Seed locations
         console.log('   📍 Seeding locations...')
         for (const location of locations) {
+            const isBase = location.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO locations 
-                (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     phone = excluded.phone,
@@ -231,7 +243,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     header_size = excluded.header_size,
                     md = excluded.md,
                     is_location_provider = excluded.is_location_provider,
-                    event_id = excluded.event_id
+                    event_id = excluded.event_id,
+                    isbase = excluded.isbase
             `, [
                 location.id,
                 location.name,
@@ -248,7 +261,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                 location.header_size,
                 location.md,
                 location.is_location_provider,
-                location.event_id
+                location.event_id,
+                isBase
             ])
         }
         console.log(`   ✅ Seeded ${locations.length} locations`)
@@ -256,10 +270,12 @@ async function seedCSVData(db: DatabaseAdapter) {
         // Seed instructors
         console.log('   👨‍🏫 Seeding instructors...')
         for (const instructor of instructors) {
+            const isBase = instructor.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO instructors 
-                (id, name, email, phone, city, country_id, cimg, description, event_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, email, phone, city, country_id, cimg, description, event_id, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     email = excluded.email,
@@ -268,7 +284,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     country_id = excluded.country_id,
                     cimg = excluded.cimg,
                     description = excluded.description,
-                    event_id = excluded.event_id
+                    event_id = excluded.event_id,
+                    isbase = excluded.isbase
             `, [
                 instructor.id,
                 instructor.name,
@@ -278,7 +295,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                 instructor['country_id/id'] || instructor.country_id,
                 instructor.cimg,
                 instructor.description,
-                instructor['event_id/id'] || instructor.event_id
+                instructor['event_id/id'] || instructor.event_id,
+                isBase
             ])
         }
         console.log(`   ✅ Seeded ${instructors.length} instructors`)
@@ -288,10 +306,12 @@ async function seedCSVData(db: DatabaseAdapter) {
         let participantCount = 0
 
         for (const child of children) {
+            const isBase = child.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO participants 
-                (id, name, age, city, country_id, cimg, description, event_id, type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, age, city, country_id, cimg, description, event_id, type, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     age = excluded.age,
@@ -300,7 +320,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     cimg = excluded.cimg,
                     description = excluded.description,
                     event_id = excluded.event_id,
-                    type = excluded.type
+                    type = excluded.type,
+                    isbase = excluded.isbase
             `, [
                 child.id,
                 child.name,
@@ -310,16 +331,19 @@ async function seedCSVData(db: DatabaseAdapter) {
                 child.cimg,
                 child.description,
                 child['event_id/id'] || child.event_id,
-                'child'
+                'child',
+                isBase
             ])
             participantCount++
         }
 
         for (const teen of teens) {
+            const isBase = teen.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO participants 
-                (id, name, age, city, country_id, cimg, description, event_id, type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, age, city, country_id, cimg, description, event_id, type, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     age = excluded.age,
@@ -328,7 +352,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     cimg = excluded.cimg,
                     description = excluded.description,
                     event_id = excluded.event_id,
-                    type = excluded.type
+                    type = excluded.type,
+                    isbase = excluded.isbase
             `, [
                 teen.id,
                 teen.name,
@@ -338,16 +363,19 @@ async function seedCSVData(db: DatabaseAdapter) {
                 teen.cimg,
                 teen.description,
                 teen['event_id/id'] || teen.event_id,
-                'teen'
+                'teen',
+                isBase
             ])
             participantCount++
         }
 
         for (const adult of adults) {
+            const isBase = adult.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO participants 
-                (id, name, age, city, country_id, cimg, description, event_id, type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, age, city, country_id, cimg, description, event_id, type, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     age = excluded.age,
@@ -356,7 +384,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     cimg = excluded.cimg,
                     description = excluded.description,
                     event_id = excluded.event_id,
-                    type = excluded.type
+                    type = excluded.type,
+                    isbase = excluded.isbase
             `, [
                 adult.id,
                 adult.name,
@@ -366,7 +395,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                 adult.cimg,
                 adult.description,
                 adult['event_id/id'] || adult.event_id,
-                'adult'
+                'adult',
+                isBase
             ])
             participantCount++
         }
@@ -375,10 +405,12 @@ async function seedCSVData(db: DatabaseAdapter) {
         // Seed posts
         console.log('   📰 Seeding posts...')
         for (const post of posts) {
+            const isBase = post.id.startsWith('_demo.') ? 1 : 0
+
             await db.run(`
                 INSERT INTO posts 
-                (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg, isbase)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     subtitle = excluded.subtitle,
@@ -391,7 +423,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                     post_date = excluded.post_date,
                     cover_properties = excluded.cover_properties,
                     event_id = excluded.event_id,
-                    cimg = excluded.cimg
+                    cimg = excluded.cimg,
+                    isbase = excluded.isbase
             `, [
                 post.id,
                 post.name,
@@ -405,7 +438,8 @@ async function seedCSVData(db: DatabaseAdapter) {
                 post.post_date,
                 post.cover_properties,
                 post['event_id/id'] || post.event_id,
-                post.cimg
+                post.cimg,
+                isBase
             ])
         }
         console.log(`   ✅ Seeded ${posts.length} posts`)

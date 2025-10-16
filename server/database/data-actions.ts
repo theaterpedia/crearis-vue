@@ -9,22 +9,22 @@ console.log('🚀 Starting Data Actions Script...\n')
 db.pragma('foreign_keys = ON')
 
 // ============================================================================
-// 1. SET isBase=true FOR EXISTING EVENTS WITH _demo.* IDs
+// 1. SET isbase=true FOR EXISTING EVENTS WITH _demo.* IDs
 // ============================================================================
 
-console.log('📋 Step 1: Setting isBase=true for demo events...')
+console.log('📋 Step 1: Setting isbase=true for demo events...')
 
 const updateIsBase = db.prepare(`
     UPDATE events 
-    SET isBase = 1 
+    SET isbase = 1 
     WHERE id LIKE '_demo.%'
 `)
 
 const result = updateIsBase.run()
-console.log(`✅ Updated ${result.changes} events to isBase=true`)
+console.log(`✅ Updated ${result.changes} events to isbase=true`)
 
 // Verify
-const baseCount = db.prepare("SELECT COUNT(*) as count FROM events WHERE isBase = 1").get() as { count: number }
+const baseCount = db.prepare("SELECT COUNT(*) as count FROM events WHERE isbase = 1").get() as { count: number }
 console.log(`   Verification: ${baseCount.count} base events in database\n`)
 
 // ============================================================================

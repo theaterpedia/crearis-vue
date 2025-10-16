@@ -4,6 +4,7 @@
  */
 
 import type { DatabaseAdapter } from '../adapter'
+import { getFileset } from '../../settings'
 
 export const migration = {
     id: '007_create_system_config_table',
@@ -34,11 +35,12 @@ export const migration = {
             `)
         }
 
-        // Insert watchcsv configuration with base fileset
+        // Insert watchcsv configuration with base fileset from settings
+        const baseFileset = getFileset('base')
         const watchcsvConfig = JSON.stringify({
             base: {
                 lastCheck: null,
-                files: ['events.csv', 'posts.csv', 'locations.csv', 'instructors.csv']
+                files: baseFileset.files
             }
         })
 
@@ -49,10 +51,11 @@ export const migration = {
         )
 
         // Insert watchdb configuration
+        // Watchdb monitors the main entity tables
         const watchdbConfig = JSON.stringify({
             base: {
                 lastCheck: null,
-                entities: ['events', 'posts', 'locations', 'instructors']
+                entities: ['events', 'posts', 'locations', 'instructors', 'participants']
             }
         })
 

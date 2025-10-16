@@ -40,80 +40,80 @@ console.log('✅ Releases table created with version ordering')
 const existingReleases = db.prepare('SELECT COUNT(*) as count FROM releases').get() as { count: number }
 
 if (existingReleases.count === 0) {
-    console.log('📝 Inserting initial release records...')
+  console.log('📝 Inserting initial release records...')
 
-    const insertRelease = db.prepare(`
+  const insertRelease = db.prepare(`
     INSERT INTO releases (id, version, version_major, version_minor, description, state, release_date)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
 
-    const releases = [
-        {
-            id: nanoid(),
-            version: '0.0',
-            major: 0,
-            minor: 0,
-            description: 'Initial concept and planning phase',
-            state: 'final',
-            release_date: '2025-01-01'
-        },
-        {
-            id: nanoid(),
-            version: '0.1',
-            major: 0,
-            minor: 1,
-            description: 'First development iteration',
-            state: 'draft',
-            release_date: '2025-02-01'
-        },
-        {
-            id: nanoid(),
-            version: '0.2',
-            major: 0,
-            minor: 2,
-            description: 'Second development iteration',
-            state: 'idea',
-            release_date: null
-        }
-    ]
+  const releases = [
+    {
+      id: nanoid(),
+      version: '0.0',
+      major: 0,
+      minor: 0,
+      description: 'Initial concept and planning phase',
+      state: 'final',
+      release_date: '2025-01-01'
+    },
+    {
+      id: nanoid(),
+      version: '0.1',
+      major: 0,
+      minor: 1,
+      description: 'First development iteration',
+      state: 'draft',
+      release_date: '2025-02-01'
+    },
+    {
+      id: nanoid(),
+      version: '0.2',
+      major: 0,
+      minor: 2,
+      description: 'Second development iteration',
+      state: 'idea',
+      release_date: null
+    }
+  ]
 
-    const insertMany = db.transaction(() => {
-        for (const release of releases) {
-            insertRelease.run(
-                release.id,
-                release.version,
-                release.major,
-                release.minor,
-                release.description,
-                release.state,
-                release.release_date
-            )
-        }
-    })
+  const insertMany = db.transaction(() => {
+    for (const release of releases) {
+      insertRelease.run(
+        release.id,
+        release.version,
+        release.major,
+        release.minor,
+        release.description,
+        release.state,
+        release.release_date
+      )
+    }
+  })
 
-    insertMany()
-    console.log('✅ Created 3 initial releases: 0.0, 0.1, 0.2')
+  insertMany()
+  console.log('✅ Created 3 initial releases: 0.0, 0.1, 0.2')
 }
 
 // ============================================================================
-// 2. ADD isBase TO EVENTS TABLE
+// 2. ADD isbase TO EVENTS TABLE
 // ============================================================================
 
-console.log('\n📋 Step 2: Adding isBase field to events table...')
+console.log('\n📋 Step 2: Adding isbase field to events table...')
 
 // Check if column exists
 const eventsColumns = db.prepare("PRAGMA table_info(events)").all() as Array<{ name: string }>
-const hasIsBase = eventsColumns.some(col => col.name === 'isBase')
+const hasIsBase = eventsColumns.some(col => col.name === 'isbase')
 
 if (!hasIsBase) {
-    db.exec(`
-    ALTER TABLE events ADD COLUMN isBase INTEGER DEFAULT 0
+  db.exec(`
+    ALTER TABLE events ADD COLUMN isbase INTEGER DEFAULT 0
   `)
-    console.log('✅ Added isBase column to events')
-    console.log('ℹ️  Note: isBase values should be set during CSV import based on xml_id patterns')
-    console.log('    (Records with id starting with "_demo." should have isBase=1)')
+  console.log('✅ Added isbase column to events')
+  console.log('ℹ️  Note: isbase values should be set during CSV import based on xml_id patterns')
+  console.log('    (Records with id starting with "_demo." should have isbase=1)')
 } else {
-    console.log('⏭️  isBase column already exists')
+  console.log('⏭️  isbase column already exists')
 }// ============================================================================
 // 3. REFACTOR TASKS TABLE
 // ============================================================================
@@ -149,8 +149,8 @@ console.log('📝 Migrating existing tasks...')
 const existingTasksCount = db.prepare("SELECT COUNT(*) as count FROM tasks").get() as { count: number }
 
 if (existingTasksCount.count > 0) {
-    // Map old status values to new ones
-    db.exec(`
+  // Map old status values to new ones
+  db.exec(`
     INSERT INTO tasks_new (
       id, title, description, category, status, priority,
       release_id, record_type, record_id, assigned_to,
@@ -181,7 +181,7 @@ if (existingTasksCount.count > 0) {
       updated_at
     FROM tasks
   `)
-    console.log(`✅ Migrated ${existingTasksCount.count} existing tasks`)
+  console.log(`✅ Migrated ${existingTasksCount.count} existing tasks`)
 }
 
 // Drop old table and rename new one
@@ -375,31 +375,31 @@ console.log('✅ Created entity-task relationship triggers')
 console.log('\n📋 Step 6: Creating main tasks for existing entities...')
 
 const createMainTasks = db.transaction(() => {
-    const tables = ['events', 'posts', 'locations', 'instructors', 'participants']
+  const tables = ['events', 'posts', 'locations', 'instructors', 'participants']
 
-    for (const table of tables) {
-        const entities = db.prepare(`SELECT id FROM ${table}`).all() as Array<{ id: string }>
+  for (const table of tables) {
+    const entities = db.prepare(`SELECT id FROM ${table}`).all() as Array<{ id: string }>
 
-        for (const entity of entities) {
-            // Check if main task already exists
-            const existingTask = db.prepare(`
+    for (const entity of entities) {
+      // Check if main task already exists
+      const existingTask = db.prepare(`
         SELECT id FROM tasks 
         WHERE record_type = ? 
           AND record_id = ? 
           AND category = 'main'
       `).get(table.slice(0, -1), entity.id) // Remove 's' from table name for record_type
 
-            if (!existingTask) {
-                db.prepare(`
+      if (!existingTask) {
+        db.prepare(`
           INSERT INTO tasks (id, title, category, status, record_type, record_id)
           VALUES (?, '{{main-title}}', 'main', 'new', ?, ?)
         `).run(nanoid(), table.slice(0, -1), entity.id)
-            }
-        }
-
-        const count = entities.length
-        console.log(`✅ Ensured main tasks for ${count} ${table}`)
+      }
     }
+
+    const count = entities.length
+    console.log(`✅ Ensured main tasks for ${count} ${table}`)
+  }
 })
 
 createMainTasks()
@@ -420,7 +420,7 @@ console.log(`✅ Tasks: ${tasksCount.count} records`)
 const mainTasksCount = db.prepare("SELECT COUNT(*) as count FROM tasks WHERE category = 'main'").get() as { count: number }
 console.log(`✅ Main tasks: ${mainTasksCount.count} records`)
 
-const baseEventsCount = db.prepare('SELECT COUNT(*) as count FROM events WHERE isBase = 1').get() as { count: number }
+const baseEventsCount = db.prepare('SELECT COUNT(*) as count FROM events WHERE isbase = 1').get() as { count: number }
 console.log(`✅ Base events: ${baseEventsCount.count} records`)
 
 const eventsCount = db.prepare('SELECT COUNT(*) as count FROM events').get() as { count: number }

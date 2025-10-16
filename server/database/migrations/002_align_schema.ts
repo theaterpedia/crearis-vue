@@ -7,29 +7,29 @@
 import type { DatabaseAdapter } from '../adapter'
 
 /**
- * Add isBase column to events table
+ * Add isbase column to events table
  * Used to mark base/template events
  */
 export async function addEventsIsBase(db: DatabaseAdapter) {
     const isPostgres = db.type === 'postgresql'
 
-    console.log('  📝 Adding events.isBase column...')
+    console.log('  📝 Adding events.isbase column...')
 
     if (isPostgres) {
         await db.run(`
       ALTER TABLE events 
-      ADD COLUMN IF NOT EXISTS isBase INTEGER DEFAULT 0
+      ADD COLUMN IF NOT EXISTS isbase INTEGER DEFAULT 0
     `, [])
     } else {
         // SQLite doesn't have IF NOT EXISTS for ADD COLUMN
         // Check if column exists first
         try {
-            await db.run(`ALTER TABLE events ADD COLUMN isBase INTEGER DEFAULT 0`, [])
+            await db.run(`ALTER TABLE events ADD COLUMN isbase INTEGER DEFAULT 0`, [])
         } catch (error: any) {
             if (!error.message.includes('duplicate column')) {
                 throw error
             }
-            console.log('  ⏭️  Column events.isBase already exists')
+            console.log('  ⏭️  Column events.isbase already exists')
         }
     }
 }

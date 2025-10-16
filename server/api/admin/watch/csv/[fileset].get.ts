@@ -8,10 +8,9 @@
 
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { db } from '../../../../database/init'
+import { getFileset, getFilesetFilePath } from '../../../../settings'
 import fs from 'fs'
 import path from 'path'
-
-const CSV_DIR = path.resolve(process.cwd(), 'src/assets/csv')
 
 export default defineEventHandler(async (event) => {
     const fileset = getRouterParam(event, 'fileset')
@@ -51,23 +50,39 @@ export default defineEventHandler(async (event) => {
         const lastCheck = filesetConfig.lastCheck ? new Date(filesetConfig.lastCheck) : null
         const files = filesetConfig.files || []
 
+        // Get fileset config from settings to get actual file paths
+        let filesetSettings
+        try {
+            filesetSettings = getFileset(fileset)
+        } catch (error: any) {
+            throw createError({
+                statusCode: 404,
+                message: error.message
+            })
+        }
+
         // Check each file's modification time
         const updatedFiles: string[] = []
 
         for (const filename of files) {
-            const filePath = path.join(CSV_DIR, filename)
+            try {
+                const filePath = getFilesetFilePath(filename, fileset)
 
-            if (!fs.existsSync(filePath)) {
-                console.warn(`⚠️ File not found: ${filename}`)
+                if (!fs.existsSync(filePath)) {
+                    console.warn(`⚠️ File not found: ${filename}`)
+                    continue
+                }
+
+                const stats = fs.statSync(filePath)
+                const mtime = stats.mtime
+
+                // If no lastCheck or file is newer, mark as updated
+                if (!lastCheck || mtime > lastCheck) {
+                    updatedFiles.push(filename)
+                }
+            } catch (error: any) {
+                console.warn(`⚠️ Error checking file ${filename}:`, error.message)
                 continue
-            }
-
-            const stats = fs.statSync(filePath)
-            const mtime = stats.mtime
-
-            // If no lastCheck or file is newer, mark as updated
-            if (!lastCheck || mtime > lastCheck) {
-                updatedFiles.push(filename)
             }
         }
 

@@ -19,10 +19,10 @@ export interface DatabaseConfig {
 
 /**
  * Get database configuration from environment variables
- * Defaults to SQLite if no DATABASE_TYPE is specified
+ * Defaults to PostgreSQL if no DATABASE_TYPE is specified
  */
 export function getDatabaseConfig(): DatabaseConfig {
-    const type = (process.env.DATABASE_TYPE || 'sqlite') as DatabaseType
+    const type = (process.env.DATABASE_TYPE || 'postgresql') as DatabaseType
 
     const config: DatabaseConfig = {
         type
