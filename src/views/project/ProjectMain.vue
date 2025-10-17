@@ -189,6 +189,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useTheme } from '@/composables/useTheme'
 import Navbar from '@/components/Navbar.vue'
 import ProjectStepper from './ProjectStepper.vue'
 import ProjectStepEvents from './ProjectStepEvents.vue'
@@ -312,8 +313,14 @@ function handleClickOutside(event: MouseEvent) {
     }
 }
 
+// Initialize theme system
+const { init: initTheme } = useTheme()
+
 // Auth check on mount
 onMounted(async () => {
+    // Initialize theme system (loads available themes, doesn't set any by default)
+    await initTheme()
+
     await requireAuth()
     // Add click outside listener
     document.addEventListener('click', handleClickOutside)

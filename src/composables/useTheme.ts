@@ -13,9 +13,10 @@
 import { ref, computed } from 'vue'
 
 // Singleton state - shared across all composable instances
-const currentThemeId = ref<number>(0)
+const currentThemeId = ref<number | null>(null)
 const themesCache = ref<any[]>([])
 const themeVarsCache = ref<Map<number, Record<string, string>>>(new Map())
+const isInverted = ref<boolean>(false)
 
 export interface Theme {
     id: number
@@ -30,10 +31,44 @@ export interface ThemeVars {
 
 export function useTheme() {
     /**
-     * Set the active theme
-     * @param id Theme ID (0-7)
+     * Helper: Apply CSS variables to document root
      */
-    const setTheme = async (id: number): Promise<void> => {
+    const applyVarsToDocument = (vars: ThemeVars) => {
+        if (typeof document === 'undefined') return
+
+        const root = document.documentElement
+        for (const [key, value] of Object.entries(vars)) {
+            root.style.setProperty(key, value)
+        }
+    }
+
+    /**
+     * Helper: Remove theme CSS variables from document root
+     */
+    const removeVarsFromDocument = () => {
+        if (typeof document === 'undefined') return
+
+        const root = document.documentElement
+        // Get all theme vars from cache and remove them
+        themeVarsCache.value.forEach((vars: ThemeVars) => {
+            for (const key of Object.keys(vars)) {
+                root.style.removeProperty(key)
+            }
+        })
+    }
+
+    /**
+     * Set the active theme
+     * @param id Theme ID (0-7) or null to remove theme (revert to site CSS)
+     */
+    const setTheme = async (id: number | null): Promise<void> => {
+        // If null, remove all theme vars
+        if (id === null) {
+            currentThemeId.value = null
+            removeVarsFromDocument()
+            return
+        }
+
         if (id < 0 || id > 7) {
             throw new Error('Theme ID must be between 0 and 7')
         }
@@ -123,18 +158,6 @@ export function useTheme() {
     const currentTheme = computed(() => currentThemeId.value)
 
     /**
-     * Helper: Apply CSS variables to document root
-     */
-    const applyVarsToDocument = (vars: ThemeVars) => {
-        if (typeof document === 'undefined') return
-
-        const root = document.documentElement
-        for (const [key, value] of Object.entries(vars)) {
-            root.style.setProperty(key, value)
-        }
-    }
-
-    /**
      * Helper: Get CSS variable string for style attribute
      * Useful for SSR or component-level styling
      */
@@ -146,15 +169,48 @@ export function useTheme() {
 
     /**
      * Initialize theme system
-     * Loads themes and sets default theme if none is set
+     * Loads themes but doesn't set any by default (uses site CSS)
      */
     const init = async () => {
         await getThemes()
+        // By default, no theme is active (null = site CSS)
+        // Apply initial inverted state
+        applyInvertedToDocument()
+    }
 
-        // Set default theme if not already set
-        if (currentThemeId.value === 0 && !themeVarsCache.value.has(0)) {
-            await setTheme(0)
-        }
+    /**
+     * Set inverted color mode
+     * @param inverted Boolean indicating if colors should be inverted
+     */
+    const setInverted = (inverted: boolean): void => {
+        isInverted.value = inverted
+        applyInvertedToDocument()
+    }
+
+    /**
+     * Get current inverted state
+     * @returns Boolean indicating if colors are inverted
+     */
+    const getInverted = (): boolean => {
+        return isInverted.value
+    }
+
+    /**
+     * Toggle inverted color mode
+     */
+    const toggleInverted = (): void => {
+        isInverted.value = !isInverted.value
+        applyInvertedToDocument()
+    }
+
+    /**
+     * Helper: Apply --color-inverted CSS variable to document root
+     */
+    const applyInvertedToDocument = (): void => {
+        if (typeof document === 'undefined') return
+
+        const root = document.documentElement
+        root.style.setProperty('--color-inverted', isInverted.value ? '1' : '0')
     }
 
     return {
@@ -162,6 +218,12 @@ export function useTheme() {
         setTheme,
         getThemeVars,
         getThemes,
+
+        // Inverted mode
+        setInverted,
+        getInverted,
+        toggleInverted,
+        isInverted: computed(() => isInverted.value),
 
         // Computed state
         currentVars,

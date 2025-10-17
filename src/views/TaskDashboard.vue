@@ -269,6 +269,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useTheme } from '@/composables/useTheme'
 import Section from '@/components/Section.vue'
 import Button from '@/components/Button.vue'
 import TaskCard from '@/components/TaskCard.vue'
@@ -1125,8 +1126,14 @@ onBeforeRouteLeave((to, from) => {
     return true
 })
 
+// Initialize theme system
+const { init: initTheme } = useTheme()
+
 // Load data on mount
 onMounted(async () => {
+    // Initialize theme system (loads available themes, doesn't set any by default)
+    await initTheme()
+
     await checkSession()
     if (isAuthenticated.value) {
         await Promise.all([
@@ -1146,6 +1153,7 @@ onMounted(async () => {
 .dashboard-wrapper {
     min-height: 100vh;
     background: var(--color-bg);
+    color: var(--color-contrast);
 }
 
 /* Dashboard Content - Full Width with Padding */
@@ -1167,10 +1175,11 @@ onMounted(async () => {
     display: flex;
     gap: 2rem;
     padding: 1.5rem;
-    background: var(--color-muted-bg);
+    background: var(--color-secondary-bg);
     border-radius: var(--radius-button);
     margin-bottom: 2rem;
     align-items: flex-start;
+    border: 1px solid var(--color-secondary-contrast);
 }
 
 .admin-filters-left {
@@ -1194,7 +1203,7 @@ onMounted(async () => {
     gap: 0.5rem;
     cursor: pointer;
     font-size: 0.9375rem;
-    color: var(--color-contrast);
+    color: var(--color-secondary-contrast);
     user-select: none;
 }
 
@@ -1219,13 +1228,15 @@ onMounted(async () => {
 
 .stat-card-mini:hover {
     transform: translateX(-2px);
-    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.1);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.2);
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent-contrast);
 }
 
 .stat-value-mini {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--color-contrast);
+    color: var(--color-card-contrast);
     line-height: 1;
     min-width: 2.5rem;
     text-align: center;
@@ -1285,10 +1296,10 @@ onMounted(async () => {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: var(--color-muted-bg);
-    border: 1px solid var(--color-border);
+    background: var(--color-secondary-bg);
+    border: 1px solid var(--color-secondary-contrast);
     border-radius: var(--radius-button);
-    color: var(--color-dimmed);
+    color: var(--color-secondary-contrast);
     font-family: var(--font);
     font-size: 0.875rem;
     font-weight: 500;
@@ -1297,14 +1308,15 @@ onMounted(async () => {
 }
 
 .toggle-btn:hover {
-    background: var(--color-card-bg);
-    border-color: var(--color-primary-bg);
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent-contrast);
+    color: var(--color-accent-contrast);
 }
 
 .toggle-btn.active {
-    background: var(--color-primary-bg);
-    border-color: var(--color-primary-bg);
-    color: var(--color-primary-contrast);
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent-contrast);
+    color: var(--color-accent-contrast);
 }
 
 /* Stats Grid */
@@ -1314,6 +1326,8 @@ onMounted(async () => {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin: 2rem 0 3rem;
+    padding: 1rem;
+    border-radius: var(--radius-button);
 }
 
 .stat-card {
@@ -1327,7 +1341,9 @@ onMounted(async () => {
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px oklch(0% 0 0 / 0.1);
+    box-shadow: 0 4px 12px oklch(0% 0 0 / 0.2);
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent-contrast);
 }
 
 .stat-total {
@@ -1357,7 +1373,7 @@ onMounted(async () => {
 .stat-value {
     font-size: 3rem;
     font-weight: 700;
-    color: var(--color-contrast);
+    color: var(--color-card-contrast);
     line-height: 1;
     margin-bottom: 0.5rem;
 }
@@ -1376,10 +1392,11 @@ onMounted(async () => {
     gap: 1.5rem;
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: var(--color-muted-bg);
+    background: var(--color-secondary-bg);
     border-radius: var(--radius-button);
     align-items: flex-end;
     flex-wrap: wrap;
+    border: 1px solid var(--color-secondary-contrast);
 }
 
 .filter-group {
@@ -1392,15 +1409,15 @@ onMounted(async () => {
 .filter-label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-contrast);
+    color: var(--color-secondary-contrast);
 }
 
 .filter-select {
     padding: 0.75rem 1rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-button);
-    background: var(--color-bg);
-    color: var(--color-contrast);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
     font-family: var(--font);
     font-size: 1rem;
     cursor: pointer;
@@ -1408,13 +1425,15 @@ onMounted(async () => {
 }
 
 .filter-select:hover {
-    border-color: var(--color-primary-bg);
+    border-color: var(--color-accent-contrast);
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
 }
 
 .filter-select:focus {
     outline: none;
-    border-color: var(--color-primary-bg);
-    box-shadow: 0 0 0 3px var(--color-ring);
+    border-color: var(--color-accent-contrast);
+    box-shadow: 0 0 0 3px var(--color-accent-variant);
 }
 
 .new-task-btn {
@@ -1427,13 +1446,14 @@ onMounted(async () => {
 .error-state {
     text-align: center;
     padding: 4rem 2rem;
-    background: var(--color-muted-bg);
+    background: var(--color-secondary-bg);
     border-radius: var(--radius-button);
     margin: 2rem 0;
+    color: var(--color-secondary-contrast);
 }
 
 .error-state p {
-    color: var(--color-negative-base);
+    color: var(--color-negative-contrast);
     margin-bottom: 1rem;
 }
 
@@ -1458,7 +1478,7 @@ onMounted(async () => {
 }
 
 .task-column {
-    background: var(--color-muted-bg);
+    background: var(--color-accent-variant);
     border-radius: var(--radius-button);
     padding: 1rem;
     display: flex;
@@ -1466,10 +1486,12 @@ onMounted(async () => {
     transition: all 0.2s ease;
     max-height: calc(100vh - 280px);
     overflow: hidden;
+    border: 2px solid var(--color-accent-contrast);
 }
 
 .task-column:hover {
-    background: oklch(from var(--color-muted-bg) calc(l * 0.98) c h);
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent-contrast);
 }
 
 .column-title {
@@ -1477,11 +1499,11 @@ onMounted(async () => {
     font-weight: 700;
     margin: 0 0 1rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--color-border);
+    border-bottom: 2px solid var(--color-accent-contrast);
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--color-contrast);
+    color: var(--color-accent-contrast);
 }
 
 .column-icon {
@@ -1493,25 +1515,26 @@ onMounted(async () => {
     font-size: 0.875rem;
     font-weight: 600;
     padding: 0.25rem 0.75rem;
-    background: var(--color-bg);
+    background: var(--color-card-bg);
     border-radius: 999px;
-    color: var(--color-dimmed);
+    color: var(--color-card-contrast);
+    border: 1px solid var(--color-border);
 }
 
 .column-todo .column-title {
-    color: oklch(72.21% 0.2812 240);
+    color: var(--color-accent-contrast);
 }
 
 .column-in-progress .column-title {
-    color: oklch(72.21% 0.2812 60);
+    color: var(--color-accent-contrast);
 }
 
 .column-done .column-title {
-    color: var(--color-primary-bg);
+    color: var(--color-positive-contrast);
 }
 
 .column-reopen .column-title {
-    color: var(--color-secondary-bg);
+    color: var(--color-warning-contrast);
 }
 
 .task-list {
@@ -1533,14 +1556,14 @@ onMounted(async () => {
 }
 
 .task-list::-webkit-scrollbar-thumb {
-    background: var(--color-border);
+    background: var(--color-accent-contrast);
     border-radius: 4px;
     border-left: 12px solid transparent;
     background-clip: padding-box;
 }
 
 .task-list::-webkit-scrollbar-thumb:hover {
-    background: var(--color-dimmed);
+    background: var(--color-contrast);
 }
 
 .empty-column {
@@ -1585,23 +1608,25 @@ onMounted(async () => {
 .auth-card {
     max-width: 500px;
     padding: 3rem;
-    background: white;
+    background: var(--color-secondary-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     text-align: center;
+    border: 2px solid var(--color-secondary-contrast);
 }
 
 .auth-card h2 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--color-secondary-contrast);
     margin-bottom: 1rem;
 }
 
 .auth-card p {
     font-size: 1.125rem;
-    color: #6b7280;
+    color: var(--color-secondary-contrast);
     margin-bottom: 2rem;
+    opacity: 0.9;
 }
 
 .login-btn {

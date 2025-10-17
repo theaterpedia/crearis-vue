@@ -19,6 +19,16 @@
             </div>
 
             <div class="navbar-menu">
+                <!-- Inverted Mode Toggle -->
+                <div class="navbar-item">
+                    <InvertedToggle />
+                </div>
+
+                <!-- Theme Dropdown -->
+                <div class="navbar-item">
+                    <ThemeDropdown />
+                </div>
+
                 <!-- Slot for menus (ToggleMenu, AdminMenu) -->
                 <slot name="menus"></slot>
 
@@ -38,6 +48,8 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { defaultNavRoutes, type NavRoute } from '@/settings'
+import InvertedToggle from './InvertedToggle.vue'
+import ThemeDropdown from './ThemeDropdown.vue'
 
 interface User {
     username: string
@@ -238,8 +250,8 @@ watch(() => props.user, (newVal) => {
     background: transparent;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-button);
-    color: var(--color-contrast);
-    font-family: var(--font);
+    color: var(--color-card-contrast);
+    font-family: var(--headings);
     font-size: 0.9375rem;
     font-weight: 500;
     cursor: pointer;
