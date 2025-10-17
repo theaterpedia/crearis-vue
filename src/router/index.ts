@@ -19,6 +19,7 @@ const router = createRouter({
     { path: '/heroes', component: () => import('../views/heroes.vue') },
     { path: '/standard', component: () => import('../views/standard.vue') },
     { path: '/timeline', component: () => import('../views/timeline.vue') },
+    { path: '/theme-demo', component: () => import('../views/ThemeDemo.vue') },
   ],
 })
 
