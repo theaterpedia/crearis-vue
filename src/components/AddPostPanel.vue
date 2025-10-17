@@ -149,19 +149,18 @@ const handleApply = async () => {
         const postSuffix = selectedPost.value.id.split('.')[1] // e.g., "post1"
         const newXmlId = `_${props.projectId}.${postSuffix}`
 
-        // Construct the new post object
+        // Construct the new post object with only valid table fields
         const newPost = {
             id: newXmlId,
             name: customName.value,
+            subtitle: selectedPost.value.subtitle || null,
             teaser: customTeaser.value,
+            cimg: selectedPost.value.cimg || null,
+            post_date: selectedPost.value.post_date || null,
             isbase: 0,
             project: props.projectId,
             template: selectedPost.value.id,
-            public_user: selectedInstructor.value,
-            // Copy other fields from template
-            cimg: selectedPost.value.cimg,
-            content: selectedPost.value.content,
-            date_published: selectedPost.value.date_published
+            public_user: selectedInstructor.value
         }
 
         // Call API to create the post

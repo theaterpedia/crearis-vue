@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import type { EventsTableFields } from '../../types/database'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -13,6 +14,22 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        // Prepare data with only valid table fields
+        const eventData: Partial<EventsTableFields> = {
+            id: body.id,
+            name: body.name,
+            teaser: body.teaser || null,
+            cimg: body.cimg || null,
+            date_begin: body.date_begin || null,
+            date_end: body.date_end || null,
+            event_type: body.event_type || 'workshop',
+            isbase: body.isbase || 0,
+            project: body.project || null,
+            template: body.template || null,
+            public_user: body.public_user || null,
+            location: body.location || null
+        }
+
         // Insert event
         const sql = `
       INSERT INTO events (
@@ -22,18 +39,18 @@ export default defineEventHandler(async (event) => {
     `
 
         await db.run(sql, [
-            body.id,
-            body.name,
-            body.teaser || null,
-            body.cimg || null,
-            body.date_begin || null,
-            body.date_end || null,
-            body.event_type || 'workshop',
-            body.isbase || 0,
-            body.project || null,
-            body.template || null,
-            body.public_user || null,
-            body.location || null
+            eventData.id,
+            eventData.name,
+            eventData.teaser,
+            eventData.cimg,
+            eventData.date_begin,
+            eventData.date_end,
+            eventData.event_type,
+            eventData.isbase,
+            eventData.project,
+            eventData.template,
+            eventData.public_user,
+            eventData.location
         ])
 
         // Return the created event

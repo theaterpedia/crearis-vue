@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import type { PostsTableFields } from '../../types/database'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -13,25 +14,39 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        // Prepare data with only valid table fields
+        const postData: Partial<PostsTableFields> = {
+            id: body.id,
+            name: body.name,
+            subtitle: body.subtitle || null,
+            teaser: body.teaser || null,
+            cimg: body.cimg || null,
+            post_date: body.post_date || null,
+            isbase: body.isbase || 0,
+            project: body.project || null,
+            template: body.template || null,
+            public_user: body.public_user || null
+        }
+
         // Insert post
         const sql = `
       INSERT INTO posts (
-        id, name, teaser, content, cimg, date_published,
+        id, name, subtitle, teaser, cimg, post_date,
         isbase, project, template, public_user
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
 
         await db.run(sql, [
-            body.id,
-            body.name,
-            body.teaser || null,
-            body.content || null,
-            body.cimg || null,
-            body.date_published || null,
-            body.isbase || 0,
-            body.project || null,
-            body.template || null,
-            body.public_user || null
+            postData.id,
+            postData.name,
+            postData.subtitle,
+            postData.teaser,
+            postData.cimg,
+            postData.post_date,
+            postData.isbase,
+            postData.project,
+            postData.template,
+            postData.public_user
         ])
 
         // Return the created post

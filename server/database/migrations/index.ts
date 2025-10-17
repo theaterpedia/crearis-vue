@@ -14,6 +14,9 @@ import { migration as migration008 } from './008_add_isbase_to_entities'
 import { migration as migration009 } from './009_add_project_relationships'
 import { migration as migration010 } from './010_add_entity_name_to_tasks'
 import { migration as migration011 } from './011_add_event_type'
+import { migration as migration012 } from './012_add_extended_fields'
+import { migration as migration013 } from './013_alter_project_status_and_add_pages'
+import { migration as migration014 } from './014_add_computed_columns_and_seed'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -37,6 +40,9 @@ const migrations: Migration[] = [
     { run: migration009.up, metadata: { id: migration009.id, description: migration009.description, version: '0.0.3', date: '2025-10-16' } },
     { run: migration010.up, metadata: { id: migration010.id, description: migration010.description, version: '0.0.3', date: '2025-10-16' } },
     { run: migration011.up, metadata: { id: migration011.id, description: migration011.description, version: '0.0.4', date: '2025-10-17' } },
+    { run: migration012.up, metadata: { id: migration012.id, description: migration012.description, version: '0.0.5', date: '2025-10-17' } },
+    { run: migration013.up, metadata: { id: migration013.id, description: migration013.description, version: '0.0.6', date: '2025-10-17' } },
+    { run: migration014.up, metadata: { id: migration014.id, description: migration014.description, version: '0.0.7', date: '2025-10-17' } },
 ]
 
 /**
