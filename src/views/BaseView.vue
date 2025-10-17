@@ -16,40 +16,19 @@
                         <span v-if="currentEvent">{{ currentEvent.name }}</span>
                     </button>
 
-                    <div v-if="isEventsOpen" class="events-dropdown">
-                        <div class="events-dropdown-header">
-                            <span>Veranstaltung wählen</span>
-                        </div>
-
-                        <button v-for="event in events" :key="event.id" class="event-option"
-                            :class="{ 'event-option-active': currentEventId === event.id }"
-                            @click="selectEvent(event.id)">
-                            <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="event-option-image" />
-
-                            <div class="event-option-label">
-                                <HeadingParser :content="event.name" as="p" />
-                            </div>
-
-                            <svg v-if="currentEventId === event.id" fill="currentColor" height="16"
-                                viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg"
-                                class="event-option-check">
-                                <path
-                                    d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z">
-                                </path>
-                            </svg>
-                        </button>
-                    </div>
+                    <EventsDropdown v-if="isEventsOpen" :events="events" :selected-event-id="currentEventId"
+                        header-text="Veranstaltung wählen" @select="handleEventSelect" />
                 </div>
 
                 <!-- View/Edit Mode Toggle -->
                 <div class="navbar-item mode-toggle">
-                    <button :class="['mode-btn', { active: dataSource === 'csv' }]" @click="setViewMode"
-                        title="Ansicht (alte Daten)">
-                        view/old
+                    <button :class="['mode-btn', { active: !hasActiveEdits }]" @click="setViewMode"
+                        title="Ansichtsmodus">
+                        Ansicht
                     </button>
-                    <button :class="['mode-btn', { active: dataSource === 'sql' }]" @click="setEditMode"
-                        title="Bearbeiten/Erstellen">
-                        edit/create
+                    <button :class="['mode-btn', { active: hasActiveEdits }]" @click="setEditMode"
+                        title="Bearbeitungsmodus">
+                        Bearbeiten
                     </button>
                 </div>
 
@@ -80,11 +59,11 @@
         <!-- Main Content: 2-Column Layout -->
         <div class="main-content">
             <!-- Left Column: Demo Content (65%) -->
-            <div class="left-column" :class="{ 'full-width': dataSource === 'csv' }">
+            <div class="left-column" :class="{ 'full-width': !hasActiveEdits }">
                 <!-- Hero Section (same as /demo) -->
                 <div v-if="currentEvent" class="demo-hero">
                     <!-- Edit button (only visible in edit mode) -->
-                    <button v-if="dataSource === 'sql'" class="hero-edit-btn"
+                    <button v-if="hasActiveEdits" class="hero-edit-btn"
                         @click.stop="activateEntity('event', currentEvent)" title="Event bearbeiten"
                         :class="{ 'is-active': activeEntityType === 'event' && activeEntityId === currentEvent.id }">
                         <svg viewBox="0 0 20 20" fill="currentColor">
@@ -115,7 +94,7 @@
                         <div v-for="post in currentEventPosts" :key="post.id" class="entity-card"
                             :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="dataSource === 'sql'" class="entity-edit-btn"
+                            <button v-if="hasActiveEdits" class="entity-edit-btn"
                                 @click.stop="activateEntity('post', post)" title="Beitrag bearbeiten"
                                 :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -134,7 +113,7 @@
                     </div>
 
                     <!-- Tasks for Posts (only additional tasks, not main) -->
-                    <div v-if="dataSource === 'sql' && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('post')" title="Aufgabe hinzufügen">
@@ -149,7 +128,7 @@
                         <div v-if="getAdditionalTasks('post').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -168,7 +147,7 @@
                         <div v-for="location in currentEventLocations" :key="location.id" class="entity-card"
                             :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="dataSource === 'sql'" class="entity-edit-btn"
+                            <button v-if="hasActiveEdits" class="entity-edit-btn"
                                 @click.stop="activateEntity('location', location)" title="Ort bearbeiten"
                                 :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -189,7 +168,7 @@
                     </div>
 
                     <!-- Tasks for Locations -->
-                    <div v-if="dataSource === 'sql' && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('location')" title="Aufgabe hinzufügen">
@@ -204,7 +183,7 @@
                         <div v-if="getAdditionalTasks('location').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -223,7 +202,7 @@
                         <div v-for="instructor in currentEventInstructors" :key="instructor.id" class="entity-card"
                             :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="dataSource === 'sql'" class="entity-edit-btn"
+                            <button v-if="hasActiveEdits" class="entity-edit-btn"
                                 @click.stop="activateEntity('instructor', instructor)" title="Kursleiter bearbeiten"
                                 :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -243,7 +222,7 @@
                     </div>
 
                     <!-- Tasks for Instructors -->
-                    <div v-if="dataSource === 'sql' && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('instructor')"
@@ -259,7 +238,7 @@
                         <div v-if="getAdditionalTasks('instructor').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.title }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -273,7 +252,7 @@
             </div>
 
             <!-- Right Column: Editing Forms (35%, hidden in view mode) -->
-            <div v-if="dataSource === 'sql'" class="right-column">
+            <div v-if="hasActiveEdits" class="right-column">
                 <!-- Main Task Form -->
                 <div class="form-section main-task-section">
                     <div class="form-header">
@@ -478,10 +457,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useDemoData } from '@/composables/useDemoData'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
+import EventsDropdown from '@/components/EventsDropdown.vue'
 
 const { user, requireAuth, logout: authLogout } = useAuth()
 
@@ -490,18 +469,82 @@ const logout = () => {
     authLogout()
 }
 
-// Demo data composable
-const {
-    events,
-    currentEvent,
-    currentEventId,
-    currentEventPosts,
-    currentEventLocations,
-    currentEventInstructors,
-    switchEvent,
-    dataSource,
-    refreshSqlData
-} = useDemoData()
+// Data source mode
+const dataSource = ref<'csv' | 'sql'>('sql')
+
+// Base data state
+const events = ref<any[]>([])
+const posts = ref<any[]>([])
+const locations = ref<any[]>([])
+const instructors = ref<any[]>([])
+
+// Current event
+const currentEventId = ref<string | null>(null)
+const currentEvent = computed(() => events.value.find(e => e.id === currentEventId.value) || null)
+
+// Current event data
+const currentEventPosts = computed(() => posts.value.filter(p => p.event_id === currentEventId.value))
+const currentEventLocations = computed(() => locations.value.filter(l => l.event_id === currentEventId.value))
+const currentEventInstructors = computed(() => instructors.value.filter(i => i.event_id === currentEventId.value))
+
+// Fetch data from API
+const fetchEvents = async () => {
+    try {
+        const response = await fetch('/api/events?isbase=1')
+        if (!response.ok) throw new Error('Failed to fetch events')
+        events.value = await response.json()
+
+        // Set first event as current if none selected
+        if (events.value.length > 0 && !currentEventId.value) {
+            currentEventId.value = events.value[0].id
+        }
+    } catch (error) {
+        console.error('Error fetching events:', error)
+    }
+}
+
+const fetchPosts = async () => {
+    try {
+        const response = await fetch('/api/posts?isbase=1')
+        if (!response.ok) throw new Error('Failed to fetch posts')
+        posts.value = await response.json()
+    } catch (error) {
+        console.error('Error fetching posts:', error)
+    }
+}
+
+const fetchLocations = async () => {
+    try {
+        const response = await fetch('/api/locations?isbase=1')
+        if (!response.ok) throw new Error('Failed to fetch locations')
+        locations.value = await response.json()
+    } catch (error) {
+        console.error('Error fetching locations:', error)
+    }
+}
+
+const fetchInstructors = async () => {
+    try {
+        const response = await fetch('/api/public-users')
+        if (!response.ok) throw new Error('Failed to fetch instructors')
+        instructors.value = await response.json()
+    } catch (error) {
+        console.error('Error fetching instructors:', error)
+    }
+}
+
+const refreshSqlData = async () => {
+    await Promise.all([
+        fetchEvents(),
+        fetchPosts(),
+        fetchLocations(),
+        fetchInstructors()
+    ])
+}
+
+const switchEvent = (eventId: string) => {
+    currentEventId.value = eventId
+}
 
 // Events dropdown
 const isEventsOpen = ref(false)
@@ -550,6 +593,15 @@ const toggleEventsDropdown = () => {
     isEventsOpen.value = !isEventsOpen.value
 }
 
+const handleEventSelect = (event: any) => {
+    switchEvent(event.id)
+    isEventsOpen.value = false
+    // Reset active entity when switching events
+    if (dataSource.value === 'sql' && currentEvent.value) {
+        activateEntity('event', currentEvent.value)
+    }
+}
+
 const selectEvent = (eventId: string) => {
     switchEvent(eventId)
     isEventsOpen.value = false
@@ -560,21 +612,21 @@ const selectEvent = (eventId: string) => {
 }
 
 const setViewMode = () => {
-    dataSource.value = 'csv'
-    // Clear active entity in view mode
+    // View mode - just clear active entity
     activeEntityType.value = null
     activeEntityId.value = null
     hasActiveEdits.value = false
 }
 
 const setEditMode = async () => {
-    dataSource.value = 'sql'
+    // Edit mode - refresh data and activate event
     await refreshSqlData()
     await loadAllTasks()
-    // Activate event by default when entering edit mode
     if (currentEvent.value) {
         await activateEntity('event', currentEvent.value)
     }
+    // Set edit mode AFTER activateEntity (which resets it to false)
+    hasActiveEdits.value = true
 }
 
 const activateEntity = async (type: 'event' | 'post' | 'location' | 'instructor', entity: any) => {
@@ -868,23 +920,14 @@ const handleClickOutside = (event: Event) => {
     }
 }
 
-// Watch data source changes
-watch(dataSource, (newSource) => {
-    if (newSource === 'csv') {
-        // In view mode, clear active entity
-        activeEntityType.value = null
-        activeEntityId.value = null
-        hasActiveEdits.value = false
-    }
-})
-
 // Initialize
 onMounted(async () => {
     await requireAuth()
     document.addEventListener('click', handleClickOutside)
 
-    // Start in view mode with CSV data
-    dataSource.value = 'csv'
+    // Fetch base data from API
+    await refreshSqlData()
+    dataSource.value = 'sql'
 })
 
 onUnmounted(() => {
@@ -905,82 +948,6 @@ onUnmounted(() => {
 /* Events Selector */
 .events-selector {
     position: relative;
-}
-
-.events-dropdown {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 20rem;
-    max-width: 24rem;
-    background: var(--color-popover-bg);
-    border: var(--border) solid var(--color-border);
-    border-radius: var(--radius-button);
-    box-shadow: 0 10px 25px -3px oklch(0% 0 0 / 0.1);
-    max-height: 70vh;
-    overflow-y: auto;
-    z-index: 200;
-}
-
-.events-dropdown-header {
-    padding: 0.75rem 1rem;
-    border-bottom: var(--border) solid var(--color-border);
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: var(--color-contrast);
-}
-
-.event-option {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: none;
-    background: none;
-    text-align: left;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    gap: 0.75rem;
-}
-
-.event-option:hover {
-    background: var(--color-muted-bg);
-}
-
-.event-option-active {
-    background: var(--color-primary-bg);
-    color: var(--color-primary-contrast);
-}
-
-.event-option-image {
-    width: 3rem;
-    height: 3rem;
-    object-fit: cover;
-    border-radius: 0.375rem;
-    flex-shrink: 0;
-}
-
-.event-option-label {
-    flex: 1;
-    min-width: 0;
-}
-
-.event-option-label strong {
-    display: block;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
-.event-option-desc {
-    display: block;
-    font-size: 0.75rem;
-    opacity: 0.7;
-    margin-top: 0.125rem;
-}
-
-.event-option-check {
-    flex-shrink: 0;
 }
 
 /* Mode Toggle */

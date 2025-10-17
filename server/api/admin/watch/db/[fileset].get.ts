@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
         for (const entityTable of entities) {
             // Check if table has isbase column
             let hasIsbaseColumn = false
-            
+
             if (db.type === 'postgresql') {
                 const tableInfo = await db.all(`
                     SELECT column_name as name

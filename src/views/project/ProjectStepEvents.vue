@@ -44,7 +44,7 @@
             <!-- Right: Add Event Panel -->
             <div class="add-panel-container">
                 <AddEventPanel :project-id="props.projectId" :base-events="baseEvents" :all-instructors="allInstructors"
-                    @event-added="handleEventAdded" />
+                    :all-locations="allLocations" @event-added="handleEventAdded" />
             </div>
         </div>
 
@@ -82,6 +82,7 @@ const emit = defineEmits<Emits>()
 const baseEvents = ref<Event[]>([])
 const projectEvents = ref<Event[]>([])
 const allInstructors = ref<Instructor[]>([])
+const allLocations = ref<any[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 
@@ -116,7 +117,7 @@ async function loadProjectEvents() {
 async function loadInstructors() {
     try {
         error.value = null
-        const response = await fetch('/api/instructors')
+        const response = await fetch('/api/public-users')
         if (!response.ok) {
             throw new Error(`Failed to load instructors: ${response.statusText}`)
         }
@@ -124,6 +125,20 @@ async function loadInstructors() {
     } catch (err) {
         console.error('Error loading instructors:', err)
         error.value = 'Fehler beim Laden der Kursleiter'
+    }
+}
+
+async function loadLocations() {
+    try {
+        error.value = null
+        const response = await fetch('/api/locations?isbase=1')
+        if (!response.ok) {
+            throw new Error(`Failed to load locations: ${response.statusText}`)
+        }
+        allLocations.value = await response.json()
+    } catch (err) {
+        console.error('Error loading locations:', err)
+        error.value = 'Fehler beim Laden der Orte'
     }
 }
 
@@ -164,7 +179,8 @@ onMounted(async () => {
         await Promise.all([
             loadBaseEvents(),
             loadProjectEvents(),
-            loadInstructors()
+            loadInstructors(),
+            loadLocations()
         ])
     } finally {
         isLoading.value = false

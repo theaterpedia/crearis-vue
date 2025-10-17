@@ -16,9 +16,9 @@ export default defineEventHandler(async (event) => {
         // Insert event
         const sql = `
       INSERT INTO events (
-        id, name, teaser, cimg, date_begin, date_end, start_time,
+        id, name, teaser, cimg, date_begin, date_end,
         event_type, isbase, project, template, public_user, location
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
 
         await db.run(sql, [
@@ -28,8 +28,7 @@ export default defineEventHandler(async (event) => {
             body.cimg || null,
             body.date_begin || null,
             body.date_end || null,
-            body.start_time || null,
-            body.event_type || null,
+            body.event_type || 'workshop',
             body.isbase || 0,
             body.project || null,
             body.template || null,

@@ -1520,20 +1520,23 @@ onMounted(async () => {
     gap: 1rem;
     flex: 1;
     overflow-y: auto;
-    padding-right: 0.75rem;
+    padding-right: 0.5rem;
 }
 
 .task-list::-webkit-scrollbar {
-    width: 8px;
+    width: 20px;
 }
 
 .task-list::-webkit-scrollbar-track {
     background: transparent;
+    margin-left: -10px;
 }
 
 .task-list::-webkit-scrollbar-thumb {
     background: var(--color-border);
     border-radius: 4px;
+    border-left: 12px solid transparent;
+    background-clip: padding-box;
 }
 
 .task-list::-webkit-scrollbar-thumb:hover {
