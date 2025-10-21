@@ -132,13 +132,14 @@ export default defineEventHandler(async (event) => {
     }
 
     // 3. Find projects where user is instructor (via events)
+    // Note: Check if user has instructor_id set, then find events taught by that instructor
     const instructorProjects = await db.all(`
         SELECT DISTINCT p.id, p.username, p.name, p.owner_id
         FROM projects p
-        INNER JOIN events e ON p.id = e.project_id
+        INNER JOIN events e ON p.id = e.project
         INNER JOIN event_instructors ei ON e.id = ei.event_id
-        INNER JOIN instructors i ON ei.instructor_id = i.id
-        WHERE i.is_user = 1 AND i.user_id = ?
+        INNER JOIN users u ON u.instructor_id = ei.instructor_id
+        WHERE u.id = ?
         ORDER BY p.name ASC
     `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>
 
@@ -169,7 +170,7 @@ export default defineEventHandler(async (event) => {
     const authorProjects = await db.all(`
         SELECT DISTINCT p.id, p.username, p.name, p.owner_id
         FROM projects p
-        INNER JOIN posts po ON p.id = po.project_id
+        INNER JOIN posts po ON p.id = po.project
         WHERE po.author_id = ?
         ORDER BY p.name ASC
     `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>

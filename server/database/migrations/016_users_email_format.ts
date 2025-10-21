@@ -169,6 +169,9 @@ export const migration = {
         console.log('\n  ✅ Adding email validation constraint...')
 
         if (isPostgres) {
+            // Drop existing constraint first if it exists (idempotent)
+            await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_id_email_format`)
+
             // Add CHECK constraint for email format
             await db.exec(`
                 ALTER TABLE users 
@@ -186,18 +189,22 @@ export const migration = {
         if (isPostgres) {
             console.log('\n  🔒 Recreating foreign key constraints...')
 
+            // Drop and recreate to ensure idempotency
+            await db.exec(`ALTER TABLE domains DROP CONSTRAINT IF EXISTS domains_admin_user_id_fkey`)
             await db.exec(`
                 ALTER TABLE domains 
                 ADD CONSTRAINT domains_admin_user_id_fkey 
                 FOREIGN KEY (admin_user_id) REFERENCES users(id)
             `)
 
+            await db.exec(`ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_owner_id_fkey`)
             await db.exec(`
                 ALTER TABLE projects 
                 ADD CONSTRAINT projects_owner_id_fkey 
                 FOREIGN KEY (owner_id) REFERENCES users(id)
             `)
 
+            await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_instructor_id_fkey`)
             await db.exec(`
                 ALTER TABLE users 
                 ADD CONSTRAINT users_instructor_id_fkey 

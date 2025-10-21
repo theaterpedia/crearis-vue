@@ -3,7 +3,8 @@
  * Check if a domain name is available
  */
 
-import { getDb } from '~/server/database/init'
+import { defineEventHandler, getQuery, createError } from 'h3'
+import { db } from '../../database/init'
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
@@ -15,8 +16,6 @@ export default defineEventHandler(async (event) => {
             message: 'Domain name is required',
         })
     }
-
-    const db = getDb()
 
     try {
         // Check if domain exists

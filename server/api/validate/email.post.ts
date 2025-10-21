@@ -6,6 +6,8 @@
  * Second attempt: waits 30s, returns true
  */
 
+import { defineEventHandler, readBody, createError } from 'h3'
+
 // Simple in-memory store for tracking validation attempts
 const validationAttempts = new Map<string, number>()
 
