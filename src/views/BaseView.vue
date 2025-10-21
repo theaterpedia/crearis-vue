@@ -3,7 +3,7 @@
         <!-- Navbar -->
         <Navbar :user="user" :full-width="false" logo-text="📦 Basis-Daten" @logout="logout">
             <template #menus>
-                <!-- Events Dropdown (center content) -->
+                <!-- Events Selector -->
                 <div class="navbar-item events-selector" ref="eventsSelectorRef">
                     <button class="navbar-button events-toggle-btn" @click="toggleEventsDropdown"
                         :aria-expanded="isEventsOpen">
@@ -16,8 +16,8 @@
                         <span v-if="currentEvent">{{ currentEvent.name }}</span>
                     </button>
 
-                    <EventsDropdown v-if="isEventsOpen" :events="events" :selected-event-id="currentEventId"
-                        header-text="Veranstaltung wählen" @select="handleEventSelect" />
+                    <ItemList v-model="isEventsOpen" :items="eventsListItems" item-type="row" size="medium"
+                        interaction="popup" title="Veranstaltung wählen" @close="isEventsOpen = false" />
                 </div>
 
                 <!-- View/Edit Mode Toggle -->
@@ -460,7 +460,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import EventsDropdown from '@/components/EventsDropdown.vue'
+import { ItemList } from '@/components/clist'
 
 const { user, requireAuth, logout: authLogout } = useAuth()
 
@@ -586,6 +586,20 @@ const activeEntityLabel = computed(() => {
         instructor: 'Kursleiter-Daten'
     }
     return labels[activeEntityType.value] || 'Entität'
+})
+
+// Transform events for ItemList component
+const eventsListItems = computed(() => {
+    return events.value.map(event => ({
+        content: event.name,
+        cimg: event.cimg,
+        props: {
+            onClick: () => {
+                handleEventSelect(event)
+                isEventsOpen.value = false
+            }
+        }
+    }))
 })
 
 // Methods
