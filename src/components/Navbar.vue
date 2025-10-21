@@ -19,6 +19,11 @@
             </div>
 
             <div class="navbar-menu">
+                <!-- Project Toggle (second from right) -->
+                <div class="navbar-item">
+                    <ProjectToggle />
+                </div>
+
                 <!-- Role Toggle (for users with multiple roles) -->
                 <div class="navbar-item">
                     <RoleToggle />
@@ -53,6 +58,7 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { defaultNavRoutes, type NavRoute } from '@/settings'
+import ProjectToggle from './ProjectToggle.vue'
 import RoleToggle from './RoleToggle.vue'
 import InvertedToggle from './InvertedToggle.vue'
 import ThemeDropdown from './ThemeDropdown.vue'

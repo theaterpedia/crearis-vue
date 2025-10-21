@@ -31,7 +31,12 @@ export default defineEventHandler(async (event) => {
             availableRoles: session.availableRoles,
             activeRole: session.activeRole,
             projectId: session.projectId,
-            projectName: session.projectName
+            projectName: session.projectName,
+            projects: session.projects || [],
+            capabilities: session.capabilities ?
+                Object.fromEntries(
+                    Object.entries(session.capabilities).map(([key, value]) => [key, Array.from(value)])
+                ) : {}
         }
     }
 })

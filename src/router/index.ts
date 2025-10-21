@@ -39,13 +39,32 @@ router.beforeEach(async (to, from, next) => {
         return
       }
 
+      // Special handling for /project route - requires projectId to be set
+      if (to.path === '/project') {
+        if (data.user.activeRole !== 'project') {
+          // Must be in project role
+          next('/')
+          return
+        }
+        if (!data.user.projectId) {
+          // Must have a project selected
+          next('/')
+          return
+        }
+      }
+
       // Check role if specified
       if (to.meta.role && data.user.activeRole !== to.meta.role && data.user.activeRole !== 'admin') {
         // Wrong role, redirect to appropriate page based on active role
         if (data.user.activeRole === 'base') {
           next('/base')
         } else if (data.user.activeRole === 'project') {
-          next('/project')
+          // Only go to /project if projectId is set
+          if (data.user.projectId) {
+            next('/project')
+          } else {
+            next('/')
+          }
         } else {
           next('/')
         }

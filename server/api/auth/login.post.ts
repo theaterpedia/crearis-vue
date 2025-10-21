@@ -3,16 +3,30 @@ import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 
-// In-memory session store (for development - use Redis in production)
-const sessions = new Map<string, {
+interface ProjectRecord {
+    id: string
+    name: string
+    username: string
+    isOwner: boolean
+    isMember: boolean
+    isInstructor: boolean
+    isAuthor: boolean
+}
+
+interface SessionData {
     userId: string
     username: string
-    availableRoles: string[]  // All roles user can access
-    activeRole: string        // Currently active role
-    projectId?: string
+    availableRoles: string[]
+    activeRole: string
+    projectId: string | null
     projectName?: string
+    projects?: ProjectRecord[]
+    capabilities?: Record<string, Set<string>>
     expiresAt: number
-}>()
+}
+
+// In-memory session store (for development - use Redis in production)
+export const sessions = new Map<string, SessionData>()
 
 // Clean up expired sessions every 5 minutes
 setInterval(() => {
@@ -60,51 +74,168 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Check if there's a matching project for this user
-    const project = await db.get(`
-        SELECT id, name, type, role
+    // === PROJECT ROLE DETECTION ===
+    // Detect if user has project role access based on ownership, membership, instructor, or author status
+
+    const projectRecords: ProjectRecord[] = []
+    let defaultProjectId: string | null = null
+
+    // 1. Find owned projects
+    const ownedProjects = await db.all(`
+        SELECT id, username, name
         FROM projects
-        WHERE username = ?
-    `, [username]) as { id: string; name: string; type: string; role: string } | undefined
+        WHERE owner_id = ?
+        ORDER BY name ASC
+    `, [user.id]) as Array<{ id: string; username: string; name: string }>
+
+    for (const proj of ownedProjects) {
+        projectRecords.push({
+            id: proj.id,
+            name: proj.name,
+            username: proj.username,
+            isOwner: true,
+            isMember: false,
+            isInstructor: false,
+            isAuthor: false
+        })
+    }
+
+    // Set default to first owned project
+    if (ownedProjects.length > 0 && !defaultProjectId) {
+        defaultProjectId = ownedProjects[0].id
+    }
+
+    // 2. Find member projects
+    const memberProjects = await db.all(`
+        SELECT p.id, p.username, p.name
+        FROM projects p
+        INNER JOIN project_members pm ON p.id = pm.project_id
+        WHERE pm.user_id = ? AND p.owner_id != ?
+        ORDER BY p.name ASC
+    `, [user.id, user.id]) as Array<{ id: string; username: string; name: string }>
+
+    for (const proj of memberProjects) {
+        projectRecords.push({
+            id: proj.id,
+            name: proj.name,
+            username: proj.username,
+            isOwner: false,
+            isMember: true,
+            isInstructor: false,
+            isAuthor: false
+        })
+    }
+
+    // Set default to first member project if no owned projects
+    if (memberProjects.length > 0 && !defaultProjectId) {
+        defaultProjectId = memberProjects[0].id
+    }
+
+    // 3. Find projects where user is instructor (via events)
+    const instructorProjects = await db.all(`
+        SELECT DISTINCT p.id, p.username, p.name, p.owner_id
+        FROM projects p
+        INNER JOIN events e ON p.id = e.project_id
+        INNER JOIN event_instructors ei ON e.id = ei.event_id
+        INNER JOIN instructors i ON ei.instructor_id = i.id
+        WHERE i.is_user = 1 AND i.user_id = ?
+        ORDER BY p.name ASC
+    `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>
+
+    for (const proj of instructorProjects) {
+        // Check if already in records (as owner or member)
+        const existing = projectRecords.find(p => p.id === proj.id)
+        if (existing) {
+            existing.isInstructor = true
+        } else {
+            projectRecords.push({
+                id: proj.id,
+                name: proj.name,
+                username: proj.username,
+                isOwner: false,
+                isMember: false,
+                isInstructor: true,
+                isAuthor: false
+            })
+        }
+    }
+
+    // Set default to first instructor project if no owned/member projects
+    if (instructorProjects.length > 0 && !defaultProjectId) {
+        defaultProjectId = instructorProjects[0].id
+    }
+
+    // 4. Find projects where user is author (via posts)
+    const authorProjects = await db.all(`
+        SELECT DISTINCT p.id, p.username, p.name, p.owner_id
+        FROM projects p
+        INNER JOIN posts po ON p.id = po.project_id
+        WHERE po.author_id = ?
+        ORDER BY p.name ASC
+    `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>
+
+    for (const proj of authorProjects) {
+        // Check if already in records
+        const existing = projectRecords.find(p => p.id === proj.id)
+        if (existing) {
+            existing.isAuthor = true
+        } else {
+            projectRecords.push({
+                id: proj.id,
+                name: proj.name,
+                username: proj.username,
+                isOwner: false,
+                isMember: false,
+                isInstructor: false,
+                isAuthor: true
+            })
+        }
+    }
+
+    // Set default to first author project if no other projects found
+    if (authorProjects.length > 0 && !defaultProjectId) {
+        defaultProjectId = authorProjects[0].id
+    }
 
     // Build available roles array
     const availableRoles: string[] = [user.role]
 
-    // If user has 'user' role and a project exists, add 'project' role
-    if (user.role === 'user' && project) {
+    // Add 'project' role if user has any project access
+    if (projectRecords.length > 0 && user.role === 'user') {
         availableRoles.push('project')
     }
 
     // Determine active role
     // - If user is 'base', always use 'base'
-    // - If user has multiple roles, default to first one (user.role)
-    const activeRole = user.role === 'base' ? 'base' : user.role
+    // - If user has project access, try to activate 'project' role by default
+    // - Otherwise use user.role
+    let activeRole = user.role
+    let initialProjectId: string | null = null
+    let initialProjectName: string | undefined = undefined
+
+    if (user.role !== 'base' && projectRecords.length > 0) {
+        // Try to activate project role with default project
+        activeRole = 'project'
+        initialProjectId = defaultProjectId
+        const defaultProject = projectRecords.find(p => p.id === defaultProjectId)
+        initialProjectName = defaultProject?.name
+    }
 
     // Create session
     const sessionId = nanoid(32)
     const expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24 hours
 
     // Build session data
-    const sessionData: {
-        userId: string
-        username: string
-        availableRoles: string[]
-        activeRole: string
-        projectId?: string
-        projectName?: string
-        expiresAt: number
-    } = {
+    const sessionData: SessionData = {
         userId: user.id,
         username: user.username,
         availableRoles,
         activeRole,
+        projectId: initialProjectId,
+        projectName: initialProjectName,
+        projects: projectRecords,
+        capabilities: {},
         expiresAt
-    }
-
-    // If project found, add project info
-    if (project) {
-        sessionData.projectId = project.id
-        sessionData.projectName = project.name
     }
 
     sessions.set(sessionId, sessionData)
@@ -119,24 +250,15 @@ export default defineEventHandler(async (event) => {
     })
 
     // Build response user object
-    const responseUser: {
-        id: string
-        username: string
-        availableRoles: string[]
-        activeRole: string
-        projectId?: string
-        projectName?: string
-    } = {
+    const responseUser = {
         id: user.id,
         username: user.username,
         availableRoles,
-        activeRole
-    }
-
-    // Add project info if available
-    if (project) {
-        responseUser.projectId = project.id
-        responseUser.projectName = project.name
+        activeRole,
+        projectId: initialProjectId,
+        projectName: initialProjectName,
+        projects: projectRecords,
+        capabilities: {}
     }
 
     return {
@@ -144,6 +266,3 @@ export default defineEventHandler(async (event) => {
         user: responseUser
     }
 })
-
-// Export for use in other endpoints
-export { sessions }

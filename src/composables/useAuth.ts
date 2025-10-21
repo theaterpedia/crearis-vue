@@ -1,14 +1,26 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+interface ProjectRecord {
+    id: string
+    name: string
+    username: string
+    isOwner: boolean
+    isMember: boolean
+    isInstructor: boolean
+    isAuthor: boolean
+}
+
 interface User {
     id: string
     username: string
     role?: 'admin' | 'base' | 'project' | 'user'  // Kept for backward compatibility
     availableRoles: string[]
     activeRole: string
-    projectId?: string
+    projectId: string | null
     projectName?: string
+    projects?: ProjectRecord[]
+    capabilities?: Record<string, Set<string>>
 }
 
 const user = ref<User | null>(null)
@@ -22,6 +34,20 @@ export function useAuth() {
     const isAdmin = computed(() => user.value?.activeRole === 'admin')
     const isBase = computed(() => user.value?.activeRole === 'base')
     const isProject = computed(() => user.value?.activeRole === 'project')
+    const hasProjectAccess = computed(() => user.value?.projectId !== null)
+
+    // Get current project record
+    const currentProject = computed(() => {
+        if (!user.value?.projectId || !user.value?.projects) return null
+        return user.value.projects.find((p: ProjectRecord) => p.id === user.value!.projectId) || null
+    })
+
+    // Check if user has specific capability
+    const hasCapability = (category: string, permission: string): boolean => {
+        if (!user.value?.capabilities) return false
+        const categoryPerms = user.value.capabilities[category]
+        return categoryPerms ? categoryPerms.has(permission) : false
+    }
 
     // Get current state
     const authState = computed(() => {
@@ -133,6 +159,34 @@ export function useAuth() {
         await checkSession()
     }
 
+    // Set active project
+    const setProjectId = async (projectId: string | null) => {
+        try {
+            const response = await fetch('/api/auth/set-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectId })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to set project')
+            }
+
+            await refreshUser()
+
+            // Navigate based on projectId
+            if (projectId) {
+                router.push('/project')
+            } else {
+                router.push('/')
+            }
+        } catch (error) {
+            console.error('Error setting project:', error)
+        }
+    }
+
     return {
         // State
         user,
@@ -144,6 +198,8 @@ export function useAuth() {
         isAdmin,
         isBase,
         isProject,
+        hasProjectAccess,
+        currentProject,
 
         // Methods
         checkSession,
@@ -151,6 +207,8 @@ export function useAuth() {
         logout,
         requireAuth,
         requireRole,
-        refreshUser
+        refreshUser,
+        setProjectId,
+        hasCapability
     }
 }
