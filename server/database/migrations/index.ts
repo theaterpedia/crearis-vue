@@ -18,6 +18,7 @@ import { migration as migration012 } from './012_add_extended_fields'
 import { migration as migration013 } from './013_alter_project_status_and_add_pages'
 import { migration as migration014 } from './014_add_computed_columns_and_seed'
 import { migration as migration015 } from './015_domain_system_and_extensions'
+import { migration as migration016 } from './016_users_email_format'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -45,6 +46,7 @@ const migrations: Migration[] = [
     { run: migration013.up, metadata: { id: migration013.id, description: migration013.description, version: '0.0.6', date: '2025-10-17' } },
     { run: migration014.up, metadata: { id: migration014.id, description: migration014.description, version: '0.0.7', date: '2025-10-17' } },
     { run: migration015.up, metadata: { id: migration015.id, description: migration015.description, version: '0.0.8', date: '2025-10-21' } },
+    { run: migration016.up, metadata: { id: migration016.id, description: migration016.description, version: '0.0.9', date: '2025-10-21' } },
 ]
 
 /**

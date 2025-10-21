@@ -351,6 +351,10 @@ export const migration = {
         console.log('\n  👤 Updating users table...')
 
         if (isPostgres) {
+            // Drop old role check constraint and add new one with 'base' role
+            await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`)
+            await db.exec(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('user', 'admin', 'base'))`)
+
             await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS instructor_id TEXT REFERENCES instructors(id)`)
         } else {
             try {
@@ -398,10 +402,12 @@ export const migration = {
         const defaultPassword = await bcrypt.hash('password123', 10)
 
         const defaultUsers = [
-            { id: 'usr_admin', username: 'admin', role: 'admin' },
-            { id: 'usr_base', username: 'base', role: 'base' },
-            { id: 'usr_project1', username: 'project1', role: 'user' },
-            { id: 'usr_project2', username: 'project2', role: 'user' }
+            { id: 'admin@theaterpedia.org', username: 'admin', role: 'admin' },
+            { id: 'base@theaterpedia.org', username: 'base', role: 'base' },
+            { id: 'project1@theaterpedia.org', username: 'project1', role: 'user' },
+            { id: 'project2@theaterpedia.org', username: 'project2', role: 'user' },
+            { id: 'tp@theaterpedia.org', username: 'tp', role: 'user' },
+            { id: 'regio1@theaterpedia.org', username: 'regio1', role: 'user' }
         ]
 
         for (const user of defaultUsers) {

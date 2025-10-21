@@ -114,11 +114,11 @@ async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectDa
         // Hash password
         const hashedPassword = await bcrypt.hash(user.password, 10)
 
-        // Generate IDs (TEXT type, so we use username as ID for simplicity)
-        const userId = user.name
+        // Generate IDs - use email format for user IDs
+        const userId = `${user.name}@theaterpedia.org`
         const projectId = user.name
 
-        // Insert user
+        // Insert user with email format ID
         await db.run(`
             INSERT INTO users (id, username, password, role)
             VALUES (?, ?, ?, ?)
@@ -485,16 +485,16 @@ async function seedProjects(db: DatabaseAdapter) {
 
         // Step 2: Assign projects to releases
         console.log('   🔗 Assigning projects to releases...')
-        
+
         // Get all projects
         const projects = await db.all('SELECT id FROM projects', [])
-        
+
         // admin and base to 'base' release, others to 'test'
         for (const project of projects as any[]) {
-            const releaseId = (project.id === '_project.admin' || project.id === '_project.base') 
-                ? '_release.base' 
+            const releaseId = (project.id === '_project.admin' || project.id === '_project.base')
+                ? '_release.base'
                 : '_release.test'
-            
+
             await db.run(`
                 UPDATE projects 
                 SET release = ? 
@@ -524,7 +524,7 @@ async function seedProjects(db: DatabaseAdapter) {
         // Step 4: Copy first 2 events and create new project events
         console.log('   📅 Creating project events...')
         const newEventIds: string[] = []
-        
+
         for (const templateEvent of templateEvents as any[]) {
             const newEventId = templateEvent.id.replace('_demo.', '_project1.')
             newEventIds.push(newEventId)
@@ -624,10 +624,10 @@ async function seedProjects(db: DatabaseAdapter) {
         // Step 6: Select first two teens and add project events to project_events
         console.log('   👥 Updating participants with project events...')
         const teens = await db.all('SELECT id FROM participants WHERE type = \'teen\' ORDER BY id LIMIT 2', [])
-        
+
         if (teens.length > 0) {
             const projectEventsJson = JSON.stringify(newEventIds)
-            
+
             for (const teen of teens as any[]) {
                 await db.run(`
                     UPDATE participants 
