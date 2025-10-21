@@ -4,7 +4,15 @@ import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 
 // In-memory session store (for development - use Redis in production)
-const sessions = new Map<string, { userId: string; username: string; role: string; expiresAt: number }>()
+const sessions = new Map<string, {
+    userId: string
+    username: string
+    availableRoles: string[]  // All roles user can access
+    activeRole: string        // Currently active role
+    projectId?: string
+    projectName?: string
+    expiresAt: number
+}>()
 
 // Clean up expired sessions every 5 minutes
 setInterval(() => {
@@ -28,12 +36,12 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Find user (using projects table as user accounts)
+    // Find user from users table
     const user = await db.get(`
-    SELECT id, username, password_hash, role
-    FROM projects
+    SELECT id, username, password, role
+    FROM users
     WHERE username = ?
-  `, [username]) as { id: string; username: string; password_hash: string; role: string } | undefined
+  `, [username]) as { id: string; username: string; password: string; role: string } | undefined
 
     if (!user) {
         throw createError({
@@ -43,7 +51,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify password
-    const validPassword = bcrypt.compareSync(password, user.password_hash)
+    const validPassword = bcrypt.compareSync(password, user.password)
 
     if (!validPassword) {
         throw createError({
@@ -52,16 +60,54 @@ export default defineEventHandler(async (event) => {
         })
     }
 
+    // Check if there's a matching project for this user
+    const project = await db.get(`
+        SELECT id, name, type, role
+        FROM projects
+        WHERE username = ?
+    `, [username]) as { id: string; name: string; type: string; role: string } | undefined
+
+    // Build available roles array
+    const availableRoles: string[] = [user.role]
+
+    // If user has 'user' role and a project exists, add 'project' role
+    if (user.role === 'user' && project) {
+        availableRoles.push('project')
+    }
+
+    // Determine active role
+    // - If user is 'base', always use 'base'
+    // - If user has multiple roles, default to first one (user.role)
+    const activeRole = user.role === 'base' ? 'base' : user.role
+
     // Create session
     const sessionId = nanoid(32)
     const expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24 hours
 
-    sessions.set(sessionId, {
+    // Build session data
+    const sessionData: {
+        userId: string
+        username: string
+        availableRoles: string[]
+        activeRole: string
+        projectId?: string
+        projectName?: string
+        expiresAt: number
+    } = {
         userId: user.id,
         username: user.username,
-        role: user.role,
+        availableRoles,
+        activeRole,
         expiresAt
-    })
+    }
+
+    // If project found, add project info
+    if (project) {
+        sessionData.projectId = project.id
+        sessionData.projectName = project.name
+    }
+
+    sessions.set(sessionId, sessionData)
 
     // Set session cookie
     setCookie(event, 'sessionId', sessionId, {
@@ -72,13 +118,30 @@ export default defineEventHandler(async (event) => {
         path: '/'
     })
 
+    // Build response user object
+    const responseUser: {
+        id: string
+        username: string
+        availableRoles: string[]
+        activeRole: string
+        projectId?: string
+        projectName?: string
+    } = {
+        id: user.id,
+        username: user.username,
+        availableRoles,
+        activeRole
+    }
+
+    // Add project info if available
+    if (project) {
+        responseUser.projectId = project.id
+        responseUser.projectName = project.name
+    }
+
     return {
         success: true,
-        user: {
-            id: user.id,
-            username: user.username,
-            role: user.role
-        }
+        user: responseUser
     }
 })
 

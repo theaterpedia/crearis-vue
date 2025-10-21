@@ -4,7 +4,11 @@ import { useRouter } from 'vue-router'
 interface User {
     id: string
     username: string
-    role: 'admin' | 'base' | 'project'
+    role?: 'admin' | 'base' | 'project' | 'user'  // Kept for backward compatibility
+    availableRoles: string[]
+    activeRole: string
+    projectId?: string
+    projectName?: string
 }
 
 const user = ref<User | null>(null)
@@ -15,14 +19,14 @@ export function useAuth() {
     const router = useRouter()
 
     // Computed properties for role checks
-    const isAdmin = computed(() => user.value?.role === 'admin')
-    const isBase = computed(() => user.value?.role === 'base')
-    const isProject = computed(() => user.value?.role === 'project')
+    const isAdmin = computed(() => user.value?.activeRole === 'admin')
+    const isBase = computed(() => user.value?.activeRole === 'base')
+    const isProject = computed(() => user.value?.activeRole === 'project')
 
     // Get current state
     const authState = computed(() => {
         if (!isAuthenticated.value) return 'unauthenticated'
-        return user.value?.role || 'unauthenticated'
+        return user.value?.activeRole || 'unauthenticated'
     })
 
     // Check session
@@ -117,11 +121,16 @@ export function useAuth() {
 
     // Require specific role
     const requireRole = (role: 'admin' | 'base' | 'project') => {
-        if (!isAuthenticated.value || user.value?.role !== role) {
+        if (!isAuthenticated.value || user.value?.activeRole !== role) {
             router.push('/login')
             return false
         }
         return true
+    }
+
+    // Refresh user data
+    const refreshUser = async () => {
+        await checkSession()
     }
 
     return {
@@ -141,6 +150,7 @@ export function useAuth() {
         login,
         logout,
         requireAuth,
-        requireRole
+        requireRole,
+        refreshUser
     }
 }

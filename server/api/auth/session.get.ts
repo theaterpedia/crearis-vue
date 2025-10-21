@@ -28,7 +28,10 @@ export default defineEventHandler(async (event) => {
         user: {
             id: session.userId,
             username: session.username,
-            role: session.role
+            availableRoles: session.availableRoles,
+            activeRole: session.activeRole,
+            projectId: session.projectId,
+            projectName: session.projectName
         }
     }
 })

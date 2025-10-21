@@ -20,6 +20,7 @@ const router = createRouter({
     { path: '/standard', component: () => import('../views/standard.vue') },
     { path: '/timeline', component: () => import('../views/timeline.vue') },
     { path: '/theme-demo', component: () => import('../views/ThemeDemo.vue') },
+    { path: '/clist-demo', component: () => import('../views/CListDemo.vue') },
   ],
 })
 
@@ -39,11 +40,11 @@ router.beforeEach(async (to, from, next) => {
       }
 
       // Check role if specified
-      if (to.meta.role && data.user.role !== to.meta.role && data.user.role !== 'admin') {
-        // Wrong role, redirect to appropriate page
-        if (data.user.role === 'base') {
+      if (to.meta.role && data.user.activeRole !== to.meta.role && data.user.activeRole !== 'admin') {
+        // Wrong role, redirect to appropriate page based on active role
+        if (data.user.activeRole === 'base') {
           next('/base')
-        } else if (data.user.role === 'project') {
+        } else if (data.user.activeRole === 'project') {
           next('/project')
         } else {
           next('/')
