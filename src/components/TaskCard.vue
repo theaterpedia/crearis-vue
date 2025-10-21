@@ -397,7 +397,7 @@ function handleDragEnd() {
 }
 
 .task-card.priority-low {
-    border-left: 4px solid var(--color-dimmed);
+    border-left: 4px solid var(--color-muted-bg);
 }
 
 /* Priority Dot */
@@ -424,7 +424,7 @@ function handleDragEnd() {
 }
 
 .priority-dot.priority-low {
-    background: var(--color-dimmed);
+    background: var(--color-muted-bg);
 }
 
 /* Task Title */

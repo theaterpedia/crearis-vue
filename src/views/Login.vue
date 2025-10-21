@@ -55,14 +55,14 @@ const handleLogin = async () => {
     const result = await login(username.value, password.value)
 
     if (result.success) {
-        // Redirect based on role
+        // Redirect based on activeRole
         const { user } = useAuth()
 
-        if (user.value?.role === 'admin') {
+        if (user.value?.activeRole === 'admin') {
             router.push('/')
-        } else if (user.value?.role === 'base') {
+        } else if (user.value?.activeRole === 'base') {
             router.push('/base')
-        } else if (user.value?.role === 'project') {
+        } else if (user.value?.activeRole === 'project') {
             router.push('/project')
         } else {
             router.push('/')

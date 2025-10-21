@@ -203,7 +203,7 @@ const { user, requireAuth, logout } = useAuth()
 
 // Project ID - defaults to username for project users, or 'project1' as fallback
 const projectId = computed(() => {
-    if (user.value?.role === 'project' && user.value.username) {
+    if (user.value?.activeRole === 'project' && user.value.username) {
         return user.value.username
     }
     return 'project1' // Fallback for testing/admin

@@ -342,8 +342,8 @@ onMounted(async () => {
 }
 
 .primary-btn {
-    background: var(--color-project);
-    color: white;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
 }
 
 .primary-btn:hover {

@@ -344,7 +344,7 @@ const currentRoute = computed(() => router.currentRoute.value.path)
 
 // Navbar logo text
 const navbarLogoText = computed(() => {
-    if (user.value?.role === 'admin') {
+    if (user.value?.activeRole === 'admin') {
         return '📋 Task Manager (Admin)'
     }
     return '📋 Task Manager'
@@ -433,7 +433,7 @@ const filteredTasks = computed(() => {
     // 'all-tasks' shows everything
 
     // Apply admin category filters (admin only)
-    if (user.value?.role === 'admin') {
+    if (user.value?.activeRole === 'admin') {
         const categoryFilters: Array<'admin' | 'main' | 'release'> = []
         if (adminFilters.value.showProject) categoryFilters.push('release')
         if (adminFilters.value.showBase) categoryFilters.push('main')
@@ -711,7 +711,7 @@ function closeToast() {
 
 // Load projects (admin only)
 async function loadProjects() {
-    if (user.value?.role !== 'admin') return
+    if (user.value?.activeRole !== 'admin') return
     projectsLoading.value = true
     try {
         const response = await fetch('/api/projects')
@@ -728,7 +728,7 @@ async function loadProjects() {
 
 // Load admin tasks (admin only)
 async function loadAdminTasks() {
-    if (user.value?.role !== 'admin') return
+    if (user.value?.activeRole !== 'admin') return
     adminTasksLoading.value = true
     try {
         const response = await fetch('/api/tasks?category=admin')
@@ -748,7 +748,7 @@ async function loadAdminTasks() {
 
 // Check watch tasks for updates
 async function checkWatchTasks() {
-    if (user.value?.role !== 'admin' || watchTasks.value.length === 0) return
+    if (user.value?.activeRole !== 'admin' || watchTasks.value.length === 0) return
 
     try {
         // Check CSV watch

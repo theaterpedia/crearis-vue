@@ -672,7 +672,7 @@ onMounted(async () => {
 .error-hint {
     margin-top: 0.5rem;
     font-size: 0.75rem;
-    color: var(--color-danger);
+    color: var(--color-warning-contrast);
 }
 
 /* ===== LOGO OPTIONS ===== */
@@ -736,7 +736,7 @@ onMounted(async () => {
     top: 0.5rem;
     right: 0.5rem;
     padding: 0.25rem;
-    background: var(--color-danger);
+    background: var(--color-warning-bg);
     border: none;
     border-radius: var(--radius-button);
     color: white;
@@ -877,8 +877,8 @@ onMounted(async () => {
 }
 
 .action-btn-danger:hover {
-    background: var(--color-danger);
-    border-color: var(--color-danger);
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-contrast);
 }
 
 .add-member-section {

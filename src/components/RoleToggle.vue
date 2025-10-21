@@ -1,12 +1,7 @@
 <template>
     <div v-if="canToggle" class="role-toggle">
-        <button
-            v-for="role in availableRoles"
-            :key="role"
-            :class="['role-btn', { active: activeRole === role }]"
-            @click="switchRole(role)"
-            :title="`Switch to ${getRoleLabel(role)} mode`"
-        >
+        <button v-for="role in availableRoles" :key="role" :class="['role-btn', { active: activeRole === role }]"
+            @click="switchRole(role)" :title="`Switch to ${getRoleLabel(role)} mode`">
             <svg v-if="role === 'user'" fill="currentColor" height="18" viewBox="0 0 256 256" width="18"
                 xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -30,8 +25,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { useRouter } from 'vue-router'
 
 const { user, refreshUser } = useAuth()
+const router = useRouter()
 
 const availableRoles = computed(() => user.value?.availableRoles || [])
 const activeRole = computed(() => user.value?.activeRole || '')
@@ -49,6 +46,22 @@ const getRoleLabel = (role: string): string => {
         admin: 'Admin'
     }
     return labels[role] || role
+}
+
+// Determine target route based on role
+const getRouteForRole = (role: string): string => {
+    switch (role) {
+        case 'project':
+            return '/project'
+        case 'user':
+            return '/'
+        case 'base':
+            return '/base'
+        case 'admin':
+            return '/admin'
+        default:
+            return '/'
+    }
 }
 
 const switchRole = async (role: string) => {
@@ -70,7 +83,11 @@ const switchRole = async (role: string) => {
         // Refresh user data
         await refreshUser()
 
-        // Reload the page to reflect the role change
+        // Navigate to appropriate route for the new role
+        const targetRoute = getRouteForRole(role)
+        await router.push(targetRoute)
+
+        // Reload the page to ensure all components reflect the role change
         window.location.reload()
     } catch (error) {
         console.error('Error switching role:', error)

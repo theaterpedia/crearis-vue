@@ -1,6 +1,7 @@
 <template>
     <div v-if="canShowToggle" class="project-toggle-wrapper" ref="dropdownRef">
-        <button class="project-toggle-btn" @click="toggleDropdown" :title="currentProjectName || 'Select Project'">
+        <button class="project-toggle-btn" :class="{ 'has-project': currentProjectId }" @click="toggleDropdown"
+            :title="currentProjectName || 'Select Project'">
             <svg fill="currentColor" height="18" viewBox="0 0 256 256" width="18" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V96H40V56ZM40,112H96v88H40Zm176,88H112V112H216v88Z" />
@@ -218,21 +219,31 @@ onUnmounted(() => {
 .project-toggle-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--color-muted-bg);
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    color: var(--color-contrast);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-button);
-    color: var(--color-text);
-    font-size: 0.875rem;
+    background: transparent;
+    font-family: var(--font);
+    font-size: 0.9375rem;
     font-weight: 500;
+    transition: var(--transition);
+    transition-property: background-color, color, border-color;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .project-toggle-btn:hover {
-    background: var(--color-card-bg);
-    border-color: var(--color-project);
+    background-color: var(--color-muted-bg);
+    border-color: var(--color-primary-bg);
+}
+
+/* Active state - when a project is selected */
+.project-toggle-btn.has-project {
+    background-color: var(--color-muted-bg);
+    border-color: var(--color-primary-bg);
 }
 
 .project-toggle-label {
@@ -422,14 +433,14 @@ onUnmounted(() => {
 }
 
 .no-projects svg {
-    color: var(--color-dimmed);
+    color: var(--color-dimmed-contrast);
     opacity: 0.5;
     margin-bottom: 1rem;
 }
 
 .no-projects p {
     font-size: 0.875rem;
-    color: var(--color-dimmed);
+    color: var(--color-dimmed-contrast);
     margin: 0;
 }
 
@@ -457,8 +468,8 @@ onUnmounted(() => {
 }
 
 .btn-clear:hover {
-    background: var(--color-danger);
-    border-color: var(--color-danger);
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-contrast);
     color: white;
 }
 

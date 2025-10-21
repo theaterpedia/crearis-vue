@@ -24,6 +24,21 @@
             </div>
 
             <div class="admin-menu-body">
+                <!-- Display Settings -->
+                <div class="admin-section">
+                    <h4 class="section-title">Anzeige</h4>
+
+                    <!-- Inverted Mode Toggle -->
+                    <div class="setting-item">
+                        <slot name="inverted-toggle"></slot>
+                    </div>
+
+                    <!-- Theme Dropdown -->
+                    <div class="setting-item">
+                        <slot name="theme-dropdown"></slot>
+                    </div>
+                </div>
+
                 <!-- Base Mode Toggle (Always available on dashboard) -->
                 <div v-if="isOnDashboard" class="admin-section base-mode-section">
                     <h4 class="section-title">Ansichtsmodus</h4>
@@ -77,6 +92,20 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Account Actions -->
+                <div v-if="username" class="admin-section">
+                    <h4 class="section-title">Konto</h4>
+                    <div class="user-info">
+                        <span class="username-display">👤 {{ username }}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-button logout-button" @click="$emit('logout')">
+                            <span class="logout-icon">🚪</span>
+                            <span class="logout-text">Abmelden</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -91,6 +120,7 @@ const props = defineProps<{
     baseMode: boolean
     currentRoute: string
     isOnDashboard: boolean
+    username?: string
     /**
      * Placement of the dropdown menu
      * @default 'right'
@@ -108,6 +138,7 @@ const emit = defineEmits<{
     'toggle-settings': []
     'toggle-base-mode': []
     action: [action: string]
+    logout: []
 }>()
 
 const isOpen = ref(false)
@@ -371,6 +402,42 @@ input[type="checkbox"]:checked+.toggle-switch-base {
 .toggle-text {
     font-weight: 500;
     color: var(--color-text);
+}
+
+.setting-item {
+    margin-bottom: 0.75rem;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.user-info {
+    margin-bottom: 0.75rem;
+}
+
+.username-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-muted-bg);
+    border-radius: 6px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.logout-button {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.logout-icon {
+    font-size: 1.125rem;
+}
+
+.logout-text {
+    flex: 1;
 }
 
 .action-buttons {

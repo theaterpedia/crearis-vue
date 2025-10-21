@@ -19,35 +19,28 @@
             </div>
 
             <div class="navbar-menu">
-                <!-- Project Toggle (second from right) -->
-                <div class="navbar-item">
+                <!-- Slot for menus (AdminMenu) -->
+                <slot name="menus"></slot>
+
+                <!-- Project Toggle (for project role users) -->
+                <div v-if="user" class="navbar-item">
                     <ProjectToggle />
                 </div>
 
-                <!-- Role Toggle (for users with multiple roles) -->
-                <div class="navbar-item">
-                    <RoleToggle />
-                </div>
-
-                <!-- Inverted Mode Toggle -->
-                <div class="navbar-item">
-                    <InvertedToggle />
-                </div>
-
-                <!-- Theme Dropdown -->
-                <div class="navbar-item">
-                    <ThemeDropdown />
-                </div>
-
-                <!-- Slot for menus (ToggleMenu, AdminMenu) -->
-                <slot name="menus"></slot>
-
-                <div v-if="user" class="navbar-item navbar-user">
-                    <span class="navbar-username">{{ user.username }}</span>
-                    <button class="navbar-button navbar-logout" @click="$emit('logout')">
-                        <span class="logout-icon">🚪</span>
-                        <span class="logout-text">Abmelden</span>
-                    </button>
+                <!-- User Menu (for user and project roles) -->
+                <div v-if="user && (user.activeRole === 'user' || user.activeRole === 'project')" class="navbar-item">
+                    <UserMenu :username="user.username" :active-role="user.activeRole" :project-name="user.projectName"
+                        :available-roles="user.availableRoles" @logout="$emit('logout')">
+                        <template #role-toggle>
+                            <RoleToggle />
+                        </template>
+                        <template #inverted-toggle>
+                            <InvertedToggle />
+                        </template>
+                        <template #theme-dropdown>
+                            <ThemeDropdown />
+                        </template>
+                    </UserMenu>
                 </div>
             </div>
         </div>
@@ -58,6 +51,7 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { defaultNavRoutes, type NavRoute } from '@/settings'
+import UserMenu from './UserMenu.vue'
 import ProjectToggle from './ProjectToggle.vue'
 import RoleToggle from './RoleToggle.vue'
 import InvertedToggle from './InvertedToggle.vue'
@@ -65,7 +59,10 @@ import ThemeDropdown from './ThemeDropdown.vue'
 
 interface User {
     username: string
-    role: string
+    role?: string             // Kept for backward compatibility
+    activeRole: string        // Primary role field
+    projectName?: string
+    availableRoles?: string[]
 }
 
 const props = withDefaults(defineProps<{
@@ -198,7 +195,7 @@ watch(() => props.user, (newVal) => {
 .navbar-route {
     padding: 0.5rem 1rem;
     border-radius: var(--radius-button);
-    color: var(--color-dimmed);
+    color: var(--color-dimmed-contrast);
     text-decoration: none;
     font-size: 0.9375rem;
     font-weight: 500;
@@ -252,47 +249,6 @@ watch(() => props.user, (newVal) => {
 .navbar-item {
     display: flex;
     align-items: center;
-}
-
-.navbar-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-button);
-    color: var(--color-card-contrast);
-    font-family: var(--headings);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.navbar-button:hover {
-    background: var(--color-muted-bg);
-    border-color: var(--color-primary-bg);
-}
-
-.navbar-user {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.navbar-username {
-    font-size: 0.875rem;
-    color: var(--color-dimmed);
-    font-weight: 500;
-}
-
-.logout-icon {
-    font-size: 1.125rem;
-}
-
-.logout-text {
-    display: inline;
 }
 
 /* Responsive Design */
@@ -350,25 +306,6 @@ watch(() => props.user, (newVal) => {
 
     .navbar-route {
         flex: 0 0 auto;
-    }
-
-    .navbar-username {
-        display: none;
-    }
-
-    /* Hide text in menu buttons, show only icons */
-    .logout-text {
-        display: none;
-    }
-
-    .navbar-button {
-        padding: 0.5rem;
-        min-width: 2.5rem;
-        justify-content: center;
-    }
-
-    .logout-icon {
-        font-size: 1.25rem;
     }
 }
 </style>
