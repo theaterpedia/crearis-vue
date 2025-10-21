@@ -10,12 +10,19 @@
                 </div>
 
                 <!-- Admin Menu - visible for admin users only -->
-                <div v-if="isAuthenticated && user?.role === 'admin'" class="navbar-item">
+                <div v-if="isAuthenticated && user?.activeRole === 'admin'" class="navbar-item">
                     <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :base-mode="baseMode"
                         :current-route="currentRoute" :is-on-dashboard="currentRoute === '/'" :placement="'right'"
-                        :button-text="'Admin'" @close="() => { }" @set-mode="setAdminMode"
+                        :button-text="'Admin'" :username="user?.username" @close="() => { }" @set-mode="setAdminMode"
                         @toggle-settings="toggleSettingsMode" @toggle-base-mode="toggleBaseMode"
-                        @action="handleAdminAction" />
+                        @action="handleAdminAction" @logout="handleLogout">
+                        <template #inverted-toggle>
+                            <InvertedToggle />
+                        </template>
+                        <template #theme-dropdown>
+                            <ThemeDropdown />
+                        </template>
+                    </AdminMenu>
                 </div>
             </template>
         </Navbar>
@@ -214,7 +221,7 @@
                     </div><!-- End Kanban Section -->
 
                     <!-- Admin Sections (hidden in base mode) -->
-                    <div v-if="user?.role === 'admin' && !baseMode">
+                    <div v-if="user?.activeRole === 'admin' && !baseMode">
                         <!-- CRUD Tables (visible when settingsMode is ON) -->
                         <div v-if="settingsMode">
                             <!-- Releases Table -->
@@ -277,6 +284,8 @@ import TaskEditModal from '@/components/TaskEditModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import ToggleMenu from '@/components/ToggleMenu.vue'
 import AdminMenu from '@/components/AdminMenu.vue'
+import InvertedToggle from '@/components/InvertedToggle.vue'
+import ThemeDropdown from '@/components/ThemeDropdown.vue'
 import Toast from '@/components/Toast.vue'
 import ProjectsTable from '@/components/ProjectsTable.vue'
 import AdminTasksList from '@/components/AdminTasksList.vue'

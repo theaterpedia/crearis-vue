@@ -1,6 +1,5 @@
 <template>
-    <button class="inverted-toggle-btn" @click="handleToggle"
-        :title="isInverted ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+    <button class="inverted-toggle-btn" @click="handleToggle" :disabled="!isInvertedAvailable" :title="getTooltip()">
         <svg v-if="!isInverted" fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
             xmlns="http://www.w3.org/2000/svg">
             <!-- Sun icon -->
@@ -21,10 +20,19 @@
 <script setup lang="ts">
 import { useTheme } from '@/composables/useTheme'
 
-const { toggleInverted, isInverted } = useTheme()
+const { toggleInverted, isInverted, isInvertedAvailable } = useTheme()
 
 function handleToggle() {
-    toggleInverted()
+    if (isInvertedAvailable.value) {
+        toggleInverted()
+    }
+}
+
+function getTooltip() {
+    if (!isInvertedAvailable.value) {
+        return 'Inverted mode only available with custom themes'
+    }
+    return isInverted.value ? 'Switch to Light Mode' : 'Switch to Dark Mode'
 }
 </script>
 
@@ -45,9 +53,14 @@ function handleToggle() {
     transition: all 0.2s;
 }
 
-.inverted-toggle-btn:hover {
+.inverted-toggle-btn:hover:not(:disabled) {
     background: var(--color-muted-bg);
     border-color: var(--color-primary-bg);
+}
+
+.inverted-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .inverted-toggle-btn svg {

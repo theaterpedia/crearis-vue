@@ -1,6 +1,9 @@
 <template>
     <div class="admin-menu-wrapper" ref="adminMenuRef">
-        <button class="admin-menu-button" @click="toggleMenu" :class="{ 'admin-menu-button-with-text': buttonText }">
+        <button class="admin-menu-button" @click="toggleMenu" :class="{
+            'admin-menu-button-with-text': buttonText,
+            'has-active-options': hasActiveOptions
+        }">
             <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-11.55,39.29c-4.79,5-9.75,10.17-12.38,16.52-2.52,6.1-2.63,13.07-2.73,19.82-.1,7-.21,14.33-3.32,17.43s-10.39,3.22-17.43,3.32c-6.75.1-13.72.21-19.82,2.73-6.35,2.63-11.52,7.59-16.52,12.38S132,224,128,224s-9.15-4.92-14.11-9.69-10.17-9.75-16.52-12.38c-6.1-2.52-13.07-2.63-19.82-2.73-7-.1-14.33-.21-17.43-3.32s-3.22-10.39-3.32-17.43c-.1-6.75-.21-13.72-2.73-19.82-2.63-6.35-7.59-11.52-12.38-16.52S32,132,32,128s4.92-9.15,9.69-14.11,9.75-10.17,12.38-16.52c2.52-6.1,2.63-13.07,2.73-19.82.1-7,.21-14.33,3.32-17.43S70.51,56.9,77.55,56.8c6.75-.1,13.72-.21,19.82-2.73,6.35-2.63,11.52-7.59,16.52-12.38S124,32,128,32s9.15,4.92,14.11,9.69,10.17,9.75,16.52,12.38c6.1,2.52,13.07,2.63,19.82,2.73,7,.1,14.33.21,17.43,3.32s3.22,10.39,3.32,17.43c.1,6.75.21,13.72,2.73,19.82,2.63,6.35,7.59,11.52,12.38,16.52S224,124,224,128,219.08,137.15,214.31,142.11Z">
@@ -112,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, type PropType } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
     adminMode: 'base-release' | 'version-release'
@@ -143,6 +146,11 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const adminMenuRef = ref<HTMLElement>()
+
+// Check if any admin options are active
+const hasActiveOptions = computed(() => {
+    return props.baseMode || props.settingsMode || props.adminMode === 'version-release'
+})
 
 function toggleMenu() {
     isOpen.value = !isOpen.value
@@ -198,6 +206,16 @@ onUnmounted(() => {
     border-color: var(--color-primary-bg);
 }
 
+.admin-menu-button.has-active-options {
+    color: var(--color-primary-bg);
+    border-color: var(--color-primary-bg);
+}
+
+.admin-menu-button.has-active-options:hover {
+    background-color: var(--color-muted-bg);
+    border-color: var(--color-primary-bg);
+}
+
 .admin-menu-button-with-text {
     width: auto;
     padding: 0.5rem 1rem;
@@ -245,7 +263,7 @@ onUnmounted(() => {
     padding: 1.5rem;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-accent);
-    color: white;
+    color: var(--color-primary-contrast);
     border-radius: 8px 8px 0 0;
 }
 
@@ -257,6 +275,7 @@ onUnmounted(() => {
     margin: 0 0 0.5rem 0;
     font-size: 1.25rem;
     font-weight: 600;
+    color: var(--color-primary-contrast);
 }
 
 .mode-status {
@@ -264,13 +283,14 @@ onUnmounted(() => {
     font-size: 0.875rem;
     opacity: 0.9;
     font-weight: 500;
+    color: var(--color-primary-contrast);
 }
 
 .close-btn {
     background: none;
     border: none;
     font-size: 2rem;
-    color: white;
+    color: var(--color-primary-contrast);
     cursor: pointer;
     line-height: 1;
     padding: 0;
@@ -340,14 +360,14 @@ onUnmounted(() => {
 }
 
 .mode-button:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-primary-bg);
     background: var(--color-surface);
 }
 
 .mode-button.active {
-    border-color: var(--color-accent);
-    background: var(--color-accent);
-    color: white;
+    border-color: var(--color-primary-bg);
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
 }
 
 .toggle-label {
@@ -384,7 +404,7 @@ onUnmounted(() => {
 }
 
 input[type="checkbox"]:checked+.toggle-switch {
-    background: var(--color-accent);
+    background: var(--color-primary-bg);
 }
 
 input[type="checkbox"]:checked+.toggle-switch::after {
@@ -392,11 +412,11 @@ input[type="checkbox"]:checked+.toggle-switch::after {
 }
 
 .toggle-switch-base {
-    background: #ce93d8;
+    background: var(--color-border);
 }
 
 input[type="checkbox"]:checked+.toggle-switch-base {
-    background: #9c27b0;
+    background: var(--color-primary-bg);
 }
 
 .toggle-text {

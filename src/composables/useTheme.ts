@@ -158,6 +158,12 @@ export function useTheme() {
     const currentTheme = computed(() => currentThemeId.value)
 
     /**
+     * Check if inverted mode is available
+     * Only available when a custom theme is active (not default CSS)
+     */
+    const isInvertedAvailable = computed(() => currentThemeId.value !== null)
+
+    /**
      * Helper: Get CSS variable string for style attribute
      * Useful for SSR or component-level styling
      */
@@ -224,6 +230,7 @@ export function useTheme() {
         getInverted,
         toggleInverted,
         isInverted: computed(() => isInverted.value),
+        isInvertedAvailable,
 
         // Computed state
         currentVars,
