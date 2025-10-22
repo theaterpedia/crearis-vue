@@ -1,0 +1,335 @@
+<template>
+    <div class="home-page">
+        <AlertBanner alert-type="primary">
+            <p><strong>Welcome to Theaterpedia!</strong> Explore theater projects, events, and community resources.</p>
+        </AlertBanner>
+
+        <Navbar :user="user" :use-default-routes="false" @logout="handleLogout">
+            <template #menus v-if="user && user.activeRole === 'admin'">
+                <AdminMenu />
+            </template>
+        </Navbar>
+
+        <Box layout="full-width">
+            <Main>
+                <!-- Hero Section -->
+                <Hero height-tmp="prominent"
+                    img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
+                    img-tmp-align-x="cover" img-tmp-align-y="cover"
+                    :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
+                    content-align-y="center">
+                    <Banner transparent>
+                        <Prose>
+                            <h1><strong>Theater Community Platform</strong></h1>
+                            <p>Connecting artists, projects, and audiences in the world of theater.</p>
+                            <Button v-if="!user" size="medium" variant="primary" @click="$router.push('/login')">
+                                Get Started
+                            </Button>
+                            <Button v-else size="medium" variant="primary" @click="$router.push('/tasks')">
+                                Go to Dashboard
+                            </Button>
+                        </Prose>
+                    </Banner>
+                </Hero>
+
+                <!-- Latest Blog Posts Section -->
+                <Section background="default">
+                    <Container>
+                        <Prose>
+                            <Heading overline="Recent Articles" level="h2">Latest from Our **Blog**</Heading>
+                        </Prose>
+
+                        <Slider v-if="posts.length > 0">
+                            <Slide v-for="post in posts" :key="post.id">
+                                <img v-if="post.cimg" :src="post.cimg" :alt="post.heading || post.id"
+                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
+                                <Prose>
+                                    <h3>{{ post.heading || post.id }}</h3>
+                                    <p v-if="post.md">{{ post.md.substring(0, 150) }}...</p>
+                                    <p v-else><em>No content available</em></p>
+                                </Prose>
+                            </Slide>
+                        </Slider>
+                        <Prose v-else>
+                            <p><em>No blog posts available yet.</em></p>
+                        </Prose>
+                    </Container>
+                </Section>
+
+                <!-- Upcoming Events Section -->
+                <Section background="muted">
+                    <Container>
+                        <Prose>
+                            <Heading overline="What's Happening" level="h2">Upcoming **Events**</Heading>
+                        </Prose>
+
+                        <Columns gap="medium" align="top" v-if="events.length > 0">
+                            <Column v-for="event in events.slice(0, 3)" :key="event.id" width="1/3">
+                                <img v-if="event.cimg" :src="event.cimg" :alt="event.heading || event.id"
+                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
+                                <Prose>
+                                    <h3>{{ event.heading || event.id }}</h3>
+                                    <p v-if="event.date"><strong>Date:</strong> {{ formatDate(event.date) }}</p>
+                                    <p v-if="event.location">{{ event.location }}</p>
+                                    <p v-if="event.md">{{ event.md.substring(0, 100) }}...</p>
+                                </Prose>
+                            </Column>
+                        </Columns>
+                        <Prose v-else>
+                            <p><em>No upcoming events.</em></p>
+                        </Prose>
+                    </Container>
+                </Section>
+
+                <!-- Projects Showcase Section -->
+                <Section background="accent">
+                    <Container>
+                        <Prose>
+                            <Heading overline="Our Community" level="h2">Active **Projects**</Heading>
+                        </Prose>
+
+                        <Columns gap="small" align="top" wrap v-if="projects.length > 0">
+                            <Column v-for="project in projects.slice(0, 4)" :key="project.id" width="1/4">
+                                <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
+                                    style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
+                                <Prose>
+                                    <h4>{{ project.heading || project.id }}</h4>
+                                    <p><strong>ID:</strong> {{ project.id }}</p>
+                                    <p v-if="project.status"><strong>Status:</strong> {{ project.status }}</p>
+                                </Prose>
+                            </Column>
+                        </Columns>
+                        <Prose v-else>
+                            <p><em>No active projects.</em></p>
+                        </Prose>
+                    </Container>
+                </Section>
+
+                <!-- Community Members Section -->
+                <Section background="default">
+                    <Container>
+                        <Prose>
+                            <Heading overline="Join Us" level="h2">Community **Members**</Heading>
+                        </Prose>
+
+                        <Slider v-if="users.length > 0">
+                            <Slide v-for="userItem in users" :key="userItem.id">
+                                <img v-if="userItem.cimg" :src="userItem.cimg" :alt="userItem.username"
+                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem; border-radius: 50%;" />
+                                <Prose>
+                                    <h4>{{ userItem.username }}</h4>
+                                    <p><strong>Role:</strong> {{ userItem.role }}</p>
+                                    <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
+                                    }}</em>
+                                    </p>
+                                </Prose>
+                            </Slide>
+                        </Slider>
+                        <Prose v-else>
+                            <p><em>No members to display.</em></p>
+                        </Prose>
+                    </Container>
+                </Section>
+            </Main>
+        </Box>
+
+        <Footer>
+            <div>
+                <Prose>
+                    <p><strong>Theaterpedia</strong></p>
+                    <p>Connecting the theater community</p>
+                </Prose>
+            </div>
+            <div>
+                <ul>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/privacy">Privacy</a></li>
+                </ul>
+            </div>
+            <div>
+                <Prose>
+                    <p>&copy; 2025 Theaterpedia. All rights reserved.</p>
+                </Prose>
+            </div>
+        </Footer>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import AlertBanner from '@/components/AlertBanner.vue'
+import Navbar from '@/components/Navbar.vue'
+import AdminMenu from '@/components/AdminMenu.vue'
+import Box from '@/components/Box.vue'
+import Main from '@/components/Main.vue'
+import Hero from '@/components/Hero.vue'
+import Banner from '@/components/Banner.vue'
+import Prose from '@/components/Prose.vue'
+import Heading from '@/components/Heading.vue'
+import Button from '@/components/Button.vue'
+import Section from '@/components/Section.vue'
+import Container from '@/components/Container.vue'
+import Slider from '@/components/Slider.vue'
+import Slide from '@/components/Slide.vue'
+import Columns from '@/components/Columns.vue'
+import Column from '@/components/Column.vue'
+import Footer from '@/components/Footer.vue'
+
+const router = useRouter()
+
+// State
+const user = ref<any>(null)
+const posts = ref<any[]>([])
+const events = ref<any[]>([])
+const projects = ref<any[]>([])
+const users = ref<any[]>([])
+
+// Check authentication
+async function checkAuth() {
+    try {
+        const response = await fetch('/api/auth/session')
+        const data = await response.json()
+        if (data.authenticated) {
+            user.value = data.user
+        }
+    } catch (error) {
+        console.error('Auth check failed:', error)
+    }
+}
+
+// Fetch posts
+async function fetchPosts() {
+    try {
+        const response = await fetch('/api/posts')
+        if (response.ok) {
+            const data = await response.json()
+            posts.value = data.slice(0, 5) // Limit to 5 posts
+        }
+    } catch (error) {
+        console.error('Failed to fetch posts:', error)
+    }
+}
+
+// Fetch events
+async function fetchEvents() {
+    try {
+        const response = await fetch('/api/events')
+        if (response.ok) {
+            const data = await response.json()
+            events.value = data.slice(0, 6) // Limit to 6 events
+        }
+    } catch (error) {
+        console.error('Failed to fetch events:', error)
+    }
+}
+
+// Fetch projects
+async function fetchProjects() {
+    try {
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+            const data = await response.json()
+            projects.value = data.slice(0, 8) // Limit to 8 projects
+        }
+    } catch (error) {
+        console.error('Failed to fetch projects:', error)
+    }
+}
+
+// Fetch users
+async function fetchUsers() {
+    try {
+        const response = await fetch('/api/users')
+        if (response.ok) {
+            const data = await response.json()
+            // Filter out admin and base users for public display
+            users.value = data.filter((u: any) => !['admin', 'base'].includes(u.username)).slice(0, 10)
+        }
+    } catch (error) {
+        console.error('Failed to fetch users:', error)
+    }
+}
+
+// Format date
+function formatDate(dateString: string): string {
+    try {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+    } catch {
+        return dateString
+    }
+}
+
+// Handle logout
+async function handleLogout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'POST' })
+        user.value = null
+        router.push('/login')
+    } catch (error) {
+        console.error('Logout failed:', error)
+    }
+}
+
+// Initialize
+onMounted(async () => {
+    await checkAuth()
+    await Promise.all([
+        fetchPosts(),
+        fetchEvents(),
+        fetchProjects(),
+        fetchUsers()
+    ])
+})
+</script>
+
+<style scoped>
+.home-page {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    color: var(--color-contrast);
+}
+
+/* Override some default spacing for landing page */
+.home-page :deep(.section) {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+}
+
+.home-page :deep(.hero) {
+    margin-bottom: 0;
+}
+
+/* Hero text styling */
+.home-page :deep(.hero .prose h1) {
+    font-size: 3rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+.home-page :deep(.hero .prose p) {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 767px) {
+    .home-page :deep(.hero .prose h1) {
+        font-size: 2rem;
+    }
+
+    .home-page :deep(.hero .prose p) {
+        font-size: 1rem;
+    }
+
+    .home-page :deep(.section) {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+</style>

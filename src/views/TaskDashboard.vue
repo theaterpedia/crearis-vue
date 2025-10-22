@@ -12,7 +12,7 @@
                 <!-- Admin Menu - visible for admin users only -->
                 <div v-if="isAuthenticated && user?.activeRole === 'admin'" class="navbar-item">
                     <AdminMenu :admin-mode="adminMode" :settings-mode="settingsMode" :base-mode="baseMode"
-                        :current-route="currentRoute" :is-on-dashboard="currentRoute === '/'" :placement="'right'"
+                        :current-route="currentRoute" :is-on-dashboard="isOnDashboard" :placement="'right'"
                         :button-text="'Admin'" :username="user?.username" @close="() => { }" @set-mode="setAdminMode"
                         @toggle-settings="toggleSettingsMode" @toggle-base-mode="toggleBaseMode"
                         @action="handleAdminAction" @logout="handleLogout">
@@ -357,6 +357,12 @@ const settingsMode = ref(false)
 const baseMode = ref(false) // When true, admin sees base user view
 const currentRoute = computed(() => router.currentRoute.value.path)
 
+// Check if on dashboard routes (/ or /tasks)
+const isOnDashboard = computed(() => {
+    const path = currentRoute.value
+    return path === '/' || path === '/tasks'
+})
+
 // Navbar logo text
 const navbarLogoText = computed(() => {
     if (user.value?.activeRole === 'admin') {
@@ -663,9 +669,9 @@ function toggleSettingsMode() {
     settingsMode.value = !settingsMode.value
 
     if (settingsMode.value) {
-        // Settings mode ON: Lock navigation to /
-        if (currentRoute.value !== '/') {
-            router.push('/')
+        // Settings mode ON: Lock navigation to dashboard routes (/ or /tasks)
+        if (!isOnDashboard.value) {
+            router.push('/tasks')
         }
         showToastNotification('Einstellungsmodus aktiviert - Navigation gesperrt, CRUD sichtbar', 'info')
     } else {

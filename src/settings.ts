@@ -176,8 +176,14 @@ export interface NavRoute {
 export const defaultNavRoutes: NavRoute[] = [
   {
     path: '/',
-    name: 'Dashboard',
+    name: 'Home',
     protected: false,
+  },
+  {
+    path: '/tasks',
+    name: 'Tasks',
+    protected: true,
+    requiresAuth: true,
   },
   {
     path: '/base',
