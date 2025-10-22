@@ -90,11 +90,11 @@ export const migration = {
         // 5. Add project management fields
         console.log('  - Adding project management fields...')
 
-        // type field
+        // type field (constraint added in migration 018)
         if (isPostgres) {
-            await addColumn('projects', 'type', "TEXT DEFAULT 'project' CHECK (type IN ('project', 'regio', 'special'))")
+            await addColumn('projects', 'type', "TEXT DEFAULT 'project'")
         } else {
-            await addColumn('projects', 'type', "TEXT DEFAULT 'project' CHECK (type IN ('project', 'regio', 'special'))")
+            await addColumn('projects', 'type', "TEXT DEFAULT 'project'")
         }
 
         // is_regio boolean

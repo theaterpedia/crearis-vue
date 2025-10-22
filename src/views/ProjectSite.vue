@@ -1,7 +1,10 @@
 <template>
-    <div class="home-page">
-        <AlertBanner alert-type="primary">
-            <p><strong>Welcome to Theaterpedia!</strong> Explore theater projects, events, and community resources.</p>
+    <div class="project-site-page">
+        <AlertBanner v-if="project" alert-type="primary">
+            <p><strong>{{ project.heading || project.id }}</strong> - {{ project.status }}</p>
+        </AlertBanner>
+        <AlertBanner v-else alert-type="warning">
+            <p><strong>Project not found</strong></p>
         </AlertBanner>
 
         <Navbar :user="user" :use-default-routes="false" @logout="handleLogout">
@@ -10,34 +13,34 @@
             </template>
         </Navbar>
 
-        <Box layout="full-width">
+        <Box layout="full-width" v-if="project">
             <Main>
-                <!-- Hero Section -->
+                <!-- Hero Section for Project -->
                 <Hero height-tmp="prominent"
-                    img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
+                    :img-tmp="project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg'"
                     img-tmp-align-x="cover" img-tmp-align-y="cover"
                     :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
                     content-align-y="center">
                     <Banner transparent>
                         <Prose>
-                            <h1><strong>Theater Community Platform</strong></h1>
-                            <p>Connecting artists, projects, and audiences in the world of theater.</p>
+                            <h1><strong>{{ project.heading || project.id }}</strong></h1>
+                            <p v-if="project.md">{{ project.md }}</p>
+                            <p v-else>Explore events, posts, and team members for this project.</p>
                             <div class="cta-group">
                                 <Button size="medium" variant="primary" @click="$router.push('/getstarted')">
-                                    Register for Conference
+                                    Get Involved
                                 </Button>
-                                <a v-if="!user" href="/login" class="cta-secondary">Sign In</a>
-                                <a v-else href="/tasks" class="cta-secondary">Go to Dashboard</a>
+                                <a href="/" class="cta-secondary">Back to Home</a>
                             </div>
                         </Prose>
                     </Banner>
                 </Hero>
 
-                <!-- Upcoming Events Section -->
+                <!-- Project Events Section -->
                 <Section background="muted">
                     <Container>
                         <Prose>
-                            <Heading overline="What's Happening" level="h2">Upcoming **Events**</Heading>
+                            <Heading overline="Project Events" level="h2">Upcoming **Events**</Heading>
                         </Prose>
 
                         <Slider v-if="events.length > 0">
@@ -53,12 +56,12 @@
                             </Slide>
                         </Slider>
                         <Prose v-else>
-                            <p><em>No upcoming events.</em></p>
+                            <p><em>No events for this project yet.</em></p>
                         </Prose>
                     </Container>
                 </Section>
 
-                <!-- Projects Showcase Section -->
+                <!-- Projects Showcase Section (same as homepage) -->
                 <Section background="default">
                     <Container>
                         <Prose>
@@ -66,14 +69,14 @@
                         </Prose>
 
                         <Columns gap="small" align="top" wrap v-if="projects.length > 0">
-                            <Column v-for="project in projects.slice(0, 4)" :key="project.id" width="1/4">
-                                <a :href="`/sites/${project.id}`"
+                            <Column v-for="proj in projects.slice(0, 4)" :key="proj.id" width="1/4">
+                                <a :href="`/sites/${proj.id}`"
                                     style="text-decoration: none; color: inherit; display: block;">
-                                    <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
+                                    <img v-if="proj.cimg" :src="proj.cimg" :alt="proj.heading || proj.id"
                                         style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
                                     <Prose>
-                                        <h4>{{ project.heading || project.id }}</h4>
-                                        <p v-if="project.status"><strong>Status:</strong> {{ project.status }}</p>
+                                        <h4>{{ proj.heading || proj.id }}</h4>
+                                        <p v-if="proj.status"><strong>Status:</strong> {{ proj.status }}</p>
                                     </Prose>
                                 </a>
                             </Column>
@@ -84,11 +87,11 @@
                     </Container>
                 </Section>
 
-                <!-- Blog Posts Gallery with CardHero -->
+                <!-- Blog Posts Gallery for Project -->
                 <Section background="accent">
                     <Container>
                         <Prose>
-                            <Heading overline="Recent Articles" level="h2">Latest from Our **Blog**</Heading>
+                            <Heading overline="Project Updates" level="h2">Latest **Posts**</Heading>
                         </Prose>
 
                         <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
@@ -104,51 +107,61 @@
                             </Column>
                         </Columns>
                         <Prose v-else>
-                            <p><em>No blog posts available yet.</em></p>
+                            <p><em>No posts for this project yet.</em></p>
                         </Prose>
                     </Container>
                 </Section>
 
-                <!-- Community Members Section -->
-                <Section background="default">
+                <!-- Team Members Section -->
+                <Section background="muted">
                     <Container>
                         <Prose>
-                            <Heading overline="Join Us" level="h2">Community **Members**</Heading>
+                            <Heading overline="Meet the Team" level="h2">Our **People**</Heading>
                         </Prose>
 
                         <Slider v-if="users.length > 0">
-                            <Slide v-for="userItem in users" :key="userItem.id">
-                                <img v-if="userItem.cimg" :src="userItem.cimg" :alt="userItem.username"
-                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem; border-radius: 50%;" />
-                                <Prose>
-                                    <h4>{{ userItem.username }}</h4>
-                                    <p><strong>Role:</strong> {{ userItem.role }}</p>
-                                    <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                    }}</em>
-                                    </p>
-                                </Prose>
+                            <Slide v-for="teamUser in users" :key="teamUser.id">
+                                <div style="text-align: center;">
+                                    <img v-if="teamUser.cimg" :src="teamUser.cimg"
+                                        :alt="teamUser.username || teamUser.id"
+                                        style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;" />
+                                    <div v-else
+                                        style="width: 120px; height: 120px; border-radius: 50%; background: #ddd; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #666;">
+                                        {{ (teamUser.username || teamUser.id).charAt(0).toUpperCase() }}
+                                    </div>
+                                    <Prose>
+                                        <h4>{{ teamUser.username || teamUser.id }}</h4>
+                                        <p v-if="teamUser.role"><em>{{ teamUser.role }}</em></p>
+                                        <p v-if="teamUser.email">{{ teamUser.email }}</p>
+                                    </Prose>
+                                </div>
                             </Slide>
                         </Slider>
                         <Prose v-else>
-                            <p><em>No members to display.</em></p>
+                            <p><em>No team members listed yet.</em></p>
                         </Prose>
                     </Container>
                 </Section>
             </Main>
         </Box>
 
+        <!-- Footer -->
         <Footer>
             <div>
                 <Prose>
-                    <p><strong>Theaterpedia</strong></p>
-                    <p>Connecting the theater community</p>
+                    <h3>Theaterpedia</h3>
+                    <p>Connecting theater communities worldwide.</p>
                 </Prose>
             </div>
             <div>
-                <ul>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/privacy">Privacy</a></li>
+                <Prose>
+                    <h4>Quick Links</h4>
+                </Prose>
+                <ul style="list-style: none; padding: 0;">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/getstarted">Get Started</a></li>
+                    <li v-if="user"><a href="/tasks">Dashboard</a></li>
+                    <li v-else><a href="/login">Sign In</a></li>
                 </ul>
             </div>
             <div>
@@ -162,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import AlertBanner from '@/components/AlertBanner.vue'
 import Navbar from '@/components/Navbar.vue'
 import AdminMenu from '@/components/AdminMenu.vue'
@@ -183,13 +196,16 @@ import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 // State
 const user = ref<any>(null)
+const project = ref<any>(null)
 const posts = ref<any[]>([])
 const events = ref<any[]>([])
-const projects = ref<any[]>([])
+const projects = ref<any[]>([]) // All projects (same as homepage)
 const users = ref<any[]>([])
+const domaincode = ref<string>('')
 
 // Check authentication
 async function checkAuth() {
@@ -204,33 +220,47 @@ async function checkAuth() {
     }
 }
 
-// Fetch posts
-async function fetchPosts() {
+// Fetch the specific project
+async function fetchProject(id: string) {
     try {
-        const response = await fetch('/api/posts')
+        const response = await fetch(`/api/projects/${encodeURIComponent(id)}`)
+        if (response.ok) {
+            project.value = await response.json()
+        } else {
+            console.error('Project not found')
+        }
+    } catch (error) {
+        console.error('Failed to fetch project:', error)
+    }
+}
+
+// Fetch posts filtered by project
+async function fetchPosts(projectId: string) {
+    try {
+        const response = await fetch(`/api/posts?project=${encodeURIComponent(projectId)}`)
         if (response.ok) {
             const data = await response.json()
-            posts.value = data.slice(0, 5) // Limit to 5 posts
+            posts.value = data.slice(0, 6)
         }
     } catch (error) {
         console.error('Failed to fetch posts:', error)
     }
 }
 
-// Fetch events
-async function fetchEvents() {
+// Fetch events filtered by project
+async function fetchEvents(projectId: string) {
     try {
-        const response = await fetch('/api/events')
+        const response = await fetch(`/api/events?project=${encodeURIComponent(projectId)}`)
         if (response.ok) {
             const data = await response.json()
-            events.value = data.slice(0, 6) // Limit to 6 events
+            events.value = data.slice(0, 6)
         }
     } catch (error) {
         console.error('Failed to fetch events:', error)
     }
 }
 
-// Fetch projects
+// Fetch all projects (same as homepage - draft/demo status)
 async function fetchProjects() {
     try {
         const response = await fetch('/api/projects')
@@ -238,130 +268,83 @@ async function fetchProjects() {
             const data = await response.json()
             // Filter projects with status 'draft' or 'demo'
             const filteredProjects = data.filter((p: any) => p.status === 'draft' || p.status === 'demo')
-            projects.value = filteredProjects.slice(0, 8) // Limit to 8 projects
+            projects.value = filteredProjects.slice(0, 8)
         }
     } catch (error) {
         console.error('Failed to fetch projects:', error)
     }
 }
 
-// Fetch users
-async function fetchUsers() {
+// Fetch users filtered by project (members)
+async function fetchUsers(projectId: string) {
     try {
-        const response = await fetch('/api/users')
+        const response = await fetch(`/api/users?project_id=${encodeURIComponent(projectId)}`)
         if (response.ok) {
             const data = await response.json()
-            // Filter out admin and base users for public display
-            users.value = data.filter((u: any) => !['admin', 'base'].includes(u.username)).slice(0, 10)
+            users.value = data.filter((u: any) => u.role !== 'admin' && u.id !== 'base@theaterpedia.org')
         }
     } catch (error) {
         console.error('Failed to fetch users:', error)
     }
 }
 
-// Format date
-function formatDate(dateString: string): string {
-    try {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })
-    } catch {
-        return dateString
-    }
-}
-
 // Handle logout
-async function handleLogout() {
-    try {
-        await fetch('/api/auth/logout', { method: 'POST' })
-        user.value = null
-        router.push('/login')
-    } catch (error) {
-        console.error('Logout failed:', error)
-    }
+function handleLogout() {
+    user.value = null
+    router.push('/login')
 }
 
-// Initialize
+// Date formatting
+function formatDate(date: string | null) {
+    if (!date) return 'TBD'
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 onMounted(async () => {
+    domaincode.value = route.params.domaincode as string
+
     await checkAuth()
-    await Promise.all([
-        fetchPosts(),
-        fetchEvents(),
-        fetchProjects(),
-        fetchUsers()
-    ])
+
+    if (domaincode.value) {
+        await fetchProject(domaincode.value)
+        await fetchEvents(domaincode.value)
+        await fetchPosts(domaincode.value)
+        await fetchUsers(domaincode.value)
+    }
+
+    await fetchProjects() // Same as homepage
 })
 </script>
 
 <style scoped>
-.home-page {
+.project-site-page {
     min-height: 100vh;
-    background-color: var(--color-bg);
-    color: var(--color-contrast);
-}
-
-/* Override some default spacing for landing page */
-.home-page :deep(.section) {
-    padding-top: 3.5rem;
-    padding-bottom: 3.5rem;
-}
-
-.home-page :deep(.hero) {
-    margin-bottom: 0;
-}
-
-/* Hero text styling */
-.home-page :deep(.hero .prose h1) {
-    font-size: 3rem;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-}
-
-.home-page :deep(.hero .prose p) {
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-/* CTA Group */
-.home-page :deep(.cta-group) {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+}
+
+.cta-group {
+    display: flex;
     gap: 1.5rem;
-    margin-top: 2rem;
+    align-items: center;
+    margin-top: 1.5rem;
 }
 
-.home-page :deep(.cta-secondary) {
-    color: var(--color-primary-contrast);
+.cta-secondary {
+    color: white;
     text-decoration: underline;
-    font-size: 1.125rem;
-    transition: opacity 0.3s;
+    font-weight: 500;
+    transition: opacity 0.2s;
 }
 
-.home-page :deep(.cta-secondary:hover) {
+.cta-secondary:hover {
     opacity: 0.8;
 }
 
-@media (max-width: 767px) {
-    .home-page :deep(.hero .prose h1) {
-        font-size: 2rem;
-    }
-
-    .home-page :deep(.hero .prose p) {
-        font-size: 1rem;
-    }
-
-    .home-page :deep(.cta-group) {
+@media (max-width: 768px) {
+    .cta-group {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .home-page :deep(.section) {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
     }
 }
 </style>

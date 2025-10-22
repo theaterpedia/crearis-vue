@@ -7,6 +7,7 @@ const router = createRouter({
     { path: '/login', component: () => import('../views/Login.vue'), meta: { public: true } },
     { path: '/', component: () => import('../views/Home.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
+    { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
 
     // Protected routes
     { path: '/tasks', component: () => import('../views/TaskDashboard.vue'), meta: { requiresAuth: true } },

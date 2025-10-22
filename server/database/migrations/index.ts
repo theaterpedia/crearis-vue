@@ -20,6 +20,8 @@ import { migration as migration014 } from './014_add_computed_columns_and_seed'
 import { migration as migration015 } from './015_domain_system_and_extensions'
 import { migration as migration016 } from './016_users_email_format'
 import migration017 from './017_project_role_tables'
+import { migration as migration018 } from './018_update_projects_schema'
+import { migration as migration019 } from './019_reseed_users_and_projects'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -49,6 +51,8 @@ const migrations: Migration[] = [
     { run: migration015.up, metadata: { id: migration015.id, description: migration015.description, version: '0.0.8', date: '2025-10-21' } },
     { run: migration016.up, metadata: { id: migration016.id, description: migration016.description, version: '0.0.9', date: '2025-10-21' } },
     { run: migration017.up, metadata: { id: migration017.id, description: migration017.name, version: '0.0.10', date: '2025-10-21' } },
+    { run: migration018.up, metadata: { id: migration018.id, description: migration018.description, version: '0.0.11', date: '2025-10-22' } },
+    { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
 ]
 
 /**
