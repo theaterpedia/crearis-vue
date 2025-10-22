@@ -32,7 +32,19 @@ export const migration = {
             ('kathrin.jung@theaterpedia.org', 'Kathrin Jung', 
              '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
             ('karel.hajek@theaterpedia.org', 'Karel Hajek', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP)
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
+            ('karin.seiler-giehl@theaterpedia.org', 'Karin Seiler-Giehl', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
+            ('afra.kriss@theaterpedia.org', 'Afra Kriss', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),             
+            ('birgitta.miehle@theaterpedia.org', 'Birgitta Miehle', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),              
+            ('bernd.walter@theaterpedia.org', 'Bernd Walter', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
+            ('johanna.schoenfelder@theaterpedia.org', 'Johanna Schönfelder', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
+            ('sophie.meier@theaterpedia.org', 'Sophie Meier', 
+             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP)                                                    
             ON CONFLICT (id) DO NOTHING
         `)
         console.log('    ✓ Created users: Rosalin Hertrich, Hans Dönitz, Kathrin Jung, Karel Hajek')
@@ -55,7 +67,7 @@ export const migration = {
 
         // Create dasei (was project1)
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
             VALUES (
                 'dasei',
                 'DASEI',
@@ -63,6 +75,7 @@ export const migration = {
                 'active',
                 'hans.doenitz@theaterpedia.org',
                 'DASEI - Digitaler Alltag in der Stadtentwicklung',
+                6,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -71,7 +84,7 @@ export const migration = {
 
         // Create raumlauf (was project2)
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
             VALUES (
                 'raumlauf',
                 'Raumlauf',
@@ -79,6 +92,7 @@ export const migration = {
                 'draft',
                 'hans.doenitz@theaterpedia.org',
                 'Raumlauf - Regional theater project',
+                1,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -87,19 +101,97 @@ export const migration = {
 
         // Create augsburg (was regio1)
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
             VALUES (
                 'augsburg',
                 'Augsburg',
                 'regio',
-                'active',
+                'draft',
                 'kathrin.jung@theaterpedia.org',
                 'Augsburg regional project',
+                2,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
         `)
         console.log('    ✓ Created project augsburg (owner: Kathrin Jung)')        // 4. Add project memberships
+        console.log('  - Adding project memberships...')
+
+        // Create aktivkreativ
+        await db.exec(`
+            INSERT INTO projects (id, heading, type, status, owner_id, description, regio, theme,created_at, updated_at)
+            VALUES (
+                'aktivkreativ',
+                '**Aktiv-Kreativ-Theater**Theaterpädgogik mit Kindern und Jugendlichen',
+                'project',
+                'demo',
+                'kathrin.jung@theaterpedia.org',
+                'aktivkreativ description',
+                'augsburg',
+                1,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        `)
+        console.log('    ✓ Created project Aktiv-Kreativ (owner: Kathrin Jung)')        // 4. Add project memberships
+        console.log('  - Adding project memberships...')
+
+        // Create hoftheater
+        await db.exec(`
+            INSERT INTO projects (id, heading, type, status, owner_id, description, regio, theme,created_at, updated_at)
+            VALUES (
+                'hoftheater_schrobenhausen',
+                '**Hoftheater Schrobenhausen**ein Ort für experimentelles Theater',
+                'project',
+                'demo',
+                'afra.kriss@theaterpedia.org',
+                'hoftheater description',
+                'augsburg',
+                2,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        `)
+        console.log('    ✓ Created project Hoftheater (owner: Kathrin Jung)')        // 4. Add project memberships
+        console.log('  - Adding project memberships...')
+
+        // Create bewaehrungshilfe_augsburg
+        await db.exec(`
+            INSERT INTO projects (id, heading, type, status, owner_id, description, regio, theme, created_at, updated_at)
+            VALUES (
+                'bewaehrungshilfe_augsburg',
+                '**Bewährungshilfe Augsburg**ein Ort für experimentelles Theater',
+                'project',
+                'demo',
+                'afra.kriss@theaterpedia.org',
+                'bewaehrungshilfe description',
+                'augsburg',
+                4,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        `)
+        console.log('    ✓ Created project Bewährungshilfe Augsburg (owner: Afra Kriss)')        // 4. Add project memberships
+        console.log('  - Adding project memberships...')
+
+        // Make Rosalin Hertrich a member of dasei
+        await db.exec(`
+            INSERT INTO project_members (project_id, user_id, role)
+            VALUES ('dasei', 'rosalin.hertrich@dasei.eu', 'member')
+            ON CONFLICT (project_id, user_id) DO NOTHING
+        `)
+        console.log('    ✓ Added Rosalin Hertrich to dasei')
+
+        console.log('  - Adding project memberships...')
+
+        // Make Rosalin Hertrich a member of dasei
+        await db.exec(`
+            INSERT INTO project_members (project_id, user_id, role)
+            VALUES ('dasei', 'rosalin.hertrich@dasei.eu', 'member')
+            ON CONFLICT (project_id, user_id) DO NOTHING
+        `)
+        console.log('    ✓ Added Rosalin Hertrich to dasei')
+
         console.log('  - Adding project memberships...')
 
         // Make Rosalin Hertrich a member of dasei
@@ -115,7 +207,7 @@ export const migration = {
 
         // Add physicaltheatre
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
             VALUES (
                 'physicaltheatre',
                 'Physical Theatre',
@@ -123,6 +215,7 @@ export const migration = {
                 'demo',
                 'rosalin.hertrich@dasei.eu',
                 'Topic site about physical theatre',
+                1,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -135,7 +228,7 @@ export const migration = {
 
         // Add comictheater
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
             VALUES (
                 'comictheater',
                 'Comic Theater',
@@ -143,6 +236,7 @@ export const migration = {
                 'demo',
                 'kathrin.jung@theaterpedia.org',
                 'Topic site about comic theater',
+                2,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -155,7 +249,7 @@ export const migration = {
 
         // Add einthema_eintag
         await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, created_at, updated_at)
+            INSERT INTO projects (id, heading, type, status, owner_id, description, theme,created_at, updated_at)
             VALUES (
                 'einthema_eintag',
                 'Ein Thema - Ein Tag',
@@ -163,6 +257,7 @@ export const migration = {
                 'demo',
                 'karel.hajek@theaterpedia.org',
                 'Topic site for one-day workshops',
+                3,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
@@ -184,6 +279,17 @@ export const migration = {
             ON CONFLICT (project_id, user_id) DO NOTHING
         `)
         console.log('    ✓ Added Karel Hajek to comictheater and raumlauf')
+
+        // 7. Add members to muenchen, augsburg and oberland
+        await db.exec(`
+            INSERT INTO project_members (project_id, user_id, role)
+            VALUES               
+                ('augsburg', 'karin.seiler-giehl@theaterpedia.org', 'member'),
+                ('augsburg', 'birgitta.miehle@theaterpedia.org', 'member'),
+                ('augsburg', 'afra.kriss@theaterpedia.org', 'member')
+            ON CONFLICT (project_id, user_id) DO NOTHING
+        `)
+        console.log('    ✓ Added members to muenchen, augsburg and oberland')
 
         console.log('✅ Migration 019 completed')
     },

@@ -24,7 +24,7 @@ export const migration = {
         console.log(`  - Found ${events.length} events with images`)
 
         // Get all projects
-        const projects = await db.all('SELECT id FROM projects', [])
+        const projects = await db.all('SELECT id FROM projects WHERE cimg IS NULL', [])
         
         console.log(`  - Updating ${projects.length} projects with random images...`)
 

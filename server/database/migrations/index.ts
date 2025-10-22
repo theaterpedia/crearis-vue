@@ -23,6 +23,7 @@ import migration017 from './017_project_role_tables'
 import { migration as migration018 } from './018_update_projects_schema'
 import { migration as migration019 } from './019_reseed_users_and_projects'
 import { migration as migration020 } from './020_add_project_images'
+import { migration as migration021 } from './021_add_users_and_regional_projects'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -55,6 +56,7 @@ const migrations: Migration[] = [
     { run: migration018.up, metadata: { id: migration018.id, description: migration018.description, version: '0.0.11', date: '2025-10-22' } },
     { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
     { run: migration020.up, metadata: { id: migration020.id, description: migration020.description, version: '0.0.13', date: '2025-10-22' } },
+    { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' } },
 ]
 
 /**
