@@ -22,39 +22,16 @@
                         <Prose>
                             <h1><strong>Theater Community Platform</strong></h1>
                             <p>Connecting artists, projects, and audiences in the world of theater.</p>
-                            <Button v-if="!user" size="medium" variant="primary" @click="$router.push('/login')">
-                                Get Started
-                            </Button>
-                            <Button v-else size="medium" variant="primary" @click="$router.push('/tasks')">
-                                Go to Dashboard
-                            </Button>
+                            <div class="cta-group">
+                                <Button size="medium" variant="primary" @click="$router.push('/getstarted')">
+                                    Register for Conference
+                                </Button>
+                                <a v-if="!user" href="/login" class="cta-secondary">Sign In</a>
+                                <a v-else href="/tasks" class="cta-secondary">Go to Dashboard</a>
+                            </div>
                         </Prose>
                     </Banner>
                 </Hero>
-
-                <!-- Latest Blog Posts Section -->
-                <Section background="default">
-                    <Container>
-                        <Prose>
-                            <Heading overline="Recent Articles" level="h2">Latest from Our **Blog**</Heading>
-                        </Prose>
-
-                        <Slider v-if="posts.length > 0">
-                            <Slide v-for="post in posts" :key="post.id">
-                                <img v-if="post.cimg" :src="post.cimg" :alt="post.heading || post.id"
-                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
-                                <Prose>
-                                    <h3>{{ post.heading || post.id }}</h3>
-                                    <p v-if="post.md">{{ post.md.substring(0, 150) }}...</p>
-                                    <p v-else><em>No content available</em></p>
-                                </Prose>
-                            </Slide>
-                        </Slider>
-                        <Prose v-else>
-                            <p><em>No blog posts available yet.</em></p>
-                        </Prose>
-                    </Container>
-                </Section>
 
                 <!-- Upcoming Events Section -->
                 <Section background="muted">
@@ -63,18 +40,18 @@
                             <Heading overline="What's Happening" level="h2">Upcoming **Events**</Heading>
                         </Prose>
 
-                        <Columns gap="medium" align="top" v-if="events.length > 0">
-                            <Column v-for="event in events.slice(0, 3)" :key="event.id" width="1/3">
+                        <Slider v-if="events.length > 0">
+                            <Slide v-for="event in events" :key="event.id">
                                 <img v-if="event.cimg" :src="event.cimg" :alt="event.heading || event.id"
-                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
+                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
                                 <Prose>
                                     <h3>{{ event.heading || event.id }}</h3>
                                     <p v-if="event.date"><strong>Date:</strong> {{ formatDate(event.date) }}</p>
                                     <p v-if="event.location">{{ event.location }}</p>
                                     <p v-if="event.md">{{ event.md.substring(0, 100) }}...</p>
                                 </Prose>
-                            </Column>
-                        </Columns>
+                            </Slide>
+                        </Slider>
                         <Prose v-else>
                             <p><em>No upcoming events.</em></p>
                         </Prose>
@@ -82,7 +59,7 @@
                 </Section>
 
                 <!-- Projects Showcase Section -->
-                <Section background="accent">
+                <Section background="default">
                     <Container>
                         <Prose>
                             <Heading overline="Our Community" level="h2">Active **Projects**</Heading>
@@ -105,6 +82,31 @@
                     </Container>
                 </Section>
 
+                <!-- Blog Posts Gallery with CardHero -->
+                <Section background="accent">
+                    <Container>
+                        <Prose>
+                            <Heading overline="Recent Articles" level="h2">Latest from Our **Blog**</Heading>
+                        </Prose>
+
+                        <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
+                            <Column v-for="post in posts.slice(0, 6)" :key="post.id" width="1/3">
+                                <CardHero height-tmp="medium" :img-tmp="post.cimg || ''" content-align-y="bottom"
+                                    content-type="text">
+                                    <Prose>
+                                        <h3>{{ post.heading || post.id }}</h3>
+                                        <p v-if="post.md">{{ post.md.substring(0, 100) }}...</p>
+                                        <p v-else><em>No content available</em></p>
+                                    </Prose>
+                                </CardHero>
+                            </Column>
+                        </Columns>
+                        <Prose v-else>
+                            <p><em>No blog posts available yet.</em></p>
+                        </Prose>
+                    </Container>
+                </Section>
+
                 <!-- Community Members Section -->
                 <Section background="default">
                     <Container>
@@ -120,7 +122,7 @@
                                     <h4>{{ userItem.username }}</h4>
                                     <p><strong>Role:</strong> {{ userItem.role }}</p>
                                     <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                    }}</em>
+                                            }}</em>
                                     </p>
                                 </Prose>
                             </Slide>
@@ -175,6 +177,7 @@ import Slider from '@/components/Slider.vue'
 import Slide from '@/components/Slide.vue'
 import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
+import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
 
 const router = useRouter()
@@ -318,6 +321,25 @@ onMounted(async () => {
     margin-bottom: 2rem;
 }
 
+/* CTA Group */
+.home-page :deep(.cta-group) {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.home-page :deep(.cta-secondary) {
+    color: var(--color-primary-contrast);
+    text-decoration: underline;
+    font-size: 1.125rem;
+    transition: opacity 0.3s;
+}
+
+.home-page :deep(.cta-secondary:hover) {
+    opacity: 0.8;
+}
+
 @media (max-width: 767px) {
     .home-page :deep(.hero .prose h1) {
         font-size: 2rem;
@@ -325,6 +347,12 @@ onMounted(async () => {
 
     .home-page :deep(.hero .prose p) {
         font-size: 1rem;
+    }
+
+    .home-page :deep(.cta-group) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
 
     .home-page :deep(.section) {
