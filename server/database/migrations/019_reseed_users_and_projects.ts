@@ -62,7 +62,7 @@ export const migration = {
 
         // Delete old projects and recreate with new IDs
         await db.exec(`
-            DELETE FROM projects WHERE id IN ('project1', 'project2', 'regio1', 'dasei', 'raumlauf', 'augsburg')
+            DELETE FROM projects WHERE id IN ('project1', 'project2', 'regio1', 'dasei', 'raumlauf')
         `)
 
         // Create dasei (was project1)
@@ -79,6 +79,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project dasei (owner: Hans Dönitz, status: active)')
 
@@ -96,6 +101,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project raumlauf (owner: Hans Dönitz, type: topic, status: draft)')
 
@@ -113,6 +123,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project augsburg (owner: Kathrin Jung)')        // 4. Add project memberships
         console.log('  - Adding project memberships...')
@@ -132,6 +147,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project Aktiv-Kreativ (owner: Kathrin Jung)')        // 4. Add project memberships
         console.log('  - Adding project memberships...')
@@ -151,6 +171,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project Hoftheater (owner: Kathrin Jung)')        // 4. Add project memberships
         console.log('  - Adding project memberships...')
@@ -170,6 +195,11 @@ export const migration = {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
+            ON CONFLICT (id) DO UPDATE SET
+                heading = EXCLUDED.heading,
+                owner_id = EXCLUDED.owner_id,
+                status = EXCLUDED.status,
+                type = EXCLUDED.type
         `)
         console.log('    ✓ Created project Bewährungshilfe Augsburg (owner: Afra Kriss)')        // 4. Add project memberships
         console.log('  - Adding project memberships...')
