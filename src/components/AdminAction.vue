@@ -62,7 +62,7 @@ const showStepper = computed(() => {
 
 const steps = computed(() => {
   const stepList: { id: number; label: string; status: 'complete' | 'current' | 'upcoming' }[] = []
-  
+
   // Add init step if not 'none'
   if (props.initStep !== 'none') {
     stepList.push({
@@ -71,7 +71,7 @@ const steps = computed(() => {
       status: currentStep.value > 1 ? 'complete' : currentStep.value === 1 ? 'current' : 'upcoming'
     })
   }
-  
+
   // Add main action step
   const mainStepId = props.initStep === 'none' ? 1 : 2
   stepList.push({
@@ -79,7 +79,7 @@ const steps = computed(() => {
     label: props.actionType.charAt(0).toUpperCase() + props.actionType.slice(1),
     status: currentStep.value > mainStepId ? 'complete' : currentStep.value === mainStepId ? 'current' : 'upcoming'
   })
-  
+
   // Add final step if not 'inline'
   if (props.finalStep !== 'inline') {
     const finalStepId = props.initStep === 'none' ? 2 : 3
@@ -89,7 +89,7 @@ const steps = computed(() => {
       status: currentStep.value > finalStepId ? 'complete' : currentStep.value === finalStepId ? 'current' : 'upcoming'
     })
   }
-  
+
   return stepList
 })
 
@@ -134,11 +134,7 @@ watch(() => [props.initStep, props.finalStep], () => {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="isOpen"
-        class="admin-action-overlay"
-        @click.self="cancel"
-      >
+      <div v-if="isOpen" class="admin-action-overlay" @click.self="cancel">
         <div class="admin-action-modal">
           <!-- Stepper Column (conditional) -->
           <div v-if="showStepper" class="admin-action-stepper">
@@ -148,14 +144,9 @@ watch(() => [props.initStep, props.finalStep], () => {
                 {{ coreType.charAt(0).toUpperCase() + coreType.slice(1) }}
               </h3>
             </div>
-            
+
             <div class="stepper-steps">
-              <div
-                v-for="step in steps"
-                :key="step.id"
-                class="stepper-step"
-                :class="[`step-${step.status}`]"
-              >
+              <div v-for="step in steps" :key="step.id" class="stepper-step" :class="[`step-${step.status}`]">
                 <div class="step-indicator">
                   <div v-if="step.status === 'complete'" class="step-icon step-icon-complete">
                     ✓
@@ -172,26 +163,15 @@ watch(() => [props.initStep, props.finalStep], () => {
           <!-- Content Panel -->
           <div class="admin-action-panel">
             <div class="panel-header">
-              <button
-                class="panel-close"
-                @click="cancel"
-                aria-label="Close"
-              >
+              <button class="panel-close" @click="cancel" aria-label="Close">
                 ×
               </button>
             </div>
 
             <div class="panel-content">
               <!-- Slot for dynamic panel content -->
-              <slot
-                name="panel"
-                :current-step="currentStep"
-                :form-data="formData"
-                :next-step="nextStep"
-                :prev-step="prevStep"
-                :complete="complete"
-                :cancel="cancel"
-              >
+              <slot name="panel" :current-step="currentStep" :form-data="formData" :next-step="nextStep"
+                :prev-step="prevStep" :complete="complete" :cancel="cancel">
                 <div class="default-panel">
                   <h2>Admin Action</h2>
                   <p>Action: {{ actionType }}</p>
@@ -203,33 +183,15 @@ watch(() => [props.initStep, props.finalStep], () => {
             </div>
 
             <div class="panel-footer">
-              <slot
-                name="footer"
-                :current-step="currentStep"
-                :next-step="nextStep"
-                :prev-step="prevStep"
-                :complete="complete"
-                :cancel="cancel"
-              >
-                <button
-                  v-if="currentStep > 1"
-                  class="btn btn-secondary"
-                  @click="prevStep"
-                >
+              <slot name="footer" :current-step="currentStep" :next-step="nextStep" :prev-step="prevStep"
+                :complete="complete" :cancel="cancel">
+                <button v-if="currentStep > 1" class="btn btn-secondary" @click="prevStep">
                   Back
                 </button>
-                <button
-                  v-if="currentStep < maxStep"
-                  class="btn btn-primary"
-                  @click="nextStep"
-                >
+                <button v-if="currentStep < maxStep" class="btn btn-primary" @click="nextStep">
                   Next
                 </button>
-                <button
-                  v-else
-                  class="btn btn-primary"
-                  @click="complete"
-                >
+                <button v-else class="btn btn-primary" @click="complete">
                   Complete
                 </button>
               </slot>
@@ -273,7 +235,7 @@ watch(() => [props.initStep, props.finalStep], () => {
 /* Stepper Column */
 .admin-action-stepper {
   width: 240px;
-  background: var(--color-background-soft);
+  background: var(--color-accent-bg);
   padding: 2rem 1.5rem;
   border-right: 1px solid var(--color-border);
   flex-shrink: 0;
@@ -286,8 +248,9 @@ watch(() => [props.initStep, props.finalStep], () => {
 .stepper-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-heading);
+  color: var(--color-accent-contrast);
   margin: 0;
+  font-family: var(--headings);
 }
 
 .stepper-steps {
@@ -359,6 +322,7 @@ watch(() => [props.initStep, props.finalStep], () => {
   border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: flex-end;
+  background: var(--color-bg);
 }
 
 .panel-close {
@@ -366,7 +330,7 @@ watch(() => [props.initStep, props.finalStep], () => {
   border: none;
   font-size: 2rem;
   line-height: 1;
-  color: var(--color-text-muted);
+  color: var(--color-muted-contrast);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -379,19 +343,21 @@ watch(() => [props.initStep, props.finalStep], () => {
 }
 
 .panel-close:hover {
-  background: var(--color-background-soft);
-  color: var(--color-heading);
+  background: var(--color-muted-bg);
+  color: var(--color-contrast);
 }
 
 .panel-content {
   flex: 1;
   padding: 2rem 1.5rem;
   overflow-y: auto;
+  background: var(--color-muted-bg);
 }
 
 .panel-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -418,27 +384,28 @@ watch(() => [props.initStep, props.finalStep], () => {
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
+  font-family: var(--font);
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+  border-color: var(--color-primary-bg);
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-dark, var(--color-primary));
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .btn-secondary {
-  background: var(--color-background-soft);
-  color: var(--color-text);
+  background: var(--color-muted-bg);
+  color: var(--color-muted-contrast);
   border-color: var(--color-border);
 }
 
 .btn-secondary:hover {
-  background: var(--color-background-mute);
+  background: var(--color-accent-bg);
+  color: var(--color-accent-contrast);
 }
 
 /* Mobile Responsiveness */

@@ -235,6 +235,11 @@
 
                         <!-- Admin Tasks List (visible when settingsMode is OFF) -->
                         <div v-if="!settingsMode">
+                            <!-- Admin Actions Section -->
+                            <div class="admin-actions-section">
+                                <AdminActionsShowcase />
+                            </div>
+
                             <!-- Watch Tasks Section -->
                             <div v-if="watchTasks.length > 0" class="watch-tasks-section">
                                 <h3 class="section-title">Watch Tasks</h3>
@@ -293,6 +298,7 @@ import AdminTaskCard from '@/components/AdminTaskCard.vue'
 import ProjectModal from '@/components/ProjectModal.vue'
 import ReleasesTable from '@/components/ReleasesTable.vue'
 import ReleaseModal from '@/components/ReleaseModal.vue'
+import AdminActionsShowcase from '@/components/AdminActionsShowcase.vue'
 
 interface Task {
     id: string
