@@ -90,7 +90,8 @@ export interface Task {
 
 export interface Project {
     id: string
-    name: string
+    name: string  // domaincode (mapped from database id)
+    heading?: string  // heading field from database
     description?: string
     owner: string
     release?: string

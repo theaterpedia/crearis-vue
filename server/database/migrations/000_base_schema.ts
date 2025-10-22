@@ -278,6 +278,7 @@ export async function createRecordVersionsTable(db: DatabaseAdapter) {
 
 /**
  * Create projects table
+ * Note: id field is the 'domaincode' - must be lowercase, no whitespace, start with letter, allow underscore and numbers
  */
 export async function createProjectsTable(db: DatabaseAdapter) {
   const isPostgres = db.type === 'postgresql'
@@ -285,17 +286,15 @@ export async function createProjectsTable(db: DatabaseAdapter) {
 
   await db.exec(`
     CREATE TABLE IF NOT EXISTS projects (
-      id ${TEXT} PRIMARY KEY,
-      username ${TEXT} UNIQUE NOT NULL,
-      password_hash ${TEXT} NOT NULL,
-      role ${TEXT} NOT NULL ${isPostgres
-      ? "CHECK(role IN ('admin', 'base', 'project'))"
-      : "CHECK(role IN ('admin', 'base', 'project'))"},
-      name ${TEXT},
+      id ${TEXT} PRIMARY KEY ${isPostgres
+      ? "CHECK(id ~ '^[a-z][a-z0-9_]*$')"
+      : "CHECK(id GLOB '[a-z]*' AND id NOT GLOB '* *' AND id NOT GLOB '*[A-Z]*')"},
+      heading ${TEXT},
       description ${TEXT},
       status ${TEXT} DEFAULT 'draft' ${isPostgres
       ? "CHECK(status IN ('draft', 'active', 'archived'))"
       : "CHECK(status IN ('draft', 'active', 'archived'))"},
+      owner_id ${TEXT},
       created_at ${TIMESTAMP},
       updated_at ${TEXT}
     )

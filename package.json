@@ -48,6 +48,7 @@
     "test:watch": "vitest watch",
     "db:migrate": "tsx server/database/migrations/run.ts",
     "db:migrate:status": "tsx server/database/migrations/run.ts --status",
+    "db:rebuild": "tsx server/database/drop-and-rebuild-pg.ts",
     "db:check-structure": "tsx server/database/check-structure.ts",
     "db:check-structure:version": "tsx server/database/check-structure.ts",
     "version:check": "tsx server/database/check-structure.ts",

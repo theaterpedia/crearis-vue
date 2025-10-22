@@ -27,31 +27,31 @@ const props = withDefaults(defineProps<AdminActionProjectsPanelProps>(), {
 })
 
 const emit = defineEmits<{
-  'submit': [data: Record<string, any>]
+  'update:formData': [data: Record<string, any>]
+  'validate': [isValid: boolean]
   'cancel': []
 }>()
 
 const formData = ref<Record<string, any>>({
   id: '',
-  username: '',
   name: '',
+  heading: '',
   description: '',
   status: 'active',
-  owner_id: props.ownerId || null,
-  is_company: false
+  owner_id: props.ownerId || null
 })
 
 const isLoading = ref(false)
 const errors = ref<Record<string, string>>({})
 
 const allProjectFields: ProjectField[] = [
-  { name: 'id', label: 'Project ID', type: 'text', required: true },
-  { name: 'username', label: 'Username', type: 'text', required: true },
-  { name: 'name', label: 'Project Name', type: 'text', required: true },
+  { name: 'id', label: 'Domaincode (ID)', type: 'text', required: true },
+  { name: 'name', label: 'Domaincode (Name)', type: 'text', required: true },
+  { name: 'heading', label: 'Heading', type: 'text' },
   { name: 'description', label: 'Description', type: 'textarea' },
-  { 
-    name: 'status', 
-    label: 'Status', 
+  {
+    name: 'status',
+    label: 'Status',
     type: 'select',
     options: [
       { value: 'active', label: 'Active' },
@@ -62,7 +62,14 @@ const allProjectFields: ProjectField[] = [
   { name: 'owner_id', label: 'Owner (Email)', type: 'text' }
 ]
 
-const defaultProjectFields = ['name', 'description', 'owner_id']
+const defaultProjectFields = ['id', 'heading', 'description', 'owner_id']
+
+// Expose validation function to parent
+defineExpose({
+  validate,
+  formData,
+  errors
+})
 
 const activeFields = computed<ProjectField[]>(() => {
   if (Array.isArray(props.fields)) {
@@ -99,39 +106,47 @@ watch(() => props.ownerId, (newOwnerId) => {
 
 async function loadProject() {
   if (!props.projectId) return
-  
+
   isLoading.value = true
+  errors.value = {}
   try {
-    const response = await fetch(`/api/projects/${props.projectId}`)
+    const response = await fetch(`/api/projects/${encodeURIComponent(props.projectId)}`)
     if (response.ok) {
       const project = await response.json()
       formData.value = { ...project }
+      emit('update:formData', formData.value)
+    } else if (response.status === 404) {
+      console.warn(`Project not found: ${props.projectId}`)
+      errors.value.general = 'Project not found'
+    } else {
+      console.error(`Failed to load project: ${response.status}`)
+      errors.value.general = 'Failed to load project data'
     }
   } catch (error) {
     console.error('Failed to load project:', error)
+    errors.value.general = 'Failed to load project data'
   } finally {
     isLoading.value = false
   }
 }
 
+// Watch formData changes and emit to parent
+watch(formData, (newData) => {
+  emit('update:formData', newData)
+}, { deep: true })
+
 function validate(): boolean {
   errors.value = {}
-  
+
   for (const field of activeFields.value) {
     if (field.required && !formData.value[field.name]) {
       errors.value[field.name] = `${field.label} is required`
     }
   }
-  
-  return Object.keys(errors.value).length === 0
-}
 
-function handleSubmit() {
-  if (isReadonly.value) return
-  
-  if (validate()) {
-    emit('submit', { ...formData.value })
-  }
+  const isValid = Object.keys(errors.value).length === 0
+  emit('validate', isValid)
+  return isValid
 }
 
 function handleCancel() {
@@ -153,81 +168,40 @@ function handleCancel() {
       Loading project data...
     </div>
 
-    <form v-else class="panel-form" @submit.prevent="handleSubmit">
-      <div
-        v-for="field in activeFields"
-        :key="field.name"
-        class="form-field"
-      >
+    <div v-else-if="errors.general" class="panel-error">
+      {{ errors.general }}
+    </div>
+
+    <div v-else class="panel-form">
+      <div v-for="field in activeFields" :key="field.name" class="form-field">
         <label :for="field.name" class="field-label">
           {{ field.label }}
           <span v-if="field.required" class="field-required">*</span>
         </label>
 
         <div class="field-input-wrapper">
-          <input
-            v-if="field.type === 'text'"
-            :id="field.name"
-            v-model="formData[field.name]"
-            type="text"
-            :readonly="isReadonly"
-            :required="field.required"
-            class="field-input"
-            :class="{ 'field-error': errors[field.name] }"
-          />
+          <input v-if="field.type === 'text'" :id="field.name" v-model="formData[field.name]" type="text"
+            :readonly="isReadonly" :required="field.required" class="field-input"
+            :class="{ 'field-error': errors[field.name] }" />
 
-          <select
-            v-else-if="field.type === 'select'"
-            :id="field.name"
-            v-model="formData[field.name]"
-            :disabled="isReadonly"
-            :required="field.required"
-            class="field-input"
-            :class="{ 'field-error': errors[field.name] }"
-          >
-            <option
-              v-for="option in field.options"
-              :key="option.value"
-              :value="option.value"
-            >
+          <select v-else-if="field.type === 'select'" :id="field.name" v-model="formData[field.name]"
+            :disabled="isReadonly" :required="field.required" class="field-input"
+            :class="{ 'field-error': errors[field.name] }">
+            <option v-for="option in field.options" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
           </select>
 
-          <textarea
-            v-else-if="field.type === 'textarea'"
-            :id="field.name"
-            v-model="formData[field.name]"
-            :readonly="isReadonly"
-            :required="field.required"
-            rows="3"
-            class="field-input field-textarea"
-            :class="{ 'field-error': errors[field.name] }"
-          />
+          <textarea v-else-if="field.type === 'textarea'" :id="field.name" v-model="formData[field.name]"
+            :readonly="isReadonly" :required="field.required" rows="3" class="field-input field-textarea"
+            :class="{ 'field-error': errors[field.name] }" />
 
           <span v-if="errors[field.name]" class="field-error-message">
             {{ errors[field.name] }}
           </span>
         </div>
       </div>
-
-      <div class="form-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleCancel"
-        >
-          {{ isReadonly ? 'Close' : 'Cancel' }}
-        </button>
-        <button
-          v-if="!isReadonly"
-          type="submit"
-          class="btn btn-primary"
-        >
-          {{ action === 'create' ? 'Create Project' : 'Save Changes' }}
-        </button>
-      </div>
-    </form>
+    </div>
   </div>
 </template>
 
@@ -252,6 +226,16 @@ function handleCancel() {
   padding: 2rem;
   text-align: center;
   color: var(--color-text-muted);
+}
+
+.panel-error {
+  padding: 1rem;
+  margin: 1rem 0;
+  background: var(--color-negative-bg, #fee);
+  border: 1px solid var(--color-negative-contrast, #f88);
+  border-radius: 6px;
+  color: var(--color-negative-contrast, #c00);
+  text-align: center;
 }
 
 .panel-form {

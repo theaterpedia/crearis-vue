@@ -14,7 +14,8 @@
         <table v-else class="projects-table">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Domaincode</th>
+                    <th>Heading</th>
                     <th>Beschreibung</th>
                     <th>Status</th>
                     <th>Erstellt</th>
@@ -23,7 +24,11 @@
             </thead>
             <tbody>
                 <tr v-for="project in projects" :key="project.id">
-                    <td class="td-name">{{ project.name }}</td>
+                    <td class="td-domaincode">{{ project.name }}</td>
+                    <td class="td-heading">
+                        <HeadingParser v-if="project.heading" :content="project.heading" as="span" :compact="true" />
+                        <span v-else>-</span>
+                    </td>
                     <td class="td-description">{{ project.description || '-' }}</td>
                     <td>
                         <span :class="['status-badge', `status-${project.status}`]">
@@ -46,9 +51,12 @@
 </template>
 
 <script setup lang="ts">
+import HeadingParser from './HeadingParser.vue'
+
 interface Project {
     id: string
-    name: string
+    name: string  // domaincode
+    heading?: string
     description?: string
     status: string
     created_at: string
@@ -144,8 +152,14 @@ function formatDate(dateString: string): string {
     color: var(--color-contrast);
 }
 
-.td-name {
+.td-domaincode {
+    font-family: monospace;
     font-weight: 600;
+    color: var(--color-primary-bg);
+}
+
+.td-heading {
+    min-width: 200px;
 }
 
 .td-description {

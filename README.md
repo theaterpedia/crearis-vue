@@ -155,6 +155,30 @@ demo-data/
 - See [Setup Guide](docs/postgresql/STAGE-C-SETUP-GUIDE.md)
 - Production-ready configuration
 
+### Database Management
+
+**Drop and Rebuild** (PostgreSQL)
+
+Completely drop all tables and rebuild from scratch:
+
+```bash
+pnpm db:rebuild
+```
+
+This command will:
+1. Drop all existing tables (CASCADE)
+2. Run all migrations to recreate schema
+3. Seed the database with CSV data and users/projects
+
+⚠️ **Warning**: This destroys all data. Use only in development or when you want a fresh start.
+
+**Migration Management**
+
+```bash
+pnpm db:migrate         # Run pending migrations
+pnpm db:migrate:status  # Check migration status
+```
+
 ### Schema
 
 - **events** - Event information with dates and locations

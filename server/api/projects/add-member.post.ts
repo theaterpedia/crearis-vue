@@ -3,10 +3,10 @@ import { db } from '../../database/init'
 
 /**
  * POST /api/projects/add-member
- * Add a user to a project's members list
+ * Add a user to a project's members list using project_members table
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event)
+    const body = await readBody(event) as { userId?: string; projectId?: string }
     const { userId, projectId } = body
 
     if (!userId || !projectId) {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Verify the project exists
-        const project = await db.get('SELECT id, members FROM projects WHERE id = ?', [projectId])
+        const project = await db.get('SELECT id FROM projects WHERE id = ?', [projectId])
         if (!project) {
             throw createError({
                 statusCode: 404,
@@ -35,19 +35,13 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Parse existing members (stored as JSON array or comma-separated string)
-        let members: string[] = []
-        if (project.members) {
-            try {
-                members = JSON.parse(project.members)
-            } catch {
-                // If not JSON, try comma-separated
-                members = project.members.split(',').map((m: string) => m.trim()).filter(Boolean)
-            }
-        }
-
         // Check if user is already a member
-        if (members.includes(userId)) {
+        const existingMember = await db.get(
+            'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+            [projectId, userId]
+        )
+
+        if (existingMember) {
             return {
                 success: true,
                 message: 'User is already a member of this project',
@@ -55,19 +49,16 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Add user to members
-        members.push(userId)
-
-        // Update project with new members list
+        // Add user to project_members table
         await db.run(
-            'UPDATE projects SET members = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [JSON.stringify(members), projectId]
+            'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+            [projectId, userId, 'member']
         )
 
         return {
             success: true,
             message: 'User added to project successfully',
-            data: { userId, projectId, members }
+            data: { userId, projectId, role: 'member' }
         }
     } catch (error) {
         console.error('Error adding user to project:', error)

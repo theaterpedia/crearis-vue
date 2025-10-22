@@ -5,7 +5,8 @@ import { db } from '../../database/init'
 
 interface ProjectRecord {
     id: string
-    name: string
+    name: string  // domaincode
+    heading?: string  // heading from database
     username: string
     isOwner: boolean
     isMember: boolean
@@ -39,7 +40,7 @@ setInterval(() => {
 }, 5 * 60 * 1000)
 
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event)
+    const body = await readBody(event) as { username?: string; password?: string }
 
     const { username, password } = body
 
@@ -82,17 +83,18 @@ export default defineEventHandler(async (event) => {
 
     // 1. Find owned projects
     const ownedProjects = await db.all(`
-        SELECT id, username, name
+        SELECT id, heading
         FROM projects
         WHERE owner_id = ?
-        ORDER BY name ASC
-    `, [user.id]) as Array<{ id: string; username: string; name: string }>
+        ORDER BY heading ASC
+    `, [user.id]) as Array<{ id: string; heading: string }>
 
     for (const proj of ownedProjects) {
         projectRecords.push({
             id: proj.id,
-            name: proj.name,
-            username: proj.username,
+            name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+            heading: proj.heading,  // Include heading separately
+            username: proj.id,  // Use project id as username fallback
             isOwner: true,
             isMember: false,
             isInstructor: false,
@@ -107,18 +109,19 @@ export default defineEventHandler(async (event) => {
 
     // 2. Find member projects
     const memberProjects = await db.all(`
-        SELECT p.id, p.username, p.name
+        SELECT p.id, p.heading
         FROM projects p
         INNER JOIN project_members pm ON p.id = pm.project_id
         WHERE pm.user_id = ? AND p.owner_id != ?
-        ORDER BY p.name ASC
-    `, [user.id, user.id]) as Array<{ id: string; username: string; name: string }>
+        ORDER BY p.heading ASC
+    `, [user.id, user.id]) as Array<{ id: string; heading: string }>
 
     for (const proj of memberProjects) {
         projectRecords.push({
             id: proj.id,
-            name: proj.name,
-            username: proj.username,
+            name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+            heading: proj.heading,  // Include heading separately
+            username: proj.id,  // Use project id as username fallback
             isOwner: false,
             isMember: true,
             isInstructor: false,
@@ -134,14 +137,14 @@ export default defineEventHandler(async (event) => {
     // 3. Find projects where user is instructor (via events)
     // Note: Check if user has instructor_id set, then find events taught by that instructor
     const instructorProjects = await db.all(`
-        SELECT DISTINCT p.id, p.username, p.name, p.owner_id
+        SELECT DISTINCT p.id, p.heading, p.owner_id
         FROM projects p
         INNER JOIN events e ON p.id = e.project
         INNER JOIN event_instructors ei ON e.id = ei.event_id
         INNER JOIN users u ON u.instructor_id = ei.instructor_id
         WHERE u.id = ?
-        ORDER BY p.name ASC
-    `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>
+        ORDER BY p.heading ASC
+    `, [user.id]) as Array<{ id: string; heading: string; owner_id: string }>
 
     for (const proj of instructorProjects) {
         // Check if already in records (as owner or member)
@@ -151,8 +154,9 @@ export default defineEventHandler(async (event) => {
         } else {
             projectRecords.push({
                 id: proj.id,
-                name: proj.name,
-                username: proj.username,
+                name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+                heading: proj.heading,  // Include heading separately
+                username: proj.id,  // Use project id as username fallback
                 isOwner: false,
                 isMember: false,
                 isInstructor: true,
@@ -168,12 +172,12 @@ export default defineEventHandler(async (event) => {
 
     // 4. Find projects where user is author (via posts)
     const authorProjects = await db.all(`
-        SELECT DISTINCT p.id, p.username, p.name, p.owner_id
+        SELECT DISTINCT p.id, p.heading, p.owner_id
         FROM projects p
         INNER JOIN posts po ON p.id = po.project
         WHERE po.author_id = ?
-        ORDER BY p.name ASC
-    `, [user.id]) as Array<{ id: string; username: string; name: string; owner_id: string }>
+        ORDER BY p.heading ASC
+    `, [user.id]) as Array<{ id: string; heading: string; owner_id: string }>
 
     for (const proj of authorProjects) {
         // Check if already in records
@@ -183,8 +187,9 @@ export default defineEventHandler(async (event) => {
         } else {
             projectRecords.push({
                 id: proj.id,
-                name: proj.name,
-                username: proj.username,
+                name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+                heading: proj.heading,  // Include heading separately
+                username: proj.id,  // Use project id as username fallback
                 isOwner: false,
                 isMember: false,
                 isInstructor: false,
@@ -207,6 +212,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Determine active role
+    // - If user is 'admin', always use 'admin' (admins don't switch to project role)
     // - If user is 'base', always use 'base'
     // - If user has project access, try to activate 'project' role by default
     // - Otherwise use user.role
@@ -214,7 +220,7 @@ export default defineEventHandler(async (event) => {
     let initialProjectId: string | null = null
     let initialProjectName: string | undefined = undefined
 
-    if (user.role !== 'base' && projectRecords.length > 0) {
+    if (user.role !== 'base' && user.role !== 'admin' && projectRecords.length > 0) {
         // Try to activate project role with default project
         activeRole = 'project'
         initialProjectId = defaultProjectId

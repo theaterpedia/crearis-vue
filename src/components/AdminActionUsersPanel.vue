@@ -27,7 +27,8 @@ const props = withDefaults(defineProps<AdminActionUsersPanelProps>(), {
 })
 
 const emit = defineEmits<{
-  'submit': [data: Record<string, any>]
+  'update:formData': [data: Record<string, any>]
+  'validate': [isValid: boolean]
   'cancel': []
 }>()
 
@@ -43,15 +44,22 @@ const formData = ref<Record<string, any>>({
 const isLoading = ref(false)
 const errors = ref<Record<string, string>>({})
 
+// Expose validation function to parent
+defineExpose({
+  validate,
+  formData,
+  errors
+})
+
 // Field definitions for users table
 const allUserFields: UserField[] = [
   { name: 'id', label: 'Email (ID)', type: 'email', required: true },
   { name: 'username', label: 'Username', type: 'text', required: true },
   { name: 'password', label: 'Password', type: 'password', required: true },
-  { 
-    name: 'role', 
-    label: 'Role', 
-    type: 'select', 
+  {
+    name: 'role',
+    label: 'Role',
+    type: 'select',
     required: true,
     options: [
       { value: 'user', label: 'User' },
@@ -94,10 +102,11 @@ watch(() => props.userId, async (newId) => {
 
 async function loadUser() {
   if (!props.userId) return
-  
+
   isLoading.value = true
+  errors.value = {}
   try {
-    const response = await fetch(`/api/users/${props.userId}`)
+    const response = await fetch(`/api/users/${encodeURIComponent(props.userId)}`)
     if (response.ok) {
       const user = await response.json()
       formData.value = {
@@ -107,22 +116,35 @@ async function loadUser() {
         role: user.role,
         instructor_id: user.instructor_id
       }
+      emit('update:formData', formData.value)
+    } else if (response.status === 404) {
+      console.warn(`User not found: ${props.userId}`)
+      errors.value.general = 'User not found'
+    } else {
+      console.error(`Failed to load user: ${response.status}`)
+      errors.value.general = 'Failed to load user data'
     }
   } catch (error) {
-    console.error('Failed to load user:', error)
+    console.error('Error loading user:', error)
+    errors.value.general = 'Failed to load user data'
   } finally {
     isLoading.value = false
   }
 }
 
+// Watch formData changes and emit to parent
+watch(formData, (newData) => {
+  emit('update:formData', newData)
+}, { deep: true })
+
 function validate(): boolean {
   errors.value = {}
-  
+
   for (const field of activeFields.value) {
     if (field.required && !formData.value[field.name]) {
       errors.value[field.name] = `${field.label} is required`
     }
-    
+
     // Email validation for id field
     if (field.name === 'id' && formData.value[field.name]) {
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -131,16 +153,10 @@ function validate(): boolean {
       }
     }
   }
-  
-  return Object.keys(errors.value).length === 0
-}
 
-function handleSubmit() {
-  if (isReadonly.value) return
-  
-  if (validate()) {
-    emit('submit', { ...formData.value })
-  }
+  const isValid = Object.keys(errors.value).length === 0
+  emit('validate', isValid)
+  return isValid
 }
 
 function handleCancel() {
@@ -165,13 +181,13 @@ function handleCancel() {
       Loading user data...
     </div>
 
-    <form v-else class="panel-form" @submit.prevent="handleSubmit">
+    <div v-else-if="errors.general" class="panel-error">
+      {{ errors.general }}
+    </div>
+
+    <div v-else class="panel-form">
       <!-- Dynamic field rendering -->
-      <div
-        v-for="field in activeFields"
-        :key="field.name"
-        class="form-field"
-      >
+      <div v-for="field in activeFields" :key="field.name" class="form-field">
         <!-- Skip password field if not creating -->
         <template v-if="field.name !== 'password' || showPasswordField">
           <label :for="field.name" class="field-label">
@@ -181,47 +197,23 @@ function handleCancel() {
 
           <div class="field-input-wrapper">
             <!-- Text/Email/Password Input -->
-            <input
-              v-if="['text', 'email', 'password'].includes(field.type)"
-              :id="field.name"
-              v-model="formData[field.name]"
-              :type="field.type"
-              :readonly="isReadonly"
-              :required="field.required"
-              class="field-input"
-              :class="{ 'field-error': errors[field.name] }"
-            />
+            <input v-if="['text', 'email', 'password'].includes(field.type)" :id="field.name"
+              v-model="formData[field.name]" :type="field.type" :readonly="isReadonly" :required="field.required"
+              class="field-input" :class="{ 'field-error': errors[field.name] }" />
 
             <!-- Select Input -->
-            <select
-              v-else-if="field.type === 'select'"
-              :id="field.name"
-              v-model="formData[field.name]"
-              :disabled="isReadonly"
-              :required="field.required"
-              class="field-input"
-              :class="{ 'field-error': errors[field.name] }"
-            >
-              <option
-                v-for="option in field.options"
-                :key="option.value"
-                :value="option.value"
-              >
+            <select v-else-if="field.type === 'select'" :id="field.name" v-model="formData[field.name]"
+              :disabled="isReadonly" :required="field.required" class="field-input"
+              :class="{ 'field-error': errors[field.name] }">
+              <option v-for="option in field.options" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
 
             <!-- Textarea -->
-            <textarea
-              v-else-if="field.type === 'textarea'"
-              :id="field.name"
-              v-model="formData[field.name]"
-              :readonly="isReadonly"
-              :required="field.required"
-              rows="3"
-              class="field-input field-textarea"
-              :class="{ 'field-error': errors[field.name] }"
-            />
+            <textarea v-else-if="field.type === 'textarea'" :id="field.name" v-model="formData[field.name]"
+              :readonly="isReadonly" :required="field.required" rows="3" class="field-input field-textarea"
+              :class="{ 'field-error': errors[field.name] }" />
 
             <!-- Error Message -->
             <span v-if="errors[field.name]" class="field-error-message">
@@ -230,25 +222,7 @@ function handleCancel() {
           </div>
         </template>
       </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleCancel"
-        >
-          {{ isReadonly ? 'Close' : 'Cancel' }}
-        </button>
-        <button
-          v-if="!isReadonly"
-          type="submit"
-          class="btn btn-primary"
-        >
-          {{ action === 'create' ? 'Create User' : 'Save Changes' }}
-        </button>
-      </div>
-    </form>
+    </div>
   </div>
 </template>
 
@@ -278,6 +252,16 @@ function handleCancel() {
   padding: 2rem;
   text-align: center;
   color: var(--color-text-muted);
+}
+
+.panel-error {
+  padding: 1rem;
+  margin: 1rem 0;
+  background: var(--color-negative-bg, #fee);
+  border: 1px solid var(--color-negative-contrast, #f88);
+  border-radius: 6px;
+  color: var(--color-negative-contrast, #c00);
+  text-align: center;
 }
 
 .panel-form {

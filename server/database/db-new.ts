@@ -31,6 +31,16 @@ if (dbConfig.type === 'sqlite') {
  * Unified Database Interface
  * Provides consistent API regardless of underlying database
  * 
+ * DEFAULT: PostgreSQL (set via DATABASE_TYPE env var or config.ts default)
+ * FALLBACK: SQLite (only if explicitly configured)
+ * 
+ * The adapter provides a unified API:
+ * - db.get(sql, params) - returns single row or undefined
+ * - db.all(sql, params) - returns array of rows
+ * - db.run(sql, params) - executes query, returns result with rowCount/changes
+ * - db.exec(sql) - executes raw SQL (migrations)
+ * - db.prepare(sql) - returns prepared statement
+ * 
  * Note: Schema creation is now handled by the migration system.
  * See server/database/migrations/ for all schema definitions.
  */

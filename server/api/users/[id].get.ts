@@ -5,9 +5,15 @@ import { db } from '../../database/init'
  * GET /api/users/:id
  * Returns a single user by ID
  * Used by AdminActionUsersPanel to load user data for alter/show actions
+ * 
+ * Database: PostgreSQL (default) - Uses unified adapter interface
+ * Note: The db adapter automatically converts ? placeholders to $1, $2 for PostgreSQL
  */
 export default defineEventHandler(async (event) => {
-    const id = getRouterParam(event, 'id')
+    const rawId = getRouterParam(event, 'id')
+
+    // Decode the URL-encoded parameter (getRouterParam does NOT auto-decode)
+    const id = rawId ? decodeURIComponent(rawId) : null
 
     if (!id) {
         throw createError({

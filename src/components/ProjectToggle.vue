@@ -35,7 +35,11 @@
                         <button v-for="project in ownerProjects" :key="project.id" class="project-tile"
                             :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
                             <div class="project-tile-header">
-                                <span class="project-tile-name">{{ project.name }}</span>
+                                <div class="project-tile-heading">
+                                    <HeadingParser v-if="project.heading" :content="project.heading" as="span"
+                                        :compact="true" />
+                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
                                         viewBox="0 0 256 256" width="14" xmlns="http://www.w3.org/2000/svg"
@@ -69,7 +73,11 @@
                         <button v-for="project in memberProjects" :key="project.id" class="project-tile"
                             :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
                             <div class="project-tile-header">
-                                <span class="project-tile-name">{{ project.name }}</span>
+                                <div class="project-tile-heading">
+                                    <HeadingParser v-if="project.heading" :content="project.heading" as="span"
+                                        :compact="true" />
+                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
                                         viewBox="0 0 256 256" width="14" xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +111,11 @@
                         <button v-for="project in partnerProjects" :key="project.id" class="project-tile"
                             :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
                             <div class="project-tile-header">
-                                <span class="project-tile-name">{{ project.name }}</span>
+                                <div class="project-tile-heading">
+                                    <HeadingParser v-if="project.heading" :content="project.heading" as="span"
+                                        :compact="true" />
+                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
                                         viewBox="0 0 256 256" width="14" xmlns="http://www.w3.org/2000/svg"
@@ -152,6 +164,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import HeadingParser from './HeadingParser.vue'
 
 const { user, setProjectId } = useAuth()
 
@@ -168,7 +181,7 @@ const currentProjectId = computed(() => user.value?.projectId || null)
 const currentProjectName = computed(() => {
     if (!currentProjectId.value) return null
     const project = allProjects.value.find((p: any) => p.id === currentProjectId.value)
-    return project ? project.name : null
+    return project ? project.name : null  // Returns domaincode (id)
 })
 
 // Organize projects by category
@@ -387,6 +400,11 @@ onUnmounted(() => {
     justify-content: space-between;
     align-items: flex-start;
     gap: 0.5rem;
+}
+
+.project-tile-heading {
+    flex: 1;
+    overflow: hidden;
 }
 
 .project-tile-name {

@@ -110,15 +110,16 @@ async function ensureUsersProjectsFile(): Promise<UserProjectData[]> {
 async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectData[]) {
     console.log('👥 Seeding users and projects...')
 
+    // Step 1: Seed all users first
+    console.log('   👤 Creating users...')
     for (const user of userData) {
         // Hash password
         const hashedPassword = await bcrypt.hash(user.password, 10)
 
-        // Generate IDs - use email format for user IDs
+        // Generate user ID - use email format
         const userId = `${user.name}@theaterpedia.org`
-        const projectId = user.name
 
-        // Insert user with email format ID
+        // Insert user
         await db.run(`
             INSERT INTO users (id, username, password, role)
             VALUES (?, ?, ?, ?)
@@ -126,29 +127,34 @@ async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectDa
                 password = excluded.password,
                 role = excluded.role
         `, [userId, user.name, hashedPassword, user.name === 'admin' ? 'admin' : 'user'])
+    }
+    console.log(`   ✅ Created ${userData.length} users`)
 
-        // Insert project with same name
-        // Projects table has: id, username, password_hash, role, name, description, status
+    // Step 2: Seed projects with owner_id linking to users
+    console.log('   📦 Creating projects...')
+    for (const user of userData) {
+        const projectId = user.name
+        const userId = `${user.name}@theaterpedia.org`
+
+        // Projects table now has: id, heading, description, status, owner_id, created_at, updated_at
+        // Note: 'name' field replaced with 'heading', formatted as 'Project Overline **[name]**'
         await db.run(`
-            INSERT INTO projects (id, username, password_hash, role, name, description, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(username) DO UPDATE SET
-                password_hash = excluded.password_hash,
-                name = excluded.name,
+            INSERT INTO projects (id, heading, description, status, owner_id)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                heading = excluded.heading,
                 description = excluded.description,
-                status = excluded.status
+                status = excluded.status,
+                owner_id = excluded.owner_id
         `, [
             projectId,
-            user.name,
-            hashedPassword,
-            user.name === 'admin' ? 'admin' : user.name === 'base' ? 'base' : 'project',
-            user.name,
+            `Project Overline **${user.name}**`,
             `Project for ${user.name}`,
-            'active'
+            'active',
+            userId
         ])
     }
-
-    console.log(`   ✅ Created ${userData.length} users and projects`)
+    console.log(`   ✅ Created ${userData.length} projects`)
 }
 
 /**

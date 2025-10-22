@@ -56,10 +56,9 @@ export const migration = {
                 console.log('    → Creating tp project (special)...')
                 await db.exec(`
                     INSERT INTO projects (
-                        id, username, password_hash, role, name, type, description, status
+                        id, heading, type, description, status
                     ) VALUES (
-                        'tp', 'tp', 'placeholder_hash', 'project', 'tp', 'special', 
-                        'default-page', 'active'
+                        'tp', 'Project Overline **tp**', 'special', 'default-page', 'active'
                     )
                 `)
             } else {
@@ -76,10 +75,9 @@ export const migration = {
                 console.log('    → Creating regio1 project (regio)...')
                 await db.exec(`
                     INSERT INTO projects (
-                        id, username, password_hash, role, name, type, description, status
+                        id, heading, type, description, status
                     ) VALUES (
-                        'regio1', 'regio1', 'placeholder_hash', 'project', 'regio1', 'regio', 
-                        'default-regio', 'active'
+                        'regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active'
                     )
                 `)
             } else {
@@ -113,10 +111,10 @@ export const migration = {
             try {
                 await db.exec(`
                     INSERT OR IGNORE INTO projects (
-                        id, username, password_hash, role, name, type, description, status
+                        id, heading, type, description, status
                     ) VALUES 
-                    ('tp', 'tp', 'placeholder_hash', 'project', 'tp', 'special', 'default-page', 'active'),
-                    ('regio1', 'regio1', 'placeholder_hash', 'project', 'regio1', 'regio', 'default-regio', 'active')
+                    ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active'),
+                    ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
                 `)
             } catch (e: any) {
                 console.log('  ℹ️  SQLite: Projects may already exist')

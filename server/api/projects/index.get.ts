@@ -6,10 +6,16 @@ export default defineEventHandler(async (event) => {
 
     try {
         // Get all projects ordered by created date (table will be created by initDatabase)
-        const projects = await db.all(`
+        const rawProjects = await db.all(`
             SELECT * FROM projects 
             ORDER BY created_at DESC
         `)
+
+        // Map to frontend format: id as 'name', keep heading as 'heading'
+        const projects = rawProjects.map((p: any) => ({
+            ...p,
+            name: p.id  // Frontend 'name' = database 'id' (domaincode)
+        }))
 
         return {
             projects,

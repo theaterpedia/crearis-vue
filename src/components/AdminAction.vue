@@ -49,6 +49,7 @@ const emit = defineEmits<{
 const currentStep = ref(1)
 const maxStep = ref(3)
 const formData = ref<Record<string, any>>({})
+const panelRef = ref<any>(null)
 
 // Computed
 const isOpen = computed({
@@ -106,6 +107,22 @@ const prevStep = () => {
   }
 }
 
+const handleAction = async () => {
+  // Validate the panel's form if available
+  if (panelRef.value && typeof panelRef.value.validate === 'function') {
+    const isValid = panelRef.value.validate()
+    if (!isValid) {
+      return // Don't proceed if validation fails
+    }
+  }
+
+  // Get form data from panel or internal state
+  const data = panelRef.value?.formData || formData.value
+
+  // Emit the complete event with the data
+  complete(data)
+}
+
 const complete = (result?: any) => {
   emit('complete', result || formData.value)
   close()
@@ -123,6 +140,10 @@ const close = () => {
     currentStep.value = 1
     formData.value = {}
   }, 300)
+}
+
+const handleFormDataUpdate = (data: Record<string, any>) => {
+  formData.value = data
 }
 
 // Watch for step changes to adjust max steps
@@ -170,8 +191,9 @@ watch(() => [props.initStep, props.finalStep], () => {
 
             <div class="panel-content">
               <!-- Slot for dynamic panel content -->
-              <slot name="panel" :current-step="currentStep" :form-data="formData" :next-step="nextStep"
-                :prev-step="prevStep" :complete="complete" :cancel="cancel">
+              <slot name="panel" :current-step="currentStep" :form-data="formData" :panel-ref="panelRef"
+                :on-form-data-update="handleFormDataUpdate" :next-step="nextStep" :prev-step="prevStep"
+                :handle-action="handleAction" :complete="complete" :cancel="cancel">
                 <div class="default-panel">
                   <h2>Admin Action</h2>
                   <p>Action: {{ actionType }}</p>
@@ -184,15 +206,15 @@ watch(() => [props.initStep, props.finalStep], () => {
 
             <div class="panel-footer">
               <slot name="footer" :current-step="currentStep" :next-step="nextStep" :prev-step="prevStep"
-                :complete="complete" :cancel="cancel">
+                :handle-action="handleAction" :complete="complete" :cancel="cancel">
                 <button v-if="currentStep > 1" class="btn btn-secondary" @click="prevStep">
                   Back
                 </button>
                 <button v-if="currentStep < maxStep" class="btn btn-primary" @click="nextStep">
                   Next
                 </button>
-                <button v-else class="btn btn-primary" @click="complete">
-                  Complete
+                <button v-else class="btn btn-primary" @click="handleAction">
+                  {{ actionType === 'create' ? 'Create' : actionType === 'alter' ? 'Save' : 'Complete' }}
                 </button>
               </slot>
             </div>

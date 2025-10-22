@@ -119,7 +119,7 @@ function openPattern2Modal() {
   pattern2_taskState.value = null
 }
 
-async function handlePattern2Submit(data: any) {
+async function handlePattern2Complete(data: any) {
   if (!selectedUser.value) return
 
   await actions.createProjectForUser(
@@ -141,11 +141,11 @@ function openPattern3Modal() {
   pattern3_result.value = ''
 }
 
-function handlePattern3Submit(data: any) {
-  actions.createUser(data, {
+function handlePattern3Complete(data: any) {
+  actions.alterUser(data, {
     actionCallback: (state, result) => {
       if (state === true) {
-        pattern3_result.value = `✓ User created: ${result.data?.username || 'success'}`
+        pattern3_result.value = `✓ User updated: ${result.data?.username || 'success'}`
         pattern3_modalOpen.value = false
       } else if (state === false) {
         pattern3_result.value = `✗ Failed: ${result.error || 'unknown error'}`
@@ -257,18 +257,19 @@ onMounted(() => {
 
     <!-- Pattern 2 Modal -->
     <AdminAction v-model="pattern2_modalOpen" init-step="collect" final-step="summary" action-type="create"
-      core-type="project">
-      <template #panel="{ complete, cancel }">
-        <AdminActionProjectsPanel action="create" fields="default" :owner-id="selectedUser"
-          @submit="handlePattern2Submit" @cancel="cancel" />
+      core-type="project" @complete="handlePattern2Complete">
+      <template #panel="{ panelRef, onFormDataUpdate, cancel }">
+        <AdminActionProjectsPanel :ref="panelRef" action="create" fields="default" :owner-id="selectedUser"
+          @update:formData="onFormDataUpdate" @cancel="cancel" />
       </template>
     </AdminAction>
 
     <!-- Pattern 3 Modal -->
-    <AdminAction v-model="pattern3_modalOpen" init-step="none" final-step="inline" action-type="alter" core-type="user">
-      <template #panel="{ complete, cancel }">
-        <AdminActionUsersPanel action="alter" fields="default" :user-id="selectedUser" @submit="handlePattern3Submit"
-          @cancel="cancel" />
+    <AdminAction v-model="pattern3_modalOpen" init-step="none" final-step="inline" action-type="alter" core-type="user"
+      @complete="handlePattern3Complete">
+      <template #panel="{ panelRef, onFormDataUpdate, cancel }">
+        <AdminActionUsersPanel :ref="panelRef" action="alter" fields="default" :user-id="selectedUser"
+          @update:formData="onFormDataUpdate" @cancel="cancel" />
       </template>
     </AdminAction>
   </div>

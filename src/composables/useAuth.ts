@@ -3,7 +3,8 @@ import { useRouter } from 'vue-router'
 
 interface ProjectRecord {
     id: string
-    name: string
+    name: string  // domaincode
+    heading?: string  // heading from database
     username: string
     isOwner: boolean
     isMember: boolean

@@ -2,6 +2,9 @@
  * Database Initialization Module
  * Handles connection setup and runs migrations automatically
  * 
+ * DEFAULT DATABASE: PostgreSQL
+ * (Falls back to SQLite only if DATABASE_TYPE env var explicitly set to 'sqlite')
+ * 
  * Initialization Strategy:
  * 1. Check if crearis_config table exists
  * 2. If not exists → Fresh database → Run all migrations

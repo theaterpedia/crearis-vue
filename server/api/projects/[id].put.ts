@@ -23,15 +23,24 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        const { name, description, status } = body
+        const { id: newId, name, heading, description, status } = body
+
+        // Reject attempts to change ID or name (domaincode is immutable)
+        if ((newId !== undefined && newId !== id) || (name !== undefined && name !== id)) {
+            throw createError({
+                statusCode: 400,
+                message: 'Cannot change project ID or name (domaincode is immutable)'
+            })
+        }
 
         // Build update query
         const updates: string[] = []
         const values: any[] = []
 
-        if (name !== undefined) {
-            updates.push('name = ?')
-            values.push(name)
+        // Allow updating heading
+        if (heading !== undefined) {
+            updates.push('heading = ?')
+            values.push(heading)
         }
         if (description !== undefined) {
             updates.push('description = ?')
@@ -61,7 +70,13 @@ export default defineEventHandler(async (event) => {
         stmt.run(...values)
 
         // Return updated project
-        const project = await db.get('SELECT * FROM projects WHERE id = ?', [id])
+        const rawProject = await db.get('SELECT * FROM projects WHERE id = ?', [id])
+
+        // Map to frontend format: id as 'name', heading as 'heading'
+        const project = {
+            ...rawProject,
+            name: rawProject.id  // Frontend 'name' = database 'id' (domaincode)
+        }
 
         return {
             success: true,

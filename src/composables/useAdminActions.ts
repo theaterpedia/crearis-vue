@@ -120,7 +120,8 @@ export async function alterUser(
 ): Promise<ActionResult> {
     const payload = typeof input === 'object' ? input : { id: input }
     const userId = typeof input === 'object' ? input.id : input
-    return executeAction(`/api/users/${userId}`, 'PATCH', payload, options)
+    // Encode userId for URL (handles email addresses with @ symbol)
+    return executeAction(`/api/users/${encodeURIComponent(userId)}`, 'PATCH', payload, options)
 }
 
 /**
