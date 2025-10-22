@@ -124,7 +124,7 @@
                                     <h4>{{ userItem.username }}</h4>
                                     <p><strong>Role:</strong> {{ userItem.role }}</p>
                                     <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                    }}</em>
+                                            }}</em>
                                     </p>
                                 </Prose>
                             </Slide>
@@ -236,8 +236,10 @@ async function fetchProjects() {
         const response = await fetch('/api/projects')
         if (response.ok) {
             const data = await response.json()
+            // API returns { projects: [...], count: ... }
+            const projectsArray = data.projects || data
             // Filter projects with status 'draft' or 'demo'
-            const filteredProjects = data.filter((p: any) => p.status === 'draft' || p.status === 'demo')
+            const filteredProjects = projectsArray.filter((p: any) => p.status === 'draft' || p.status === 'demo')
             projects.value = filteredProjects.slice(0, 8) // Limit to 8 projects
         }
     } catch (error) {
