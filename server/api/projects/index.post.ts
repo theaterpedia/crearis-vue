@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     try {
-        const { name, description, status = 'draft' } = body
+        const { name, description, status = 'draft', username, owner_id } = body
 
         if (!name) {
             throw createError({
@@ -17,14 +17,17 @@ export default defineEventHandler(async (event) => {
 
         // Generate ID
         const id = `proj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        
+        // Use provided username or generate from id
+        const projectUsername = username || id
 
-        // Insert project
+        // Insert project with username (required field)
         const stmt = db.prepare(`
-            INSERT INTO projects (id, name, description, status)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO projects (id, username, name, description, status, owner_id, role)
+            VALUES (?, ?, ?, ?, ?, ?, 'project')
         `)
 
-        stmt.run(id, name, description || null, status)
+        stmt.run(id, projectUsername, name, description || null, status, owner_id || null)
 
         // Return created project
         const project = await db.get('SELECT * FROM projects WHERE id = ?', [id])
