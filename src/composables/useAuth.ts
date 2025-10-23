@@ -80,7 +80,7 @@ export function useAuth() {
     }
 
     // Login
-    const login = async (username: string, password: string) => {
+    const login = async (userId: string, password: string) => {
         isLoading.value = true
         try {
             const response = await fetch('/api/auth/login', {
@@ -88,7 +88,7 @@ export function useAuth() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ userId, password })
             })
 
             if (!response.ok) {

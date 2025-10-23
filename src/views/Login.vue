@@ -7,9 +7,9 @@
 
                     <form @submit.prevent="handleLogin" class="login-form">
                         <div class="form-group">
-                            <label for="username" class="form-label">Username</label>
-                            <Input id="username" v-model="username" type="text" placeholder="Enter your username"
-                                required :disabled="isLoading" />
+                            <label for="userId" class="form-label">User ID (Email)</label>
+                            <Input id="userId" v-model="userId" type="email" placeholder="Enter your email" required
+                                :disabled="isLoading" />
                         </div>
 
                         <div class="form-group">
@@ -22,7 +22,7 @@
                             {{ error }}
                         </div>
 
-                        <Button type="submit" :disabled="isLoading || !username || !password" class="login-button">
+                        <Button type="submit" :disabled="isLoading || !userId || !password" class="login-button">
                             {{ isLoading ? 'Logging in...' : 'Login' }}
                         </Button>
                     </form>
@@ -45,14 +45,14 @@ import Button from '@/components/Button.vue'
 const router = useRouter()
 const { login, isLoading } = useAuth()
 
-const username = ref('')
+const userId = ref('')
 const password = ref('')
 const error = ref('')
 
 const handleLogin = async () => {
     error.value = ''
 
-    const result = await login(username.value, password.value)
+    const result = await login(userId.value, password.value)
 
     if (result.success) {
         // Redirect based on activeRole

@@ -61,31 +61,8 @@
                     </Container>
                 </Section>
 
-                <!-- Projects Showcase Section (same as homepage) -->
-                <Section background="default">
-                    <Container>
-                        <Prose>
-                            <Heading overline="Pipeline" level="h2">New **Projects** in the Pipeline</Heading>
-                        </Prose>
-
-                        <Columns gap="small" align="top" wrap v-if="projects.length > 0">
-                            <Column v-for="proj in projects.slice(0, 4)" :key="proj.id" width="1/4">
-                                <a :href="`/sites/${proj.id}`"
-                                    style="text-decoration: none; color: inherit; display: block;">
-                                    <img v-if="proj.cimg" :src="proj.cimg" :alt="proj.heading || proj.id"
-                                        style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
-                                    <Prose>
-                                        <h4>{{ proj.heading || proj.id }}</h4>
-                                        <p v-if="proj.status"><strong>Status:</strong> {{ proj.status }}</p>
-                                    </Prose>
-                                </a>
-                            </Column>
-                        </Columns>
-                        <Prose v-else>
-                            <p><em>No projects in the pipeline.</em></p>
-                        </Prose>
-                    </Container>
-                </Section>
+                <!-- Regio Content Demo Section (only shown if project has regio) -->
+                <RegioContentDemo v-if="project && project.regio" :regio="project.regio" />
 
                 <!-- Blog Posts Gallery for Project -->
                 <Section background="accent">
@@ -194,6 +171,7 @@ import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
+import RegioContentDemo from '@/components/RegioContentDemo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -203,7 +181,6 @@ const user = ref<any>(null)
 const project = ref<any>(null)
 const posts = ref<any[]>([])
 const events = ref<any[]>([])
-const projects = ref<any[]>([]) // All projects (same as homepage)
 const users = ref<any[]>([])
 const domaincode = ref<string>('')
 
@@ -260,21 +237,6 @@ async function fetchEvents(projectId: string) {
     }
 }
 
-// Fetch all projects (same as homepage - draft/demo status)
-async function fetchProjects() {
-    try {
-        const response = await fetch('/api/projects')
-        if (response.ok) {
-            const data = await response.json()
-            // Filter projects with status 'draft' or 'demo'
-            const filteredProjects = data.filter((p: any) => p.status === 'draft' || p.status === 'demo')
-            projects.value = filteredProjects.slice(0, 8)
-        }
-    } catch (error) {
-        console.error('Failed to fetch projects:', error)
-    }
-}
-
 // Fetch users filtered by project (members)
 async function fetchUsers(projectId: string) {
     try {
@@ -311,8 +273,6 @@ onMounted(async () => {
         await fetchPosts(domaincode.value)
         await fetchUsers(domaincode.value)
     }
-
-    await fetchProjects() // Same as homepage
 })
 </script>
 

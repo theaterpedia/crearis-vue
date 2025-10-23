@@ -40,23 +40,25 @@ setInterval(() => {
 }, 5 * 60 * 1000)
 
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event) as { username?: string; password?: string }
+    const body = await readBody(event) as { username?: string; userId?: string; password?: string }
 
-    const { username, password } = body
+    // Support both userId (new) and username (legacy) for backwards compatibility
+    const userIdentifier = body.userId || body.username
+    const { password } = body
 
-    if (!username || !password) {
+    if (!userIdentifier || !password) {
         throw createError({
             statusCode: 400,
-            message: 'Username and password are required'
+            message: 'User ID and password are required'
         })
     }
 
-    // Find user from users table
+    // Find user from users table by id (email format)
     const user = await db.get(`
     SELECT id, username, password, role
     FROM users
-    WHERE username = ?
-  `, [username]) as { id: string; username: string; password: string; role: string } | undefined
+    WHERE id = ?
+  `, [userIdentifier]) as { id: string; username: string; password: string; role: string } | undefined
 
     if (!user) {
         throw createError({
