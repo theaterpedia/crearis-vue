@@ -18,7 +18,7 @@ import bcrypt from 'bcryptjs'
 import { getFileset } from '../../settings'
 
 export const migration = {
-    id: '021_system_data_seeding',
+    id: '021_seed_system_data',
     description: 'Seed all system-critical data (config, projects, users, domains, memberships)',
 
     async up(db: DatabaseAdapter): Promise<void> {

@@ -21,9 +21,9 @@ import { migration as migration015 } from './015_domain_system_and_extensions'
 import { migration as migration016 } from './016_users_email_format'
 import migration017 from './017_project_role_tables'
 import { migration as migration018 } from './018_update_projects_schema'
-import { migration as migration019 } from './019_reseed_users_and_projects'
-import { migration as migration020 } from './020_add_project_images'
-import { migration as migration021 } from './021_add_users_and_regional_projects'
+import { migration as migration019 } from './019_add_tags_status_ids'
+import { migration as migration020 } from './020_refactor_entities'
+import { migration as migration021 } from './021_seed_system_data'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
