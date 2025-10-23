@@ -60,14 +60,14 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
         if (isPostgres) {
             await db.run(`
                 INSERT INTO tasks (
-                    id, name, description, status, category, priority,
+                    id, name, description, status_id, category, priority,
                     logic, filter, entity_name, record_type, record_id,
                     assigned_to, due_date, release_id, cimg
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
                     description = EXCLUDED.description,
-                    status = EXCLUDED.status,
+                    status_id = EXCLUDED.status_id,
                     category = EXCLUDED.category,
                     priority = EXCLUDED.priority,
                     logic = EXCLUDED.logic,
@@ -87,7 +87,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
         } else {
             await db.run(`
                 INSERT OR REPLACE INTO tasks (
-                    id, name, description, status, category, priority,
+                    id, name, description, status_id, category, priority,
                     logic, filter, entity_name, record_type, record_id,
                     assigned_to, due_date, release_id, cimg
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

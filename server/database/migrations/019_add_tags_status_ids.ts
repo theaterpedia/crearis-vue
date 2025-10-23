@@ -2288,8 +2288,8 @@ export const migration = {
             await db.exec(`ALTER TABLE tasks DROP COLUMN IF EXISTS status`)
             console.log('    ✓ Dropped old TEXT status column')
 
-            await db.exec(`ALTER TABLE tasks RENAME COLUMN status_new TO status`)
-            console.log('    ✓ Renamed status_new → status')
+            await db.exec(`ALTER TABLE tasks RENAME COLUMN status_new TO status_id`)
+            console.log('    ✓ Renamed status_new → status_id')
 
             // -------------------------------------------------------------------
             // 6.5: Add foreign key constraint and default
@@ -2299,26 +2299,26 @@ export const migration = {
             // Add NOT NULL constraint
             await db.exec(`
                 ALTER TABLE tasks 
-                ALTER COLUMN status SET NOT NULL
+                ALTER COLUMN status_id SET NOT NULL
             `)
             console.log('    ✓ Added NOT NULL constraint')
 
             // Add default value (idea status)
             await db.exec(`
                 ALTER TABLE tasks 
-                ALTER COLUMN status SET DEFAULT ${ideaStatusId}
+                ALTER COLUMN status_id SET DEFAULT ${ideaStatusId}
             `)
             console.log(`    ✓ Set default to idea (id=${ideaStatusId})`)
 
             // Add foreign key constraint
             await db.exec(`
                 ALTER TABLE tasks 
-                ADD CONSTRAINT tasks_status_fkey 
-                FOREIGN KEY (status) REFERENCES status(id)
+                ADD CONSTRAINT tasks_status_id_fkey 
+                FOREIGN KEY (status_id) REFERENCES status(id)
             `)
             console.log('    ✓ Added FK constraint to status table')
 
-            console.log('\n✅ Chapter 6 completed: Tasks aligned with name/cimg fields and status FK')
+            console.log('\n✅ Chapter 6 completed: Tasks aligned with name/cimg fields and status_id FK')
 
         } else {
             // SQLite implementation
