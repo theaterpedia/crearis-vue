@@ -18,6 +18,7 @@ import path from 'path'
 import { db } from './db-new'
 import { runMigrations } from './migrations/index'
 import { seedDatabase } from './seed'
+import { initializeStatusCache } from '../utils/status-helpers'
 
 interface ConfigData {
     version: string
@@ -128,6 +129,9 @@ async function initializeDatabase() {
 
 // Run initialization
 await initializeDatabase()
+
+// Initialize status cache for fast lookups
+await initializeStatusCache(db)
 
 // Export initialized database
 export { db }
