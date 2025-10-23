@@ -11,33 +11,49 @@
 </template>
 
 <script setup lang="ts">
+import { useStatus } from '../composables/useStatus'
+
 type TaskStatus = 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
 type ColorVariant = 'muted' | 'primary' | 'warning' | 'positive' | 'secondary' | 'negative'
 
-defineProps<{
+const props = withDefaults(defineProps<{
     modelValue: TaskStatus
     allowedStatuses?: TaskStatus[]
-}>()
+    table?: string
+    lang?: string
+}>(), {
+    table: 'tasks',
+    lang: 'de'
+})
 
 defineEmits<{
     'update:modelValue': [status: TaskStatus]
 }>()
 
-const statusMap: Record<TaskStatus, { label: string; color: ColorVariant }> = {
-    idea: { label: 'Idea', color: 'muted' },
-    new: { label: 'New', color: 'primary' },
-    draft: { label: 'Draft', color: 'warning' },
-    final: { label: 'Final', color: 'positive' },
-    reopen: { label: 'Reopen', color: 'secondary' },
-    trash: { label: 'Trash', color: 'negative' }
+const { getStatusIdByName, status4Lang } = useStatus()
+
+// Status color mapping for visual styling
+const colorMap: Record<TaskStatus, ColorVariant> = {
+    idea: 'muted',
+    new: 'primary',
+    draft: 'warning',
+    final: 'positive',
+    reopen: 'secondary',
+    trash: 'negative'
 }
 
 function getStatusLabel(status: TaskStatus): string {
-    return statusMap[status]?.label || status
+    const statusId = getStatusIdByName(status, props.table)
+    if (!statusId) {
+        return status // Fallback to raw value
+    }
+
+    const statusInfo = status4Lang(statusId, props.table, props.lang)
+    return statusInfo?.displayName || status
 }
 
 function getColorVariant(status: TaskStatus): ColorVariant {
-    return statusMap[status]?.color || 'muted'
+    return colorMap[status] || 'muted'
 }
 </script>
 

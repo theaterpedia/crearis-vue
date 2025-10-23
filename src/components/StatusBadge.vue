@@ -6,25 +6,47 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useStatus } from '../composables/useStatus'
 
 type TaskStatus = 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
 type ColorVariant = 'muted' | 'primary' | 'warning' | 'positive' | 'secondary' | 'negative'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     status: TaskStatus
-}>()
+    table?: string
+    lang?: string
+}>(), {
+    table: 'tasks',
+    lang: 'de'
+})
 
-const statusMap: Record<TaskStatus, { label: string; color: ColorVariant }> = {
-    idea: { label: 'Idea', color: 'muted' },
-    new: { label: 'New', color: 'primary' },
-    draft: { label: 'Draft', color: 'warning' },
-    final: { label: 'Final', color: 'positive' },
-    reopen: { label: 'Reopen', color: 'secondary' },
-    trash: { label: 'Trash', color: 'negative' }
+const { getStatusIdByName, status4Lang } = useStatus()
+
+// Status color mapping remains the same for visual styling
+const colorMap: Record<TaskStatus, ColorVariant> = {
+    idea: 'muted',
+    new: 'primary',
+    draft: 'warning',
+    final: 'positive',
+    reopen: 'secondary',
+    trash: 'negative'
 }
 
-const statusLabel = computed(() => statusMap[props.status]?.label || props.status)
-const colorClass = computed(() => `status-${statusMap[props.status]?.color || 'muted'}`)
+// Get translated status label using status helpers
+const statusLabel = computed(() => {
+    const statusId = getStatusIdByName(props.status, props.table)
+    if (!statusId) {
+        return props.status // Fallback to raw value
+    }
+
+    const statusInfo = status4Lang(statusId, props.table, props.lang)
+    return statusInfo?.displayName || props.status
+})
+
+const colorClass = computed(() => {
+    const color: ColorVariant = colorMap[props.status as TaskStatus] || 'muted'
+    return `status-${color}`
+})
 </script>
 
 <style scoped>

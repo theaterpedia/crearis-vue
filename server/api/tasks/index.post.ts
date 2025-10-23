@@ -1,11 +1,14 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
+import { getStatusIdByName } from '../../utils/status-helpers'
 
 // After Migration 019 Chapter 6:
 // - tasks.title → tasks.name
 // - tasks.image → tasks.cimg
-// - tasks.status (TEXT) → tasks.status (INTEGER FK to status table)
+// - tasks.status (TEXT) → tasks.status_id (INTEGER FK to status table)
+// After Migration 020:
+// - Added lang field and status_display computed column
 interface CreateTaskBody {
     name: string  // Renamed from title
     description?: string
@@ -48,46 +51,29 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Validate status if provided and get status ID
-        let statusId: number | undefined
+        // Validate status if provided and get status ID using helper
+        let statusId: number
         if (body.status) {
-            const validStatuses = ['new', 'idea', 'draft', 'active', 'final', 'reopen', 'trash']
-            if (!validStatuses.includes(body.status)) {
+            const foundId = getStatusIdByName(body.status, 'tasks')
+
+            if (!foundId) {
                 throw createError({
                     statusCode: 400,
-                    message: 'Invalid status. Must be: new, idea, draft, active, final, reopen, or trash'
+                    message: `Invalid status '${body.status}'. Must be a valid status name for tasks.`
                 })
             }
-
-            // Lookup status ID from status table
-            const statusRecord = await db.get(
-                'SELECT id FROM status WHERE "table" = ? AND name = ?',
-                ['tasks', body.status]
-            )
-
-            if (!statusRecord) {
-                throw createError({
-                    statusCode: 400,
-                    message: `Status '${body.status}' not found in status table`
-                })
-            }
-
-            statusId = statusRecord.id
+            statusId = foundId
         } else {
             // Default to 'idea' status
-            const defaultStatus = await db.get(
-                'SELECT id FROM status WHERE "table" = ? AND name = ?',
-                ['tasks', 'idea']
-            )
+            const foundId = getStatusIdByName('idea', 'tasks')
 
-            if (!defaultStatus) {
+            if (!foundId) {
                 throw createError({
                     statusCode: 500,
                     message: 'Default status (idea) not found. Run migration 021.'
                 })
             }
-
-            statusId = defaultStatus.id
+            statusId = foundId
         }
 
         // Validate priority if provided
@@ -118,7 +104,7 @@ export default defineEventHandler(async (event) => {
                 name, 
                 description, 
                 category,
-                status,
+                status_id,
                 priority, 
                 release_id,
                 record_type, 
@@ -152,13 +138,14 @@ export default defineEventHandler(async (event) => {
         )
 
         // Fetch created task with status information
+        // tasks.status_display and tasks.lang are included in tasks.*
         const task = await db.get(`
             SELECT 
                 tasks.*,
                 status.value as status_value,
                 status.name as status_name
             FROM tasks
-            LEFT JOIN status ON tasks.status = status.id
+            LEFT JOIN status ON tasks.status_id = status.id
             WHERE tasks.id = ?
         `, [id])
 

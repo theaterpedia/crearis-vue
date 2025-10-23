@@ -55,10 +55,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role
+    SELECT id, sysmail, extmail, username, password, role, instructor_id
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as { id: number; sysmail: string; extmail: string | null; username: string; password: string; role: string } | undefined
+  `, [userIdentifier, userIdentifier]) as { id: number; sysmail: string; extmail: string | null; username: string; password: string; role: string; instructor_id: string | number | null } | undefined
 
     if (!user) {
         throw createError({
@@ -84,19 +84,22 @@ export default defineEventHandler(async (event) => {
     let defaultProjectId: string | null = null
 
     // 1. Find owned projects
+    // After Migration 019: projects.id is INTEGER, projects.domaincode is TEXT (old id)
+    console.log('[LOGIN] Finding owned projects for user', user.id)
     const ownedProjects = await db.all(`
-        SELECT id, heading
+        SELECT domaincode, heading
         FROM projects
         WHERE owner_id = ?
         ORDER BY heading ASC
-    `, [user.id]) as Array<{ id: string; heading: string }>
+    `, [user.id]) as Array<{ domaincode: string; heading: string }>
+    console.log('[LOGIN] Found owned projects:', ownedProjects.length)
 
     for (const proj of ownedProjects) {
         projectRecords.push({
-            id: proj.id,
-            name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+            id: proj.domaincode,
+            name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading,  // Include heading separately
-            username: proj.id,  // Use project id as username fallback
+            username: proj.domaincode,  // Use domaincode as username fallback
             isOwner: true,
             isMember: false,
             isInstructor: false,
@@ -106,24 +109,26 @@ export default defineEventHandler(async (event) => {
 
     // Set default to first owned project
     if (ownedProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = ownedProjects[0].id
+        defaultProjectId = ownedProjects[0].domaincode
     }
 
     // 2. Find member projects
+    console.log('[LOGIN] Finding member projects')
     const memberProjects = await db.all(`
-        SELECT p.id, p.heading
+        SELECT p.domaincode, p.heading
         FROM projects p
         INNER JOIN project_members pm ON p.id = pm.project_id
         WHERE pm.user_id = ? AND p.owner_id != ?
         ORDER BY p.heading ASC
-    `, [user.id, user.id]) as Array<{ id: string; heading: string }>
+    `, [user.id, user.id]) as Array<{ domaincode: string; heading: string }>
+    console.log('[LOGIN] Found member projects:', memberProjects.length)
 
     for (const proj of memberProjects) {
         projectRecords.push({
-            id: proj.id,
-            name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+            id: proj.domaincode,
+            name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading,  // Include heading separately
-            username: proj.id,  // Use project id as username fallback
+            username: proj.domaincode,  // Use domaincode as username fallback
             isOwner: false,
             isMember: true,
             isInstructor: false,
@@ -133,32 +138,44 @@ export default defineEventHandler(async (event) => {
 
     // Set default to first member project if no owned projects
     if (memberProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = memberProjects[0].id
+        defaultProjectId = memberProjects[0].domaincode
     }
 
     // 3. Find projects where user is instructor (via events)
     // Note: Check if user has instructor_id set, then find events taught by that instructor
-    const instructorProjects = await db.all(`
-        SELECT DISTINCT p.id, p.heading, p.owner_id
-        FROM projects p
-        INNER JOIN events e ON p.id = e.project
-        INNER JOIN event_instructors ei ON e.id = ei.event_id
-        INNER JOIN users u ON u.instructor_id = ei.instructor_id
-        WHERE u.id = ?
-        ORDER BY p.heading ASC
-    `, [user.id]) as Array<{ id: string; heading: string; owner_id: string }>
+    // Skip this query if user has no instructor_id or if there are no instructors yet
+    console.log('[LOGIN] Finding instructor projects')
+    let instructorProjects: Array<{ domaincode: string; heading: string; owner_id: number }> = []
+
+    if (user.instructor_id) {
+        try {
+            // Cast instructor_id to handle potential TEXT type (should be INTEGER after migration)
+            instructorProjects = await db.all(`
+                SELECT DISTINCT p.domaincode, p.heading, p.owner_id
+                FROM projects p
+                INNER JOIN events e ON p.id = e.project_id
+                INNER JOIN event_instructors ei ON e.id = ei.event_id
+                WHERE ei.instructor_id = CAST(? AS INTEGER)
+                ORDER BY p.heading ASC
+            `, [user.instructor_id]) as Array<{ domaincode: string; heading: string; owner_id: number }>
+        } catch (error) {
+            console.error('[LOGIN] Error finding instructor projects:', error)
+            // Continue without instructor projects if query fails
+        }
+    }
+    console.log('[LOGIN] Found instructor projects:', instructorProjects.length)
 
     for (const proj of instructorProjects) {
         // Check if already in records (as owner or member)
-        const existing = projectRecords.find(p => p.id === proj.id)
+        const existing = projectRecords.find(p => p.id === proj.domaincode)
         if (existing) {
             existing.isInstructor = true
         } else {
             projectRecords.push({
-                id: proj.id,
-                name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+                id: proj.domaincode,
+                name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading,  // Include heading separately
-                username: proj.id,  // Use project id as username fallback
+                username: proj.domaincode,  // Use domaincode as username fallback
                 isOwner: false,
                 isMember: false,
                 isInstructor: true,
@@ -169,29 +186,31 @@ export default defineEventHandler(async (event) => {
 
     // Set default to first instructor project if no owned/member projects
     if (instructorProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = instructorProjects[0].id
+        defaultProjectId = instructorProjects[0].domaincode
     }
 
     // 4. Find projects where user is author (via posts)
+    console.log('[LOGIN] Finding author projects')
     const authorProjects = await db.all(`
-        SELECT DISTINCT p.id, p.heading, p.owner_id
+        SELECT DISTINCT p.domaincode, p.heading, p.owner_id
         FROM projects p
-        INNER JOIN posts po ON p.id = po.project
+        INNER JOIN posts po ON p.id = po.project_id
         WHERE po.author_id = ?
         ORDER BY p.heading ASC
-    `, [user.id]) as Array<{ id: string; heading: string; owner_id: string }>
+    `, [user.id]) as Array<{ domaincode: string; heading: string; owner_id: number }>
+    console.log('[LOGIN] Found author projects:', authorProjects.length)
 
     for (const proj of authorProjects) {
         // Check if already in records
-        const existing = projectRecords.find(p => p.id === proj.id)
+        const existing = projectRecords.find(p => p.id === proj.domaincode)
         if (existing) {
             existing.isAuthor = true
         } else {
             projectRecords.push({
-                id: proj.id,
-                name: proj.id,  // Frontend 'name' = database 'id' (domaincode)
+                id: proj.domaincode,
+                name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading,  // Include heading separately
-                username: proj.id,  // Use project id as username fallback
+                username: proj.domaincode,  // Use domaincode as username fallback
                 isOwner: false,
                 isMember: false,
                 isInstructor: false,
@@ -202,7 +221,7 @@ export default defineEventHandler(async (event) => {
 
     // Set default to first author project if no other projects found
     if (authorProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = authorProjects[0].id
+        defaultProjectId = authorProjects[0].domaincode
     }
 
     // Build available roles array

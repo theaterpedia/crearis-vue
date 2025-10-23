@@ -1,18 +1,21 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
 
-// After Migration 019 Chapter 6:
+// After Migration 019 Chapter 6 & Migration 020:
 // - tasks.title → tasks.name
 // - tasks.image → tasks.cimg
-// - tasks.status (TEXT) → tasks.status (INTEGER FK to status table)
+// - tasks.status (TEXT) → tasks.status_id (INTEGER FK to status table)
+// - Added tasks.lang and tasks.status_display (computed)
 interface Task {
     id: string
     name: string  // Renamed from title
     description?: string
     category: 'admin' | 'main' | 'release'
-    status: number  // Now INTEGER FK to status table
+    status_id: number  // INTEGER FK to status table
     status_value: number  // Status value (0, 1, 2, 4, 5, 8, 16)
     status_name: string  // Status name (new, idea, draft, active, final, reopen, trash)
+    status_display: string  // Translated status name based on task's lang
+    lang: string  // Language for this task (de, en, cz)
     priority: 'low' | 'medium' | 'high' | 'urgent'
     release_id?: string
     record_type?: string
@@ -44,7 +47,8 @@ export default defineEventHandler(async (event) => {
         const recordId = query.record_id as string | undefined
 
         // Build query with entity joins for title inheritance and image fallback
-        // Join with status table to get status_value and status_name
+        // Join with status table to get status_value, status_name
+        // tasks.status_display is computed column (from Migration 020)
         let sql = `
             SELECT 
                 tasks.*,
