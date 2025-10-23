@@ -2,17 +2,21 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 
+// After Migration 019 Chapter 6:
+// - tasks.title → tasks.name
+// - tasks.image → tasks.cimg
+// - tasks.status (TEXT) → tasks.status (INTEGER FK to status table)
 interface CreateTaskBody {
-    title: string
+    name: string  // Renamed from title
     description?: string
     category?: 'admin' | 'main' | 'release'
-    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status?: string  // Status name (new, idea, draft, active, final, reopen, trash)
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     release_id?: string
     record_type?: string
     record_id?: string
     assigned_to?: string
-    image?: string
+    cimg?: string  // Renamed from image
     prompt?: string
     due_date?: string
 }
@@ -29,10 +33,10 @@ export default defineEventHandler(async (event) => {
         }
 
         // Validate required fields
-        if (!body.title || body.title.trim() === '') {
+        if (!body.name || body.name.trim() === '') {
             throw createError({
                 statusCode: 400,
-                message: 'Title is required'
+                message: 'Name is required'
             })
         }
 
@@ -44,12 +48,46 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Validate status if provided
-        if (body.status && !['idea', 'new', 'draft', 'final', 'reopen', 'trash'].includes(body.status)) {
-            throw createError({
-                statusCode: 400,
-                message: 'Invalid status. Must be: idea, new, draft, final, reopen, or trash'
-            })
+        // Validate status if provided and get status ID
+        let statusId: number | undefined
+        if (body.status) {
+            const validStatuses = ['new', 'idea', 'draft', 'active', 'final', 'reopen', 'trash']
+            if (!validStatuses.includes(body.status)) {
+                throw createError({
+                    statusCode: 400,
+                    message: 'Invalid status. Must be: new, idea, draft, active, final, reopen, or trash'
+                })
+            }
+
+            // Lookup status ID from status table
+            const statusRecord = await db.get(
+                'SELECT id FROM status WHERE "table" = ? AND name = ?',
+                ['tasks', body.status]
+            )
+
+            if (!statusRecord) {
+                throw createError({
+                    statusCode: 400,
+                    message: `Status '${body.status}' not found in status table`
+                })
+            }
+
+            statusId = statusRecord.id
+        } else {
+            // Default to 'idea' status
+            const defaultStatus = await db.get(
+                'SELECT id FROM status WHERE "table" = ? AND name = ?',
+                ['tasks', 'idea']
+            )
+
+            if (!defaultStatus) {
+                throw createError({
+                    statusCode: 500,
+                    message: 'Default status (idea) not found. Run migration 021.'
+                })
+            }
+
+            statusId = defaultStatus.id
         }
 
         // Validate priority if provided
@@ -77,7 +115,7 @@ export default defineEventHandler(async (event) => {
         const stmt = db.prepare(`
             INSERT INTO tasks (
                 id, 
-                title, 
+                name, 
                 description, 
                 category,
                 status,
@@ -86,7 +124,7 @@ export default defineEventHandler(async (event) => {
                 record_type, 
                 record_id, 
                 assigned_to,
-                image,
+                cimg,
                 prompt,
                 due_date,
                 created_at,
@@ -97,23 +135,32 @@ export default defineEventHandler(async (event) => {
 
         stmt.run(
             id,
-            body.title.trim(),
+            body.name.trim(),
             body.description || null,
             body.category || 'main',
-            body.status || 'new',
+            statusId,
             body.priority || 'medium',
             body.release_id || null,
             body.record_type || null,
             body.record_id || null,
             body.assigned_to || null,
-            body.image || null,
+            body.cimg || null,
             body.prompt || null,
             body.due_date || null,
             now,
             now
         )
 
-        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
+        // Fetch created task with status information
+        const task = await db.get(`
+            SELECT 
+                tasks.*,
+                status.value as status_value,
+                status.name as status_name
+            FROM tasks
+            LEFT JOIN status ON tasks.status = status.id
+            WHERE tasks.id = ?
+        `, [id])
 
         return {
             success: true,

@@ -1,10 +1,16 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+// After Migration 019 Chapter 5:
+// - id: auto-increment INTEGER (internal DB use)
+// - domaincode: unique TEXT identifier (user-facing, URLs)
+// - name: project title/display name (TEXT)
+// - heading: legacy field for backward compatibility
 interface ProjectRecord {
-    id: string
-    name: string  // domaincode
-    heading?: string  // heading from database
+    id: number  // Changed from string to number (auto-increment)
+    domaincode: string  // User-facing unique identifier
+    name?: string  // Project title/display name
+    heading?: string  // Heading from database (backward compat)
     username: string
     isOwner: boolean
     isMember: boolean

@@ -20,13 +20,19 @@ export const migration = {
     async up(db: DatabaseAdapter): Promise<void> {
         console.log('Running migration 023: Seed demo data...')
 
+        // Helper function to get user ID by email (sysmail)
+        const getUserId = async (email: string): Promise<number | null> => {
+            const user = await db.get('SELECT id FROM users WHERE sysmail = ?', [email])
+            return user ? (user as any).id : null
+        }
+
         // ============================================================
         // PART 1: Create Demo Users (from migrations 019, 021)
         // ============================================================
         console.log('  - Creating demo users...')
 
         await db.exec(`
-            INSERT INTO users (id, username, password, role, created_at) 
+            INSERT INTO users (sysmail, username, password, role, created_at) 
             VALUES 
             ('rosalin.hertrich@dasei.eu', 'Rosalin Hertrich', 
              '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
@@ -62,9 +68,20 @@ export const migration = {
              '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
             ('eleanora.allerdings@dasei.eu', 'Eleanora Allerdings', 
              '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP)
-            ON CONFLICT (id) DO NOTHING
+            ON CONFLICT (sysmail) DO NOTHING
         `)
         console.log('    ✓ Created 17 demo users')
+
+        // Get user IDs for project ownership
+        const hansId = await getUserId('hans.doenitz@theaterpedia.org')
+        const kathrinId = await getUserId('kathrin.jung@theaterpedia.org')
+        const afraId = await getUserId('afra.kriss@theaterpedia.org')
+        const rosalinId = await getUserId('rosalin.hertrich@dasei.eu')
+        const karelId = await getUserId('karel.hajek@theaterpedia.org')
+        const sabineId = await getUserId('sabine.menne@theaterpedia.org')
+        const annieId = await getUserId('annie.duerrwang@theaterpedia.org')
+        const eleanoraId = await getUserId('eleanora.allerdings@dasei.eu')
+        const rosaId = await getUserId('rosa.koeniger@utopia-in-action.de')
 
         // ============================================================
         // PART 2: Remove old system projects and create demo projects

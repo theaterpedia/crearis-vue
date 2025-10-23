@@ -13,12 +13,12 @@
                     </div>
 
                     <form class="modal-body" @submit.prevent="handleSubmit">
-                        <!-- Title -->
+                        <!-- Name (renamed from Title) -->
                         <div class="form-group">
                             <label for="task-title" class="form-label required">
                                 Title
                             </label>
-                            <input id="task-title" v-model="formData.title" type="text" class="form-input"
+                            <input id="task-title" v-model="formData.name" type="text" class="form-input"
                                 placeholder="Enter task title..." required />
                         </div>
 
@@ -35,7 +35,7 @@
                         <div v-if="task" class="form-group">
                             <label class="form-label">Status</label>
                             <StatusToggler v-model="formData.status"
-                                :allowed-statuses="['idea', 'new', 'draft', 'final', 'reopen', 'trash']" />
+                                :allowed-statuses="['idea', 'new', 'draft', 'active', 'final', 'reopen', 'trash']" />
                         </div>
 
                         <!-- Category & Priority Row -->
@@ -108,7 +108,7 @@
                                 <label for="task-image" class="form-label">
                                     Image URL
                                 </label>
-                                <input id="task-image" v-model="formData.image" type="text" class="form-input"
+                                <input id="task-image" v-model="formData.cimg" type="text" class="form-input"
                                     placeholder="Enter image URL..." />
                             </div>
                         </div>
@@ -145,7 +145,7 @@
                             <button type="button" class="btn btn-secondary" @click="$emit('close')">
                                 Cancel
                             </button>
-                            <button type="submit" class="btn btn-primary" :disabled="!formData.title">
+                            <button type="submit" class="btn btn-primary" :disabled="!formData.name">
                                 {{ task ? 'Update Task' : 'Create Task' }}
                             </button>
                         </div>
@@ -163,9 +163,10 @@ import CategoryBadge from './CategoryBadge.vue'
 
 interface Task {
     id?: string
-    title: string
+    name: string  // Renamed from title
     description?: string
-    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status?: string  // Status name (new, idea, draft, active, final, reopen, trash)
+    status_name?: string  // Status name from API response
     category?: 'admin' | 'base' | 'project' | 'release'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     record_type?: string
@@ -173,7 +174,7 @@ interface Task {
     assigned_to?: string
     due_date?: string
     release_id?: string
-    image?: string
+    cimg?: string  // Renamed from image
     prompt?: string
 }
 
@@ -195,17 +196,17 @@ const emit = defineEmits<{
 }>()
 
 const formData = ref<Task>({
-    title: '',
+    name: '',  // Renamed from title
     description: '',
     priority: 'medium',
-    status: 'new',
+    status: 'idea',  // Default to idea (not new)
     category: 'base',
     record_type: '',
     record_id: '',
     assigned_to: '',
     due_date: '',
     release_id: '',
-    image: '',
+    cimg: '',  // Renamed from image
     prompt: ''
 })
 
@@ -213,33 +214,33 @@ const formData = ref<Task>({
 watch(() => props.task, (newTask: Task | null | undefined) => {
     if (newTask) {
         formData.value = {
-            title: newTask.title || '',
+            name: newTask.name || '',  // Renamed from title
             description: newTask.description || '',
             priority: newTask.priority || 'medium',
-            status: newTask.status || 'new',
+            status: newTask.status_name || newTask.status || 'idea',  // Use status_name from API
             category: newTask.category || 'base',
             record_type: newTask.record_type || '',
             record_id: newTask.record_id || '',
             assigned_to: newTask.assigned_to || '',
             due_date: newTask.due_date ? formatDateForInput(newTask.due_date) : '',
             release_id: newTask.release_id || '',
-            image: newTask.image || '',
+            cimg: newTask.cimg || '',  // Renamed from image
             prompt: newTask.prompt || ''
         }
     } else {
         // Reset form for new task
         formData.value = {
-            title: '',
+            name: '',  // Renamed from title
             description: '',
             priority: 'medium',
-            status: 'new',
+            status: 'idea',  // Default to idea (not new)
             category: 'base',
             record_type: '',
             record_id: '',
             assigned_to: '',
             due_date: '',
             release_id: '',
-            image: '',
+            cimg: '',  // Renamed from image
             prompt: ''
         }
     }
@@ -262,7 +263,7 @@ function handleOverlayClick() {
 function handleSubmit() {
     // Clean up empty strings to null
     const taskData: Partial<Task> = {
-        title: formData.value.title,
+        name: formData.value.name,  // Renamed from title
         description: formData.value.description || undefined,
         priority: formData.value.priority,
         status: formData.value.status,
@@ -272,7 +273,7 @@ function handleSubmit() {
         assigned_to: formData.value.assigned_to || undefined,
         due_date: formData.value.due_date || undefined,
         release_id: formData.value.release_id || undefined,
-        image: formData.value.image || undefined,
+        cimg: formData.value.cimg || undefined,  // Renamed from image
         prompt: formData.value.prompt || undefined
     }
 

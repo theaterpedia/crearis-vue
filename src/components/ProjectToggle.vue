@@ -33,12 +33,14 @@
                     </div>
                     <div class="project-tiles">
                         <button v-for="project in ownerProjects" :key="project.id" class="project-tile"
-                            :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
+                            :class="{ active: currentProjectId === project.domaincode }"
+                            @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
                                 <div class="project-tile-heading">
                                     <HeadingParser v-if="project.heading" :content="project.heading" as="span"
                                         :compact="true" />
-                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                    <span v-else class="project-tile-name">{{ project.name || project.domaincode
+                                        }}</span>
                                 </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
@@ -71,12 +73,14 @@
                     </div>
                     <div class="project-tiles">
                         <button v-for="project in memberProjects" :key="project.id" class="project-tile"
-                            :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
+                            :class="{ active: currentProjectId === project.domaincode }"
+                            @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
                                 <div class="project-tile-heading">
                                     <HeadingParser v-if="project.heading" :content="project.heading" as="span"
                                         :compact="true" />
-                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                    <span v-else class="project-tile-name">{{ project.name || project.domaincode
+                                        }}</span>
                                 </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
@@ -109,12 +113,14 @@
                     </div>
                     <div class="project-tiles">
                         <button v-for="project in partnerProjects" :key="project.id" class="project-tile"
-                            :class="{ active: currentProjectId === project.id }" @click="selectProject(project.id)">
+                            :class="{ active: currentProjectId === project.domaincode }"
+                            @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
                                 <div class="project-tile-heading">
                                     <HeadingParser v-if="project.heading" :content="project.heading" as="span"
                                         :compact="true" />
-                                    <span v-else class="project-tile-name">{{ project.name }}</span>
+                                    <span v-else class="project-tile-name">{{ project.name || project.domaincode
+                                        }}</span>
                                 </div>
                                 <div class="project-tile-badges">
                                     <svg v-if="project.isInstructor" fill="currentColor" height="14"
@@ -180,8 +186,8 @@ const allProjects = computed(() => user.value?.projects || [])
 const currentProjectId = computed(() => user.value?.projectId || null)
 const currentProjectName = computed(() => {
     if (!currentProjectId.value) return null
-    const project = allProjects.value.find((p: any) => p.id === currentProjectId.value)
-    return project ? project.name : null  // Returns domaincode (id)
+    const project = allProjects.value.find((p: any) => p.domaincode === currentProjectId.value)
+    return project ? (project.name || project.domaincode) : null  // Returns project name or domaincode fallback
 })
 
 // Organize projects by category

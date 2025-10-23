@@ -15,7 +15,7 @@ interface ProjectRecord {
 }
 
 interface SessionData {
-    userId: string
+    userId: number
     username: string
     availableRoles: string[]
     activeRole: string
@@ -53,12 +53,12 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Find user from users table by id (email format)
+    // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, username, password, role
+    SELECT id, sysmail, extmail, username, password, role
     FROM users
-    WHERE id = ?
-  `, [userIdentifier]) as { id: string; username: string; password: string; role: string } | undefined
+    WHERE sysmail = ? OR extmail = ?
+  `, [userIdentifier, userIdentifier]) as { id: number; sysmail: string; extmail: string | null; username: string; password: string; role: string } | undefined
 
     if (!user) {
         throw createError({

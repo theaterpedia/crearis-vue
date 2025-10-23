@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Get project
-        const rawProject = await db.get('SELECT * FROM projects WHERE id = ?', [id])
+        // Get project by domaincode
+        const rawProject = await db.get('SELECT * FROM projects WHERE domaincode = ?', [id])
 
         if (!rawProject) {
             throw createError({
@@ -23,10 +23,10 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Map to frontend format: id as 'name', keep heading as 'heading'
+        // Return project with proper field mapping
         const project = {
             ...rawProject,
-            name: rawProject.id  // Frontend 'name' = database 'id' (domaincode)
+            // No additional mapping needed - domaincode and name fields exist in DB
         }
 
         return project

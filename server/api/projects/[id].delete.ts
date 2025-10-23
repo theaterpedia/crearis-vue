@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Check if project exists
-        const existing = await db.get('SELECT * FROM projects WHERE id = ?', [id])
+        // Check if project exists by domaincode
+        const existing = await db.get('SELECT * FROM projects WHERE domaincode = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         }
 
         // Delete project
-        await db.run('DELETE FROM projects WHERE id = ?', [id])
+        await db.run('DELETE FROM projects WHERE domaincode = ?', [id])
 
         return {
             success: true,

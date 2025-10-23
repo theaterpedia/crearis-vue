@@ -1,18 +1,24 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
 
+// After Migration 019 Chapter 6:
+// - tasks.title → tasks.name
+// - tasks.image → tasks.cimg
+// - tasks.status (TEXT) → tasks.status (INTEGER FK to status table)
 interface Task {
     id: string
-    title: string
+    name: string  // Renamed from title
     description?: string
     category: 'admin' | 'main' | 'release'
-    status: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status: number  // Now INTEGER FK to status table
+    status_value: number  // Status value (0, 1, 2, 4, 5, 8, 16)
+    status_name: string  // Status name (new, idea, draft, active, final, reopen, trash)
     priority: 'low' | 'medium' | 'high' | 'urgent'
     release_id?: string
     record_type?: string
     record_id?: string
     assigned_to?: string
-    image?: string
+    cimg?: string  // Renamed from image
     prompt?: string
     created_at: string
     updated_at: string
@@ -31,16 +37,19 @@ interface ApiResponse {
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
-        const status = query.status as string | undefined
+        const statusFilter = query.status as string | undefined
         const category = query.category as string | undefined
         const releaseId = query.release_id as string | undefined
         const recordType = query.record_type as string | undefined
         const recordId = query.record_id as string | undefined
 
         // Build query with entity joins for title inheritance and image fallback
+        // Join with status table to get status_value and status_name
         let sql = `
             SELECT 
                 tasks.*,
+                status.value as status_value,
+                status.name as status_name,
                 CASE tasks.record_type
                     WHEN 'event' THEN events.name
                     WHEN 'post' THEN posts.name
@@ -49,7 +58,7 @@ export default defineEventHandler(async (event) => {
                     WHEN 'participant' THEN participants.name
                 END as entity_name,
                 CASE 
-                    WHEN tasks.title = '{{main-title}}' THEN 
+                    WHEN tasks.name = '{{main-title}}' THEN 
                         COALESCE(
                             CASE tasks.record_type
                                 WHEN 'event' THEN events.name || ' - Main Task'
@@ -58,12 +67,12 @@ export default defineEventHandler(async (event) => {
                                 WHEN 'instructor' THEN instructors.name || ' - Main Task'
                                 WHEN 'participant' THEN participants.name || ' - Main Task'
                             END,
-                            tasks.title
+                            tasks.name
                         )
-                    ELSE tasks.title
+                    ELSE tasks.name
                 END as display_title,
                 COALESCE(
-                    tasks.image,
+                    tasks.cimg,
                     CASE tasks.record_type
                         WHEN 'event' THEN events.cimg
                         WHEN 'post' THEN posts.cimg
@@ -73,6 +82,7 @@ export default defineEventHandler(async (event) => {
                     END
                 ) as entity_image
             FROM tasks
+            LEFT JOIN status ON tasks.status = status.id
             LEFT JOIN events ON tasks.record_type = 'event' AND tasks.record_id = events.id
             LEFT JOIN posts ON tasks.record_type = 'post' AND tasks.record_id = posts.id
             LEFT JOIN locations ON tasks.record_type = 'location' AND tasks.record_id = locations.id
@@ -82,9 +92,10 @@ export default defineEventHandler(async (event) => {
         `
         const params: any[] = []
 
-        if (status) {
-            sql += ' AND tasks.status = ?'
-            params.push(status)
+        // Filter by status name if provided
+        if (statusFilter) {
+            sql += ' AND status.name = ?'
+            params.push(statusFilter)
         }
 
         if (category) {
@@ -123,12 +134,13 @@ export default defineEventHandler(async (event) => {
             tasks,
             counts: {
                 total: tasks.length,
-                idea: tasks.filter(t => t.status === 'idea').length,
-                new: tasks.filter(t => t.status === 'new').length,
-                draft: tasks.filter(t => t.status === 'draft').length,
-                final: tasks.filter(t => t.status === 'final').length,
-                reopen: tasks.filter(t => t.status === 'reopen').length,
-                trash: tasks.filter(t => t.status === 'trash').length,
+                idea: tasks.filter(t => t.status_name === 'idea').length,
+                new: tasks.filter(t => t.status_name === 'new').length,
+                draft: tasks.filter(t => t.status_name === 'draft').length,
+                active: tasks.filter(t => t.status_name === 'active').length,
+                final: tasks.filter(t => t.status_name === 'final').length,
+                reopen: tasks.filter(t => t.status_name === 'reopen').length,
+                trash: tasks.filter(t => t.status_name === 'trash').length,
                 byCategory: {
                     admin: tasks.filter(t => t.category === 'admin').length,
                     main: tasks.filter(t => t.category === 'main').length,

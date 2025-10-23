@@ -127,9 +127,10 @@
                         </div>
                         <div v-if="getAdditionalTasks('post').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
-                                <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
-                                <span class="task-title">{{ task.title }}</span>
+                                <span class="task-status-badge" :class="`status-${task.status_name}`">{{
+                                    task.status_name
+                                    }}</span>
+                                <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
                                     ✎
@@ -182,9 +183,10 @@
                         </div>
                         <div v-if="getAdditionalTasks('location').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
-                                <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
-                                <span class="task-title">{{ task.title }}</span>
+                                <span class="task-status-badge" :class="`status-${task.status_name}`">{{
+                                    task.status_name
+                                    }}</span>
+                                <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
                                     ✎
@@ -237,9 +239,10 @@
                         </div>
                         <div v-if="getAdditionalTasks('instructor').length > 0" class="task-list">
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
-                                <span class="task-status-badge" :class="`status-${task.status}`">{{ task.status
-                                }}</span>
-                                <span class="task-title">{{ task.title }}</span>
+                                <span class="task-status-badge" :class="`status-${task.status_name}`">{{
+                                    task.status_name
+                                    }}</span>
+                                <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
                                     ✎
@@ -279,7 +282,7 @@
                     <div class="form-body">
                         <div class="form-group">
                             <label>Titel</label>
-                            <input type="text" v-model="mainTaskForm.title" placeholder="Aufgaben-Titel"
+                            <input type="text" v-model="mainTaskForm.name" placeholder="Aufgaben-Titel"
                                 @input="markAsEdited" />
                         </div>
 
@@ -297,6 +300,7 @@
                                     <option value="idea">Idee</option>
                                     <option value="new">Neu</option>
                                     <option value="draft">Entwurf</option>
+                                    <option value="active">Aktiv</option>
                                     <option value="final">Fertig</option>
                                     <option value="reopen">Reopen</option>
                                 </select>
@@ -319,7 +323,7 @@
 
                             <div class="form-group">
                                 <label>Bild URL</label>
-                                <input type="text" v-model="mainTaskForm.image" placeholder="https://..."
+                                <input type="text" v-model="mainTaskForm.cimg" placeholder="https://..."
                                     @input="markAsEdited" />
                             </div>
                         </div>
@@ -560,12 +564,12 @@ const hasActiveEdits = ref(false)
 // Forms
 const mainTaskForm = ref({
     id: null as string | null,
-    title: '',
+    name: '',  // Renamed from title
     description: '',
-    status: 'new',
+    status: 'idea',  // Default to idea (not new)
     priority: 'medium',
     due_date: '',
-    image: '',
+    cimg: '',  // Renamed from image
     category: 'main'
 })
 
@@ -676,12 +680,12 @@ const loadMainTask = async (recordType: string, recordId: string) => {
                 const task = tasks[0]
                 mainTaskForm.value = {
                     id: task.id,
-                    title: task.title || '',
+                    name: task.name || '',  // Renamed from title
                     description: task.description || '',
-                    status: task.status || 'new',
+                    status: task.status_name || task.status || 'idea',  // Use status_name from API
                     priority: task.priority || 'medium',
                     due_date: task.due_date || '',
-                    image: task.image || '',
+                    cimg: task.cimg || '',  // Renamed from image
                     category: 'main'
                 }
                 console.log('✅ Main task loaded:', mainTaskForm.value)
@@ -703,12 +707,12 @@ const loadMainTask = async (recordType: string, recordId: string) => {
 const resetMainTaskForm = () => {
     mainTaskForm.value = {
         id: null,
-        title: '',
+        name: '',  // Renamed from title
         description: '',
-        status: 'new',
+        status: 'idea',  // Default to idea (not new)
         priority: 'medium',
         due_date: '',
-        image: '',
+        cimg: '',  // Renamed from image
         category: 'main'
     }
 }

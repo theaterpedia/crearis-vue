@@ -3,11 +3,11 @@
         <!-- Task Header with HeadingParser -->
         <div class="task-header">
             <div class="task-title">
-                <HeadingParser :content="task.title" as="h4" />
+                <HeadingParser :content="task.name" as="h4" />
             </div>
             <div class="task-actions">
-                <button v-if="task.status === 'trash'" class="action-btn restore-btn" @click="$emit('restore', task)"
-                    title="Restore task">
+                <button v-if="task.status_name === 'trash'" class="action-btn restore-btn"
+                    @click="$emit('restore', task)" title="Restore task">
                     ↺
                 </button>
                 <button v-else class="action-btn trash-btn" @click="$emit('trash', task)" title="Move to trash">
@@ -39,7 +39,7 @@
         </div>
 
         <!-- Execute Button (when updates detected and not in trash) -->
-        <div v-if="hasUpdates && task.status !== 'trash'" class="action-section">
+        <div v-if="hasUpdates && task.status_name !== 'trash'" class="action-section">
             <button class="execute-btn" @click="executeTask" :disabled="!selectedFilter">
                 <span>▶</span> Execute {{ task.logic?.includes('watchcsv') ? 'Reset' : 'Save' }}
             </button>
@@ -66,9 +66,10 @@ import HeadingParser from './HeadingParser.vue'
 
 interface WatchTask {
     id?: string
-    title: string
+    name: string  // Renamed from title
     description?: string
-    status?: 'reopen' | 'draft' | 'trash'
+    status?: number  // INTEGER FK to status table
+    status_name?: string  // Status name from API (for display)
     category?: string
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     logic?: string
@@ -105,8 +106,8 @@ const truncatedDescription = computed(() => {
 })
 
 const watchStatus = computed(() => {
-    if (props.task.status === 'trash') return 'inactive'
-    if (props.task.status === 'draft') return 'changes'
+    if (props.task.status_name === 'trash') return 'inactive'
+    if (props.task.status_name === 'draft') return 'changes'
     return 'watching'
 })
 
@@ -120,7 +121,7 @@ const watchStatusLabel = computed(() => {
 })
 
 const hasUpdates = computed(() => {
-    return props.task.status === 'draft' &&
+    return props.task.status_name === 'draft' &&
         (props.task.updatedFiles?.length || props.task.updatedEntities?.length)
 })
 

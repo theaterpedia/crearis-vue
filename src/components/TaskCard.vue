@@ -17,7 +17,7 @@
             <div class="task-header">
                 <div class="task-header-left">
                     <!-- Status & Category Badges -->
-                    <StatusBadge v-if="task.status" :status="task.status" />
+                    <StatusBadge v-if="task.status_name" :status="task.status_name" />
                     <CategoryBadge v-if="task.category" :category="task.category" />
                 </div>
                 <div class="task-header-right">
@@ -68,9 +68,11 @@ import HeadingParser from './HeadingParser.vue'
 
 interface Task {
     id?: string
-    title: string
+    name: string  // Renamed from title
     description?: string
-    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status?: number  // INTEGER FK to status table
+    status_name?: string  // Status name from joined status table (for display)
+    status_value?: number  // Status numeric value from status table
     category?: 'admin' | 'base' | 'project' | 'release'
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     record_type?: string
@@ -78,7 +80,7 @@ interface Task {
     assigned_to?: string
     due_date?: string
     release_id?: string
-    image?: string
+    cimg?: string  // Renamed from image
     prompt?: string
     entity_name?: string
     display_title?: string
@@ -110,13 +112,13 @@ const cardTitle = computed(() => {
         return props.task.display_title
     }
 
-    // Fallback: Replace {{main-title}} in title with entity_name
-    if (props.task.title && props.task.title.includes('{{main-title}}') && props.task.entity_name) {
-        return props.task.title.replace(/\{\{main-title\}\}/g, props.task.entity_name)
+    // Fallback: Replace {{main-title}} in name with entity_name
+    if (props.task.name && props.task.name.includes('{{main-title}}') && props.task.entity_name) {
+        return props.task.name.replace(/\{\{main-title\}\}/g, props.task.entity_name)
     }
 
-    // Default: Use title as is
-    return props.task.title || 'Untitled Task'
+    // Default: Use name as is
+    return props.task.name || 'Untitled Task'
 })
 
 // Full display title (kept for backwards compatibility if needed elsewhere)
@@ -126,13 +128,13 @@ const displayTitle = computed(() => {
         return props.task.display_title
     }
 
-    // Fallback: Replace {{main-title}} in title with entity_name
-    if (props.task.title && props.task.title.includes('{{main-title}}') && props.task.entity_name) {
-        return props.task.title.replace(/\{\{main-title\}\}/g, props.task.entity_name)
+    // Fallback: Replace {{main-title}} in name with entity_name
+    if (props.task.name && props.task.name.includes('{{main-title}}') && props.task.entity_name) {
+        return props.task.name.replace(/\{\{main-title\}\}/g, props.task.entity_name)
     }
 
-    // Default: Use title as is
-    return props.task.title || 'Untitled Task'
+    // Default: Use name as is
+    return props.task.name || 'Untitled Task'
 })
 
 // Priority label

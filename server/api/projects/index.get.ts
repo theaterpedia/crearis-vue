@@ -2,24 +2,24 @@ import { defineEventHandler, createError } from 'h3'
 import { db } from '../../database/init'
 
 // GET /api/projects - List all projects
+// After Migration 019 Chapter 5: Returns projects with proper field structure
+// - id: auto-increment INTEGER
+// - domaincode: unique TEXT identifier
+// - name: project title/display name
+// - heading: legacy field for backward compatibility
 export default defineEventHandler(async (event) => {
 
     try {
-        // Get all projects ordered by created date (table will be created by initDatabase)
+        // Get all projects ordered by created date
         const rawProjects = await db.all(`
             SELECT * FROM projects 
             ORDER BY created_at DESC
         `)
 
-        // Map to frontend format: id as 'name', keep heading as 'heading'
-        const projects = rawProjects.map((p: any) => ({
-            ...p,
-            name: p.id  // Frontend 'name' = database 'id' (domaincode)
-        }))
-
+        // Return raw projects with all fields (no mapping needed)
         return {
-            projects,
-            count: projects.length
+            projects: rawProjects,
+            count: rawProjects.length
         }
     } catch (error) {
         console.error('Error fetching projects:', error)

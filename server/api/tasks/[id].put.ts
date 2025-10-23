@@ -1,15 +1,19 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 
+// After Migration 019 Chapter 6:
+// - tasks.title → tasks.name
+// - tasks.image → tasks.cimg
+// - tasks.status (TEXT) → tasks.status (INTEGER FK to status table)
 interface UpdateTaskBody {
-    title?: string
+    name?: string  // Renamed from title
     description?: string
     category?: 'admin' | 'main' | 'release'
-    status?: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status?: string  // Status name (new, idea, draft, active, final, reopen, trash)
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     release_id?: string | null
     assigned_to?: string
-    image?: string
+    cimg?: string  // Renamed from image
     prompt?: string
     due_date?: string
     completed_at?: string
@@ -52,12 +56,31 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Validate status if provided
-        if (body.status && !['idea', 'new', 'draft', 'final', 'reopen', 'trash'].includes(body.status)) {
-            throw createError({
-                statusCode: 400,
-                message: 'Invalid status. Must be: idea, new, draft, final, reopen, or trash'
-            })
+        // Validate status if provided and get status ID
+        let statusId: number | undefined
+        if (body.status !== undefined) {
+            const validStatuses = ['new', 'idea', 'draft', 'active', 'final', 'reopen', 'trash']
+            if (!validStatuses.includes(body.status)) {
+                throw createError({
+                    statusCode: 400,
+                    message: 'Invalid status. Must be: new, idea, draft, active, final, reopen, or trash'
+                })
+            }
+
+            // Lookup status ID from status table
+            const statusRecord = await db.get(
+                'SELECT id FROM status WHERE "table" = ? AND name = ?',
+                ['tasks', body.status]
+            )
+
+            if (!statusRecord) {
+                throw createError({
+                    statusCode: 400,
+                    message: `Status '${body.status}' not found in status table`
+                })
+            }
+
+            statusId = statusRecord.id
         }
 
         // Validate priority if provided
@@ -82,15 +105,15 @@ export default defineEventHandler(async (event) => {
         const updates: string[] = []
         const values: any[] = []
 
-        if (body.title !== undefined) {
-            if (body.title.trim() === '') {
+        if (body.name !== undefined) {
+            if (body.name.trim() === '') {
                 throw createError({
                     statusCode: 400,
-                    message: 'Title cannot be empty'
+                    message: 'Name cannot be empty'
                 })
             }
-            updates.push('title = ?')
-            values.push(body.title.trim())
+            updates.push('name = ?')
+            values.push(body.name.trim())
         }
 
         if (body.description !== undefined) {
@@ -103,9 +126,9 @@ export default defineEventHandler(async (event) => {
             values.push(body.category)
         }
 
-        if (body.status !== undefined) {
+        if (statusId !== undefined) {
             updates.push('status = ?')
-            values.push(body.status)
+            values.push(statusId)
 
             // Auto-set completed_at when marking as final
             if (body.status === 'final' && !body.completed_at) {
@@ -134,9 +157,9 @@ export default defineEventHandler(async (event) => {
             values.push(body.assigned_to || null)
         }
 
-        if (body.image !== undefined) {
-            updates.push('image = ?')
-            values.push(body.image || null)
+        if (body.cimg !== undefined) {
+            updates.push('cimg = ?')
+            values.push(body.cimg || null)
         }
 
         if (body.prompt !== undefined) {
@@ -173,7 +196,16 @@ export default defineEventHandler(async (event) => {
 
         await db.run(sql, [...values])
 
-        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
+        // Fetch updated task with status information
+        const task = await db.get(`
+            SELECT 
+                tasks.*,
+                status.value as status_value,
+                status.name as status_name
+            FROM tasks
+            LEFT JOIN status ON tasks.status = status.id
+            WHERE tasks.id = ?
+        `, [id])
 
         return {
             success: true,

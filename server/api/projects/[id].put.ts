@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Check if project exists
-        const existing = await db.get('SELECT * FROM projects WHERE id = ?', [id])
+        // Check if project exists by domaincode
+        const existing = await db.get('SELECT * FROM projects WHERE domaincode = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
@@ -23,13 +23,13 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        const { id: newId, name, heading, description, status } = body
+        const { domaincode: newDomaincode, name, heading, description, status } = body
 
-        // Reject attempts to change ID or name (domaincode is immutable)
-        if ((newId !== undefined && newId !== id) || (name !== undefined && name !== id)) {
+        // Reject attempts to change domaincode (immutable)
+        if (newDomaincode !== undefined && newDomaincode !== id) {
             throw createError({
                 statusCode: 400,
-                message: 'Cannot change project ID or name (domaincode is immutable)'
+                message: 'Cannot change project domaincode (immutable)'
             })
         }
 
@@ -37,7 +37,12 @@ export default defineEventHandler(async (event) => {
         const updates: string[] = []
         const values: any[] = []
 
-        // Allow updating heading
+        // Allow updating name (project title/name)
+        if (name !== undefined) {
+            updates.push('name = ?')
+            values.push(name)
+        }
+        // Allow updating heading (kept for backward compat)
         if (heading !== undefined) {
             updates.push('heading = ?')
             values.push(heading)
@@ -64,23 +69,17 @@ export default defineEventHandler(async (event) => {
         const stmt = db.prepare(`
             UPDATE projects 
             SET ${updates.join(', ')}
-            WHERE id = ?
+            WHERE domaincode = ?
         `)
 
         stmt.run(...values)
 
         // Return updated project
-        const rawProject = await db.get('SELECT * FROM projects WHERE id = ?', [id])
-
-        // Map to frontend format: id as 'name', heading as 'heading'
-        const project = {
-            ...rawProject,
-            name: rawProject.id  // Frontend 'name' = database 'id' (domaincode)
-        }
+        const rawProject = await db.get('SELECT * FROM projects WHERE domaincode = ?', [id])
 
         return {
             success: true,
-            project
+            project: rawProject
         }
     } catch (error) {
         console.error('Error updating project:', error)

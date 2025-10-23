@@ -9,7 +9,7 @@
         <ul v-else class="admin-tasks-list">
             <li v-for="task in tasks" :key="task.id" class="admin-task-item">
                 <div class="task-content">
-                    <h4 class="task-title">{{ task.display_title || task.title }}</h4>
+                    <h4 class="task-title">{{ task.display_title || task.name }}</h4>
                     <p v-if="task.description" class="task-description">
                         {{ task.description }}
                     </p>
@@ -31,7 +31,7 @@
 <script setup lang="ts">
 interface AdminTask {
     id: string
-    title: string
+    name: string  // Renamed from title
     display_title?: string
     description?: string
 }

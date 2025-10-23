@@ -4,21 +4,39 @@ import { db } from '../../database/init'
 /**
  * POST /api/projects/add-member
  * Add a user to a project's members list using project_members table
+ * After Migration 019 Chapter 5:
+ * - projectId parameter is the domaincode (TEXT)
+ * - project_members table uses numeric project id (INTEGER FK)
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event) as { userId?: string; projectId?: string }
+    const body = await readBody(event) as { userId?: string | number; projectId?: string }
     const { userId, projectId } = body
 
     if (!userId || !projectId) {
         throw createError({
             statusCode: 400,
-            message: 'userId and projectId are required'
+            message: 'userId and projectId (domaincode) are required'
         })
     }
 
     try {
-        // First, verify the user exists
-        const user = await db.get('SELECT id FROM users WHERE id = ?', [userId])
+        // Convert userId to INTEGER if it's a string (sysmail lookup)
+        let numericUserId: number
+        if (typeof userId === 'number') {
+            numericUserId = userId
+        } else {
+            const user = await db.get('SELECT id FROM users WHERE sysmail = ?', [userId])
+            if (!user) {
+                throw createError({
+                    statusCode: 404,
+                    message: 'User not found'
+                })
+            }
+            numericUserId = user.id
+        }
+
+        // Verify the user exists by numeric id
+        const user = await db.get('SELECT id FROM users WHERE id = ?', [numericUserId])
         if (!user) {
             throw createError({
                 statusCode: 404,
@@ -26,8 +44,8 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Verify the project exists
-        const project = await db.get('SELECT id FROM projects WHERE id = ?', [projectId])
+        // Lookup project by domaincode, get numeric id
+        const project = await db.get('SELECT id, domaincode FROM projects WHERE domaincode = ?', [projectId])
         if (!project) {
             throw createError({
                 statusCode: 404,
@@ -35,30 +53,32 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Check if user is already a member
+        const numericProjectId = project.id
+
+        // Check if user is already a member (using numeric project_id)
         const existingMember = await db.get(
             'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
+            [numericProjectId, numericUserId]
         )
 
         if (existingMember) {
             return {
                 success: true,
                 message: 'User is already a member of this project',
-                data: { userId, projectId }
+                data: { userId: numericUserId, projectId, projectDbId: numericProjectId }
             }
         }
 
-        // Add user to project_members table
+        // Add user to project_members table (using numeric ids)
         await db.run(
             'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-            [projectId, userId, 'member']
+            [numericProjectId, numericUserId, 'member']
         )
 
         return {
             success: true,
             message: 'User added to project successfully',
-            data: { userId, projectId, role: 'member' }
+            data: { userId: numericUserId, projectId, projectDbId: numericProjectId, role: 'member' }
         }
     } catch (error) {
         console.error('Error adding user to project:', error)
