@@ -135,6 +135,286 @@ export const migration = {
 
         console.log('    ✓ Status table created with indexes on name, table, and (name+table) unique')
 
+        // -------------------------------------------------------------------
+        // 1.3: Populate status table with task statuses
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating status table with task statuses...')
+
+        const taskStatuses = [
+            {
+                value: 0,
+                name: 'new',
+                table: 'tasks',
+                description: 'Newly created task',
+                name_i18n: { de: 'Neu', en: 'New', cz: 'Nový' },
+                desc_i18n: { de: 'Neu erstellte Aufgabe', en: 'Newly created task', cz: 'Nově vytvořený úkol' }
+            },
+            {
+                value: 1,
+                name: 'idea',
+                table: 'tasks',
+                description: 'Task idea/concept',
+                name_i18n: { de: 'Idee', en: 'Idea', cz: 'Nápad' },
+                desc_i18n: { de: 'Aufgaben-Idee/Konzept', en: 'Task idea/concept', cz: 'Nápad/koncept úkolu' }
+            },
+            {
+                value: 2,
+                name: 'draft',
+                table: 'tasks',
+                description: 'Draft task',
+                name_i18n: { de: 'Entwurf', en: 'Draft', cz: 'Koncept' },
+                desc_i18n: { de: 'Entwurfsaufgabe', en: 'Draft task', cz: 'Konceptový úkol' }
+            },
+            {
+                value: 4,
+                name: 'active',
+                table: 'tasks',
+                description: 'Active/in-progress task',
+                name_i18n: { de: 'Aktiv', en: 'Active', cz: 'Aktivní' },
+                desc_i18n: { de: 'Aktive/laufende Aufgabe', en: 'Active/in-progress task', cz: 'Aktivní/probíhající úkol' }
+            },
+            {
+                value: 5,
+                name: 'final',
+                table: 'tasks',
+                description: 'Completed task',
+                name_i18n: { de: 'Abgeschlossen', en: 'Completed', cz: 'Dokončeno' },
+                desc_i18n: { de: 'Abgeschlossene Aufgabe', en: 'Completed task', cz: 'Dokončený úkol' }
+            },
+            {
+                value: 8,
+                name: 'reopen',
+                table: 'tasks',
+                description: 'Reopened task',
+                name_i18n: { de: 'Wiedereröffnet', en: 'Reopened', cz: 'Znovu otevřeno' },
+                desc_i18n: { de: 'Wiedereröffnete Aufgabe', en: 'Reopened task', cz: 'Znovu otevřený úkol' }
+            },
+            {
+                value: 16,
+                name: 'trash',
+                table: 'tasks',
+                description: 'Trashed task',
+                name_i18n: { de: 'Papierkorb', en: 'Trash', cz: 'Koš' },
+                desc_i18n: { de: 'Gelöschte Aufgabe', en: 'Trashed task', cz: 'Smazaný úkol' }
+            }
+        ]
+
+        for (const status of taskStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (
+                        ${status.value}, 
+                        '${status.name}', 
+                        '${status.table}', 
+                        '${status.description}',
+                        '${JSON.stringify(status.name_i18n)}'::jsonb,
+                        '${JSON.stringify(status.desc_i18n)}'::jsonb
+                    )
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (
+                        ${status.value}, 
+                        '${status.name}', 
+                        '${status.table}', 
+                        '${status.description}',
+                        '${JSON.stringify(status.name_i18n)}',
+                        '${JSON.stringify(status.desc_i18n)}'
+                    )
+                `)
+            }
+        }
+
+        console.log('    ✓ Task statuses populated with i18n translations (new, idea, draft, active, final, reopen, trash)')
+
+        // -------------------------------------------------------------------
+        // 1.4: Populate status table with events statuses  
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating status table with events statuses...')
+
+        const eventsStatuses = [
+            { value: 2, name: 'draft', table: 'events', description: 'Draft version', name_i18n: { de: 'Entwurf', cz: 'Koncept' }, desc_i18n: { de: 'Entwurfsversion', cz: 'Konceptová verze' } },
+            { value: 3, name: 'publish', table: 'events', description: 'Published', name_i18n: { de: 'Veröffentlicht', cz: 'Zveřejněno' }, desc_i18n: { de: 'Veröffentlicht', cz: 'Zveřejněno' } },
+            { value: 4, name: 'released', table: 'events', description: 'Released', name_i18n: { de: 'Freigegeben', cz: 'Vydáno' }, desc_i18n: { de: 'Freigegeben', cz: 'Vydáno' } },
+            { value: 6, name: 'confirmed', table: 'events', description: 'Confirmed event', name_i18n: { de: 'Bestätigt', cz: 'Potvrzeno' }, desc_i18n: { de: 'Bestätigte Veranstaltung', cz: 'Potvrzená událost' } },
+            { value: 8, name: 'running', table: 'events', description: 'Currently running', name_i18n: { de: 'Läuft', cz: 'Probíhá' }, desc_i18n: { de: 'Läuft gerade', cz: 'Právě probíhá' } },
+            { value: 9, name: 'passed', table: 'events', description: 'Event has passed', name_i18n: { de: 'Vergangen', cz: 'Proběhlo' }, desc_i18n: { de: 'Veranstaltung ist vorbei', cz: 'Událost proběhla' } },
+            { value: 12, name: 'documented', table: 'events', description: 'Documented', name_i18n: { de: 'Dokumentiert', cz: 'Zdokumentováno' }, desc_i18n: { de: 'Dokumentiert', cz: 'Zdokumentováno' } }
+        ]
+
+        for (const status of eventsStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', '${status.table}', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', '${status.table}', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Events statuses populated with i18n translations (draft, publish, released, confirmed, running, passed, documented)')
+
+        // -------------------------------------------------------------------
+        // 1.5: Populate status table with posts statuses
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating status table with posts statuses...')
+
+        const postsStatuses = [
+            { value: 2, name: 'draft', table: 'posts', description: 'Draft version', name_i18n: { de: 'Entwurf', cz: 'Koncept' }, desc_i18n: { de: 'Entwurfsversion', cz: 'Konceptová verze' } },
+            { value: 3, name: 'publish', table: 'posts', description: 'Published', name_i18n: { de: 'Veröffentlicht', cz: 'Zveřejněno' }, desc_i18n: { de: 'Veröffentlicht', cz: 'Zveřejněno' } },
+            { value: 4, name: 'released', table: 'posts', description: 'Released', name_i18n: { de: 'Freigegeben', cz: 'Vydáno' }, desc_i18n: { de: 'Freigegeben', cz: 'Vydáno' } }
+        ]
+
+        for (const status of postsStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', '${status.table}', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', '${status.table}', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Posts statuses populated with i18n translations (draft, publish, released)')
+
+        // -------------------------------------------------------------------
+        // 1.6: Populate common status entries for all tables
+        // -------------------------------------------------------------------
+        console.log('\n  📊 Populating common status entries for all tables...')
+
+        // Common statuses for projects, events, posts, persons, users
+        const commonTables = ['projects', 'events', 'posts', 'persons', 'users']
+        const commonStatuses = [
+            { value: 0, name: 'new', description: 'Newly created', name_i18n: { de: 'Neu', en: 'New', cz: 'Nový' }, desc_i18n: { de: 'Neu erstellt', en: 'Newly created', cz: 'Nově vytvořený' } },
+            { value: 1, name: 'demo', description: 'Demo/example data', name_i18n: { de: 'Demo', en: 'Demo', cz: 'Demo' }, desc_i18n: { de: 'Demo-/Beispieldaten', en: 'Demo/example data', cz: 'Demonstrační/ukázková data' } },
+            { value: 2, name: 'progress', description: 'Work in progress', name_i18n: { de: 'In Arbeit', en: 'In progress', cz: 'Probíhá' }, desc_i18n: { de: 'In Bearbeitung', en: 'Work in progress', cz: 'Probíhající práce' } },
+            { value: 4, name: 'done', description: 'Completed', name_i18n: { de: 'Fertig', en: 'Done', cz: 'Hotovo' }, desc_i18n: { de: 'Abgeschlossen', en: 'Completed', cz: 'Dokončeno' } },
+            { value: 16, name: 'trash', description: 'In trash/deleted', name_i18n: { de: 'Papierkorb', en: 'Trash', cz: 'Koš' }, desc_i18n: { de: 'Im Papierkorb/gelöscht', en: 'In trash/deleted', cz: 'V koši/smazáno' } },
+            { value: 32, name: 'archived', description: 'Archived', name_i18n: { de: 'Archiviert', en: 'Archived', cz: 'Archivováno' }, desc_i18n: { de: 'Archiviert', en: 'Archived', cz: 'Archivováno' } },
+            { value: 48, name: 'linked', description: 'Linked/referenced data', name_i18n: { de: 'Verknüpft', en: 'Linked', cz: 'Propojeno' }, desc_i18n: { de: 'Verknüpfte/referenzierte Daten', en: 'Linked/referenced data', cz: 'Propojená/odkazovaná data' } }
+        ]
+
+        for (const table of commonTables) {
+            for (const status of commonStatuses) {
+                if (isPostgres) {
+                    await db.exec(`
+                        INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                        VALUES (${status.value}, '${status.name}', '${table}', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                        ON CONFLICT (name, "table") DO NOTHING
+                    `)
+                } else {
+                    await db.exec(`
+                        INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                        VALUES (${status.value}, '${status.name}', '${table}', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                    `)
+                }
+            }
+        }
+
+        console.log('    ✓ Common statuses populated for projects, events, posts, persons, users')
+
+        // -------------------------------------------------------------------
+        // 1.7: Populate projects-specific statuses
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating projects-specific statuses...')
+
+        const projectsSpecificStatuses = [
+            { value: 2, name: 'draft', description: 'Draft version', name_i18n: { de: 'Entwurf', en: 'Draft', cz: 'Koncept' }, desc_i18n: { de: 'Entwurfsversion', en: 'Draft version', cz: 'Konceptová verze' } },
+            { value: 3, name: 'publish', description: 'Published', name_i18n: { de: 'Veröffentlicht', en: 'Published', cz: 'Zveřejněno' }, desc_i18n: { de: 'Veröffentlicht', en: 'Published', cz: 'Zveřejněno' } },
+            { value: 4, name: 'released', description: 'Released', name_i18n: { de: 'Freigegeben', en: 'Released', cz: 'Vydáno' }, desc_i18n: { de: 'Freigegeben', en: 'Released', cz: 'Vydáno' } }
+        ]
+
+        for (const status of projectsSpecificStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'projects', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'projects', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Projects-specific statuses populated')
+
+        // -------------------------------------------------------------------
+        // 1.8: Populate users-specific statuses
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating users-specific statuses...')
+
+        const usersSpecificStatuses = [
+            { value: 2, name: 'verified', description: 'Email verified', name_i18n: { de: 'Verifiziert', en: 'Verified', cz: 'Ověřeno' }, desc_i18n: { de: 'E-Mail verifiziert', en: 'Email verified', cz: 'E-mail ověřen' } },
+            { value: 3, name: 'publish', description: 'Public profile', name_i18n: { de: 'Öffentlich', en: 'Public', cz: 'Veřejný' }, desc_i18n: { de: 'Öffentliches Profil', en: 'Public profile', cz: 'Veřejný profil' } },
+            { value: 4, name: 'synced', description: 'Synced with external system', name_i18n: { de: 'Synchronisiert', en: 'Synced', cz: 'Synchronizováno' }, desc_i18n: { de: 'Mit externem System synchronisiert', en: 'Synced with external system', cz: 'Synchronizováno s externím systémem' } },
+            { value: 6, name: 'public', description: 'Public user', name_i18n: { de: 'Öffentlicher Benutzer', en: 'Public user', cz: 'Veřejný uživatel' }, desc_i18n: { de: 'Öffentlicher Benutzer', en: 'Public user', cz: 'Veřejný uživatel' } }
+        ]
+
+        for (const status of usersSpecificStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'users', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'users', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Users-specific statuses populated')
+
+        // -------------------------------------------------------------------
+        // 1.9: Populate persons-specific statuses
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Populating persons-specific statuses...')
+
+        const personsSpecificStatuses = [
+            { value: 2, name: 'active', description: 'Active person', name_i18n: { de: 'Aktiv', en: 'Active', cz: 'Aktivní' }, desc_i18n: { de: 'Aktive Person', en: 'Active person', cz: 'Aktivní osoba' } },
+            { value: 4, name: 'synced', description: 'Synced with external system', name_i18n: { de: 'Synchronisiert', en: 'Synced', cz: 'Synchronizováno' }, desc_i18n: { de: 'Mit externem System synchronisiert', en: 'Synced with external system', cz: 'Synchronizováno s externím systémem' } },
+            { value: 6, name: 'public', description: 'Public person', name_i18n: { de: 'Öffentlich', en: 'Public', cz: 'Veřejný' }, desc_i18n: { de: 'Öffentliche Person', en: 'Public person', cz: 'Veřejná osoba' } },
+            { value: 32, name: 'archived', description: 'Archived person', name_i18n: { de: 'Archiviert', en: 'Archived', cz: 'Archivováno' }, desc_i18n: { de: 'Archivierte Person', en: 'Archived person', cz: 'Archivovaná osoba' } },
+            { value: 16, name: 'deleted', description: 'Deleted person', name_i18n: { de: 'Gelöscht', en: 'Deleted', cz: 'Smazáno' }, desc_i18n: { de: 'Gelöschte Person', en: 'Deleted person', cz: 'Smazaná osoba' } }
+        ]
+
+        for (const status of personsSpecificStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'persons', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'persons', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Persons-specific statuses populated')
+
+        console.log('\n✅ Chapter 1 completed: All status entries populated for all tables')
+
         // ===================================================================
         // CHAPTER 2: Migrate Users to Support Auto-ID
         // ===================================================================
@@ -265,23 +545,98 @@ export const migration = {
             }
             console.log('      ✓ Updated project_members.user_id')
 
-            // Step 7: Update foreign key constraints to reference new id field
-            // First drop old constraints, then recreate them
+            // Step 7: Drop all old foreign key constraints BEFORE converting column types
+            console.log('    ℹ️  Dropping old foreign key constraints before conversion...')
+
             await db.exec(`ALTER TABLE domains DROP CONSTRAINT IF EXISTS domains_admin_user_id_fkey`)
-            await db.exec(`ALTER TABLE domains ADD CONSTRAINT domains_admin_user_id_fkey 
-                          FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL`)
-
             await db.exec(`ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_owner_id_fkey`)
-            await db.exec(`ALTER TABLE projects ADD CONSTRAINT projects_owner_id_fkey 
-                          FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL`)
-
             await db.exec(`ALTER TABLE project_members DROP CONSTRAINT IF EXISTS project_members_user_id_fkey`)
-            await db.exec(`ALTER TABLE project_members ADD CONSTRAINT project_members_user_id_fkey 
-                          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE`)
+            await db.exec(`ALTER TABLE events DROP CONSTRAINT IF EXISTS events_user_id_fkey`)
+
+            console.log('      ✓ Dropped old FK constraints')
+
+            // Step 8: Convert column types to INTEGER
+            console.log('    ℹ️  Converting foreign key column types to INTEGER...')
+
+            // Convert domains.admin_user_id from TEXT to INTEGER
+            // Handle NULLs and convert text representations of numbers
+            try {
+                await db.exec(`
+                    ALTER TABLE domains 
+                    ALTER COLUMN admin_user_id TYPE INTEGER 
+                    USING CASE 
+                        WHEN admin_user_id IS NULL THEN NULL
+                        WHEN admin_user_id ~ '^[0-9]+$' THEN admin_user_id::INTEGER
+                        ELSE NULL
+                    END
+                `)
+                console.log('      ✓ Converted domains.admin_user_id to INTEGER')
+            } catch (error: any) {
+                console.log('      ❌ Failed to convert domains.admin_user_id:', error.message)
+                throw error
+            }
+
+            // Convert projects.owner_id from TEXT to INTEGER (if it's TEXT)
+            try {
+                await db.exec(`
+                    ALTER TABLE projects 
+                    ALTER COLUMN owner_id TYPE INTEGER 
+                    USING CASE 
+                        WHEN owner_id IS NULL THEN NULL
+                        WHEN owner_id ~ '^[0-9]+$' THEN owner_id::INTEGER
+                        ELSE NULL
+                    END
+                `)
+                console.log('      ✓ Converted projects.owner_id to INTEGER')
+            } catch (error: any) {
+                console.log('      ❌ Failed to convert projects.owner_id:', error.message)
+                throw error
+            }
+
+            // Convert project_members.user_id from TEXT to INTEGER (if it's TEXT)
+            try {
+                await db.exec(`
+                    ALTER TABLE project_members 
+                    ALTER COLUMN user_id TYPE INTEGER 
+                    USING CASE 
+                        WHEN user_id IS NULL THEN NULL
+                        WHEN user_id ~ '^[0-9]+$' THEN user_id::INTEGER
+                        ELSE NULL
+                    END
+                `)
+                console.log('      ✓ Converted project_members.user_id to INTEGER')
+            } catch (error: any) {
+                console.log('      ❌ Failed to convert project_members.user_id:', error.message)
+                throw error
+            }
+
+            // Step 9: Add new foreign key constraints to reference new INTEGER id field
+            console.log('    ℹ️  Adding new foreign key constraints...')
+
+            await db.exec(`
+                ALTER TABLE domains 
+                ADD CONSTRAINT domains_admin_user_id_fkey 
+                FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL
+            `)
+            console.log('      ✓ Added domains.admin_user_id FK')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD CONSTRAINT projects_owner_id_fkey 
+                FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
+            `)
+            console.log('      ✓ Added projects.owner_id FK')
+
+            await db.exec(`
+                ALTER TABLE project_members 
+                ADD CONSTRAINT project_members_user_id_fkey 
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            `)
+            console.log('      ✓ Added project_members.user_id FK')
 
             console.log('    ✓ Updated foreign key constraints')
 
-            // Step 8: Drop old users table
+            // Step 10: Drop old users table
             await db.exec(`DROP TABLE users_old`)
             console.log('    ✓ Dropped old users table')
 
@@ -443,9 +798,76 @@ export const migration = {
                 FROM instructors_old i
             `)
 
+            // Drop FK constraints that reference instructors_old before dropping the table
+            await db.exec(`ALTER TABLE events DROP CONSTRAINT IF EXISTS events_public_user_fkey`)
+            await db.exec(`ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_public_user_fkey`)
+            await db.exec(`ALTER TABLE event_instructors DROP CONSTRAINT IF EXISTS event_instructors_instructor_id_fkey`)
+            await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_instructor_id_fkey`)
+            await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_instructor_id_fkey1`)
+
             // Drop old table
             await db.exec(`DROP TABLE instructors_old`)
             console.log('    ✓ Instructors migrated to auto-ID with status_id')
+
+            // Convert column types to INTEGER before recreating FK constraints
+            await db.exec(`
+                ALTER TABLE events 
+                ALTER COLUMN public_user TYPE INTEGER 
+                USING CASE 
+                    WHEN public_user IS NULL THEN NULL
+                    WHEN public_user ~ '^[0-9]+$' THEN public_user::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE posts 
+                ALTER COLUMN public_user TYPE INTEGER 
+                USING CASE 
+                    WHEN public_user IS NULL THEN NULL
+                    WHEN public_user ~ '^[0-9]+$' THEN public_user::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE event_instructors 
+                ALTER COLUMN instructor_id TYPE INTEGER 
+                USING CASE 
+                    WHEN instructor_id IS NULL THEN NULL
+                    WHEN instructor_id ~ '^[0-9]+$' THEN instructor_id::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE users 
+                ALTER COLUMN instructor_id TYPE INTEGER 
+                USING CASE 
+                    WHEN instructor_id IS NULL THEN NULL
+                    WHEN instructor_id ~ '^[0-9]+$' THEN instructor_id::INTEGER
+                    ELSE NULL
+                END
+            `)
+
+            // Recreate FK constraints pointing to new instructors table
+            await db.exec(`
+                ALTER TABLE events 
+                ADD CONSTRAINT events_public_user_fkey 
+                FOREIGN KEY (public_user) REFERENCES instructors(id) ON DELETE SET NULL
+            `)
+            await db.exec(`
+                ALTER TABLE posts 
+                ADD CONSTRAINT posts_public_user_fkey 
+                FOREIGN KEY (public_user) REFERENCES instructors(id) ON DELETE SET NULL
+            `)
+            await db.exec(`
+                ALTER TABLE event_instructors 
+                ADD CONSTRAINT event_instructors_instructor_id_fkey 
+                FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE
+            `)
+            await db.exec(`
+                ALTER TABLE users 
+                ADD CONSTRAINT users_instructor_id_fkey 
+                FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE SET NULL
+            `)
 
             // -------------------------------------------------------------------
             // 3.3: Migrate locations table
@@ -518,76 +940,122 @@ export const migration = {
                 FROM locations_old l
             `)
 
+            // Drop FK constraints that reference locations_old
+            await db.exec(`ALTER TABLE events DROP CONSTRAINT IF EXISTS events_location_fkey`)
+
             // Drop old table
             await db.exec(`DROP TABLE locations_old`)
+
+            // Convert column types to INTEGER (after dropping old table, before recreating FK)
+            await db.exec(`
+                ALTER TABLE events 
+                ALTER COLUMN location TYPE INTEGER 
+                USING CASE 
+                    WHEN location IS NULL THEN NULL
+                    WHEN location ~ '^[0-9]+$' THEN location::INTEGER
+                    ELSE NULL
+                END
+            `)
+
+            // Recreate FK constraint
+            await db.exec(`
+                ALTER TABLE events 
+                ADD CONSTRAINT events_location_fkey 
+                FOREIGN KEY (location) REFERENCES locations(id) ON DELETE SET NULL
+            `)
+
             console.log('    ✓ Locations migrated to auto-ID with status_id')
 
             // -------------------------------------------------------------------
             // 3.4: Update foreign key references
             // -------------------------------------------------------------------
-            console.log('\n  🔗 Updating foreign key references...')
+            // NOTE: FK reference updates are no longer needed here because:
+            // 1. Data migration in steps 3.1-3.3 already populated new INTEGER ids
+            // 2. Column type conversions above already converted FK columns to INTEGER
+            // 3. FK constraints recreated above already reference the new INTEGER ids
+            console.log('\n  🔗 Foreign key references already updated during migration')
 
-            // Note: events.public_user references instructors(id)
-            // Since we renamed old ID to xmlid, we need to update this reference
-            // First, check if the column exists
-            const eventsColumns = await db.all(`
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = 'events' AND column_name = 'public_user'
-            `, [])
+            // -------------------------------------------------------------------
+            // 3.5: Migrate events status from TEXT to INTEGER FK
+            // -------------------------------------------------------------------
+            console.log('\n  📊 Migrating events.status from TEXT to status_id INTEGER...')
 
-            if (eventsColumns.length > 0) {
-                console.log('    → Updating events.public_user references...')
+            // Add new status_id column
+            await db.exec(`
+                ALTER TABLE events
+                ADD COLUMN IF NOT EXISTS status_id INTEGER REFERENCES status(id)
+            `)
 
-                // Create mapping table temporarily
+            // Map old TEXT status values to new INTEGER status IDs
+            const eventsStatusMapping = [
+                { oldValue: 'draft', newName: 'draft' },
+                { oldValue: 'publish', newName: 'publish' },
+                { oldValue: 'released', newName: 'released' },
+                { oldValue: 'confirmed', newName: 'confirmed' },
+                { oldValue: 'running', newName: 'running' },
+                { oldValue: 'passed', newName: 'passed' },
+                { oldValue: 'documented', newName: 'documented' }
+            ]
+
+            for (const mapping of eventsStatusMapping) {
                 await db.exec(`
-                    CREATE TEMPORARY TABLE instructor_id_map AS
-                    SELECT xmlid AS old_id, id AS new_id
-                    FROM instructors
+                    UPDATE events
+                    SET status_id = (SELECT id FROM status WHERE "table" = 'events' AND name = '${mapping.newName}' LIMIT 1)
+                    WHERE status = '${mapping.oldValue}'
                 `)
-
-                // Update events.public_user to use new instructor IDs
-                await db.exec(`
-                    UPDATE events e
-                    SET public_user = m.new_id::TEXT
-                    FROM instructor_id_map m
-                    WHERE e.public_user = m.old_id
-                `)
-
-                // Drop temporary table
-                await db.exec(`DROP TABLE instructor_id_map`)
-                console.log('    ✓ Updated events.public_user references')
             }
 
-            // Note: events.location references locations(id)
-            const eventsLocationColumns = await db.all(`
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = 'events' AND column_name = 'location'
+            // Set default for any unmapped statuses (use 'draft' as default)
+            const defaultEventsStatusId = await db.get(`
+                SELECT id FROM status WHERE "table" = 'events' AND name = 'draft' LIMIT 1
             `, [])
 
-            if (eventsLocationColumns.length > 0) {
-                console.log('    → Updating events.location references...')
+            await db.exec(`
+                UPDATE events
+                SET status_id = ${defaultEventsStatusId.id}
+                WHERE status_id IS NULL
+            `)
 
-                // Create mapping table temporarily
+            console.log('    ✓ Migrated events.status to status_id')
+
+            // -------------------------------------------------------------------
+            // 3.6: Migrate posts status from TEXT to INTEGER FK
+            // -------------------------------------------------------------------
+            console.log('\n  📊 Migrating posts.status from TEXT to status_id INTEGER...')
+
+            // Add new status_id column
+            await db.exec(`
+                ALTER TABLE posts
+                ADD COLUMN IF NOT EXISTS status_id INTEGER REFERENCES status(id)
+            `)
+
+            // Map old TEXT status values to new INTEGER status IDs
+            const postsStatusMapping = [
+                { oldValue: 'draft', newName: 'draft' },
+                { oldValue: 'publish', newName: 'publish' },
+                { oldValue: 'released', newName: 'released' }
+            ]
+
+            for (const mapping of postsStatusMapping) {
                 await db.exec(`
-                    CREATE TEMPORARY TABLE location_id_map AS
-                    SELECT xmlid AS old_id, id AS new_id
-                    FROM locations
+                    UPDATE posts
+                    SET status_id = (SELECT id FROM status WHERE "table" = 'posts' AND name = '${mapping.newName}' LIMIT 1)
+                    WHERE status = '${mapping.oldValue}'
                 `)
-
-                // Update events.location to use new location IDs
-                await db.exec(`
-                    UPDATE events e
-                    SET location = m.new_id::TEXT
-                    FROM location_id_map m
-                    WHERE e.location = m.old_id
-                `)
-
-                // Drop temporary table
-                await db.exec(`DROP TABLE location_id_map`)
-                console.log('    ✓ Updated events.location references')
             }
+
+            // Set default for any unmapped statuses (use 'draft' as default)
+            const defaultPostsStatusId = await db.get(`
+                SELECT id FROM status WHERE "table" = 'posts' AND name = 'draft' LIMIT 1
+            `, [])
+
+            await db.exec(`
+                UPDATE posts
+                SET status_id = ${defaultPostsStatusId.id}
+                WHERE status_id IS NULL
+            `)
+
+            console.log('    ✓ Migrated posts.status to status_id')
 
         } else {
             // SQLite implementation
@@ -691,32 +1159,126 @@ export const migration = {
             // -------------------------------------------------------------------
             console.log('\n  👥 Adding computed column is_user to participants...')
 
+            // Add as regular column (PostgreSQL doesn't support subqueries in generated columns)
             await db.exec(`
                 ALTER TABLE participants 
-                ADD COLUMN IF NOT EXISTS is_user BOOLEAN 
-                GENERATED ALWAYS AS (
-                    EXISTS (
-                        SELECT 1 FROM users WHERE users.participant_id = participants.id
-                    )
-                ) STORED
+                ADD COLUMN IF NOT EXISTS is_user BOOLEAN DEFAULT FALSE
             `)
-            console.log('    ✓ Added participants.is_user computed column')
+
+            // Create trigger function to maintain is_user
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_participant_is_user()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+                        IF NEW.participant_id IS NOT NULL THEN
+                            UPDATE participants 
+                            SET is_user = TRUE 
+                            WHERE id = NEW.participant_id;
+                        END IF;
+                        RETURN NEW;
+                    ELSIF (TG_OP = 'DELETE') THEN
+                        IF OLD.participant_id IS NOT NULL THEN
+                            UPDATE participants 
+                            SET is_user = (
+                                EXISTS (
+                                    SELECT 1 FROM users 
+                                    WHERE participant_id = OLD.participant_id
+                                    AND id != OLD.id
+                                )
+                            )
+                            WHERE id = OLD.participant_id;
+                        END IF;
+                        RETURN OLD;
+                    END IF;
+                    RETURN NULL;
+                END;
+                $$ LANGUAGE plpgsql
+            `)
+
+            // Create trigger on users table
+            await db.exec(`
+                DROP TRIGGER IF EXISTS trg_update_participant_is_user ON users
+            `)
+            await db.exec(`
+                CREATE TRIGGER trg_update_participant_is_user
+                AFTER INSERT OR UPDATE OR DELETE ON users
+                FOR EACH ROW
+                EXECUTE FUNCTION update_participant_is_user()
+            `)
+
+            // Initial population
+            await db.exec(`
+                UPDATE participants p
+                SET is_user = EXISTS (
+                    SELECT 1 FROM users WHERE participant_id = p.id
+                )
+            `)
+
+            console.log('    ✓ Added participants.is_user with trigger maintenance')
 
             // -------------------------------------------------------------------
             // 4.4: Add computed column is_user to instructors
             // -------------------------------------------------------------------
             console.log('\n  🎓 Adding computed column is_user to instructors...')
 
+            // Add as regular column (PostgreSQL doesn't support subqueries in generated columns)
             await db.exec(`
                 ALTER TABLE instructors 
-                ADD COLUMN IF NOT EXISTS is_user BOOLEAN 
-                GENERATED ALWAYS AS (
-                    EXISTS (
-                        SELECT 1 FROM users WHERE users.instructor_id = instructors.id
-                    )
-                ) STORED
+                ADD COLUMN IF NOT EXISTS is_user BOOLEAN DEFAULT FALSE
             `)
-            console.log('    ✓ Added instructors.is_user computed column')
+
+            // Create trigger function to maintain is_user
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_instructor_is_user()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+                        IF NEW.instructor_id IS NOT NULL THEN
+                            UPDATE instructors 
+                            SET is_user = TRUE 
+                            WHERE id = NEW.instructor_id;
+                        END IF;
+                        RETURN NEW;
+                    ELSIF (TG_OP = 'DELETE') THEN
+                        IF OLD.instructor_id IS NOT NULL THEN
+                            UPDATE instructors 
+                            SET is_user = (
+                                EXISTS (
+                                    SELECT 1 FROM users 
+                                    WHERE instructor_id = OLD.instructor_id
+                                    AND id != OLD.id
+                                )
+                            )
+                            WHERE id = OLD.instructor_id;
+                        END IF;
+                        RETURN OLD;
+                    END IF;
+                    RETURN NULL;
+                END;
+                $$ LANGUAGE plpgsql
+            `)
+
+            // Create trigger on users table
+            await db.exec(`
+                DROP TRIGGER IF EXISTS trg_update_instructor_is_user ON users
+            `)
+            await db.exec(`
+                CREATE TRIGGER trg_update_instructor_is_user
+                AFTER INSERT OR UPDATE OR DELETE ON users
+                FOR EACH ROW
+                EXECUTE FUNCTION update_instructor_is_user()
+            `)
+
+            // Initial population
+            await db.exec(`
+                UPDATE instructors i
+                SET is_user = EXISTS (
+                    SELECT 1 FROM users WHERE instructor_id = i.id
+                )
+            `)
+
+            console.log('    ✓ Added instructors.is_user with trigger maintenance')
 
         } else {
             // SQLite implementation
@@ -804,7 +1366,7 @@ export const migration = {
                     p.heading,  -- old heading becomes name
                     p.description,
                     p.status,
-                    (SELECT u.id FROM users u WHERE u.sysmail = p.owner_id LIMIT 1),  -- Convert owner_id to new user ID
+                    p.owner_id,  -- Already converted to INTEGER in Chapter 2
                     p.created_at,
                     p.updated_at,
                     p.header_type,
@@ -926,11 +1488,24 @@ export const migration = {
                 await db.exec(`
                     ALTER TABLE project_members DROP CONSTRAINT IF EXISTS project_members_project_id_fkey
                 `)
+                // Use UPDATE to convert domaincode to integer id
                 await db.exec(`
-                    ALTER TABLE project_members ALTER COLUMN project_id TYPE INTEGER USING (
-                        SELECT m.new_id FROM project_id_map m WHERE m.old_id = project_members.project_id
-                    )
+                    UPDATE project_members pm
+                    SET project_id = m.new_id::TEXT
+                    FROM project_id_map m
+                    WHERE pm.project_id = m.old_id
                 `)
+                // Convert column type to INTEGER
+                await db.exec(`
+                    ALTER TABLE project_members 
+                    ALTER COLUMN project_id TYPE INTEGER 
+                    USING CASE 
+                        WHEN project_id IS NULL THEN NULL
+                        WHEN project_id ~ '^[0-9]+$' THEN project_id::INTEGER
+                        ELSE NULL
+                    END
+                `)
+                // Recreate FK constraint
                 await db.exec(`
                     ALTER TABLE project_members 
                     ADD CONSTRAINT project_members_project_id_fkey 
@@ -960,8 +1535,91 @@ export const migration = {
             // Drop temporary mapping table
             await db.exec(`DROP TABLE project_id_map`)
 
+            // Drop FK constraints referencing projects_old before dropping table
+            await db.exec(`ALTER TABLE events DROP CONSTRAINT IF EXISTS events_project_fkey`)
+            await db.exec(`ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_project_fkey`)
+            await db.exec(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_project_fkey`)
+            await db.exec(`ALTER TABLE form_input DROP CONSTRAINT IF EXISTS form_input_project_fkey`)
+            await db.exec(`ALTER TABLE domains DROP CONSTRAINT IF EXISTS domains_project_id_fkey`)
+
             // Drop old projects table
             await db.exec(`DROP TABLE projects_old`)
+
+            // Convert column types to INTEGER and recreate FK constraints
+            await db.exec(`
+                ALTER TABLE events 
+                ALTER COLUMN project TYPE INTEGER 
+                USING CASE 
+                    WHEN project IS NULL THEN NULL
+                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE events 
+                ADD CONSTRAINT events_project_fkey 
+                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
+            `)
+
+            await db.exec(`
+                ALTER TABLE posts 
+                ALTER COLUMN project TYPE INTEGER 
+                USING CASE 
+                    WHEN project IS NULL THEN NULL
+                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE posts 
+                ADD CONSTRAINT posts_project_fkey 
+                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
+            `)
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ALTER COLUMN project TYPE INTEGER 
+                USING CASE 
+                    WHEN project IS NULL THEN NULL
+                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD CONSTRAINT pages_project_fkey 
+                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
+            `)
+
+            await db.exec(`
+                ALTER TABLE form_input 
+                ALTER COLUMN project TYPE INTEGER 
+                USING CASE 
+                    WHEN project IS NULL THEN NULL
+                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE form_input 
+                ADD CONSTRAINT form_input_project_fkey 
+                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
+            `)
+
+            await db.exec(`
+                ALTER TABLE domains 
+                ALTER COLUMN project_id TYPE INTEGER 
+                USING CASE 
+                    WHEN project_id IS NULL THEN NULL
+                    WHEN project_id ~ '^[0-9]+$' THEN project_id::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE domains 
+                ADD CONSTRAINT domains_project_id_fkey 
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+            `)
 
             console.log('    ✓ All foreign key references updated')
 
@@ -1314,7 +1972,7 @@ export const migration = {
 
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS events_tags (
-                    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+                    event_id TEXT REFERENCES events(id) ON DELETE CASCADE,
                     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (event_id, tag_id)
@@ -1324,7 +1982,7 @@ export const migration = {
 
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS posts_tags (
-                    post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+                    post_id TEXT REFERENCES posts(id) ON DELETE CASCADE,
                     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (post_id, tag_id)
@@ -1686,22 +2344,32 @@ export const migration = {
             await db.exec(`
                 CREATE OR REPLACE FUNCTION update_instructors_regio()
                 RETURNS TRIGGER AS $$
+                DECLARE
+                    v_user_id INTEGER;
                 BEGIN
                     -- Only if is_user is true
                     IF NEW.is_user = TRUE THEN
-                        -- Find regio project where user is owner or member
-                        NEW.regio_id = (
-                            SELECT p.id
-                            FROM projects p
-                            WHERE p.is_regio = TRUE
-                            AND (
-                                p.owner_id = NEW.user_id
-                                OR NEW.user_id::TEXT = ANY(
-                                    SELECT jsonb_array_elements_text(p.member_ids)
+                        -- Find the user that links to this instructor
+                        SELECT id INTO v_user_id
+                        FROM users
+                        WHERE instructor_id = NEW.id
+                        LIMIT 1;
+                        
+                        IF v_user_id IS NOT NULL THEN
+                            -- Find regio project where user is owner or member
+                            NEW.regio_id = (
+                                SELECT p.id
+                                FROM projects p
+                                WHERE p.is_regio = TRUE
+                                AND (
+                                    p.owner_id = v_user_id
+                                    OR v_user_id::TEXT = ANY(
+                                        SELECT jsonb_array_elements_text(p.member_ids)
+                                    )
                                 )
-                            )
-                            LIMIT 1
-                        );
+                                LIMIT 1
+                            );
+                        END IF;
                     ELSE
                         NEW.regio_id = NULL;
                     END IF;
@@ -1715,7 +2383,7 @@ export const migration = {
             `)
             await db.exec(`
                 CREATE TRIGGER trg_update_instructors_regio
-                BEFORE INSERT OR UPDATE OF is_user, user_id ON instructors
+                BEFORE INSERT OR UPDATE OF is_user ON instructors
                 FOR EACH ROW
                 EXECUTE FUNCTION update_instructors_regio();
             `)
@@ -1731,7 +2399,7 @@ export const migration = {
                 UPDATE events e
                 SET regio_id = p.regio
                 FROM projects p
-                WHERE p.id::TEXT = e.project
+                WHERE p.id = e.project::INTEGER
             `)
             console.log('    ✓ Populated events.regio_id')
 
@@ -1740,7 +2408,7 @@ export const migration = {
                 UPDATE posts po
                 SET regio_id = p.regio
                 FROM projects p
-                WHERE p.id::TEXT = po.project
+                WHERE p.id = po.project::INTEGER
             `)
             console.log('    ✓ Populated posts.regio_id')
 
@@ -1750,10 +2418,11 @@ export const migration = {
                 SET regio_id = (
                     SELECT p.id
                     FROM projects p
+                    JOIN users u ON u.instructor_id = i.id
                     WHERE p.is_regio = TRUE
                     AND (
-                        p.owner_id = i.user_id
-                        OR i.user_id::TEXT = ANY(
+                        p.owner_id = u.id
+                        OR u.id::TEXT = ANY(
                             SELECT jsonb_array_elements_text(p.member_ids)
                         )
                     )
@@ -1790,10 +2459,19 @@ export const migration = {
                     v_instructor_is_user BOOLEAN;
                 BEGIN
                     -- Get the numeric value of the status
-                    SELECT value INTO v_status_value
-                    FROM status
-                    WHERE id = NEW.status_id
-                    LIMIT 1;
+                    -- NOTE: events still uses TEXT status column, not status_id
+                    -- Map common status names to values
+                    CASE NEW.status
+                        WHEN 'new' THEN v_status_value := 0;
+                        WHEN 'idea' THEN v_status_value := 1;
+                        WHEN 'draft' THEN v_status_value := 2;
+                        WHEN 'active' THEN v_status_value := 4;
+                        WHEN 'final' THEN v_status_value := 5;
+                        WHEN 'published' THEN v_status_value := 4;
+                        WHEN 'reopen' THEN v_status_value := 8;
+                        WHEN 'trash' THEN v_status_value := 16;
+                        ELSE v_status_value := 1; -- Default to idea
+                    END CASE;
 
                     -- If status is going > 2 (publishing), validate public_user
                     IF v_status_value > 2 THEN
@@ -1826,7 +2504,7 @@ export const migration = {
             `)
             await db.exec(`
                 CREATE TRIGGER trg_validate_event_status
-                BEFORE INSERT OR UPDATE OF status_id, public_user ON events
+                BEFORE INSERT OR UPDATE OF status, public_user ON events
                 FOR EACH ROW
                 EXECUTE FUNCTION validate_event_status();
             `)
