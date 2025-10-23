@@ -8,12 +8,21 @@ import type { DatabaseAdapter } from '../adapter'
 export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
     console.log('🌱 Seeding admin watch tasks...')
 
+    // Get status IDs for tasks
+    const reopenStatus = await db.get(`SELECT id FROM status WHERE "table" = 'tasks' AND name = 'reopen' LIMIT 1`)
+    const reopenStatusId = reopenStatus ? (reopenStatus as any).id : null
+
+    if (!reopenStatusId) {
+        console.log('  ⚠️  Warning: reopen status not found, skipping admin watch tasks')
+        return
+    }
+
     const tasks = [
         {
             id: '_admin.task_watch_reset_base',
             title: '**Reset Base** reload the base from csv',
             description: 'Watches CSV files and reloads base entities when files are updated. This task monitors file system changes and updates the database accordingly.',
-            status: 'reopen', // Watch tasks always stay in reopen
+            status: reopenStatusId, // Use status_id instead of TEXT
             category: 'admin',
             priority: 'high',
             logic: 'watchcsv_base',
@@ -30,7 +39,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
             id: '_admin.task_watch_save_base',
             title: '**Save Base** update the base to csv',
             description: 'Watches database entities with isbase flag and exports them to CSV when changes are detected. This task monitors database changes and updates CSV files accordingly.',
-            status: 'reopen', // Watch tasks always stay in reopen
+            status: reopenStatusId, // Use status_id instead of TEXT
             category: 'admin',
             priority: 'high',
             logic: 'watchdb_base',
@@ -51,12 +60,12 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
         if (isPostgres) {
             await db.run(`
                 INSERT INTO tasks (
-                    id, title, description, status, category, priority,
+                    id, name, description, status, category, priority,
                     logic, filter, entity_name, record_type, record_id,
-                    assigned_to, due_date, release_id, image
+                    assigned_to, due_date, release_id, cimg
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 ON CONFLICT (id) DO UPDATE SET
-                    title = EXCLUDED.title,
+                    name = EXCLUDED.name,
                     description = EXCLUDED.description,
                     status = EXCLUDED.status,
                     category = EXCLUDED.category,
@@ -69,7 +78,7 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
                     assigned_to = EXCLUDED.assigned_to,
                     due_date = EXCLUDED.due_date,
                     release_id = EXCLUDED.release_id,
-                    image = EXCLUDED.image
+                    cimg = EXCLUDED.cimg
             `, [
                 task.id, task.title, task.description, task.status, task.category, task.priority,
                 task.logic, task.filter, task.entity_name, task.record_type, task.record_id,
@@ -78,9 +87,9 @@ export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
         } else {
             await db.run(`
                 INSERT OR REPLACE INTO tasks (
-                    id, title, description, status, category, priority,
+                    id, name, description, status, category, priority,
                     logic, filter, entity_name, record_type, record_id,
-                    assigned_to, due_date, release_id, image
+                    assigned_to, due_date, release_id, cimg
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 task.id, task.title, task.description, task.status, task.category, task.priority,

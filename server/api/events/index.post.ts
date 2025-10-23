@@ -2,21 +2,36 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { EventsTableFields } from '../../types/database'
 
+// POST /api/events - Create new event
+// After Migration 019 Chapter 3B:
+// - events.id is now INTEGER (auto-increment), not provided by client
+// - events.xmlid can optionally store old TEXT id
+// - events.project_id stores INTEGER FK to projects.id
+// - body.project accepts domaincode (TEXT) for lookup
 export default defineEventHandler(async (event) => {
     try {
         const body = await readBody(event)
 
         // Validate required fields
-        if (!body.id || !body.name) {
+        if (!body.name) {
             throw createError({
                 statusCode: 400,
-                message: 'Missing required fields: id, name'
+                message: 'Missing required field: name'
             })
+        }
+
+        // Lookup project_id if project domaincode provided
+        let projectId = null
+        if (body.project) {
+            const project = await db.get('SELECT id FROM projects WHERE domaincode = ?', [body.project])
+            if (project) {
+                projectId = project.id
+            }
         }
 
         // Prepare data with only valid table fields
         const eventData: Partial<EventsTableFields> = {
-            id: body.id,
+            xmlid: body.xmlid || body.id || null, // Store old id as xmlid
             name: body.name,
             teaser: body.teaser || null,
             cimg: body.cimg || null,
@@ -24,22 +39,23 @@ export default defineEventHandler(async (event) => {
             date_end: body.date_end || null,
             event_type: body.event_type || 'workshop',
             isbase: body.isbase || 0,
-            project: body.project || null,
+            project_id: projectId,
             template: body.template || null,
             public_user: body.public_user || null,
             location: body.location || null
         }
 
-        // Insert event
+        // Insert event (id is auto-generated)
         const sql = `
-      INSERT INTO events (
-        id, name, teaser, cimg, date_begin, date_end,
-        event_type, isbase, project, template, public_user, location
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
+            INSERT INTO events (
+                xmlid, name, teaser, cimg, date_begin, date_end,
+                event_type, isbase, project_id, template, public_user, location
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
+        `
 
-        await db.run(sql, [
-            eventData.id,
+        const result = await db.run(sql, [
+            eventData.xmlid,
             eventData.name,
             eventData.teaser,
             eventData.cimg,
@@ -47,14 +63,21 @@ export default defineEventHandler(async (event) => {
             eventData.date_end,
             eventData.event_type,
             eventData.isbase,
-            eventData.project,
+            eventData.project_id,
             eventData.template,
             eventData.public_user,
             eventData.location
         ])
 
-        // Return the created event
-        const created = await db.get('SELECT * FROM events WHERE id = ?', [body.id])
+        // Get the created event with domaincode
+        const created = await db.get(`
+            SELECT 
+                e.*,
+                p.domaincode AS domaincode
+            FROM events e
+            LEFT JOIN projects p ON e.project_id = p.id
+            WHERE e.id = ?
+        `, [(result as any).id])
 
         return created
     } catch (error) {
@@ -64,7 +87,7 @@ export default defineEventHandler(async (event) => {
         if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
             throw createError({
                 statusCode: 409,
-                message: 'Event with this ID already exists'
+                message: 'Event with this xmlid already exists'
             })
         }
 

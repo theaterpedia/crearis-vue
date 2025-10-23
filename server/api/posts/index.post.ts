@@ -2,55 +2,78 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { PostsTableFields } from '../../types/database'
 
+// POST /api/posts - Create new post
+// After Migration 019 Chapter 3B:
+// - posts.id is now INTEGER (auto-increment), not provided by client
+// - posts.xmlid can optionally store old TEXT id
+// - posts.project_id stores INTEGER FK to projects.id
+// - body.project accepts domaincode (TEXT) for lookup
 export default defineEventHandler(async (event) => {
     try {
         const body = await readBody(event)
 
         // Validate required fields
-        if (!body.id || !body.name) {
+        if (!body.name) {
             throw createError({
                 statusCode: 400,
-                message: 'Missing required fields: id, name'
+                message: 'Missing required field: name'
             })
+        }
+
+        // Lookup project_id if project domaincode provided
+        let projectId = null
+        if (body.project) {
+            const project = await db.get('SELECT id FROM projects WHERE domaincode = ?', [body.project])
+            if (project) {
+                projectId = project.id
+            }
         }
 
         // Prepare data with only valid table fields
         const postData: Partial<PostsTableFields> = {
-            id: body.id,
+            xmlid: body.xmlid || body.id || null, // Store old id as xmlid
             name: body.name,
             subtitle: body.subtitle || null,
             teaser: body.teaser || null,
             cimg: body.cimg || null,
             post_date: body.post_date || null,
             isbase: body.isbase || 0,
-            project: body.project || null,
+            project_id: projectId,
             template: body.template || null,
             public_user: body.public_user || null
         }
 
-        // Insert post
+        // Insert post (id is auto-generated)
         const sql = `
-      INSERT INTO posts (
-        id, name, subtitle, teaser, cimg, post_date,
-        isbase, project, template, public_user
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
+            INSERT INTO posts (
+                xmlid, name, subtitle, teaser, cimg, post_date,
+                isbase, project_id, template, public_user
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
+        `
 
-        await db.run(sql, [
-            postData.id,
+        const result = await db.run(sql, [
+            postData.xmlid,
             postData.name,
             postData.subtitle,
             postData.teaser,
             postData.cimg,
             postData.post_date,
             postData.isbase,
-            postData.project,
+            postData.project_id,
             postData.template,
             postData.public_user
         ])
 
-        // Return the created post
-        const created = await db.get('SELECT * FROM posts WHERE id = ?', [body.id])
+        // Get the created post with domaincode
+        const created = await db.get(`
+            SELECT 
+                p.*,
+                pr.domaincode AS domaincode
+            FROM posts p
+            LEFT JOIN projects pr ON p.project_id = pr.id
+            WHERE p.id = ?
+        `, [(result as any).id])
 
         return created
     } catch (error) {
@@ -60,7 +83,7 @@ export default defineEventHandler(async (event) => {
         if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
             throw createError({
                 statusCode: 409,
-                message: 'Post with this ID already exists'
+                message: 'Post with this xmlid already exists'
             })
         }
 

@@ -1057,6 +1057,303 @@ export const migration = {
 
             console.log('    ✓ Migrated posts.status to status_id')
 
+            // ===================================================================
+            // CHAPTER 3B: Migrate Events and Posts to Auto-Increment IDs
+            // ===================================================================
+            console.log('\n📖 Chapter 3B: Migrate Events and Posts to Auto-Increment IDs')
+
+            // -------------------------------------------------------------------
+            // 3B.1: Migrate events table to auto-increment ID
+            // -------------------------------------------------------------------
+            console.log('\n  📅 Migrating events table to auto-increment ID...')
+
+            // Get all columns from events_old table dynamically
+            const eventsColumns = await db.all(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'events'
+                ORDER BY ordinal_position
+            `)
+            const eventColumnNames = (eventsColumns as any[]).map(c => c.column_name)
+            console.log(`    ℹ️  Found ${eventColumnNames.length} columns in events table: ${eventColumnNames.join(', ')}`)
+
+            // Backup existing table
+            await db.exec(`ALTER TABLE events RENAME TO events_old`)
+
+            // Create new table with auto-incrementing ID and all existing columns except id
+            // We keep all fields that exist, adding xmlid for the old id
+            await db.exec(`
+                CREATE TABLE events (
+                    id SERIAL PRIMARY KEY,
+                    xmlid TEXT UNIQUE,
+                    name TEXT,
+                    date_begin TEXT,
+                    date_end TEXT,
+                    address_id TEXT,
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    seats_max INTEGER,
+                    cimg TEXT,
+                    header_type TEXT,
+                    rectitle TEXT,
+                    teaser TEXT,
+                    version_id TEXT,
+                    created_at TIMESTAMP,
+                    updated_at TEXT,
+                    status TEXT,
+                    isbase INTEGER DEFAULT 0,
+                    project TEXT,
+                    template TEXT,
+                    public_user INTEGER REFERENCES instructors(id) ON DELETE SET NULL,
+                    location INTEGER REFERENCES locations(id) ON DELETE SET NULL,
+                    event_type TEXT,
+                    md TEXT,
+                    html TEXT,
+                    status_id INTEGER REFERENCES status(id),
+                    lang TEXT DEFAULT 'de' CHECK (lang IN ('de', 'en', 'cz')),
+                    tags_ids INTEGER[] DEFAULT '{}',
+                    tags_display TEXT[] DEFAULT '{}'
+                )
+            `)
+
+            // Migrate data - dynamically build INSERT based on what columns exist
+            // Note: user_id needs special handling as it's INTEGER in new table but may be TEXT in old
+            const selectColumnsList = eventColumnNames.filter(col => col !== 'id' && col !== 'user_id')
+            const selectClause = selectColumnsList.join(', ')
+
+            await db.exec(`
+                INSERT INTO events (
+                    xmlid, ${selectClause}, user_id
+                )
+                SELECT 
+                    id as xmlid, ${selectClause},
+                    CASE 
+                        WHEN user_id IS NULL THEN NULL
+                        WHEN user_id ~ '^[0-9]+$' THEN user_id::INTEGER
+                        ELSE NULL
+                    END as user_id
+                FROM events_old
+            `)
+
+            console.log('    ✓ Events migrated to auto-ID')
+
+            // Drop any triggers or constraints on events_old before dropping the table
+            await db.exec(`DROP TRIGGER IF EXISTS trigger_create_event_task ON events_old CASCADE`)
+            await db.exec(`DROP TRIGGER IF EXISTS trigger_delete_event_task ON events_old CASCADE`)
+
+            // Drop old table with CASCADE to handle any remaining dependencies
+            await db.exec(`DROP TABLE events_old CASCADE`)
+
+            console.log('    ✓ Dropped old events table')
+
+            // -------------------------------------------------------------------
+            // 3B.2: Update events_tags junction table
+            // -------------------------------------------------------------------
+            console.log('\n  🔗 Updating events_tags junction table...')
+
+            // Create mapping of old TEXT ids to new INTEGER ids
+            const eventIdMapping: Record<string, number> = {}
+            const eventsData = await db.all('SELECT id, xmlid FROM events')
+
+            for (const event of eventsData as any[]) {
+                eventIdMapping[event.xmlid] = event.id
+            }
+
+            // Check if events_tags exists
+            const eventsTagsExists = await db.get(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'events_tags'
+                )
+            `)
+
+            if ((eventsTagsExists as any).exists) {
+                // Backup events_tags
+                await db.exec(`ALTER TABLE events_tags RENAME TO events_tags_old`)
+
+                // Create new junction table with INTEGER event_id
+                await db.exec(`
+                    CREATE TABLE events_tags (
+                        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+                        tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (event_id, tag_id)
+                    )
+                `)
+
+                // Migrate data using the mapping
+                const oldEventsTags = await db.all('SELECT * FROM events_tags_old')
+                for (const oldTag of oldEventsTags as any[]) {
+                    const newEventId = eventIdMapping[oldTag.event_id]
+                    if (newEventId) {
+                        await db.run(
+                            `INSERT INTO events_tags (event_id, tag_id, created_at) VALUES ($1, $2, $3)`,
+                            [newEventId, oldTag.tag_id, oldTag.created_at]
+                        )
+                    }
+                }
+
+                // Drop old table
+                await db.exec(`DROP TABLE events_tags_old`)
+
+                // Create indexes
+                await db.exec(`
+                    CREATE INDEX IF NOT EXISTS idx_events_tags_event ON events_tags(event_id)
+                `)
+                await db.exec(`
+                    CREATE INDEX IF NOT EXISTS idx_events_tags_tag ON events_tags(tag_id)
+                `)
+
+                console.log('    ✓ events_tags junction table updated')
+            } else {
+                console.log('    ℹ️  events_tags table does not exist yet, will be created later')
+            }
+
+            // -------------------------------------------------------------------
+            // 3B.3: Migrate posts table to auto-increment ID
+            // -------------------------------------------------------------------
+            console.log('\n  📝 Migrating posts table to auto-increment ID...')
+
+            // Get all columns from posts table dynamically
+            const postsColumns = await db.all(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'posts'
+                ORDER BY ordinal_position
+            `)
+            const postColumnNames = (postsColumns as any[]).map(c => c.column_name)
+            console.log(`    ℹ️  Found ${postColumnNames.length} columns in posts table: ${postColumnNames.join(', ')}`)
+
+            // Backup existing table
+            await db.exec(`ALTER TABLE posts RENAME TO posts_old`)
+
+            // Create new table with auto-incrementing ID and all existing columns except id
+            await db.exec(`
+                CREATE TABLE posts (
+                    id SERIAL PRIMARY KEY,
+                    xmlid TEXT UNIQUE,
+                    name TEXT,
+                    subtitle TEXT,
+                    teaser TEXT,
+                    author_id TEXT,
+                    blog_id TEXT,
+                    tag_ids TEXT,
+                    website_published TEXT,
+                    is_published TEXT,
+                    post_date TEXT,
+                    cover_properties TEXT,
+                    event_id TEXT,
+                    cimg TEXT,
+                    version_id TEXT,
+                    created_at TIMESTAMP,
+                    updated_at TEXT,
+                    status TEXT,
+                    isbase INTEGER DEFAULT 0,
+                    project TEXT,
+                    template TEXT,
+                    public_user INTEGER REFERENCES instructors(id) ON DELETE SET NULL,
+                    header_type TEXT,
+                    md TEXT,
+                    html TEXT,
+                    status_id INTEGER REFERENCES status(id),
+                    lang TEXT DEFAULT 'de' CHECK (lang IN ('de', 'en', 'cz')),
+                    tags_ids INTEGER[] DEFAULT '{}',
+                    tags_display TEXT[] DEFAULT '{}'
+                )
+            `)
+
+            // Migrate data - dynamically build INSERT based on what columns exist
+            const postSelectColumns = postColumnNames.filter(col => col !== 'id').join(', ')
+            await db.exec(`
+                INSERT INTO posts (
+                    xmlid, ${postSelectColumns}
+                )
+                SELECT 
+                    id as xmlid, ${postSelectColumns}
+                FROM posts_old
+            `)
+
+            console.log('    ✓ Posts migrated to auto-ID')
+
+            // Drop any triggers or constraints on posts_old before dropping the table
+            await db.exec(`DROP TRIGGER IF EXISTS trigger_create_post_task ON posts_old CASCADE`)
+            await db.exec(`DROP TRIGGER IF EXISTS trigger_delete_post_task ON posts_old CASCADE`)
+
+            // Drop old table with CASCADE to handle any remaining dependencies
+            await db.exec(`DROP TABLE posts_old CASCADE`)
+
+            console.log('    ✓ Dropped old posts table')
+
+            // -------------------------------------------------------------------
+            // 3B.4: Update posts_tags junction table
+            // -------------------------------------------------------------------
+            console.log('\n  🔗 Updating posts_tags junction table...')
+
+            // Create mapping of old TEXT ids to new INTEGER ids
+            const postIdMapping: Record<string, number> = {}
+            const postsData = await db.all('SELECT id, xmlid FROM posts')
+
+            for (const post of postsData as any[]) {
+                postIdMapping[post.xmlid] = post.id
+            }
+
+            // Check if posts_tags exists
+            const postsTagsExists = await db.get(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'posts_tags'
+                )
+            `)
+
+            if ((postsTagsExists as any).exists) {
+                // Backup posts_tags
+                await db.exec(`ALTER TABLE posts_tags RENAME TO posts_tags_old`)
+
+                // Create new junction table with INTEGER post_id
+                await db.exec(`
+                    CREATE TABLE posts_tags (
+                        post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+                        tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (post_id, tag_id)
+                    )
+                `)
+
+                // Migrate data using the mapping
+                const oldPostsTags = await db.all('SELECT * FROM posts_tags_old')
+                for (const oldTag of oldPostsTags as any[]) {
+                    const newPostId = postIdMapping[oldTag.post_id]
+                    if (newPostId) {
+                        await db.run(
+                            `INSERT INTO posts_tags (post_id, tag_id, created_at) VALUES ($1, $2, $3)`,
+                            [newPostId, oldTag.tag_id, oldTag.created_at]
+                        )
+                    }
+                }
+
+                // Drop old table
+                await db.exec(`DROP TABLE posts_tags_old`)
+
+                // Create indexes
+                await db.exec(`
+                    CREATE INDEX IF NOT EXISTS idx_posts_tags_post ON posts_tags(post_id)
+                `)
+                await db.exec(`
+                    CREATE INDEX IF NOT EXISTS idx_posts_tags_tag ON posts_tags(tag_id)
+                `)
+
+                console.log('    ✓ posts_tags junction table updated')
+            } else {
+                console.log('    ℹ️  posts_tags table does not exist yet, will be created later')
+            }
+
+            // -------------------------------------------------------------------
+            // 3B.5: Note about project field conversion
+            // -------------------------------------------------------------------
+            console.log('\n  ℹ️  Note: events.project and posts.project remain as TEXT (domaincode)')
+            console.log('      These will be converted to project_id INTEGER in Chapter 5B after projects migration')
+
+            console.log('\n✅ Chapter 3B completed: Events and Posts migrated to auto-increment IDs')
+
         } else {
             // SQLite implementation
             console.log('    ⚠️  SQLite: File table migration requires manual handling')
@@ -1718,6 +2015,145 @@ export const migration = {
         }
 
         // ===================================================================
+        // CHAPTER 5B: Convert Events/Posts project to project_id
+        // ===================================================================
+        console.log('\n📖 Chapter 5B: Convert Events/Posts project to project_id')
+
+        if (isPostgres) {
+            // -------------------------------------------------------------------
+            // 5B.1: Update events.project to events.project_id (INTEGER FK)
+            // -------------------------------------------------------------------
+            console.log('\n  🔄 Converting events.project to project_id...')
+
+            // Check if project column exists and is TEXT
+            const eventsProjectCol = await db.all(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'events' AND column_name = 'project'
+            `)
+
+            if (eventsProjectCol.length > 0) {
+                console.log(`    ℹ️  events.project exists with type: ${(eventsProjectCol[0] as any).data_type}`)
+
+                // Add new project_id column
+                await db.exec(`
+                    ALTER TABLE events
+                    ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL
+                `)
+
+                // Map TEXT domaincode to INTEGER project.id
+                // Handle both TEXT and INTEGER cases
+                const projectType = (eventsProjectCol[0] as any).data_type
+                if (projectType === 'text' || projectType === 'character varying') {
+                    await db.exec(`
+                        UPDATE events e
+                        SET project_id = p.id
+                        FROM projects p
+                        WHERE e.project = p.domaincode
+                    `)
+                } else if (projectType === 'integer') {
+                    // Already INTEGER, just copy
+                    await db.exec(`
+                        UPDATE events e
+                        SET project_id = project
+                    `)
+                }
+
+                // Drop old project column
+                await db.exec(`ALTER TABLE events DROP COLUMN IF EXISTS project`)
+
+                console.log('    ✓ Converted events.project → events.project_id')
+            } else {
+                console.log('    ℹ️  events.project does not exist, project_id may already be set')
+            }
+
+            // -------------------------------------------------------------------
+            // 5B.2: Update posts.project to posts.project_id (INTEGER FK)
+            // -------------------------------------------------------------------
+            console.log('\n  🔄 Converting posts.project to project_id...')
+
+            // Check if project column exists and is TEXT
+            const postsProjectCol = await db.all(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'posts' AND column_name = 'project'
+            `)
+
+            if (postsProjectCol.length > 0) {
+                console.log(`    ℹ️  posts.project exists with type: ${(postsProjectCol[0] as any).data_type}`)
+
+                // Add new project_id column
+                await db.exec(`
+                    ALTER TABLE posts
+                    ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL
+                `)
+
+                // Map TEXT domaincode to INTEGER project.id
+                const projectType = (postsProjectCol[0] as any).data_type
+                if (projectType === 'text' || projectType === 'character varying') {
+                    await db.exec(`
+                        UPDATE posts p
+                        SET project_id = pr.id
+                        FROM projects pr
+                        WHERE p.project = pr.domaincode
+                    `)
+                } else if (projectType === 'integer') {
+                    // Already INTEGER, just copy
+                    await db.exec(`
+                        UPDATE posts p
+                        SET project_id = project
+                    `)
+                }
+
+                // Drop old project column
+                await db.exec(`ALTER TABLE posts DROP COLUMN IF EXISTS project`)
+
+                console.log('    ✓ Converted posts.project → posts.project_id')
+            } else {
+                console.log('    ℹ️  posts.project does not exist, project_id may already be set')
+            }
+
+            // -------------------------------------------------------------------
+            // 5B.3: Add regio_id to events and posts (will be computed by triggers)
+            // -------------------------------------------------------------------
+            console.log('\n  🌍 Adding regio_id columns...')
+
+            await db.exec(`
+                ALTER TABLE events
+                ADD COLUMN IF NOT EXISTS regio_id INTEGER REFERENCES projects(id)
+            `)
+
+            await db.exec(`
+                ALTER TABLE posts
+                ADD COLUMN IF NOT EXISTS regio_id INTEGER REFERENCES projects(id)
+            `)
+
+            // Populate initial values
+            await db.exec(`
+                UPDATE events e
+                SET regio_id = p.regio
+                FROM projects p
+                WHERE e.project_id = p.id AND p.regio IS NOT NULL
+            `)
+
+            await db.exec(`
+                UPDATE posts po
+                SET regio_id = p.regio
+                FROM projects p
+                WHERE po.project_id = p.id AND p.regio IS NOT NULL
+            `)
+
+            console.log('    ✓ Added and populated regio_id columns')
+
+            console.log('\n✅ Chapter 5B completed: Events and Posts project references converted to INTEGER FK')
+
+        } else {
+            // SQLite implementation
+            console.log('    ⚠️  SQLite: Events/Posts project conversion requires manual handling')
+            console.log('    ⚠️  SQLite migration for events/posts not yet implemented')
+        }
+
+        // ===================================================================
         // CHAPTER 6: Align Tasks, Add Status FK
         // ===================================================================
         console.log('\n📖 Chapter 6: Align Tasks, Add Status FK')
@@ -1966,29 +2402,56 @@ export const migration = {
             }
 
             // -------------------------------------------------------------------
-            // 8.2: Create junction tables for tags
+            // 8.2: Verify junction tables for tags exist
             // -------------------------------------------------------------------
-            console.log('\n  🔗 Creating events_tags and posts_tags junction tables...')
+            console.log('\n  🔗 Verifying events_tags and posts_tags junction tables...')
 
-            await db.exec(`
-                CREATE TABLE IF NOT EXISTS events_tags (
-                    event_id TEXT REFERENCES events(id) ON DELETE CASCADE,
-                    tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (event_id, tag_id)
+            // Note: These tables are now created in Chapter 3B during events/posts migration
+            // This section just verifies they exist
+
+            const eventsTagsCheck = await db.get(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'events_tags'
                 )
             `)
-            console.log('    ✓ Created events_tags table')
 
-            await db.exec(`
-                CREATE TABLE IF NOT EXISTS posts_tags (
-                    post_id TEXT REFERENCES posts(id) ON DELETE CASCADE,
-                    tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (post_id, tag_id)
+            if ((eventsTagsCheck as any).exists) {
+                console.log('    ✓ events_tags table exists')
+            } else {
+                // Create if it doesn't exist (for edge cases)
+                await db.exec(`
+                    CREATE TABLE IF NOT EXISTS events_tags (
+                        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+                        tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (event_id, tag_id)
+                    )
+                `)
+                console.log('    ✓ Created events_tags table')
+            }
+
+            const postsTagsCheck = await db.get(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'posts_tags'
                 )
             `)
-            console.log('    ✓ Created posts_tags table')
+
+            if ((postsTagsCheck as any).exists) {
+                console.log('    ✓ posts_tags table exists')
+            } else {
+                // Create if it doesn't exist (for edge cases)
+                await db.exec(`
+                    CREATE TABLE IF NOT EXISTS posts_tags (
+                        post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+                        tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (post_id, tag_id)
+                    )
+                `)
+                console.log('    ✓ Created posts_tags table')
+            }
 
             // Create indexes
             await db.exec(`
@@ -2003,7 +2466,7 @@ export const migration = {
             await db.exec(`
                 CREATE INDEX IF NOT EXISTS idx_posts_tags_tag ON posts_tags(tag_id)
             `)
-            console.log('    ✓ Created indexes for tag junction tables')
+            console.log('    ✓ Verified indexes for tag junction tables')
 
             // -------------------------------------------------------------------
             // 8.3: Add computed columns for tags_ids and tags_display
@@ -2284,7 +2747,7 @@ export const migration = {
             // -------------------------------------------------------------------
             console.log('\n  ⚙️  Creating triggers for regio_id...')
 
-            // Function to update events regio_id
+            // Function to update events regio_id (now uses project_id INTEGER)
             await db.exec(`
                 CREATE OR REPLACE FUNCTION update_events_regio()
                 RETURNS TRIGGER AS $$
@@ -2293,7 +2756,7 @@ export const migration = {
                     NEW.regio_id = (
                         SELECT p.regio
                         FROM projects p
-                        WHERE p.id::TEXT = NEW.project
+                        WHERE p.id = NEW.project_id
                         LIMIT 1
                     );
                     RETURN NEW;
@@ -2306,13 +2769,13 @@ export const migration = {
             `)
             await db.exec(`
                 CREATE TRIGGER trg_update_events_regio
-                BEFORE INSERT OR UPDATE OF project ON events
+                BEFORE INSERT OR UPDATE OF project_id ON events
                 FOR EACH ROW
                 EXECUTE FUNCTION update_events_regio();
             `)
             console.log('    ✓ Created trigger for events regio_id')
 
-            // Function to update posts regio_id
+            // Function to update posts regio_id (now uses project_id INTEGER)
             await db.exec(`
                 CREATE OR REPLACE FUNCTION update_posts_regio()
                 RETURNS TRIGGER AS $$
@@ -2321,7 +2784,7 @@ export const migration = {
                     NEW.regio_id = (
                         SELECT p.regio
                         FROM projects p
-                        WHERE p.id::TEXT = NEW.project
+                        WHERE p.id = NEW.project_id
                         LIMIT 1
                     );
                     RETURN NEW;
@@ -2334,7 +2797,7 @@ export const migration = {
             `)
             await db.exec(`
                 CREATE TRIGGER trg_update_posts_regio
-                BEFORE INSERT OR UPDATE OF project ON posts
+                BEFORE INSERT OR UPDATE OF project_id ON posts
                 FOR EACH ROW
                 EXECUTE FUNCTION update_posts_regio();
             `)
@@ -2394,21 +2857,21 @@ export const migration = {
             // -------------------------------------------------------------------
             console.log('\n  📊 Populating initial regio_id values...')
 
-            // Update events
+            // Update events (now uses project_id INTEGER)
             await db.exec(`
                 UPDATE events e
                 SET regio_id = p.regio
                 FROM projects p
-                WHERE p.id = e.project::INTEGER
+                WHERE p.id = e.project_id AND p.regio IS NOT NULL
             `)
             console.log('    ✓ Populated events.regio_id')
 
-            // Update posts
+            // Update posts (now uses project_id INTEGER)
             await db.exec(`
                 UPDATE posts po
                 SET regio_id = p.regio
                 FROM projects p
-                WHERE p.id = po.project::INTEGER
+                WHERE p.id = po.project_id AND p.regio IS NOT NULL
             `)
             console.log('    ✓ Populated posts.regio_id')
 

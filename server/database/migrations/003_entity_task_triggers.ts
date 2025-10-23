@@ -42,7 +42,7 @@ async function createPostgreSQLTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE OR REPLACE FUNCTION create_main_task()
         RETURNS TRIGGER AS $$
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 gen_random_uuid()::text,
                 '{{main-title}}',
@@ -107,7 +107,7 @@ async function createSQLiteTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE TRIGGER IF NOT EXISTS create_event_main_task
         AFTER INSERT ON events
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 (SELECT lower(hex(randomblob(8)))),
                 '{{main-title}}',
@@ -135,7 +135,7 @@ async function createSQLiteTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE TRIGGER IF NOT EXISTS create_post_main_task
         AFTER INSERT ON posts
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 (SELECT lower(hex(randomblob(8)))),
                 '{{main-title}}',
@@ -163,7 +163,7 @@ async function createSQLiteTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE TRIGGER IF NOT EXISTS create_location_main_task
         AFTER INSERT ON locations
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 (SELECT lower(hex(randomblob(8)))),
                 '{{main-title}}',
@@ -191,7 +191,7 @@ async function createSQLiteTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE TRIGGER IF NOT EXISTS create_instructor_main_task
         AFTER INSERT ON instructors
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 (SELECT lower(hex(randomblob(8)))),
                 '{{main-title}}',
@@ -219,7 +219,7 @@ async function createSQLiteTriggers(db: DatabaseAdapter): Promise<void> {
         CREATE TRIGGER IF NOT EXISTS create_participant_main_task
         AFTER INSERT ON participants
         BEGIN
-            INSERT INTO tasks (id, title, category, status, record_type, record_id)
+            INSERT INTO tasks (id, name, category, status, record_type, record_id)
             VALUES (
                 (SELECT lower(hex(randomblob(8)))),
                 '{{main-title}}',
