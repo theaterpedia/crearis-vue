@@ -152,11 +152,11 @@ export const migration = {
         // -------------------------------------------------------------------
         console.log('\n  📦 Seeding initial projects...')
 
-        // Check if 'tp' project exists
-        const tpExists = await db.get('SELECT id FROM projects WHERE id = $1', ['tp'])
+        // Check if 'tp' project exists (using domaincode, not id)
+        const tpExists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['tp'])
         if (!tpExists) {
             await db.exec(`
-                INSERT INTO projects (id, heading, type, description, status)
+                INSERT INTO projects (domaincode, name, type, description, status)
                 VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active')
             `)
             console.log('    ✓ Created tp project (special)')
@@ -164,11 +164,11 @@ export const migration = {
             console.log('    ℹ️  tp project already exists')
         }
 
-        // Check if 'regio1' project exists
-        const regio1Exists = await db.get('SELECT id FROM projects WHERE id = $1', ['regio1'])
+        // Check if 'regio1' project exists (using domaincode, not id)
+        const regio1Exists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['regio1'])
         if (!regio1Exists) {
             await db.exec(`
-                INSERT INTO projects (id, heading, type, description, status)
+                INSERT INTO projects (domaincode, name, type, description, status)
                 VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
             `)
             console.log('    ✓ Created regio1 project (regio)')
@@ -303,17 +303,17 @@ export const migration = {
             const project2User = await db.get(`SELECT id FROM users WHERE username = $1`, ['project2'])
 
             if (project1User) {
-                await db.run(`UPDATE projects SET owner_id = $1 WHERE id = $2`, [(project1User as any).id, 'tp'])
+                await db.run(`UPDATE projects SET owner_id = $1 WHERE domaincode = $2`, [(project1User as any).id, 'tp'])
                 console.log(`    ✓ Set tp project owner to project1@theaterpedia.org`)
             }
 
             if (project2User) {
-                await db.run(`UPDATE projects SET owner_id = $1 WHERE id = $2`, [(project2User as any).id, 'regio1'])
+                await db.run(`UPDATE projects SET owner_id = $1 WHERE domaincode = $2`, [(project2User as any).id, 'regio1'])
                 console.log(`    ✓ Set regio1 project owner to project2@theaterpedia.org`)
             }
         } else {
-            await db.run(`UPDATE projects SET owner_id = ? WHERE id = ?`, ['project1@theaterpedia.org', 'tp'])
-            await db.run(`UPDATE projects SET owner_id = ? WHERE id = ?`, ['project2@theaterpedia.org', 'regio1'])
+            await db.run(`UPDATE projects SET owner_id = ? WHERE domaincode = ?`, ['project1@theaterpedia.org', 'tp'])
+            await db.run(`UPDATE projects SET owner_id = ? WHERE domaincode = ?`, ['project2@theaterpedia.org', 'regio1'])
         }
 
         // -------------------------------------------------------------------
@@ -329,16 +329,16 @@ export const migration = {
         const project2UserId = project2User ? (project2User as any).id : null
 
         // Check if tp project exists
-        const tpProject = await db.get('SELECT id FROM projects WHERE id = ?', ['tp'])
+        const tpProject = await db.get('SELECT id FROM projects WHERE domaincode = ?', ['tp'])
         if (tpProject && project1UserId) {
             const existingMember = await db.get(
                 'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['tp', project1UserId]
+                [(tpProject as any).id, project1UserId]
             )
             if (!existingMember) {
                 await db.run(
                     'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['tp', project1UserId, 'owner']
+                    [(tpProject as any).id, project1UserId, 'owner']
                 )
                 console.log('    ✓ Added project1 as member of tp')
             } else {
@@ -349,12 +349,12 @@ export const migration = {
         if (tpProject && project2UserId) {
             const existingMember2 = await db.get(
                 'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['tp', project2UserId]
+                [(tpProject as any).id, project2UserId]
             )
             if (!existingMember2) {
                 await db.run(
                     'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['tp', project2UserId, 'member']
+                    [(tpProject as any).id, project2UserId, 'member']
                 )
                 console.log('    ✓ Added project2 as member of tp')
             } else {
@@ -363,16 +363,16 @@ export const migration = {
         }
 
         // Check if regio1 project exists
-        const regio1Project = await db.get('SELECT id FROM projects WHERE id = ?', ['regio1'])
+        const regio1Project = await db.get('SELECT id FROM projects WHERE domaincode = ?', ['regio1'])
         if (regio1Project && project2UserId) {
             const existingMember = await db.get(
                 'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['regio1', project2UserId]
+                [(regio1Project as any).id, project2UserId]
             )
             if (!existingMember) {
                 await db.run(
                     'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['regio1', project2UserId, 'owner']
+                    [(regio1Project as any).id, project2UserId, 'owner']
                 )
                 console.log('    ✓ Added project2 as member of regio1')
             } else {
@@ -388,7 +388,7 @@ export const migration = {
 
         // Remove in reverse order
         await db.exec('DELETE FROM project_members')
-        await db.exec('DELETE FROM projects WHERE id IN (\'tp\', \'regio1\')')
+        await db.exec('DELETE FROM projects WHERE domaincode IN (\'tp\', \'regio1\')')
         await db.exec('DELETE FROM users WHERE sysmail IN (\'admin@theaterpedia.org\', \'base@theaterpedia.org\', \'project1@theaterpedia.org\', \'project2@theaterpedia.org\', \'tp@theaterpedia.org\', \'regio1@theaterpedia.org\')')
         await db.exec('DELETE FROM sysdomains')
         await db.exec('DELETE FROM tlds')
