@@ -70,67 +70,9 @@ export default {
         }
 
         // ===================================================================
-        // PHASE 4: Seed some example project members (optional)
+        // PHASE 4: Removed Project Members Seeding (moved to migration 021)
         // ===================================================================
-        console.log('\n  👥 Seeding example project members...')
-
-        // Check if tp project exists
-        const tpProject = await db.get('SELECT id FROM projects WHERE id = ?', ['tp'])
-
-        if (tpProject) {
-            // Add project1 as owner (already is via owner_id, but also as member for consistency)
-            const existingMember = await db.get(
-                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['tp', 'project1@theaterpedia.org']
-            )
-
-            if (!existingMember) {
-                await db.run(
-                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['tp', 'project1@theaterpedia.org', 'owner']
-                )
-                console.log('    ✓ Added project1 as member of tp')
-            } else {
-                console.log('    ℹ️  project1 already a member of tp')
-            }
-
-            // Add project2 as a regular member
-            const existingMember2 = await db.get(
-                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['tp', 'project2@theaterpedia.org']
-            )
-
-            if (!existingMember2) {
-                await db.run(
-                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['tp', 'project2@theaterpedia.org', 'member']
-                )
-                console.log('    ✓ Added project2 as member of tp')
-            } else {
-                console.log('    ℹ️  project2 already a member of tp')
-            }
-        }
-
-        // Check if regio1 project exists
-        const regio1Project = await db.get('SELECT id FROM projects WHERE id = ?', ['regio1'])
-
-        if (regio1Project) {
-            // Add project2 as owner (already is via owner_id)
-            const existingMember = await db.get(
-                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-                ['regio1', 'project2@theaterpedia.org']
-            )
-
-            if (!existingMember) {
-                await db.run(
-                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-                    ['regio1', 'project2@theaterpedia.org', 'owner']
-                )
-                console.log('    ✓ Added project2 as member of regio1')
-            } else {
-                console.log('    ℹ️  project2 already a member of regio1')
-            }
-        }
+        console.log('\n  ℹ️  Project members seeding moved to migration 021')
 
         console.log('\n✅ Migration 017 completed: Project role system tables created')
     },

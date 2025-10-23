@@ -1,238 +1,316 @@
 /**
- * Migration 021: Add users and regional projects
+ * Migration 021: System Data Seeding
  * 
- * Changes:
- * - Add new users: Nina Roob, Rosa Königer, Annie Dürrwang, Sabine Menne, Astrid von Creytz, Esther Sambale, Eleanora Allerdings
- * - Add new projects: oberland, muenchen, nuernberg, wahlfische, linklater_nuernberg, utopia_in_action
- * - Set up project memberships
+ * Consolidates all system-critical data seeding from migrations 007, 014, 015, 017.
+ * This data is required for the system to function properly.
+ * 
+ * Seeding order (respecting dependencies):
+ * 1. System config (watchcsv, watchdb) - from migration 007
+ * 2. Initial projects (tp, regio1) - from migration 014
+ * 3. TLDs and system domains - from migration 015
+ * 4. System users - from migration 015
+ * 5. Project ownership assignments - from migration 015
+ * 6. Project memberships - from migration 017
  */
 
 import type { DatabaseAdapter } from '../adapter'
+import bcrypt from 'bcryptjs'
+import { getFileset } from '../../settings'
 
 export const migration = {
-    id: '021_add_users_and_regional_projects',
-    description: 'Add new users and regional projects with memberships',
+    id: '021_system_data_seeding',
+    description: 'Seed all system-critical data (config, projects, users, domains, memberships)',
 
     async up(db: DatabaseAdapter): Promise<void> {
-        console.log('Running migration 021: Add users and regional projects...')
+        const isPostgres = db.type === 'postgresql'
 
-        // 1. Create new users
-        console.log('  - Creating new users...')
+        console.log('Running migration 021: System data seeding...')
 
-        await db.exec(`
-            INSERT INTO users (id, username, password, role, created_at) 
-            VALUES 
-            ('nina.roob@utopia-in-action.de', 'Nina Roob', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('rosa.koeniger@utopia-in-action.de', 'Rosa Königer', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('annie.duerrwang@theaterpedia.org', 'Annie Dürrwang', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('sabine.menne@theaterpedia.org', 'Sabine Menne', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('astrid.v-creytz@theaterpedia.org', 'Astrid von Creytz', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('esther.sambale@dasei.eu', 'Esther Sambale', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP),
-            ('eleanora.allerdings@dasei.eu', 'Eleanora Allerdings', 
-             '$2a$10$cW.gFfqOOqEv3a8VEpKTmeFN8MWuXwB6UgL3xb0EpGgXDPyOB8VfW', 'user', CURRENT_TIMESTAMP)
-            ON CONFLICT (id) DO NOTHING
-        `)
-        console.log('    ✓ Created 7 new users')
+        // ===================================================================
+        // STEP 1: System Config (from migration 007)
+        // ===================================================================
+        console.log('\n  ⚙️  Seeding system config...')
 
-        // 2. Add new projects (all status: demo)
-        console.log('  - Adding new projects...')
+        // Get base fileset for watchcsv config
+        const baseFileset = getFileset('base')
+        const watchcsvConfig = JSON.stringify({
+            base: {
+                lastCheck: null,
+                files: baseFileset.files
+            }
+        })
 
-        // Regio Oberland
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
-            VALUES (
-                'oberland',
-                '**Regio Oberland** Bad Tölz, Murnau Garmisch-Partenkirchen',
-                'regio',
-                'demo',
-                'sabine.menne@theaterpedia.org',
-                'Regional theater network in Oberland region',
-                2,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+        if (isPostgres) {
+            await db.run(
+                `INSERT INTO system_config (key, value, description)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (key) DO NOTHING`,
+                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Regio Oberland')
-
-        // Regio München
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
-            VALUES (
-                'muenchen',
-                '**Regio München** Großraum München',
-                'regio',
-                'demo',
-                'annie.duerrwang@theaterpedia.org',
-                'Regional theater network in Munich metropolitan area',
-                1,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+        } else {
+            await db.run(
+                `INSERT OR IGNORE INTO system_config (key, value, description)
+                 VALUES (?, ?, ?)`,
+                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Regio München')
+        }
 
-        // Regio Nürnberg
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, created_at, updated_at)
-            VALUES (
-                'nuernberg',
-                '**Regio Nürnberg** Nürnberg-Fürth-Erlangen',
-                'regio',
-                'demo',
-                'eleanora.allerdings@dasei.eu',
-                'Regional theater network in Nuremberg metropolitan region',
-                2,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+        // Watchdb configuration
+        const watchdbConfig = JSON.stringify({
+            base: {
+                lastCheck: null,
+                entities: ['events', 'posts', 'locations', 'instructors', 'participants']
+            }
+        })
+
+        if (isPostgres) {
+            await db.run(
+                `INSERT INTO system_config (key, value, description)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (key) DO NOTHING`,
+                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Regio Nürnberg')
-
-        // Wahlfische
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, regio, theme, created_at, updated_at)
-            VALUES (
-                'wahlfische',
-                '**Wahlfische** Demokratie-Projekte und Workshops',
-                'project',
-                'demo',
-                'eleanora.allerdings@dasei.eu',
-                'Democracy projects and workshops',
-                'nuernberg',
-                5,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+        } else {
+            await db.run(
+                `INSERT OR IGNORE INTO system_config (key, value, description)
+                 VALUES (?, ?, ?)`,
+                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Wahlfische')
+        }
+        console.log('    ✓ Seeded system config (watchcsv, watchdb)')
 
-        // Linklater Nürnberg
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, regio, theme, created_at, updated_at)
-            VALUES (
-                'linklater_nuernberg',
-                '**Linklater Nürnberg** Stimmbildung',
-                'project',
-                'demo',
-                'eleanora.allerdings@dasei.eu',
-                'Voice training and vocal development',
-                'nuernberg',
-                5,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+        // ===================================================================
+        // STEP 2: Initial Projects (from migration 014)
+        // ===================================================================
+        console.log('\n  📦 Seeding initial projects...')
+
+        // Check if 'tp' project exists
+        const tpExists = await db.get('SELECT id FROM projects WHERE id = $1', ['tp'])
+        if (!tpExists) {
+            await db.exec(`
+                INSERT INTO projects (id, heading, type, description, status)
+                VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active')
+            `)
+            console.log('    ✓ Created tp project (special)')
+        } else {
+            console.log('    ℹ️  tp project already exists')
+        }
+
+        // Check if 'regio1' project exists
+        const regio1Exists = await db.get('SELECT id FROM projects WHERE id = $1', ['regio1'])
+        if (!regio1Exists) {
+            await db.exec(`
+                INSERT INTO projects (id, heading, type, description, status)
+                VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
+            `)
+            console.log('    ✓ Created regio1 project (regio)')
+        } else {
+            console.log('    ℹ️  regio1 project already exists')
+        }
+
+        // ===================================================================
+        // STEP 3: TLDs and System Domains (from migration 015)
+        // ===================================================================
+        console.log('\n  🌐 Seeding TLDs and system domains...')
+
+        // Seed TLDs
+        const tlds = [
+            { name: 'de', description: 'Germany', relevance: 1 },
+            { name: 'com', description: 'Commercial', relevance: 1 },
+            { name: 'org', description: 'Organization', relevance: 1 },
+            { name: 'info', description: 'Information', relevance: 1 },
+            { name: 'bayern', description: 'Bavaria', relevance: 1 },
+            { name: 'eu', description: 'European Union', relevance: 1 }
+        ]
+
+        for (const tld of tlds) {
+            if (isPostgres) {
+                await db.run(
+                    `INSERT INTO tlds (name, description, relevance) 
+                     VALUES ($1, $2, $3) 
+                     ON CONFLICT (name) DO NOTHING`,
+                    [tld.name, tld.description, tld.relevance]
+                )
+            } else {
+                await db.run(
+                    `INSERT OR IGNORE INTO tlds (name, description, relevance) 
+                     VALUES (?, ?, ?)`,
+                    [tld.name, tld.description, tld.relevance]
+                )
+            }
+        }
+        console.log(`    ✓ Seeded ${tlds.length} TLDs`)
+
+        // Seed sysdomains
+        const sysdomains = [
+            { domain: 'theaterpedia', tld: 'org', subdomain: null, description: 'Theaterpedia main domain', options: null },
+            { domain: 'dasei', tld: 'eu', subdomain: null, description: 'Dasei domain', options: { private: true } },
+            { domain: 'raumlauf', tld: 'de', subdomain: null, description: 'Raumlauf domain', options: null },
+            { domain: 'brecht', tld: 'bayern', subdomain: null, description: 'Brecht Bavaria domain', options: null },
+            { domain: 'crearis', tld: 'info', subdomain: null, description: 'Crearis info domain', options: { private: true } }
+        ]
+
+        for (const sysdomain of sysdomains) {
+            if (isPostgres) {
+                await db.run(
+                    `INSERT INTO sysdomains (domain, tld, subdomain, description, options) 
+                     VALUES ($1, $2, $3, $4, $5)
+                     ON CONFLICT DO NOTHING`,
+                    [
+                        sysdomain.domain,
+                        sysdomain.tld,
+                        sysdomain.subdomain,
+                        sysdomain.description,
+                        sysdomain.options ? JSON.stringify(sysdomain.options) : null
+                    ]
+                )
+            } else {
+                await db.run(
+                    `INSERT OR IGNORE INTO sysdomains (domain, tld, subdomain, description, options) 
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [
+                        sysdomain.domain,
+                        sysdomain.tld,
+                        sysdomain.subdomain,
+                        sysdomain.description,
+                        sysdomain.options ? JSON.stringify(sysdomain.options) : null
+                    ]
+                )
+            }
+        }
+        console.log(`    ✓ Seeded ${sysdomains.length} system domains`)
+
+        // ===================================================================
+        // STEP 4: System Users (from migration 015)
+        // ===================================================================
+        console.log('\n  👥 Seeding system users...')
+
+        const defaultPassword = await bcrypt.hash('password123', 10)
+
+        const defaultUsers = [
+            { id: 'admin@theaterpedia.org', username: 'admin', role: 'admin' },
+            { id: 'base@theaterpedia.org', username: 'base', role: 'base' },
+            { id: 'project1@theaterpedia.org', username: 'project1', role: 'user' },
+            { id: 'project2@theaterpedia.org', username: 'project2', role: 'user' },
+            { id: 'tp@theaterpedia.org', username: 'tp', role: 'user' },
+            { id: 'regio1@theaterpedia.org', username: 'regio1', role: 'user' }
+        ]
+
+        for (const user of defaultUsers) {
+            if (isPostgres) {
+                const existing = await db.get(`SELECT id FROM users WHERE username = $1`, [user.username])
+                if (!existing) {
+                    await db.run(
+                        `INSERT INTO users (id, username, password, role, created_at) 
+                         VALUES ($1, $2, $3, $4, NOW())`,
+                        [user.id, user.username, defaultPassword, user.role]
+                    )
+                    console.log(`    ✓ Created user: ${user.username}`)
+                } else {
+                    console.log(`    ℹ️  User ${user.username} already exists`)
+                }
+            } else {
+                await db.run(
+                    `INSERT OR IGNORE INTO users (id, username, password, role, created_at) 
+                     VALUES (?, ?, ?, ?, datetime('now'))`,
+                    [user.id, user.username, defaultPassword, user.role]
+                )
+            }
+        }
+
+        // ===================================================================
+        // STEP 5: Project Ownership (from migration 015)
+        // ===================================================================
+        console.log('\n  📦 Assigning project ownership...')
+
+        if (isPostgres) {
+            const project1User = await db.get(`SELECT id FROM users WHERE username = $1`, ['project1'])
+            const project2User = await db.get(`SELECT id FROM users WHERE username = $1`, ['project2'])
+
+            if (project1User) {
+                await db.run(`UPDATE projects SET owner_id = $1 WHERE id = $2`, [(project1User as any).id, 'tp'])
+                console.log(`    ✓ Set tp project owner to project1@theaterpedia.org`)
+            }
+
+            if (project2User) {
+                await db.run(`UPDATE projects SET owner_id = $1 WHERE id = $2`, [(project2User as any).id, 'regio1'])
+                console.log(`    ✓ Set regio1 project owner to project2@theaterpedia.org`)
+            }
+        } else {
+            await db.run(`UPDATE projects SET owner_id = ? WHERE id = ?`, ['project1@theaterpedia.org', 'tp'])
+            await db.run(`UPDATE projects SET owner_id = ? WHERE id = ?`, ['project2@theaterpedia.org', 'regio1'])
+        }
+
+        // ===================================================================
+        // STEP 6: Project Memberships (from migration 017)
+        // ===================================================================
+        console.log('\n  👥 Seeding project memberships...')
+
+        // Check if tp project exists
+        const tpProject = await db.get('SELECT id FROM projects WHERE id = ?', ['tp'])
+        if (tpProject) {
+            const existingMember = await db.get(
+                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+                ['tp', 'project1@theaterpedia.org']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Linklater Nürnberg')
+            if (!existingMember) {
+                await db.run(
+                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+                    ['tp', 'project1@theaterpedia.org', 'owner']
+                )
+                console.log('    ✓ Added project1 as member of tp')
+            } else {
+                console.log('    ℹ️  project1 already a member of tp')
+            }
 
-        // Utopia in Action
-        await db.exec(`
-            INSERT INTO projects (id, heading, type, status, owner_id, description, theme, regio, created_at, updated_at)
-            VALUES (
-                'utopia_in_action',
-                '**Utopia in Action** Theater der Unterdrückten Augsburg',
-                'project',
-                'demo',
-                'rosa.koeniger@utopia-in-action.de',
-                'Theatre of the Oppressed in Augsburg',
-                4,
-                'augsburg',
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+            const existingMember2 = await db.get(
+                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+                ['tp', 'project2@theaterpedia.org']
             )
-            ON CONFLICT (id) DO UPDATE SET
-                heading = EXCLUDED.heading,
-                owner_id = EXCLUDED.owner_id,
-                status = EXCLUDED.status,
-                type = EXCLUDED.type
-        `)
-        console.log('    ✓ Added project: Utopia in Action')
+            if (!existingMember2) {
+                await db.run(
+                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+                    ['tp', 'project2@theaterpedia.org', 'member']
+                )
+                console.log('    ✓ Added project2 as member of tp')
+            } else {
+                console.log('    ℹ️  project2 already a member of tp')
+            }
+        }
 
-        // 3. Add project memberships
-        console.log('  - Adding project memberships...')
+        // Check if regio1 project exists
+        const regio1Project = await db.get('SELECT id FROM projects WHERE id = ?', ['regio1'])
+        if (regio1Project) {
+            const existingMember = await db.get(
+                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+                ['regio1', 'project2@theaterpedia.org']
+            )
+            if (!existingMember) {
+                await db.run(
+                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+                    ['regio1', 'project2@theaterpedia.org', 'owner']
+                )
+                console.log('    ✓ Added project2 as member of regio1')
+            } else {
+                console.log('    ℹ️  project2 already a member of regio1')
+            }
+        }
 
-        await db.exec(`
-            INSERT INTO project_members (project_id, user_id, role)
-            VALUES 
-                ('muenchen', 'bernd.walter@theaterpedia.org', 'member'),
-                ('oberland', 'sophie.meier@theaterpedia.org', 'member'),
-                ('oberland', 'johanna.schoenfelder@theaterpedia.org', 'member'),                
-                ('augsburg', 'rosa.koeniger@utopia-in-action.de', 'member'),
-                ('augsburg', 'nina.roob@utopia-in-action.de', 'member'),
-                ('nuernberg', 'esther.sambale@dasei.eu', 'member'),
-                ('nuernberg', 'hans.doenitz@theaterpedia.org', 'member'),
-                ('muenchen', 'astrid.v-creytz@theaterpedia.org', 'member'),
-                ('wahlfische', 'esther.sambale@dasei.eu', 'member')
-            ON CONFLICT (project_id, user_id) DO NOTHING
-        `)
-        console.log('    ✓ Added project memberships')
-
-        console.log('✅ Migration 021 completed')
+        console.log('\n✅ Migration 021 completed: All system data seeded')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
-        console.log('Migration 021 down: Reverting users and projects...')
+        console.log('Migration 021 down: Removing system data...')
 
-        // Remove project memberships
-        await db.exec(`
-            DELETE FROM project_members 
-            WHERE (project_id = 'augsburg' AND user_id IN ('rosa.koeniger@utopia-in-action.de', 'nina.roob@utopia-in-action.de'))
-               OR (project_id = 'nuernberg' AND user_id IN ('esther.sambale@dasei.eu', 'hans.doenitz@theaterpedia.org'))
-               OR (project_id = 'muenchen' AND user_id IN ('astrid.v-creytz@theaterpedia.org', 'bernd.walter@theaterpedia.org'))
-               OR (project_id = 'oberland' AND user_id IN ('sophie.meier@theaterpedia.org', 'johanna.schoenfelder@theaterpedia.org'))
-               OR (project_id = 'wahlfische' AND user_id = 'esther.sambale@dasei.eu')
-        `)
-
-        // Remove new projects
-        await db.exec(`
-            DELETE FROM projects 
-            WHERE id IN ('oberland', 'muenchen', 'nuernberg', 'wahlfische', 'linklater_nuernberg', 'utopia_in_action')
-        `)
-
-        // Remove new users
-        await db.exec(`
-            DELETE FROM users 
-            WHERE id IN (
-                'nina.roob@utopia-in-action.de',
-                'rosa.koeniger@utopia-in-action.de',
-                'annie.duerrwang@theaterpedia.org',
-                'sabine.menne@theaterpedia.org',
-                'astrid.v-creytz@theaterpedia.org',
-                'esther.sambale@dasei.eu',
-                'eleanora.allerdings@dasei.eu'
-            )
-        `)
+        // Remove in reverse order
+        await db.exec('DELETE FROM project_members WHERE user_id IN (\'project1@theaterpedia.org\', \'project2@theaterpedia.org\')')
+        await db.exec('DELETE FROM projects WHERE id IN (\'tp\', \'regio1\')')
+        await db.exec('DELETE FROM users WHERE id IN (\'admin@theaterpedia.org\', \'base@theaterpedia.org\', \'project1@theaterpedia.org\', \'project2@theaterpedia.org\', \'tp@theaterpedia.org\', \'regio1@theaterpedia.org\')')
+        await db.exec('DELETE FROM sysdomains')
+        await db.exec('DELETE FROM tlds')
+        await db.exec('DELETE FROM system_config WHERE key IN (\'watchcsv\', \'watchdb\')')
 
         console.log('✅ Migration 021 reverted')
     }
 }
+

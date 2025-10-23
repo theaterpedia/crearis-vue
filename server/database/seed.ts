@@ -669,36 +669,28 @@ async function needsSeeding(db: DatabaseAdapter): Promise<boolean> {
 /**
  * Main seeding function
  * Called after fresh database initialization
+ * 
+ * NOTE: CSV data seeding has been moved to migration 022.
+ * This function now only seeds admin watch tasks.
  */
 export async function seedDatabase(db: DatabaseAdapter): Promise<void> {
-    // Check if seeding is needed
-    const needs = await needsSeeding(db)
-    if (!needs) {
-        console.log('ℹ️  Database already has data - skipping seeding')
-        return
-    }
-
-    console.log('\n🌱 Starting database seeding...\n')
+    console.log('\n🌱 Starting database seeding (admin tasks only)...\n')
 
     try {
-        // Step 1: Ensure users/projects file exists and get data
-        const userData = await ensureUsersProjectsFile()
-
-        // Step 2: Seed users and projects
-        await seedUsersAndProjects(db, userData)
-
-        // Step 3: Seed CSV data
-        await seedCSVData(db)
-
-        // Step 4: Seed projects (releases, project assignments, project events/posts)
-        await seedProjects(db)
-
-        // Step 5: Seed admin watch tasks
+        // Seed admin watch tasks
         await seedAdminWatchTasks(db)
 
         console.log('\n🎉 Database seeding completed successfully!\n')
+        console.log('ℹ️  Note: CSV data seeding is now handled by migration 022')
+        console.log('   Run migrations to populate the database with CSV data.\n')
     } catch (error: any) {
         console.error('\n❌ Database seeding failed:', error.message)
         throw error
     }
 }
+
+/**
+ * Export seedCSVData for use by admin tasks
+ * This allows the admin CSV import task to work independently of migrations
+ */
+export { seedCSVData }

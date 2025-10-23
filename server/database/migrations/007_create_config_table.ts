@@ -1,10 +1,11 @@
 /**
  * Migration 007: Create system config table for watch tasks
  * Used for storing watch timestamps and other config values
+ * 
+ * Note: Data seeding moved to migration 021
  */
 
 import type { DatabaseAdapter } from '../adapter'
-import { getFileset } from '../../settings'
 
 export const migration = {
     id: '007_create_system_config_table',
@@ -35,54 +36,7 @@ export const migration = {
             `)
         }
 
-        // Insert watchcsv configuration with base fileset from settings
-        const baseFileset = getFileset('base')
-        const watchcsvConfig = JSON.stringify({
-            base: {
-                lastCheck: null,
-                files: baseFileset.files
-            }
-        })
-
-        if (db.type === 'postgresql') {
-            await db.run(
-                `INSERT INTO system_config (key, value, description)
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT (key) DO NOTHING`,
-                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
-            )
-        } else {
-            await db.run(
-                `INSERT OR IGNORE INTO system_config (key, value, description)
-                 VALUES (?, ?, ?)`,
-                ['watchcsv', watchcsvConfig, 'Tracks last check timestamps for CSV file monitoring']
-            )
-        }
-
-        // Insert watchdb configuration
-        // Watchdb monitors the main entity tables
-        const watchdbConfig = JSON.stringify({
-            base: {
-                lastCheck: null,
-                entities: ['events', 'posts', 'locations', 'instructors', 'participants']
-            }
-        })
-
-        if (db.type === 'postgresql') {
-            await db.run(
-                `INSERT INTO system_config (key, value, description)
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT (key) DO NOTHING`,
-                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
-            )
-        } else {
-            await db.run(
-                `INSERT OR IGNORE INTO system_config (key, value, description)
-                 VALUES (?, ?, ?)`,
-                ['watchdb', watchdbConfig, 'Tracks last check timestamps for database entity monitoring']
-            )
-        }
-
-        console.log('✅ Migration 007 completed: system_config table created with watch configs')
+        console.log('✅ Migration 007 completed: system_config table created')
+        console.log('  ℹ️  Data seeding moved to migration 021')
     }
 }

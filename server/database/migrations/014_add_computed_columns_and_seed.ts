@@ -43,47 +43,6 @@ export const migration = {
                 GENERATED ALWAYS AS (type = 'project') STORED
             `)
 
-            // 4. Seed special projects
-            console.log('  - Seeding special projects...')
-
-            // Check if 'tp' project exists
-            const tpExists = await db.get(
-                'SELECT id FROM projects WHERE id = $1',
-                ['tp']
-            )
-
-            if (!tpExists) {
-                console.log('    → Creating tp project (special)...')
-                await db.exec(`
-                    INSERT INTO projects (
-                        id, heading, type, description, status
-                    ) VALUES (
-                        'tp', 'Project Overline **tp**', 'special', 'default-page', 'active'
-                    )
-                `)
-            } else {
-                console.log('    ℹ️  tp project already exists')
-            }
-
-            // Check if 'regio1' project exists
-            const regio1Exists = await db.get(
-                'SELECT id FROM projects WHERE id = $1',
-                ['regio1']
-            )
-
-            if (!regio1Exists) {
-                console.log('    → Creating regio1 project (regio)...')
-                await db.exec(`
-                    INSERT INTO projects (
-                        id, heading, type, description, status
-                    ) VALUES (
-                        'regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active'
-                    )
-                `)
-            } else {
-                console.log('    ℹ️  regio1 project already exists')
-            }
-
         } else {
             // SQLite
             console.log('  ⚠️  SQLite: GENERATED columns require SQLite 3.31+')
@@ -106,20 +65,9 @@ export const migration = {
             } catch (e: any) {
                 console.log('  ⚠️  SQLite: Could not add GENERATED columns:', e.message)
             }
-
-            // Seed projects
-            try {
-                await db.exec(`
-                    INSERT OR IGNORE INTO projects (
-                        id, heading, type, description, status
-                    ) VALUES 
-                    ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active'),
-                    ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
-                `)
-            } catch (e: any) {
-                console.log('  ℹ️  SQLite: Projects may already exist')
-            }
         }
+
+        console.log('  ℹ️  Project seeding moved to migration 021')
 
         console.log('✅ Migration 014 completed')
     },

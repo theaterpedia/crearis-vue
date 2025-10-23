@@ -16,7 +16,6 @@
  */
 
 import type { DatabaseAdapter } from '../adapter'
-import bcrypt from 'bcryptjs'
 
 export const migration = {
     id: '015_domain_system_and_extensions',
@@ -50,34 +49,7 @@ export const migration = {
             `)
         }
 
-        // System seed TLDs
-        console.log('  → Seeding system TLDs...')
-        const tlds = [
-            { name: 'de', description: 'Germany', relevance: 1 },
-            { name: 'com', description: 'Commercial', relevance: 1 },
-            { name: 'org', description: 'Organization', relevance: 1 },
-            { name: 'info', description: 'Information', relevance: 1 },
-            { name: 'bayern', description: 'Bavaria', relevance: 1 },
-            { name: 'eu', description: 'European Union', relevance: 1 }
-        ]
-
-        for (const tld of tlds) {
-            if (isPostgres) {
-                await db.run(
-                    `INSERT INTO tlds (name, description, relevance) 
-                     VALUES ($1, $2, $3) 
-                     ON CONFLICT (name) DO NOTHING`,
-                    [tld.name, tld.description, tld.relevance]
-                )
-            } else {
-                await db.run(
-                    `INSERT OR IGNORE INTO tlds (name, description, relevance) 
-                     VALUES (?, ?, ?)`,
-                    [tld.name, tld.description, tld.relevance]
-                )
-            }
-        }
-        console.log(`    ✓ Seeded ${tlds.length} TLDs`)
+        console.log('  ℹ️  TLD seeding moved to migration 021')
 
         // ===================================================================
         // PHASE 2: SYSTEM SEED - Sysdomains Table
@@ -139,44 +111,7 @@ export const migration = {
             }
         }
 
-        // System seed sysdomains
-        console.log('  → Seeding system domains...')
-        const sysdomains = [
-            { domain: 'theaterpedia', tld: 'org', subdomain: null, description: 'Theaterpedia main domain', options: null },
-            { domain: 'dasei', tld: 'eu', subdomain: null, description: 'Dasei domain', options: { private: true } },
-            { domain: 'raumlauf', tld: 'de', subdomain: null, description: 'Raumlauf domain', options: null },
-            { domain: 'brecht', tld: 'bayern', subdomain: null, description: 'Brecht Bavaria domain', options: null },
-            { domain: 'crearis', tld: 'info', subdomain: null, description: 'Crearis info domain', options: { private: true } }
-        ]
-
-        for (const sysdomain of sysdomains) {
-            if (isPostgres) {
-                await db.run(
-                    `INSERT INTO sysdomains (domain, tld, subdomain, description, options) 
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [
-                        sysdomain.domain,
-                        sysdomain.tld,
-                        sysdomain.subdomain,
-                        sysdomain.description,
-                        sysdomain.options ? JSON.stringify(sysdomain.options) : null
-                    ]
-                )
-            } else {
-                await db.run(
-                    `INSERT INTO sysdomains (domain, tld, subdomain, description, options) 
-                     VALUES (?, ?, ?, ?, ?)`,
-                    [
-                        sysdomain.domain,
-                        sysdomain.tld,
-                        sysdomain.subdomain,
-                        sysdomain.description,
-                        sysdomain.options ? JSON.stringify(sysdomain.options) : null
-                    ]
-                )
-            }
-        }
-        console.log(`    ✓ Seeded ${sysdomains.length} system domains`)
+        console.log('  ℹ️  Sysdomain seeding moved to migration 021')
 
         // ===================================================================
         // PHASE 3: Domains Table (for projects)
@@ -395,134 +330,9 @@ export const migration = {
         }
 
         // ===================================================================
-        // PHASE 8: System Seed - Create Default Users
+        // PHASE 8-10: Removed Data Seeding (moved to migration 021)
         // ===================================================================
-        console.log('\n  👥 Seeding default users...')
-
-        const defaultPassword = await bcrypt.hash('password123', 10)
-
-        const defaultUsers = [
-            { id: 'admin@theaterpedia.org', username: 'admin', role: 'admin' },
-            { id: 'base@theaterpedia.org', username: 'base', role: 'base' },
-            { id: 'project1@theaterpedia.org', username: 'project1', role: 'user' },
-            { id: 'project2@theaterpedia.org', username: 'project2', role: 'user' },
-            { id: 'tp@theaterpedia.org', username: 'tp', role: 'user' },
-            { id: 'regio1@theaterpedia.org', username: 'regio1', role: 'user' }
-        ]
-
-        for (const user of defaultUsers) {
-            if (isPostgres) {
-                // Check if user with this username already exists
-                const existing = await db.get(
-                    `SELECT id FROM users WHERE username = $1`,
-                    [user.username]
-                )
-
-                if (!existing) {
-                    await db.run(
-                        `INSERT INTO users (id, username, password, role, created_at) 
-                         VALUES ($1, $2, $3, $4, NOW())`,
-                        [user.id, user.username, defaultPassword, user.role]
-                    )
-                    console.log(`    ✓ Created user: ${user.username}`)
-                } else {
-                    console.log(`    ℹ️  User ${user.username} already exists with id=${existing.id}`)
-                }
-            } else {
-                await db.run(
-                    `INSERT OR IGNORE INTO users (id, username, password, role, created_at) 
-                     VALUES (?, ?, ?, ?, datetime('now'))`,
-                    [user.id, user.username, defaultPassword, user.role]
-                )
-            }
-        }
-        console.log(`    ✓ Seeded ${defaultUsers.length} default users`)
-
-        // ===================================================================
-        // PHASE 9: Update Existing Projects with Owners
-        // ===================================================================
-        console.log('\n  📦 Updating existing projects with owners...')
-
-        if (isPostgres) {
-            // Get the existing user IDs for project1 and project2
-            const project1User = await db.get(
-                `SELECT id FROM users WHERE username = $1`,
-                ['project1']
-            )
-            const project2User = await db.get(
-                `SELECT id FROM users WHERE username = $1`,
-                ['project2']
-            )
-
-            // Update tp project to have project1 as owner
-            if (project1User) {
-                await db.run(
-                    `UPDATE projects SET owner_id = $1 WHERE id = $2`,
-                    [project1User.id, 'tp']
-                )
-                console.log(`    ✓ Set tp project owner to ${project1User.id}`)
-            }
-
-            // Update regio1 project to have project2 as owner
-            if (project2User) {
-                await db.run(
-                    `UPDATE projects SET owner_id = $1 WHERE id = $2`,
-                    [project2User.id, 'regio1']
-                )
-                console.log(`    ✓ Set regio1 project owner to ${project2User.id}`)
-            }
-        } else {
-            await db.run(
-                `UPDATE projects SET owner_id = ? WHERE id = ?`,
-                ['usr_project1', 'tp']
-            )
-            await db.run(
-                `UPDATE projects SET owner_id = ? WHERE id = ?`,
-                ['usr_project2', 'regio1']
-            )
-        }
-        console.log('    ✓ Updated existing projects with owners')
-
-        // ===================================================================
-        // PHASE 10: Link First Location to project1 (if exists)
-        // ===================================================================
-        console.log('\n  📍 Attempting to link first demo location to project1...')
-
-        try {
-            if (isPostgres) {
-                const firstLocation = await db.get(
-                    `SELECT id FROM locations WHERE id LIKE '_demo.%' LIMIT 1`,
-                    []
-                )
-
-                if (firstLocation) {
-                    await db.run(
-                        `UPDATE locations SET project_id = $1 WHERE id = $2`,
-                        ['tp', (firstLocation as any).id]
-                    )
-                    console.log(`    ✓ Linked location ${(firstLocation as any).id} to project1`)
-                } else {
-                    console.log('    ℹ️  No demo locations found yet')
-                }
-            } else {
-                const firstLocation = await db.get(
-                    `SELECT id FROM locations WHERE id LIKE '_demo.%' LIMIT 1`,
-                    []
-                )
-
-                if (firstLocation) {
-                    await db.run(
-                        `UPDATE locations SET project_id = ? WHERE id = ?`,
-                        ['tp', (firstLocation as any).id]
-                    )
-                    console.log(`    ✓ Linked location ${(firstLocation as any).id} to project1`)
-                } else {
-                    console.log('    ℹ️  No demo locations found yet')
-                }
-            }
-        } catch (e: any) {
-            console.log(`    ℹ️  Could not link location: ${e.message}`)
-        }
+        console.log('\n  ℹ️  User seeding, project ownership, and location linking moved to migration 021')
 
         console.log('\n✅ Migration 015 completed')
     },
