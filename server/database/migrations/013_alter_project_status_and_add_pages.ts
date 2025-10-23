@@ -55,11 +55,13 @@ export const migration = {
 
         // 2. Create pages table
         console.log('  - Creating pages table...')
+        // Note: project field is added without FK constraint here
+        // It will be properly handled in Migration 019 Chapter 5
         if (isPostgres) {
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS pages (
                     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-                    project TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                    project TEXT NOT NULL,
                     header_type TEXT DEFAULT 'simple' CHECK (header_type IN ('simple', 'columns', 'banner', 'cover', 'bauchbinde')),
                     page_type TEXT NOT NULL CHECK (page_type IN ('landing', 'event', 'post', 'team')),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -70,7 +72,7 @@ export const migration = {
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS pages (
                     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                    project TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                    project TEXT NOT NULL,
                     header_type TEXT DEFAULT 'simple' CHECK (header_type IN ('simple', 'columns', 'banner', 'cover', 'bauchbinde')),
                     page_type TEXT NOT NULL CHECK (page_type IN ('landing', 'event', 'post', 'team')),
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -119,11 +121,13 @@ export const migration = {
 
         // 4. Create form_input table
         console.log('  - Creating form_input table...')
+        // Note: project field is added without FK constraint here
+        // It will be properly handled in Migration 019 Chapter 5
         if (isPostgres) {
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS form_input (
                     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-                    project TEXT NOT NULL REFERENCES projects(id),
+                    project TEXT NOT NULL,
                     name TEXT,
                     email TEXT,
                     "user" TEXT,
@@ -136,7 +140,7 @@ export const migration = {
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS form_input (
                     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                    project TEXT NOT NULL REFERENCES projects(id),
+                    project TEXT NOT NULL,
                     name TEXT,
                     email TEXT,
                     "user" TEXT,

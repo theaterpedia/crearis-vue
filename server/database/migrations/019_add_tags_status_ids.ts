@@ -420,6 +420,20 @@ export const migration = {
         // ===================================================================
         console.log('\n📖 Chapter 2: Migrate Users to Support Auto-ID')
 
+        // Check if migration already partially completed
+        const checkUsersOld = await db.get(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'users_old'
+            ) as exists
+        `, [])
+
+        if ((checkUsersOld as any).exists) {
+            console.log('  ⚠️  users_old table already exists - migration may have partially run')
+            console.log('  🔄 Cleaning up and restarting Chapter 2...')
+            await db.exec(`DROP TABLE IF EXISTS users_old CASCADE`)
+        }
+
         // -------------------------------------------------------------------
         // 2.1: Create new users table with auto-incrementing ID
         // -------------------------------------------------------------------
@@ -431,6 +445,7 @@ export const migration = {
             console.log('    ✓ Renamed users to users_old')
 
             // Step 2: Create new users table with auto-incrementing id
+            // Note: instructor_id FK constraint will be added in Chapter 4 after instructors migration
             await db.exec(`
                 CREATE TABLE users (
                     id SERIAL PRIMARY KEY,
@@ -440,7 +455,7 @@ export const migration = {
                     password TEXT NOT NULL,
                     role TEXT NOT NULL CHECK (role IN ('user', 'admin', 'base')),
                     status_id INTEGER REFERENCES status(id),
-                    instructor_id TEXT REFERENCES instructors(id),
+                    instructor_id TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -493,12 +508,19 @@ export const migration = {
             const userIdMap: Record<string, number> = {}
 
             for (const oldUser of oldUsers as any[]) {
-                const result = await db.run(
+                // Convert old TEXT id to email format for sysmail
+                // If it's already an email, use it; otherwise append @theaterpedia.org
+                const oldId = String(oldUser.id) // Ensure it's a string
+                const sysmail = oldId.includes('@')
+                    ? oldId
+                    : `${oldId}@theaterpedia.org`
+
+                const row = await db.get(
                     `INSERT INTO users (sysmail, username, password, role, status_id, instructor_id, created_at, updated_at)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                      RETURNING id`,
                     [
-                        oldUser.id, // old id becomes sysmail
+                        sysmail, // Convert old id to email format
                         oldUser.username,
                         oldUser.password,
                         oldUser.role,
@@ -509,9 +531,9 @@ export const migration = {
                     ]
                 )
 
-                const newId = (result as any).id
+                const newId = row.id
                 userIdMap[oldUser.id] = newId
-                console.log(`      → Migrated user ${oldUser.username}: ${oldUser.id} → id:${newId}`)
+                console.log(`      → Migrated user ${oldUser.username}: ${oldUser.id} → id:${newId} (${sysmail})`)
             }
 
             // Step 6: Update foreign key references in other tables
@@ -566,7 +588,7 @@ export const migration = {
                     ALTER COLUMN admin_user_id TYPE INTEGER 
                     USING CASE 
                         WHEN admin_user_id IS NULL THEN NULL
-                        WHEN admin_user_id ~ '^[0-9]+$' THEN admin_user_id::INTEGER
+                        WHEN admin_user_id::TEXT ~ '^[0-9]+$' THEN admin_user_id::INTEGER
                         ELSE NULL
                     END
                 `)
@@ -583,7 +605,7 @@ export const migration = {
                     ALTER COLUMN owner_id TYPE INTEGER 
                     USING CASE 
                         WHEN owner_id IS NULL THEN NULL
-                        WHEN owner_id ~ '^[0-9]+$' THEN owner_id::INTEGER
+                        WHEN owner_id::TEXT ~ '^[0-9]+$' THEN owner_id::INTEGER
                         ELSE NULL
                     END
                 `)
@@ -600,7 +622,7 @@ export const migration = {
                     ALTER COLUMN user_id TYPE INTEGER 
                     USING CASE 
                         WHEN user_id IS NULL THEN NULL
-                        WHEN user_id ~ '^[0-9]+$' THEN user_id::INTEGER
+                        WHEN user_id::TEXT ~ '^[0-9]+$' THEN user_id::INTEGER
                         ELSE NULL
                     END
                 `)
@@ -637,7 +659,7 @@ export const migration = {
             console.log('    ✓ Updated foreign key constraints')
 
             // Step 10: Drop old users table
-            await db.exec(`DROP TABLE users_old`)
+            await db.exec(`DROP TABLE IF EXISTS users_old CASCADE`)
             console.log('    ✓ Dropped old users table')
 
         } else {
@@ -1833,45 +1855,17 @@ export const migration = {
             await db.exec(`DROP TABLE project_id_map`)
 
             // Drop FK constraints referencing projects_old before dropping table
-            await db.exec(`ALTER TABLE events DROP CONSTRAINT IF EXISTS events_project_fkey`)
-            await db.exec(`ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_project_fkey`)
+            // Note: events and posts project fields are converted in Chapter 5B
             await db.exec(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_project_fkey`)
             await db.exec(`ALTER TABLE form_input DROP CONSTRAINT IF EXISTS form_input_project_fkey`)
             await db.exec(`ALTER TABLE domains DROP CONSTRAINT IF EXISTS domains_project_id_fkey`)
+            await db.exec(`ALTER TABLE locations DROP CONSTRAINT IF EXISTS locations_project_id_fkey`)
 
             // Drop old projects table
             await db.exec(`DROP TABLE projects_old`)
 
             // Convert column types to INTEGER and recreate FK constraints
-            await db.exec(`
-                ALTER TABLE events 
-                ALTER COLUMN project TYPE INTEGER 
-                USING CASE 
-                    WHEN project IS NULL THEN NULL
-                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
-                    ELSE NULL
-                END
-            `)
-            await db.exec(`
-                ALTER TABLE events 
-                ADD CONSTRAINT events_project_fkey 
-                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
-            `)
-
-            await db.exec(`
-                ALTER TABLE posts 
-                ALTER COLUMN project TYPE INTEGER 
-                USING CASE 
-                    WHEN project IS NULL THEN NULL
-                    WHEN project ~ '^[0-9]+$' THEN project::INTEGER
-                    ELSE NULL
-                END
-            `)
-            await db.exec(`
-                ALTER TABLE posts 
-                ADD CONSTRAINT posts_project_fkey 
-                FOREIGN KEY (project) REFERENCES projects(id) ON DELETE SET NULL
-            `)
+            // Note: events.project and posts.project are handled in Chapter 5B after this
 
             await db.exec(`
                 ALTER TABLE pages 
@@ -1918,6 +1912,21 @@ export const migration = {
                 FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
             `)
 
+            await db.exec(`
+                ALTER TABLE locations 
+                ALTER COLUMN project_id TYPE INTEGER 
+                USING CASE 
+                    WHEN project_id IS NULL THEN NULL
+                    WHEN project_id ~ '^[0-9]+$' THEN project_id::INTEGER
+                    ELSE NULL
+                END
+            `)
+            await db.exec(`
+                ALTER TABLE locations 
+                ADD CONSTRAINT locations_project_id_fkey 
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+            `)
+
             console.log('    ✓ All foreign key references updated')
 
             // -------------------------------------------------------------------
@@ -1956,7 +1965,7 @@ export const migration = {
                         IF NEW.project_id IS NOT NULL AND NEW.status_id > 2 THEN
                             UPDATE projects 
                             SET is_location_provider = TRUE 
-                            WHERE domaincode = NEW.project_id;
+                            WHERE id = NEW.project_id;
                         END IF;
                         RETURN NEW;
                     END IF;
@@ -1974,7 +1983,7 @@ export const migration = {
                                     AND id != OLD.id
                                 )
                             )
-                            WHERE domaincode = OLD.project_id;
+                            WHERE id = OLD.project_id;
                         END IF;
                         RETURN OLD;
                     END IF;
@@ -2001,7 +2010,7 @@ export const migration = {
                 SET is_location_provider = TRUE
                 WHERE EXISTS (
                     SELECT 1 FROM locations l
-                    WHERE l.project_id = p.domaincode
+                    WHERE l.project_id = p.id
                     AND l.status_id > 2
                 );
             `)

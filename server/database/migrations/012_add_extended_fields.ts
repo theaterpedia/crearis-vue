@@ -105,7 +105,8 @@ export const migration = {
         }
 
         // regio (references projects where is_regio = true)
-        await addColumn('projects', 'regio', 'TEXT REFERENCES projects(id)')
+        // Note: FK constraint will be properly handled in Migration 019 Chapter 5
+        await addColumn('projects', 'regio', 'TEXT')
 
         // partner_projects (comma-separated list or JSON)
         await addColumn('projects', 'partner_projects', 'TEXT')

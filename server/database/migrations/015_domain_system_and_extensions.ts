@@ -119,14 +119,16 @@ export const migration = {
         console.log('\n  🌐 Creating domains table...')
 
         if (isPostgres) {
+            // Note: admin_user_id and project_id are added without FK constraints here
+            // They will be properly handled with FK in Migration 019 Chapters 2 and 5
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS domains (
                     id SERIAL PRIMARY KEY,
                     sysdomain_id INTEGER REFERENCES sysdomains(id),
                     tld TEXT NOT NULL REFERENCES tlds(name),
                     textdomain TEXT CHECK (textdomain IS NULL OR textdomain ~ '^[a-z0-9_]+$'),
-                    admin_user_id TEXT REFERENCES users(id),
-                    project_id TEXT REFERENCES projects(id),
+                    admin_user_id TEXT,
+                    project_id TEXT,
                     description TEXT
                 )
             `)
@@ -201,14 +203,16 @@ export const migration = {
                 EXECUTE FUNCTION enforce_sysdomain_tld()
             `)
         } else {
+            // Note: admin_user_id and project_id are added without FK constraints here
+            // They will be properly handled with FK in Migration 019 Chapters 2 and 5
             await db.exec(`
                 CREATE TABLE IF NOT EXISTS domains (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     sysdomain_id INTEGER REFERENCES sysdomains(id),
                     tld TEXT NOT NULL REFERENCES tlds(name),
                     textdomain TEXT CHECK (textdomain IS NULL OR (textdomain NOT LIKE '%.%')),
-                    admin_user_id TEXT REFERENCES users(id),
-                    project_id TEXT REFERENCES projects(id),
+                    admin_user_id TEXT,
+                    project_id TEXT,
                     description TEXT
                 )
             `)
@@ -244,7 +248,9 @@ export const migration = {
         console.log('\n  📦 Updating projects table...')
 
         if (isPostgres) {
-            await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id TEXT REFERENCES users(id)`)
+            // Note: owner_id is added without FK constraint here
+            // It will be properly handled with FK in Migration 019 Chapter 2
+            await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id TEXT`)
             await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_company BOOLEAN DEFAULT FALSE`)
             await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS config JSONB`)
             await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS domain_id INTEGER REFERENCES domains(id)`)
@@ -254,7 +260,7 @@ export const migration = {
             await db.exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS member_ids JSONB`)
         } else {
             try {
-                await db.exec(`ALTER TABLE projects ADD COLUMN owner_id TEXT REFERENCES users(id)`)
+                await db.exec(`ALTER TABLE projects ADD COLUMN owner_id TEXT`)
             } catch (e: any) {
                 if (!e.message.includes('duplicate column')) throw e
             }
@@ -290,10 +296,12 @@ export const migration = {
             await db.exec(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`)
             await db.exec(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('user', 'admin', 'base'))`)
 
-            await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS instructor_id TEXT REFERENCES instructors(id)`)
+            // Note: instructor_id is added without FK constraint here
+            // It will be properly handled with FK in Migration 019 Chapter 4
+            await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS instructor_id TEXT`)
         } else {
             try {
-                await db.exec(`ALTER TABLE users ADD COLUMN instructor_id TEXT REFERENCES instructors(id)`)
+                await db.exec(`ALTER TABLE users ADD COLUMN instructor_id TEXT`)
             } catch (e: any) {
                 if (!e.message.includes('duplicate column')) throw e
             }
@@ -319,11 +327,13 @@ export const migration = {
         // ===================================================================
         console.log('\n  📍 Updating locations table...')
 
+        // Note: project_id is added without FK constraint here
+        // It will be properly handled with FK in Migration 019 Chapter 5
         if (isPostgres) {
-            await db.exec(`ALTER TABLE locations ADD COLUMN IF NOT EXISTS project_id TEXT REFERENCES projects(id)`)
+            await db.exec(`ALTER TABLE locations ADD COLUMN IF NOT EXISTS project_id TEXT`)
         } else {
             try {
-                await db.exec(`ALTER TABLE locations ADD COLUMN project_id TEXT REFERENCES projects(id)`)
+                await db.exec(`ALTER TABLE locations ADD COLUMN project_id TEXT`)
             } catch (e: any) {
                 if (!e.message.includes('duplicate column')) throw e
             }

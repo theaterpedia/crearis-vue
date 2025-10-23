@@ -61,6 +61,13 @@ async function getConfigFromDatabase(): Promise<ConfigData | null> {
  * Initialize database with smart migration handling
  */
 async function initializeDatabase() {
+    // Check if migrations should be skipped (e.g., during development after rebuild)
+    if (process.env.SKIP_MIGRATIONS === 'true') {
+        console.log('\n⏭️  Skipping migrations (SKIP_MIGRATIONS=true)')
+        console.log('✅ Database connection ready\n')
+        return
+    }
+
     const currentVersion = getCurrentVersion()
     const dbConfig = await getConfigFromDatabase()
 

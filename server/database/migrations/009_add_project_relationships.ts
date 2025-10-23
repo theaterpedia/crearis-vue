@@ -41,23 +41,21 @@ export const migration = {
 
         // 2. Add fields to events table
         console.log('  - Adding project, template, public_user, location fields to events...')
-        
-        const eventsFields = [
-            { name: 'project', ref: 'projects(id)' },
-            { name: 'template', ref: 'events(id)' },
-            { name: 'public_user', ref: 'instructors(id)' },
-            { name: 'location', ref: 'locations(id)' }
-        ]
 
-        for (const field of eventsFields) {
+        // Note: All these fields are added without FK constraints here
+        // They will be properly handled with FK constraints in Migration 019:
+        // - project: converted to project_id in Chapter 5B
+        // - template: converted to template_id in Chapter 3B (self-reference to events.id)
+        // - public_user: converted to INTEGER FK in Chapter 3 
+        // - location: converted to INTEGER FK in Chapter 3
+        const eventsFieldsToAdd = ['project', 'template', 'public_user', 'location']
+
+        for (const fieldName of eventsFieldsToAdd) {
             if (isPostgres) {
-                await db.exec(`
-                    ALTER TABLE events 
-                    ADD COLUMN IF NOT EXISTS ${field.name} TEXT REFERENCES ${field.ref}
-                `)
+                await db.exec(`ALTER TABLE events ADD COLUMN IF NOT EXISTS ${fieldName} TEXT`)
             } else {
                 try {
-                    await db.exec(`ALTER TABLE events ADD COLUMN ${field.name} TEXT REFERENCES ${field.ref}`)
+                    await db.exec(`ALTER TABLE events ADD COLUMN ${fieldName} TEXT`)
                 } catch (e: any) {
                     if (!e.message?.includes('duplicate column')) throw e
                 }
@@ -66,22 +64,20 @@ export const migration = {
 
         // 3. Add fields to posts table
         console.log('  - Adding project, template, public_user fields to posts...')
-        
-        const postsFields = [
-            { name: 'project', ref: 'projects(id)' },
-            { name: 'template', ref: 'posts(id)' },
-            { name: 'public_user', ref: 'instructors(id)' }
-        ]
 
-        for (const field of postsFields) {
+        // Note: All these fields are added without FK constraints here
+        // They will be properly handled with FK constraints in Migration 019:
+        // - project: converted to project_id in Chapter 5B
+        // - template: converted to template_id in Chapter 3B (self-reference to posts.id)
+        // - public_user: converted to INTEGER FK in Chapter 3
+        const postsFieldsToAdd = ['project', 'template', 'public_user']
+
+        for (const fieldName of postsFieldsToAdd) {
             if (isPostgres) {
-                await db.exec(`
-                    ALTER TABLE posts 
-                    ADD COLUMN IF NOT EXISTS ${field.name} TEXT REFERENCES ${field.ref}
-                `)
+                await db.exec(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS ${fieldName} TEXT`)
             } else {
                 try {
-                    await db.exec(`ALTER TABLE posts ADD COLUMN ${field.name} TEXT REFERENCES ${field.ref}`)
+                    await db.exec(`ALTER TABLE posts ADD COLUMN ${fieldName} TEXT`)
                 } catch (e: any) {
                     if (!e.message?.includes('duplicate column')) throw e
                 }
@@ -106,7 +102,7 @@ export const migration = {
         // 5. Add constraints for PostgreSQL
         if (isPostgres) {
             console.log('  - Adding CHECK constraints for isbase rules...')
-            
+
             // Events constraints
             try {
                 await db.exec(`

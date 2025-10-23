@@ -23,15 +23,16 @@ export default {
         // ===================================================================
         console.log('\n  📋 Creating project_members table...')
 
+        // Note: FK constraints will be properly handled in Migration 019
+        // - project_id: Chapter 5 (projects migration)
+        // - user_id: Chapter 2 (users migration)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS project_members (
                 project_id TEXT NOT NULL,
                 user_id TEXT NOT NULL,
                 role TEXT DEFAULT 'member',
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (project_id, user_id),
-                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                PRIMARY KEY (project_id, user_id)
             )
         `)
 
@@ -42,14 +43,15 @@ export default {
         // ===================================================================
         console.log('\n  📋 Creating event_instructors table (if not exists)...')
 
+        // Note: FK constraints will be properly handled in Migration 019
+        // - event_id: Chapter 3B (events migration)
+        // - instructor_id: Chapter 3 (instructors migration)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS event_instructors (
                 event_id TEXT NOT NULL,
                 instructor_id TEXT NOT NULL,
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (event_id, instructor_id),
-                FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
-                FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE
+                PRIMARY KEY (event_id, instructor_id)
             )
         `)
 
