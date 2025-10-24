@@ -202,12 +202,14 @@ describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
     beforeEach(async () => {
         db = await createTestDatabase()
 
-        const result = await db.run(`
+        await db.run(`
             INSERT INTO i18n_codes (name, variation, type, text, status)
             VALUES ('save', 'false', 'button', '{"de": "Speichern"}', 'de')
         `)
 
-        testId = result.lastID as number
+        // Get the inserted ID
+        const inserted = await db.get(`SELECT id FROM i18n_codes WHERE name = 'save' AND variation = 'false' AND type = 'button'`)
+        testId = inserted.id
     })
 
     afterEach(async () => {
@@ -222,7 +224,8 @@ describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
         `, [JSON.stringify({ de: 'Speichern', en: 'Save', cz: 'Uložit' }), testId])
 
         const updated = await db.get('SELECT * FROM i18n_codes WHERE id = ?', [testId])
-        const text = JSON.parse(updated.text)
+        // PostgreSQL returns JSONB as object, not string
+        const text = typeof updated.text === 'string' ? JSON.parse(updated.text) : updated.text
 
         expect(text.de).toBe('Speichern')
         expect(text.en).toBe('Save')
@@ -248,8 +251,11 @@ describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
         `, [JSON.stringify({ de: 'Speichern', en: 'Save' }), 'en', testId])
 
         const updated = await db.get('SELECT * FROM i18n_codes WHERE id = ?', [testId])
+        // PostgreSQL returns JSONB as object, not string
+        const text = typeof updated.text === 'string' ? JSON.parse(updated.text) : updated.text
+
         expect(updated.status).toBe('en')
-        expect(JSON.parse(updated.text).en).toBe('Save')
+        expect(text.en).toBe('Save')
     })
 
     it('should fail if ID does not exist', async () => {
@@ -287,12 +293,14 @@ describeOrSkip('i18n API - DELETE /api/i18n/:id', () => {
     beforeEach(async () => {
         db = await createTestDatabase()
 
-        const result = await db.run(`
+        await db.run(`
             INSERT INTO i18n_codes (name, variation, type, text, status)
             VALUES ('save', 'false', 'button', '{"de": "Speichern"}', 'de')
         `)
 
-        testId = result.lastID as number
+        // Get the inserted ID
+        const inserted = await db.get(`SELECT id FROM i18n_codes WHERE name = 'save' AND variation = 'false' AND type = 'button'`)
+        testId = inserted.id
     })
 
     afterEach(async () => {
@@ -370,7 +378,8 @@ describeOrSkip('i18n API - POST /api/i18n/get-or-create', () => {
         `)
 
         const created = await db.get('SELECT * FROM i18n_codes WHERE name = ?', ['autokey'])
-        const text = JSON.parse(created.text)
+        // PostgreSQL returns JSONB as object, not string
+        const text = typeof created.text === 'string' ? JSON.parse(created.text) : created.text
 
         expect(text.de).toBe('autokey')
         expect(text.en).toBe('autokey')
@@ -431,7 +440,8 @@ describeOrSkip('i18n API - Data Validation', () => {
         `, [JSON.stringify(text)])
 
         const inserted = await db.get('SELECT * FROM i18n_codes WHERE name = ?', ['complex'])
-        const parsed = JSON.parse(inserted.text)
+        // PostgreSQL returns JSONB as object, not string
+        const parsed = typeof inserted.text === 'string' ? JSON.parse(inserted.text) : inserted.text
 
         expect(parsed.de).toBe('Test "quoted"')
         expect(parsed.en).toBe('Test with, comma')
