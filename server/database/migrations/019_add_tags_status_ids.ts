@@ -1656,6 +1656,7 @@ export const migration = {
                     is_topic BOOLEAN GENERATED ALWAYS AS (type = 'topic') STORED,
                     is_onepage BOOLEAN GENERATED ALWAYS AS (COALESCE((config->>'onepage')::BOOLEAN, FALSE)) STORED,
                     is_service BOOLEAN GENERATED ALWAYS AS (COALESCE((config->>'service')::BOOLEAN, FALSE)) STORED,
+                    is_sidebar BOOLEAN GENERATED ALWAYS AS (COALESCE((config->>'sidebar')::BOOLEAN, FALSE)) STORED,
                     regio INTEGER REFERENCES projects(id),
                     partner_projects TEXT,
                     heading TEXT,

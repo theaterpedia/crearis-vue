@@ -24,6 +24,7 @@ import { migration as migration018 } from './018_update_projects_schema'
 import { migration as migration019 } from './019_add_tags_status_ids'
 import { migration as migration020 } from './020_refactor_entities'
 import { migration as migration021 } from './021_seed_system_data'
+import { migration as migration022 } from './022_seed_csv_data'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -57,6 +58,7 @@ const migrations: Migration[] = [
     { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
     { run: migration020.up, metadata: { id: migration020.id, description: migration020.description, version: '0.0.13', date: '2025-10-22' } },
     { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' } },
+    { run: migration022.up, metadata: { id: migration022.id, description: migration022.description, version: '0.0.15', date: '2025-10-24' } },
 ]
 
 /**
