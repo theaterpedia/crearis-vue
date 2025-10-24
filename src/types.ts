@@ -5,6 +5,7 @@
 
 export interface Event {
     id: number  // Auto-increment INTEGER (Migration 019)
+    xmlid?: string  // Old TEXT identifier for legacy compatibility (Migration 019)
     name: string
     teaser?: string
     description?: string
@@ -27,6 +28,7 @@ export interface Event {
 
 export interface Post {
     id: number  // Auto-increment INTEGER (Migration 019)
+    xmlid?: string  // Old TEXT identifier for legacy compatibility (Migration 019)
     name: string
     teaser?: string
     content?: string

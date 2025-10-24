@@ -69,6 +69,14 @@ export default defineEventHandler(async (event) => {
             eventData.location
         ])
 
+        // Extract the new event ID from the result
+        // PostgreSQL: result.rows[0].id, SQLite: result.lastID
+        const newId = result.rows?.[0]?.id || result.lastID
+
+        if (!newId) {
+            throw new Error('Failed to get new event ID')
+        }
+
         // Get the created event with domaincode
         const created = await db.get(`
             SELECT 
@@ -77,7 +85,7 @@ export default defineEventHandler(async (event) => {
             FROM events e
             LEFT JOIN projects p ON e.project_id = p.id
             WHERE e.id = ?
-        `, [(result as any).id])
+        `, [newId])
 
         return created
     } catch (error) {

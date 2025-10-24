@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div class="step-actions">
+        <div v-if="!hideActions" class="step-actions">
             <button class="action-btn secondary-btn" @click="handlePrev">
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                     xmlns="http://www.w3.org/2000/svg">
@@ -75,6 +75,8 @@ import type { Post, Instructor } from '@/types'
 
 interface Props {
     projectId: string
+    isLocked?: boolean
+    hideActions?: boolean
 }
 
 interface Emits {
@@ -82,7 +84,10 @@ interface Emits {
     (e: 'prev'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    isLocked: false,
+    hideActions: false
+})
 const emit = defineEmits<Emits>()
 
 // i18n setup - default to German for project users
@@ -192,34 +197,34 @@ function handlePrev() {
 onMounted(async () => {
     // Load i18n strings with inline HTML strategy (get-or-create with default text)
     const { getOrCreate } = useI18n()
-    
+
     const titleEntry = await getOrCreate('posts', 'field', 'false', 'Beiträge verwalten')
     i18nTitle.value = titleEntry?.text?.de || 'Beiträge verwalten'
-    
+
     const subtitleEntry = await getOrCreate('posts-step-subtitle', 'desc', 'false', 'Wählen Sie Basis-Beiträge aus und passen Sie diese für Ihr Projekt an')
     i18nSubtitle.value = subtitleEntry?.text?.de || 'Wählen Sie Basis-Beiträge aus und passen Sie diese für Ihr Projekt an'
-    
+
     const loadingEntry = await getOrCreate('loading-posts', 'desc', 'false', 'Lade Beiträge...')
     i18nLoading.value = loadingEntry?.text?.de || 'Lade Beiträge...'
-    
+
     const nextEntry = await getOrCreate('next', 'button', 'false', 'Weiter')
     i18nNext.value = nextEntry?.text?.de || 'Weiter'
-    
+
     const prevEntry = await getOrCreate('prev', 'button', 'false', 'Zurück')
     i18nPrev.value = prevEntry?.text?.de || 'Zurück'
-    
+
     const emptyTitleEntry = await getOrCreate('no-posts-yet', 'desc', 'false', 'Keine Beiträge vorhanden')
     i18nEmptyTitle.value = emptyTitleEntry?.text?.de || 'Keine Beiträge vorhanden'
-    
+
     const emptyTextEntry = await getOrCreate('add-posts-right', 'desc', 'false', 'Fügen Sie Ihren ersten Beitrag mit dem Panel rechts hinzu.')
     i18nEmptyText.value = emptyTextEntry?.text?.de || 'Fügen Sie Ihren ersten Beitrag mit dem Panel rechts hinzu.'
-    
+
     const errorPostsEntry = await getOrCreate('error-loading-posts', 'desc', 'false', 'Fehler beim Laden der Beiträge')
     i18nErrorPosts.value = errorPostsEntry?.text?.de || 'Fehler beim Laden der Beiträge'
-    
+
     const errorInstructorsEntry = await getOrCreate('error-loading-instructors', 'desc', 'false', 'Fehler beim Laden der Kursleiter')
     i18nErrorInstructors.value = errorInstructorsEntry?.text?.de || 'Fehler beim Laden der Kursleiter'
-    
+
     const errorDeleteEntry = await getOrCreate('error-deleting-post', 'desc', 'false', 'Fehler beim Löschen des Beitrags')
     i18nErrorDelete.value = errorDeleteEntry?.text?.de || 'Fehler beim Löschen des Beitrags'
 

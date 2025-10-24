@@ -290,11 +290,14 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Construct XML-ID based on template ID
-        // Replace the project prefix: _demo.eventX → _projectN.eventX
-        // Or if template has different prefix, construct: _projectN.eventX
-        const templatePrefix = selectedEvent.value.id.split('.')[0] // e.g., "_demo"
-        const eventSuffix = selectedEvent.value.id.split('.')[1] // e.g., "event1"
+        // Construct XML-ID based on template xmlid
+        // Base events have xmlid like "_demo.event1" or "base_event.workshop1"
+        // We need to extract the suffix and create a new xmlid for this project
+        const templateXmlId = selectedEvent.value.xmlid || `base_event.${selectedEvent.value.id}`
+
+        // Split xmlid by '.' to get suffix (e.g., "event1" from "_demo.event1")
+        const parts = templateXmlId.split('.')
+        const eventSuffix = parts.length > 1 ? parts[parts.length - 1] : `event${selectedEvent.value.id}`
         const newXmlId = `_${props.projectId}.${eventSuffix}`
 
         // Construct the new event object with all required fields
@@ -304,7 +307,7 @@ const handleApply = async () => {
             teaser: customTeaser.value.trim() || '',
             isbase: 0,
             project: props.projectId,
-            template: selectedEvent.value.id,
+            template: templateXmlId,  // Use xmlid as template reference
             public_user: selectedInstructor.value,
             location: selectedLocation.value,
             // Copy other fields from template

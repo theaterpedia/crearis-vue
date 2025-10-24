@@ -65,6 +65,14 @@ export default defineEventHandler(async (event) => {
             postData.public_user
         ])
 
+        // Extract the new post ID from the result
+        // PostgreSQL: result.rows[0].id, SQLite: result.lastID
+        const newId = result.rows?.[0]?.id || result.lastID
+
+        if (!newId) {
+            throw new Error('Failed to get new post ID')
+        }
+
         // Get the created post with domaincode
         const created = await db.get(`
             SELECT 
@@ -73,7 +81,7 @@ export default defineEventHandler(async (event) => {
             FROM posts p
             LEFT JOIN projects pr ON p.project_id = pr.id
             WHERE p.id = ?
-        `, [(result as any).id])
+        `, [newId])
 
         return created
     } catch (error) {

@@ -43,12 +43,12 @@
 
             <!-- Right: Add Event Panel -->
             <div class="add-panel-container">
-                <AddEventPanel :project-id="props.projectId" :base-events="baseEvents" :all-instructors="allInstructors"
+                <EventPanel :project-id="props.projectId" :base-events="baseEvents" :all-instructors="allInstructors"
                     :all-locations="allLocations" @event-added="handleEventAdded" />
             </div>
         </div>
 
-        <div class="step-actions">
+        <div v-if="!hideActions" class="step-actions">
             <button class="action-btn primary-btn" @click="handleNext">
                 <span v-html="i18nNext"></span>
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
@@ -65,19 +65,25 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import EventCard from '@/components/EventCard.vue'
-import AddEventPanel from '@/components/AddEventPanel.vue'
+import EventPanel from '@/components/EventPanel.vue'
+import AlertBanner from '@/components/AlertBanner.vue'
 import { useI18n } from '@/composables/useI18n'
 import type { Event, Instructor } from '@/types'
 
 interface Props {
     projectId: string
+    isLocked?: boolean
+    hideActions?: boolean
 }
 
 interface Emits {
     (e: 'next'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    isLocked: false,
+    hideActions: false
+})
 const emit = defineEmits<Emits>()
 
 // i18n setup - default to German for project users
@@ -192,31 +198,31 @@ function handleNext() {
 onMounted(async () => {
     // Load i18n strings with inline HTML strategy (get-or-create with default text)
     const { getOrCreate } = useI18n()
-    
+
     const titleEntry = await getOrCreate('events', 'field', 'false', 'Veranstaltungen')
     i18nTitle.value = titleEntry?.text?.de || 'Veranstaltungen'
-    
+
     const subtitleEntry = await getOrCreate('events-step-subtitle', 'desc', 'false', 'Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen')
     i18nSubtitle.value = subtitleEntry?.text?.de || 'Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen'
-    
+
     const loadingEntry = await getOrCreate('loading-events', 'desc', 'false', 'Events werden geladen...')
     i18nLoading.value = loadingEntry?.text?.de || 'Events werden geladen...'
-    
+
     const nextEntry = await getOrCreate('next', 'button', 'false', 'Weiter')
     i18nNext.value = nextEntry?.text?.de || 'Weiter'
-    
+
     const emptyTitleEntry = await getOrCreate('no-events-yet', 'desc', 'false', 'Noch keine Events')
     i18nEmptyTitle.value = emptyTitleEntry?.text?.de || 'Noch keine Events'
-    
+
     const emptyTextEntry = await getOrCreate('add-events-right', 'desc', 'false', 'Fügen Sie Events über das Panel rechts hinzu')
     i18nEmptyText.value = emptyTextEntry?.text?.de || 'Fügen Sie Events über das Panel rechts hinzu'
-    
+
     const errorEventsEntry = await getOrCreate('error-loading-events', 'desc', 'false', 'Fehler beim Laden der Events')
     i18nErrorEvents.value = errorEventsEntry?.text?.de || 'Fehler beim Laden der Events'
-    
+
     const errorInstructorsEntry = await getOrCreate('error-loading-instructors', 'desc', 'false', 'Fehler beim Laden der Kursleiter')
     i18nErrorInstructors.value = errorInstructorsEntry?.text?.de || 'Fehler beim Laden der Kursleiter'
-    
+
     const errorLocationsEntry = await getOrCreate('error-loading-locations', 'desc', 'false', 'Fehler beim Laden der Orte')
     i18nErrorLocations.value = errorLocationsEntry?.text?.de || 'Fehler beim Laden der Orte'
 

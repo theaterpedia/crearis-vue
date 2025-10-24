@@ -43,6 +43,20 @@ export class SQLiteAdapter implements DatabaseAdapter {
 
     run(sql: string, params: any[] = []): QueryResult {
         const stmt = this.db.prepare(sql)
+
+        // Check if this is a RETURNING query
+        if (sql.toUpperCase().includes('RETURNING')) {
+            // Use get() to retrieve the returned row
+            const row = stmt.get(...params) as any
+            return {
+                rows: row ? [row] : [],
+                rowCount: 1,
+                lastID: row?.id,
+                changes: 1
+            }
+        }
+
+        // Regular INSERT/UPDATE/DELETE without RETURNING
         const result = stmt.run(...params)
         return {
             rows: [],

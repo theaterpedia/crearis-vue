@@ -217,12 +217,14 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
 
-// Project ID - defaults to username for project users, or 'project1' as fallback
+// Project ID - use the projectId from auth session (contains domaincode)
 const projectId = computed(() => {
-    if (user.value?.activeRole === 'project' && user.value.username) {
-        return user.value.username
+    // For project users, use the projectId from session (contains domaincode like "theaterpedia")
+    if (user.value?.activeRole === 'project' && user.value.projectId) {
+        return user.value.projectId
     }
-    return 'project1' // Fallback for testing/admin
+    // Fallback for admin/testing
+    return 'project1'
 })
 
 // Project state

@@ -143,10 +143,14 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Construct XML-ID based on template ID
-        // Replace the project prefix: _demo.postX → _projectN.postX
-        const templatePrefix = selectedPost.value.id.split('.')[0] // e.g., "_demo"
-        const postSuffix = selectedPost.value.id.split('.')[1] // e.g., "post1"
+        // Construct XML-ID based on template xmlid
+        // Base posts have xmlid like "_demo.post1" or "base_post.article1"
+        // We need to extract the suffix and create a new xmlid for this project
+        const templateXmlId = selectedPost.value.xmlid || `base_post.${selectedPost.value.id}`
+
+        // Split xmlid by '.' to get suffix (e.g., "post1" from "_demo.post1")
+        const parts = templateXmlId.split('.')
+        const postSuffix = parts.length > 1 ? parts[parts.length - 1] : `post${selectedPost.value.id}`
         const newXmlId = `_${props.projectId}.${postSuffix}`
 
         // Construct the new post object with only valid table fields
@@ -159,7 +163,7 @@ const handleApply = async () => {
             post_date: selectedPost.value.post_date || null,
             isbase: 0,
             project: props.projectId,
-            template: selectedPost.value.id,
+            template: templateXmlId,  // Use xmlid as template reference
             public_user: selectedInstructor.value
         }
 
