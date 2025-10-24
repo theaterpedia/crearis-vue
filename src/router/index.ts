@@ -27,6 +27,7 @@ const router = createRouter({
     { path: '/timeline', component: () => import('../views/timeline.vue') },
     { path: '/theme-demo', component: () => import('../views/ThemeDemo.vue') },
     { path: '/clist-demo', component: () => import('../views/CListDemo.vue') },
+    { path: '/kanban-demo', component: () => import('../views/KanbanDemo.vue') },
   ],
 })
 
