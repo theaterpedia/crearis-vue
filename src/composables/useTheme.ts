@@ -109,6 +109,13 @@ export function useTheme() {
             // Cache the vars
             themeVarsCache.value.set(id, data.vars)
 
+            // If theme has inverted flag, set it
+            if (data.inverted === true) {
+                setInverted(true)
+            } else {
+                setInverted(false)
+            }
+
             return data.vars
         } catch (error) {
             console.error(`Failed to load theme ${id}:`, error)
