@@ -141,12 +141,56 @@ export function useStatus() {
         return statusCache.value.filter((s: StatusEntry) => s.table === table)
     }
 
+    /**
+     * Get matching statuses from other tables by value
+     * Returns unique localized texts only (excluding tasks table)
+     * @param value - Status value to match
+     * @param lang - Language code
+     * @returns Array of {table, text} objects with unique texts
+     */
+    function getMatchingStatusesForOtherTables(value: number, lang: string = 'de'): Array<{ table: string; text: string }> {
+        if (!cacheInitialized.value) {
+            return []
+        }
+
+        const otherTables = ['events', 'posts', 'users', 'projects']
+        const matchingStatuses = statusCache.value
+            .filter((s: StatusEntry) => s.value === value && otherTables.includes(s.table))
+            .map(s => ({
+                table: s.table,
+                text: s.name_i18n?.[lang] || s.name_i18n?.['de'] || s.name_i18n?.['en'] || s.name
+            }))
+
+        // Filter out duplicates by text
+        const uniqueTexts = new Set<string>()
+        const result: Array<{ table: string; text: string }> = []
+
+        for (const status of matchingStatuses) {
+            if (!uniqueTexts.has(status.text)) {
+                uniqueTexts.add(status.text)
+                result.push(status)
+            }
+        }
+
+        return result
+    }
+
+    /**
+     * Get default language based on user role
+     */
+    function getDefaultLanguage(userRole?: string): 'de' | 'en' | 'cz' {
+        if (userRole === 'admin') return 'en'
+        return 'de' // Default for project users and others
+    }
+
     return {
         status4Lang,
         getStatusIdByVal,
         getStatusIdByName,
         getStatusDisplayName,
         getStatusesForTable,
+        getMatchingStatusesForOtherTables,
+        getDefaultLanguage,
         cacheInitialized: computed(() => cacheInitialized.value),
         cacheLoading: computed(() => cacheLoading.value),
         initializeCache

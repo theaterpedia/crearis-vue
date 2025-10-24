@@ -113,11 +113,18 @@
 
                         <!-- Tasks Board (4 Main Columns + Optional) -->
                         <div v-if="!loading && !error" class="tasks-board">
-                            <!-- Idea Column -->
-                            <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, 'idea')">
+                            <!-- Idea Column (status_value = 1) -->
+                            <div class="task-column column-idea" @dragover.prevent @drop="handleDrop($event, STATUS_VALUE.IDEA)">
                                 <h3 class="column-title">
-                                    <span class="column-icon">�</span>
-                                    Idea
+                                    <span class="column-icon">💡</span>
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.IDEA, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.IDEA, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.IDEA, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.IDEA, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ ideaTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -129,11 +136,18 @@
                                 </div>
                             </div>
 
-                            <!-- New Column -->
-                            <div class="task-column column-new" @dragover.prevent @drop="handleDrop($event, 'new')">
+                            <!-- New Column (status_value = 0) -->
+                            <div v-if="viewSettings.showNew" class="task-column column-new" @dragover.prevent @drop="handleDrop($event, STATUS_VALUE.NEW)">
                                 <h3 class="column-title">
                                     <span class="column-icon">📋</span>
-                                    New
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.NEW, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.NEW, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.NEW, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.NEW, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ newTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -145,11 +159,18 @@
                                 </div>
                             </div>
 
-                            <!-- Draft Column -->
-                            <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, 'draft')">
+                            <!-- Draft Column (status_value = 2) -->
+                            <div class="task-column column-draft" @dragover.prevent @drop="handleDrop($event, STATUS_VALUE.DRAFT)">
                                 <h3 class="column-title">
                                     <span class="column-icon">⚡</span>
-                                    Draft
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.DRAFT, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.DRAFT, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.DRAFT, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.DRAFT, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ draftTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -161,11 +182,18 @@
                                 </div>
                             </div>
 
-                            <!-- Final Column -->
-                            <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, 'final')">
+                            <!-- Final Column (status_value = 5) -->
+                            <div class="task-column column-final" @dragover.prevent @drop="handleDrop($event, STATUS_VALUE.FINAL)">
                                 <h3 class="column-title">
                                     <span class="column-icon">✓</span>
-                                    Final
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.FINAL, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.FINAL, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.FINAL, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.FINAL, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ finalTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -177,12 +205,19 @@
                                 </div>
                             </div>
 
-                            <!-- Reopen Column -->
+                            <!-- Reopen Column (status_value = 8) -->
                             <div class="task-column column-reopen" @dragover.prevent
-                                @drop="handleDrop($event, 'reopen')">
+                                @drop="handleDrop($event, STATUS_VALUE.REOPEN)">
                                 <h3 class="column-title">
                                     <span class="column-icon">🔄</span>
-                                    Reopen
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.REOPEN, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.REOPEN, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.REOPEN, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.REOPEN, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ reopenTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -194,12 +229,19 @@
                                 </div>
                             </div>
 
-                            <!-- Trash Column (optional) -->
+                            <!-- Trash Column (optional) (status_value = 16) -->
                             <div v-if="viewSettings.showTrash" class="task-column column-trash" @dragover.prevent
-                                @drop="handleDrop($event, 'trash')">
+                                @drop="handleDrop($event, STATUS_VALUE.TRASH)">
                                 <h3 class="column-title">
                                     <span class="column-icon">🗑</span>
-                                    Papierkorb
+                                    <div class="column-title-text">
+                                        <strong>{{ getStatusDisplayName(STATUS_VALUE.TRASH, 'tasks', currentLang) }}</strong>
+                                        <div class="column-subtitle" v-if="getMatchingStatusesForOtherTables(STATUS_VALUE.TRASH, currentLang).length > 0">
+                                            <span v-for="(match, idx) in getMatchingStatusesForOtherTables(STATUS_VALUE.TRASH, currentLang)" :key="idx">
+                                                {{ match.text }}<template v-if="idx < getMatchingStatusesForOtherTables(STATUS_VALUE.TRASH, currentLang).length - 1">, </template>
+                                            </span>
+                                        </div>
+                                    </div>
                                     <span class="column-count">{{ trashTasks.length }}</span>
                                 </h3>
                                 <div class="task-list">
@@ -208,12 +250,12 @@
                                         @delete="deleteTask" @drag-start="handleDragStart" />
 
                                     <!-- Trashed watch tasks -->
-                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.status === 'trash')"
+                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.status_value === STATUS_VALUE.TRASH)"
                                         :key="task.id" :task="task" @restore="restoreWatchTask" />
 
-                                    <div v-if="trashTasks.length === 0 && watchTasks.filter((t: any) => t.status === 'trash').length === 0"
+                                    <div v-if="trashTasks.length === 0 && watchTasks.filter((t: any) => t.status_value === STATUS_VALUE.TRASH).length === 0"
                                         class="empty-column">
-                                        Keine Aufgaben
+                                        No tasks
                                     </div>
                                 </div>
                             </div>
@@ -282,6 +324,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { useStatus } from '@/composables/useStatus'
 import Section from '@/components/Section.vue'
 import Button from '@/components/Button.vue'
 import TaskCard from '@/components/TaskCard.vue'
@@ -302,16 +345,23 @@ import AdminActionsShowcase from '@/components/AdminActionsShowcase.vue'
 
 interface Task {
     id: string
-    title: string
+    name: string  // Renamed from title (Migration 019)
+    title?: string  // Keep for backward compatibility
     description?: string
     category: 'admin' | 'main' | 'release'
-    status: 'idea' | 'new' | 'draft' | 'final' | 'reopen' | 'trash'
+    status_id: number  // INTEGER FK to status table (Migration 019)
+    status_value: number  // Status byte value (0, 1, 2, 4, 5, 8, 16)
+    status_name: string  // Status name from status table
+    status_display: string  // Translated status name based on lang
+    status?: string  // Keep for backward compatibility
+    lang: string  // Language (de, en, cz)
     priority: 'low' | 'medium' | 'high' | 'urgent'
     release_id?: string
     record_type?: string
     record_id?: string
     assigned_to?: string
-    image?: string
+    cimg?: string  // Renamed from image (Migration 019)
+    image?: string  // Keep for backward compatibility
     prompt?: string
     logic?: string
     filter?: string
@@ -324,6 +374,7 @@ interface Task {
     updated_at: string
     entity_name?: string
     display_title?: string
+    entity_image?: string
 }
 
 interface Release {
@@ -339,6 +390,13 @@ interface Release {
 
 const router = useRouter()
 const { user, isAuthenticated, checkSession, logout } = useAuth()
+const { 
+    status4Lang, 
+    getStatusDisplayName, 
+    getMatchingStatusesForOtherTables,
+    getDefaultLanguage,
+    initializeCache 
+} = useStatus()
 
 const tasks = ref<Task[]>([])
 const releases = ref<Release[]>([])
@@ -347,6 +405,11 @@ const currentTask = ref<Task | null>(null)
 const loading = ref(false)
 const error = ref('')
 const draggedTask = ref<Task | null>(null)
+
+// Language detection based on user role
+const currentLang = computed(() => {
+    return getDefaultLanguage(user.value?.activeRole)
+})
 
 // View state
 const viewState = ref('only-main') // 'only-release' | 'only-main' | 'all-tasks'
@@ -468,36 +531,47 @@ const filteredTasks = computed(() => {
     return result
 })
 
+// Status value constants (from status table)
+const STATUS_VALUE = {
+    NEW: 0,
+    IDEA: 1,
+    DRAFT: 2,
+    ACTIVE: 4,
+    FINAL: 5,
+    REOPEN: 8,
+    TRASH: 16
+} as const
+
 // Computed: Statistics
 const stats = computed(() => {
     const filtered = filteredTasks.value
     return {
         total: filtered.length,
-        idea: filtered.filter((t: Task) => t.status === 'idea').length,
-        draft: filtered.filter((t: Task) => t.status === 'draft').length,
-        final: filtered.filter((t: Task) => t.status === 'final').length,
-        reopen: filtered.filter((t: Task) => t.status === 'reopen').length
+        idea: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.IDEA).length,
+        draft: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.DRAFT).length,
+        final: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.FINAL).length,
+        reopen: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.REOPEN).length
     }
 })
 
-// Computed: Tasks by status
+// Computed: Tasks by status value
 const ideaTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'idea')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.IDEA)
 )
 const newTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'new')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.NEW)
 )
 const draftTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'draft')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.DRAFT)
 )
 const finalTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'final')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.FINAL)
 )
 const reopenTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'reopen')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.REOPEN)
 )
 const trashTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status === 'trash')
+    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.TRASH)
 )
 
 // Load tasks from API
@@ -576,7 +650,8 @@ async function saveTask(taskData: Partial<Task>) {
 
 // Delete task
 async function deleteTask(task: Task) {
-    if (!confirm(`Are you sure you want to delete "${task.title}"?`)) {
+    const taskTitle = task.display_title || task.name || task.title || 'this task'
+    if (!confirm(`Are you sure you want to delete "${taskTitle}"?`)) {
         return
     }
 
@@ -596,13 +671,13 @@ async function deleteTask(task: Task) {
     }
 }
 
-// Update task status (for drag-and-drop)
-async function updateTaskStatus(taskId: string, newStatus: Task['status']) {
+// Update task status (for drag-and-drop) - now uses status_value
+async function updateTaskStatus(taskId: string, newStatusValue: number) {
     try {
         const response = await fetch(`/api/tasks/${taskId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ status_value: newStatusValue })
         })
 
         if (!response.ok) {
@@ -621,11 +696,11 @@ function handleDragStart(task: Task) {
     draggedTask.value = task
 }
 
-function handleDrop(event: DragEvent, newStatus: Task['status']) {
+function handleDrop(event: DragEvent, newStatusValue: number) {
     event.preventDefault()
 
-    if (draggedTask.value && draggedTask.value.status !== newStatus) {
-        updateTaskStatus(draggedTask.value.id, newStatus)
+    if (draggedTask.value && draggedTask.value.status_value !== newStatusValue) {
+        updateTaskStatus(draggedTask.value.id, newStatusValue)
     }
 
     draggedTask.value = null
@@ -757,8 +832,8 @@ async function loadAdminTasks() {
             const data = await response.json()
             adminTasks.value = data.tasks || []
             // Separate watch tasks from regular admin tasks
-            watchTasks.value = adminTasks.value.filter(t => t.logic)
-            regularAdminTasks.value = adminTasks.value.filter(t => !t.logic)
+            watchTasks.value = adminTasks.value.filter((t: any) => t.logic)
+            regularAdminTasks.value = adminTasks.value.filter((t: any) => !t.logic)
         }
     } catch (err) {
         console.error('Failed to load admin tasks:', err)
@@ -1155,6 +1230,9 @@ onMounted(async () => {
     // Initialize theme system (loads available themes, doesn't set any by default)
     await initTheme()
 
+    // Initialize status cache
+    await initializeCache()
+
     await checkSession()
     if (isAuthenticated.value) {
         await Promise.all([
@@ -1529,6 +1607,25 @@ onMounted(async () => {
 
 .column-icon {
     font-size: 1.25rem;
+}
+
+.column-title-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.column-title-text strong {
+    font-size: 1.125rem;
+    line-height: 1.2;
+}
+
+.column-subtitle {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-dimmed);
+    line-height: 1.3;
 }
 
 .column-count {
