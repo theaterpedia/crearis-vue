@@ -38,7 +38,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
+import { useI18n } from '@/composables/useI18n'
 
 interface StepItem {
     label: string
@@ -47,7 +49,7 @@ interface StepItem {
 
 interface Props {
     step: number
-    headerMessage: string
+    projectId: string
 }
 
 interface Emits {
@@ -57,13 +59,60 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const steps: StepItem[] = [
-    { label: 'Events', description: 'Wählen Sie die Veranstaltungen für Ihr Projekt' },
-    { label: 'Data', description: 'Konfigurieren Sie die Datenquellen' },
-    { label: 'Theme', description: 'Passen Sie das Design an' },
-    { label: 'Views', description: 'Definieren Sie die Ansichten' },
-    { label: 'Landing', description: 'Gestalten Sie die Startseite' }
-]
+const { button, setLanguage } = useI18n()
+
+// Language detection (admin → en, project users → de)
+const userLang = ref('de')
+
+// Step labels and descriptions with i18n
+const steps = ref<StepItem[]>([
+    { label: 'Events', description: 'Loading...' },
+    { label: 'Posts', description: 'Loading...' },
+    { label: 'Users', description: 'Loading...' },
+    { label: 'Theme', description: 'Loading...' },
+    { label: 'Pages', description: 'Loading...' }
+])
+
+// Header message computed
+const headerMessage = computed(() => {
+    const stepPrefixes = ['Schritt 1: ', 'Schritt 2: ', 'Schritt 3: ', 'Schritt 4: ', 'Schritt 5: ']
+    const currentIndex = props.step
+    if (currentIndex >= 0 && currentIndex < steps.value.length) {
+        return stepPrefixes[currentIndex] + steps.value[currentIndex].label
+    }
+    return ''
+})
+
+onMounted(async () => {
+    // Detect language (simplified - could check user role or preferences)
+    setLanguage(userLang.value as any)
+
+    // Load i18n strings for step labels
+    try {
+        const stepNames = [
+            await button('events-select'),
+            await button('posts-create'),
+            await button('users-regio-config'),
+            await button('theme-layout-navigation'),
+            await button('landing-heading-pages')
+        ]
+
+        const stepDescs = [
+            'Wählen Sie die Veranstaltungen für Ihr Projekt',
+            'Erstellen Sie Posts für Ihr Projekt',
+            'Konfigurieren Sie Benutzer und Regionalprojekte',
+            'Passen Sie Theme, Layout und Navigation an',
+            'Gestalten Sie Landing-Page, Heading und Pages'
+        ]
+
+        steps.value = stepNames.map((name, i) => ({
+            label: name || steps.value[i].label,
+            description: stepDescs[i]
+        }))
+    } catch (error) {
+        console.error('Failed to load step i18n:', error)
+    }
+})
 
 function goToStep(index: number) {
     // Allow navigation to any step
@@ -74,9 +123,6 @@ function goToStep(index: number) {
 <style scoped>
 /* ===== STEPPER CONTAINER ===== */
 .project-stepper {
-    background: var(--color-card-bg);
-    border: var(--border) solid var(--color-border);
-    border-radius: var(--radius-card);
     padding: 2rem;
 }
 

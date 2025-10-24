@@ -1,8 +1,8 @@
 <template>
     <div class="step-component">
         <div class="step-header">
-            <h3>Theme, Layout, Navigation</h3>
-            <p class="step-subtitle">Passen Sie Design und Einstellungen an</p>
+            <h3>Users & Regio konfigurieren</h3>
+            <p class="step-subtitle">Verwalten Sie Benutzer und Regionalprojekte</p>
         </div>
 
         <!-- Horizontal Tabs -->
@@ -15,10 +15,8 @@
 
         <!-- Tab Content -->
         <div class="tab-content">
-            <ThemeConfigPanel v-if="activeTab === 'theme'" :project-id="projectId" :is-locked="isLocked" />
-            <LayoutConfigPanel v-else-if="activeTab === 'layout'" :project-id="projectId" :is-locked="isLocked" />
-            <NavigationConfigPanel v-else-if="activeTab === 'navigation'" :project-id="projectId"
-                :is-locked="isLocked" />
+            <UsersConfigPanel v-if="activeTab === 'users'" :project-id="projectId" :is-locked="isLocked" />
+            <ProjectsConfigPanel v-else-if="activeTab === 'projects'" :project-id="projectId" :is-locked="isLocked" />
         </div>
 
         <div class="step-actions">
@@ -29,10 +27,10 @@
                         d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z">
                     </path>
                 </svg>
-                Zurück
+                <span>Zurück</span>
             </button>
             <button class="action-btn primary-btn" @click="handleNext">
-                Weiter
+                <span>Weiter</span>
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -46,9 +44,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
-import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
-import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
+import UsersConfigPanel from '@/components/UsersConfigPanel.vue'
+import ProjectsConfigPanel from '@/components/ProjectsConfigPanel.vue'
 
 interface Props {
     projectId: string
@@ -65,12 +62,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 const emit = defineEmits<Emits>()
 
-const activeTab = ref('theme')
+const activeTab = ref('users')
 
 const tabs = [
-    { id: 'theme', label: 'Theme' },
-    { id: 'layout', label: 'Layout' },
-    { id: 'navigation', label: 'Navigation' }
+    { id: 'users', label: 'Users' },
+    { id: 'projects', label: 'Projects' }
 ]
 
 function handleNext() {
@@ -83,6 +79,7 @@ function handlePrev() {
 </script>
 
 <style scoped>
+/* ===== STEP COMPONENT ===== */
 .step-component {
     display: flex;
     flex-direction: column;
@@ -136,11 +133,12 @@ function handlePrev() {
     min-height: 400px;
 }
 
+/* ===== STEP ACTIONS ===== */
 .step-actions {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding-top: 1rem;
+    padding-top: 1.5rem;
     border-top: var(--border) solid var(--color-border);
 }
 
@@ -149,7 +147,7 @@ function handlePrev() {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    border: none;
+    border: var(--border-button) solid var(--color-border);
     border-radius: var(--radius-button);
     font-size: 0.875rem;
     font-weight: 500;
@@ -160,24 +158,19 @@ function handlePrev() {
 .primary-btn {
     background: var(--color-project);
     color: white;
+    border-color: var(--color-project);
 }
 
 .primary-btn:hover {
     opacity: 0.9;
-    transform: translateY(-1px);
 }
 
 .secondary-btn {
-    background: var(--color-bg);
+    background: transparent;
     color: var(--color-text);
-    border: var(--border) solid var(--color-border);
 }
 
 .secondary-btn:hover {
     background: var(--color-bg-soft);
-}
-
-.action-btn:active {
-    transform: translateY(0);
 }
 </style>

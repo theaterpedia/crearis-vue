@@ -141,44 +141,54 @@
 
         <!-- Main Content: 2-Column Layout -->
         <div class="main-content">
-            <!-- Left Column: Stepper Navigation & Content (40%) -->
-            <div class="left-column">
-                <ProjectStepper v-model:step="currentStep" :header-message="stepHeaderMessage" />
+            <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
+            <div class="navigation">
+                <!-- Stepper Mode: status < 2 -->
+                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" />
 
-                <!-- Step-specific left column content -->
-                <div class="step-content">
-                    <div v-if="currentStep === 0" class="step-description">
-                        <h3>Veranstaltungen</h3>
-                        <p>Wählen Sie die Veranstaltungen aus, die in Ihrem Projekt angezeigt werden sollen.</p>
-                    </div>
-                    <div v-else-if="currentStep === 1" class="step-description">
-                        <h3>Daten</h3>
-                        <p>Konfigurieren Sie die Datenquellen und Inhalte für Ihr Projekt.</p>
-                    </div>
-                    <div v-else-if="currentStep === 2" class="step-description">
-                        <h3>Theme</h3>
-                        <p>Passen Sie das Erscheinungsbild Ihres Projekts an.</p>
-                    </div>
-                    <div v-else-if="currentStep === 3" class="step-description">
-                        <h3>Ansichten</h3>
-                        <p>Definieren Sie die verschiedenen Ansichten Ihres Projekts.</p>
-                    </div>
-                    <div v-else-if="currentStep === 4" class="step-description">
-                        <h3>Landing</h3>
-                        <p>Gestalten Sie die Startseite Ihres Projekts.</p>
-                    </div>
-                </div>
+                <!-- Navigation Mode: status >= 2 -->
+                <ProjectNavigation v-else :project-id="projectId" :visible-tabs="visibleNavigationTabs"
+                    @tab-change="handleTabChange" />
             </div>
 
-            <!-- Right Column: Step Components (60%) -->
-            <div class="right-column">
-                <div class="right-column-content">
-                    <ProjectStepEvents v-if="currentStep === 0" :project-id="projectId" @next="nextStep" />
-                    <ProjectStepData v-else-if="currentStep === 1" :project-id="projectId" @next="nextStep"
-                        @prev="prevStep" />
-                    <ProjectStepTheme v-else-if="currentStep === 2" @next="nextStep" @prev="prevStep" />
-                    <ProjectStepViews v-else-if="currentStep === 3" @next="nextStep" @prev="prevStep" />
-                    <ProjectStepLanding v-else-if="currentStep === 4" @prev="prevStep" @complete="completeProject" />
+            <!-- Right Column: Editor (60%) -->
+            <div class="editor">
+                <div class="editor-content">
+                    <!-- Stepper Mode Components -->
+                    <template v-if="isStepper">
+                        <ProjectStepEvents v-if="currentStep === 0" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" />
+                        <ProjectStepPosts v-else-if="currentStep === 1" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="prevStep" />
+                        <ProjectStepUsers v-else-if="currentStep === 2" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="prevStep" />
+                        <ProjectStepTheme v-else-if="currentStep === 3" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="prevStep" />
+                        <ProjectStepPages v-else-if="currentStep === 4" :project-id="projectId" :is-locked="isLocked"
+                            @prev="prevStep" @complete="completeProject" />
+                    </template>
+
+                    <!-- Navigation Mode Panels -->
+                    <template v-else>
+                        <ProjectStepEvents v-if="currentNavTab === 'events'" :project-id="projectId"
+                            :is-locked="isLocked" hide-actions />
+                        <ProjectStepPosts v-else-if="currentNavTab === 'posts'" :project-id="projectId"
+                            :is-locked="isLocked" hide-actions />
+                        <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
+                            :is-locked="isLocked" hide-actions />
+                        <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
+                            :is-locked="isLocked" />
+                        <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
+                            :is-locked="isLocked" />
+                        <NavigationConfigPanel v-else-if="currentNavTab === 'navigation'" :project-id="projectId"
+                            :is-locked="isLocked" />
+                        <ProjectStepPages v-else-if="currentNavTab === 'pages'" :project-id="projectId"
+                            :is-locked="isLocked" hide-actions />
+                        <EventsConfigPanel v-else-if="currentNavTab === 'events-config'" :project-id="projectId"
+                            :is-locked="isLocked" />
+                        <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
+                            :is-locked="isLocked" />
+                    </template>
                 </div>
             </div>
         </div>
@@ -192,11 +202,17 @@ import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import Navbar from '@/components/Navbar.vue'
 import ProjectStepper from './ProjectStepper.vue'
+import ProjectNavigation from './ProjectNavigation.vue'
 import ProjectStepEvents from './ProjectStepEvents.vue'
-import ProjectStepData from './ProjectStepData.vue'
+import ProjectStepPosts from './ProjectStepPosts.vue'
+import ProjectStepUsers from './ProjectStepUsers.vue'
 import ProjectStepTheme from './ProjectStepTheme.vue'
-import ProjectStepViews from './ProjectStepViews.vue'
-import ProjectStepLanding from './ProjectStepLanding.vue'
+import ProjectStepPages from './ProjectStepPages.vue'
+import EventsConfigPanel from '@/components/EventsConfigPanel.vue'
+import RegioConfigPanel from '@/components/RegioConfigPanel.vue'
+import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
+import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
+import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
@@ -209,19 +225,39 @@ const projectId = computed(() => {
     return 'project1' // Fallback for testing/admin
 })
 
-// Current step (0-4)
+// Project state
+const projectData = ref<any>(null)
+const projectStatus = ref(0) // Default status
+
+// Current step (0-4) for stepper mode
 const currentStep = ref(0)
 
-// Step header messages
-const stepHeaderMessage = computed(() => {
-    const messages = [
-        'Schritt 1: Veranstaltungen auswählen',
-        'Schritt 2: Daten konfigurieren',
-        'Schritt 3: Theme anpassen',
-        'Schritt 4: Ansichten definieren',
-        'Schritt 5: Landing-Page gestalten'
-    ]
-    return messages[currentStep.value] || ''
+// Current tab for navigation mode
+const currentNavTab = ref('events')
+
+// Computed props based on project status
+const isStepper = computed(() => projectStatus.value < 2)
+const isLocked = computed(() => projectStatus.value > 3)
+
+// Visible tabs for navigation mode (computed based on project settings)
+const visibleNavigationTabs = computed(() => {
+    const tabs: string[] = ['events', 'posts', 'users', 'theme', 'layout', 'navigation', 'pages']
+
+    // Add conditional tabs based on project settings
+    if (projectData.value) {
+        // EventsConfigPanel: NOT (is_service OR is_topic)
+        const showEventsConfig = !(projectData.value.is_service || projectData.value.is_topic)
+        if (showEventsConfig) {
+            tabs.push('events-config')
+        }
+
+        // RegioConfigPanel: is_regio
+        if (projectData.value.is_regio) {
+            tabs.push('regio-config')
+        }
+    }
+
+    return tabs
 })
 
 // Config dropdown state
@@ -258,6 +294,19 @@ const config = ref({
     description: 'Ein tolles Projekt mit spannenden Inhalten.'
 })
 
+// Load project data
+async function loadProjectData() {
+    try {
+        const response = await fetch(`/api/projects/${projectId.value}`)
+        if (response.ok) {
+            projectData.value = await response.json()
+            projectStatus.value = projectData.value.status || 0
+        }
+    } catch (error) {
+        console.error('Failed to load project data:', error)
+    }
+}
+
 // Navigation functions
 function nextStep() {
     if (currentStep.value < 4) {
@@ -269,6 +318,10 @@ function prevStep() {
     if (currentStep.value > 0) {
         currentStep.value--
     }
+}
+
+function handleTabChange(tabId: string) {
+    currentNavTab.value = tabId
 }
 
 function goBack() {
@@ -322,6 +375,10 @@ onMounted(async () => {
     await initTheme()
 
     await requireAuth()
+
+    // Load project data to determine status and settings
+    await loadProjectData()
+
     // Add click outside listener
     document.addEventListener('click', handleClickOutside)
 })
@@ -568,45 +625,27 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-/* Left Column - Stepper & Description */
-.left-column {
+/* Navigation Column (Left) - Stepper or Tabs */
+.navigation {
     flex: 0 0 40%;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     overflow-y: auto;
-}
-
-.step-content {
     background: var(--color-card-bg);
     border: var(--border) solid var(--color-border);
     border-radius: var(--radius-card);
-    padding: 2rem;
 }
 
-.step-description h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--color-project);
-    margin: 0 0 1rem 0;
-}
-
-.step-description p {
-    font-size: 1rem;
-    color: var(--color-text);
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* Right Column - Step Components */
-.right-column {
+/* Editor Column (Right) - Main Content Area */
+.editor {
     flex: 0 0 60%;
     overflow-y: auto;
     padding-left: 1rem;
     border-left: var(--border) solid var(--color-border);
 }
 
-.right-column-content {
+.editor-content {
     background: var(--color-card-bg);
     border: var(--border) solid var(--color-border);
     border-radius: var(--radius-card);
@@ -620,8 +659,8 @@ onUnmounted(() => {
         flex-direction: column;
     }
 
-    .left-column,
-    .right-column {
+    .navigation,
+    .editor {
         flex: 1;
         border: none;
         padding: 0;

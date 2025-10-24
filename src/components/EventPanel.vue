@@ -109,12 +109,17 @@ import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
 import type { Event, Instructor } from '@/types'
 
-const props = defineProps<{
+interface Props {
     projectId: string
     baseEvents: Event[]
     allInstructors: Instructor[]
     allLocations: Location[]
-}>()
+    addOnly?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    addOnly: true
+})
 
 const emit = defineEmits<{
     eventAdded: [eventId: string]
