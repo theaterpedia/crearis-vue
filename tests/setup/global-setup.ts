@@ -2,14 +2,19 @@
  * Global Test Setup
  * 
  * Runs once before all tests to prepare the test environment.
+ * - Loads environment variables from .env file
  * - Verifies PostgreSQL connection if needed
  * - Creates test database if it doesn't exist
  * - Sets up environment variables
  */
 
+import { config as loadEnv } from 'dotenv'
 import { getTestDatabaseConfig } from '../../server/database/test-config.js'
 
 export default async function globalSetup() {
+    // Load environment variables from .env file
+    loadEnv()
+
     const config = getTestDatabaseConfig()
 
     console.log('\n🧪 Test Environment Setup')

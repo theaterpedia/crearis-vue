@@ -7,6 +7,26 @@
  */
 
 import { beforeEach, afterEach } from 'vitest'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+// Load environment variables from .env file
+try {
+    const envPath = resolve(process.cwd(), '.env')
+    const envFile = readFileSync(envPath, 'utf-8')
+    envFile.split('\n').forEach(line => {
+        const match = line.match(/^([^#=]+)=(.*)$/)
+        if (match) {
+            const key = match[1].trim()
+            const value = match[2].trim()
+            if (key && !process.env[key]) {
+                process.env[key] = value
+            }
+        }
+    })
+} catch (error) {
+    // .env file not found or not readable - continue with system environment variables
+}
 
 // Set test environment
 process.env.NODE_ENV = 'test'

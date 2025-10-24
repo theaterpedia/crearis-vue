@@ -16,6 +16,9 @@ import { nanoid } from 'nanoid'
 // Re-export for test files
 export { isPostgreSQLTest }
 
+// Track if schema has been initialized for PostgreSQL
+let postgresSchemaInitialized = false
+
 /**
  * Create a test database adapter
  */
@@ -28,13 +31,18 @@ export async function createTestDatabase(): Promise<DatabaseAdapter> {
             throw new Error('PostgreSQL connection string not configured for tests')
         }
         adapter = new PostgreSQLAdapter(testDbConfig.connectionString)
+
+        // Initialize schema only once for PostgreSQL
+        if (!postgresSchemaInitialized) {
+            await initializeTestSchema(adapter)
+            postgresSchemaInitialized = true
+        }
     } else {
         // SQLite in-memory database
         adapter = new SQLiteAdapter(':memory:')
+        // Always initialize schema for SQLite (each test gets its own instance)
+        await initializeTestSchema(adapter)
     }
-
-    // Initialize schema
-    await initializeTestSchema(adapter)
 
     return adapter
 }
@@ -165,8 +173,13 @@ export async function cleanupTestDatabase(db: DatabaseAdapter): Promise<void> {
     if (isPostgreSQLTest()) {
         // Clear all tables in PostgreSQL test database
         await db.exec('TRUNCATE events, tasks, versions, i18n_codes CASCADE')
+    } else {
+        // Clear all tables in SQLite in-memory database
+        await db.exec('DELETE FROM events')
+        await db.exec('DELETE FROM tasks')
+        await db.exec('DELETE FROM versions')
+        await db.exec('DELETE FROM i18n_codes')
     }
-    // SQLite in-memory database is automatically cleaned up
 
     await db.close()
 }

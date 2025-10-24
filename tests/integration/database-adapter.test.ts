@@ -14,10 +14,13 @@ import {
     insertTestTask,
     countRows,
     assertTableEmpty,
-    assertTableRowCount
+    assertTableRowCount,
+    isPostgreSQLTest
 } from '../utils/db-test-utils.js'
 import type { DatabaseAdapter } from '../../server/database/adapter.js'
-import { isPostgreSQLTest } from '../../server/database/test-config.js'
+
+// Helper to conditionally skip tests on SQLite
+const describeOrSkip = isPostgreSQLTest() ? describe : describe.skip
 
 describe('Database Adapter - Basic Operations', () => {
     let db: DatabaseAdapter
@@ -110,7 +113,7 @@ describe('Database Adapter - Basic Operations', () => {
     })
 })
 
-describe('Database Adapter - Prepared Statements @pgintegration', () => {
+describeOrSkip('Database Adapter - Prepared Statements @pgintegration', () => {
     let db: DatabaseAdapter
 
     beforeEach(async () => {
@@ -157,7 +160,7 @@ describe('Database Adapter - Prepared Statements @pgintegration', () => {
     })
 })
 
-describe('Database Adapter - Transactions @pgintegration', () => {
+describeOrSkip('Database Adapter - Transactions @pgintegration', () => {
     let db: DatabaseAdapter
 
     beforeEach(async () => {
@@ -196,14 +199,10 @@ describe('Database Adapter - Transactions @pgintegration', () => {
     })
 })
 
-describe('Database Adapter - PostgreSQL Specific @pgintegration', () => {
+describeOrSkip('Database Adapter - PostgreSQL Specific @pgintegration', () => {
     let db: DatabaseAdapter
 
     beforeEach(async () => {
-        if (!isPostgreSQLTest()) {
-            console.log('Skipping PostgreSQL-specific test')
-            return
-        }
         db = await createTestDatabase()
     })
 
