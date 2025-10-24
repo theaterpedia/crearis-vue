@@ -5,6 +5,11 @@
  * Supports both SQLite (default) and PostgreSQL.
  */
 
+import { config as loadEnv } from 'dotenv'
+
+// Load environment variables
+loadEnv()
+
 export type DatabaseType = 'sqlite' | 'postgresql'
 
 export interface DatabaseConfig {

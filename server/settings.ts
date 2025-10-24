@@ -41,6 +41,17 @@ export function getDataPath(): string {
  * Defines all available filesets
  */
 export const filesets: Record<string, FilesetConfig> = {
+    root: {
+        id: 'root',
+        name: 'Root Dataset',
+        description: 'Core seed data (users, projects)',
+        path: path.resolve(process.cwd(), 'server/data/root'),
+        files: [
+            'users.csv',
+            'projects.csv'
+        ],
+        isDefault: false
+    },
     base: {
         id: 'base',
         name: 'Base Dataset',

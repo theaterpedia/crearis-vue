@@ -1,10 +1,16 @@
 /**
  * Migration 022: Seed CSV Data
  * 
- * Imports all CSV data from base fileset into the database.
+ * Chapter 1: Imports core seed data from 'root' fileset (users, projects)
+ * Chapter 2: Imports demo data from 'base' fileset (events, posts, locations, instructors, participants) - DEACTIVATED
+ * 
  * This migration replaces the automatic CSV seeding that previously ran on startup.
  * 
- * CSV Files imported:
+ * CSV Files imported in Chapter 1 (root):
+ * - users.csv
+ * - projects.csv
+ * 
+ * CSV Files imported in Chapter 2 (base) - DEACTIVATED:
  * - events.csv
  * - posts.csv
  * - locations.csv
@@ -20,25 +26,197 @@ import { getFileset, getFilesetFilePath } from '../../settings'
 
 export const migration = {
     id: '022_seed_csv_data',
-    description: 'Import CSV data from base fileset',
+    description: 'Import CSV data from root and base filesets',
 
     async up(db: DatabaseAdapter): Promise<void> {
         console.log('Running migration 022: Seed CSV data...')
 
-        const filesetId = 'base'
+        // ============================================================
+        // CHAPTER 1: Fileset 'root' - Core Seed Data (users, projects)
+        // ============================================================
+        console.log('\n📦 Chapter 1: Fileset "root" (users, projects)')
+        console.log('================================================')
+
+        const rootFilesetId = 'root'
 
         try {
-            const fileset = getFileset(filesetId)
+            const rootFileset = getFileset(rootFilesetId)
+            console.log(`  - Using fileset: ${rootFileset.name} (${rootFileset.path})`)
+
+            // Read CSV files for root fileset
+            const usersCSV = fs.readFileSync(getFilesetFilePath('users.csv', rootFilesetId), 'utf-8')
+            const projectsCSV = fs.readFileSync(getFilesetFilePath('projects.csv', rootFilesetId), 'utf-8')
+
+            // Parse CSV data
+            const users = parseCSV(usersCSV)
+            const projects = parseCSV(projectsCSV)
+
+            // Seed users
+            console.log('  - Seeding users...')
+            for (const user of users) {
+                if (db.type === 'postgresql') {
+                    await db.run(`
+                        INSERT INTO users 
+                        (sysmail, username, password, role, lang, created_at)
+                        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                        ON CONFLICT(sysmail) DO UPDATE SET
+                            username = EXCLUDED.username,
+                            password = EXCLUDED.password,
+                            role = EXCLUDED.role,
+                            lang = EXCLUDED.lang
+                    `, [
+                        user.sysmail,
+                        user.username,
+                        user.password,
+                        user.role || 'user',
+                        user.lang || 'de'
+                    ])
+                } else {
+                    await db.run(`
+                        INSERT INTO users 
+                        (sysmail, username, password, role, lang, created_at)
+                        VALUES (?, ?, ?, ?, ?, datetime('now'))
+                        ON CONFLICT(sysmail) DO UPDATE SET
+                            username = excluded.username,
+                            password = excluded.password,
+                            role = excluded.role,
+                            lang = excluded.lang
+                    `, [
+                        user.sysmail,
+                        user.username,
+                        user.password,
+                        user.role || 'user',
+                        user.lang || 'de'
+                    ])
+                }
+            }
+            console.log(`    ✓ Seeded ${users.length} users`)
+
+            // CHECK:base - Build owner_id lookup map (sysmail -> id) for projects
+            // We need to lookup user IDs by sysmail since CSV uses sysmail references
+            const ownerMap = new Map<string, any>()
+            for (const user of users) {
+                const dbUser = await db.get('SELECT id FROM users WHERE sysmail = ?', [user.sysmail])
+                if (dbUser) {
+                    ownerMap.set(user.sysmail, dbUser.id)
+                }
+            }
+
+            // Seed projects
+            console.log('  - Seeding projects...')
+            for (const project of projects) {
+                // CHECK:base - Resolve owner_id from sysmail reference
+                const ownerSysmail = project['owner_id/sysmail'] || project.owner_id
+                const ownerId = ownerMap.get(ownerSysmail)
+
+                if (!ownerId) {
+                    console.warn(`    ⚠️  Warning: Owner not found for project ${project.domaincode}: ${ownerSysmail}`)
+                    continue
+                }
+
+                // CHECK:base - Resolve regio reference if present
+                let regioId = null
+                if (project['regio/domaincode']) {
+                    const regioResult = await db.get('SELECT id FROM projects WHERE domaincode = ?', [project['regio/domaincode']])
+                    if (regioResult) {
+                        regioId = regioResult.id
+                    }
+                }
+
+                if (db.type === 'postgresql') {
+                    await db.run(`
+                        INSERT INTO projects 
+                        (domaincode, name, heading, description, status, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        ON CONFLICT(domaincode) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            heading = EXCLUDED.heading,
+                            description = EXCLUDED.description,
+                            status = EXCLUDED.status,
+                            owner_id = EXCLUDED.owner_id,
+                            type = EXCLUDED.type,
+                            regio = EXCLUDED.regio,
+                            theme = EXCLUDED.theme,
+                            teaser = EXCLUDED.teaser,
+                            cimg = EXCLUDED.cimg,
+                            updated_at = CURRENT_TIMESTAMP
+                    `, [
+                        project.domaincode,
+                        project.name,
+                        project.heading,
+                        project.description,
+                        project.status || 'draft',
+                        ownerId,
+                        project.type || 'project',
+                        regioId,
+                        project.theme ? parseInt(project.theme) : null,
+                        project.teaser,
+                        project.cimg
+                    ])
+                } else {
+                    await db.run(`
+                        INSERT INTO projects 
+                        (domaincode, name, heading, description, status, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                        ON CONFLICT(domaincode) DO UPDATE SET
+                            name = excluded.name,
+                            heading = excluded.heading,
+                            description = excluded.description,
+                            status = excluded.status,
+                            owner_id = excluded.owner_id,
+                            type = excluded.type,
+                            regio = excluded.regio,
+                            theme = excluded.theme,
+                            teaser = excluded.teaser,
+                            cimg = excluded.cimg,
+                            updated_at = datetime('now')
+                    `, [
+                        project.domaincode,
+                        project.name,
+                        project.heading,
+                        project.description,
+                        project.status || 'draft',
+                        ownerId,
+                        project.type || 'project',
+                        regioId,
+                        project.theme ? parseInt(project.theme) : null,
+                        project.teaser,
+                        project.cimg
+                    ])
+                }
+            }
+            console.log(`    ✓ Seeded ${projects.length} projects`)
+
+            console.log('\n✅ Chapter 1 completed: Root fileset seeded')
+
+        } catch (error: any) {
+            console.error(`\n❌ Error seeding root fileset: ${error.message}`)
+            throw error
+        }
+
+        // ============================================================
+        // CHAPTER 2: Fileset 'base' - Demo Data (DEACTIVATED)
+        // ============================================================
+        console.log('\n📦 Chapter 2: Fileset "base" (events, posts, locations, instructors, participants)')
+        console.log('=================================================================================')
+        console.log('⚠️  DEACTIVATED - To activate, uncomment the code block below')
+        console.log('⚠️  This chapter will be refactored after testing root fileset seeding')
+
+        /* CHECK:base - DEACTIVATED Chapter 2 - Uncomment to enable base fileset seeding
+        const baseFilesetId = 'base'
+
+        try {
+            const fileset = getFileset(baseFilesetId)
             console.log(`  - Using fileset: ${fileset.name} (${fileset.path})`)
 
             // Read all CSV files
-            const eventsCSV = fs.readFileSync(getFilesetFilePath('events.csv', filesetId), 'utf-8')
-            const postsCSV = fs.readFileSync(getFilesetFilePath('posts.csv', filesetId), 'utf-8')
-            const locationsCSV = fs.readFileSync(getFilesetFilePath('locations.csv', filesetId), 'utf-8')
-            const instructorsCSV = fs.readFileSync(getFilesetFilePath('instructors.csv', filesetId), 'utf-8')
-            const childrenCSV = fs.readFileSync(getFilesetFilePath('children.csv', filesetId), 'utf-8')
-            const teensCSV = fs.readFileSync(getFilesetFilePath('teens.csv', filesetId), 'utf-8')
-            const adultsCSV = fs.readFileSync(getFilesetFilePath('adults.csv', filesetId), 'utf-8')
+            const eventsCSV = fs.readFileSync(getFilesetFilePath('events.csv', baseFilesetId), 'utf-8')
+            const postsCSV = fs.readFileSync(getFilesetFilePath('posts.csv', baseFilesetId), 'utf-8')
+            const locationsCSV = fs.readFileSync(getFilesetFilePath('locations.csv', baseFilesetId), 'utf-8')
+            const instructorsCSV = fs.readFileSync(getFilesetFilePath('instructors.csv', baseFilesetId), 'utf-8')
+            const childrenCSV = fs.readFileSync(getFilesetFilePath('children.csv', baseFilesetId), 'utf-8')
+            const teensCSV = fs.readFileSync(getFilesetFilePath('teens.csv', baseFilesetId), 'utf-8')
+            const adultsCSV = fs.readFileSync(getFilesetFilePath('adults.csv', baseFilesetId), 'utf-8')
 
             // Parse CSV data
             const events = parseCSV(eventsCSV)
@@ -542,29 +720,37 @@ export const migration = {
             }
             console.log(`    ✓ Seeded ${posts.length} posts`)
 
-            console.log('✅ Migration 022 completed: CSV data seeding complete!')
+            console.log('\n✅ Chapter 2 completed: Base fileset seeded')
         } catch (error: any) {
-            console.error('❌ Error seeding CSV data:', error.message)
+            console.error(`\n❌ Error seeding base fileset: ${error.message}`)
             throw error
         }
+        */ // END OF DEACTIVATED CHAPTER 2
+
+        console.log('\n✅ Migration 022 completed!')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
-        console.log('Migration 022 down: Removing CSV-imported data...')
+        console.log('Migration 022 down: Removing seeded data...')
 
-        // Remove all records with isbase = 1 (base CSV data)
+        // Remove all records with isbase = 1 (base CSV data from Chapter 2)
         await db.exec('DELETE FROM posts WHERE isbase = 1')
         await db.exec('DELETE FROM participants WHERE isbase = 1')
         await db.exec('DELETE FROM instructors WHERE isbase = 1')
         await db.exec('DELETE FROM locations WHERE isbase = 1')
         await db.exec('DELETE FROM events WHERE isbase = 1')
 
-        console.log('✅ Migration 022 reverted: CSV data removed')
+        // Remove root fileset data (Chapter 1)
+        await db.exec('DELETE FROM projects WHERE domaincode IN (SELECT domaincode FROM projects WHERE owner_id IN (SELECT id FROM users WHERE sysmail LIKE \'%@dasei.eu\' OR sysmail LIKE \'%@theaterpedia.org\'))')
+        await db.exec('DELETE FROM users WHERE sysmail LIKE \'%@dasei.eu\' OR sysmail LIKE \'%@theaterpedia.org\'')
+
+        console.log('✅ Migration 022 reverted: Seeded data removed')
     }
 }
 
 /**
- * Parse CSV file (utility function)
+ * CHECK:base - Parse CSV file (utility function)
+ * This function is used by both Chapter 1 and Chapter 2
  */
 function parseCSV(csvText: string): any[] {
     const lines = csvText.trim().split('\n')

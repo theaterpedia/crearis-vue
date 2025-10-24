@@ -19,6 +19,9 @@ dist/
 demo-data.db
 projectnames_and_users.csv
 
+# Sensitive data
+server/data/PASSWORDS.md
+
 # Logs
 logs/
 *.log

@@ -4,8 +4,12 @@
  * Or check status: pnpm db:migrate:status (or pnpm db:migrate --status)
  */
 
+import { config as loadEnv } from 'dotenv'
 import { db } from '../db-new'
 import { runMigrations, getMigrationStatus } from './index'
+
+// Load environment variables
+loadEnv()
 
 async function main() {
     // Check if --status flag is provided

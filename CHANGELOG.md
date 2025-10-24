@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **CSV-Based Seeding System Extension**
+  - Created "root" fileset for core seed data (users, projects)
+  - 17 demo users with generated passwords (pattern: firstname2025)
+  - 15 demo projects with owner and regio relationships
+  - Password reference document (PASSWORDS.md, gitignored)
+  - Foreign key resolution in CSV seeding (email → user.id, domaincode → project.id)
+  - Root fileset registration in settings.ts
+  - Test script for migration 022 validation
+
+### Changed
+- **Migration 022 Reorganization**
+  - Chapter 1: Root fileset seeding (users, projects) - ACTIVE
+  - Chapter 2: Base fileset seeding (events, posts, locations, instructors, participants) - DEACTIVATED
+  - Added CHECK:base comments for future refactoring
+  - Improved dotenv loading in database config and migration runner
+
+### Fixed
+- Environment variable loading in migration runner and database config
+
 ## [0.0.1] - 2025-10-15
 
 ### Added
