@@ -57,15 +57,17 @@ export const migration = {
                 if (db.type === 'postgresql') {
                     await db.run(`
                         INSERT INTO users 
-                        (sysmail, username, password, role, lang, created_at)
-                        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                        (sysmail, extmail, username, password, role, lang, created_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
                         ON CONFLICT(sysmail) DO UPDATE SET
+                            extmail = EXCLUDED.extmail,
                             username = EXCLUDED.username,
                             password = EXCLUDED.password,
                             role = EXCLUDED.role,
                             lang = EXCLUDED.lang
                     `, [
                         user.sysmail,
+                        user.extmail || null,
                         user.username,
                         user.password,
                         user.role || 'user',
@@ -74,15 +76,17 @@ export const migration = {
                 } else {
                     await db.run(`
                         INSERT INTO users 
-                        (sysmail, username, password, role, lang, created_at)
-                        VALUES (?, ?, ?, ?, ?, datetime('now'))
+                        (sysmail, extmail, username, password, role, lang, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
                         ON CONFLICT(sysmail) DO UPDATE SET
+                            extmail = excluded.extmail,
                             username = excluded.username,
                             password = excluded.password,
                             role = excluded.role,
                             lang = excluded.lang
                     `, [
                         user.sysmail,
+                        user.extmail || null,
                         user.username,
                         user.password,
                         user.role || 'user',
