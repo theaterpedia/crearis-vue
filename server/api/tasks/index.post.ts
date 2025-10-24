@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 import { getStatusIdByName } from '../../utils/status-helpers'
+import type { TasksTableFields } from '../../types/database'
 
 // After Migration 019 Chapter 6:
 // - tasks.title → tasks.name
@@ -98,6 +99,26 @@ export default defineEventHandler(async (event) => {
         const id = nanoid()
         const now = new Date().toISOString()
 
+        // Use TasksTableFields for type-safe INSERT
+        const taskData: Partial<TasksTableFields> = {
+            id,
+            name: body.name.trim(),
+            description: body.description || null,
+            category: body.category || 'main',
+            status_id: statusId,
+            priority: body.priority || 'medium',
+            release_id: body.release_id || null,
+            record_type: body.record_type || null,
+            record_id: body.record_id || null,
+            assigned_to: body.assigned_to || null,
+            cimg: body.cimg || null,
+            prompt: body.prompt || null,
+            due_date: body.due_date || null,
+            created_at: now,
+            updated_at: now,
+            lang: 'de'  // Default language
+        }
+
         const stmt = db.prepare(`
             INSERT INTO tasks (
                 id, 
@@ -114,27 +135,29 @@ export default defineEventHandler(async (event) => {
                 prompt,
                 due_date,
                 created_at,
-                updated_at
+                updated_at,
+                lang
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
         stmt.run(
-            id,
-            body.name.trim(),
-            body.description || null,
-            body.category || 'main',
-            statusId,
-            body.priority || 'medium',
-            body.release_id || null,
-            body.record_type || null,
-            body.record_id || null,
-            body.assigned_to || null,
-            body.cimg || null,
-            body.prompt || null,
-            body.due_date || null,
-            now,
-            now
+            taskData.id,
+            taskData.name,
+            taskData.description,
+            taskData.category,
+            taskData.status_id,
+            taskData.priority,
+            taskData.release_id,
+            taskData.record_type,
+            taskData.record_id,
+            taskData.assigned_to,
+            taskData.cimg,
+            taskData.prompt,
+            taskData.due_date,
+            taskData.created_at,
+            taskData.updated_at,
+            taskData.lang
         )
 
         // Fetch created task with status information

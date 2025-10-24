@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import { getStatusIdByName } from '../../utils/status-helpers'
+import type { TasksTableFields } from '../../types/database'
 
 // After Migration 019 Chapter 6:
 // - tasks.title → tasks.name
@@ -93,6 +94,8 @@ export default defineEventHandler(async (event) => {
             }
         }
 
+        // Build update data using TasksTableFields for type safety
+        const updateData: Partial<TasksTableFields> = {}
         const updates: string[] = []
         const values: any[] = []
 
@@ -103,28 +106,33 @@ export default defineEventHandler(async (event) => {
                     message: 'Name cannot be empty'
                 })
             }
+            updateData.name = body.name.trim()
             updates.push('name = ?')
-            values.push(body.name.trim())
+            values.push(updateData.name)
         }
 
         if (body.description !== undefined) {
+            updateData.description = body.description || null
             updates.push('description = ?')
-            values.push(body.description || null)
+            values.push(updateData.description)
         }
 
         if (body.category !== undefined) {
+            updateData.category = body.category
             updates.push('category = ?')
-            values.push(body.category)
+            values.push(updateData.category)
         }
 
         if (statusId !== undefined) {
+            updateData.status_id = statusId
             updates.push('status_id = ?')
-            values.push(statusId)
+            values.push(updateData.status_id)
 
             // Auto-set completed_at when marking as final
             if (body.status === 'final' && !body.completed_at) {
+                updateData.completed_at = new Date().toISOString()
                 updates.push('completed_at = ?')
-                values.push(new Date().toISOString())
+                values.push(updateData.completed_at)
             }
 
             // Clear completed_at when not final
@@ -134,43 +142,51 @@ export default defineEventHandler(async (event) => {
         }
 
         if (body.priority !== undefined) {
+            updateData.priority = body.priority
             updates.push('priority = ?')
-            values.push(body.priority)
+            values.push(updateData.priority)
         }
 
         if (body.release_id !== undefined) {
+            updateData.release_id = body.release_id || null
             updates.push('release_id = ?')
-            values.push(body.release_id || null)
+            values.push(updateData.release_id)
         }
 
         if (body.assigned_to !== undefined) {
+            updateData.assigned_to = body.assigned_to || null
             updates.push('assigned_to = ?')
-            values.push(body.assigned_to || null)
+            values.push(updateData.assigned_to)
         }
 
         if (body.cimg !== undefined) {
+            updateData.cimg = body.cimg || null
             updates.push('cimg = ?')
-            values.push(body.cimg || null)
+            values.push(updateData.cimg)
         }
 
         if (body.prompt !== undefined) {
+            updateData.prompt = body.prompt || null
             updates.push('prompt = ?')
-            values.push(body.prompt || null)
+            values.push(updateData.prompt)
         }
 
         if (body.due_date !== undefined) {
+            updateData.due_date = body.due_date || null
             updates.push('due_date = ?')
-            values.push(body.due_date || null)
+            values.push(updateData.due_date)
         }
 
         if (body.completed_at !== undefined) {
+            updateData.completed_at = body.completed_at || null
             updates.push('completed_at = ?')
-            values.push(body.completed_at || null)
+            values.push(updateData.completed_at)
         }
 
         // Always update the updated_at timestamp
+        updateData.updated_at = new Date().toISOString()
         updates.push('updated_at = ?')
-        values.push(new Date().toISOString())
+        values.push(updateData.updated_at)
 
         // Add id to the end for WHERE clause
         values.push(id)

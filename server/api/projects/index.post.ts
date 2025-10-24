@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import type { ProjectsTableFields } from '../../types/database'
 
 // POST /api/projects - Create new project
 // After Migration 019 Chapter 5:
@@ -66,13 +67,32 @@ export default defineEventHandler(async (event) => {
             }
         }
 
+        // Use ProjectsTableFields for type-safe INSERT
+        const projectData: Partial<ProjectsTableFields> = {
+            domaincode,
+            name,
+            heading,
+            description,
+            status,
+            owner_id,
+            header_size
+        }
+
         // Insert project
         const stmt = db.prepare(`
             INSERT INTO projects (domaincode, name, heading, description, status, owner_id, header_size)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `)
 
-        stmt.run(domaincode, name, heading, description, status, owner_id, header_size)
+        stmt.run(
+            projectData.domaincode,
+            projectData.name,
+            projectData.heading,
+            projectData.description,
+            projectData.status,
+            projectData.owner_id,
+            projectData.header_size
+        )
 
         // Return created project (with auto-generated id)
         const rawProject = await db.get('SELECT * FROM projects WHERE domaincode = ?', [domaincode])

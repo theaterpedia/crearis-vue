@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError, setCookie, getCookie } from 
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
+import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
 
 interface ProjectRecord {
     id: string
@@ -58,7 +59,7 @@ export default defineEventHandler(async (event) => {
     SELECT id, sysmail, extmail, username, password, role, instructor_id
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as { id: number; sysmail: string; extmail: string | null; username: string; password: string; role: string; instructor_id: string | number | null } | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id'> | undefined
 
     if (!user) {
         throw createError({
@@ -91,14 +92,14 @@ export default defineEventHandler(async (event) => {
         FROM projects
         WHERE owner_id = ?
         ORDER BY heading ASC
-    `, [user.id]) as Array<{ domaincode: string; heading: string }>
+    `, [user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading'>>
     console.log('[LOGIN] Found owned projects:', ownedProjects.length)
 
     for (const proj of ownedProjects) {
         projectRecords.push({
             id: proj.domaincode,
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-            heading: proj.heading,  // Include heading separately
+            heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
             isOwner: true,
             isMember: false,
@@ -120,14 +121,14 @@ export default defineEventHandler(async (event) => {
         INNER JOIN project_members pm ON p.id = pm.project_id
         WHERE pm.user_id = ? AND p.owner_id != ?
         ORDER BY p.heading ASC
-    `, [user.id, user.id]) as Array<{ domaincode: string; heading: string }>
+    `, [user.id, user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading'>>
     console.log('[LOGIN] Found member projects:', memberProjects.length)
 
     for (const proj of memberProjects) {
         projectRecords.push({
             id: proj.domaincode,
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-            heading: proj.heading,  // Include heading separately
+            heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
             isOwner: false,
             isMember: true,
@@ -145,7 +146,7 @@ export default defineEventHandler(async (event) => {
     // Note: Check if user has instructor_id set, then find events taught by that instructor
     // Skip this query if user has no instructor_id or if there are no instructors yet
     console.log('[LOGIN] Finding instructor projects')
-    let instructorProjects: Array<{ domaincode: string; heading: string; owner_id: number }> = []
+    let instructorProjects: Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>> = []
 
     if (user.instructor_id) {
         try {
@@ -157,7 +158,7 @@ export default defineEventHandler(async (event) => {
                 INNER JOIN event_instructors ei ON e.id = ei.event_id
                 WHERE ei.instructor_id = CAST(? AS INTEGER)
                 ORDER BY p.heading ASC
-            `, [user.instructor_id]) as Array<{ domaincode: string; heading: string; owner_id: number }>
+            `, [user.instructor_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
         } catch (error) {
             console.error('[LOGIN] Error finding instructor projects:', error)
             // Continue without instructor projects if query fails
@@ -174,7 +175,7 @@ export default defineEventHandler(async (event) => {
             projectRecords.push({
                 id: proj.domaincode,
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-                heading: proj.heading,  // Include heading separately
+                heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback
                 isOwner: false,
                 isMember: false,
@@ -197,7 +198,7 @@ export default defineEventHandler(async (event) => {
         INNER JOIN posts po ON p.id = po.project_id
         WHERE po.author_id = ?
         ORDER BY p.heading ASC
-    `, [user.id]) as Array<{ domaincode: string; heading: string; owner_id: number }>
+    `, [user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
     console.log('[LOGIN] Found author projects:', authorProjects.length)
 
     for (const proj of authorProjects) {
@@ -209,7 +210,7 @@ export default defineEventHandler(async (event) => {
             projectRecords.push({
                 id: proj.domaincode,
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-                heading: proj.heading,  // Include heading separately
+                heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback
                 isOwner: false,
                 isMember: false,
