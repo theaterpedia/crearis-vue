@@ -14,6 +14,9 @@ const router = createRouter({
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
     { path: '/project', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
 
+    // Admin routes
+    { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
+
     // Other routes
     { path: '/home', component: () => import('../views/index.vue') },
     { path: '/catalog', component: () => import('../views/catalog.vue') },

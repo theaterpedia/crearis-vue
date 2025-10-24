@@ -96,6 +96,16 @@
                     </div>
                 </div>
 
+                <!-- Admin Links -->
+                <div class="admin-section">
+                    <h4 class="section-title">Administration</h4>
+                    <div class="action-buttons">
+                        <RouterLink to="/admin/i18n" class="action-button action-link" @click="closeMenu">
+                            🌍 i18n Verwaltung
+                        </RouterLink>
+                    </div>
+                </div>
+
                 <!-- Account Actions -->
                 <div v-if="username" class="admin-section">
                     <h4 class="section-title">Konto</h4>
@@ -484,6 +494,16 @@ input[type="checkbox"]:checked+.toggle-switch-base {
     border-color: var(--color-accent);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-link {
+    display: block;
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.action-link:visited {
+    color: var(--color-text);
 }
 
 /* Mobile styles */

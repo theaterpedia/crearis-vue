@@ -1,7 +1,7 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-10-24T04:53:17.798Z",
+  "generatedAt": "2025-10-24T07:12:04.869Z",
   "description": "Database schema for crearis-demo-data system v0.0.2",
   "tables": {
     "crearis_config": {
@@ -301,6 +301,48 @@
         "updated_at": {
           "type": "TEXT",
           "nullable": true
+        }
+      }
+    },
+    "i18n_codes": {
+      "description": "I18n_codes table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('i18n_codes_id_seq'::regclass)"
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "variation": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'false'::text"
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "text": {
+          "type": "JSONB",
+          "nullable": false
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
         }
       }
     },
@@ -1405,6 +1447,15 @@
           "type": "INTEGER",
           "nullable": true
         },
+        "participant_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
         "created_at": {
           "type": "TIMESTAMP WITHOUT TIME ZONE",
           "nullable": true,
@@ -1414,15 +1465,6 @@
           "type": "TIMESTAMP WITHOUT TIME ZONE",
           "nullable": true,
           "default": "CURRENT_TIMESTAMP"
-        },
-        "participant_id": {
-          "type": "INTEGER",
-          "nullable": true
-        },
-        "lang": {
-          "type": "TEXT",
-          "nullable": false,
-          "default": "'de'::text"
         },
         "status_display": {
           "type": "TEXT",
@@ -1598,9 +1640,9 @@
           "extmail",
           "status_id",
           "instructor_id",
-          "updated_at",
           "participant_id",
           "lang",
+          "updated_at",
           "status_display"
         ],
         "description": "PostgreSQL has additional columns"
@@ -1751,9 +1793,9 @@
           "extmail",
           "status_id",
           "instructor_id",
-          "updated_at",
           "participant_id",
           "lang",
+          "updated_at",
           "status_display"
         ],
         "description": "SQLite is missing these columns"

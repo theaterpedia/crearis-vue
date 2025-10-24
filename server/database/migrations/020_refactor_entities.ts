@@ -4,6 +4,10 @@
  * Chapter 1: Add Language Support
  * - Add 'lang' field to participants, instructors, tasks, locations, users
  * - Add 'status_display' computed column for translated status names
+ * 
+ * Chapter 2: Create i18n_codes Table
+ * - Create i18n_codes table for managing multi-language translations
+ * - Seed initial translation entries (button, field types)
  */
 
 import type { DatabaseAdapter } from '../adapter'
@@ -136,18 +140,227 @@ export const migration = {
         }
 
         console.log('\n✅ Chapter 1 completed: i18n core added (lang + status_display)')
+
+        // ===================================================================
+        // CHAPTER 2: Create i18n_codes Table
+        // ===================================================================
+        console.log('\n📖 Chapter 2: Create i18n_codes Table')
+
+        // -------------------------------------------------------------------
+        // 2.1: Create i18n_codes table
+        // -------------------------------------------------------------------
+        console.log('\n  🌍 Creating i18n_codes table...')
+
+        if (isPostgres) {
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS i18n_codes (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    variation TEXT DEFAULT 'false',
+                    type TEXT NOT NULL CHECK (type IN ('button', 'nav', 'field', 'desc')),
+                    text JSONB NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'de' CHECK (status IN ('de', 'en', 'cz', 'draft', 'ok')),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `)
+
+            // Create indexes for common query patterns
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_name 
+                ON i18n_codes(name)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_type 
+                ON i18n_codes(type)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_status 
+                ON i18n_codes(status)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_name_variation 
+                ON i18n_codes(name, variation)
+            `)
+
+            // Create unique index to prevent duplicate name+variation+type combinations
+            await db.exec(`
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_i18n_codes_unique 
+                ON i18n_codes(name, variation, type)
+            `)
+
+            console.log('    ✓ Created i18n_codes table with indexes (PostgreSQL)')
+        } else {
+            // SQLite
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS i18n_codes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    variation TEXT DEFAULT 'false',
+                    type TEXT NOT NULL CHECK (type IN ('button', 'nav', 'field', 'desc')),
+                    text TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'de' CHECK (status IN ('de', 'en', 'cz', 'draft', 'ok')),
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_name 
+                ON i18n_codes(name)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_type 
+                ON i18n_codes(type)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_status 
+                ON i18n_codes(status)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_i18n_codes_name_variation 
+                ON i18n_codes(name, variation)
+            `)
+
+            await db.exec(`
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_i18n_codes_unique 
+                ON i18n_codes(name, variation, type)
+            `)
+
+            console.log('    ✓ Created i18n_codes table with indexes (SQLite)')
+        }
+
+        // -------------------------------------------------------------------
+        // 2.2: Seed initial i18n entries
+        // -------------------------------------------------------------------
+        console.log('\n  📝 Seeding initial i18n entries...')
+
+        if (isPostgres) {
+            // Entry 1: "ok" button - same in all languages
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'ok',
+                    'false',
+                    'button',
+                    '{"de": "ok", "en": "ok", "cz": "ok"}'::jsonb,
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: ok button (all languages same)')
+
+            // Entry 2: "abbrechen" button - different translations
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'abbrechen',
+                    'false',
+                    'button',
+                    '{"de": "abbrechen", "en": "cancel", "cz": "zrusit"}'::jsonb,
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: abbrechen button (de/en/cz)')
+
+            // Entry 3: "name" field - generic
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'name',
+                    'false',
+                    'field',
+                    '{"de": "Titel", "en": "Heading", "cz": "titul"}'::jsonb,
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: name field (generic)')
+
+            // Entry 4: "name" field - instructors variation (Czech pending)
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'name',
+                    'instructors',
+                    'field',
+                    '{"de": "Vor- und Nachname", "en": "Full name", "cz": "Vor- und Nachname"}'::jsonb,
+                    'cz'
+                )
+            `)
+            console.log('    ✓ Seeded: name field (instructors variation, cz pending)')
+        } else {
+            // SQLite - use TEXT for JSONB
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'ok',
+                    'false',
+                    'button',
+                    '{"de": "ok", "en": "ok", "cz": "ok"}',
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: ok button (all languages same)')
+
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'abbrechen',
+                    'false',
+                    'button',
+                    '{"de": "abbrechen", "en": "cancel", "cz": "zrusit"}',
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: abbrechen button (de/en/cz)')
+
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'name',
+                    'false',
+                    'field',
+                    '{"de": "Titel", "en": "Heading", "cz": "titul"}',
+                    'ok'
+                )
+            `)
+            console.log('    ✓ Seeded: name field (generic)')
+
+            await db.exec(`
+                INSERT INTO i18n_codes (name, variation, type, text, status)
+                VALUES (
+                    'name',
+                    'instructors',
+                    'field',
+                    '{"de": "Vor- und Nachname", "en": "Full name", "cz": "Vor- und Nachname"}',
+                    'cz'
+                )
+            `)
+            console.log('    ✓ Seeded: name field (instructors variation, cz pending)')
+        }
+
+        console.log('\n✅ Chapter 2 completed: i18n_codes table created and seeded')
         console.log('✅ Migration 020 completed')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
         const isPostgres = db.type === 'postgresql'
 
-        console.log('Migration 020 down: Removing i18n core...')
+        console.log('Migration 020 down: Removing i18n core and i18n_codes table...')
+
+        // Drop i18n_codes table (Chapter 2)
+        await db.exec(`DROP TABLE IF EXISTS i18n_codes`)
+        console.log('  ✓ Dropped i18n_codes table')
 
         const tables = ['participants', 'instructors', 'tasks', 'locations', 'users']
         const tablesWithStatus = ['events', 'posts', 'participants', 'instructors', 'tasks', 'locations', 'users']
 
-        // Drop status_display columns
+        // Drop status_display columns (Chapter 1)
         for (const table of tablesWithStatus) {
             await db.exec(`ALTER TABLE ${table} DROP COLUMN IF EXISTS status_display`)
         }

@@ -456,11 +456,13 @@ export const migration = {
                     role TEXT NOT NULL CHECK (role IN ('user', 'admin', 'base')),
                     status_id INTEGER REFERENCES status(id),
                     instructor_id TEXT,
+                    participant_id INTEGER,
+                    lang TEXT NOT NULL DEFAULT 'de' CHECK (lang IN ('de', 'en', 'cz')),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `)
-            console.log('    ✓ Created new users table with auto-incrementing id')
+            console.log('    ✓ Created new users table with auto-incrementing id and lang field')
 
             // Step 3: Add constraint to prevent extmail from being used as sysmail anywhere
             await db.exec(`
@@ -516,8 +518,8 @@ export const migration = {
                     : `${oldId}@theaterpedia.org`
 
                 const row = await db.get(
-                    `INSERT INTO users (sysmail, username, password, role, status_id, instructor_id, created_at, updated_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    `INSERT INTO users (sysmail, username, password, role, status_id, instructor_id, lang, created_at, updated_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                      RETURNING id`,
                     [
                         sysmail, // Convert old id to email format
@@ -526,6 +528,7 @@ export const migration = {
                         oldUser.role,
                         defaultStatusId,
                         oldUser.instructor_id,
+                        'de', // Default language for migrated users
                         oldUser.created_at,
                         oldUser.updated_at
                     ]

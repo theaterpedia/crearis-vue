@@ -13,6 +13,9 @@ import { PostgreSQLAdapter } from '../../server/database/adapters/postgresql.js'
 import { testDbConfig, isPostgreSQLTest } from '../../server/database/test-config.js'
 import { nanoid } from 'nanoid'
 
+// Re-export for test files
+export { isPostgreSQLTest }
+
 /**
  * Create a test database adapter
  */
@@ -83,10 +86,29 @@ async function initializeTestSchema(db: DatabaseAdapter): Promise<void> {
     )
   `)
 
+    // Create i18n_codes table
+    await db.exec(`
+    CREATE TABLE IF NOT EXISTS i18n_codes (
+      id ${isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+      name TEXT NOT NULL,
+      variation TEXT DEFAULT 'false',
+      type TEXT NOT NULL CHECK (type IN ('button', 'nav', 'field', 'desc')),
+      text ${isPostgres ? 'JSONB NOT NULL' : 'TEXT NOT NULL'},
+      status TEXT NOT NULL DEFAULT 'de' CHECK (status IN ('de', 'en', 'cz', 'draft', 'ok')),
+      created_at ${TIMESTAMP},
+      updated_at ${TIMESTAMP}
+    )
+  `)
+
     // Create indexes
     await db.exec('CREATE INDEX IF NOT EXISTS idx_events_status ON events(status)')
     await db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)')
     await db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category)')
+    await db.exec('CREATE INDEX IF NOT EXISTS idx_i18n_codes_name ON i18n_codes(name)')
+    await db.exec('CREATE INDEX IF NOT EXISTS idx_i18n_codes_type ON i18n_codes(type)')
+    await db.exec('CREATE INDEX IF NOT EXISTS idx_i18n_codes_status ON i18n_codes(status)')
+    await db.exec('CREATE INDEX IF NOT EXISTS idx_i18n_codes_name_variation ON i18n_codes(name, variation)')
+    await db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_i18n_codes_unique ON i18n_codes(name, variation, type)')
 
     // Add update triggers
     if (isPostgres) {
@@ -142,7 +164,7 @@ async function initializeTestSchema(db: DatabaseAdapter): Promise<void> {
 export async function cleanupTestDatabase(db: DatabaseAdapter): Promise<void> {
     if (isPostgreSQLTest()) {
         // Clear all tables in PostgreSQL test database
-        await db.exec('TRUNCATE events, tasks, versions CASCADE')
+        await db.exec('TRUNCATE events, tasks, versions, i18n_codes CASCADE')
     }
     // SQLite in-memory database is automatically cleaned up
 
@@ -154,11 +176,12 @@ export async function cleanupTestDatabase(db: DatabaseAdapter): Promise<void> {
  */
 export async function resetTestDatabase(db: DatabaseAdapter): Promise<void> {
     if (isPostgreSQLTest()) {
-        await db.exec('TRUNCATE events, tasks, versions CASCADE')
+        await db.exec('TRUNCATE events, tasks, versions, i18n_codes CASCADE')
     } else {
         await db.exec('DELETE FROM events')
         await db.exec('DELETE FROM tasks')
         await db.exec('DELETE FROM versions')
+        await db.exec('DELETE FROM i18n_codes')
     }
 }
 

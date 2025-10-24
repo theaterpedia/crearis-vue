@@ -20,10 +20,23 @@ export function getTestDatabaseConfig(): TestDatabaseConfig {
 
     if (testDbType === 'postgresql') {
         // PostgreSQL test database
-        // Default: postgresql://localhost:5432/demo_data_test
-        const testDbUrl = process.env.TEST_DATABASE_URL ||
-            process.env.DATABASE_URL?.replace(/\/([^/]+)$/, '/demo_data_test') ||
-            'postgresql://localhost:5432/demo_data_test'
+        let testDbUrl = process.env.TEST_DATABASE_URL
+
+        if (!testDbUrl) {
+            // Build from environment variables (same as main config, but with _test database)
+            const dbUser = process.env.DB_USER
+            const dbPassword = process.env.DB_PASSWORD
+            const dbHost = process.env.DB_HOST || 'localhost'
+            const dbPort = process.env.DB_PORT || '5432'
+
+            if (dbUser && dbPassword) {
+                const testDbName = process.env.TEST_DB_NAME || `${process.env.DB_NAME}_test` || 'demo_data_test'
+                testDbUrl = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${testDbName}`
+            } else {
+                // Fallback to default
+                testDbUrl = 'postgresql://localhost:5432/demo_data_test'
+            }
+        }
 
         return {
             type: 'postgresql',

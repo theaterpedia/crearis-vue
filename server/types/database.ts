@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-10-24T05:20:40.938Z
+ * Generated at: 2025-10-24T07:12:15.800Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -126,6 +126,21 @@ export interface HeroOverridesTableFields {
     event_ids?: string | null
     heading?: string | null
     updated_at?: string | null
+}
+
+/**
+ * I18n_codes table
+ * Table: i18n_codes
+ */
+export interface I18nCodesTableFields {
+    created_at?: string | null // default: CURRENT_TIMESTAMP
+    id: number // default: nextval('i18n_codes_id_seq'::regclass)
+    name: string
+    status: string // default: 'de'::text
+    text: Record<string, any>
+    type: string
+    updated_at?: string | null // default: CURRENT_TIMESTAMP
+    variation?: string | null // default: 'false'::text
 }
 
 /**
@@ -561,6 +576,13 @@ export function isValidHeroOverridesField(key: string): key is keyof HeroOverrid
     return validFields.includes(key as keyof HeroOverridesTableFields)
 }
 
+export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableFields {
+    const validFields: (keyof I18nCodesTableFields)[] = [
+        'id', 'name', 'variation', 'type', 'text', 'status', 'created_at', 'updated_at'
+    ]
+    return validFields.includes(key as keyof I18nCodesTableFields)
+}
+
 export function isValidInstructorsField(key: string): key is keyof InstructorsTableFields {
     const validFields: (keyof InstructorsTableFields)[] = [
         'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_id', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display', 'status'
@@ -682,7 +704,7 @@ export function isValidTldsField(key: string): key is keyof TldsTableFields {
 
 export function isValidUsersField(key: string): key is keyof UsersTableFields {
     const validFields: (keyof UsersTableFields)[] = [
-        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'created_at', 'updated_at', 'participant_id', 'lang', 'status_display'
+        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'created_at', 'updated_at', 'status_display'
     ]
     return validFields.includes(key as keyof UsersTableFields)
 }
