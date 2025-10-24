@@ -48,6 +48,7 @@
             </div>
         </Section>
     </Container>
+    <DemoToggle />
 </template>
 
 <script setup lang="ts">
@@ -61,6 +62,7 @@ import TranslationList from '@/components/i18n/TranslationList.vue'
 import StatusOverview from '@/components/i18n/StatusOverview.vue'
 import BulkImportExport from '@/components/i18n/BulkImportExport.vue'
 import I18nDemo from '@/components/I18nDemo.vue'
+import DemoToggle from '@/components/DemoToggle.vue'
 
 const { requireAuth, isAdmin } = useAuth()
 const router = useRouter()

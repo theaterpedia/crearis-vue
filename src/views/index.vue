@@ -1,11 +1,7 @@
 <template>
   <Box>
-    <Sidebar
-      footerText="30 Jahre Theaterädagogik Bayern"
-      logo="https://pruvious.com/uploads/logo-dasei.svg"
-      logoAlt="DAS Ei"
-      logoSmall="https://pruvious.com/uploads/logo-dasei-small.svg"
-    >
+    <Sidebar footerText="30 Jahre Theaterädagogik Bayern" logo="https://pruvious.com/uploads/logo-dasei.svg"
+      logoAlt="DAS Ei" logoSmall="https://pruvious.com/uploads/logo-dasei-small.svg">
       <MainMenu v-model:items="mainMenuItems" />
     </Sidebar>
 
@@ -58,8 +54,7 @@
             </Column>
             <Column width="1/4">
               <img
-                src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-              />
+                src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg" />
             </Column>
           </Columns>
         </Container>
@@ -98,8 +93,7 @@
               <Columns gap="small">
                 <Column width="1/5">
                   <img
-                    src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-                  />
+                    src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg" />
                 </Column>
                 <Column>
                   <Prose>
@@ -156,29 +150,21 @@
                 SEMINARVERLAUF WÄHLEN
                 <span>*</span>
               </legend>
-              <RadioGroup
-                :choices="[
-                  { label: 'München (Tageskurse + Online intensiv)', value: 'muc' },
-                  { label: 'Nürnberg (Tageskurse + Online intensiv)', value: 'nbg' },
-                  { label: 'Burgstallmühle (mit Unterbringung) > Burgstallmühle 1, 91572 Bechhofen', value: 'bgh' },
-                ]"
-                @update:modelValue="console.log"
-                name="location"
-              />
+              <RadioGroup :choices="[
+                { label: 'München (Tageskurse + Online intensiv)', value: 'muc' },
+                { label: 'Nürnberg (Tageskurse + Online intensiv)', value: 'nbg' },
+                { label: 'Burgstallmühle (mit Unterbringung) > Burgstallmühle 1, 91572 Bechhofen', value: 'bgh' },
+              ]" @update:modelValue="console.log" name="location" />
             </fieldset>
             <fieldset>
               <legend>
                 BASISTAG AUSWÄHLEN
                 <span>*</span>
               </legend>
-              <RadioGroup
-                :choices="[
-                  { label: 'SA., 29. Juli 09:30 – 18:30, München', value: '2023-07-29' },
-                  { label: 'SA., 9. Sept. 09:00 – 18:00, Nürnberg', value: '2023-09-09' },
-                ]"
-                @update:modelValue="console.log"
-                name="date"
-              />
+              <RadioGroup :choices="[
+                { label: 'SA., 29. Juli 09:30 – 18:30, München', value: '2023-07-29' },
+                { label: 'SA., 9. Sept. 09:00 – 18:00, Nürnberg', value: '2023-09-09' },
+              ]" @update:modelValue="console.log" name="date" />
             </fieldset>
             <fieldset>
               <legend>KONTAKTDATEN</legend>
@@ -192,8 +178,7 @@
 
       <Parallax
         backgroundImage="https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_south_west,h_1100,w_1600/c_crop,g_center,h_1500,q_70,r_0,w_1600,y_100/v1594701917/dasei/einstiege_lampe_nora.jpg"
-        placement="below"
-      >
+        placement="below">
         <Banner transparent>
           <Prose>
             <p class="h2"><strong>Du hast Fragen?</strong></p>
@@ -227,6 +212,7 @@
       <p class="h3 primary"><strong>30 Jahre Theaterpädagogik in Bayern.</strong></p>
     </Prose>
   </Footer>
+  <DemoToggle />
 </template>
 
 <script lang="ts" setup>
@@ -253,6 +239,7 @@ import {
   type MainMenuParentItem,
 } from '@/index'
 import { ref, type Ref } from 'vue'
+import DemoToggle from '@/components/DemoToggle.vue'
 
 const mainMenuItems: Ref<MainMenuParentItem[]> = ref([
   {

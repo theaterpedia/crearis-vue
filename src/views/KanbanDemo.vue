@@ -22,6 +22,7 @@
                     @item-moved="handleItemMoved" />
             </Section>
         </div>
+        <DemoToggle />
     </div>
 </template>
 
@@ -33,6 +34,7 @@ import Navbar from '@/components/Navbar.vue'
 import Button from '@/components/Button.vue'
 import Section from '@/components/Section.vue'
 import Kanban from '@/components/Kanban.vue'
+import DemoToggle from '@/components/DemoToggle.vue'
 
 const router = useRouter()
 const { user, isAuthenticated, logout } = useAuth()

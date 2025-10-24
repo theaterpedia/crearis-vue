@@ -180,11 +180,13 @@
             </div>
         </section>
     </div>
+    <DemoToggle />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTheme, type Theme, type ThemeVars } from '../composables/useTheme'
+import DemoToggle from '@/components/DemoToggle.vue'
 
 // Initialize theme composable
 const {

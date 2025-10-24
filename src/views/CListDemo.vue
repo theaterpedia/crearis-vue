@@ -14,18 +14,18 @@
 
                     <div class="demo-variants">
                         <h4>Size Variants</h4>
-                        <ItemRow content="Small Event **Summer Festival** 2024" cimg="https://picsum.photos/80/80?random=1"
-                            size="small" />
-                        <ItemRow content="Medium Event **Theater Conference** Premium" cimg="https://picsum.photos/80/80?random=2"
-                            size="medium" />
-                        <ItemRow content="Large Event **International Workshop** Series" cimg="https://picsum.photos/80/80?random=3"
-                            size="large" />
+                        <ItemRow content="Small Event **Summer Festival** 2024"
+                            cimg="https://picsum.photos/80/80?random=1" size="small" />
+                        <ItemRow content="Medium Event **Theater Conference** Premium"
+                            cimg="https://picsum.photos/80/80?random=2" size="medium" />
+                        <ItemRow content="Large Event **International Workshop** Series"
+                            cimg="https://picsum.photos/80/80?random=3" size="large" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>With Slot (3rd Column)</h4>
-                        <ItemRow content="Event with Actions **Spring Concert** 2024" cimg="https://picsum.photos/80/80?random=4"
-                            size="medium">
+                        <ItemRow content="Event with Actions **Spring Concert** 2024"
+                            cimg="https://picsum.photos/80/80?random=4" size="medium">
                             <button class="demo-action-btn">View</button>
                         </ItemRow>
                     </div>
@@ -41,10 +41,10 @@
                     <div class="demo-grid">
                         <ItemTile content="Small Tile **Workshop** Basics" cimg="https://picsum.photos/300/200?random=5"
                             size="small" />
-                        <ItemTile content="Medium Tile **Performance** Evening Show" cimg="https://picsum.photos/300/200?random=6"
-                            size="medium" />
-                        <ItemTile content="Large Tile **Festival** Annual Event" cimg="https://picsum.photos/300/200?random=7"
-                            size="large" />
+                        <ItemTile content="Medium Tile **Performance** Evening Show"
+                            cimg="https://picsum.photos/300/200?random=6" size="medium" />
+                        <ItemTile content="Large Tile **Festival** Annual Event"
+                            cimg="https://picsum.photos/300/200?random=7" size="large" />
                     </div>
                 </div>
 
@@ -56,16 +56,16 @@
                     </p>
 
                     <div class="demo-grid">
-                        <ItemCard content="Small Card **Introduction** Beginner Level" cimg="https://picsum.photos/300/200?random=8"
-                            size="small">
+                        <ItemCard content="Small Card **Introduction** Beginner Level"
+                            cimg="https://picsum.photos/300/200?random=8" size="small">
                             <span class="demo-badge">New</span>
                         </ItemCard>
-                        <ItemCard content="Medium Card **Advanced Course** Professional" cimg="https://picsum.photos/300/200?random=9"
-                            size="medium">
+                        <ItemCard content="Medium Card **Advanced Course** Professional"
+                            cimg="https://picsum.photos/300/200?random=9" size="medium">
                             <span class="demo-badge">Popular</span>
                         </ItemCard>
-                        <ItemCard content="Large Card **Master Class** Expert Level" cimg="https://picsum.photos/300/200?random=10"
-                            size="large">
+                        <ItemCard content="Large Card **Master Class** Expert Level"
+                            cimg="https://picsum.photos/300/200?random=10" size="large">
                             <span class="demo-badge">Premium</span>
                         </ItemCard>
                     </div>
@@ -126,6 +126,7 @@
                 </div>
             </Section>
         </Container>
+        <DemoToggle />
     </div>
 </template>
 
@@ -135,6 +136,7 @@ import Container from '@/components/Container.vue'
 import Section from '@/components/Section.vue'
 import Heading from '@/components/Heading.vue'
 import { ItemRow, ItemTile, ItemCard, ItemList, ItemGallery } from '@/components/clist'
+import DemoToggle from '@/components/DemoToggle.vue'
 
 const listPopupOpen = ref(false)
 const galleryPopupOpen = ref(false)

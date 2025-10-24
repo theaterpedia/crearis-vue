@@ -157,12 +157,14 @@
         </div>
       </div>
     </div>
+    <DemoToggle />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useDemoData } from '../composables/useDemoData'
+import DemoToggle from '@/components/DemoToggle.vue'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
