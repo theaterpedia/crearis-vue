@@ -1,14 +1,14 @@
 <template>
     <div class="step-component">
         <div class="step-header">
-            <h3>Beiträge verwalten</h3>
-            <p class="step-subtitle">Wählen Sie Basis-Beiträge aus und passen Sie diese für Ihr Projekt an</p>
+            <h3 v-html="i18nTitle"></h3>
+            <p class="step-subtitle" v-html="i18nSubtitle"></p>
         </div>
 
         <!-- Loading Spinner -->
         <div v-if="isLoading" class="loading-container">
             <div class="spinner"></div>
-            <p>Lade Beiträge...</p>
+            <p v-html="i18nLoading"></p>
         </div>
 
         <!-- Error Banner -->
@@ -25,8 +25,8 @@
                             d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z">
                         </path>
                     </svg>
-                    <p class="empty-title">Keine Beiträge vorhanden</p>
-                    <p class="empty-text">Fügen Sie Ihren ersten Beitrag mit dem Panel rechts hinzu.</p>
+                    <p class="empty-title" v-html="i18nEmptyTitle"></p>
+                    <p class="empty-text" v-html="i18nEmptyText"></p>
                 </div>
 
                 <div v-else class="posts-grid">
@@ -50,10 +50,10 @@
                         d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z">
                     </path>
                 </svg>
-                Zurück
+                <span v-html="i18nPrev"></span>
             </button>
             <button class="action-btn primary-btn" @click="handleNext">
-                Weiter
+                <span v-html="i18nNext"></span>
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -70,6 +70,7 @@ import { ref, onMounted } from 'vue'
 import PostCard from '@/components/PostCard.vue'
 import AddPostPanel from '@/components/AddPostPanel.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
+import { useI18n } from '@/composables/useI18n'
 import type { Post, Instructor } from '@/types'
 
 interface Props {
@@ -83,6 +84,22 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// i18n setup - default to German for project users
+const { setLanguage } = useI18n()
+setLanguage('de')
+
+// i18n reactive strings
+const i18nTitle = ref('')
+const i18nSubtitle = ref('')
+const i18nLoading = ref('')
+const i18nNext = ref('')
+const i18nPrev = ref('')
+const i18nEmptyTitle = ref('')
+const i18nEmptyText = ref('')
+const i18nErrorPosts = ref('')
+const i18nErrorInstructors = ref('')
+const i18nErrorDelete = ref('')
 
 // State
 const basePosts = ref<Post[]>([])
@@ -101,6 +118,7 @@ async function loadBasePosts() {
         basePosts.value = await response.json()
     } catch (err) {
         console.error('Error loading base posts:', err)
+        error.value = i18nErrorPosts.value
         throw err
     }
 }
@@ -116,7 +134,7 @@ async function loadProjectPosts() {
         projectPosts.value = await response.json()
     } catch (err) {
         console.error('Error loading project posts:', err)
-        error.value = 'Fehler beim Laden der Projekt-Beiträge'
+        error.value = i18nErrorPosts.value
         throw err
     }
 }
@@ -131,6 +149,7 @@ async function loadInstructors() {
         allInstructors.value = await response.json()
     } catch (err) {
         console.error('Error loading instructors:', err)
+        error.value = i18nErrorInstructors.value
         throw err
     }
 }
@@ -156,8 +175,8 @@ async function handlePostDelete(postId: string) {
         await loadProjectPosts()
     } catch (err) {
         console.error('Error deleting post:', err)
-        error.value = 'Fehler beim Löschen des Beitrags'
-        alert('Fehler beim Löschen des Beitrags')
+        error.value = i18nErrorDelete.value
+        alert(i18nErrorDelete.value)
     }
 }
 
@@ -171,12 +190,45 @@ function handlePrev() {
 
 // Load data on mount
 onMounted(async () => {
+    // Load i18n strings with inline HTML strategy (get-or-create with default text)
+    const { getOrCreate } = useI18n()
+    
+    const titleEntry = await getOrCreate('posts', 'field', 'false', 'Beiträge verwalten')
+    i18nTitle.value = titleEntry?.text?.de || 'Beiträge verwalten'
+    
+    const subtitleEntry = await getOrCreate('posts-step-subtitle', 'desc', 'false', 'Wählen Sie Basis-Beiträge aus und passen Sie diese für Ihr Projekt an')
+    i18nSubtitle.value = subtitleEntry?.text?.de || 'Wählen Sie Basis-Beiträge aus und passen Sie diese für Ihr Projekt an'
+    
+    const loadingEntry = await getOrCreate('loading-posts', 'desc', 'false', 'Lade Beiträge...')
+    i18nLoading.value = loadingEntry?.text?.de || 'Lade Beiträge...'
+    
+    const nextEntry = await getOrCreate('next', 'button', 'false', 'Weiter')
+    i18nNext.value = nextEntry?.text?.de || 'Weiter'
+    
+    const prevEntry = await getOrCreate('prev', 'button', 'false', 'Zurück')
+    i18nPrev.value = prevEntry?.text?.de || 'Zurück'
+    
+    const emptyTitleEntry = await getOrCreate('no-posts-yet', 'desc', 'false', 'Keine Beiträge vorhanden')
+    i18nEmptyTitle.value = emptyTitleEntry?.text?.de || 'Keine Beiträge vorhanden'
+    
+    const emptyTextEntry = await getOrCreate('add-posts-right', 'desc', 'false', 'Fügen Sie Ihren ersten Beitrag mit dem Panel rechts hinzu.')
+    i18nEmptyText.value = emptyTextEntry?.text?.de || 'Fügen Sie Ihren ersten Beitrag mit dem Panel rechts hinzu.'
+    
+    const errorPostsEntry = await getOrCreate('error-loading-posts', 'desc', 'false', 'Fehler beim Laden der Beiträge')
+    i18nErrorPosts.value = errorPostsEntry?.text?.de || 'Fehler beim Laden der Beiträge'
+    
+    const errorInstructorsEntry = await getOrCreate('error-loading-instructors', 'desc', 'false', 'Fehler beim Laden der Kursleiter')
+    i18nErrorInstructors.value = errorInstructorsEntry?.text?.de || 'Fehler beim Laden der Kursleiter'
+    
+    const errorDeleteEntry = await getOrCreate('error-deleting-post', 'desc', 'false', 'Fehler beim Löschen des Beitrags')
+    i18nErrorDelete.value = errorDeleteEntry?.text?.de || 'Fehler beim Löschen des Beitrags'
+
     isLoading.value = true
     try {
         await Promise.all([loadBasePosts(), loadProjectPosts(), loadInstructors()])
     } catch (err) {
         console.error('Error loading data:', err)
-        error.value = 'Fehler beim Laden der Daten'
+        error.value = i18nErrorPosts.value
     } finally {
         isLoading.value = false
     }

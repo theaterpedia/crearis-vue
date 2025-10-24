@@ -1,8 +1,8 @@
 <template>
     <div class="step-component">
         <div class="step-header">
-            <h3>Veranstaltungen</h3>
-            <p class="step-subtitle">Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen</p>
+            <h3 v-html="i18nTitle"></h3>
+            <p class="step-subtitle" v-html="i18nSubtitle"></p>
         </div>
 
         <!-- Error State -->
@@ -18,7 +18,7 @@
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-container">
             <div class="spinner"></div>
-            <p>Events werden geladen...</p>
+            <p v-html="i18nLoading"></p>
         </div>
 
         <div v-else class="step-content-container">
@@ -31,8 +31,8 @@
                             d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-68-76a12,12,0,1,1-12-12A12,12,0,0,1,140,132Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,184,132ZM96,172a12,12,0,1,1-12-12A12,12,0,0,1,96,172Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,140,172Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,184,172Z">
                         </path>
                     </svg>
-                    <p class="empty-title">Noch keine Events</p>
-                    <p class="empty-text">Fügen Sie Events über das Panel rechts hinzu</p>
+                    <p class="empty-title" v-html="i18nEmptyTitle"></p>
+                    <p class="empty-text" v-html="i18nEmptyText"></p>
                 </div>
 
                 <div v-else class="events-grid">
@@ -50,7 +50,7 @@
 
         <div class="step-actions">
             <button class="action-btn primary-btn" @click="handleNext">
-                Weiter
+                <span v-html="i18nNext"></span>
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -63,9 +63,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import EventCard from '@/components/EventCard.vue'
 import AddEventPanel from '@/components/AddEventPanel.vue'
+import { useI18n } from '@/composables/useI18n'
 import type { Event, Instructor } from '@/types'
 
 interface Props {
@@ -78,6 +79,21 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// i18n setup - default to German for project users
+const { field, desc, button, setLanguage } = useI18n()
+setLanguage('de')
+
+// i18n reactive strings
+const i18nTitle = ref('')
+const i18nSubtitle = ref('')
+const i18nLoading = ref('')
+const i18nNext = ref('')
+const i18nEmptyTitle = ref('')
+const i18nEmptyText = ref('')
+const i18nErrorEvents = ref('')
+const i18nErrorInstructors = ref('')
+const i18nErrorLocations = ref('')
 
 const baseEvents = ref<Event[]>([])
 const projectEvents = ref<Event[]>([])
@@ -96,7 +112,7 @@ async function loadBaseEvents() {
         baseEvents.value = await response.json()
     } catch (err) {
         console.error('Error loading base events:', err)
-        error.value = 'Fehler beim Laden der Basis-Events'
+        error.value = i18nErrorEvents.value
     }
 }
 
@@ -110,7 +126,7 @@ async function loadProjectEvents() {
         projectEvents.value = await response.json()
     } catch (err) {
         console.error('Error loading project events:', err)
-        error.value = 'Fehler beim Laden der Projekt-Events'
+        error.value = i18nErrorEvents.value
     }
 }
 
@@ -124,7 +140,7 @@ async function loadInstructors() {
         allInstructors.value = await response.json()
     } catch (err) {
         console.error('Error loading instructors:', err)
-        error.value = 'Fehler beim Laden der Kursleiter'
+        error.value = i18nErrorInstructors.value
     }
 }
 
@@ -138,7 +154,7 @@ async function loadLocations() {
         allLocations.value = await response.json()
     } catch (err) {
         console.error('Error loading locations:', err)
-        error.value = 'Fehler beim Laden der Orte'
+        error.value = i18nErrorLocations.value
     }
 }
 
@@ -174,6 +190,36 @@ function handleNext() {
 }
 
 onMounted(async () => {
+    // Load i18n strings with inline HTML strategy (get-or-create with default text)
+    const { getOrCreate } = useI18n()
+    
+    const titleEntry = await getOrCreate('events', 'field', 'false', 'Veranstaltungen')
+    i18nTitle.value = titleEntry?.text?.de || 'Veranstaltungen'
+    
+    const subtitleEntry = await getOrCreate('events-step-subtitle', 'desc', 'false', 'Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen')
+    i18nSubtitle.value = subtitleEntry?.text?.de || 'Wählen Sie die Events aus, die in Ihrem Projekt erscheinen sollen'
+    
+    const loadingEntry = await getOrCreate('loading-events', 'desc', 'false', 'Events werden geladen...')
+    i18nLoading.value = loadingEntry?.text?.de || 'Events werden geladen...'
+    
+    const nextEntry = await getOrCreate('next', 'button', 'false', 'Weiter')
+    i18nNext.value = nextEntry?.text?.de || 'Weiter'
+    
+    const emptyTitleEntry = await getOrCreate('no-events-yet', 'desc', 'false', 'Noch keine Events')
+    i18nEmptyTitle.value = emptyTitleEntry?.text?.de || 'Noch keine Events'
+    
+    const emptyTextEntry = await getOrCreate('add-events-right', 'desc', 'false', 'Fügen Sie Events über das Panel rechts hinzu')
+    i18nEmptyText.value = emptyTextEntry?.text?.de || 'Fügen Sie Events über das Panel rechts hinzu'
+    
+    const errorEventsEntry = await getOrCreate('error-loading-events', 'desc', 'false', 'Fehler beim Laden der Events')
+    i18nErrorEvents.value = errorEventsEntry?.text?.de || 'Fehler beim Laden der Events'
+    
+    const errorInstructorsEntry = await getOrCreate('error-loading-instructors', 'desc', 'false', 'Fehler beim Laden der Kursleiter')
+    i18nErrorInstructors.value = errorInstructorsEntry?.text?.de || 'Fehler beim Laden der Kursleiter'
+    
+    const errorLocationsEntry = await getOrCreate('error-loading-locations', 'desc', 'false', 'Fehler beim Laden der Orte')
+    i18nErrorLocations.value = errorLocationsEntry?.text?.de || 'Fehler beim Laden der Orte'
+
     isLoading.value = true
     try {
         await Promise.all([
