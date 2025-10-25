@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/', component: () => import('../views/Home.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
+    { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
 
     // Protected routes
     { path: '/tasks', component: () => import('../views/TaskDashboard.vue'), meta: { requiresAuth: true } },

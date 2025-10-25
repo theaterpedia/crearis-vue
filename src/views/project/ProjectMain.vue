@@ -170,7 +170,8 @@
 
                     <!-- Navigation Mode Panels -->
                     <template v-else>
-                        <ProjectStepEvents v-if="currentNavTab === 'events'" :project-id="projectId"
+                        <PageConfigController v-if="currentNavTab === 'homepage'" :project="projectId" mode="project" />
+                        <ProjectStepEvents v-else-if="currentNavTab === 'events'" :project-id="projectId"
                             :is-locked="isLocked" hide-actions />
                         <ProjectStepPosts v-else-if="currentNavTab === 'posts'" :project-id="projectId"
                             :is-locked="isLocked" hide-actions />
@@ -213,6 +214,7 @@ import RegioConfigPanel from '@/components/RegioConfigPanel.vue'
 import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
 import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
+import PageConfigController from '@/components/PageConfigController.vue'
 
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
@@ -243,7 +245,7 @@ const isLocked = computed(() => projectStatus.value > 3)
 
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
-    const tabs: string[] = ['events', 'posts', 'users', 'theme', 'layout', 'navigation', 'pages']
+    const tabs: string[] = ['homepage', 'events', 'posts', 'users', 'theme', 'layout', 'navigation', 'pages']
 
     // Add conditional tabs based on project settings
     if (projectData.value) {
