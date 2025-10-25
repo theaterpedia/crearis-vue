@@ -185,7 +185,7 @@ export function useAuth() {
 
             // Navigate based on projectId
             if (projectId) {
-                router.push('/project')
+                router.push('/projects')
             } else {
                 router.push('/')
             }

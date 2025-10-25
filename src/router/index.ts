@@ -12,7 +12,7 @@ const router = createRouter({
     // Protected routes
     { path: '/tasks', component: () => import('../views/TaskDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
-    { path: '/project', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
+    { path: '/projects', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
 
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
@@ -46,8 +46,8 @@ router.beforeEach(async (to, from, next) => {
         return
       }
 
-      // Special handling for /project route - requires projectId to be set
-      if (to.path === '/project') {
+      // Special handling for /projects route - requires projectId to be set
+      if (to.path === '/projects') {
         if (data.user.activeRole !== 'project') {
           // Must be in project role
           next('/')
@@ -66,9 +66,9 @@ router.beforeEach(async (to, from, next) => {
         if (data.user.activeRole === 'base') {
           next('/base')
         } else if (data.user.activeRole === 'project') {
-          // Only go to /project if projectId is set
+          // Only go to /projects if projectId is set
           if (data.user.projectId) {
-            next('/project')
+            next('/projects')
           } else {
             next('/')
           }

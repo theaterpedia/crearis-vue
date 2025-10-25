@@ -52,7 +52,7 @@ const getRoleLabel = (role: string): string => {
 const getRouteForRole = (role: string): string => {
     switch (role) {
         case 'project':
-            return '/project'
+            return '/projects'
         case 'user':
             return '/'
         case 'base':

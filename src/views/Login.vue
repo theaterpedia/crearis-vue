@@ -63,7 +63,7 @@ const handleLogin = async () => {
         } else if (user.value?.activeRole === 'base') {
             router.push('/base')
         } else if (user.value?.activeRole === 'project') {
-            router.push('/project')
+            router.push('/projects')
         } else {
             router.push('/')
         }

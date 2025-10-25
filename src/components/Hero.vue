@@ -1,56 +1,49 @@
 <template>
-  <div
-    class="hero"
-    :class="[
-      target === 'page' ? `hero-${heightTmp}` : 'hero-mini card-hero',
-      `hero-align-content-${contentAlignY}`,
-      bottomline ? 'hero-bottomline' : '',
-    ]"
-    :style="contentType === 'left' ? 'padding-left: 0rem' : ''"
-  >
+  <div class="hero" :class="[
+    target === 'page' ? `hero-${heightTmp}` : 'hero-mini card-hero',
+    `hero-align-content-${contentAlignY}`,
+    bottomline ? 'hero-bottomline' : '',
+  ]" :style="contentType === 'left' ? 'padding-left: 0rem' : ''">
     <div class="hero-cover">
-      <div
-        :class="target === 'page' ? 'hero-cover-image' : 'static-cover-image'"
-        :style="{
-          backgroundImage: `url(${imgTmp})`,
-          backgroundPositionX:
-            target === 'page'
-              ? imgTmpAlignX === 'stretch'
-                ? 'left'
-                : imgTmpAlignX === 'cover'
-                  ? 'center'
-                  : imgTmpAlignX
-              : 'center',
-          backgroundPositionY:
-            target === 'page'
-              ? imgTmpAlignY === 'stretch'
-                ? 'top'
-                : imgTmpAlignY === 'cover'
-                  ? 'center'
-                  : imgTmpAlignY
-              : 'center',
-          backgroundSize:
-            target === 'page'
-              ? imgTmpAlignX === 'cover' || imgTmpAlignY === 'cover'
-                ? 'cover'
-                : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
-              : '500px',
-        }"
-      >
+      <div :class="target === 'page' ? 'hero-cover-image' : 'static-cover-image'" :style="{
+        backgroundImage: `url(${imgTmp})`,
+        backgroundPositionX:
+          target === 'page'
+            ? imgTmpAlignX === 'stretch'
+              ? 'left'
+              : imgTmpAlignX === 'cover'
+                ? 'center'
+                : imgTmpAlignX
+            : 'center',
+        backgroundPositionY:
+          target === 'page'
+            ? imgTmpAlignY === 'stretch'
+              ? 'top'
+              : imgTmpAlignY === 'cover'
+                ? 'center'
+                : imgTmpAlignY
+            : 'center',
+        backgroundSize:
+          target === 'page'
+            ? imgTmpAlignX === 'cover' || imgTmpAlignY === 'cover'
+              ? 'cover'
+              : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
+            : '500px',
+      }">
         <div v-if="overlay" class="hero-cover-overlay" :style="{ background: overlay }"></div>
       </div>
     </div>
 
     <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">
       <Container>
-        <slot/>
+        <slot />
       </Container>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { type PropType } from 'vue'
+import type { PropType } from 'vue'
 import Container from './Container.vue'
 
 defineProps({
@@ -136,6 +129,33 @@ defineProps({
   contentType: {
     type: String as PropType<'text' | 'banner' | 'left'>,
     default: 'text',
+  },
+
+  /**
+   * Gradient overlay type for the hero image.
+   *
+   * - `none` - No gradient overlay.
+   * - `left-bottom` - Gradient from left bottom corner.
+   */
+  gradient_type: {
+    type: String as PropType<'none' | 'left-bottom'>,
+    default: 'none',
+  },
+
+  /**
+   * Gradient overlay depth/opacity (0.0 to 1.0).
+   */
+  gradient_depth: {
+    type: Number,
+    default: 1.0,
+  },
+
+  /**
+   * Background correction for image adjustments.
+   */
+  backgroundCorrection: {
+    type: [Number, String] as PropType<number | string>,
+    default: 'none',
   },
 })
 </script>
@@ -239,8 +259,10 @@ defineProps({
 }
 
 .hero-content-short {
-  min-width: 23rem; /* 368px */
-  max-width: 50rem; /* 800px */
+  min-width: 23rem;
+  /* 368px */
+  max-width: 50rem;
+  /* 800px */
 }
 
 .hero-content-fixed {
@@ -264,11 +286,11 @@ defineProps({
     padding: 0 0 1rem;
   }
 
-  .hero-content > * {
+  .hero-content>* {
     padding: 0;
   }
 
-  .hero-content-text > * {
+  .hero-content-text>* {
     padding: 1.75rem 1rem;
   }
 

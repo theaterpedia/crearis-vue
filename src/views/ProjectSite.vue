@@ -1,174 +1,135 @@
 <template>
     <div class="project-site-page">
-        <AlertBanner v-if="project" alert-type="primary">
-            <p><strong>{{ project.heading || project.id }}</strong> - {{ project.status }}</p>
-        </AlertBanner>
-        <AlertBanner v-else alert-type="warning">
-            <p><strong>Project not found</strong></p>
-        </AlertBanner>
-
-        <Navbar :user="user" :use-default-routes="false" @logout="handleLogout">
-            <template #menus>
-                <AdminMenu v-if="user && user.activeRole === 'admin'" />
-                <EditPanelButton v-if="project" :is-authenticated="!!user" :is-admin="user?.activeRole === 'admin'"
-                    :is-owner="project.owner_id === user?.id" :is-member="false" @open="openEditPanel" />
-            </template>
-        </Navbar>
-
         <!-- Edit Panel -->
         <EditPanel v-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Project'}`"
             subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
             @save="handleSaveProject" />
 
-        <Box layout="full-width" v-if="project">
-            <Main>
-                <!-- Hero Section for Project -->
-                <Hero height-tmp="prominent"
-                    :img-tmp="project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg'"
-                    img-tmp-align-x="cover" img-tmp-align-y="cover"
-                    :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
-                    content-align-y="center">
-                    <Banner transparent>
-                        <Prose>
-                            <h1><strong>{{ project.heading || project.id }}</strong></h1>
-                            <p v-if="project.md">{{ project.md }}</p>
-                            <p v-else>Explore events, posts, and team members for this project.</p>
-                            <div class="cta-group">
-                                <Button size="medium" variant="primary" @click="$router.push('/getstarted')">
-                                    Get Involved
-                                </Button>
-                                <a href="/" class="cta-secondary">Back to Home</a>
-                            </div>
-                        </Prose>
-                    </Banner>
-                </Hero>
+        <!-- PageLayout wrapper with PageHeading in header slot -->
+        <PageLayout v-if="project">
+            <template #header>
+                <PageHeading :heading="project.heading || project.id"
+                    :teaserText="project.teaser || project.md || 'Explore events, posts, and team members for this project.'"
+                    :imgTmp="project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg'"
+                    :headerType="project.header_type || 'banner'" :headerSize="project.header_size || 'prominent'"
+                    :cta="{ title: 'Get Involved', link: '/getstarted' }"
+                    :link="{ title: 'Back to Home', link: '/' }" />
+            </template>
 
-                <!-- Project Events Section -->
-                <Section background="muted">
-                    <Container>
-                        <Prose>
-                            <Heading overline="Project Events" level="h2">Upcoming **Events**</Heading>
-                        </Prose>
+            <!-- Project Events Section -->
+            <Section background="muted">
+                <Container>
+                    <Prose>
+                        <Heading overline="Project Events" level="h2">Upcoming **Events**</Heading>
+                    </Prose>
 
-                        <Slider v-if="events.length > 0">
-                            <Slide v-for="event in events" :key="event.id">
-                                <img v-if="event.cimg" :src="event.cimg" :alt="event.heading || event.id"
-                                    style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
+                    <Slider v-if="events.length > 0">
+                        <Slide v-for="event in events" :key="event.id">
+                            <img v-if="event.cimg" :src="event.cimg" :alt="event.heading || event.id"
+                                style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
+                            <Prose>
+                                <h3>{{ event.heading || event.id }}</h3>
+                                <p v-if="event.date"><strong>Date:</strong> {{ formatDate(event.date) }}</p>
+                                <p v-if="event.location">{{ event.location }}</p>
+                                <p v-if="event.md">{{ event.md.substring(0, 100) }}...</p>
+                            </Prose>
+                        </Slide>
+                    </Slider>
+                    <Prose v-else>
+                        <p><em>No events for this project yet.</em></p>
+                    </Prose>
+                </Container>
+            </Section>
+
+            <!-- Regio Content Demo Section (only shown if project has regio) -->
+            <RegioContentDemo v-if="project && project.regio" :regio="project.regio" />
+
+            <!-- Blog Posts Gallery for Project -->
+            <Section background="accent">
+                <Container>
+                    <Prose>
+                        <Heading overline="Project Updates" level="h2">Latest **Posts**</Heading>
+                    </Prose>
+
+                    <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
+                        <Column v-for="post in posts.slice(0, 6)" :key="post.id" width="1/3">
+                            <CardHero height-tmp="medium" :img-tmp="post.cimg || ''" content-align-y="bottom"
+                                content-type="text">
                                 <Prose>
-                                    <h3>{{ event.heading || event.id }}</h3>
-                                    <p v-if="event.date"><strong>Date:</strong> {{ formatDate(event.date) }}</p>
-                                    <p v-if="event.location">{{ event.location }}</p>
-                                    <p v-if="event.md">{{ event.md.substring(0, 100) }}...</p>
+                                    <h3>{{ post.heading || post.id }}</h3>
+                                    <p v-if="post.md">{{ post.md.substring(0, 100) }}...</p>
+                                    <p v-else><em>No content available</em></p>
                                 </Prose>
-                            </Slide>
-                        </Slider>
-                        <Prose v-else>
-                            <p><em>No events for this project yet.</em></p>
-                        </Prose>
-                    </Container>
-                </Section>
+                            </CardHero>
+                        </Column>
+                    </Columns>
+                    <Prose v-else>
+                        <p><em>No posts for this project yet.</em></p>
+                    </Prose>
+                </Container>
+            </Section>
 
-                <!-- Regio Content Demo Section (only shown if project has regio) -->
-                <RegioContentDemo v-if="project && project.regio" :regio="project.regio" />
+            <!-- Team Members Section -->
+            <Section background="muted">
+                <Container>
+                    <Prose>
+                        <Heading overline="Meet the Team" level="h2">Our **People**</Heading>
+                    </Prose>
 
-                <!-- Blog Posts Gallery for Project -->
-                <Section background="accent">
-                    <Container>
-                        <Prose>
-                            <Heading overline="Project Updates" level="h2">Latest **Posts**</Heading>
-                        </Prose>
-
-                        <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
-                            <Column v-for="post in posts.slice(0, 6)" :key="post.id" width="1/3">
-                                <CardHero height-tmp="medium" :img-tmp="post.cimg || ''" content-align-y="bottom"
-                                    content-type="text">
-                                    <Prose>
-                                        <h3>{{ post.heading || post.id }}</h3>
-                                        <p v-if="post.md">{{ post.md.substring(0, 100) }}...</p>
-                                        <p v-else><em>No content available</em></p>
-                                    </Prose>
-                                </CardHero>
-                            </Column>
-                        </Columns>
-                        <Prose v-else>
-                            <p><em>No posts for this project yet.</em></p>
-                        </Prose>
-                    </Container>
-                </Section>
-
-                <!-- Team Members Section -->
-                <Section background="muted">
-                    <Container>
-                        <Prose>
-                            <Heading overline="Meet the Team" level="h2">Our **People**</Heading>
-                        </Prose>
-
-                        <Slider v-if="users.length > 0">
-                            <Slide v-for="teamUser in users" :key="teamUser.id">
-                                <div style="text-align: center;">
-                                    <img v-if="teamUser.cimg" :src="teamUser.cimg"
-                                        :alt="teamUser.username || teamUser.id"
-                                        style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;" />
-                                    <div v-else
-                                        style="width: 120px; height: 120px; border-radius: 50%; background: #ddd; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #666;">
-                                        {{ (teamUser.username || teamUser.id).charAt(0).toUpperCase() }}
-                                    </div>
-                                    <Prose>
-                                        <h4>{{ teamUser.username || teamUser.id }}</h4>
-                                        <p v-if="teamUser.role"><em>{{ teamUser.role }}</em></p>
-                                        <p v-if="teamUser.email">{{ teamUser.email }}</p>
-                                    </Prose>
+                    <Slider v-if="users.length > 0">
+                        <Slide v-for="teamUser in users" :key="teamUser.id">
+                            <div style="text-align: center;">
+                                <img v-if="teamUser.cimg" :src="teamUser.cimg" :alt="teamUser.username || teamUser.id"
+                                    style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;" />
+                                <div v-else
+                                    style="width: 120px; height: 120px; border-radius: 50%; background: #ddd; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #666;">
+                                    {{ (teamUser.username || teamUser.id).charAt(0).toUpperCase() }}
                                 </div>
-                            </Slide>
-                        </Slider>
-                        <Prose v-else>
-                            <p><em>No team members listed yet.</em></p>
+                                <Prose>
+                                    <h4>{{ teamUser.username || teamUser.id }}</h4>
+                                    <p v-if="teamUser.role"><em>{{ teamUser.role }}</em></p>
+                                    <p v-if="teamUser.email">{{ teamUser.email }}</p>
+                                </Prose>
+                            </div>
+                        </Slide>
+                    </Slider>
+                    <Prose v-else>
+                        <p><em>No team members listed yet.</em></p>
+                    </Prose>
+                </Container>
+            </Section>
+        </PageLayout>
+
+        <!-- Fallback for when project is not loaded -->
+        <PageLayout v-else>
+            <template #header>
+                <Section>
+                    <Container>
+                        <Prose>
+                            <h1>Project Not Found</h1>
+                            <p>The requested project could not be loaded.</p>
                         </Prose>
                     </Container>
                 </Section>
-            </Main>
-        </Box>
-
-        <!-- Footer -->
-        <Footer>
-            <div>
-                <Prose>
-                    <h3>Theaterpedia</h3>
-                    <p>Connecting theater communities worldwide.</p>
-                </Prose>
-            </div>
-            <div>
-                <Prose>
-                    <h4>Quick Links</h4>
-                </Prose>
-                <ul style="list-style: none; padding: 0;">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/getstarted">Get Started</a></li>
-                    <li v-if="user"><a href="/tasks">Dashboard</a></li>
-                    <li v-else><a href="/login">Sign In</a></li>
-                </ul>
-            </div>
-            <div>
-                <Prose>
-                    <p>&copy; 2025 Theaterpedia. All rights reserved.</p>
-                </Prose>
-            </div>
-        </Footer>
+            </template>
+            <Section>
+                <Container>
+                    <Prose>
+                        <p><a href="/">Return to Home</a></p>
+                    </Prose>
+                </Container>
+            </Section>
+        </PageLayout>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import AlertBanner from '@/components/AlertBanner.vue'
-import Navbar from '@/components/Navbar.vue'
-import AdminMenu from '@/components/AdminMenu.vue'
+import PageLayout from '@/components/PageLayout.vue'
+import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
-import Box from '@/components/Box.vue'
-import Main from '@/components/Main.vue'
-import Hero from '@/components/Hero.vue'
-import Banner from '@/components/Banner.vue'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
@@ -179,7 +140,6 @@ import Slide from '@/components/Slide.vue'
 import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
-import Footer from '@/components/Footer.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 
