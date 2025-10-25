@@ -65,7 +65,8 @@
     <!-- 2-Column Layout Container (Main + Aside) -->
     <Box :layout="wideContent ? 'full-width' : 'centered'" :fullwidthPadding="fullwidthMode && fullwidthPadding">
       <!-- Left Side Content (only for fullThree layout) -->
-      <SideContent v-if="showLeftSidebar" placement="left">
+      <SideContent v-if="showLeftSidebar" placement="left"
+        :layoutMode="siteLayout === 'fullThree' ? 'fullThree' : null">
         <Section>
           <!-- HARDCODED: Replace with dynamic left sidebar content -->
           <Prose>
@@ -86,7 +87,8 @@
       </main>
 
       <!-- Right Side Content (conditionally displayed) -->
-      <SideContent v-if="showRightSidebar" placement="right">
+      <SideContent v-if="showRightSidebar" placement="right"
+        :layoutMode="siteLayout === 'fullTwo' ? 'fullTwo' : siteLayout === 'fullThree' ? 'fullThree' : null">
         <!-- HARDCODED: Replace with dynamic right sidebar content -->
         <!-- CardHero Section -->
         <Section>
@@ -434,6 +436,37 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
   width: 100%;
   order: 1;
   /* Main content always in the middle */
+}
+
+/* Desktop: Main content takes remaining space */
+@media (min-width: 1024px) {
+  .main-content {
+    flex: 1;
+    width: auto;
+    /* Let it take remaining space */
+  }
+}
+
+/* Tablet (768px-1023px): Main content should be full width when sidebars wrap */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content {
+    flex: 0 0 100%;
+    /* Don't grow, don't shrink, fixed 100% width */
+    width: 100%;
+    order: 0;
+    /* Come first */
+  }
+}
+
+/* Mobile (<768px): Main content full width */
+@media (max-width: 767px) {
+  .main-content {
+    flex: 0 0 100%;
+    /* Don't grow, don't shrink, fixed 100% width */
+    width: 100%;
+    order: 0;
+    /* Come first */
+  }
 }
 
 /* NEW LAYOUT SYSTEM: Fullwidth Padding - applies to wrappers in fullwidth mode */

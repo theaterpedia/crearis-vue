@@ -38,7 +38,7 @@
               <template v-else-if="parseText(child.text).type === 'headline-subline'">
                 <strong>{{ parseText(child.text).main }}</strong>
                 <span v-if="parseText(child.text).sub" class="layout-toggle-description">{{ parseText(child.text).sub
-                  }}</span>
+                }}</span>
               </template>
               <template v-else-if="parseText(child.text).type === 'overline-headline'">
                 <span class="layout-toggle-overline">{{ parseText(child.text).overline }}</span>
@@ -67,7 +67,7 @@
             <template v-else-if="parseText(option.text).type === 'headline-subline'">
               <strong>{{ parseText(option.text).main }}</strong>
               <span v-if="parseText(option.text).sub" class="layout-toggle-description">{{ parseText(option.text).sub
-                }}</span>
+              }}</span>
             </template>
             <template v-else-if="parseText(option.text).type === 'overline-headline'">
               <span class="layout-toggle-overline">{{ parseText(option.text).overline }}</span>
@@ -472,15 +472,10 @@ onUnmounted(() => {
     height: 1.25rem;
   }
 
-  /* Flip placement on mobile: left becomes right, right becomes left */
-  .layout-toggle-dropdown-left {
-    left: auto;
+  /* On mobile: Always align dropdown to the right to prevent overflow */
+  .layout-toggle-dropdown {
     right: 0;
-  }
-
-  .layout-toggle-dropdown-right {
-    right: auto;
-    left: 0;
+    left: auto;
   }
 }
 </style>

@@ -37,11 +37,11 @@ ProjectSite.vue (outer)
 ### Phase 1: Visual Verification (Manual)
 
 #### Test 1.1: Basic Rendering
-- [ ] Navigate to `/projects/theaterpedia`
-- [ ] Verify PageHeading displays with project image
-- [ ] Verify heading and teaser text render correctly
-- [ ] Verify CTA buttons appear and are clickable
-- [ ] Verify TopNav appears at top
+- [x] Navigate to `/projects/theaterpedia`
+- [X] Verify PageHeading displays with project image
+- [X] Verify heading and teaser text render correctly
+- [x] Verify CTA buttons appear and are clickable
+- [x] Verify TopNav appears at top
 
 #### Test 1.2: Layout Modes
 
