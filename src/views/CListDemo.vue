@@ -14,17 +14,17 @@
 
                     <div class="demo-variants">
                         <h4>Size Variants</h4>
-                        <ItemRow v-if="eventItems[0]" :content="eventItems[0].content" :cimg="eventItems[0].cimg"
+                        <ItemRow v-if="eventItems[0]" :heading="eventItems[0].heading" :cimg="eventItems[0].cimg"
                             size="small" />
-                        <ItemRow v-if="eventItems[1]" :content="eventItems[1].content" :cimg="eventItems[1].cimg"
+                        <ItemRow v-if="eventItems[1]" :heading="eventItems[1].heading" :cimg="eventItems[1].cimg"
                             size="medium" />
-                        <ItemRow v-if="eventItems[2]" :content="eventItems[2].content" :cimg="eventItems[2].cimg"
+                        <ItemRow v-if="eventItems[2]" :heading="eventItems[2].heading" :cimg="eventItems[2].cimg"
                             size="large" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>With Slot (3rd Column)</h4>
-                        <ItemRow v-if="eventItems[3]" :content="eventItems[3].content" :cimg="eventItems[3].cimg"
+                        <ItemRow v-if="eventItems[3]" :heading="eventItems[3].heading" :cimg="eventItems[3].cimg"
                             size="medium">
                             <button class="demo-action-btn">View</button>
                         </ItemRow>
@@ -39,11 +39,11 @@
                     </p>
 
                     <div class="demo-grid">
-                        <ItemTile v-if="instructorItems[0]" :content="instructorItems[0].content"
+                        <ItemTile v-if="instructorItems[0]" :heading="instructorItems[0].heading"
                             :cimg="instructorItems[0].cimg" size="small" />
-                        <ItemTile v-if="instructorItems[1]" :content="instructorItems[1].content"
+                        <ItemTile v-if="instructorItems[1]" :heading="instructorItems[1].heading"
                             :cimg="instructorItems[1].cimg" size="medium" />
-                        <ItemTile v-if="instructorItems[2]" :content="instructorItems[2].content"
+                        <ItemTile v-if="instructorItems[2]" :heading="instructorItems[2].heading"
                             :cimg="instructorItems[2].cimg" size="large" />
                     </div>
                 </div>
@@ -56,15 +56,15 @@
                     </p>
 
                     <div class="demo-grid">
-                        <ItemCard v-if="postItems[0]" :content="postItems[0].content" :cimg="postItems[0].cimg"
+                        <ItemCard v-if="postItems[0]" :heading="postItems[0].heading" :cimg="postItems[0].cimg"
                             size="small">
                             <span class="demo-badge">New</span>
                         </ItemCard>
-                        <ItemCard v-if="postItems[1]" :content="postItems[1].content" :cimg="postItems[1].cimg"
+                        <ItemCard v-if="postItems[1]" :heading="postItems[1].heading" :cimg="postItems[1].cimg"
                             size="medium">
                             <span class="demo-badge">Popular</span>
                         </ItemCard>
-                        <ItemCard v-if="postItems[2]" :content="postItems[2].content" :cimg="postItems[2].cimg"
+                        <ItemCard v-if="postItems[2]" :heading="postItems[2].heading" :cimg="postItems[2].cimg"
                             size="large">
                             <span class="demo-badge">Premium</span>
                         </ItemCard>
@@ -159,7 +159,8 @@ async function fetchData() {
         if (eventsRes.ok) {
             events.value = await eventsRes.json()
             eventItems.value = events.value.slice(0, 6).map(event => ({
-                content: `${event.heading || event.id}${event.teaser ? ' **' + event.teaser + '**' : ''}`,
+                heading: `${event.heading || event.id}${event.name ? event.name : ''}`,
+                teaser: event.teaser,
                 cimg: event.cimg || 'https://picsum.photos/400/300?random=event'
             }))
         }
@@ -169,17 +170,19 @@ async function fetchData() {
         if (postsRes.ok) {
             posts.value = await postsRes.json()
             postItems.value = posts.value.slice(0, 6).map(post => ({
-                content: `${post.heading || post.id}${post.teaser ? ' **' + post.teaser + '**' : ''}`,
+                heading: `${post.name || post.id}${post.name ? post.name : ''}`,
+                teaser: post.teaser,
                 cimg: post.cimg || 'https://picsum.photos/400/300?random=post'
             }))
         }
 
-        // Fetch instructors
-        const instructorsRes = await fetch('/api/instructors')
+        // Fetch instructors (using public-users endpoint)
+        const instructorsRes = await fetch('/api/public-users')
         if (instructorsRes.ok) {
             instructors.value = await instructorsRes.json()
             instructorItems.value = instructors.value.slice(0, 6).map(instructor => ({
-                content: `${instructor.heading || instructor.id}${instructor.teaser ? ' **' + instructor.teaser + '**' : ''}`,
+                heading: `${instructor.heading || instructor.id}${instructor.name ? ` ${instructor.name}` : ''}`,
+                teaser: instructor.teaser,
                 cimg: instructor.cimg || 'https://picsum.photos/400/300?random=instructor'
             }))
         }

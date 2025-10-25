@@ -14,8 +14,8 @@
 
             <div class="field-row">
                 <label for="page_cssvars">CSS Variables</label>
-                <textarea id="page_cssvars" v-model="localData.page_cssvars" rows="4"
-                    placeholder="--var-name: value;" @input="emitChange"></textarea>
+                <textarea id="page_cssvars" v-model="localData.page_cssvars" rows="4" placeholder="--var-name: value;"
+                    @input="emitChange"></textarea>
             </div>
 
             <div class="field-row">
@@ -31,7 +31,8 @@
 
         <div class="field-group">
             <h4>Extended Options (JSON)</h4>
-            <JsonFieldEditor v-model="localData.page_options_ext" :fields="extendedFields" @update:modelValue="emitChange" />
+            <JsonFieldEditor v-model="localData.page_options_ext" :fields="extendedFields"
+                @update:modelValue="emitChange" />
         </div>
     </div>
 </template>

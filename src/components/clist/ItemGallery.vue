@@ -1,7 +1,7 @@
 <template>
     <div v-if="interaction === 'static'" class="item-gallery-container">
         <div class="item-gallery" :class="itemTypeClass">
-            <component :is="itemComponent" v-for="(item, index) in items" :key="index" :content="item.content"
+            <component :is="itemComponent" v-for="(item, index) in items" :key="index" :heading="item.heading"
                 :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
@@ -19,8 +19,8 @@
                 </div>
                 <div class="popup-content">
                     <div class="item-gallery" :class="itemTypeClass">
-                        <component :is="itemComponent" v-for="(item, index) in items" :key="index" :content="item.content"
-                            :cimg="item.cimg" :size="size" v-bind="item.props || {}">
+                        <component :is="itemComponent" v-for="(item, index) in items" :key="index"
+                            :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                             <template v-if="item.slot" #default>
                                 <component :is="item.slot" />
                             </template>
@@ -40,7 +40,7 @@
         <div v-if="isZoomed" class="zoom-overlay" @click.self="toggleZoom">
             <div class="zoom-container">
                 <div class="item-gallery" :class="itemTypeClass">
-                    <component :is="itemComponent" v-for="(item, index) in items" :key="index" :content="item.content"
+                    <component :is="itemComponent" v-for="(item, index) in items" :key="index" :heading="item.heading"
                         :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                         <template v-if="item.slot" #default>
                             <component :is="item.slot" />
@@ -59,7 +59,7 @@ import ItemCard from './ItemCard.vue'
 import ItemRow from './ItemRow.vue'
 
 interface GalleryItem {
-    content: string
+    heading: string
     cimg?: string
     props?: Record<string, any>
     slot?: any

@@ -18,8 +18,8 @@
             <template #header>
                 <PageHeading :heading="post.heading || post.name || post.id"
                     :teaserText="post.teaser || post.md || 'Read this post.'"
-                    :imgTmp="post.cimg || 'https://picsum.photos/1440/900?random=post'" :headerType="post.header_type || 'banner'"
-                    :headerSize="'prominent'" />
+                    :imgTmp="post.cimg || 'https://picsum.photos/1440/900?random=post'"
+                    :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
             </template>
 
             <!-- Post Content Section -->

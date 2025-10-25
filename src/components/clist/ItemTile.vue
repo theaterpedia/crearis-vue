@@ -7,7 +7,7 @@
         <div class="tile-content">
             <!-- Header (no padding, no margin, no color marker) -->
             <div class="tile-header">
-                <HeadingParser :content="content" :as="headingLevel" :compact="true" v-bind="$attrs" />
+                <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
             </div>
         </div>
     </div>
@@ -18,7 +18,7 @@ import { computed, ref } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 
 interface Props {
-    content: string
+    heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
 }
@@ -76,10 +76,10 @@ const backgroundStyle = computed(() => {
     position: relative;
     z-index: 1;
     padding: 1rem;
-    background: linear-gradient(to bottom, 
-        transparent 0%, 
-        oklch(from var(--color-card-bg) l c h / 0.8) 40%, 
-        var(--color-card-bg) 100%);
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            oklch(from var(--color-card-bg) l c h / 0.8) 40%,
+            var(--color-card-bg) 100%);
 }
 
 /* Header - no padding, no margin, no color marker */

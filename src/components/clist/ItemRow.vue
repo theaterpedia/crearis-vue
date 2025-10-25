@@ -4,7 +4,7 @@
             <div class="image-box" :style="imageStyle"></div>
         </div>
         <div class="row-col-content">
-            <HeadingParser :content="content" :as="headingLevel" :compact="true" v-bind="$attrs" />
+            <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
         </div>
         <div v-if="$slots.default" class="row-col-slot">
             <slot></slot>
@@ -17,7 +17,7 @@ import { computed, ref } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 
 interface Props {
-    content: string
+    heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
     cols?: 1 | 2 | 3

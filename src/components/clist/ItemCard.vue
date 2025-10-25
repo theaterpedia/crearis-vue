@@ -8,7 +8,7 @@
         <div class="card-content">
             <!-- Card Header -->
             <div class="card-header">
-                <HeadingParser :content="content" :as="headingLevel" :compact="true" v-bind="$attrs" />
+                <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
             </div>
 
             <!-- Card Meta (slot for additional content) -->
@@ -24,7 +24,7 @@ import { computed, ref } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 
 interface Props {
-    content: string
+    heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
 }
@@ -106,7 +106,8 @@ const headingLevel = computed(() => {
 
 /* Size variants - 30% taller than TaskCard */
 .size-small {
-    min-height: 195px; /* ~150px * 1.3 */
+    min-height: 195px;
+    /* ~150px * 1.3 */
 }
 
 .size-small .card-content {
@@ -114,11 +115,13 @@ const headingLevel = computed(() => {
 }
 
 .size-medium {
-    min-height: 260px; /* ~200px * 1.3 */
+    min-height: 260px;
+    /* ~200px * 1.3 */
 }
 
 .size-large {
-    min-height: 325px; /* ~250px * 1.3 */
+    min-height: 325px;
+    /* ~250px * 1.3 */
 }
 
 .size-large .card-content {
