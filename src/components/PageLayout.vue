@@ -89,50 +89,21 @@
       <!-- Right Side Content (conditionally displayed) -->
       <SideContent v-if="showRightSidebar" placement="right"
         :layoutMode="siteLayout === 'fullTwo' ? 'fullTwo' : siteLayout === 'fullThree' ? 'fullThree' : null">
-        <!-- HARDCODED: Replace with dynamic right sidebar content -->
-        <!-- CardHero Section -->
-        <Section>
-          <CardHero heightTmp="medium"
-            imgTmp="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg">
-            <Prose>
-              <h3><strong>Aktuelles</strong></h3>
-              <p>Entdecke unsere neuesten Programme und Workshops.</p>
-              <Button size="small" variant="plain">Mehr erfahren</Button>
-            </Prose>
-          </CardHero>
-        </Section>
+        <!-- Dynamic aside content based on asideOptions -->
+        <Section v-if="asideOptions">
+          <!-- pPostit -->
+          <pPostit v-if="asideOptions.postit?.enabled" :title="asideOptions.postit.title"
+            :content="asideOptions.postit.content" :color="asideOptions.postit.color" :isAside="true" />
 
-        <!-- Timeline Section -->
-        <Section>
-          <Timeline>
-            <li>
-              <mark>31. März</mark>
-              <div>
-                <Prose>
-                  <h4><strong>Aktueller Status</strong></h4>
-                  <p>Grafisches Design und Proof-of-Concept abgeschlossen.</p>
-                </Prose>
-              </div>
-            </li>
-            <li>
-              <mark>31. Mai</mark>
-              <div>
-                <Prose>
-                  <h4><strong>Relaunch</strong></h4>
-                  <p>Neuprogrammierung basierend auf neuem Code.</p>
-                </Prose>
-              </div>
-            </li>
-            <li>
-              <mark>1. Juni</mark>
-              <div>
-                <Prose>
-                  <h4><strong>Beta-Testing</strong></h4>
-                  <p>Private Previews und Testing-Phase.</p>
-                </Prose>
-              </div>
-            </li>
-          </Timeline>
+          <!-- pToc -->
+          <pToc v-if="asideOptions.toc?.enabled" :title="asideOptions.toc.title" :isAside="true" />
+
+          <!-- pList -->
+          <pList v-if="asideOptions.list?.type" :type="asideOptions.list.type" :header="asideOptions.list.header"
+            :isAside="true" :projectId="projectId" />
+
+          <!-- pContext -->
+          <pContext v-if="asideOptions.context?.content" :content="asideOptions.context.content" :isAside="true" />
         </Section>
       </SideContent>
     </Box>
@@ -141,15 +112,24 @@
     <div v-show="showBottom" class="bottom-wrapper"
       :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && bottomWide }">
       <div class="bottom-content" :class="{ 'bottom-content-boxed': !bottomWide }">
-        <!-- HARDCODED: Replace with dynamic bottom content -->
-        <Section background="accent">
-          <Container>
-            <Prose>
-              <h2><strong>Bottom Content Area</strong></h2>
-              <p>This area can be used for additional content sections.</p>
-            </Prose>
-          </Container>
-        </Section>
+        <!-- Dynamic footer content based on footerOptions -->
+        <Container v-if="footerOptions">
+          <!-- pGallery -->
+          <pGallery v-if="footerOptions.gallery?.type" :type="footerOptions.gallery.type"
+            :header="footerOptions.gallery.header" :isFooter="true" :projectId="projectId" />
+
+          <!-- pPostit -->
+          <pPostit v-if="footerOptions.postit?.enabled" :title="footerOptions.postit.title"
+            :content="footerOptions.postit.content" :color="footerOptions.postit.color" :isFooter="true" />
+
+          <!-- pSlider -->
+          <pSlider v-if="footerOptions.slider?.type" :type="footerOptions.slider.type"
+            :header="footerOptions.slider.header" :isFooter="true" :projectId="projectId" />
+
+          <!-- pRepeat -->
+          <pRepeat v-if="footerOptions.repeat?.enabled" :title="footerOptions.repeat.title"
+            :sections="footerOptions.repeat.sections" :columns="footerOptions.repeat.columns" :isFooter="true" />
+        </Container>
       </div>
     </div>
 
@@ -206,6 +186,14 @@ import {
   layoutToggleOptions as layoutToggleOptionsConfig,
   type SiteLayout
 } from '../layoutsettings'
+import pList from './page/pList.vue'
+import pGallery from './page/pGallery.vue'
+import pSlider from './page/pSlider.vue'
+import pPostit from './page/pPostit.vue'
+import pToc from './page/pToc.vue'
+import pContext from './page/pContext.vue'
+import pRepeat from './page/pRepeat.vue'
+import type { AsideOptions, FooterOptions } from '@/composables/usePageOptions'
 
 const route = useRoute()
 const { y } = useWindowScroll()
@@ -250,6 +238,18 @@ const scrollBreak = computed(() => {
 const showAside = ref(pageSettings.showAside)
 const showBottom = ref(pageSettings.showBottom)
 const alertBanner = ref(pageSettings.alertBanner)
+
+// NEW: Page Options - for dynamic aside and footer content
+interface Props {
+  asideOptions?: AsideOptions
+  footerOptions?: FooterOptions
+  projectId?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  asideOptions: () => ({}),
+  footerOptions: () => ({})
+})
 
 // NEW LAYOUT SYSTEM: Site Layout - imported from settings
 const siteLayout = ref<SiteLayout>(layoutSettings.siteLayout)

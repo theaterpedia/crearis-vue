@@ -14,7 +14,7 @@
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="post">
+        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId">
             <template #header>
                 <PageHeading :heading="post.heading || post.name || post.id"
                     :teaserText="post.teaser || post.md || 'Read this post.'"
@@ -96,6 +96,7 @@ import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
+import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 
 const router = useRouter()
 const route = useRoute()
@@ -119,6 +120,29 @@ const canEdit = computed(() => {
         return true // Simplified - should check ownership
     }
     return false
+})
+
+// Parse options for PageLayout from post data
+const asideOptions = computed<AsideOptions>(() => {
+    if (!post.value) return {}
+    // Posts table uses JSONB fields for options
+    return parseAsideOptions({
+        aside_postit: post.value.aside_options,
+        aside_toc: post.value.aside_toc,
+        aside_list: post.value.aside_list,
+        aside_context: post.value.aside_context
+    })
+})
+
+const footerOptions = computed<FooterOptions>(() => {
+    if (!post.value) return {}
+    // Posts table uses JSONB fields for options
+    return parseFooterOptions({
+        footer_gallery: post.value.footer_gallery,
+        footer_postit: post.value.footer_options,
+        footer_slider: post.value.footer_slider,
+        footer_repeat: post.value.footer_repeat
+    })
 })
 
 const editPanelData = computed((): EditPanelData[] => {

@@ -6,7 +6,7 @@
             @save="handleSaveProject" />
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="project">
+        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="project.id">
             <template #header>
                 <PageHeading :heading="project.heading || project.id"
                     :teaserText="project.teaser || project.md || 'Explore events, posts, and team members for this project.'"
@@ -142,6 +142,7 @@ import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
+import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 
 const router = useRouter()
 const route = useRoute()
@@ -154,6 +155,17 @@ const events = ref<any[]>([])
 const users = ref<any[]>([])
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
+
+// Parse options for PageLayout
+const asideOptions = computed<AsideOptions>(() => {
+    if (!project.value) return {}
+    return parseAsideOptions(project.value)
+})
+
+const footerOptions = computed<FooterOptions>(() => {
+    if (!project.value) return {}
+    return parseFooterOptions(project.value)
+})
 
 // Edit panel data computed from project
 const editPanelData = computed<EditPanelData>(() => {
