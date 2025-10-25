@@ -24,7 +24,40 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        const { domaincode: newDomaincode, name, heading, description, status, teaser, cimg, header_type, header_size, md } = body as Partial<ProjectsTableFields> & { domaincode?: string }
+        const {
+            domaincode: newDomaincode,
+            name,
+            heading,
+            description,
+            status,
+            teaser,
+            cimg,
+            header_type,
+            header_size,
+            md,
+            // Chapter 11: Page options
+            page_background,
+            page_cssvars,
+            page_navigation,
+            page_options_ext,
+            // Chapter 11: Aside options
+            aside_postit,
+            aside_toc,
+            aside_list,
+            aside_context,
+            aside_options_ext,
+            // Chapter 11: Header options
+            header_alert,
+            header_postit,
+            header_options_ext,
+            // Chapter 11: Footer options
+            footer_gallery,
+            footer_postit,
+            footer_slider,
+            footer_repeat,
+            footer_sitemap,
+            footer_options_ext
+        } = body as Partial<ProjectsTableFields> & { domaincode?: string }
 
         // Reject attempts to change domaincode (immutable)
         if (newDomaincode !== undefined && newDomaincode !== id) {
@@ -85,6 +118,104 @@ export default defineEventHandler(async (event) => {
             updateData.md = md
             updates.push('md = ?')
             values.push(updateData.md)
+        }
+
+        // Chapter 11: Page options
+        if (page_background !== undefined) {
+            updateData.page_background = page_background
+            updates.push('page_background = ?')
+            values.push(updateData.page_background)
+        }
+        if (page_cssvars !== undefined) {
+            updateData.page_cssvars = page_cssvars
+            updates.push('page_cssvars = ?')
+            values.push(updateData.page_cssvars)
+        }
+        if (page_navigation !== undefined) {
+            updateData.page_navigation = page_navigation
+            updates.push('page_navigation = ?')
+            values.push(updateData.page_navigation)
+        }
+        if (page_options_ext !== undefined) {
+            updateData.page_options_ext = page_options_ext
+            updates.push('page_options_ext = ?')
+            values.push(JSON.stringify(updateData.page_options_ext))
+        }
+
+        // Chapter 11: Aside options
+        if (aside_postit !== undefined) {
+            updateData.aside_postit = aside_postit
+            updates.push('aside_postit = ?')
+            values.push(JSON.stringify(updateData.aside_postit))
+        }
+        if (aside_toc !== undefined) {
+            updateData.aside_toc = aside_toc
+            updates.push('aside_toc = ?')
+            values.push(updateData.aside_toc)
+        }
+        if (aside_list !== undefined) {
+            updateData.aside_list = aside_list
+            updates.push('aside_list = ?')
+            values.push(updateData.aside_list)
+        }
+        if (aside_context !== undefined) {
+            updateData.aside_context = aside_context
+            updates.push('aside_context = ?')
+            values.push(updateData.aside_context)
+        }
+        if (aside_options_ext !== undefined) {
+            updateData.aside_options_ext = aside_options_ext
+            updates.push('aside_options_ext = ?')
+            values.push(JSON.stringify(updateData.aside_options_ext))
+        }
+
+        // Chapter 11: Header options
+        if (header_alert !== undefined) {
+            updateData.header_alert = header_alert
+            updates.push('header_alert = ?')
+            values.push(updateData.header_alert)
+        }
+        if (header_postit !== undefined) {
+            updateData.header_postit = header_postit
+            updates.push('header_postit = ?')
+            values.push(JSON.stringify(updateData.header_postit))
+        }
+        if (header_options_ext !== undefined) {
+            updateData.header_options_ext = header_options_ext
+            updates.push('header_options_ext = ?')
+            values.push(JSON.stringify(updateData.header_options_ext))
+        }
+
+        // Chapter 11: Footer options
+        if (footer_gallery !== undefined) {
+            updateData.footer_gallery = footer_gallery
+            updates.push('footer_gallery = ?')
+            values.push(updateData.footer_gallery)
+        }
+        if (footer_postit !== undefined) {
+            updateData.footer_postit = footer_postit
+            updates.push('footer_postit = ?')
+            values.push(JSON.stringify(updateData.footer_postit))
+        }
+        if (footer_slider !== undefined) {
+            updateData.footer_slider = footer_slider
+            updates.push('footer_slider = ?')
+            values.push(updateData.footer_slider)
+        }
+        if (footer_repeat !== undefined) {
+            updateData.footer_repeat = footer_repeat
+            updates.push('footer_repeat = ?')
+            values.push(JSON.stringify(updateData.footer_repeat))
+        }
+        if (footer_sitemap !== undefined) {
+            updateData.footer_sitemap = footer_sitemap
+            updates.push('footer_sitemap = ?')
+            values.push(updateData.footer_sitemap)
+        }
+        if (footer_options_ext !== undefined) {
+            updateData.footer_options_ext = footer_options_ext
+            updates.push('footer_options_ext = ?')
+            values.push(JSON.stringify(updateData.footer_options_ext))
         }
 
         if (updates.length === 0) {

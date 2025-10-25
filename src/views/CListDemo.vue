@@ -5,99 +5,99 @@
             <Section>
                 <Heading headline="CList Components Demo" overline="Component Library" as="h1" />
 
-                <!-- Row Demo -->
+                <!-- Row Demo - Events -->
                 <div class="demo-section">
-                    <Heading headline="ItemRow" overline="List Item" as="h3" />
+                    <Heading headline="ItemRow" overline="Events from Database" as="h3" />
                     <p class="demo-description">
                         Row layout with image, content, and optional slot. Fixed widths on first and third columns.
                     </p>
 
                     <div class="demo-variants">
                         <h4>Size Variants</h4>
-                        <ItemRow content="Small Event **Summer Festival** 2024"
-                            cimg="https://picsum.photos/80/80?random=1" size="small" />
-                        <ItemRow content="Medium Event **Theater Conference** Premium"
-                            cimg="https://picsum.photos/80/80?random=2" size="medium" />
-                        <ItemRow content="Large Event **International Workshop** Series"
-                            cimg="https://picsum.photos/80/80?random=3" size="large" />
+                        <ItemRow v-if="eventItems[0]" :content="eventItems[0].content" :cimg="eventItems[0].cimg"
+                            size="small" />
+                        <ItemRow v-if="eventItems[1]" :content="eventItems[1].content" :cimg="eventItems[1].cimg"
+                            size="medium" />
+                        <ItemRow v-if="eventItems[2]" :content="eventItems[2].content" :cimg="eventItems[2].cimg"
+                            size="large" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>With Slot (3rd Column)</h4>
-                        <ItemRow content="Event with Actions **Spring Concert** 2024"
-                            cimg="https://picsum.photos/80/80?random=4" size="medium">
+                        <ItemRow v-if="eventItems[3]" :content="eventItems[3].content" :cimg="eventItems[3].cimg"
+                            size="medium">
                             <button class="demo-action-btn">View</button>
                         </ItemRow>
                     </div>
                 </div>
 
-                <!-- Tile Demo -->
+                <!-- Tile Demo - Instructors -->
                 <div class="demo-section">
-                    <Heading headline="ItemTile" overline="Compact Card" as="h3" />
+                    <Heading headline="ItemTile" overline="Instructors from Database" as="h3" />
                     <p class="demo-description">
                         Tile layout like TaskCard but no padding/margin on header, no left color marker.
                     </p>
 
                     <div class="demo-grid">
-                        <ItemTile content="Small Tile **Workshop** Basics" cimg="https://picsum.photos/300/200?random=5"
-                            size="small" />
-                        <ItemTile content="Medium Tile **Performance** Evening Show"
-                            cimg="https://picsum.photos/300/200?random=6" size="medium" />
-                        <ItemTile content="Large Tile **Festival** Annual Event"
-                            cimg="https://picsum.photos/300/200?random=7" size="large" />
+                        <ItemTile v-if="instructorItems[0]" :content="instructorItems[0].content"
+                            :cimg="instructorItems[0].cimg" size="small" />
+                        <ItemTile v-if="instructorItems[1]" :content="instructorItems[1].content"
+                            :cimg="instructorItems[1].cimg" size="medium" />
+                        <ItemTile v-if="instructorItems[2]" :content="instructorItems[2].content"
+                            :cimg="instructorItems[2].cimg" size="large" />
                     </div>
                 </div>
 
-                <!-- Card Demo -->
+                <!-- Card Demo - Posts -->
                 <div class="demo-section">
-                    <Heading headline="ItemCard" overline="Enhanced Card" as="h3" />
+                    <Heading headline="ItemCard" overline="Posts from Database" as="h3" />
                     <p class="demo-description">
                         Card layout like TaskCard but 30% taller with accent border on left.
                     </p>
 
                     <div class="demo-grid">
-                        <ItemCard content="Small Card **Introduction** Beginner Level"
-                            cimg="https://picsum.photos/300/200?random=8" size="small">
+                        <ItemCard v-if="postItems[0]" :content="postItems[0].content" :cimg="postItems[0].cimg"
+                            size="small">
                             <span class="demo-badge">New</span>
                         </ItemCard>
-                        <ItemCard content="Medium Card **Advanced Course** Professional"
-                            cimg="https://picsum.photos/300/200?random=9" size="medium">
+                        <ItemCard v-if="postItems[1]" :content="postItems[1].content" :cimg="postItems[1].cimg"
+                            size="medium">
                             <span class="demo-badge">Popular</span>
                         </ItemCard>
-                        <ItemCard content="Large Card **Master Class** Expert Level"
-                            cimg="https://picsum.photos/300/200?random=10" size="large">
+                        <ItemCard v-if="postItems[2]" :content="postItems[2].content" :cimg="postItems[2].cimg"
+                            size="large">
                             <span class="demo-badge">Premium</span>
                         </ItemCard>
                     </div>
                 </div>
 
-                <!-- List Container Demo -->
+                <!-- List Container Demo - Instructors -->
                 <div class="demo-section">
-                    <Heading headline="ItemList Container" overline="Default: Tiles" as="h3" />
+                    <Heading headline="ItemList Container" overline="Instructors from Database" as="h3" />
                     <p class="demo-description">
                         Container for list items with different interaction modes.
                     </p>
 
                     <div class="demo-variants">
                         <h4>Static List (Tiles)</h4>
-                        <ItemList :items="sampleItems" item-type="tile" size="medium" interaction="static" />
+                        <ItemList :items="instructorItems" item-type="tile" size="medium" interaction="static" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>Static List (Rows)</h4>
-                        <ItemList :items="sampleItems" item-type="row" size="medium" interaction="static" />
+                        <ItemList :items="instructorItems" item-type="row" size="medium" interaction="static" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>Popup Interaction</h4>
                         <button @click="listPopupOpen = true" class="demo-trigger-btn">Open List Popup</button>
-                        <ItemList v-model="listPopupOpen" :items="sampleItems" item-type="row" size="medium"
-                            interaction="popup" title="Select an Event" />
+                        <ItemList v-model="listPopupOpen" :items="instructorItems" item-type="row" size="medium"
+                            interaction="popup" title="Select an Instructor" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>Zoom Interaction</h4>
-                        <ItemList :items="sampleItems" item-type="tile" size="medium" interaction="zoom">
+                        <ItemList :items="instructorItems" item-type="tile" size="medium" interaction="zoom">
                             <template #trigger>
                                 <button class="demo-trigger-btn">Expand List</button>
                             </template>
@@ -105,22 +105,22 @@
                     </div>
                 </div>
 
-                <!-- Gallery Container Demo -->
+                <!-- Gallery Container Demo - Events -->
                 <div class="demo-section">
-                    <Heading headline="ItemGallery Container" overline="Default: Cards" as="h3" />
+                    <Heading headline="ItemGallery Container" overline="Events from Database" as="h3" />
                     <p class="demo-description">
                         Gallery container with larger items, defaults to cards.
                     </p>
 
                     <div class="demo-variants">
                         <h4>Static Gallery (Cards)</h4>
-                        <ItemGallery :items="sampleItems" item-type="card" size="medium" interaction="static" />
+                        <ItemGallery :items="eventItems" item-type="card" size="medium" interaction="static" />
                     </div>
 
                     <div class="demo-variants">
                         <h4>Popup Interaction</h4>
                         <button @click="galleryPopupOpen = true" class="demo-trigger-btn">Open Gallery Popup</button>
-                        <ItemGallery v-model="galleryPopupOpen" :items="sampleItems" item-type="card" size="medium"
+                        <ItemGallery v-model="galleryPopupOpen" :items="eventItems" item-type="card" size="medium"
                             interaction="popup" title="Event Gallery" />
                     </div>
                 </div>
@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Container from '@/components/Container.vue'
 import Section from '@/components/Section.vue'
 import Heading from '@/components/Heading.vue'
@@ -141,32 +141,56 @@ import DemoToggle from '@/components/DemoToggle.vue'
 const listPopupOpen = ref(false)
 const galleryPopupOpen = ref(false)
 
-const sampleItems = [
-    {
-        content: 'Summer Event **Jazz Festival** 2024',
-        cimg: 'https://picsum.photos/400/300?random=11'
-    },
-    {
-        content: 'Theater Production **Hamlet** Classic',
-        cimg: 'https://picsum.photos/400/300?random=12'
-    },
-    {
-        content: 'Workshop **Digital Arts** Masterclass',
-        cimg: 'https://picsum.photos/400/300?random=13'
-    },
-    {
-        content: 'Concert Series **Piano Recital** Monthly',
-        cimg: 'https://picsum.photos/400/300?random=14'
-    },
-    {
-        content: 'Exhibition **Modern Art** Contemporary',
-        cimg: 'https://picsum.photos/400/300?random=15'
-    },
-    {
-        content: 'Dance Performance **Ballet Gala** Annual',
-        cimg: 'https://picsum.photos/400/300?random=16'
+// Real data from database
+const events = ref<any[]>([])
+const posts = ref<any[]>([])
+const instructors = ref<any[]>([])
+
+// Formatted items for components
+const eventItems = ref<any[]>([])
+const postItems = ref<any[]>([])
+const instructorItems = ref<any[]>([])
+
+// Fetch data from API
+async function fetchData() {
+    try {
+        // Fetch events
+        const eventsRes = await fetch('/api/events')
+        if (eventsRes.ok) {
+            events.value = await eventsRes.json()
+            eventItems.value = events.value.slice(0, 6).map(event => ({
+                content: `${event.heading || event.id}${event.teaser ? ' **' + event.teaser + '**' : ''}`,
+                cimg: event.cimg || 'https://picsum.photos/400/300?random=event'
+            }))
+        }
+
+        // Fetch posts
+        const postsRes = await fetch('/api/posts')
+        if (postsRes.ok) {
+            posts.value = await postsRes.json()
+            postItems.value = posts.value.slice(0, 6).map(post => ({
+                content: `${post.heading || post.id}${post.teaser ? ' **' + post.teaser + '**' : ''}`,
+                cimg: post.cimg || 'https://picsum.photos/400/300?random=post'
+            }))
+        }
+
+        // Fetch instructors
+        const instructorsRes = await fetch('/api/instructors')
+        if (instructorsRes.ok) {
+            instructors.value = await instructorsRes.json()
+            instructorItems.value = instructors.value.slice(0, 6).map(instructor => ({
+                content: `${instructor.heading || instructor.id}${instructor.teaser ? ' **' + instructor.teaser + '**' : ''}`,
+                cimg: instructor.cimg || 'https://picsum.photos/400/300?random=instructor'
+            }))
+        }
+    } catch (error) {
+        console.error('Error fetching demo data:', error)
     }
-]
+}
+
+onMounted(() => {
+    fetchData()
+})
 </script>
 
 <style scoped>

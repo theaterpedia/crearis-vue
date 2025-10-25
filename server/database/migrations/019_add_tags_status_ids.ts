@@ -12,6 +12,8 @@
  * - Chapter 8: Enable Native Tags (events, posts)
  * - Chapter 9: Surface regio_id (events, posts, instructors)
  * - Chapter 10: Block Publishing of Invalid Events
+ * - Chapter 11: Extend Projects with Page/Aside/Header/Footer Options
+ * - Chapter 12: Extend Pages with Page/Aside/Header/Footer Options
  * 
  * This migration creates the foundational tables for the tag and status system,
  * and migrates the users table, file tables, and projects to use auto-incrementing IDs.
@@ -2994,7 +2996,235 @@ export const migration = {
             console.log('    ⚠️  SQLite migration for event validation not yet implemented')
         }
 
-        console.log('\n✅ Migration 019 completed: All chapters complete - tables migrated, tags enabled, regio surfaced, and validations added')
+        // ===================================================================
+        // CHAPTER 11: Extend Projects with Page/Aside/Header/Footer Options
+        // ===================================================================
+        console.log('\n📖 Chapter 11: Extend Projects with Page/Aside/Header/Footer Options')
+
+        if (isPostgres) {
+            // -------------------------------------------------------------------
+            // 11.1: Add page options (allow empty, default to empty)
+            // -------------------------------------------------------------------
+            console.log('\n  📄 Adding page options to projects...')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS page_background TEXT DEFAULT '',
+                ADD COLUMN IF NOT EXISTS page_cssvars JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS page_navigation JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS page_options_ext JSONB DEFAULT '{}'
+            `)
+
+            console.log('    ✓ Added page options fields (allow empty)')
+
+            // -------------------------------------------------------------------
+            // 11.2: Add aside options (allow empty, default to empty)
+            // -------------------------------------------------------------------
+            console.log('\n  📌 Adding aside options to projects...')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS aside_postit JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS aside_toc JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS aside_list TEXT DEFAULT '',
+                ADD COLUMN IF NOT EXISTS aside_context JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS aside_options_ext JSONB DEFAULT '{}'
+            `)
+
+            console.log('    ✓ Added aside options fields (allow empty)')
+
+            // -------------------------------------------------------------------
+            // 11.3: Add header options (allow empty, default to empty)
+            // -------------------------------------------------------------------
+            console.log('\n  🎯 Adding header options to projects...')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS header_alert JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS header_postit JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS header_options_ext JSONB DEFAULT '{}'
+            `)
+
+            console.log('    ✓ Added header options fields (allow empty)')
+
+            // -------------------------------------------------------------------
+            // 11.4: Add footer options (allow empty, default to empty)
+            // -------------------------------------------------------------------
+            console.log('\n  🦶 Adding footer options to projects...')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS footer_gallery TEXT DEFAULT '',
+                ADD COLUMN IF NOT EXISTS footer_postit JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS footer_slider TEXT DEFAULT '',
+                ADD COLUMN IF NOT EXISTS footer_repeat JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS footer_sitemap TEXT DEFAULT '',
+                ADD COLUMN IF NOT EXISTS footer_options_ext JSONB DEFAULT '{}'
+            `)
+
+            console.log('    ✓ Added footer options fields (allow empty)')
+
+            // -------------------------------------------------------------------
+            // 11.5: Add computed has_content columns (stored as generated)
+            // -------------------------------------------------------------------
+            console.log('\n  🧮 Adding computed has_content columns...')
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS page_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(page_background, '') != '' OR
+                    COALESCE(page_cssvars::text, '{}') != '{}' OR
+                    COALESCE(page_navigation::text, '{}') != '{}' OR
+                    COALESCE(page_options_ext::text, '{}') != '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS aside_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(aside_postit::text, '{}') != '{}' OR
+                    COALESCE(aside_toc::text, '{}') != '{}' OR
+                    COALESCE(aside_list, '') != '' OR
+                    COALESCE(aside_context::text, '{}') != '{}' OR
+                    COALESCE(aside_options_ext::text, '{}') != '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS header_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(header_alert::text, '{}') != '{}' OR
+                    COALESCE(header_postit::text, '{}') != '{}' OR
+                    COALESCE(header_options_ext::text, '{}') != '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS footer_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(footer_gallery, '') != '' OR
+                    COALESCE(footer_postit::text, '{}') != '{}' OR
+                    COALESCE(footer_slider, '') != '' OR
+                    COALESCE(footer_repeat::text, '{}') != '{}' OR
+                    COALESCE(footer_sitemap, '') != '' OR
+                    COALESCE(footer_options_ext::text, '{}') != '{}'
+                ) STORED
+            `)
+
+            console.log('    ✓ Added has_content computed columns (page, aside, header, footer)')
+
+            console.log('\n✅ Chapter 11 completed: Project schema extended with page, aside, header, and footer options plus has_content flags')
+
+        } else {
+            // SQLite implementation
+            console.log('    ⚠️  SQLite: Project schema extension not yet implemented')
+        }
+
+        // ===================================================================
+        // CHAPTER 12: Extend Pages with Page/Aside/Header/Footer Options
+        // ===================================================================
+        console.log('\n📖 Chapter 12: Extend Pages with Page/Aside/Header/Footer Options')
+
+        if (isPostgres) {
+            // -------------------------------------------------------------------
+            // 12.1: Add page_options field
+            // -------------------------------------------------------------------
+            console.log('\n  📄 Adding page_options field...')
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS page_options JSONB DEFAULT '{}'::jsonb
+            `)
+
+            console.log('    ✓ Added page_options JSONB field')
+
+            // -------------------------------------------------------------------
+            // 12.2: Add header_options field
+            // -------------------------------------------------------------------
+            console.log('\n  📄 Adding header_options field...')
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS header_options JSONB DEFAULT '{}'::jsonb
+            `)
+
+            console.log('    ✓ Added header_options JSONB field')
+
+            // -------------------------------------------------------------------
+            // 12.3: Add aside_options field
+            // -------------------------------------------------------------------
+            console.log('\n  📄 Adding aside_options field...')
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS aside_options JSONB DEFAULT '{}'::jsonb
+            `)
+
+            console.log('    ✓ Added aside_options JSONB field')
+
+            // -------------------------------------------------------------------
+            // 12.4: Add footer_options field
+            // -------------------------------------------------------------------
+            console.log('\n  📄 Adding footer_options field...')
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS footer_options JSONB DEFAULT '{}'::jsonb
+            `)
+
+            console.log('    ✓ Added footer_options JSONB field')
+
+            // -------------------------------------------------------------------
+            // 12.5: Add computed has_content columns
+            // -------------------------------------------------------------------
+            console.log('\n  🔢 Adding has_content computed columns...')
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS page_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(page_options::text, '{}') = '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS aside_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(aside_options::text, '{}') = '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS header_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(header_options::text, '{}') = '{}'
+                ) STORED
+            `)
+
+            await db.exec(`
+                ALTER TABLE pages 
+                ADD COLUMN IF NOT EXISTS footer_has_content BOOLEAN 
+                GENERATED ALWAYS AS (
+                    COALESCE(footer_options::text, '{}') = '{}'
+                ) STORED
+            `)
+
+            console.log('    ✓ Added has_content computed columns (page, aside, header, footer) - True when JSON is empty')
+
+            console.log('\n✅ Chapter 12 completed: Pages schema extended with page, aside, header, and footer options plus has_content flags')
+
+        } else {
+            // SQLite implementation
+            console.log('    ⚠️  SQLite: Pages schema extension not yet implemented')
+        }
+
+        console.log('\n✅ Migration 019 completed: All chapters complete - tables migrated, tags enabled, regio surfaced, validations added, and project/pages options extended')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {

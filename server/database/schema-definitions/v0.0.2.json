@@ -633,6 +633,42 @@
           "type": "TEXT",
           "nullable": false
         },
+        "page_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "aside_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "header_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "footer_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
         "created_at": {
           "type": "TIMESTAMP WITHOUT TIME ZONE",
           "nullable": true,
@@ -1062,6 +1098,112 @@
         },
         "member_ids": {
           "type": "JSONB",
+          "nullable": true
+        },
+        "page_background": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "page_cssvars": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "page_navigation": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "page_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_toc": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "aside_list": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "aside_context": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "aside_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_alert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "header_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_gallery": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_slider": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_repeat": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_sitemap": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "aside_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "header_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "footer_has_content": {
+          "type": "BOOLEAN",
           "nullable": true
         },
         "username": {

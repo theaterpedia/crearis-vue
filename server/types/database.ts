@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-10-24T07:12:15.800Z
+ * Generated at: 2025-10-25T14:43:02.193Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -227,9 +227,17 @@ export interface PageSectionsTableFields {
  * Table: pages
  */
 export interface PagesTableFields {
+    aside_has_content?: boolean | null
+    aside_options?: Record<string, any> | null // default: '{}'::jsonb
     created_at?: string | null // default: CURRENT_TIMESTAMP
+    footer_has_content?: boolean | null
+    footer_options?: Record<string, any> | null // default: '{}'::jsonb
+    header_has_content?: boolean | null
+    header_options?: Record<string, any> | null // default: '{}'::jsonb
     header_type?: string | null // default: 'simple'::text
     id: string // default: (gen_random_uuid())::text
+    page_has_content?: boolean | null
+    page_options?: Record<string, any> | null // default: '{}'::jsonb
     page_type: string
     project: number
     updated_at?: string | null // default: CURRENT_TIMESTAMP
@@ -328,6 +336,12 @@ export interface ProjectMembersTableFields {
  */
 export interface ProjectsTableFields {
     id: number // PRIMARY KEY, default: nextval('projects_id_seq'::regclass)
+    aside_context?: string | null // default: ''::text
+    aside_has_content?: boolean | null
+    aside_list?: string | null // default: ''::text
+    aside_options_ext?: Record<string, any> | null // default: '{}'::jsonb
+    aside_postit?: Record<string, any> | null // default: '{}'::jsonb
+    aside_toc?: string | null // default: ''::text
     cimg?: string | null
     config?: Record<string, any> | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
@@ -338,6 +352,17 @@ export interface ProjectsTableFields {
     description?: string | null
     domain_id?: number | null
     domaincode: string
+    footer_gallery?: string | null // default: ''::text
+    footer_has_content?: boolean | null
+    footer_options_ext?: Record<string, any> | null // default: '{}'::jsonb
+    footer_postit?: Record<string, any> | null // default: '{}'::jsonb
+    footer_repeat?: Record<string, any> | null // default: '{}'::jsonb
+    footer_sitemap?: string | null // default: ''::text
+    footer_slider?: string | null // default: ''::text
+    header_alert?: string | null // default: ''::text
+    header_has_content?: boolean | null
+    header_options_ext?: Record<string, any> | null // default: '{}'::jsonb
+    header_postit?: Record<string, any> | null // default: '{}'::jsonb
     header_size?: string | null
     header_type?: string | null
     heading?: string | null
@@ -352,6 +377,11 @@ export interface ProjectsTableFields {
     member_ids?: Record<string, any> | null
     name?: string | null
     owner_id?: number | null
+    page_background?: string | null // default: ''::text
+    page_cssvars?: string | null // default: ''::text
+    page_has_content?: boolean | null
+    page_navigation?: string | null // default: ''::text
+    page_options_ext?: Record<string, any> | null // default: '{}'::jsonb
     partner_projects?: string | null
     password_hash: string
     regio?: number | null
@@ -606,7 +636,7 @@ export function isValidPageSectionsField(key: string): key is keyof PageSections
 
 export function isValidPagesField(key: string): key is keyof PagesTableFields {
     const validFields: (keyof PagesTableFields)[] = [
-        'id', 'project', 'header_type', 'page_type', 'created_at', 'updated_at'
+        'id', 'project', 'header_type', 'page_type', 'page_options', 'header_options', 'aside_options', 'footer_options', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'created_at', 'updated_at'
     ]
     return validFields.includes(key as keyof PagesTableFields)
 }
@@ -641,7 +671,7 @@ export function isValidProjectMembersField(key: string): key is keyof ProjectMem
 
 export function isValidProjectsField(key: string): key is keyof ProjectsTableFields {
     const validFields: (keyof ProjectsTableFields)[] = [
-        'id', 'domaincode', 'name', 'description', 'status', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'username', 'password_hash', 'role', 'release'
+        'id', 'domaincode', 'name', 'description', 'status', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'username', 'password_hash', 'role', 'release'
     ]
     return validFields.includes(key as keyof ProjectsTableFields)
 }
