@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        const { domaincode: newDomaincode, name, heading, description, status } = body as Partial<ProjectsTableFields> & { domaincode?: string }
+        const { domaincode: newDomaincode, name, heading, description, status, teaser, cimg, header_type, header_size, md } = body as Partial<ProjectsTableFields> & { domaincode?: string }
 
         // Reject attempts to change domaincode (immutable)
         if (newDomaincode !== undefined && newDomaincode !== id) {
@@ -60,6 +60,31 @@ export default defineEventHandler(async (event) => {
             updateData.status = status
             updates.push('status = ?')
             values.push(updateData.status)
+        }
+        if (teaser !== undefined) {
+            updateData.teaser = teaser
+            updates.push('teaser = ?')
+            values.push(updateData.teaser)
+        }
+        if (cimg !== undefined) {
+            updateData.cimg = cimg
+            updates.push('cimg = ?')
+            values.push(updateData.cimg)
+        }
+        if (header_type !== undefined) {
+            updateData.header_type = header_type
+            updates.push('header_type = ?')
+            values.push(updateData.header_type)
+        }
+        if (header_size !== undefined) {
+            updateData.header_size = header_size
+            updates.push('header_size = ?')
+            values.push(updateData.header_size)
+        }
+        if (md !== undefined) {
+            updateData.md = md
+            updates.push('md = ?')
+            values.push(updateData.md)
         }
 
         if (updates.length === 0) {

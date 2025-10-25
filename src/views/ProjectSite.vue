@@ -8,10 +8,17 @@
         </AlertBanner>
 
         <Navbar :user="user" :use-default-routes="false" @logout="handleLogout">
-            <template #menus v-if="user && user.activeRole === 'admin'">
-                <AdminMenu />
+            <template #menus>
+                <AdminMenu v-if="user && user.activeRole === 'admin'" />
+                <EditPanelButton v-if="project" :is-authenticated="!!user" :is-admin="user?.activeRole === 'admin'"
+                    :is-owner="project.owner_id === user?.id" :is-member="false" @open="openEditPanel" />
             </template>
         </Navbar>
+
+        <!-- Edit Panel -->
+        <EditPanel v-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Project'}`"
+            subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
+            @save="handleSaveProject" />
 
         <Box layout="full-width" v-if="project">
             <Main>
@@ -151,11 +158,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AlertBanner from '@/components/AlertBanner.vue'
 import Navbar from '@/components/Navbar.vue'
 import AdminMenu from '@/components/AdminMenu.vue'
+import EditPanel from '@/components/EditPanel.vue'
+import EditPanelButton from '@/components/EditPanelButton.vue'
 import Box from '@/components/Box.vue'
 import Main from '@/components/Main.vue'
 import Hero from '@/components/Hero.vue'
@@ -172,6 +181,7 @@ import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
+import type { EditPanelData } from '@/components/EditPanel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -183,6 +193,68 @@ const posts = ref<any[]>([])
 const events = ref<any[]>([])
 const users = ref<any[]>([])
 const domaincode = ref<string>('')
+const isEditPanelOpen = ref(false)
+
+// Edit panel data computed from project
+const editPanelData = computed<EditPanelData>(() => {
+    if (!project.value) {
+        return {
+            heading: '',
+            teaser: '',
+            cimg: '',
+            header_type: '',
+            header_size: '',
+            md: ''
+        }
+    }
+    return {
+        heading: project.value.heading || '',
+        teaser: project.value.teaser || '',
+        cimg: project.value.cimg || '',
+        header_type: project.value.header_type || '',
+        header_size: project.value.header_size || '',
+        md: project.value.md || ''
+    }
+})
+
+// Open edit panel
+function openEditPanel() {
+    isEditPanelOpen.value = true
+}
+
+// Close edit panel
+function closeEditPanel() {
+    isEditPanelOpen.value = false
+}
+
+// Handle save project
+async function handleSaveProject(data: EditPanelData) {
+    if (!project.value) return
+
+    try {
+        const response = await fetch(`/api/projects/${encodeURIComponent(project.value.id)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+
+        if (response.ok) {
+            const updatedProject = await response.json()
+            project.value = updatedProject
+            closeEditPanel()
+            // Optional: Show success message
+            console.log('Project updated successfully')
+        } else {
+            console.error('Failed to update project')
+            // Optional: Show error message
+        }
+    } catch (error) {
+        console.error('Error saving project:', error)
+        // Optional: Show error message
+    }
+}
 
 // Check authentication
 async function checkAuth() {

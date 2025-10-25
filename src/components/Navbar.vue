@@ -19,13 +19,14 @@
             </div>
 
             <div class="navbar-menu">
-                <!-- Slot for menus (AdminMenu) -->
-                <slot name="menus"></slot>
 
                 <!-- Project Toggle (for project role users) -->
                 <div v-if="user" class="navbar-item">
                     <ProjectToggle />
                 </div>
+
+                <!-- Slot for menus (AdminMenu) -->
+                <slot name="menus"></slot>
 
                 <!-- User Menu (for user and project roles) -->
                 <div v-if="user && (user.activeRole === 'user' || user.activeRole === 'project')" class="navbar-item">
