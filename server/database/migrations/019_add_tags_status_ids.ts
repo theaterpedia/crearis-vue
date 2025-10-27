@@ -362,6 +362,7 @@ export const migration = {
         console.log('\n  📝 Populating users-specific statuses...')
 
         const usersSpecificStatuses = [
+            { value: 0, name: 'activated', description: 'has logged in', name_i18n: { de: 'aktiviert', en: 'activated', cz: 'aktivni' }, desc_i18n: { de: 'erstes login absolviert', en: 'first login', cz: 'privni login' } },
             { value: 2, name: 'verified', description: 'Email verified', name_i18n: { de: 'Verifiziert', en: 'Verified', cz: 'Ověřeno' }, desc_i18n: { de: 'E-Mail verifiziert', en: 'Email verified', cz: 'E-mail ověřen' } },
             { value: 3, name: 'publish', description: 'Public profile', name_i18n: { de: 'Öffentlich', en: 'Public', cz: 'Veřejný' }, desc_i18n: { de: 'Öffentliches Profil', en: 'Public profile', cz: 'Veřejný profil' } },
             { value: 4, name: 'synced', description: 'Synced with external system', name_i18n: { de: 'Synchronisiert', en: 'Synced', cz: 'Synchronizováno' }, desc_i18n: { de: 'Mit externem System synchronisiert', en: 'Synced with external system', cz: 'Synchronizováno s externím systémem' } },
