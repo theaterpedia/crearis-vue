@@ -1,21 +1,26 @@
-# Crearis Demo Data Server
+# Crearis Vue
 
-> Standalone server application providing Vue UI components and demo data API endpoints
+> A comprehensive Vue 3 application for managing theater projects, events, posts, and educational content with dynamic page layouts, admin dashboard, and real-time collaboration features.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D8.0.0-orange.svg)](https://pnpm.io/)
 
-Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://github.com/theaterpedia/crearis-nuxt) to run as an independent server.
+Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://github.com/theaterpedia/crearis-nuxt) to run as an independent full-stack application.
 
 ## ✨ Features
 
-- 🎭 **Vue 3 SPA** - Interactive demo interface with Vue Router
-- ⚡ **Nitro Server** - Fast, modern server with hot reload
-- 💾 **Dual Database Support** - SQLite (default) or PostgreSQL with automated setup
-- 📊 **CSV Import** - Sync database from CSV files
-- 🔌 **REST API** - Three main endpoints for data operations
-- 🎨 **UI Components** - Reusable Vue components library
+- 🎭 **Vue 3 SPA** - Modern single-page application with Vue Router
+- 📦 **Project Management** - Comprehensive project, event, and post management system
+- 👥 **User Roles** - Multi-role authentication (admin, project owner, user)
+- ⚡ **Nitro Server** - Fast, modern server with hot module replacement
+- 💾 **Dual Database Support** - SQLite (default) or PostgreSQL with automated migrations
+- 📊 **CSV Import/Export** - Sync database from CSV files
+- 🔌 **REST API** - Comprehensive API endpoints for all data operations
+- 🎨 **UI Component Library** - Reusable Vue 3 components with TypeScript
+- 📄 **Dynamic Page Layouts** - Configurable page regions (aside, footer) with p-components
+- ✏️ **Inline Editing** - EditPanel for content management
+- 📋 **Kanban Dashboard** - Task management with drag-and-drop
 - 🔧 **Automated Setup** - One-command PostgreSQL configuration
 
 ## 🚀 Quick Start
@@ -126,16 +131,19 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 ## 📁 Project Structure
 
 ```
-demo-data/
+crearis-vue/
 ├── src/                    # Vue application
-│   ├── components/         # UI components
+│   ├── components/         # UI components (150+)
 │   ├── views/             # Page views
 │   ├── router/            # Vue Router
+│   ├── composables/       # Composable functions
 │   ├── assets/            # Static files & CSV data
 │   └── app.ts             # App entry point
 ├── server/                # Nitro server
-│   ├── api/demo/          # API endpoints
-│   └── database/          # Database config
+│   ├── api/               # API endpoints (auth, projects, events, posts, etc.)
+│   ├── database/          # Database config & migrations
+│   └── data/              # CSV seed data
+├── docs/                  # Documentation
 ├── nitro.config.ts        # Server configuration
 ├── vite.config.ts         # Build configuration
 └── index.html             # SPA template
@@ -212,9 +220,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **Repository**: https://github.com/theaterpedia/demo-data
+- **Repository**: https://github.com/theaterpedia/crearis-vue
+- **Issues**: https://github.com/theaterpedia/crearis-vue/issues
 - **Original Monorepo**: https://github.com/theaterpedia/crearis-nuxt
-- **Issues**: https://github.com/theaterpedia/demo-data/issues
 
 ---
 

@@ -143,4 +143,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSV file path resolution for server-side imports
 - Server-side imports for H3 utilities
 
-[0.1.0]: https://github.com/theaterpedia/demo-data/releases/tag/v0.1.0
+[0.1.0]: https://github.com/theaterpedia/crearis-vue/releases/tag/v0.1.0

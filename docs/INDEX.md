@@ -2,6 +2,8 @@
 
 Complete documentation for the demo-data project including database management, testing, and schema migrations.
 
+**Copyright:** (c) Hans Dönitz, hans.doenitz@theaterpedia.org 2025
+
 ---
 
 ## 📚 Documentation Index

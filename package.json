@@ -1,30 +1,37 @@
 {
-  "name": "crearis-demo-data",
+  "name": "crearis-vue",
   "version": "0.0.1",
-  "description": "Standalone server application providing Vue UI components and demo data API endpoints",
-  "author": "theaterpedia",
+  "description": "Crearis Vue - A comprehensive Vue 3 application for managing theater projects, events, posts, and educational content with dynamic page layouts, admin dashboard, and real-time collaboration features",
+  "author": "Hans Dönitz <hans.doenitz@theaterpedia.org>",
+  "copyright": "(c) Hans Dönitz, hans.doenitz@theaterpedia.org 2025",
   "license": "MIT",
-  "homepage": "https://github.com/theaterpedia/demo-data#readme",
+  "homepage": "https://github.com/theaterpedia/crearis-vue#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/theaterpedia/demo-data.git"
+    "url": "git+https://github.com/theaterpedia/crearis-vue.git"
   },
   "bugs": {
-    "url": "https://github.com/theaterpedia/demo-data/issues"
+    "url": "https://github.com/theaterpedia/crearis-vue/issues"
   },
   "keywords": [
     "vue",
+    "vue3",
     "nitro",
     "server",
-    "demo-data",
+    "theater",
+    "project-management",
+    "cms",
     "sqlite",
+    "postgresql",
     "api",
     "theaterpedia",
-    "crearis"
+    "crearis",
+    "education",
+    "events"
   ],
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=20.10.0",
+    "pnpm": ">=10.0.0"
   },
   "type": "module",
   "scripts": {

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# PostgreSQL Automated Setup Script for demo-data project
+#!/bin/bash
+#
+# PostgreSQL Automated Setup Script for crearis-vue project
 # Stage C: Automated PostgreSQL Configuration
 # 
 # This script:
@@ -388,7 +390,7 @@ create_database() {
 main() {
     echo ""
     echo "╔════════════════════════════════════════════════════════╗"
-    echo "║   PostgreSQL Automated Setup - demo-data Project      ║"
+    echo "║   PostgreSQL Automated Setup - crearis-vue Project    ║"
     echo "║   Stage C: Database Configuration                     ║"
     echo "╚════════════════════════════════════════════════════════╝"
     echo ""

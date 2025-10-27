@@ -1,5 +1,5 @@
 /**
- * Type definitions for demo-data entities
+ * Type definitions for crearis-vue entities
  * Updated for Migration 019 (auto-increment IDs, status_id) and Migration 020 (i18n)
  */
 

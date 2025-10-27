@@ -16,7 +16,11 @@ dist/
 *.db
 *.db-shm
 *.db-wal
+# SQLite database
+crearis-vue.db
+crearis-vue.db-*
 demo-data.db
+demo-data.db-*
 projectnames_and_users.csv
 
 # Sensitive data
