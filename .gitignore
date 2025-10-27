@@ -25,6 +25,7 @@ projectnames_and_users.csv
 
 # Sensitive data
 server/data/PASSWORDS.md
+server/data/PASSWORDS.csv
 
 # Logs
 logs/

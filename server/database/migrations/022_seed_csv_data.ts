@@ -21,8 +21,28 @@
  */
 
 import fs from 'fs'
+import path from 'path'
 import type { DatabaseAdapter } from '../adapter'
 import { getFileset, getFilesetFilePath } from '../../settings'
+
+/**
+ * Generate a random 10-character password with letters and numbers
+ */
+function generateRandomPassword(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let result = ''
+    for (let i = 0; i < 10; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return result
+}
+
+/**
+ * Extract first name from username for password generation
+ */
+function extractFirstName(username: string): string {
+    return username.split(' ')[0].toLowerCase()
+}
 
 export const migration = {
     id: '022_seed_csv_data',
@@ -50,6 +70,88 @@ export const migration = {
             // Parse CSV data
             const users = parseCSV(usersCSV)
             const projects = parseCSV(projectsCSV)
+
+            // Generate PASSWORDS.csv with random passwords (enhanced with checks)
+            console.log('  - Generating PASSWORDS.csv...')
+            const passwordsFilePath = path.join(process.cwd(), 'server', 'data', 'PASSWORDS.csv')
+
+            // Load existing passwords from CSV if it exists
+            const existingPasswords = new Map<string, { extmail: string, password: string }>()
+            if (fs.existsSync(passwordsFilePath)) {
+                console.log('    ℹ️  Found existing PASSWORDS.csv, loading entries...')
+                try {
+                    const existingCSV = fs.readFileSync(passwordsFilePath, 'utf-8')
+                    const existingEntries = parseCSV(existingCSV)
+                    for (const entry of existingEntries) {
+                        existingPasswords.set(entry.sysmail, {
+                            extmail: entry.extmail || '',
+                            password: entry.password
+                        })
+                    }
+                    console.log(`    ✓ Loaded ${existingPasswords.size} existing password entries`)
+                } catch (error) {
+                    console.log('    ⚠️  Could not parse existing PASSWORDS.csv, proceeding with fresh generation')
+                }
+            }
+
+            const passwordEntries: Array<{ sysmail: string, extmail: string, password: string }> = []
+            let newPasswordsGenerated = 0
+            let skippedExistingUsers = 0
+            let skippedExistingPasswords = 0
+
+            for (const user of users) {
+                // Check 1: Does user already exist in database?
+                const existingUser = await db.get('SELECT id FROM users WHERE sysmail = ?', [user.sysmail])
+                if (existingUser) {
+                    console.log(`    ⏭️  Skipping password generation for existing user: ${user.sysmail}`)
+                    skippedExistingUsers++
+
+                    // Still add to CSV if we have a password for them
+                    if (existingPasswords.has(user.sysmail)) {
+                        const existing = existingPasswords.get(user.sysmail)!
+                        passwordEntries.push({
+                            sysmail: user.sysmail,
+                            extmail: existing.extmail,
+                            password: existing.password
+                        })
+                    }
+                    continue
+                }
+
+                // Check 2: Do we already have a password for this user in the CSV?
+                if (existingPasswords.has(user.sysmail)) {
+                    console.log(`    ♻️  Reusing existing password for user: ${user.sysmail}`)
+                    const existing = existingPasswords.get(user.sysmail)!
+                    passwordEntries.push({
+                        sysmail: user.sysmail,
+                        extmail: user.extmail || existing.extmail,
+                        password: existing.password
+                    })
+                    skippedExistingPasswords++
+                    continue
+                }
+
+                // Generate new password only if both checks pass
+                const randomPassword = generateRandomPassword()
+                passwordEntries.push({
+                    sysmail: user.sysmail,
+                    extmail: user.extmail || '',
+                    password: randomPassword
+                })
+                newPasswordsGenerated++
+                console.log(`    🔑 Generated new password for user: ${user.sysmail}`)
+            }
+
+            // Write PASSWORDS.csv
+            const passwordsCSVContent = [
+                'sysmail,extmail,password',
+                ...passwordEntries.map(entry =>
+                    `"${entry.sysmail}","${entry.extmail}","${entry.password}"`
+                )
+            ].join('\n')
+
+            fs.writeFileSync(passwordsFilePath, passwordsCSVContent, 'utf-8')
+            console.log(`    ✓ Updated PASSWORDS.csv: ${newPasswordsGenerated} new, ${skippedExistingUsers} existing users, ${skippedExistingPasswords} reused passwords`)
 
             // Seed users
             console.log('  - Seeding users...')
