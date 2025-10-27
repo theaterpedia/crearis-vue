@@ -1,14 +1,5 @@
 import { ref, computed, watch } from 'vue'
 
-// CSV data import simulation - in real app this would come via GraphQL
-import eventsCSV from '../assets/csv/events.csv?raw'
-import postsCSV from '../assets/csv/posts.csv?raw'
-import locationsCSV from '../assets/csv/locations.csv?raw'
-import instructorsCSV from '../assets/csv/instructors.csv?raw'
-import childrenCSV from '../assets/csv/children.csv?raw'
-import teensCSV from '../assets/csv/teens.csv?raw'
-import adultsCSV from '../assets/csv/adults.csv?raw'
-
 interface Event {
   id: string
   name: string
@@ -68,43 +59,13 @@ interface Participant {
   'event_id/id': string
 }
 
-function parseCSV(csvText: string): any[] {
-  const lines = csvText.trim().split('\n')
-  const headers = lines[0].split(',').map(h => h.replace(/"/g, ''))
-  
-  return lines.slice(1).map(line => {
-    const values: string[] = []
-    let current = ''
-    let inQuotes = false
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i]
-      if (char === '"' && (i === 0 || line[i-1] === ',')) {
-        inQuotes = true
-      } else if (char === '"' && (i === line.length - 1 || line[i+1] === ',')) {
-        inQuotes = false
-      } else if (char === ',' && !inQuotes) {
-        values.push(current)
-        current = ''
-      } else if (!(char === '"' && (i === 0 || line[i-1] === ',' || i === line.length - 1 || line[i+1] === ','))) {
-        current += char
-      }
-    }
-    values.push(current)
-    
-    const obj: any = {}
-    headers.forEach((header, index) => {
-      obj[header] = values[index] || ''
-    })
-    return obj
-  })
-}
+
 
 export const useDemoData = () => {
   const currentEventId = ref('_demo.event_forum_theater_schwabing')
-  const dataSource = ref<'csv' | 'sql'>('csv')
+  const dataSource = ref<'csv' | 'sql'>('sql') // Default to SQL since CSV files are server-side only
   const sqlData = ref<any>(null)
-  
+
   // Fetch SQL data when source is SQL
   const fetchSqlData = async () => {
     try {
@@ -114,91 +75,78 @@ export const useDemoData = () => {
       console.error('Failed to fetch SQL data:', error)
     }
   }
-  
+
+  // Automatically fetch SQL data on initialization
+  fetchSqlData()
+
   // Watch data source and fetch SQL data if needed
-  watch(dataSource, async (newSource) => {
+  watch(dataSource, async (newSource: 'csv' | 'sql') => {
     if (newSource === 'sql' && !sqlData.value) {
       await fetchSqlData()
     }
   })
-  
-  // Parse CSV or return SQL data
+
+  // Return SQL data (CSV files are now server-side only)
   const events = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.events as Event[]
-    }
-    return parseCSV(eventsCSV) as Event[]
+    return sqlData.value?.events as Event[] || []
   })
-  
+
   const posts = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.posts.map((p: any) => ({
-        ...p,
-        'author_id/id': p.author_id,
-        'event_id/id': p.event_id
-      })) as Post[]
-    }
-    return parseCSV(postsCSV) as Post[]
+    if (!sqlData.value?.posts) return []
+    return sqlData.value.posts.map((p: any) => ({
+      ...p,
+      'author_id/id': p.author_id,
+      'event_id/id': p.event_id
+    })) as Post[]
   })
-  
+
   const locations = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.locations as Location[]
-    }
-    return parseCSV(locationsCSV) as Location[]
+    return sqlData.value?.locations as Location[] || []
   })
-  
+
   const instructors = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.instructors.map((i: any) => ({
-        ...i,
-        'event_id/id': i.event_id
-      })) as Instructor[]
-    }
-    return parseCSV(instructorsCSV) as Instructor[]
+    if (!sqlData.value?.instructors) return []
+    return sqlData.value.instructors.map((i: any) => ({
+      ...i,
+      'event_id/id': i.event_id
+    })) as Instructor[]
   })
-  
+
   const children = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.participants
-        .filter((p: any) => p.type === 'child')
-        .map((p: any) => ({
-          ...p,
-          'event_id/id': p.event_id
-        })) as Participant[]
-    }
-    return parseCSV(childrenCSV) as Participant[]
+    if (!sqlData.value?.participants) return []
+    return sqlData.value.participants
+      .filter((p: any) => p.type === 'child')
+      .map((p: any) => ({
+        ...p,
+        'event_id/id': p.event_id
+      })) as Participant[]
   })
-  
+
   const teens = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.participants
-        .filter((p: any) => p.type === 'teen')
-        .map((p: any) => ({
-          ...p,
-          'event_id/id': p.event_id
-        })) as Participant[]
-    }
-    return parseCSV(teensCSV) as Participant[]
+    if (!sqlData.value?.participants) return []
+    return sqlData.value.participants
+      .filter((p: any) => p.type === 'teen')
+      .map((p: any) => ({
+        ...p,
+        'event_id/id': p.event_id
+      })) as Participant[]
   })
-  
+
   const adults = computed(() => {
-    if (dataSource.value === 'sql' && sqlData.value) {
-      return sqlData.value.participants
-        .filter((p: any) => p.type === 'adult')
-        .map((p: any) => ({
-          ...p,
-          'event_id/id': p.event_id
-        })) as Participant[]
-    }
-    return parseCSV(adultsCSV) as Participant[]
+    if (!sqlData.value?.participants) return []
+    return sqlData.value.participants
+      .filter((p: any) => p.type === 'adult')
+      .map((p: any) => ({
+        ...p,
+        'event_id/id': p.event_id
+      })) as Participant[]
   })
-  
+
   // Get current event
-  const currentEvent = computed(() => 
-    events.value.find(event => event.id === currentEventId.value)
+  const currentEvent = computed(() =>
+    events.value.find((event: Event) => event.id === currentEventId.value)
   )
-  
+
   // Helper function to check if an item's event_id field contains the current event
   const hasEvent = (eventIdField: string, targetEventId: string): boolean => {
     if (!eventIdField) return false
@@ -208,34 +156,34 @@ export const useDemoData = () => {
   }
 
   // Get data related to current event
-  const currentEventPosts = computed(() => 
-    posts.value.filter(post => hasEvent(post['event_id/id'], currentEventId.value)).slice(0, 4)
+  const currentEventPosts = computed(() =>
+    posts.value.filter((post: Post) => hasEvent(post['event_id/id'], currentEventId.value)).slice(0, 4)
   )
-  
-  const currentEventLocations = computed(() => 
-    locations.value.filter(location => hasEvent(location.event_id, currentEventId.value)).slice(0, 3)
+
+  const currentEventLocations = computed(() =>
+    locations.value.filter((location: Location) => hasEvent(location.event_id, currentEventId.value)).slice(0, 3)
   )
-  
-  const currentEventInstructors = computed(() => 
-    instructors.value.filter(instructor => hasEvent(instructor['event_id/id'], currentEventId.value)).slice(0, 3)
+
+  const currentEventInstructors = computed(() =>
+    instructors.value.filter((instructor: Instructor) => hasEvent(instructor['event_id/id'], currentEventId.value)).slice(0, 3)
   )
-  
-  const currentEventChildren = computed(() => 
-    children.value.filter(child => hasEvent(child['event_id/id'], currentEventId.value)).slice(0, 4)
+
+  const currentEventChildren = computed(() =>
+    children.value.filter((child: Participant) => hasEvent(child['event_id/id'], currentEventId.value)).slice(0, 4)
   )
-  
-  const currentEventTeens = computed(() => 
-    teens.value.filter(teen => hasEvent(teen['event_id/id'], currentEventId.value)).slice(0, 4)
+
+  const currentEventTeens = computed(() =>
+    teens.value.filter((teen: Participant) => hasEvent(teen['event_id/id'], currentEventId.value)).slice(0, 4)
   )
-  
-  const currentEventAdults = computed(() => 
-    adults.value.filter(adult => hasEvent(adult['event_id/id'], currentEventId.value)).slice(0, 4)
+
+  const currentEventAdults = computed(() =>
+    adults.value.filter((adult: Participant) => hasEvent(adult['event_id/id'], currentEventId.value)).slice(0, 4)
   )
-  
+
   const switchEvent = (eventId: string) => {
     currentEventId.value = eventId
   }
-  
+
   return {
     // Data
     events,
@@ -246,11 +194,11 @@ export const useDemoData = () => {
     currentEventChildren,
     currentEventTeens,
     currentEventAdults,
-    
+
     // Actions
     switchEvent,
     refreshSqlData: fetchSqlData,
-    
+
     // State
     currentEventId,
     dataSource

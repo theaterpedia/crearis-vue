@@ -158,32 +158,15 @@
             </Main>
         </Box>
 
-        <Footer>
-            <div>
-                <Prose>
-                    <p><strong>Theaterpedia</strong></p>
-                    <p>Connecting the theater community</p>
-                </Prose>
-            </div>
-            <div>
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <Prose>
-                    <p>&copy; 2025 Theaterpedia. All rights reserved.</p>
-                </Prose>
-            </div>
-        </Footer>
+        <!-- New Home Site Footer -->
+        <HomeSiteFooter />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { homeRoutes } from '@/config/homeroutes'
 import Navbar from '@/components/Navbar.vue'
 import AdminMenu from '@/components/AdminMenu.vue'
 import Box from '@/components/Box.vue'
@@ -196,6 +179,7 @@ import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
 import Footer from '@/components/Footer.vue'
+import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 
 const router = useRouter()
 
@@ -219,6 +203,36 @@ const registrationStatus = ref<'idle' | 'submitting' | 'success' | 'error'>('idl
 const submitButtonText = computed(() => {
     return registrationStatus.value === 'submitting' ? 'Submitting...' : 'Register Now'
 })
+
+// SEO: Set meta tags for get started page
+function setMetaTags() {
+    const meta = homeRoutes.getstarted;
+    if (!meta) return;
+
+    document.title = meta.title;
+
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            element!.setAttribute(key, value);
+        });
+    };
+
+    setMeta('meta[name="description"]', { name: 'description', content: meta.description });
+    if (meta.keywords) {
+        setMeta('meta[name="keywords"]', { name: 'keywords', content: meta.keywords });
+    }
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: meta.ogTitle || meta.title });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: meta.ogDescription || meta.description });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: meta.twitterCard || 'summary' });
+}
 
 // Check authentication
 async function checkAuth() {
@@ -279,6 +293,7 @@ async function handleRegistration() {
 }
 
 onMounted(async () => {
+    setMetaTags()
     await checkAuth()
 })
 </script>

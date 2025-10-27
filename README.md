@@ -1,12 +1,44 @@
 # Crearis Vue
 
-> A comprehensive Vue 3 application for managing theater projects, events, posts, and educational content with dynamic page layouts, admin dashboard, and real-time collaboration features.
+> **Website Accelerator for the Theaterpedia.org Network** - A full-stack Vue 3 application serving as the central platform for creating and managing theater project websites across the Theaterpedia network, powered by ODOO API integration.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D8.0.0-orange.svg)](https://pnpm.io/)
 
-Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://github.com/theaterpedia/crearis-nuxt) to run as an independent full-stack application.
+## 🎯 Project Overview
+
+This project has evolved from a simple SPA into a **comprehensive website accelerator** that serves three distinct systems under one domain:
+
+### A) Theaterpedia.org Network Homepage
+- **Purpose**: Central hub and search portal for the Theaterpedia.org network
+- **Future**: Will enable content discovery across all network projects
+- **Status**: Under active development
+
+### B) Admin SPA for Project Configuration
+- **Purpose**: Administrative interface for managing projects, events, posts, and content
+- **Target Users**: Network administrators and project owners
+- **Features**: Project management, user roles, content editing, CSV import/export
+- **Future Plans**: Refactor into a Progressive Web App (PWA)
+
+### C) Project Sites as External Websites
+- **Purpose**: Individual project websites with SEO optimization
+- **Route**: Preview under `/sites/:domaincode`
+- **Production**: Each project will have its own domain once leaving preview status
+- **Optimization**: Built for search engine visibility and external web presence
+
+### 🔄 Integration Status
+
+**⚠️ System Under Migration**
+
+This system is centered around the **ODOO API** as the primary data source. The exact architecture and module boundaries are currently **under active migration** from the legacy system. The current implementation represents a transitional state with:
+
+- Data synchronization from ODOO being refined
+- Module boundaries being established
+- SEO optimizations being implemented
+- Architecture decisions being validated
+
+**Timeline**: Current implementation expected to serve for 3-6 months while full migration is completed.
 
 ## ✨ Features
 
@@ -14,7 +46,7 @@ Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://gith
 - 📦 **Project Management** - Comprehensive project, event, and post management system
 - 👥 **User Roles** - Multi-role authentication (admin, project owner, user)
 - ⚡ **Nitro Server** - Fast, modern server with hot module replacement
-- 💾 **Dual Database Support** - SQLite (default) or PostgreSQL with automated migrations
+- 💾 **PostgreSQL Database** - Production-ready database with JSONB support (SQLite deprecated)
 - 📊 **CSV Import/Export** - Sync database from CSV files
 - 🔌 **REST API** - Comprehensive API endpoints for all data operations
 - 🎨 **UI Component Library** - Reusable Vue 3 components with TypeScript
@@ -23,21 +55,17 @@ Extracted from `@crearis/ui` package in the [crearis-nuxt monorepo](https://gith
 - 📋 **Kanban Dashboard** - Task management with drag-and-drop
 - 🔧 **Automated Setup** - One-command PostgreSQL configuration
 
-## 🚀 Quick Start
+## ⚠️ Database Requirements
 
-### SQLite (Default)
-```bash
-# Install dependencies
-pnpm install
+**� SQLite Support is DEPRECATED**
 
-# Start development server
-pnpm run dev
+The application currently requires **PostgreSQL** due to extensive use of JSONB field types throughout the codebase. SQLite support has been deprecated and would require significant refactoring to restore.
 
-# Initialize database (in another terminal)
-curl -X POST http://localhost:3000/api/demo/sync
-```
+**✅ PostgreSQL is REQUIRED** for all installations.
 
-### PostgreSQL (Automated Setup)
+## �🚀 Quick Start
+
+### PostgreSQL Setup (Required)
 ```bash
 # Install dependencies
 pnpm install
@@ -49,6 +77,23 @@ bash setup-postgresql.sh
 pnpm run dev
 
 # Initialize database (in another terminal)
+curl -X POST http://localhost:3000/api/demo/sync
+```
+
+### Manual PostgreSQL Setup
+```bash
+# Install dependencies
+pnpm install
+
+# Copy environment template
+cp .env.database.example .env
+# Edit .env with your PostgreSQL credentials
+
+# Start development server
+pnpm run dev
+
+# Run migrations and seed data
+pnpm db:migrate
 curl -X POST http://localhost:3000/api/demo/sync
 ```
 
@@ -85,10 +130,7 @@ curl -X PUT http://localhost:3000/api/demo/hero \
 
 - **Node.js** 18+ ([Download](https://nodejs.org/))
 - **pnpm** 8+ (`npm install -g pnpm`)
-- **Build tools** for better-sqlite3:
-  - Linux: `apt install build-essential python3-dev`
-  - macOS: Xcode Command Line Tools
-  - Windows: Visual Studio Build Tools
+- **PostgreSQL** 12+ ([Installation Guide](https://www.postgresql.org/download/))
 
 ### Scripts
 
@@ -123,10 +165,11 @@ NODE_ENV=production # Environment
 ### Requirements
 
 - Node.js 18+
-- Writable filesystem for SQLite database
-- ~100MB disk space
+- **PostgreSQL 12+** (required - SQLite deprecated)
+- 1GB+ RAM
+- 2GB+ disk space
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
 
 ## 📁 Project Structure
 
@@ -151,17 +194,35 @@ crearis-vue/
 
 ## 💾 Database
 
-### Database Options
+### Current Database Status
 
-**SQLite** (Default)
-- No setup required
-- Works out of the box
-- Perfect for development
+**🔴 SQLite Support: DEPRECATED**
+- SQLite support has been deprecated due to extensive use of PostgreSQL-specific features
+- Current codebase relies heavily on **JSONB field types** not available in SQLite
+- Restoring SQLite compatibility would require significant refactoring effort
 
-**PostgreSQL** (Production-ready)
+**✅ PostgreSQL: REQUIRED**
+- **PostgreSQL 12+** is the only supported database
 - Automated setup script: `bash setup-postgresql.sh`
 - See [Setup Guide](docs/postgresql/STAGE-C-SETUP-GUIDE.md)
-- Production-ready configuration
+- Production-ready with full JSONB support
+
+### Why SQLite? (Future Considerations)
+
+While SQLite is currently deprecated, there are compelling reasons to potentially restore support in the future:
+
+**🌩️ Cloudflare D1 Compatibility**
+- Cloudflare D1 is SQLite-compatible and offers excellent edge performance
+- Would enable serverless deployment with minimal latency worldwide
+- Cost-effective scaling for read-heavy workloads
+
+**📓 Obsidian.md Integration Plans**
+- Plans to make parts of the application available inside Obsidian.md
+- Obsidian users prefer simple local database solutions over PostgreSQL
+- SQLite would enable seamless offline functionality within Obsidian vaults
+- Local-first approach aligns with Obsidian's philosophy
+
+> **Note**: Future SQLite support would require refactoring JSONB dependencies to use JSON text fields with application-level parsing, or implementing a compatibility layer.
 
 ### Database Management
 
@@ -189,20 +250,29 @@ pnpm db:migrate:status  # Check migration status
 
 ### Schema
 
+- **users** - User accounts and authentication
+- **projects** - Project management with JSONB metadata
 - **events** - Event information with dates and locations
-- **posts** - Blog posts and articles
+- **posts** - Blog posts and articles with JSONB content
 - **locations** - Venue locations
 - **instructors** - Instructor profiles
 - **participants** - Participant data (all age groups)
-- **hero_overrides** - Custom hero section overrides
+- **tasks** - Task management system
+- **pages** - Dynamic page content with JSONB configuration
 
-### CSV Import
+### CSV Import/Export
 
-CSV files in `src/assets/csv/`:
-- `events.csv`, `posts.csv`, `locations.csv`, `instructors.csv`
-- `children.csv`, `teens.csv`, `adults.csv` (participant data)
+CSV files are managed in `/server/data/` directories:
+- `root/` - Core data (users, projects)
+- `base/` - Demo data (events, posts, locations, instructors, participants)
 
-Run sync to import: `curl -X POST http://localhost:3000/api/demo/sync`
+```bash
+# Import from CSV files
+curl -X POST http://localhost:3000/api/demo/sync
+
+# Run database migrations
+pnpm db:migrate
+```
 
 ## 🤝 Contributing
 

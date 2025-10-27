@@ -124,7 +124,7 @@
                                     <h4>{{ userItem.username }}</h4>
                                     <p><strong>Role:</strong> {{ userItem.role }}</p>
                                     <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                            }}</em>
+                                    }}</em>
                                     </p>
                                 </Prose>
                             </Slide>
@@ -137,32 +137,15 @@
             </Main>
         </Box>
 
-        <Footer>
-            <div>
-                <Prose>
-                    <p><strong>Theaterpedia</strong></p>
-                    <p>Connecting the theater community</p>
-                </Prose>
-            </div>
-            <div>
-                <ul>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/privacy">Privacy</a></li>
-                </ul>
-            </div>
-            <div>
-                <Prose>
-                    <p>&copy; 2025 Theaterpedia. All rights reserved.</p>
-                </Prose>
-            </div>
-        </Footer>
+        <!-- New Home Site Footer -->
+        <HomeSiteFooter />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { homeRoutes } from '@/config/homeroutes'
 import AlertBanner from '@/components/AlertBanner.vue'
 import Navbar from '@/components/Navbar.vue'
 import AdminMenu from '@/components/AdminMenu.vue'
@@ -181,6 +164,7 @@ import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
+import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 
 const router = useRouter()
 
@@ -190,6 +174,51 @@ const posts = ref<any[]>([])
 const events = ref<any[]>([])
 const projects = ref<any[]>([])
 const users = ref<any[]>([])
+
+// SEO: Set meta tags for home page
+function setMetaTags() {
+    const meta = homeRoutes.home;
+    if (!meta) return;
+
+    // Set title
+    document.title = meta.title;
+
+    // Helper to set or update meta tag
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            element!.setAttribute(key, value);
+        });
+    };
+
+    // Basic meta tags
+    setMeta('meta[name="description"]', { name: 'description', content: meta.description });
+    if (meta.keywords) {
+        setMeta('meta[name="keywords"]', { name: 'keywords', content: meta.keywords });
+    }
+
+    // Open Graph tags
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: meta.ogTitle || meta.title });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: meta.ogDescription || meta.description });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    if (meta.ogImage) {
+        setMeta('meta[property="og:image"]', { property: 'og:image', content: meta.ogImage });
+    }
+
+    // Twitter Card tags
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: meta.twitterCard || 'summary' });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: meta.ogTitle || meta.title });
+    setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: meta.ogDescription || meta.description });
+    if (meta.ogImage) {
+        setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: meta.ogImage });
+    }
+}
 
 // Check authentication
 async function checkAuth() {
@@ -288,6 +317,7 @@ async function handleLogout() {
 
 // Initialize
 onMounted(async () => {
+    setMetaTags()
     await checkAuth()
     await Promise.all([
         fetchPosts(),

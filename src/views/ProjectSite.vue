@@ -345,6 +345,68 @@ function formatDate(date: string | null) {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+// SEO: Set meta tags from project config
+function setProjectSeoMeta() {
+    if (!project.value) return;
+
+    // Extract SEO data from project.config or use fallbacks
+    const config = project.value.config || {};
+    const seoTitle = config.seo_title || project.value.name || project.value.heading || project.value.domaincode;
+    const seoDescription = config.seo_description || project.value.teaser || project.value.description || '';
+    const seoKeywords = config.seo_keywords || '';
+    const seoImage = config.seo_image || project.value.cimg || '';
+    const ogTitle = config.og_title || seoTitle;
+    const ogDescription = config.og_description || seoDescription;
+    const twitterCard = config.twitter_card || 'summary_large_image';
+
+    // Set title
+    document.title = `${seoTitle} - Theaterpedia`;
+
+    // Helper to set or update meta tag
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (value) { // Only set if value exists
+                element!.setAttribute(key, value);
+            }
+        });
+    };
+
+    // Basic meta tags
+    if (seoDescription) {
+        setMeta('meta[name="description"]', { name: 'description', content: seoDescription });
+    }
+    if (seoKeywords) {
+        setMeta('meta[name="keywords"]', { name: 'keywords', content: seoKeywords });
+    }
+
+    // Open Graph tags
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: ogTitle });
+    if (ogDescription) {
+        setMeta('meta[property="og:description"]', { property: 'og:description', content: ogDescription });
+    }
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    if (seoImage) {
+        setMeta('meta[property="og:image"]', { property: 'og:image', content: seoImage });
+    }
+
+    // Twitter Card tags
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: twitterCard });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: ogTitle });
+    if (ogDescription) {
+        setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: ogDescription });
+    }
+    if (seoImage) {
+        setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: seoImage });
+    }
+}
+
 onMounted(async () => {
     domaincode.value = route.params.domaincode as string
 
@@ -352,6 +414,8 @@ onMounted(async () => {
 
     if (domaincode.value) {
         await fetchProject(domaincode.value)
+        // Set SEO meta tags after project is loaded
+        setProjectSeoMeta()
         await fetchEvents(domaincode.value)
         await fetchPosts(domaincode.value)
         await fetchUsers(domaincode.value)
