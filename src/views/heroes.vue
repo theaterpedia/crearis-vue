@@ -1,14 +1,8 @@
 <template>
   <Box layout="full-width">
     <Main>
-      <Hero
-        :contentAlignY="contentAlignY"
-        :heightTmp="height"
-        :imgTmpAlignX="imgTmpAlignX"
-        :imgTmpAlignY="imgTmpAlignY"
-        contentType="banner"
-        imgTmp="https://pruvious.com/uploads/dasei/banner.jpg"
-      >
+      <Hero :contentAlignY="contentAlignY" :heightTmp="height" :imgTmpAlignX="imgTmpAlignX" :imgTmpAlignY="imgTmpAlignY"
+        contentType="banner" imgTmp="https://pruvious.com/uploads/dasei/banner.jpg">
         <Banner transparent>
           <Prose>
             <h1>
@@ -25,15 +19,8 @@
         </Banner>
       </Hero>
 
-      <Hero
-        :contentAlignY="contentAlignY"
-        :heightTmp="height"
-        :imgTmpAlignX="imgTmpAlignX"
-        :imgTmpAlignY="imgTmpAlignY"
-        :overlay="overlay"
-        contentWidth="full"
-        imgTmp="https://pruvious.com/uploads/dasei/banner.jpg"
-      >
+      <Hero :contentAlignY="contentAlignY" :heightTmp="height" :imgTmpAlignX="imgTmpAlignX" :imgTmpAlignY="imgTmpAlignY"
+        :overlay="overlay" contentWidth="full" imgTmp="https://pruvious.com/uploads/dasei/banner.jpg">
         <Columns :align="columnsAlign">
           <Column>
             <Prose>
@@ -51,16 +38,8 @@
         </Columns>
       </Hero>
 
-      <Hero
-        :contentAlignY="contentAlignY"
-        :heightTmp="height"
-        imgTmpAlignX="cover"
-        :imgTmpAlignY="imgTmpAlignY"
-        
-        contentType="left"
-        contentWidth="fixed"
-        imgTmp="https://pruvious.com/uploads/dasei/banner.jpg"
-      >
+      <Hero :contentAlignY="contentAlignY" :heightTmp="height" imgTmpAlignX="cover" :imgTmpAlignY="imgTmpAlignY"
+        contentType="left" contentWidth="fixed" imgTmp="https://pruvious.com/uploads/dasei/banner.jpg">
         <Banner themeColor="primary" option="bauchbinde">
           <Prose>
             <h2><strong>Bauchbinde: Left-Aligned Content</strong></h2>
@@ -69,8 +48,8 @@
               <code>contentType="left"</code> with <code>contentWidth="fixed"</code>.
             </p>
             <p>
-              The content is fixed at 80% of the hero width and aligned to the left with 
-              no margins. This creates a broadcast-style lower-third overlay perfect for 
+              The content is fixed at 80% of the hero width and aligned to the left with
+              no margins. This creates a broadcast-style lower-third overlay perfect for
               news tickers and announcements.
             </p>
             <Button size="small" variant="plain">Learn More</Button>
@@ -80,20 +59,10 @@
     </Main>
 
     <button @click="settingsVisible = !settingsVisible" class="toggle">
-      <svg
-        fill="none"
-        height="1rem"
-        stroke="currentColor"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-        width="1rem"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg fill="none" height="1rem" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="2" viewBox="0 0 24 24" width="1rem" xmlns="http://www.w3.org/2000/svg">
         <path
-          d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-        />
+          d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
     </button>
@@ -102,59 +71,43 @@
       <Form>
         <fieldset>
           <legend>HEIGHT</legend>
-          <RadioGroup
-            v-model="height"
-            :choices="[
-              { label: 'Full', value: 'full' },
-              { label: 'Prominent', value: 'prominent' },
-              { label: 'Medium', value: 'medium' },
-              { label: 'Mini', value: 'mini' },
-            ]"
-            name="height"
-          />
+          <RadioGroup v-model="height" :choices="[
+            { label: 'Full', value: 'full' },
+            { label: 'Prominent', value: 'prominent' },
+            { label: 'Medium', value: 'medium' },
+            { label: 'Mini', value: 'mini' },
+          ]" name="height" />
         </fieldset>
 
         <fieldset>
           <legend>COVER ALIGN X</legend>
-          <RadioGroup
-            v-model="imgTmpAlignX"
-            :choices="[
-              { label: 'Left', value: 'left' },
-              { label: 'Right', value: 'right' },
-              { label: 'Center', value: 'center' },
-              { label: 'Stretch', value: 'stretch' },
-              { label: 'Cover', value: 'cover' },
-            ]"
-            name="imgTmpAlignX"
-          />
+          <RadioGroup v-model="imgTmpAlignX" :choices="[
+            { label: 'Left', value: 'left' },
+            { label: 'Right', value: 'right' },
+            { label: 'Center', value: 'center' },
+            { label: 'Stretch', value: 'stretch' },
+            { label: 'Cover', value: 'cover' },
+          ]" name="imgTmpAlignX" />
         </fieldset>
 
         <fieldset>
           <legend>COVER ALIGN Y</legend>
-          <RadioGroup
-            v-model="imgTmpAlignY"
-            :choices="[
-              { label: 'Top', value: 'top' },
-              { label: 'Bottom', value: 'bottom' },
-              { label: 'Center', value: 'center' },
-              { label: 'Stretch', value: 'stretch' },
-              { label: 'Cover', value: 'cover' },
-            ]"
-            name="imgTmpAlignY"
-          />
+          <RadioGroup v-model="imgTmpAlignY" :choices="[
+            { label: 'Top', value: 'top' },
+            { label: 'Bottom', value: 'bottom' },
+            { label: 'Center', value: 'center' },
+            { label: 'Stretch', value: 'stretch' },
+            { label: 'Cover', value: 'cover' },
+          ]" name="imgTmpAlignY" />
         </fieldset>
 
         <fieldset>
           <legend>CONTENT ALIGN Y</legend>
-          <RadioGroup
-            v-model="contentAlignY"
-            :choices="[
-              { label: 'Top', value: 'top' },
-              { label: 'Center', value: 'center' },
-              { label: 'Bottom', value: 'bottom' },
-            ]"
-            name="contentAlignY"
-          />
+          <RadioGroup v-model="contentAlignY" :choices="[
+            { label: 'Top', value: 'top' },
+            { label: 'Center', value: 'center' },
+            { label: 'Bottom', value: 'bottom' },
+          ]" name="contentAlignY" />
         </fieldset>
 
         <fieldset>
@@ -164,15 +117,11 @@
 
         <fieldset>
           <legend>COLUMNS ALIGN Y (2ND HERO)</legend>
-          <RadioGroup
-            v-model="columnsAlign"
-            :choices="[
-              { label: 'Top', value: 'top' },
-              { label: 'Center', value: 'center' },
-              { label: 'Bottom', value: 'bottom' },
-            ]"
-            name="columnsAlign"
-          />
+          <RadioGroup v-model="columnsAlign" :choices="[
+            { label: 'Top', value: 'top' },
+            { label: 'Center', value: 'center' },
+            { label: 'Bottom', value: 'bottom' },
+          ]" name="columnsAlign" />
         </fieldset>
       </Form>
     </div>
@@ -180,7 +129,17 @@
 </template>
 
 <script lang="ts" setup>
-import { Banner, Box, Button, Column, Columns, Form, Hero, Input, Main, Prose, RadioGroup } from '@/index'
+import Banner from '@/components/Banner.vue'
+import Box from '@/components/Box.vue'
+import Button from '@/components/Button.vue'
+import Column from '@/components/Column.vue'
+import Columns from '@/components/Columns.vue'
+import Form from '@/components/Form.vue'
+import Hero from '@/components/Hero.vue'
+import Input from '@/components/Input.vue'
+import Main from '@/components/Main.vue'
+import Prose from '@/components/Prose.vue'
+import RadioGroup from '@/components/RadioGroup.vue'
 import { ref } from 'vue'
 
 const settingsVisible = ref(true)

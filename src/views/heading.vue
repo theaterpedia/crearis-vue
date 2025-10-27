@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Heading } from '@/index'
+import Heading from '@/components/Heading.vue'
 </script>
 
 <style scoped>
@@ -22,7 +22,7 @@ import { Heading } from '@/index'
   padding: 2rem;
 }
 
-.container > * + * {
+.container>*+* {
   margin-top: 2rem;
 }
 </style>
