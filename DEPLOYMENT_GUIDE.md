@@ -401,14 +401,16 @@ df -h
 │   ├── .git/              # Git repository
 │   ├── src/               # Vue source code
 │   ├── server/            # Nitro server source
+│   │   └── data/         # Development data files
 │   ├── package.json       # Dependencies
 │   ├── .env              # Environment configuration
 │   └── .output/          # Built application (after build)
 ├── live/                  # Production application files
 │   ├── server/           # Production server files
+│   │   └── data/ -> ../../data/  # Symlink to persistent data
 │   ├── public/          # Static assets
 │   └── ecosystem.config.js # PM2 configuration
-├── data/                 # Application data
+├── data/                 # Application data (persistent, backed up)
 │   ├── PASSWORDS.csv    # Generated passwords (gitignored)
 │   └── backups/         # Database backups
 ├── logs/                # Application logs
@@ -419,6 +421,24 @@ df -h
     ├── deploy.sh        # Main deployment script
     └── .env.deploy      # Deployment configuration
 ```
+
+### Important: No Repo Restructuring Needed! ✅
+
+**Your current repository structure is perfect and should NOT be changed.** The deployment script handles the mapping:
+
+| Development (Repo)          | Production (Server)        | How It's Mapped                |
+|-----------------------------|---------------------------|--------------------------------|
+| `server/data/`              | `/opt/crearis/data/`      | Copied by deployment script    |
+| `.output/`                  | `/opt/crearis/live/`      | Synced by deployment script    |
+| `src/`, `server/` (source)  | `/opt/crearis/source/`    | Git clone                      |
+| `.env`                      | `.env` in source/         | Used during build              |
+| (none)                      | `/opt/crearis/logs/`      | Created by PM2                 |
+
+**Key Points:**
+- Keep your repo structure as-is (development-friendly)
+- Deployment script extracts and organizes files for production
+- Symlink connects live app to persistent data directory
+- No manual file movement needed after deployment
 
 ### Why Separate Source and Live?
 
@@ -630,8 +650,29 @@ deploy_to_live() {
     rsync -av --delete "$SOURCE_DIR/.output/" "$LIVE_DIR/"
     
     # Copy data files that should persist
-    if [[ -f "$SOURCE_DIR/server/data/PASSWORDS.csv" ]]; then
-        cp "$SOURCE_DIR/server/data/PASSWORDS.csv" "$DATA_DIR/"
+    if [[ -d "$SOURCE_DIR/server/data" ]]; then
+        log "📋 Copying persistent data files..."
+        mkdir -p "$DATA_DIR"
+        
+        # Copy PASSWORDS.csv if it exists
+        if [[ -f "$SOURCE_DIR/server/data/PASSWORDS.csv" ]]; then
+            cp "$SOURCE_DIR/server/data/PASSWORDS.csv" "$DATA_DIR/"
+            chmod 600 "$DATA_DIR/PASSWORDS.csv"  # Secure permissions
+        fi
+        
+        # Copy any other data files (excluding .gitkeep, backups)
+        find "$SOURCE_DIR/server/data" -type f \
+            ! -name '.gitkeep' \
+            ! -name '*.backup' \
+            ! -name '*.backup_*' \
+            -exec cp {} "$DATA_DIR/" \;
+    fi
+    
+    # Create symlink from live app to data directory
+    # This allows the app to access /opt/crearis/data/ as if it's server/data/
+    if [[ ! -L "$LIVE_DIR/server/data" ]]; then
+        mkdir -p "$LIVE_DIR/server"
+        ln -sf "$DATA_DIR" "$LIVE_DIR/server/data"
     fi
     
     # Create PM2 ecosystem file
