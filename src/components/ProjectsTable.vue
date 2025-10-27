@@ -18,6 +18,7 @@
                     <th>Heading</th>
                     <th>Beschreibung</th>
                     <th>Status</th>
+                    <th>Homepage</th>
                     <th>Erstellt</th>
                     <th>Aktionen</th>
                 </tr>
@@ -34,6 +35,11 @@
                         <span :class="['status-badge', `status-${project.status}`]">
                             {{ project.status }}
                         </span>
+                    </td>
+                    <td class="td-link">
+                        <RouterLink :to="`/sites/${project.name}`" class="project-link" title="Homepage besuchen">
+                            🔗 Besuchen
+                        </RouterLink>
                     </td>
                     <td class="td-date">{{ formatDate(project.created_at) }}</td>
                     <td class="td-actions">
@@ -172,6 +178,29 @@ function formatDate(dateString: string): string {
 .td-date {
     color: var(--color-dimmed);
     font-size: 0.875rem;
+}
+
+.td-link {
+    white-space: nowrap;
+}
+
+.project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    text-decoration: none;
+    border-radius: var(--radius-button);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.project-link:hover {
+    background: oklch(from var(--color-primary-bg) calc(l * 0.9) c h);
+    transform: translateY(-1px);
 }
 
 .td-actions {

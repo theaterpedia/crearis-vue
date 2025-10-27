@@ -28,8 +28,12 @@
         <!-- TODO: Add menu items from Sidebar/MainMenu here -->
         <!-- HARDCODED: Replace with dynamic navigation actions -->
         <template #actions>
-          <ToggleMenu v-model="siteLayout" :toggleOptions="layoutToggleOptions" :arrayOptions="layoutArrayOptions"
-            header="Layout Options" @update:arrayOption="handleArrayOptionUpdate" />
+          <!-- Pass through topnav-actions slot from parent -->
+          <slot name="topnav-actions" />
+
+          <!-- Default: Layout Toggle Menu (only show if no topnav-actions slot provided) -->
+          <ToggleMenu v-if="!$slots['topnav-actions']" v-model="siteLayout" :toggleOptions="layoutToggleOptions"
+            :arrayOptions="layoutArrayOptions" header="Layout Options" @update:arrayOption="handleArrayOptionUpdate" />
         </template>
       </TopNav>
     </div>

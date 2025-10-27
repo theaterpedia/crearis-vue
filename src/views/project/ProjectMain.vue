@@ -16,6 +16,19 @@
                     </button>
                 </div>
 
+                <!-- Homepage Link -->
+                <div class="navbar-item">
+                    <RouterLink :to="`/sites/${projectId}`" class="navbar-button homepage-link" title="Zur Homepage">
+                        <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z">
+                            </path>
+                        </svg>
+                        Homepage
+                    </RouterLink>
+                </div>
+
                 <!-- Config Dropdown -->
                 <div class="navbar-item config-dropdown-wrapper" ref="configDropdownRef">
                     <button class="navbar-button config-toggle-btn" @click="toggleConfigDropdown"
@@ -435,6 +448,26 @@ onUnmounted(() => {
 
 .back-btn:hover svg {
     transform: translateX(-2px);
+}
+
+/* Homepage Link */
+.homepage-link {
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.homepage-link svg {
+    transition: transform 0.2s ease;
+}
+
+.homepage-link:hover {
+    background: var(--color-project);
+    border-color: var(--color-project);
+    color: white;
+}
+
+.homepage-link:hover svg {
+    transform: scale(1.1);
 }
 
 /* ===== CONFIG DROPDOWN ===== */
