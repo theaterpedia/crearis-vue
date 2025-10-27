@@ -54,43 +54,105 @@ export const migration = {
             // Seed users
             console.log('  - Seeding users...')
             for (const user of users) {
+                // Handle instructor_id/xmlid reference
+                const instructorXmlId = user['instructor_id/xmlid'] || user.instructor_id
+                let instructorId: number | null = null
+
+                if (instructorXmlId && instructorXmlId.trim()) {
+                    // Check if instructor exists by xmlid
+                    const existingInstructor = await db.get(
+                        'SELECT id FROM instructors WHERE xmlid = ?',
+                        [instructorXmlId]
+                    )
+
+                    if (existingInstructor) {
+                        // Instructor exists, use its ID
+                        instructorId = existingInstructor.id
+                        console.log(`    ℹ️  Linked user ${user.username} to existing instructor ${instructorXmlId}`)
+                    } else {
+                        // Create new instructor from user data
+                        console.log(`    ℹ️  Creating new instructor for user ${user.username} with xmlid ${instructorXmlId}`)
+
+                        // Extract first slug (dot notation) to check for regio
+                        const firstSlug = instructorXmlId.split('.')[0]
+                        let regioId: number | null = null
+
+                        // Check if first slug matches a project with is_regio = true
+                        const regioProject = await db.get(
+                            'SELECT id FROM projects WHERE domaincode = ? AND is_regio = ?',
+                            [firstSlug, db.type === 'postgresql' ? true : 1]
+                        )
+
+                        if (regioProject) {
+                            regioId = regioProject.id
+                            console.log(`      ✓ Found regio project '${firstSlug}' (id: ${regioId})`)
+                        }
+
+                        // Use extmail if available, fallback to sysmail
+                        const instructorEmail = user.extmail && user.extmail.trim() ? user.extmail : user.sysmail
+
+                        if (db.type === 'postgresql') {
+                            const newInstructor = await db.get(`
+                                INSERT INTO instructors (xmlid, name, email, regio_id, isbase)
+                                VALUES ($1, $2, $3, $4, 0)
+                                RETURNING id
+                            `, [instructorXmlId, user.username, instructorEmail, regioId])
+                            instructorId = newInstructor?.id || null
+                        } else {
+                            await db.run(`
+                                INSERT INTO instructors (xmlid, name, email, regio_id, isbase)
+                                VALUES (?, ?, ?, ?, 0)
+                            `, [instructorXmlId, user.username, instructorEmail, regioId])
+                            const newInstructor = await db.get(
+                                'SELECT id FROM instructors WHERE xmlid = ?',
+                                [instructorXmlId]
+                            )
+                            instructorId = newInstructor?.id || null
+                        }
+                    }
+                }
+
                 if (db.type === 'postgresql') {
                     await db.run(`
                         INSERT INTO users 
-                        (sysmail, extmail, username, password, role, lang, created_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+                        (sysmail, extmail, username, password, role, lang, instructor_id, created_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
                         ON CONFLICT(sysmail) DO UPDATE SET
                             extmail = EXCLUDED.extmail,
                             username = EXCLUDED.username,
                             password = EXCLUDED.password,
                             role = EXCLUDED.role,
-                            lang = EXCLUDED.lang
+                            lang = EXCLUDED.lang,
+                            instructor_id = EXCLUDED.instructor_id
                     `, [
                         user.sysmail,
                         user.extmail || null,
                         user.username,
                         user.password,
                         user.role || 'user',
-                        user.lang || 'de'
+                        user.lang || 'de',
+                        instructorId
                     ])
                 } else {
                     await db.run(`
                         INSERT INTO users 
-                        (sysmail, extmail, username, password, role, lang, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+                        (sysmail, extmail, username, password, role, lang, instructor_id, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
                         ON CONFLICT(sysmail) DO UPDATE SET
                             extmail = excluded.extmail,
                             username = excluded.username,
                             password = excluded.password,
                             role = excluded.role,
-                            lang = excluded.lang
+                            lang = excluded.lang,
+                            instructor_id = excluded.instructor_id
                     `, [
                         user.sysmail,
                         user.extmail || null,
                         user.username,
                         user.password,
                         user.role || 'user',
-                        user.lang || 'de'
+                        user.lang || 'de',
+                        instructorId
                     ])
                 }
             }

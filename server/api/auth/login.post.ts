@@ -56,10 +56,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role, instructor_id
+    SELECT id, sysmail, extmail, username, password, role, instructor_id, status_id
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id'> | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_id'> | undefined
 
     if (!user) {
         throw createError({
@@ -76,6 +76,16 @@ export default defineEventHandler(async (event) => {
             statusCode: 401,
             message: 'Invalid credentials'
         })
+    }
+
+    // Check and update status if empty/null/undefined - set to 0 (activated)
+    if (user.status_id === null || user.status_id === undefined) {
+        await db.run(`
+            UPDATE users
+            SET status_id = 0
+            WHERE id = ?
+        `, [user.id])
+        console.log(`[LOGIN] Updated user ${user.id} status to 0 (activated)`)
     }
 
     // === PROJECT ROLE DETECTION ===
