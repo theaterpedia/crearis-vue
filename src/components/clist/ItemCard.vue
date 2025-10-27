@@ -1,6 +1,8 @@
 <template>
-    <div class="item-card" :class="[sizeClass, { 'has-background': cimg }]"
-        :style="cimg ? { backgroundImage: `url('${cimg}')` } : {}">
+    <div class="item-card" :class="[sizeClass, { 'has-background': cimg }]">
+        <!-- Background Image with Lazy Loading -->
+        <img v-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
+
         <!-- Background Fade Overlay -->
         <div v-if="cimg" class="card-background-fade"></div>
 
@@ -50,8 +52,18 @@ const headingLevel = computed(() => {
     border-left: 4px solid var(--color-accent-bg);
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
-    background-size: cover;
-    background-position: center;
+}
+
+/* Background image as actual img element */
+.card-background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
 }
 
 .item-card:hover {

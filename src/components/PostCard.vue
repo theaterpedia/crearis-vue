@@ -9,7 +9,7 @@
         </button>
 
         <div v-if="post.cimg" class="post-card-image">
-            <img :src="post.cimg" :alt="post.name" />
+            <img :src="post.cimg" :alt="post.name" loading="lazy" />
         </div>
         <div class="post-card-content">
             <div class="post-card-heading">

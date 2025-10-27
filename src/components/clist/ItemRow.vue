@@ -1,7 +1,8 @@
 <template>
     <div class="item-row" :class="sizeClass" @click="$emit('click', $event)">
         <div class="row-col-image">
-            <div class="image-box" :style="imageStyle"></div>
+            <img v-if="cimg" :src="cimg" :alt="heading" class="image-box" loading="lazy" />
+            <div v-else class="image-box image-placeholder"></div>
         </div>
         <div class="row-col-content">
             <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
@@ -38,19 +39,6 @@ const headingLevel = computed(() => {
     if (props.size === 'small') return 'h5'
     if (props.size === 'large') return 'h4'
     return 'h4'
-})
-
-const imageStyle = computed(() => {
-    if (props.cimg) {
-        return {
-            backgroundImage: `url('${props.cimg}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-        }
-    }
-    return {
-        backgroundColor: 'var(--color-neutral-bg)'
-    }
 })
 </script>
 
@@ -96,6 +84,11 @@ const imageStyle = computed(() => {
     height: 80px;
     border-radius: 0.375rem;
     overflow: hidden;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    background-color: var(--color-neutral-bg);
 }
 
 /* Size variants */

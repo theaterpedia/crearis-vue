@@ -1,7 +1,7 @@
 <template>
     <div class="item-tile" :class="sizeClass">
-        <!-- Background Image -->
-        <div v-if="cimg" class="tile-background" :style="backgroundStyle"></div>
+        <!-- Background Image with Lazy Loading -->
+        <img v-if="cimg" :src="cimg" :alt="heading" class="tile-background" loading="lazy" />
 
         <!-- Content -->
         <div class="tile-content">
@@ -34,17 +34,6 @@ const headingLevel = computed(() => {
     if (props.size === 'large') return 'h3'
     return 'h4'
 })
-
-const backgroundStyle = computed(() => {
-    if (props.cimg) {
-        return {
-            backgroundImage: `url('${props.cimg}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-        }
-    }
-    return {}
-})
 </script>
 
 <style scoped>
@@ -68,6 +57,8 @@ const backgroundStyle = computed(() => {
     left: 0;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    object-position: center;
     z-index: 0;
 }
 

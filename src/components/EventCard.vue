@@ -9,7 +9,7 @@
         </button>
 
         <div v-if="event.cimg" class="event-card-image">
-            <img :src="event.cimg" :alt="event.name" />
+            <img :src="event.cimg" :alt="event.name" loading="lazy" />
         </div>
         <div class="event-card-content">
             <div class="event-card-heading">

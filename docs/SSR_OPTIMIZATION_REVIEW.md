@@ -3,6 +3,7 @@
 ## Executive Summary
 
 This document identifies **essential SSR optimizations** required for the Theaterpedia three-system architecture during the 3-6 month migration period. Focus is on **critical SEO requirements** without requiring a full SSR rewrite.
+It further reasons in depth on the question how and when to start server-prerendering the project-sites (estimate: from JAN 2026 onwards).
 
 ## Current Architecture Status
 
@@ -170,10 +171,28 @@ setMeta('link[rel="canonical"]', {
 
 **Solutions**:
 
-1. **Lazy Load Images**
+1. **Lazy Load Images (Implemented)**
 ```vue
-<img :src="imageSrc" loading="lazy" />
+<!-- Works with any image URL, including CDN images -->
+<img :src="project.cimg" :alt="project.name" loading="lazy" />
 ```
+
+**✅ Applied to:**
+- `EventCard.vue` - Event card images
+- `PostCard.vue` - Post card images  
+- `ItemCard.vue` (clist) - Background images
+- `ItemRow.vue` (clist) - Thumbnail images
+- `ItemTile.vue` (clist) - Tile background images
+
+**❌ NOT applied to:**
+- `Hero.vue` - Hero images are above the fold and critical for LCP (Largest Contentful Paint)
+- `CardHero.vue` - Same reason as Hero.vue
+
+**Note on CDN Images**: The `loading="lazy"` attribute works perfectly with external CDN URLs (like Cloudinary). The browser delays the HTTP request to the CDN until the image is near the viewport, which:
+- Reduces initial bandwidth usage
+- Lowers CDN costs (images below fold aren't fetched unless user scrolls)
+- Improves page load time
+- Better Core Web Vitals scores
 
 2. **Parallel Data Fetching** (Already implemented)
 ```typescript
@@ -335,3 +354,213 @@ The **minimum viable SEO implementation** for 3-6 months requires:
 **Total Implementation Time**: ~5-7 days for critical items
 
 This approach provides **80% of SEO benefits with 20% of the effort** compared to a full SSR rewrite, making it ideal for the 3-6 month migration timeline.
+
+---
+
+
+## If we want to pre-rendering Project Sites - Technical Analysis
+
+### Current Challenge
+
+Your project sites use dynamic routes: `/sites/:domaincode`
+
+To pre-render these, the build tool needs to know **all possible domaincode values** at build time.
+
+### Solution Approach
+
+**Yes, if you export projects to a TS file**, you can pre-render them. Here's how:
+
+#### Option 1: Static Route List in nitro.config.ts
+
+```typescript
+// nitro.config.ts
+import { projects } from './src/config/projects' // Your exported projects
+
+export default defineNitroConfig({
+  preset: 'node-server',
+  serveStatic: true,
+  compressPublicAssets: true,
+  
+  prerender: {
+    routes: [
+      // Static home routes
+      '/',
+      '/getstarted',
+      '/blog',
+      '/events',
+      '/projects',
+      '/team',
+      '/search',
+      
+      // Dynamic project sites from TS file
+      ...projects.map(p => `/sites/${p.domaincode}`)
+    ]
+  }
+})
+```
+
+#### Option 2: Dynamic Route Discovery Function
+
+```typescript
+// nitro.config.ts
+export default defineNitroConfig({
+  preset: 'node-server',
+  
+  prerender: {
+    // Function that returns routes to pre-render
+    routes: async () => {
+      // Import your projects data
+      const { projects } = await import('./src/config/projects')
+      
+      return [
+        '/',
+        '/getstarted',
+        // ... other static routes
+        ...projects.map(p => `/sites/${p.domaincode}`)
+      ]
+    }
+  }
+})
+```
+
+#### Option 3: Fetch from Database at Build Time
+
+```typescript
+// nitro.config.ts
+export default defineNitroConfig({
+  prerender: {
+    routes: async () => {
+      // Import your database adapter
+      const { getDatabase } = await import('./server/database/index')
+      const db = await getDatabase()
+      
+      // Fetch all published projects
+      const projects = await db.all(
+        'SELECT domaincode FROM projects WHERE status = "published"'
+      )
+      
+      return [
+        '/',
+        '/getstarted',
+        ...projects.map(p => `/sites/${p.domaincode}`)
+      ]
+    }
+  }
+})
+```
+
+### Pros and Cons
+
+#### ✅ Advantages of Pre-rendering Project Sites:
+
+1. **Instant Load** - HTML ready immediately, no API calls needed
+2. **Perfect SEO** - All content visible to crawlers on first request
+3. **CDN-friendly** - Static HTML files can be cached at edge locations
+4. **Lower Server Load** - No dynamic rendering needed
+5. **Social Media** - Open Graph tags work perfectly for sharing
+
+#### ❌ Disadvantages:
+
+1. **Stale Data** - Pre-rendered at build time, doesn't reflect live updates
+2. **Build Time** - If you have 100+ projects, build takes longer
+3. **Deployment Complexity** - Need to rebuild and redeploy to update content
+4. **Storage** - Each project generates a separate HTML file
+
+### Hybrid Approach (Recommended)
+
+The **best solution** for your use case:
+
+```typescript
+// nitro.config.ts
+export default defineNitroConfig({
+  prerender: {
+    routes: async () => {
+      const { projects } = await import('./src/config/projects')
+      
+      // Only pre-render "important" or "featured" projects
+      const featuredProjects = projects
+        .filter(p => p.config?.featured === true || p.status === 'published')
+        .map(p => `/sites/${p.domaincode}`)
+      
+      return [
+        '/',
+        '/getstarted',
+        ...featuredProjects
+      ]
+    }
+  },
+  
+  // Enable ISR (Incremental Static Regeneration) - if using Netlify/Vercel
+  routeRules: {
+    '/sites/**': {
+      swr: 3600, // Cache for 1 hour, then regenerate in background
+    }
+  }
+})
+```
+
+### Your Projects TS File Structure
+
+You'd need something like:
+
+```typescript
+// src/config/projects.ts
+export interface ProjectSummary {
+  domaincode: string
+  name: string
+  status: 'draft' | 'published'
+  config?: {
+    featured?: boolean
+    seo_title?: string
+    seo_description?: string
+  }
+}
+
+export const projects: ProjectSummary[] = [
+  {
+    domaincode: 'munich-festival',
+    name: 'Munich Theatre Festival',
+    status: 'published',
+    config: { featured: true }
+  },
+  // ... more projects
+]
+```
+
+### Implementation Steps
+
+1. **Export projects to TS file** (from database or manual)
+2. **Update nitro.config.ts** with prerender routes
+3. **Run build**: `pnpm run build` (Nitro will pre-render automatically)
+4. **Deploy** the .output directory
+
+### When This Makes Sense
+
+Pre-rendering is ideal if:
+- ✅ You have a **manageable number** of projects (< 100)
+- ✅ Content **doesn't change frequently** (daily/weekly is fine, not hourly)
+- ✅ You have a **CI/CD pipeline** to rebuild on content updates
+- ✅ You want **maximum SEO performance**
+
+### When NOT to Pre-render
+
+Skip pre-rendering if:
+- ❌ You have **hundreds of projects** (slow builds)
+- ❌ Content updates **frequently** (multiple times per day)
+- ❌ You need **real-time data** from ODOO API
+- ❌ Projects have **user-specific content** (personalization)
+
+### My Recommendation for Theaterpedia
+
+Given your architecture ("under migration", ODOO API-centric, 3-6 month timeline):
+
+**Use Priority 1 (Server-Side Meta Tag Injection)** instead of pre-rendering because:
+
+1. More flexible during migration period
+2. Always shows latest ODOO data
+3. Simpler deployment (no rebuild needed for updates)
+4. Still satisfies social media scrapers with server-side meta tags
+
+Then **consider pre-rendering later** once architecture stabilizes.
+
+Would you like me to create an example configuration for pre-rendering project sites with a projects TS file?
