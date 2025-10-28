@@ -6,6 +6,7 @@ node_modules/
 dist/
 .output/
 .nitro/
+server/public/
 
 # Environment files
 .env
@@ -73,3 +74,4 @@ build/Release/
 # Production
 .vercel
 .netlify
+docs/NITRO_3_NEW_BUILD.md

@@ -138,6 +138,13 @@
 </template>
 
 <script lang="ts" setup>
-import { Box, Catalog, Column, Columns, Container, Main, Prose, Section } from '@/index'
+import Box from '@/components/Box.vue'
+import Catalog from '@/components/Catalog.vue'
+import Column from '@/components/Column.vue'
+import Columns from '@/components/Columns.vue'
+import Container from '@/components/Container.vue'
+import Main from '@/components/Main.vue'
+import Prose from '@/components/Prose.vue'
+import Section from '@/components/Section.vue'
 import DemoToggle from '@/components/DemoToggle.vue'
 </script>

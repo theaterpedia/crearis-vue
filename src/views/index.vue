@@ -216,28 +216,24 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  Banner,
-  Box,
-  Button,
-  Column,
-  Columns,
-  Container,
-  Footer,
-  Form,
-  Hero,
-  Input,
-  Main,
-  MainMenu,
-  Prose,
-  RadioGroup,
-  Section,
-  Sidebar,
-  Slide,
-  Slider,
-  TextArea,
-  type MainMenuParentItem,
-} from '@/index'
+import Button from '@/components/Button.vue'
+import Column from '@/components/Column.vue'
+import Columns from '@/components/Columns.vue'
+import Container from '@/components/Container.vue'
+import Footer from '@/components/Footer.vue'
+import Form from '@/components/Form.vue'
+import Hero from '@/components/Hero.vue'
+import Input from '@/components/Input.vue'
+import Main from '@/components/Main.vue'
+import MainMenu from '@/components/MainMenu.vue'
+import Prose from '@/components/Prose.vue'
+import RadioGroup from '@/components/RadioGroup.vue'
+import Section from '@/components/Section.vue'
+import Sidebar from '@/components/Sidebar.vue'
+import Slide from '@/components/Slide.vue'
+import Slider from '@/components/Slider.vue'
+import TextArea from '@/components/TextArea.vue'
+import type { MainMenuParentItem } from '@/components/MainMenuItem.vue'
 import { ref, type Ref } from 'vue'
 import DemoToggle from '@/components/DemoToggle.vue'
 

@@ -23,7 +23,7 @@
 import fs from 'fs'
 import path from 'path'
 import type { DatabaseAdapter } from '../adapter'
-import { getFileset, getFilesetFilePath } from '../../settings'
+import { getFileset, getFilesetFilePath, getDataPath } from '../../settings'
 
 /**
  * Generate a random 10-character password with letters and numbers
@@ -73,7 +73,7 @@ export const migration = {
 
             // Generate PASSWORDS.csv with random passwords (enhanced with checks)
             console.log('  - Generating PASSWORDS.csv...')
-            const passwordsFilePath = path.join(process.cwd(), 'server', 'data', 'PASSWORDS.csv')
+            const passwordsFilePath = path.join(getDataPath(), 'PASSWORDS.csv')
 
             // Load existing passwords from CSV if it exists
             const existingPasswords = new Map<string, { extmail: string, password: string }>()
@@ -142,10 +142,37 @@ export const migration = {
                 console.log(`    🔑 Generated new password for user: ${user.sysmail}`)
             }
 
-            // Write PASSWORDS.csv
+            // Write PASSWORDS.csv - merge with existing entries to preserve system users
+            const allEntries = new Map<string, { sysmail: string, extmail: string, password: string }>()
+
+            // Load all existing entries first (including system users from migration 021)
+            if (fs.existsSync(passwordsFilePath)) {
+                try {
+                    const existingCSV = fs.readFileSync(passwordsFilePath, 'utf-8')
+                    const existingRows = existingCSV.split('\n').slice(1).filter(row => row.trim())
+                    for (const row of existingRows) {
+                        const match = row.match(/"([^"]*)","([^"]*)","([^"]*)"/)
+                        if (match) {
+                            allEntries.set(match[1], {
+                                sysmail: match[1],
+                                extmail: match[2],
+                                password: match[3]
+                            })
+                        }
+                    }
+                } catch (error) {
+                    console.log('    ⚠️  Could not parse existing PASSWORDS.csv entries')
+                }
+            }
+
+            // Add/update CSV user entries
+            for (const entry of passwordEntries) {
+                allEntries.set(entry.sysmail, entry)
+            }
+
             const passwordsCSVContent = [
                 'sysmail,extmail,password',
-                ...passwordEntries.map(entry =>
+                ...Array.from(allEntries.values()).map(entry =>
                     `"${entry.sysmail}","${entry.extmail}","${entry.password}"`
                 )
             ].join('\n')

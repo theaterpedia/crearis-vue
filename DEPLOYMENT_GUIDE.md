@@ -13,7 +13,252 @@
 
 ---
 
+## 📋 Deployment Overview
+
+### Three-Phase Deployment Process
+
+This guide uses a structured 3-phase approach with clear user separation:
+
+| Phase | User | Purpose | Script |
+|-------|------|---------|--------|
+| **Phase 1** | `root` | Clone repository, create directories | `server_deploy_phase1_clone.sh` |
+| **Phase 2** | `pruvious` | Database setup, build application | `server_deploy_phase2_build.sh` |
+| **Phase 3** | `root` | Domain configuration, SSL certificates | `server_deploy_phase3_domain.sh` |
+
+### User Roles
+
+- **root**: System administration tasks (directory creation, Nginx, SSL certificates)
+- **pruvious**: Application user (runs PM2, builds code, database operations)
+
+### Server Directory Structure
+
+After deployment, the server will have this structure:
+
+```
+/opt/crearis/
+├── source/          # Git repository (managed by pruvious)
+│   ├── .git/
+│   ├── .env         # Application configuration (create in Phase 1)
+│   ├── src/
+│   ├── server/
+│   │   ├── data/   # Source data files (copied to /opt/crearis/data)
+│   │   │   ├── root/        # Root fileset (users.csv, projects.csv)
+│   │   │   └── base/        # Base fileset (demo data)
+│   └── ...
+├── live/            # Production build (managed by pruvious)
+│   ├── .output/     # Built application
+│   ├── server/
+│   │   ├── index.mjs        # Nitro server entry point
+│   │   └── data/            # ⚠️ SYMLINK → /opt/crearis/data
+│   └── ecosystem.config.js  # PM2 configuration
+├── data/            # ⚠️ PERSISTENT DATA (owned by pruvious, mode 700)
+│   ├── PASSWORDS.csv        # Plain passwords for distribution (mode 600)
+│   ├── root/                # Root fileset (users.csv, projects.csv)
+│   └── base/                # Base fileset (events, posts, etc.)
+├── logs/            # Application logs (owned by pruvious)
+├── backups/         # Database backups (owned by pruvious)
+└── scripts/         # Deployment scripts (owned by root)
+    ├── .env.deploy          # Deployment configuration
+    └── server_deploy_phase*.sh
+```
+
+**Important Notes:**
+
+1. **No Repo Restructuring Needed!**  
+   The repository structure (`server/data/`) differs from production (`/opt/crearis/data/`).  
+   This is intentional and handled automatically by the deployment scripts via symlinks.
+
+2. **Data Persistence via Symlink**  
+   `/opt/crearis/live/server/data/` → `/opt/crearis/data/`  
+   This ensures data survives deployments and lives outside the live directory.
+
+3. **Password Security**  
+   PASSWORDS.csv contains plaintext passwords for initial distribution.  
+   See "Password Distribution" section below for security best practices.
+
+---
+
+## 🔐 Password System
+
+### Overview
+
+The application generates random 10-character passwords for all users:
+- **System users** (6): admin, base, project1, project2, tp, regio1
+- **CSV users** (17+): Imported from `server/data/root/users.csv`
+
+All passwords are stored in `/opt/crearis/data/PASSWORDS.csv` for distribution.
+
+### Security Requirements
+
+1. **File Permissions** (set automatically by deployment script):
+   ```bash
+   chmod 600 /opt/crearis/data/PASSWORDS.csv  # Only owner can read/write
+   chmod 700 /opt/crearis/data                # Only owner can access
+   ```
+
+2. **After First Deployment**:
+   - Copy PASSWORDS.csv securely (encrypted email, password manager, etc.)
+   - Distribute passwords to users via secure channel
+   - **Recommended**: Delete or encrypt PASSWORDS.csv after distribution
+   - Instruct users to change passwords on first login
+
+3. **For Detailed Documentation**:
+   - See `docs/PASSWORD_SYSTEM.md` for complete documentation
+   - Includes password rotation, backup strategies, troubleshooting
+
+---
+
+## 📥 Bulk User Import (Post-Deployment)
+
+After initial deployment, you can add additional users in bulk using the user import system.
+
+### Import Location
+
+```
+/opt/crearis/data/import/
+├── import-users.csv       # Place CSV here for import
+└── archive/               # Processed files archived automatically
+    └── YYYY-MM-DDTHH-MM-SS_import-users.csv
+```
+
+### CSV Format
+
+Create `import-users.csv` with the following format:
+
+```csv
+sysmail,extmail,username,password,role,lang,instructor_id/xmlid
+"john.doe@example.com","","John Doe","","user","de",""
+"jane@example.com","jane@company.com","Jane Smith","","base","en","project.partner.jane"
+"instructor@example.com","","Instructor Name","","user","de","instructor.xmlid"
+```
+
+**Field Descriptions:**
+- `sysmail`: Primary email (required, unique)
+- `extmail`: Secondary email (optional)
+- `username`: Display name (required)
+- `password`: Leave empty (auto-generated)
+- `role`: `admin`, `base`, or `user` (default: `user`)
+- `lang`: `de`, `en`, or `cz` (default: `de`)
+- `instructor_id/xmlid`: Link to instructor by xmlid (optional)
+
+### Import Process
+
+1. **Create CSV file** with new users (on your local machine)
+
+2. **Upload to server**:
+   ```bash
+   scp import-users.csv pruvious@server:/opt/crearis/data/import/
+   ```
+
+3. **Run import script** (on server as pruvious):
+   ```bash
+   cd /opt/crearis/source
+   bash scripts/import-users.sh
+   ```
+
+4. **Review output**:
+   - Shows validation results
+   - Displays import statistics
+   - Archives processed file with timestamp
+   - Updates PASSWORDS.csv with new user passwords
+
+5. **Distribute new passwords**:
+   ```bash
+   # View new passwords
+   tail -n +1 /opt/crearis/data/PASSWORDS.csv | grep -E "john.doe|jane@"
+   
+   # Securely distribute to users
+   # (See Password Distribution section above)
+   ```
+
+### Features
+
+- ✅ **Automatic password generation**: Random 10-character passwords
+- ✅ **Idempotent**: Safe to re-run, skips existing users
+- ✅ **Validation**: Checks email format, required fields, valid roles/languages
+- ✅ **Instructor creation**: Auto-creates or links instructor profiles
+- ✅ **Password merging**: Appends to existing PASSWORDS.csv
+- ✅ **File archiving**: Processed files archived with timestamp
+- ✅ **Error handling**: Comprehensive logging and error messages
+
+### Security Notes
+
+1. **File Permissions**:
+   ```bash
+   chmod 600 /opt/crearis/data/import/import-users.csv
+   chmod 700 /opt/crearis/data/import
+   ```
+
+2. **After Import**:
+   - Original CSV is moved to archive/
+   - PASSWORDS.csv updated with new entries
+   - Distribute passwords securely
+   - Delete or encrypt PASSWORDS.csv after distribution
+
+### Troubleshooting
+
+**Issue: Permission denied**
+```bash
+# Check ownership
+ls -la /opt/crearis/data/import/
+# Should be owned by pruvious
+
+# Fix permissions
+sudo chown -R pruvious:pruvious /opt/crearis/data/import/
+sudo chmod 700 /opt/crearis/data/import/
+```
+
+**Issue: Import script not found**
+```bash
+# Check script location
+ls -la /opt/crearis/source/scripts/import-users.sh
+
+# Make executable if needed
+chmod +x /opt/crearis/source/scripts/import-users.sh
+```
+
+**Issue: Database connection error**
+```bash
+# Verify .env configuration
+cat /opt/crearis/source/.env | grep DB_
+
+# Test database connection
+psql -U $DB_USER -h $DB_HOST -d $DB_NAME -c "SELECT 1;"
+```
+
+### For Detailed Documentation
+
+See `docs/USER_IMPORT_SYSTEM.md` for:
+- Complete CSV format specification
+- Advanced usage examples
+- Integration with migrations
+- Testing procedures
+- Rollback instructions
+
+---
+
 ## Pre-Deployment Testing Checklist
+
+### 0. System Requirements
+
+**Node.js Version: ≥ 20.10.0**
+```bash
+# Check Node.js version
+node --version  # Must be 20.10.0 or higher
+```
+
+If you need to install/update Node.js:
+```bash
+# Using nvm (recommended)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 20
+nvm use 20
+
+# Or install directly from NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
 
 ### 1. Local Production Build Test
 ```bash
@@ -32,77 +277,335 @@ pnpm start
 
 # Verify app runs on http://localhost:3000
 # Check all major features work correctly (requires PostgreSQL JSONB support)
+
 ```
 
-### 2. PostgreSQL Database Setup
+
+
+### 2. Server Preparation and PostgreSQL Database Setup
+
+> **📋 Three-Phase Deployment Process**
+>
+> The deployment is split into 3 phases with different user requirements:
+>
+> - **Phase 1** (as **root**): Clone repository and create directory structure
+> - **Phase 2** (as **pruvious**): Database setup, build application
+> - **Phase 3** (as **root**): Domain configuration and SSL certificates
+>
+> See detailed scripts in `/scripts/server_deploy_phase*.sh`
+
+#### Prerequisites (as root)
+
 ```bash
-# ✅ REQUIRED: Ensure PostgreSQL is installed and running
-sudo systemctl status postgresql
+# Create system user for running the application (if not exists)
+sudo useradd -m -s /bin/bash pruvious
+sudo passwd pruvious
 
-# Create database and user (if not exists)
-sudo -u postgres createuser crearis_admin
-sudo -u postgres createdb crearis_production -O crearis_admin
-sudo -u postgres psql -c "ALTER USER crearis_admin PASSWORD 'your_secure_password';"
+# Install required software
+sudo apt update
+sudo apt install -y git nginx postgresql postgresql-contrib certbot python3-certbot-nginx
 
-# Configure environment
-cp .env.database.example .env
-# Edit .env with your PostgreSQL credentials
+# Install Node.js (version 20.10.0+)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
 
-# Run database migrations
-pnpm db:migrate
+# Install pnpm
+npm install -g pnpm
 
-# Verify PASSWORDS.csv was generated properly
-ls -la server/data/PASSWORDS.csv
-
-# Check sample data exists (requires PostgreSQL JSONB support)
-curl http://localhost:3000/api/demo/data | jq .
-```
-
-## PM2 Deployment (Recommended)
-
-> **Alternative Deployment Methods**: For Docker, Kubernetes, cloud platforms, and other deployment options, see [ALTERNATIVE_DEPLOYMENTS.md](./ALTERNATIVE_DEPLOYMENTS.md)
-
-### PM2 Process Manager Setup
-
-**Install PM2:**
-```bash
+# Install PM2 for process management
 npm install -g pm2
+
+# Ensure PostgreSQL is running
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# Create PostgreSQL database user (note: different from Linux user)
+sudo -u postgres createuser crearis_admin
+sudo -u postgres psql -c "ALTER USER crearis_admin PASSWORD 'your_secure_database_password';"
 ```
 
-**Create ecosystem file:**
-```javascript
-// ecosystem.config.js
-module.exports = {
-  apps: [{
-    name: 'crearis-vue',
-    script: '.output/server/index.mjs',
-    cwd: '/var/www/crearis-vue',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000,
-      HOST: '0.0.0.0'
-    },
-    instances: 1,
-    exec_mode: 'fork',
-    watch: false,
-    max_memory_restart: '1G',
-    error_file: '/var/log/crearis-vue/error.log',
-    out_file: '/var/log/crearis-vue/out.log',
-    log_file: '/var/log/crearis-vue/combined.log'
-  }]
-}
-```
+#### Phase 1: Clone Repository (as root)
 
-**Start with PM2:**
 ```bash
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup
+# Navigate to scripts directory
+cd /path/to/local/repo/scripts
+
+# Copy deployment configuration
+cp .env.deploy.example .env.deploy
+
+# Edit configuration
+nano .env.deploy
+# Set: GITHUB_REPO, DEPLOY_USER=pruvious, domains, etc.
+
+# Run Phase 1 script
+sudo bash server_deploy_phase1_clone.sh
+```
+
+**What Phase 1 does:**
+- Creates directory structure: `/opt/crearis/{source,live,data,logs,scripts}`
+- Clones GitHub repository to `/opt/crearis/source`
+- Creates `.env` template with placeholders
+- Sets proper ownership for `pruvious` user
+
+**After Phase 1:**
+- Edit `/opt/crearis/source/.env` with your PostgreSQL credentials
+- Set `DB_PASSWORD` and other required values
+
+#### Phase 2: Database & Build (as pruvious)
+
+**Prerequisites:**
+- Node.js ≥ 20.10.0 must be installed
+- PostgreSQL client tools installed
+- pnpm installed globally
+
+**Trouble-Shooting**
+If the for security-reasons the database-user is disallowed to create databases we create the db as root and then grant the privileges
+
+```bash
+# Change Database-Name and User accordingly
+sudo -u postgres createdb crearis_production
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE crearis_production TO crearis_admin;"
 ```
 
 
+```bash
+# Switch to pruvious user
+sudo -u pruvious bash
+
+# Navigate to scripts
+cd /opt/crearis/scripts
+
+# Run Phase 2 script (includes Node.js version check)
+bash server_deploy_phase2_build.sh
+```
+
+**What Phase 2 does:**
+- **Validates Node.js version ≥ 20.10.0**
+- Validates `.env` configuration
+- Tests PostgreSQL database connection
+- Creates database if needed
+- Installs Node.js dependencies
+- Runs database migrations
+- Builds production application
+- Syncs to live directory
+- Sets up PM2 configuration
+
+**After Phase 2:**
+- Start application: `pm2 start /opt/crearis/live/ecosystem.config.js`
+- Enable PM2 on boot: `pm2 startup` (follow instructions)
+- Save PM2 configuration: `pm2 save`
+
+#### Phase 3: Domain & SSL (as root)
+
+```bash
+# Ensure .env.deploy is configured with domains
+nano /opt/crearis/scripts/.env.deploy
+# Set: PRIMARY_DOMAIN, ADDITIONAL_DOMAINS, SSL_EMAIL
+
+# Run Phase 3 script
+sudo bash /opt/crearis/scripts/server_deploy_phase3_domain.sh
+```
+
+**What Phase 3 does:**
+- Creates Nginx configuration
+- Obtains SSL certificates from Let's Encrypt
+- Configures automatic certificate renewal
+- Sets up HTTPS redirects
+- Verifies deployment
+
+**After Phase 3:**
+- Your application is live at `https://your-domain.com`
+- SSL certificates auto-renew via systemd timer
+
+---
+
+## 📝 Deployment Scripts Reference
+
+All deployment scripts are located in `/scripts/` with the `server_` prefix:
+
+### Script Files
+
+| Script | User | Purpose |
+|--------|------|---------|
+| `server_deploy_phase1_clone.sh` | root | Clone repository, create structure |
+| `server_deploy_phase2_build.sh` | pruvious | Build application, setup database |
+| `server_deploy_phase3_domain.sh` | root | Configure Nginx, obtain SSL certs |
+| `.env.deploy.example` | - | Deployment configuration template |
+
+### Configuration File: `.env.deploy`
+
+Before running any deployment scripts, copy and configure:
+
+```bash
+cd /path/to/repo/scripts
+cp .env.deploy.example .env.deploy
+nano .env.deploy
+```
+
+**Example `.env.deploy` for theaterpedia.org:**
+
+```bash
+# GitHub Repository
+GITHUB_REPO=https://github.com/theaterpedia/crearis-vue.git
+DEPLOY_BRANCH=main
+
+# System User (Linux user that runs PM2)
+DEPLOY_USER=pruvious
+
+# PostgreSQL Database User (database owner)
+PG_USER=crearis_admin
+
+# Directory Structure
+BASE_DIR=/opt/crearis
+SOURCE_DIR=/opt/crearis/source
+LIVE_DIR=/opt/crearis/live
+DATA_DIR=/opt/crearis/data
+LOG_DIR=/opt/crearis/logs
+BACKUP_DIR=/opt/crearis/backups
+SCRIPTS_DIR=/opt/crearis/scripts
+
+# Application Port (internal)
+APP_PORT=3000
+
+# Domain Configuration
+PRIMARY_DOMAIN=theaterpedia.org
+ADDITIONAL_DOMAINS=www.theaterpedia.org
+SSL_EMAIL=admin@theaterpedia.org
+```
+
+### Quick Deployment Commands
+
+```bash
+# Phase 1 (as root)
+sudo bash scripts/server_deploy_phase1_clone.sh
+
+# Edit .env with database credentials
+sudo nano /opt/crearis/source/.env
+
+# Phase 2 (as pruvious)
+sudo -u pruvious bash /opt/crearis/scripts/server_deploy_phase2_build.sh
+
+# Start application (as pruvious)
+sudo -u pruvious pm2 start /opt/crearis/live/ecosystem.config.js
+sudo -u pruvious pm2 save
+# Follow pm2 startup instructions
+
+# Phase 3 (as root)
+sudo bash /opt/crearis/scripts/server_deploy_phase3_domain.sh
+```
+
+---
+
+## PM2 Process Management
+
+> **Note**: PM2 setup is handled automatically by Phase 2.
+> The following commands are for managing the application after deployment.
+
+### PM2 Commands (run as pruvious)
+
+```bash
+# Start application
+pm2 start /opt/crearis/live/ecosystem.config.js
+
+# View status
+pm2 status
+
+# View logs
+pm2 logs crearis-vue
+
+# Restart application
+pm2 restart crearis-vue
+
+# Stop application
+pm2 stop crearis-vue
+
+# Monitor resources
+pm2 monit
+
+# Save current PM2 state
+pm2 save
+
+# Setup PM2 to start on boot (run once)
+pm2 startup
+# Follow the instructions provided by the command
+```
+
+### Updating the Application (as pruvious)
+
+```bash
+# Navigate to source directory
+cd /opt/crearis/source
+
+# Pull latest changes
+git pull origin main
+
+# Install dependencies (if package.json changed)
+pnpm install --frozen-lockfile
+
+# Build application
+pnpm build
+
+# Sync to live directory
+rsync -av --delete .output/ /opt/crearis/live/
+
+# Restart PM2
+pm2 restart crearis-vue
+```
+
+---
+
+## Nginx & SSL Management
+
+> **Note**: Nginx and SSL are configured automatically by Phase 3.
+> The following information is for reference and troubleshooting.
+
+### Nginx Configuration
+
+Phase 3 creates `/etc/nginx/sites-available/crearis-vue` with:
+- HTTP to HTTPS redirect
+- SSL certificate configuration
+- Reverse proxy to `localhost:3000`
+- Security headers
+- Static file caching
+
+### Manual Nginx Commands (as root)
+
+```bash
+# Test configuration
+sudo nginx -t
+
+# Reload configuration
+sudo systemctl reload nginx
+
+# Restart Nginx
+sudo systemctl restart nginx
+
+# View logs
+sudo tail -f /opt/crearis/logs/nginx-*.log
+```
+
+### SSL Certificate Management (as root)
+
+```bash
+# List certificates
+sudo certbot certificates
+
+# Renew certificates (dry run)
+sudo certbot renew --dry-run
+
+# Force renewal
+sudo certbot renew --force-renewal
+
+# Expand certificate to include more domains
+sudo certbot --nginx -d theaterpedia.org -d www.theaterpedia.org --expand
+```
+
+---
 
 ## Reverse Proxy Setup (nginx)
+
+> **Note**: This section is for reference only.
+> Phase 3 automatically configures Nginx with optimal settings.
 
 ### nginx Configuration
 ```nginx
@@ -158,7 +661,7 @@ cp .env.database.example .env
 # PostgreSQL Configuration (✅ REQUIRED - Only Supported Database)
 # =============================================================================
 DATABASE_TYPE=postgresql
-DB_USER=your_username
+DB_USER=crearis_admin
 DB_PASSWORD=your_secure_password
 DB_NAME=crearis_development
 DB_HOST=localhost
@@ -179,7 +682,7 @@ Set these on your server or hosting platform:
 ```bash
 # Database (PostgreSQL recommended for production)
 DATABASE_TYPE=postgresql
-DB_USER=crearis_prod
+DB_USER=crearis_admin
 DB_PASSWORD=your_very_secure_password
 DB_NAME=crearis_production
 DB_HOST=your_db_host
@@ -257,42 +760,167 @@ pm2 restart crearis-vue
 
 ### Database Backup
 
-#### SQLite Backup (⚠️ OUTDATED - NOT SUPPORTED)
+The application includes automated backup scripts for production database management.
+
+#### Automated Backup Scripts (✅ RECOMMENDED)
+
+**Production Backup** (on server):
 ```bash
-# ⚠️ WARNING: SQLite is outdated and not supported
+# Quick backup using pnpm
+cd /opt/crearis/source
+pnpm db:backup
+
+# Or run script directly
+bash scripts/backup-production-db.sh
+
+# Named backup (e.g., before deployment)
+pnpm db:backup pre_deployment_v1.2.0
+```
+
+**Features:**
+- ✅ Compressed backups (gzip)
+- ✅ Automatic retention (7 days default)
+- ✅ Integrity verification
+- ✅ Secure permissions (600)
+- ✅ Timestamped filenames
+
+**Output Location:**
+```
+/opt/crearis/backups/
+└── db_backup_YYYYMMDD_HHMMSS.sql.gz
+```
+
+#### Development Recovery (from production backup)
+
+**Download and restore production data to dev:**
+```bash
+# 1. Download backup from production
+scp pruvious@server:/opt/crearis/backups/db_backup_20251028_020000.sql.gz \
+    ~/backups/
+
+# 2. Restore to local dev database
+cd /path/to/crearis-vue
+pnpm db:restore ~/backups/db_backup_20251028_020000.sql.gz
+
+# 3. Script automatically:
+#    - Drops local dev database
+#    - Restores production data
+#    - Re-runs migrations (syncs schema with code)
+#    - Verifies integrity
+```
+
+#### Automated Backup Scheduling
+
+**Option 1: PM2 Integration** (recommended)
+```javascript
+// /opt/crearis/live/ecosystem.config.js
+module.exports = {
+  apps: [{
+    name: 'crearis-vue',
+    script: './server/index.mjs',
+    cron_restart: '0 2 * * *',  // Daily at 2 AM
+    post_restart: 'bash /opt/crearis/scripts/backup-production-db.sh',
+  }]
+};
+```
+
+**Option 2: System Cron**
+```bash
+# Edit crontab
+crontab -e
+
+# Add daily backup at 2 AM
+0 2 * * * cd /opt/crearis/source && bash scripts/backup-production-db.sh
+
+# Add weekly archive on Sunday at 3 AM
+0 3 * * 0 cd /opt/crearis/source && bash scripts/backup-production-db.sh weekly
+```
+
+#### Manual Backup Commands
+
+**For reference or custom workflows:**
+```bash
+# Manual PostgreSQL dump
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        -F p \
+        --no-owner \
+        --no-acl \
+        | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Schema only (no data)
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        --schema-only \
+        -F p \
+        | gzip > schema_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Specific tables
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        -t users -t projects -t events \
+        -F p \
+        | gzip > tables_$(date +%Y%m%d_%H%M%S).sql.gz
+```
+
+#### Backup Best Practices
+
+1. **Always backup before**:
+   - Major deployments
+   - Schema migrations
+   - Configuration changes
+   - Version updates
+
+2. **Test restore process**:
+   ```bash
+   # Test on dev box monthly
+   pnpm db:restore <backup_file>
+   # Verify data integrity
+   # Check application functionality
+   ```
+
+3. **Retention strategy**:
+   - Daily: 7 days (automatic)
+   - Weekly: 4 weeks (manual archive)
+   - Monthly: 12 months (off-site storage)
+
+4. **Off-site storage**:
+   ```bash
+   # Encrypt and store remotely
+   gpg --encrypt --recipient admin@example.com backup.sql.gz
+   scp backup.sql.gz.gpg remote-server:/secure/backups/
+   ```
+
+#### For Detailed Documentation
+
+See comprehensive backup/recovery documentation:
+- `docs/DATABASE_BACKUP_RECOVERY.md` - Complete backup/recovery procedures
+- `docs/DATABASE_SAFETY_PRODUCTION.md` - Production safety analysis
+- Scripts: `scripts/backup-production-db.sh`, `scripts/restore-from-production.sh`
+
+#### Legacy SQLite Backup (⚠️ NOT SUPPORTED)
+
+```bash
+# ⚠️ WARNING: SQLite is no longer supported
 # ⚠️ Application requires PostgreSQL JSONB fields
-# ⚠️ SQLite backup scripts are provided for reference only
+# ⚠️ Below commands for reference only
 
 # Manual backup (OUTDATED)
 # cp crearis-vue.db crearis-vue.db.backup.$(date +%Y%m%d_%H%M%S)
-
-# Automated SQLite backup script (OUTDATED)
-#!/bin/bash
-# BACKUP_DIR="/var/backups/crearis-vue"
-# mkdir -p $BACKUP_DIR
-# cp crearis-vue.db "$BACKUP_DIR/crearis-vue.db.$(date +%Y%m%d_%H%M%S)"
-# find $BACKUP_DIR -name "*.db.*" -mtime +7 -delete
-```
-
-#### PostgreSQL Backup (✅ REQUIRED)
-```bash
-# Manual backup
-pg_dump -h localhost -U crearis_prod -d crearis_production > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Automated PostgreSQL backup script
-#!/bin/bash
-BACKUP_DIR="/var/backups/crearis-vue"
-mkdir -p $BACKUP_DIR
-export PGPASSWORD="your_password"
-pg_dump -h localhost -U crearis_prod -d crearis_production > "$BACKUP_DIR/crearis_$(date +%Y%m%d_%H%M%S).sql"
-gzip "$BACKUP_DIR/crearis_$(date +%Y%m%d_%H%M%S).sql"
-find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
 ```
 
 ### Application Backup
 ```bash
-# Backup entire application
-tar -czf crearis-vue-backup-$(date +%Y%m%d).tar.gz .output/ server/data/
+# Backup entire application (code + build)
+tar -czf crearis-vue-backup-$(date +%Y%m%d).tar.gz \
+    .output/ \
+    server/data/ \
+    .env
+
+# Exclude: node_modules, git, logs
 ```
 
 ## Troubleshooting
@@ -476,7 +1104,7 @@ PM2_ECOSYSTEM_FILE="/opt/crearis/live/ecosystem.config.js"
 # Database (ensure these match your .env)
 DATABASE_TYPE="postgresql"
 DB_HOST="localhost"
-DB_USER="crearis_prod"
+DB_USER="crearis_admin"
 DB_NAME="crearis_production"
 # DB_PASSWORD should be set in main .env file
 

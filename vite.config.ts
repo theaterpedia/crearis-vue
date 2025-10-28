@@ -19,13 +19,14 @@ export default defineConfig({
   ],
 
   // Build configuration for SPA
+  // Output to server/public/ so Nitro can copy it to .output/public/
   build: {
-    outDir: 'dist',
+    outDir: 'server/public',
+    emptyOutDir: true,
     assetsDir: 'assets',
+    sourcemap: false,
     rollupOptions: {
-      input: {
-        main: './index.html'
-      }
+      input: './index.html'
     }
   },
 
