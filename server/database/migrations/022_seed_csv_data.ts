@@ -22,6 +22,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import bcrypt from 'bcryptjs'
 import type { DatabaseAdapter } from '../adapter'
 import { getFileset, getFilesetFilePath, getDataPath } from '../../settings'
 
@@ -149,7 +150,7 @@ export const migration = {
             if (fs.existsSync(passwordsFilePath)) {
                 try {
                     const existingCSV = fs.readFileSync(passwordsFilePath, 'utf-8')
-                    const existingRows = existingCSV.split('\n').slice(1).filter(row => row.trim())
+                    const existingRows = existingCSV.split('\n').slice(1).filter((row: string) => row.trim())
                     for (const row of existingRows) {
                         const match = row.match(/"([^"]*)","([^"]*)","([^"]*)"/)
                         if (match) {
@@ -179,6 +180,12 @@ export const migration = {
 
             fs.writeFileSync(passwordsFilePath, passwordsCSVContent, 'utf-8')
             console.log(`    ✓ Updated PASSWORDS.csv: ${newPasswordsGenerated} new, ${skippedExistingUsers} existing users, ${skippedExistingPasswords} reused passwords`)
+
+            // Build a map of plaintext passwords for hashing during user insertion
+            const plaintextPasswordMap = new Map<string, string>()
+            for (const entry of allEntries.values()) {
+                plaintextPasswordMap.set(entry.sysmail, entry.password)
+            }
 
             // Seed users
             console.log('  - Seeding users...')
@@ -241,6 +248,14 @@ export const migration = {
                     }
                 }
 
+                // Get plaintext password from PASSWORDS.csv and hash it
+                const plaintextPassword = plaintextPasswordMap.get(user.sysmail)
+                if (!plaintextPassword) {
+                    console.error(`    ❌ No password found for user ${user.sysmail}, skipping...`)
+                    continue
+                }
+                const hashedPassword = await bcrypt.hash(plaintextPassword, 10)
+
                 if (db.type === 'postgresql') {
                     await db.run(`
                         INSERT INTO users 
@@ -257,7 +272,7 @@ export const migration = {
                         user.sysmail,
                         user.extmail || null,
                         user.username,
-                        user.password,
+                        hashedPassword,
                         user.role || 'user',
                         user.lang || 'de',
                         instructorId
@@ -278,7 +293,7 @@ export const migration = {
                         user.sysmail,
                         user.extmail || null,
                         user.username,
-                        user.password,
+                        hashedPassword,
                         user.role || 'user',
                         user.lang || 'de',
                         instructorId
