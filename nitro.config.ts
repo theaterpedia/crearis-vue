@@ -1,6 +1,6 @@
 export default {
-  // Source directory
-  srcDir: '.',
+  // Scan server directory for API routes and handlers
+  scanDirs: ['server'],
 
   // Development server settings
   devServer: {
@@ -11,12 +11,6 @@ export default {
   experimental: {
     viteNode: true
   },
-
-  // API routes directory
-  apiDir: 'server/api',
-
-  // Server handlers directory 
-  handlersDir: 'server',
 
   // Public assets configuration
   // Nitro will copy server/public/ to .output/public/ during build

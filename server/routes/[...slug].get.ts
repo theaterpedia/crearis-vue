@@ -1,3 +1,4 @@
+import { defineEventHandler, getRequestPath, sendRedirect, setHeader, createError } from 'h3'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 

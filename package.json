@@ -40,7 +40,7 @@
     "dev:backend": "nitro dev",
     "prebuild": "vite build",
     "build": "nitro build",
-    "start": "node .output/server/index.mjs",
+    "start": "NODE_ENV=production node .output/server/index.mjs",
     "preview": "nitro preview",
     "prepare": "nitro prepare",
     "test": "vitest",
