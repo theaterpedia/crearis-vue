@@ -272,7 +272,7 @@ run_migrations() {
     if [[ -f "scripts/migrate.sh" ]]; then
         bash scripts/migrate.sh
     elif [[ -n "$(pnpm run | grep migrate)" ]]; then
-        pnpm run migrate
+        pnpm run db:migrate
     else
         warning "No migration script found, skipping migrations"
     fi
@@ -545,6 +545,33 @@ print_next_steps() {
     echo ""
     echo "6. Run Phase 3 as root to configure domains and SSL:"
     echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
+    echo ""
+    echo "========================================================================="
+    echo ""
+    warning "⚠️  IMPORTANT: Port Conflict Check"
+    echo ""
+    echo "Before starting PM2, verify that port 3000 is available:"
+    echo ""
+    echo "1. Check if port 3000 is already in use:"
+    echo "   sudo lsof -i :3000"
+    echo "   sudo netstat -tuln | grep :3000"
+    echo ""
+    echo "2. Check for other PM2 processes using port 3000:"
+    echo "   pm2 list"
+    echo "   pm2 env <process-name>  # Check PORT setting"
+    echo ""
+    echo "3. If port 3000 is occupied, change to a different port (e.g., 3020):"
+    echo "   a. Edit: $LIVE_DIR/ecosystem.config.js"
+    echo "      Change: PORT: 3000  →  PORT: 3020"
+    echo ""
+    echo "   b. Edit: $SOURCE_DIR/.env"
+    echo "      Change: PORT=3000  →  PORT=3020"
+    echo ""
+    echo "   c. After Phase 3, verify and update Nginx configuration:"
+    echo "      sudo nano /etc/nginx/sites-available/crearis-vue"
+    echo "      Find: proxy_pass http://127.0.0.1:3000;"
+    echo "      Change to: proxy_pass http://127.0.0.1:3020;"
+    echo "      Then: sudo nginx -t && sudo systemctl reload nginx"
     echo ""
     echo "========================================================================="
 }

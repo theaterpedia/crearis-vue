@@ -382,23 +382,21 @@ bash server_deploy_phase2_build.sh
 
 **What Phase 2 does:**
 - **Validates Node.js version ≥ 22.0.0 (REQUIRED for Nitro 3.0)**
-- Validates `.env` configuration
+- Validates `.env` configuration (with `SKIP_MIGRATIONS=false` for initial setup)
 - Tests PostgreSQL database connection
 - Creates database if needed
 - Installs Node.js dependencies
-- Runs database migrations
-- Builds production application
+- Creates data directory symlink (before migrations)
+- Runs database migrations (schema + seed data)
+- Builds production application (Vite + Nitro)
 - Syncs to live directory
-- Sets up PM2 configuration
+- Sets up PM2 configuration (with `SKIP_MIGRATIONS=true` to prevent auto-migrations on restart)
 
 **After Phase 2:**
-- **⚠️ IMPORTANT**: Edit `/opt/crearis/source/.env` and change `SKIP_MIGRATIONS=false` to `SKIP_MIGRATIONS=true`
-  - This prevents migrations from running automatically on PM2 restart
-  - Future schema changes should be run manually: `pnpm db:migrate`
-  - This ensures database stability and prevents accidental schema changes
 - Start application: `pm2 start /opt/crearis/live/ecosystem.config.js`
 - Enable PM2 on boot: `pm2 startup` (follow instructions)
 - Save PM2 configuration: `pm2 save`
+- **Note**: PM2 automatically sets `SKIP_MIGRATIONS=true` in its environment, protecting against accidental migrations on restart
 
 #### Phase 3: Domain & SSL (as root)
 
@@ -703,43 +701,56 @@ HOST=0.0.0.0
 
 # Migration Control (IMPORTANT!)
 # Initial deployment: Set to false so Phase 2 can run migrations
-# After Phase 2 completes: Change to true to prevent auto-migrations on restart
-# For future schema changes: Run migrations manually with 'pnpm db:migrate'
-SKIP_MIGRATIONS=true
+# PM2 will override this to true to prevent auto-migrations on restart
+SKIP_MIGRATIONS=false
 ```
 
 ### Migration Control Strategy
 
-**Why SKIP_MIGRATIONS matters:**
+**How SKIP_MIGRATIONS works in deployment:**
 
-1. **Initial Deployment (Phase 2)**:
-   - Set `SKIP_MIGRATIONS=false` in `.env`
-   - Phase 2 runs migrations to create database schema
+1. **Initial Deployment - Phase 2**:
+   - `.env` has `SKIP_MIGRATIONS=false`
+   - Phase 2 script runs migrations explicitly to create database schema
    - All tables, indexes, and seed data are created
 
-2. **After Phase 2 Completes**:
-   - Change to `SKIP_MIGRATIONS=true`
-   - Prevents migrations from running on every PM2 restart
+2. **PM2 Runtime Protection**:
+   - PM2 ecosystem config sets `SKIP_MIGRATIONS: true` in environment
+   - This **overrides** the `.env` setting
+   - Prevents migrations from running on PM2 restart
    - Protects against accidental schema changes
    - Ensures database stability
 
-3. **Future Updates**:
-   - Keep `SKIP_MIGRATIONS=true` in production
-   - Run migrations manually when needed: `pnpm db:migrate`
+3. **Future Schema Changes**:
+   - Keep `SKIP_MIGRATIONS=false` in `.env` (for manual migration runs)
+   - Run migrations manually when needed: `cd /opt/crearis/source && pnpm db:migrate`
    - Test migrations on staging first
    - Backup database before schema changes
+   - PM2 will still prevent auto-migrations on restart
+
+**Architecture**:
+```
+Development (.env):           SKIP_MIGRATIONS=false  (allows manual migrations)
+                                      ↓
+Production Runtime (PM2):     SKIP_MIGRATIONS=true   (overrides, prevents auto-migrations)
+```
 
 **Best Practice**:
 ```bash
-# After Phase 2, always set:
-SKIP_MIGRATIONS=true
+# .env file (source directory):
+SKIP_MIGRATIONS=false  # Keep this - allows manual migration runs
 
-# Only set to false temporarily for manual migration runs:
-# 1. Backup database
-# 2. Set SKIP_MIGRATIONS=false
-# 3. Run: pnpm db:migrate
-# 4. Verify changes
-# 5. Set SKIP_MIGRATIONS=true again
+# PM2 ecosystem.config.js (live directory):
+env: {
+  SKIP_MIGRATIONS: 'true'  # Auto-set by Phase 2 - protects runtime
+}
+
+# To run migrations manually (when needed):
+cd /opt/crearis/source
+pnpm db:migrate  # Respects .env setting (false)
+
+# PM2 restart still protected:
+pm2 restart crearis-vue  # Uses PM2 env (true)
 ```
 
 ## SSL/HTTPS Setup
