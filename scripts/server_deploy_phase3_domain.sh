@@ -248,7 +248,19 @@ server {
     # Client max body size
     client_max_body_size 50M;
     
-    # Proxy settings
+    # Disable gzip for proxied content (Nitro handles compression)
+    gzip off;
+    
+    # Serve static assets directly from filesystem (Vite build output)
+    # Nitro doesn't serve /assets/ path - it only serves /_nuxt/ internal bundles
+    location /assets/ {
+        alias $LIVE_DIR/public/assets/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # Proxy settings for application (/_nuxt/ bundles and all other routes)
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
         proxy_http_version 1.1;
@@ -260,19 +272,16 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
         
+        # Don't buffer proxied responses (prevents corruption)
+        proxy_buffering off;
+        
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
-    
-    # Static files caching (if served by Nginx)
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-        proxy_pass http://127.0.0.1:$APP_PORT;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
 }
+
 EOF
     
     success "HTTPS Nginx configuration created ✓"

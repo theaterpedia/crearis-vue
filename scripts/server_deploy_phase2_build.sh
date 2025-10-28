@@ -272,7 +272,7 @@ run_migrations() {
     if [[ -f "scripts/migrate.sh" ]]; then
         bash scripts/migrate.sh
     elif [[ -n "$(pnpm run | grep migrate)" ]]; then
-        pnpm run db:migrate
+        pnpm run migrate
     else
         warning "No migration script found, skipping migrations"
     fi
@@ -425,6 +425,32 @@ create_import_directory() {
     log "  Script: bash scripts/import-users.sh"
 }
 
+# Setup .output directory structure for Nitro
+setup_output_structure() {
+    log "🔗 Setting up .output directory structure for Nitro..."
+    
+    # The application expects .output/public/ and .output/server/ structure
+    # Create .output with symlinks to the actual directories
+    mkdir -p "$LIVE_DIR/.output"
+    
+    # Remove existing symlinks if they exist
+    rm -f "$LIVE_DIR/.output/public" "$LIVE_DIR/.output/server"
+    
+    # Create symlinks
+    ln -sfn ../public "$LIVE_DIR/.output/public"
+    ln -sfn ../server "$LIVE_DIR/.output/server"
+    
+    # Verify symlinks
+    if [[ -L "$LIVE_DIR/.output/public" ]] && [[ -L "$LIVE_DIR/.output/server" ]]; then
+        success ".output directory structure created ✓"
+        log "  $LIVE_DIR/.output/public -> ../public"
+        log "  $LIVE_DIR/.output/server -> ../server"
+    else
+        error "Failed to create .output symlinks"
+        exit 1
+    fi
+}
+
 # Setup PM2
 setup_pm2() {
     log "🔧 Setting up PM2 configuration..."
@@ -439,6 +465,8 @@ setup_pm2() {
     # Create ecosystem file directly in live directory (always create/update)
     log "Creating PM2 ecosystem.config.js in $LIVE_DIR..."
     
+    # Note: Database credentials are loaded from .env file through PM2
+    # The .env file is copied to LIVE_DIR and PM2 loads it automatically
     cat > "$LIVE_DIR/ecosystem.config.js" << EOF
 module.exports = {
   apps: [{
@@ -451,7 +479,12 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: 3000,
+      DB_USER: '$DB_USER',
+      DB_PASSWORD: '$DB_PASSWORD',
+      DB_NAME: '$DB_NAME',
+      DB_HOST: '$DB_HOST',
+      DB_PORT: '$DB_PORT'
     },
     error_file: '$LOG_DIR/error.log',
     out_file: '$LOG_DIR/out.log',
@@ -465,6 +498,7 @@ EOF
     log "  Location: $LIVE_DIR/ecosystem.config.js"
     log "  NODE_ENV: production (REQUIRED for Nitro 3.0)"
     log "  Port: 3000"
+    log "  Database: $DB_NAME@$DB_HOST:$DB_PORT"
 }
 
 # Print next steps
@@ -496,27 +530,19 @@ print_next_steps() {
     echo "   ls -la $LIVE_DIR/server/data"
     echo "   ls -la $DATA_DIR/PASSWORDS.csv"
     echo ""
-    echo "4. ⚠️  IMPORTANT: Prevent auto-migrations on restart"
-    echo "   Edit $SOURCE_DIR/.env and change:"
-    echo "   SKIP_MIGRATIONS=false  →  SKIP_MIGRATIONS=true"
-    echo ""
-    echo "   This prevents migrations from running automatically when PM2 restarts."
-    echo "   For future schema changes, run migrations manually with:"
-    echo "   pnpm db:migrate"
-    echo ""
-    echo "5. Distribute passwords to users (SECURITY):"
+    echo "4. Distribute passwords to users (SECURITY):"
     echo "   - Copy $DATA_DIR/PASSWORDS.csv securely"
     echo "   - Distribute via encrypted channel"
     echo "   - Delete or encrypt PASSWORDS.csv after distribution"
     echo "   - See docs/PASSWORD_SYSTEM.md for details"
     echo ""
-    echo "6. (Optional) Import additional users:"
+    echo "5. (Optional) Import additional users:"
     echo "   - Create import-users.csv with user data"
     echo "   - Upload to $DATA_DIR/import/"
     echo "   - Run: bash scripts/import-users.sh"
     echo "   - See docs/USER_IMPORT_SYSTEM.md for details"
     echo ""
-    echo "7. Run Phase 3 as root to configure domains and SSL:"
+    echo "6. Run Phase 3 as root to configure domains and SSL:"
     echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
     echo ""
     echo "========================================================================="
@@ -537,6 +563,7 @@ main() {
     run_migrations
     build_application
     sync_to_live
+    setup_output_structure
     copy_data_files
     create_import_directory
     setup_pm2
