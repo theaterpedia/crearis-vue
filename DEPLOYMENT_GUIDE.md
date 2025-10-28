@@ -241,10 +241,10 @@ See `docs/USER_IMPORT_SYSTEM.md` for:
 
 ### 0. System Requirements
 
-**Node.js Version: ≥ 20.10.0**
+**Node.js Version: ≥ 22.0.0** (Required for Nitro 3.0)
 ```bash
 # Check Node.js version
-node --version  # Must be 20.10.0 or higher
+node --version  # Must be 22.0.0 or higher
 ```
 
 If you need to install/update Node.js:
@@ -252,11 +252,12 @@ If you need to install/update Node.js:
 # Using nvm (recommended)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 source ~/.bashrc
-nvm install 20
-nvm use 20
+nvm install 22
+nvm use 22
+nvm alias default 22
 
 # Or install directly from NodeSource
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
@@ -305,8 +306,8 @@ sudo passwd pruvious
 sudo apt update
 sudo apt install -y git nginx postgresql postgresql-contrib certbot python3-certbot-nginx
 
-# Install Node.js (version 20.10.0+)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Install Node.js (version 22.0.0+ - REQUIRED for Nitro 3.0)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Install pnpm
@@ -354,7 +355,7 @@ sudo bash server_deploy_phase1_clone.sh
 #### Phase 2: Database & Build (as pruvious)
 
 **Prerequisites:**
-- Node.js ≥ 20.10.0 must be installed
+- Node.js ≥ 22.0.0 must be installed (REQUIRED for Nitro 3.0)
 - PostgreSQL client tools installed
 - pnpm installed globally
 
@@ -380,7 +381,7 @@ bash server_deploy_phase2_build.sh
 ```
 
 **What Phase 2 does:**
-- **Validates Node.js version ≥ 20.10.0**
+- **Validates Node.js version ≥ 22.0.0 (REQUIRED for Nitro 3.0)**
 - Validates `.env` configuration
 - Tests PostgreSQL database connection
 - Creates database if needed

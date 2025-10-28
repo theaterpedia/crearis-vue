@@ -257,7 +257,6 @@ cd /opt/crearis/source
 sudo -u pruvious bash /opt/crearis/scripts/server_deploy_phase2_build.sh
 # (It will regenerate config without rebuilding if .output exists)
 ```
-
 ### Issue: "Cannot find module" errors
 
 **Cause:** Dependencies not installed or wrong Node version
@@ -265,7 +264,7 @@ sudo -u pruvious bash /opt/crearis/scripts/server_deploy_phase2_build.sh
 **Fix:**
 ```bash
 cd /opt/crearis/source
-node --version  # Should be >= 20.10.0
+node --version  # Should be >= 22.0.0 (REQUIRED for Nitro 3.0)
 pnpm install --frozen-lockfile
 ```
 
@@ -532,4 +531,5 @@ See: `docs/USER_IMPORT_SYSTEM.md`
 
 **Last Updated:** October 28, 2025  
 **Deployment System:** Nitro 3.0 Build + PostgreSQL 12+  
-**Node.js:** >= 20.10.0 Required
+**Node.js:** >= 22.0.0 Required (Nitro 3.0 requirement)
+
