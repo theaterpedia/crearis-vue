@@ -271,8 +271,17 @@ curl -I http://localhost:3000/assets/index-*.js # Should return JS with correct 
    - [ ] Test authentication flow (login/logout) - needs database connection
    - [ ] Verify API endpoints with real data
 
-2. **Update Deployment Scripts** - HIGH PRIORITY
+2. **~~Password System Security Fix~~** ✅ COMPLETED (Oct 28, 2025)
+   - ✅ Migration 021: System users now use random passwords (not 'password123')
+   - ✅ Migration 022: Updated to merge PASSWORDS.csv entries (preserves system users)
+   - ✅ Both migrations use `getDataPath()` for portable path resolution
+   - ✅ Tested: Passwords persist across multiple migration runs
+   - ✅ Documented: See [PASSWORD_SYSTEM.md](./PASSWORD_SYSTEM.md) for complete documentation
+   - **Production Requirement**: Create symlink `/opt/crearis/live/server/data/ → /opt/crearis/data/`
+
+3. **Update Deployment Scripts** - HIGH PRIORITY
    - [ ] Modify `scripts/server_deploy_phase2_build.sh` to use new build process
+   - [ ] Add symlink creation for `server/data/` → persistent data directory
    - [ ] Ensure `NODE_ENV=production` is set in PM2 ecosystem config
    - [ ] Ensure deployment cleans `server/public/` before build (or keep for debugging)
    - [ ] Verify `.output/` directory is fully standalone

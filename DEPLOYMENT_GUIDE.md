@@ -41,23 +41,70 @@ After deployment, the server will have this structure:
 │   ├── .env         # Application configuration (create in Phase 1)
 │   ├── src/
 │   ├── server/
+│   │   ├── data/   # Source data files (copied to /opt/crearis/data)
+│   │   │   ├── root/        # Root fileset (users.csv, projects.csv)
+│   │   │   └── base/        # Base fileset (demo data)
 │   └── ...
 ├── live/            # Production build (managed by pruvious)
+│   ├── .output/     # Built application
 │   ├── server/
-│   │   └── data/    # Symlink to /opt/crearis/data
-│   └── ...
-├── data/            # Data files - PASSWORDS.csv, etc. (owned by pruvious)
+│   │   ├── index.mjs        # Nitro server entry point
+│   │   └── data/            # ⚠️ SYMLINK → /opt/crearis/data
+│   └── ecosystem.config.js  # PM2 configuration
+├── data/            # ⚠️ PERSISTENT DATA (owned by pruvious, mode 700)
+│   ├── PASSWORDS.csv        # Plain passwords for distribution (mode 600)
+│   ├── root/                # Root fileset (users.csv, projects.csv)
+│   └── base/                # Base fileset (events, posts, etc.)
 ├── logs/            # Application logs (owned by pruvious)
 ├── backups/         # Database backups (owned by pruvious)
 └── scripts/         # Deployment scripts (owned by root)
-    ├── .env.deploy  # Deployment configuration
+    ├── .env.deploy          # Deployment configuration
     └── server_deploy_phase*.sh
 ```
 
-**Important: No Repo Restructuring Needed!**
+**Important Notes:**
 
-The repository structure (`server/data/`) differs from production (`/opt/crearis/data/`).
-This is intentional and handled automatically by the deployment scripts via symlinks.
+1. **No Repo Restructuring Needed!**  
+   The repository structure (`server/data/`) differs from production (`/opt/crearis/data/`).  
+   This is intentional and handled automatically by the deployment scripts via symlinks.
+
+2. **Data Persistence via Symlink**  
+   `/opt/crearis/live/server/data/` → `/opt/crearis/data/`  
+   This ensures data survives deployments and lives outside the live directory.
+
+3. **Password Security**  
+   PASSWORDS.csv contains plaintext passwords for initial distribution.  
+   See "Password Distribution" section below for security best practices.
+
+---
+
+## 🔐 Password System
+
+### Overview
+
+The application generates random 10-character passwords for all users:
+- **System users** (6): admin, base, project1, project2, tp, regio1
+- **CSV users** (17+): Imported from `server/data/root/users.csv`
+
+All passwords are stored in `/opt/crearis/data/PASSWORDS.csv` for distribution.
+
+### Security Requirements
+
+1. **File Permissions** (set automatically by deployment script):
+   ```bash
+   chmod 600 /opt/crearis/data/PASSWORDS.csv  # Only owner can read/write
+   chmod 700 /opt/crearis/data                # Only owner can access
+   ```
+
+2. **After First Deployment**:
+   - Copy PASSWORDS.csv securely (encrypted email, password manager, etc.)
+   - Distribute passwords to users via secure channel
+   - **Recommended**: Delete or encrypt PASSWORDS.csv after distribution
+   - Instruct users to change passwords on first login
+
+3. **For Detailed Documentation**:
+   - See `docs/PASSWORD_SYSTEM.md` for complete documentation
+   - Includes password rotation, backup strategies, troubleshooting
 
 ---
 

@@ -19,7 +19,58 @@
 
 import type { DatabaseAdapter } from '../adapter'
 import bcrypt from 'bcryptjs'
-import { getFileset } from '../../settings'
+import { getFileset, getDataPath } from '../../settings'
+import fs from 'fs'
+import path from 'path'
+
+/**
+ * Generate a random 10-character password with letters and numbers
+ */
+function generateRandomPassword(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let result = ''
+    for (let i = 0; i < 10; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return result
+}
+
+/**
+ * Parse CSV file (utility function)
+ */
+function parseCSV(csvText: string): any[] {
+    const lines = csvText.trim().split('\n')
+    if (lines.length === 0) return []
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+
+    return lines.slice(1).map(line => {
+        const values: string[] = []
+        let current = ''
+        let inQuotes = false
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i]
+            if (char === '"' && (i === 0 || line[i - 1] === ',')) {
+                inQuotes = true
+            } else if (char === '"' && (i === line.length - 1 || line[i + 1] === ',')) {
+                inQuotes = false
+            } else if (char === ',' && !inQuotes) {
+                values.push(current.trim())
+                current = ''
+            } else if (!(char === '"' && (i === 0 || line[i - 1] === ',' || i === line.length - 1 || line[i + 1] === ','))) {
+                current += char
+            }
+        }
+        values.push(current.trim())
+
+        const obj: any = {}
+        headers.forEach((header, index) => {
+            obj[header] = values[index] || ''
+        })
+        return obj
+    })
+}
 
 export const migration = {
     id: '021_seed_system_data',
@@ -253,7 +304,23 @@ export const migration = {
         // -------------------------------------------------------------------
         console.log('\n  👥 Seeding system users...')
 
-        const defaultPassword = await bcrypt.hash('password123', 10)
+        // Load or create PASSWORDS.csv for system users
+        const passwordsFilePath = path.join(getDataPath(), 'PASSWORDS.csv')
+        const existingPasswords = new Map<string, string>()
+
+        if (fs.existsSync(passwordsFilePath)) {
+            console.log('    ℹ️  Found existing PASSWORDS.csv, loading system user entries...')
+            try {
+                const existingCSV = fs.readFileSync(passwordsFilePath, 'utf-8')
+                const existingEntries = parseCSV(existingCSV)
+                for (const entry of existingEntries) {
+                    existingPasswords.set(entry.sysmail, entry.password)
+                }
+                console.log(`    ✓ Loaded ${existingPasswords.size} existing password entries`)
+            } catch (error) {
+                console.log('    ⚠️  Could not parse existing PASSWORDS.csv, will generate fresh passwords')
+            }
+        }
 
         // Get default status ID for 'new' status
         const newStatus = await db.get(
@@ -271,26 +338,105 @@ export const migration = {
             { sysmail: 'regio1@theaterpedia.org', username: 'regio1', role: 'user' }
         ]
 
+        const passwordEntries: Array<{ sysmail: string, extmail: string, password: string }> = []
+        let newPasswordsGenerated = 0
+        let reusedPasswords = 0
+
         for (const user of defaultUsers) {
-            if (isPostgres) {
-                const existing = await db.get(`SELECT id FROM users WHERE username = $1`, [user.username])
-                if (!existing) {
-                    await db.run(
-                        `INSERT INTO users (sysmail, username, password, role, status_id, created_at) 
-                         VALUES ($1, $2, $3, $4, $5, NOW())`,
-                        [user.sysmail, user.username, defaultPassword, user.role, defaultStatusId]
-                    )
-                    console.log(`    ✓ Created user: ${user.username}`)
-                } else {
-                    console.log(`    ℹ️  User ${user.username} already exists`)
+            // Check if user already exists in database
+            const existingUser = await db.get(`SELECT id FROM users WHERE sysmail = $1`, [user.sysmail])
+
+            let plainPassword: string
+            if (existingUser) {
+                console.log(`    ℹ️  User ${user.username} already exists in database`)
+                // Still add to CSV if we have a password
+                if (existingPasswords.has(user.sysmail)) {
+                    plainPassword = existingPasswords.get(user.sysmail)!
+                    passwordEntries.push({
+                        sysmail: user.sysmail,
+                        extmail: '',
+                        password: plainPassword
+                    })
+                    reusedPasswords++
                 }
+                continue
+            }
+
+            // Check if we have an existing password for this user
+            if (existingPasswords.has(user.sysmail)) {
+                console.log(`    ♻️  Reusing existing password for ${user.username}`)
+                plainPassword = existingPasswords.get(user.sysmail)!
+                reusedPasswords++
+            } else {
+                console.log(`    🔑 Generating new password for ${user.username}`)
+                plainPassword = generateRandomPassword()
+                newPasswordsGenerated++
+            }
+
+            // Add to password entries for CSV
+            passwordEntries.push({
+                sysmail: user.sysmail,
+                extmail: '',
+                password: plainPassword
+            })
+
+            // Hash password for database
+            const hashedPassword = await bcrypt.hash(plainPassword, 10)
+
+            if (isPostgres) {
+                await db.run(
+                    `INSERT INTO users (sysmail, username, password, role, status_id, created_at) 
+                     VALUES ($1, $2, $3, $4, $5, NOW())`,
+                    [user.sysmail, user.username, hashedPassword, user.role, defaultStatusId]
+                )
+                console.log(`    ✓ Created user: ${user.username}`)
             } else {
                 await db.run(
-                    `INSERT OR IGNORE INTO users (sysmail, username, password, role, status_id, created_at) 
+                    `INSERT INTO users (sysmail, username, password, role, status_id, created_at) 
                      VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-                    [user.sysmail, user.username, defaultPassword, user.role, defaultStatusId]
+                    [user.sysmail, user.username, hashedPassword, user.role, defaultStatusId]
                 )
+                console.log(`    ✓ Created user: ${user.username}`)
             }
+        }
+
+        // Update PASSWORDS.csv with system user passwords
+        if (passwordEntries.length > 0) {
+            // Merge with existing entries
+            const allEntries = new Map<string, { sysmail: string, extmail: string, password: string }>()
+
+            // Load all existing entries first
+            if (fs.existsSync(passwordsFilePath)) {
+                try {
+                    const existingCSV = fs.readFileSync(passwordsFilePath, 'utf-8')
+                    const existing = parseCSV(existingCSV)
+                    for (const entry of existing) {
+                        allEntries.set(entry.sysmail, {
+                            sysmail: entry.sysmail,
+                            extmail: entry.extmail || '',
+                            password: entry.password
+                        })
+                    }
+                } catch (error) {
+                    console.log('    ⚠️  Error reading existing PASSWORDS.csv, will create new file')
+                }
+            }
+
+            // Add/update system user entries
+            for (const entry of passwordEntries) {
+                allEntries.set(entry.sysmail, entry)
+            }
+
+            // Write updated CSV
+            const passwordsCSVContent = [
+                'sysmail,extmail,password',
+                ...Array.from(allEntries.values()).map(entry =>
+                    `"${entry.sysmail}","${entry.extmail}","${entry.password}"`
+                )
+            ].join('\n')
+
+            fs.writeFileSync(passwordsFilePath, passwordsCSVContent, 'utf-8')
+            console.log(`    ✓ Updated PASSWORDS.csv: ${newPasswordsGenerated} new, ${reusedPasswords} reused passwords`)
         }
 
         // -------------------------------------------------------------------

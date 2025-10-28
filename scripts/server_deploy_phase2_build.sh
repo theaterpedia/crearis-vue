@@ -246,7 +246,13 @@ build_application() {
     
     cd "$SOURCE_DIR"
     
-    # Run production build
+    # Clean previous build outputs
+    log "Cleaning previous build outputs..."
+    rm -rf .output server/public
+    
+    # Run production build (prebuild runs automatically)
+    # prebuild: vite build → server/public/
+    # build: nitro build → .output/ (copies server/public/ to .output/public/)
     NODE_ENV=production pnpm run build
     
     if [[ ! -d ".output" ]]; then
@@ -254,7 +260,16 @@ build_application() {
         exit 1
     fi
     
+    if [[ ! -d ".output/public" ]] || [[ ! -f ".output/public/index.html" ]]; then
+        error "Build failed: .output/public/ is empty or missing index.html"
+        echo "Check if vite build (prebuild) completed successfully"
+        exit 1
+    fi
+    
     success "Application built successfully ✓"
+    log "  Frontend: server/public/ (Vite output)"
+    log "  Backend: .output/server/ (Nitro output)"
+    log "  Static: .output/public/ (Copied from server/public/)"
 }
 
 # Sync to live directory
@@ -264,17 +279,31 @@ sync_to_live() {
     # Create live directory if it doesn't exist
     mkdir -p "$LIVE_DIR"
     
-    # Sync .output directory
+    # Sync .output directory (clean sync - delete old files)
+    log "Syncing .output/ to $LIVE_DIR..."
     rsync -av --delete "$SOURCE_DIR/.output/" "$LIVE_DIR/"
     
     # Copy .env file
     cp "$SOURCE_DIR/.env" "$LIVE_DIR/.env"
     chmod 600 "$LIVE_DIR/.env"
     
+    # Create server directory if doesn't exist
+    mkdir -p "$LIVE_DIR/server"
+    
     # Create symlink to data directory
-    if [[ -d "$DATA_DIR" ]]; then
-        ln -sf "$DATA_DIR" "$LIVE_DIR/server/data"
+    log "Creating symlink: $LIVE_DIR/server/data -> $DATA_DIR"
+    if [[ -L "$LIVE_DIR/server/data" ]] || [[ -e "$LIVE_DIR/server/data" ]]; then
+        rm -rf "$LIVE_DIR/server/data"
+    fi
+    ln -sfn "$DATA_DIR" "$LIVE_DIR/server/data"
+    
+    # Verify symlink
+    if [[ -L "$LIVE_DIR/server/data" ]]; then
         success "Data directory symlinked ✓"
+        log "  $LIVE_DIR/server/data -> $DATA_DIR"
+    else
+        error "Failed to create symlink"
+        exit 1
     fi
     
     success "Build synced to live directory ✓"
@@ -282,7 +311,10 @@ sync_to_live() {
 
 # Copy data files
 copy_data_files() {
-    log "📄 Copying data files..."
+    log "📄 Copying data files to persistent storage..."
+    
+    # Ensure data directory exists
+    mkdir -p "$DATA_DIR"
     
     # Copy data files from source if they exist
     if [[ -d "$SOURCE_DIR/server/data" ]]; then
@@ -302,20 +334,39 @@ copy_data_files() {
                     log "  Copied directory: $filename"
                 fi
             else
-                # Only copy file if doesn't exist in data directory
+                # Only copy file if doesn't exist in data directory (preserve existing)
                 if [[ ! -f "$DATA_DIR/$filename" ]]; then
                     cp "$file" "$DATA_DIR/"
                     
                     # Secure permissions for sensitive files
                     if [[ "$filename" == "PASSWORDS.csv" ]] || [[ "$filename" == *.env* ]]; then
                         chmod 600 "$DATA_DIR/$filename"
+                        log "  Copied file: $filename (secured with 600 permissions)"
+                    else
+                        log "  Copied file: $filename"
                     fi
-                    
-                    log "  Copied file: $filename"
+                else
+                    log "  Skipped (exists): $filename"
                 fi
             fi
         done
-        success "Data files copied ✓"
+        
+        # Set secure permissions on data directory
+        chmod 700 "$DATA_DIR"
+        
+        success "Data files copied and secured ✓"
+        
+        # Warn about PASSWORDS.csv
+        if [[ -f "$DATA_DIR/PASSWORDS.csv" ]]; then
+            echo ""
+            warning "⚠️  PASSWORDS.csv contains plaintext passwords for initial distribution"
+            log "  Location: $DATA_DIR/PASSWORDS.csv"
+            log "  Permissions: $(stat -c '%a' "$DATA_DIR/PASSWORDS.csv")"
+            log "  Recommendation: Copy passwords securely, then delete or encrypt this file"
+            echo ""
+        fi
+    else
+        warning "No data files found in $SOURCE_DIR/server/data"
     fi
 }
 
@@ -357,6 +408,8 @@ EOF
     
     success "PM2 ecosystem.config.js created ✓"
     log "  Location: $LIVE_DIR/ecosystem.config.js"
+    log "  NODE_ENV: production (REQUIRED for Nitro 3.0)"
+    log "  Port: 3000"
 }
 
 # Print next steps
@@ -366,19 +419,35 @@ print_next_steps() {
     success "✅ Phase 2 Complete: Application Built & Database Ready"
     echo "========================================================================="
     echo ""
+    echo "📋 Build Summary:"
+    echo "  Frontend: Vite → server/public/ → .output/public/"
+    echo "  Backend: Nitro → .output/server/"
+    echo "  Symlink: $LIVE_DIR/server/data → $DATA_DIR"
+    echo ""
     echo "📋 Next Steps:"
     echo ""
     echo "1. Start/restart the application (as $DEPLOY_USER):"
     echo "   cd $LIVE_DIR"
+    echo "   pm2 delete crearis-vue 2>/dev/null || true  # Stop old process"
     echo "   pm2 start ecosystem.config.js"
     echo "   pm2 save"
     echo "   pm2 startup  # Follow instructions to enable on boot"
     echo ""
     echo "2. Check application status:"
     echo "   pm2 status"
-    echo "   pm2 logs crearis-vue"
+    echo "   pm2 logs crearis-vue --lines 50"
     echo ""
-    echo "3. Run Phase 3 as root to configure domains and SSL:"
+    echo "3. Verify symlink is working:"
+    echo "   ls -la $LIVE_DIR/server/data"
+    echo "   ls -la $DATA_DIR/PASSWORDS.csv"
+    echo ""
+    echo "4. Distribute passwords to users (SECURITY):"
+    echo "   - Copy $DATA_DIR/PASSWORDS.csv securely"
+    echo "   - Distribute via encrypted channel"
+    echo "   - Delete or encrypt PASSWORDS.csv after distribution"
+    echo "   - See docs/PASSWORD_SYSTEM.md for details"
+    echo ""
+    echo "5. Run Phase 3 as root to configure domains and SSL:"
     echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
     echo ""
     echo "========================================================================="
