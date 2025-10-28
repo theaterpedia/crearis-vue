@@ -13,6 +13,9 @@ server/public/
 .env.local
 .env.*.local
 
+# Deployment configuration
+scripts/.env.deploy
+
 # Database files
 *.db
 *.db-shm

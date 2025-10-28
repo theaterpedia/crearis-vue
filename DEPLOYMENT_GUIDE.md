@@ -44,6 +44,11 @@ After deployment, the server will have this structure:
 │   │   ├── data/   # Source data files (copied to /opt/crearis/data)
 │   │   │   ├── root/        # Root fileset (users.csv, projects.csv)
 │   │   │   └── base/        # Base fileset (demo data)
+│   ├── scripts/    # Deployment scripts (in repo)
+│   │   ├── .env.deploy          # Deployment configuration (gitignored)
+│   │   ├── .env.deploy.example  # Template
+│   │   ├── server_deploy_phase2_build.sh
+│   │   └── server_deploy_phase3_domain.sh
 │   └── ...
 ├── live/            # Production build (managed by pruvious)
 │   ├── .output/     # Built application
@@ -56,10 +61,7 @@ After deployment, the server will have this structure:
 │   ├── root/                # Root fileset (users.csv, projects.csv)
 │   └── base/                # Base fileset (events, posts, etc.)
 ├── logs/            # Application logs (owned by pruvious)
-├── backups/         # Database backups (owned by pruvious)
-└── scripts/         # Deployment scripts (owned by root)
-    ├── .env.deploy          # Deployment configuration
-    └── server_deploy_phase*.sh
+└── backups/         # Database backups (owned by pruvious)
 ```
 
 **Important Notes:**
@@ -327,30 +329,40 @@ sudo -u postgres psql -c "ALTER USER crearis_admin PASSWORD 'your_secure_databas
 
 #### Phase 1: Clone Repository (as root)
 
+This is a simple manual process - no script needed:
+
 ```bash
-# Navigate to scripts directory
-cd /path/to/local/repo/scripts
+# Create directory structure
+sudo mkdir -p /opt/crearis/{source,live,data,logs,backups}
 
-# Copy deployment configuration
-cp .env.deploy.example .env.deploy
+# Create system user if not exists
+sudo useradd -m -s /bin/bash pruvious 2>/dev/null || true
 
-# Edit configuration
-nano .env.deploy
-# Set: GITHUB_REPO, DEPLOY_USER=pruvious, domains, etc.
+# Clone repository to source directory
+sudo git clone https://github.com/theaterpedia/crearis-vue.git /opt/crearis/source
 
-# Run Phase 1 script
-sudo bash server_deploy_phase1_clone.sh
+# Optional: checkout specific branch or tag
+cd /opt/crearis/source
+sudo git checkout theaterpedia.org  # or: sudo git checkout tags/v1.0.0
+
+# Set ownership to pruvious user
+sudo chown -R pruvious:pruvious /opt/crearis
+
+# Set secure permissions
+sudo chmod 755 /opt/crearis/source /opt/crearis/live /opt/crearis/logs
+sudo chmod 700 /opt/crearis/data /opt/crearis/backups
+
+# Copy environment configuration template
+sudo -u pruvious cp /opt/crearis/source/.env.database.example /opt/crearis/source/.env
+
+# Make deployment scripts executable
+sudo chmod +x /opt/crearis/source/scripts/*.sh
 ```
-
-**What Phase 1 does:**
-- Creates directory structure: `/opt/crearis/{source,live,data,logs,scripts}`
-- Clones GitHub repository to `/opt/crearis/source`
-- Creates `.env` template with placeholders
-- Sets proper ownership for `pruvious` user
 
 **After Phase 1:**
 - Edit `/opt/crearis/source/.env` with your PostgreSQL credentials
 - Set `DB_PASSWORD` and other required values
+- Configure `/opt/crearis/source/scripts/.env.deploy` for your domain
 
 #### Phase 2: Database & Build (as pruvious)
 
@@ -373,8 +385,8 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE crearis_production TO
 # Switch to pruvious user
 sudo -u pruvious bash
 
-# Navigate to scripts
-cd /opt/crearis/scripts
+# Navigate to source scripts directory
+cd /opt/crearis/source/scripts
 
 # Run Phase 2 script (includes Node.js version check)
 bash server_deploy_phase2_build.sh
@@ -404,11 +416,11 @@ bash server_deploy_phase2_build.sh
 
 ```bash
 # Ensure .env.deploy is configured with domains
-nano /opt/crearis/scripts/.env.deploy
+nano /opt/crearis/source/scripts/.env.deploy
 # Set: PRIMARY_DOMAIN, ADDITIONAL_DOMAINS, SSL_EMAIL
 
 # Run Phase 3 script
-sudo bash /opt/crearis/scripts/server_deploy_phase3_domain.sh
+sudo bash /opt/crearis/source/scripts/server_deploy_phase3_domain.sh
 ```
 
 **What Phase 3 does:**
@@ -426,23 +438,23 @@ sudo bash /opt/crearis/scripts/server_deploy_phase3_domain.sh
 
 ## 📝 Deployment Scripts Reference
 
-All deployment scripts are located in `/scripts/` with the `server_` prefix:
+All deployment scripts are located in `/opt/crearis/source/scripts/` with the `server_` prefix:
 
 ### Script Files
 
 | Script | User | Purpose |
 |--------|------|---------|
-| `server_deploy_phase1_clone.sh` | root | Clone repository, create structure |
 | `server_deploy_phase2_build.sh` | pruvious | Build application, setup database |
 | `server_deploy_phase3_domain.sh` | root | Configure Nginx, obtain SSL certs |
 | `.env.deploy.example` | - | Deployment configuration template |
+| `.env.deploy` | - | Your deployment configuration (gitignored) |
 
 ### Configuration File: `.env.deploy`
 
-Before running any deployment scripts, copy and configure:
+After cloning the repository, copy and configure:
 
 ```bash
-cd /path/to/repo/scripts
+cd /opt/crearis/source/scripts
 cp .env.deploy.example .env.deploy
 nano .env.deploy
 ```
@@ -481,14 +493,20 @@ SSL_EMAIL=admin@theaterpedia.org
 ### Quick Deployment Commands
 
 ```bash
-# Phase 1 (as root)
-sudo bash scripts/server_deploy_phase1_clone.sh
+# Phase 1 (as root - manual clone, see Phase 1 section above)
+sudo mkdir -p /opt/crearis/{source,live,data,logs,backups}
+sudo git clone https://github.com/theaterpedia/crearis-vue.git /opt/crearis/source
+sudo chown -R pruvious:pruvious /opt/crearis
+sudo chmod +x /opt/crearis/source/scripts/*.sh
 
 # Edit .env with database credentials
 sudo nano /opt/crearis/source/.env
 
+# Configure deployment settings
+sudo nano /opt/crearis/source/scripts/.env.deploy
+
 # Phase 2 (as pruvious)
-sudo -u pruvious bash /opt/crearis/scripts/server_deploy_phase2_build.sh
+sudo -u pruvious bash /opt/crearis/source/scripts/server_deploy_phase2_build.sh
 
 # Start application (as pruvious)
 sudo -u pruvious pm2 start /opt/crearis/live/ecosystem.config.js
@@ -496,7 +514,7 @@ sudo -u pruvious pm2 save
 # Follow pm2 startup instructions
 
 # Phase 3 (as root)
-sudo bash /opt/crearis/scripts/server_deploy_phase3_domain.sh
+sudo bash /opt/crearis/source/scripts/server_deploy_phase3_domain.sh
 ```
 
 ---
