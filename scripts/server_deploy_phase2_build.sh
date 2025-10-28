@@ -272,7 +272,7 @@ run_migrations() {
     if [[ -f "scripts/migrate.sh" ]]; then
         bash scripts/migrate.sh
     elif [[ -n "$(pnpm run | grep migrate)" ]]; then
-        pnpm run migrate
+        pnpm run db:migrate
     else
         warning "No migration script found, skipping migrations"
     fi
