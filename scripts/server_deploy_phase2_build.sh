@@ -370,6 +370,21 @@ copy_data_files() {
     fi
 }
 
+# Create import directory for bulk user imports
+create_import_directory() {
+    log "📥 Creating import directory for bulk user imports..."
+    
+    mkdir -p "$DATA_DIR/import/archive"
+    chmod 700 "$DATA_DIR/import"
+    chmod 700 "$DATA_DIR/import/archive"
+    
+    success "Import directory created ✓"
+    log "  Location: $DATA_DIR/import/"
+    log "  Archive: $DATA_DIR/import/archive/"
+    log "  Usage: Place import-users.csv in import/ directory"
+    log "  Script: bash scripts/import-users.sh"
+}
+
 # Setup PM2
 setup_pm2() {
     log "🔧 Setting up PM2 configuration..."
@@ -447,7 +462,13 @@ print_next_steps() {
     echo "   - Delete or encrypt PASSWORDS.csv after distribution"
     echo "   - See docs/PASSWORD_SYSTEM.md for details"
     echo ""
-    echo "5. Run Phase 3 as root to configure domains and SSL:"
+    echo "5. (Optional) Import additional users:"
+    echo "   - Create import-users.csv with user data"
+    echo "   - Upload to $DATA_DIR/import/"
+    echo "   - Run: bash scripts/import-users.sh"
+    echo "   - See docs/USER_IMPORT_SYSTEM.md for details"
+    echo ""
+    echo "6. Run Phase 3 as root to configure domains and SSL:"
     echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
     echo ""
     echo "========================================================================="
@@ -468,6 +489,7 @@ main() {
     build_application
     sync_to_live
     copy_data_files
+    create_import_directory
     setup_pm2
     print_next_steps
 }

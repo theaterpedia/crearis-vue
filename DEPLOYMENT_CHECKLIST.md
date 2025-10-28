@@ -23,6 +23,64 @@
 
 ---
 
+## ⚠️ Pre-Deployment Backup (CRITICAL)
+
+**Always backup before deployment!**
+
+### On Production Server
+
+```bash
+# SSH to production server
+ssh pruvious@production-server
+
+# Create timestamped backup
+cd /opt/crearis/source
+pnpm db:backup pre_deployment_$(date +%Y%m%d)
+
+# Or with version number
+pnpm db:backup pre_deployment_v0.1.0
+```
+
+### Verify Backup
+
+```bash
+# Check backup was created
+ls -lh /opt/crearis/backups/
+# Should show: db_backup_pre_deployment_*.sql.gz
+
+# Verify backup integrity
+gunzip -t /opt/crearis/backups/db_backup_pre_deployment_*.sql.gz
+# Should show: OK (no errors)
+
+# Check backup size (should be > 1MB for populated database)
+du -h /opt/crearis/backups/db_backup_pre_deployment_*.sql.gz
+```
+
+### Backup Checklist
+
+- [ ] Backup created successfully
+- [ ] Backup file integrity verified
+- [ ] Backup file size is reasonable (> 1MB)
+- [ ] Backup location: `/opt/crearis/backups/`
+- [ ] Backup filename contains date/version
+
+### In Case of Emergency
+
+If deployment fails, restore from backup:
+```bash
+# Stop application
+pm2 stop crearis-vue
+
+# Restore database
+gunzip -c /opt/crearis/backups/db_backup_pre_deployment_*.sql.gz | \
+    psql -U crearis_admin -d crearis_admin_prod
+
+# Restart application
+pm2 restart crearis-vue
+```
+
+---
+
 ## Phase 1: Repository Clone (as root)
 
 ```bash
@@ -305,6 +363,122 @@ rsync -av --delete .output/ /opt/crearis/live/
 cd /opt/crearis/live
 pm2 restart crearis-vue
 ```
+
+---
+
+## 📥 Optional: Bulk User Import (Post-Deployment)
+
+**When to use:** Adding users after initial deployment
+
+### Preparation (on local machine)
+
+1. **Create CSV file** `import-users.csv`:
+   ```csv
+   sysmail,extmail,username,password,role,lang,instructor_id/xmlid
+   "john.doe@example.com","","John Doe","","user","de",""
+   "jane@example.com","jane@ext.com","Jane Smith","","base","en","instructor.xmlid"
+   ```
+
+2. **Validate CSV**:
+   - Required: sysmail, username
+   - Leave password empty (auto-generated)
+   - Valid roles: admin, base, user
+   - Valid languages: de, en, cz
+
+### Upload to Server
+
+```bash
+# Copy CSV to import directory
+scp import-users.csv pruvious@server:/opt/crearis/data/import/
+```
+
+### Run Import
+
+```bash
+# SSH to server
+ssh pruvious@server
+
+# Navigate to source
+cd /opt/crearis/source
+
+# Run import script
+bash scripts/import-users.sh
+
+# Script will:
+# ✓ Validate CSV format
+# ✓ Generate random passwords
+# ✓ Import users to database
+# ✓ Update PASSWORDS.csv
+# ✓ Archive processed CSV
+```
+
+### Verify Import
+
+```bash
+# Check import statistics (displayed by script)
+# Should show:
+# - Total rows processed
+# - New users created
+# - Passwords generated
+# - File archived
+
+# View new passwords
+tail -n 10 /opt/crearis/data/PASSWORDS.csv
+
+# Verify in database
+psql -U crearis_admin -d crearis_admin_prod -c "SELECT COUNT(*) FROM users;"
+```
+
+### Distribute New Passwords
+
+```bash
+# Extract passwords for new users
+grep -E "john.doe|jane@" /opt/crearis/data/PASSWORDS.csv
+
+# Securely distribute (see Phase 2 password distribution)
+# - Encrypted email
+# - Password manager
+# - Secure file sharing
+```
+
+### Checklist
+
+- [ ] CSV created with correct format
+- [ ] CSV uploaded to `/opt/crearis/data/import/`
+- [ ] Import script executed successfully
+- [ ] PASSWORDS.csv updated
+- [ ] Original CSV archived to `archive/` directory
+- [ ] New passwords distributed securely
+- [ ] Passwords deleted/encrypted after distribution
+- [ ] Users notified to change password on first login
+
+### Troubleshooting
+
+**Permission denied:**
+```bash
+sudo chown pruvious:pruvious /opt/crearis/data/import/import-users.csv
+sudo chmod 600 /opt/crearis/data/import/import-users.csv
+```
+
+**Script not found:**
+```bash
+ls -la /opt/crearis/source/scripts/import-users.sh
+chmod +x /opt/crearis/source/scripts/import-users.sh
+```
+
+**Database error:**
+```bash
+# Test database connection
+psql -U crearis_admin -h localhost -d crearis_admin_prod -c "SELECT 1;"
+```
+
+### For Detailed Documentation
+
+See: `docs/USER_IMPORT_SYSTEM.md`
+- Complete CSV format specification
+- Advanced usage examples
+- Error handling guide
+- Rollback procedures
 
 ---
 

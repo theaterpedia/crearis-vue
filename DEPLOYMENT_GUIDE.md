@@ -108,6 +108,135 @@ All passwords are stored in `/opt/crearis/data/PASSWORDS.csv` for distribution.
 
 ---
 
+## 📥 Bulk User Import (Post-Deployment)
+
+After initial deployment, you can add additional users in bulk using the user import system.
+
+### Import Location
+
+```
+/opt/crearis/data/import/
+├── import-users.csv       # Place CSV here for import
+└── archive/               # Processed files archived automatically
+    └── YYYY-MM-DDTHH-MM-SS_import-users.csv
+```
+
+### CSV Format
+
+Create `import-users.csv` with the following format:
+
+```csv
+sysmail,extmail,username,password,role,lang,instructor_id/xmlid
+"john.doe@example.com","","John Doe","","user","de",""
+"jane@example.com","jane@company.com","Jane Smith","","base","en","project.partner.jane"
+"instructor@example.com","","Instructor Name","","user","de","instructor.xmlid"
+```
+
+**Field Descriptions:**
+- `sysmail`: Primary email (required, unique)
+- `extmail`: Secondary email (optional)
+- `username`: Display name (required)
+- `password`: Leave empty (auto-generated)
+- `role`: `admin`, `base`, or `user` (default: `user`)
+- `lang`: `de`, `en`, or `cz` (default: `de`)
+- `instructor_id/xmlid`: Link to instructor by xmlid (optional)
+
+### Import Process
+
+1. **Create CSV file** with new users (on your local machine)
+
+2. **Upload to server**:
+   ```bash
+   scp import-users.csv pruvious@server:/opt/crearis/data/import/
+   ```
+
+3. **Run import script** (on server as pruvious):
+   ```bash
+   cd /opt/crearis/source
+   bash scripts/import-users.sh
+   ```
+
+4. **Review output**:
+   - Shows validation results
+   - Displays import statistics
+   - Archives processed file with timestamp
+   - Updates PASSWORDS.csv with new user passwords
+
+5. **Distribute new passwords**:
+   ```bash
+   # View new passwords
+   tail -n +1 /opt/crearis/data/PASSWORDS.csv | grep -E "john.doe|jane@"
+   
+   # Securely distribute to users
+   # (See Password Distribution section above)
+   ```
+
+### Features
+
+- ✅ **Automatic password generation**: Random 10-character passwords
+- ✅ **Idempotent**: Safe to re-run, skips existing users
+- ✅ **Validation**: Checks email format, required fields, valid roles/languages
+- ✅ **Instructor creation**: Auto-creates or links instructor profiles
+- ✅ **Password merging**: Appends to existing PASSWORDS.csv
+- ✅ **File archiving**: Processed files archived with timestamp
+- ✅ **Error handling**: Comprehensive logging and error messages
+
+### Security Notes
+
+1. **File Permissions**:
+   ```bash
+   chmod 600 /opt/crearis/data/import/import-users.csv
+   chmod 700 /opt/crearis/data/import
+   ```
+
+2. **After Import**:
+   - Original CSV is moved to archive/
+   - PASSWORDS.csv updated with new entries
+   - Distribute passwords securely
+   - Delete or encrypt PASSWORDS.csv after distribution
+
+### Troubleshooting
+
+**Issue: Permission denied**
+```bash
+# Check ownership
+ls -la /opt/crearis/data/import/
+# Should be owned by pruvious
+
+# Fix permissions
+sudo chown -R pruvious:pruvious /opt/crearis/data/import/
+sudo chmod 700 /opt/crearis/data/import/
+```
+
+**Issue: Import script not found**
+```bash
+# Check script location
+ls -la /opt/crearis/source/scripts/import-users.sh
+
+# Make executable if needed
+chmod +x /opt/crearis/source/scripts/import-users.sh
+```
+
+**Issue: Database connection error**
+```bash
+# Verify .env configuration
+cat /opt/crearis/source/.env | grep DB_
+
+# Test database connection
+psql -U $DB_USER -h $DB_HOST -d $DB_NAME -c "SELECT 1;"
+```
+
+### For Detailed Documentation
+
+See `docs/USER_IMPORT_SYSTEM.md` for:
+- Complete CSV format specification
+- Advanced usage examples
+- Integration with migrations
+- Testing procedures
+- Rollback instructions
+
+---
+
 ## Pre-Deployment Testing Checklist
 
 ### 0. System Requirements
@@ -631,42 +760,167 @@ pm2 restart crearis-vue
 
 ### Database Backup
 
-#### SQLite Backup (⚠️ OUTDATED - NOT SUPPORTED)
+The application includes automated backup scripts for production database management.
+
+#### Automated Backup Scripts (✅ RECOMMENDED)
+
+**Production Backup** (on server):
 ```bash
-# ⚠️ WARNING: SQLite is outdated and not supported
+# Quick backup using pnpm
+cd /opt/crearis/source
+pnpm db:backup
+
+# Or run script directly
+bash scripts/backup-production-db.sh
+
+# Named backup (e.g., before deployment)
+pnpm db:backup pre_deployment_v1.2.0
+```
+
+**Features:**
+- ✅ Compressed backups (gzip)
+- ✅ Automatic retention (7 days default)
+- ✅ Integrity verification
+- ✅ Secure permissions (600)
+- ✅ Timestamped filenames
+
+**Output Location:**
+```
+/opt/crearis/backups/
+└── db_backup_YYYYMMDD_HHMMSS.sql.gz
+```
+
+#### Development Recovery (from production backup)
+
+**Download and restore production data to dev:**
+```bash
+# 1. Download backup from production
+scp pruvious@server:/opt/crearis/backups/db_backup_20251028_020000.sql.gz \
+    ~/backups/
+
+# 2. Restore to local dev database
+cd /path/to/crearis-vue
+pnpm db:restore ~/backups/db_backup_20251028_020000.sql.gz
+
+# 3. Script automatically:
+#    - Drops local dev database
+#    - Restores production data
+#    - Re-runs migrations (syncs schema with code)
+#    - Verifies integrity
+```
+
+#### Automated Backup Scheduling
+
+**Option 1: PM2 Integration** (recommended)
+```javascript
+// /opt/crearis/live/ecosystem.config.js
+module.exports = {
+  apps: [{
+    name: 'crearis-vue',
+    script: './server/index.mjs',
+    cron_restart: '0 2 * * *',  // Daily at 2 AM
+    post_restart: 'bash /opt/crearis/scripts/backup-production-db.sh',
+  }]
+};
+```
+
+**Option 2: System Cron**
+```bash
+# Edit crontab
+crontab -e
+
+# Add daily backup at 2 AM
+0 2 * * * cd /opt/crearis/source && bash scripts/backup-production-db.sh
+
+# Add weekly archive on Sunday at 3 AM
+0 3 * * 0 cd /opt/crearis/source && bash scripts/backup-production-db.sh weekly
+```
+
+#### Manual Backup Commands
+
+**For reference or custom workflows:**
+```bash
+# Manual PostgreSQL dump
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        -F p \
+        --no-owner \
+        --no-acl \
+        | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Schema only (no data)
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        --schema-only \
+        -F p \
+        | gzip > schema_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Specific tables
+pg_dump -U crearis_admin \
+        -h localhost \
+        -d crearis_admin_prod \
+        -t users -t projects -t events \
+        -F p \
+        | gzip > tables_$(date +%Y%m%d_%H%M%S).sql.gz
+```
+
+#### Backup Best Practices
+
+1. **Always backup before**:
+   - Major deployments
+   - Schema migrations
+   - Configuration changes
+   - Version updates
+
+2. **Test restore process**:
+   ```bash
+   # Test on dev box monthly
+   pnpm db:restore <backup_file>
+   # Verify data integrity
+   # Check application functionality
+   ```
+
+3. **Retention strategy**:
+   - Daily: 7 days (automatic)
+   - Weekly: 4 weeks (manual archive)
+   - Monthly: 12 months (off-site storage)
+
+4. **Off-site storage**:
+   ```bash
+   # Encrypt and store remotely
+   gpg --encrypt --recipient admin@example.com backup.sql.gz
+   scp backup.sql.gz.gpg remote-server:/secure/backups/
+   ```
+
+#### For Detailed Documentation
+
+See comprehensive backup/recovery documentation:
+- `docs/DATABASE_BACKUP_RECOVERY.md` - Complete backup/recovery procedures
+- `docs/DATABASE_SAFETY_PRODUCTION.md` - Production safety analysis
+- Scripts: `scripts/backup-production-db.sh`, `scripts/restore-from-production.sh`
+
+#### Legacy SQLite Backup (⚠️ NOT SUPPORTED)
+
+```bash
+# ⚠️ WARNING: SQLite is no longer supported
 # ⚠️ Application requires PostgreSQL JSONB fields
-# ⚠️ SQLite backup scripts are provided for reference only
+# ⚠️ Below commands for reference only
 
 # Manual backup (OUTDATED)
 # cp crearis-vue.db crearis-vue.db.backup.$(date +%Y%m%d_%H%M%S)
-
-# Automated SQLite backup script (OUTDATED)
-#!/bin/bash
-# BACKUP_DIR="/var/backups/crearis-vue"
-# mkdir -p $BACKUP_DIR
-# cp crearis-vue.db "$BACKUP_DIR/crearis-vue.db.$(date +%Y%m%d_%H%M%S)"
-# find $BACKUP_DIR -name "*.db.*" -mtime +7 -delete
-```
-
-#### PostgreSQL Backup (✅ REQUIRED)
-```bash
-# Manual backup
-pg_dump -h localhost -U crearis_prod -d crearis_production > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Automated PostgreSQL backup script
-#!/bin/bash
-BACKUP_DIR="/var/backups/crearis-vue"
-mkdir -p $BACKUP_DIR
-export PGPASSWORD="your_password"
-pg_dump -h localhost -U crearis_prod -d crearis_production > "$BACKUP_DIR/crearis_$(date +%Y%m%d_%H%M%S).sql"
-gzip "$BACKUP_DIR/crearis_$(date +%Y%m%d_%H%M%S).sql"
-find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
 ```
 
 ### Application Backup
 ```bash
-# Backup entire application
-tar -czf crearis-vue-backup-$(date +%Y%m%d).tar.gz .output/ server/data/
+# Backup entire application (code + build)
+tar -czf crearis-vue-backup-$(date +%Y%m%d).tar.gz \
+    .output/ \
+    server/data/ \
+    .env
+
+# Exclude: node_modules, git, logs
 ```
 
 ## Troubleshooting
