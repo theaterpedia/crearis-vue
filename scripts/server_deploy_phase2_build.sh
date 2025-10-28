@@ -272,7 +272,7 @@ run_migrations() {
     if [[ -f "scripts/migrate.sh" ]]; then
         bash scripts/migrate.sh
     elif [[ -n "$(pnpm run | grep migrate)" ]]; then
-        pnpm run migrate
+        pnpm run db:migrate
     else
         warning "No migration script found, skipping migrations"
     fi
@@ -496,19 +496,27 @@ print_next_steps() {
     echo "   ls -la $LIVE_DIR/server/data"
     echo "   ls -la $DATA_DIR/PASSWORDS.csv"
     echo ""
-    echo "4. Distribute passwords to users (SECURITY):"
+    echo "4. ⚠️  IMPORTANT: Prevent auto-migrations on restart"
+    echo "   Edit $SOURCE_DIR/.env and change:"
+    echo "   SKIP_MIGRATIONS=false  →  SKIP_MIGRATIONS=true"
+    echo ""
+    echo "   This prevents migrations from running automatically when PM2 restarts."
+    echo "   For future schema changes, run migrations manually with:"
+    echo "   pnpm db:migrate"
+    echo ""
+    echo "5. Distribute passwords to users (SECURITY):"
     echo "   - Copy $DATA_DIR/PASSWORDS.csv securely"
     echo "   - Distribute via encrypted channel"
     echo "   - Delete or encrypt PASSWORDS.csv after distribution"
     echo "   - See docs/PASSWORD_SYSTEM.md for details"
     echo ""
-    echo "5. (Optional) Import additional users:"
+    echo "6. (Optional) Import additional users:"
     echo "   - Create import-users.csv with user data"
     echo "   - Upload to $DATA_DIR/import/"
     echo "   - Run: bash scripts/import-users.sh"
     echo "   - See docs/USER_IMPORT_SYSTEM.md for details"
     echo ""
-    echo "6. Run Phase 3 as root to configure domains and SSL:"
+    echo "7. Run Phase 3 as root to configure domains and SSL:"
     echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
     echo ""
     echo "========================================================================="

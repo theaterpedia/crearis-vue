@@ -224,8 +224,9 @@ PORT=3000
 HOST=0.0.0.0
 
 # Migration Control
-# Set to true initially - Phase 2 will run migrations explicitly
-SKIP_MIGRATIONS=true
+# Set to false for initial deployment (Phase 2 will run migrations)
+# Change to true after Phase 2 completes to prevent auto-migrations on restart
+SKIP_MIGRATIONS=false
 
 # =============================================================================
 # Application Configuration

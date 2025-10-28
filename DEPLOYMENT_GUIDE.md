@@ -392,6 +392,10 @@ bash server_deploy_phase2_build.sh
 - Sets up PM2 configuration
 
 **After Phase 2:**
+- **⚠️ IMPORTANT**: Edit `/opt/crearis/source/.env` and change `SKIP_MIGRATIONS=false` to `SKIP_MIGRATIONS=true`
+  - This prevents migrations from running automatically on PM2 restart
+  - Future schema changes should be run manually: `pnpm db:migrate`
+  - This ensures database stability and prevents accidental schema changes
 - Start application: `pm2 start /opt/crearis/live/ecosystem.config.js`
 - Enable PM2 on boot: `pm2 startup` (follow instructions)
 - Save PM2 configuration: `pm2 save`
@@ -697,8 +701,45 @@ NODE_ENV=production
 PORT=3000
 HOST=0.0.0.0
 
-# Skip migrations in production (run manually)
+# Migration Control (IMPORTANT!)
+# Initial deployment: Set to false so Phase 2 can run migrations
+# After Phase 2 completes: Change to true to prevent auto-migrations on restart
+# For future schema changes: Run migrations manually with 'pnpm db:migrate'
 SKIP_MIGRATIONS=true
+```
+
+### Migration Control Strategy
+
+**Why SKIP_MIGRATIONS matters:**
+
+1. **Initial Deployment (Phase 2)**:
+   - Set `SKIP_MIGRATIONS=false` in `.env`
+   - Phase 2 runs migrations to create database schema
+   - All tables, indexes, and seed data are created
+
+2. **After Phase 2 Completes**:
+   - Change to `SKIP_MIGRATIONS=true`
+   - Prevents migrations from running on every PM2 restart
+   - Protects against accidental schema changes
+   - Ensures database stability
+
+3. **Future Updates**:
+   - Keep `SKIP_MIGRATIONS=true` in production
+   - Run migrations manually when needed: `pnpm db:migrate`
+   - Test migrations on staging first
+   - Backup database before schema changes
+
+**Best Practice**:
+```bash
+# After Phase 2, always set:
+SKIP_MIGRATIONS=true
+
+# Only set to false temporarily for manual migration runs:
+# 1. Backup database
+# 2. Set SKIP_MIGRATIONS=false
+# 3. Run: pnpm db:migrate
+# 4. Verify changes
+# 5. Set SKIP_MIGRATIONS=true again
 ```
 
 ## SSL/HTTPS Setup
