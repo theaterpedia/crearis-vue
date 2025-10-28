@@ -17,6 +17,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Node v22 required for Nitro 3.0
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env.deploy"
@@ -214,6 +218,42 @@ install_dependencies() {
     pnpm install --frozen-lockfile --prod=false
     
     success "Dependencies installed ✓"
+}
+
+# Setup data directory symlink in source
+setup_source_data_symlink() {
+    log "🔗 Setting up data directory symlink in source..."
+    
+    # Ensure persistent data directory exists
+    mkdir -p "$DATA_DIR"
+    
+    # Create server directory in source if doesn't exist
+    mkdir -p "$SOURCE_DIR/server"
+    
+    # Remove existing server/data if it's a regular directory or broken symlink
+    if [[ -e "$SOURCE_DIR/server/data" ]] || [[ -L "$SOURCE_DIR/server/data" ]]; then
+        if [[ ! -L "$SOURCE_DIR/server/data" ]]; then
+            # It's a regular directory, move contents to persistent storage
+            log "Moving existing data directory contents to $DATA_DIR..."
+            if [[ -d "$SOURCE_DIR/server/data" ]]; then
+                cp -rn "$SOURCE_DIR/server/data/"* "$DATA_DIR/" 2>/dev/null || true
+            fi
+        fi
+        rm -rf "$SOURCE_DIR/server/data"
+    fi
+    
+    # Create symlink from source to persistent data directory
+    log "Creating symlink: $SOURCE_DIR/server/data -> $DATA_DIR"
+    ln -sfn "$DATA_DIR" "$SOURCE_DIR/server/data"
+    
+    # Verify symlink
+    if [[ -L "$SOURCE_DIR/server/data" ]] && [[ -d "$SOURCE_DIR/server/data" ]]; then
+        success "Source data directory symlinked ✓"
+        log "  $SOURCE_DIR/server/data -> $DATA_DIR"
+    else
+        error "Failed to create source data symlink"
+        exit 1
+    fi
 }
 
 # Run database migrations
@@ -485,6 +525,7 @@ main() {
     test_database_connection
     create_database
     install_dependencies
+    setup_source_data_symlink
     run_migrations
     build_application
     sync_to_live
