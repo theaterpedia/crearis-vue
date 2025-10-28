@@ -57,6 +57,9 @@
     "db:rebuild": "tsx server/database/drop-and-rebuild-pg.ts",
     "db:check-structure": "tsx server/database/check-structure.ts",
     "db:check-structure:version": "tsx server/database/check-structure.ts",
+    "db:backup": "bash scripts/backup-production-db.sh",
+    "db:restore": "bash scripts/restore-from-production.sh",
+    "user:import": "tsx server/scripts/import-users.ts",
     "version:check": "tsx server/database/check-structure.ts",
     "version:bump": "tsx server/database/update-version.ts"
   },
