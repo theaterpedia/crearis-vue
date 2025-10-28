@@ -480,6 +480,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3000,
+      SKIP_MIGRATIONS: 'true',
       DB_USER: '$DB_USER',
       DB_PASSWORD: '$DB_PASSWORD',
       DB_NAME: '$DB_NAME',
