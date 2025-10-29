@@ -32,7 +32,7 @@
         <div class="field-group">
             <h4>Extended Options (JSON)</h4>
             <JsonFieldEditor v-model="localData.page_options_ext" :fields="extendedFields"
-                @update:modelValue="emitChange" />
+                @update:modelValue="handleExtOptionsChange" />
         </div>
     </div>
 </template>
@@ -59,7 +59,11 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const localData = ref<PageOptions>({ ...props.modelValue })
+// Initialize with page_options_ext as empty object if undefined
+const localData = ref<PageOptions>({
+    ...props.modelValue,
+    page_options_ext: props.modelValue.page_options_ext || {}
+})
 
 const extendedFields = [
     { key: 'fullwidth', type: 'Boolean' as const },
@@ -69,11 +73,19 @@ const extendedFields = [
 ]
 
 watch(() => props.modelValue, (newValue) => {
-    localData.value = { ...newValue }
+    localData.value = {
+        ...newValue,
+        page_options_ext: newValue.page_options_ext || {}
+    }
 }, { deep: true })
 
 function emitChange() {
     emit('update:modelValue', { ...localData.value })
+}
+
+function handleExtOptionsChange(value: Record<string, any>) {
+    localData.value.page_options_ext = value
+    emitChange()
 }
 </script>
 

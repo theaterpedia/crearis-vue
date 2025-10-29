@@ -2,7 +2,7 @@
     <div class="project-navigation">
         <!-- Header -->
         <div class="navigation-header">
-            <HeadingParser v-if="projectName && projectName.trim()" :heading="projectName" tag="h2" />
+            <HeadingParser v-if="projectName && projectName.trim()" :content="projectName" as="h2" />
             <h2 v-else>Navigation</h2>
         </div>
 

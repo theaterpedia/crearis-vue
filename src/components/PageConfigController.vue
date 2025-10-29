@@ -108,8 +108,7 @@ async function loadConfiguration() {
             // Load from projects table
             const response = await fetch(`/api/projects/${props.project}`)
             if (!response.ok) throw new Error('Failed to load project')
-            const data = await response.json()
-            const project = data.project
+            const project = await response.json()
 
             // Map project fields to panels
             pageOptions.value = {
