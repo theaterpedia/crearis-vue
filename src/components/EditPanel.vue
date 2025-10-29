@@ -1,18 +1,14 @@
 <template>
-    <VDropdown :shown="isOpen" :auto-hide="false" :placement="placement" theme="edit-panel" :triggers="[]" :distance="0"
-        strategy="fixed" @apply-hide="$emit('close')">
-        <!-- Invisible anchor point -->
-        <div ref="anchorRef" style="position: fixed; top: 0; right: 0; width: 0; height: 0;"></div>
-
-        <template #popper="{ hide }">
-            <div class="edit-panel" :class="`edit-panel-${panelSize}`" :style="panelStyles">
+    <Teleport to="body">
+        <Transition name="slide-panel">
+            <div v-if="isOpen" class="edit-panel" :class="`edit-panel-${panelSize}`" :style="panelStyles">
                 <!-- Header -->
                 <div class="edit-panel-header">
                     <div class="header-content">
                         <h2 class="panel-title">{{ title }}</h2>
                         <p v-if="subtitle" class="panel-subtitle">{{ subtitle }}</p>
                     </div>
-                    <button class="close-btn" @click="handleClose(hide)" aria-label="Close">
+                    <button class="close-btn" @click="handleClose" aria-label="Close">
                         <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -25,21 +21,25 @@
                 <!-- Body with scroll -->
                 <div class="edit-panel-body">
                     <form @submit.prevent="handleSave" class="edit-form">
-                        <!-- Heading -->
-                        <div class="form-group">
-                            <label class="form-label" for="edit-heading">
-                                Heading
-                                <span class="required">*</span>
-                            </label>
-                            <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
-                                placeholder="Enter heading..." required />
-                        </div>
-
-                        <!-- Teaser -->
-                        <div class="form-group">
-                            <label class="form-label" for="edit-teaser">Teaser</label>
-                            <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
-                                placeholder="Brief description..."></textarea>
+                        <!-- Heading + Header Type Row -->
+                        <div class="form-row">
+                            <div class="form-group form-group-flex">
+                                <label class="form-label" for="edit-heading">
+                                    Heading
+                                    <span class="required">*</span>
+                                </label>
+                                <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
+                                    placeholder="Enter heading..." required />
+                            </div>
+                            <div class="form-group form-group-fixed">
+                                <label class="form-label" for="edit-header-type">Header Type</label>
+                                <select id="edit-header-type" v-model="formData.header_type" class="form-select">
+                                    <option value="">Default</option>
+                                    <option value="hero">Hero</option>
+                                    <option value="banner">Banner</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Cover Image URL -->
@@ -47,20 +47,16 @@
                             <label class="form-label" for="edit-cimg">Cover Image URL</label>
                             <input id="edit-cimg" v-model="formData.cimg" type="url" class="form-input"
                                 placeholder="https://..." />
-                            <div v-if="formData.cimg" class="image-preview">
+                            <div v-if="formData.cimg && !isSmallHeight" class="image-preview">
                                 <img :src="formData.cimg" alt="Preview" @error="handleImageError" />
                             </div>
                         </div>
 
-                        <!-- Header Type -->
+                        <!-- Teaser -->
                         <div class="form-group">
-                            <label class="form-label" for="edit-header-type">Header Type</label>
-                            <select id="edit-header-type" v-model="formData.header_type" class="form-select">
-                                <option value="">Default</option>
-                                <option value="hero">Hero</option>
-                                <option value="banner">Banner</option>
-                                <option value="minimal">Minimal</option>
-                            </select>
+                            <label class="form-label" for="edit-teaser">Teaser</label>
+                            <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
+                                placeholder="Brief description..."></textarea>
                         </div>
 
                         <!-- Header Size (if available) -->
@@ -90,7 +86,7 @@
 
                         <!-- Action Buttons -->
                         <div class="form-actions">
-                            <button type="button" class="btn-secondary" @click="handleClose(hide)" :disabled="isSaving">
+                            <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSaving">
                                 Cancel
                             </button>
                             <button type="submit" class="btn-primary" :disabled="isSaving">
@@ -101,8 +97,8 @@
                     </form>
                 </div>
             </div>
-        </template>
-    </VDropdown>
+        </Transition>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -161,6 +157,12 @@ const panelSize = computed(() => {
     return 'large'
 })
 
+// Check if screen height is small (hide image preview if < 900px)
+const isSmallHeight = computed(() => {
+    if (typeof window === 'undefined') return false
+    return window.innerHeight < 900
+})
+
 // Apply system theme styles to panel (override page theme)
 const panelStyles = computed(() => {
     // Use system default styles, not the current page theme
@@ -183,8 +185,7 @@ function hasField(fieldName: string): boolean {
 }
 
 // Handle close
-function handleClose(hideFn: () => void) {
-    hideFn()
+function handleClose() {
     emit('close')
 }
 
@@ -220,11 +221,26 @@ watch(() => props.isOpen, (isOpen) => {
 </script>
 
 <style scoped>
+/* Slide Transition */
+.slide-panel-enter-active,
+.slide-panel-leave-active {
+    transition: transform 0.3s ease-out;
+}
+
+.slide-panel-enter-from {
+    transform: translateX(100%);
+}
+
+.slide-panel-leave-to {
+    transform: translateX(100%);
+}
+
 /* Panel Container */
 .edit-panel {
     position: fixed;
     top: 0;
     bottom: 0;
+    max-height: 100vh;
     background: var(--color-bg);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     display: flex;
@@ -323,10 +339,26 @@ watch(() => props.isOpen, (isOpen) => {
     gap: 1.5rem;
 }
 
+.form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.form-group-flex {
+    flex: 1;
+    min-width: 0;
+}
+
+.form-group-fixed {
+    width: 120px;
+    flex-shrink: 0;
 }
 
 .form-label {

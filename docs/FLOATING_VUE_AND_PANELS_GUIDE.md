@@ -1,4 +1,263 @@
-# Floating Vue Integration Guide
+# Floating Vue and Panels Guide
+
+## When to Use Floating Vue (and When Not To)
+
+### ✅ Use Floating Vue For:
+
+**1. Tooltips**
+- Info icons with contextual help
+- Field validation hints
+- Hover explanations
+- Keyboard shortcut hints
+
+**2. Dropdown Menus**
+- Navigation menus
+- Action menus (edit/delete/share)
+- Select components
+- Context menus (right-click)
+
+**3. Popovers**
+- Date pickers
+- Color pickers
+- Mini forms
+- Quick previews
+
+**4. Elements That Need Auto-Positioning**
+- Content that must avoid viewport edges
+- Elements that need collision detection
+- Components that need to flip/shift based on available space
+- Floating elements with arrow pointers
+
+### ❌ Do NOT Use Floating Vue For:
+
+**1. Full-Screen or Fixed-Position Overlays**
+- Modal dialogs that cover the entire screen
+- Side panels with fixed positioning (EditPanel, filters, etc.)
+- Drawers that slide from edges
+- Full-page overlays with backdrop
+
+**Reason:** These don't need auto-positioning or collision detection. Simple `v-if` + `<Teleport>` + CSS is more performant and easier to debug.
+
+**2. Always-Visible UI Elements**
+- Persistent sidebars
+- Static navigation bars
+- Fixed headers/footers
+- Permanent UI chrome
+
+**Reason:** Floating Vue is for temporarily shown elements triggered by user interaction.
+
+**3. Complex Multi-Step Flows**
+- Wizards with multiple screens
+- Form flows with navigation
+- Multi-panel editors
+
+**Reason:** These need route-based state management or dedicated overlay components, not positioning logic.
+
+---
+
+## Overlay Panels and Floating Panels
+
+### Strategy: Choose Based on Positioning Needs
+
+#### Pattern 1: Fixed Overlay Panels (No Auto-Positioning)
+
+**When:** Full-height side panels, drawers, or fixed-position overlays.
+
+**Implementation:**
+```vue
+<template>
+  <Teleport to="body">
+    <Transition name="slide-panel">
+      <div v-if="isOpen" class="overlay-panel">
+        <!-- Panel content -->
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<style scoped>
+.overlay-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;  /* or left: 0 for left panel */
+  width: 25rem;
+  background: var(--color-bg);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+/* Slide transition */
+.slide-panel-enter-active,
+.slide-panel-leave-active {
+  transition: transform 0.3s ease-out;
+}
+
+.slide-panel-enter-from,
+.slide-panel-leave-to {
+  transform: translateX(100%);  /* or translateX(-100%) for left panel */
+}
+</style>
+```
+
+**Benefits:**
+- Simple and predictable
+- No library overhead
+- Easy to debug
+- Full control over positioning
+- Better performance
+
+**Examples:**
+- EditPanel (project/post/event editor)
+- Filter panels
+- Shopping cart sidebars
+- Mobile navigation drawers
+
+---
+
+#### Pattern 2: Floating Panels (With Auto-Positioning)
+
+**When:** Panels that appear near a trigger element and need smart positioning.
+
+**Implementation:**
+```vue
+<template>
+  <VDropdown
+    v-model:shown="isOpen"
+    :auto-hide="false"
+    theme="floating-panel"
+    placement="bottom-start"
+    :distance="8">
+    
+    <button>Open Panel</button>
+
+    <template #popper="{ hide }">
+      <div class="floating-panel">
+        <!-- Panel content -->
+        <button @click="hide()">Close</button>
+      </div>
+    </template>
+  </VDropdown>
+</template>
+
+<style>
+.v-popper--theme-floating-panel .v-popper__inner {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-dropdown);
+  padding: 1rem;
+  max-width: 24rem;
+}
+</style>
+```
+
+**Benefits:**
+- Auto-adjusts if trigger near viewport edge
+- Built-in collision detection
+- Handles scrolling parent containers
+- Arrow pointer positioning
+
+**Examples:**
+- Action menus with extended options
+- Inline property editors
+- Comment/annotation panels
+- Contextual help panels
+
+---
+
+### Decision Tree
+
+```
+Is it full-height or full-screen?
+├─ YES → Use Pattern 1 (Fixed Overlay)
+└─ NO
+   ├─ Does it need to position near a trigger?
+   │  ├─ YES
+   │  │  ├─ Can it be clipped by viewport edges?
+   │  │  │  ├─ YES → Use Pattern 2 (Floating with VDropdown)
+   │  │  │  └─ NO → Use Pattern 1 if simple
+   │  │  └─ NO
+   │  └─ NO → Use Pattern 1 (Fixed Overlay)
+```
+
+---
+
+### Code Alignment Standards
+
+**1. Always Use Teleport**
+```vue
+<!-- ✅ Good: Teleport to body -->
+<Teleport to="body">
+  <div v-if="isOpen">...</div>
+</Teleport>
+
+<!-- ❌ Bad: No teleport (can be clipped) -->
+<div v-if="isOpen" class="absolute">...</div>
+```
+
+**2. Use Vue Transitions**
+```vue
+<!-- ✅ Good: Smooth animations -->
+<Transition name="slide-panel">
+  <div v-if="isOpen">...</div>
+</Transition>
+
+<!-- ❌ Bad: No transition -->
+<div v-if="isOpen">...</div>
+```
+
+**3. Consistent Z-Index Strategy**
+```css
+/* Global z-index scale */
+:root {
+  --z-dropdown: 1000;
+  --z-overlay: 1100;
+  --z-modal: 1200;
+  --z-toast: 1300;
+}
+
+.overlay-panel {
+  z-index: var(--z-overlay);
+}
+```
+
+**4. Emit Close Events (Don't Mutate Props)**
+```vue
+<!-- ✅ Good: Emit event -->
+<script setup>
+const emit = defineEmits(['close'])
+function handleClose() {
+  emit('close')
+}
+</script>
+
+<!-- ❌ Bad: Mutate v-model directly -->
+<script setup>
+const isOpen = defineModel()
+function handleClose() {
+  isOpen.value = false  // Avoid
+}
+</script>
+```
+
+**5. Keyboard Accessibility**
+```vue
+<script setup>
+onMounted(() => {
+  // Close on Escape key
+  const handleEscape = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && props.isOpen) {
+      emit('close')
+    }
+  }
+  window.addEventListener('keydown', handleEscape)
+  onUnmounted(() => window.removeEventListener('keydown', handleEscape))
+})
+</script>
+```
+
+---
 
 ## Overview
 
