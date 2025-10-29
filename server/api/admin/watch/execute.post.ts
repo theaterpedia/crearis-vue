@@ -301,7 +301,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                     ])
                 } else if (entityTable === 'posts') {
                     await db.run(`
-                        INSERT INTO posts (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg, isbase)
+                        INSERT INTO posts (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_xmlid, cimg, isbase)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                         ON CONFLICT(id) DO UPDATE SET
                             name = excluded.name,
@@ -314,7 +314,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                             is_published = excluded.is_published,
                             post_date = excluded.post_date,
                             cover_properties = excluded.cover_properties,
-                            event_id = excluded.event_id,
+                            event_xmlid = excluded.event_xmlid,
                             cimg = excluded.cimg,
                             isbase = 1,
                             updated_at = CURRENT_TIMESTAMP
@@ -335,7 +335,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                     ])
                 } else if (entityTable === 'locations') {
                     await db.run(`
-                        INSERT INTO locations (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id, isbase)
+                        INSERT INTO locations (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_xmlid, isbase)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                         ON CONFLICT(id) DO UPDATE SET
                             name = excluded.name,
@@ -352,7 +352,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                             header_size = excluded.header_size,
                             md = excluded.md,
                             is_location_provider = excluded.is_location_provider,
-                            event_id = excluded.event_id,
+                            event_xmlid = excluded.event_xmlid,
                             isbase = 1,
                             updated_at = CURRENT_TIMESTAMP
                     `, [
@@ -375,7 +375,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                     ])
                 } else if (entityTable === 'instructors') {
                     await db.run(`
-                        INSERT INTO instructors (id, name, email, phone, city, country_id, cimg, description, event_id, isbase)
+                        INSERT INTO instructors (id, name, email, phone, city, country_id, cimg, description, event_xmlid, isbase)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                         ON CONFLICT(id) DO UPDATE SET
                             name = excluded.name,
@@ -385,7 +385,7 @@ async function executeWatchCsvBase(filter: string, skipConflictCheck: boolean = 
                             country_id = excluded.country_id,
                             cimg = excluded.cimg,
                             description = excluded.description,
-                            event_id = excluded.event_id,
+                            event_xmlid = excluded.event_xmlid,
                             isbase = 1,
                             updated_at = CURRENT_TIMESTAMP
                     `, [

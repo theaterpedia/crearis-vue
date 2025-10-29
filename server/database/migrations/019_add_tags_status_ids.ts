@@ -728,7 +728,7 @@ export const migration = {
                     country_id TEXT,
                     cimg TEXT,
                     description TEXT,
-                    event_id TEXT,
+                    event_xmlid TEXT,
                     type TEXT,
                     version_id TEXT,
                     status_id INTEGER REFERENCES status(id),
@@ -741,7 +741,7 @@ export const migration = {
             await db.exec(`
                 INSERT INTO participants (
                     xmlid, name, age, city, country_id, cimg, description,
-                    event_id, type, version_id, status_id, created_at, updated_at
+                    event_xmlid, type, version_id, status_id, created_at, updated_at
                 )
                 SELECT 
                     p.id,
@@ -784,7 +784,7 @@ export const migration = {
                     country_id TEXT,
                     cimg TEXT,
                     description TEXT,
-                    event_id TEXT,
+                    event_xmlid TEXT,
                     version_id TEXT,
                     status_id INTEGER REFERENCES status(id),
                     multiproject TEXT DEFAULT 'yes' CHECK (multiproject IN ('yes', 'no')),
@@ -801,7 +801,7 @@ export const migration = {
             await db.exec(`
                 INSERT INTO instructors (
                     xmlid, name, email, phone, city, country_id, cimg, description,
-                    event_id, version_id, status_id, multiproject, header_type, md, html, isbase,
+                    event_xmlid, version_id, status_id, multiproject, header_type, md, html, isbase,
                     created_at, updated_at
                 )
                 SELECT 
@@ -924,7 +924,7 @@ export const migration = {
                     header_size TEXT,
                     md TEXT,
                     is_location_provider TEXT,
-                    event_id TEXT,
+                    event_xmlid TEXT,
                     version_id TEXT,
                     status_id INTEGER REFERENCES status(id),
                     project_id TEXT,
@@ -939,7 +939,7 @@ export const migration = {
                 INSERT INTO locations (
                     xmlid, name, phone, email, city, zip, street, country_id,
                     is_company, category_id, cimg, header_type, header_size, md,
-                    is_location_provider, event_id, version_id, status_id, project_id, isbase,
+                    is_location_provider, event_xmlid, version_id, status_id, project_id, isbase,
                     created_at, updated_at
                 )
                 SELECT 
@@ -1269,7 +1269,7 @@ export const migration = {
                     is_published TEXT,
                     post_date TEXT,
                     cover_properties TEXT,
-                    event_id TEXT,
+                    event_xmlid TEXT,
                     cimg TEXT,
                     version_id TEXT,
                     created_at TIMESTAMP,
@@ -1289,14 +1289,22 @@ export const migration = {
                 )
             `)
 
-            // Migrate data - dynamically build INSERT based on what columns exist
-            const postSelectColumns = postColumnNames.filter(col => col !== 'id').join(', ')
+            // Migrate data - manually specify columns to handle event_id -> event_xmlid rename
+            // Note: lang, tags_ids, tags_display are new columns with defaults
             await db.exec(`
                 INSERT INTO posts (
-                    xmlid, ${postSelectColumns}
+                    xmlid, name, subtitle, teaser, author_id, blog_id, tag_ids, 
+                    website_published, is_published, post_date, cover_properties, 
+                    event_xmlid, cimg, version_id, created_at, updated_at, status, 
+                    isbase, project, template, public_user, header_type, md, html, 
+                    status_id
                 )
                 SELECT 
-                    id as xmlid, ${postSelectColumns}
+                    id as xmlid, name, subtitle, teaser, author_id, blog_id, tag_ids,
+                    website_published, is_published, post_date, cover_properties,
+                    event_id as event_xmlid, cimg, version_id, created_at, updated_at, status,
+                    isbase, project, template, public_user, header_type, md, html,
+                    status_id
                 FROM posts_old
             `)
 
@@ -1375,7 +1383,55 @@ export const migration = {
             }
 
             // -------------------------------------------------------------------
-            // 3B.5: Note about project field conversion
+            // 3B.5: Update event_instructors.event_id to INTEGER
+            // -------------------------------------------------------------------
+            console.log('\n  🔗 Updating event_instructors.event_id to INTEGER...')
+
+            // Drop foreign key constraint if it exists (will be recreated later in migration 021)
+            await db.exec(`ALTER TABLE event_instructors DROP CONSTRAINT IF EXISTS event_instructors_event_id_fkey`)
+
+            // Convert event_id from TEXT to INTEGER using the mapping
+            // First, create backup
+            await db.exec(`ALTER TABLE event_instructors RENAME TO event_instructors_old`)
+
+            // Create new table with INTEGER event_id
+            await db.exec(`
+                CREATE TABLE event_instructors (
+                    event_id INTEGER NOT NULL,
+                    instructor_id INTEGER NOT NULL,
+                    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (event_id, instructor_id)
+                )
+            `)
+
+            // Migrate data using the event ID mapping
+            const oldEventInstructors = await db.all('SELECT * FROM event_instructors_old')
+            let migratedCount = 0
+            for (const oldRel of oldEventInstructors as any[]) {
+                const newEventId = eventIdMapping[oldRel.event_id]
+                if (newEventId) {
+                    await db.run(
+                        `INSERT INTO event_instructors (event_id, instructor_id, added_at) VALUES ($1, $2, $3)
+                         ON CONFLICT (event_id, instructor_id) DO NOTHING`,
+                        [newEventId, oldRel.instructor_id, oldRel.added_at]
+                    )
+                    migratedCount++
+                } else {
+                    console.log(`    ⚠️  Skipping event_instructor with invalid event_id: ${oldRel.event_id}`)
+                }
+            }
+
+            // Drop old table
+            await db.exec(`DROP TABLE event_instructors_old`)
+
+            // Create indexes
+            await db.exec(`CREATE INDEX IF NOT EXISTS idx_event_instructors_event ON event_instructors(event_id)`)
+            await db.exec(`CREATE INDEX IF NOT EXISTS idx_event_instructors_instructor ON event_instructors(instructor_id)`)
+
+            console.log(`    ✓ event_instructors.event_id converted to INTEGER (${migratedCount} relationships migrated)`)
+
+            // -------------------------------------------------------------------
+            // 3B.6: Note about project field conversion
             // -------------------------------------------------------------------
             console.log('\n  ℹ️  Note: events.project and posts.project remain as TEXT (domaincode)')
             console.log('      These will be converted to project_id INTEGER in Chapter 5B after projects migration')

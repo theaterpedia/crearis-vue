@@ -171,13 +171,11 @@ export default defineEventHandler(async (event) => {
 
     if (user.instructor_id && typeof user.instructor_id === 'number') {
         try {
-            // Note: event_instructors.event_id is TEXT, events.id is INTEGER
-            // Cast event_id to INTEGER for the join
             instructorProjects = await db.all(`
                 SELECT DISTINCT p.domaincode, p.heading, p.owner_id
                 FROM projects p
                 INNER JOIN events e ON p.id = e.project_id
-                INNER JOIN event_instructors ei ON e.id = ei.event_id::INTEGER
+                INNER JOIN event_instructors ei ON e.id = ei.event_id
                 WHERE ei.instructor_id = $1
                 ORDER BY p.heading ASC
             `, [user.instructor_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>

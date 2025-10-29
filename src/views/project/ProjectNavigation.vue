@@ -2,7 +2,8 @@
     <div class="project-navigation">
         <!-- Header -->
         <div class="navigation-header">
-            <h2>Navigation</h2>
+            <HeadingParser v-if="projectName && projectName.trim()" :heading="projectName" tag="h2" />
+            <h2 v-else>Navigation</h2>
         </div>
 
         <!-- Vertical Tabs -->
@@ -18,9 +19,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h } from 'vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 
 interface Props {
     projectId: string
+    projectName?: string
     visibleTabs: string[]
 }
 

@@ -160,8 +160,8 @@
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" />
 
                 <!-- Navigation Mode: status >= 2 -->
-                <ProjectNavigation v-else :project-id="projectId" :visible-tabs="visibleNavigationTabs"
-                    @tab-change="handleTabChange" />
+                <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
+                    :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
             </div>
 
             <!-- Right Column: Editor (60%) -->
@@ -275,6 +275,14 @@ const visibleNavigationTabs = computed(() => {
     }
 
     return tabs
+})
+
+// Safe project name for display
+const projectName = computed(() => {
+    if (!projectData.value) return undefined
+    const heading = projectData.value.heading?.trim()
+    const name = projectData.value.name?.trim()
+    return heading || name || undefined
 })
 
 // Config dropdown state
