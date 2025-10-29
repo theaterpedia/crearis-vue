@@ -38,7 +38,7 @@
             <Section background="muted">
                 <Container>
                     <Prose>
-                        <Heading overline="Project Events" level="h2">Upcoming **Events**</Heading>
+                        <Heading overline="Project Events" level="h2" headline="Upcoming Events" />
                     </Prose>
 
                     <Slider v-if="events.length > 0">
@@ -66,7 +66,7 @@
             <Section background="accent">
                 <Container>
                     <Prose>
-                        <Heading overline="Project Updates" level="h2">Latest **Posts**</Heading>
+                        <Heading overline="Project Updates" level="h2" headline="Latest Posts" />
                     </Prose>
 
                     <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
@@ -91,7 +91,7 @@
             <Section background="muted">
                 <Container>
                     <Prose>
-                        <Heading overline="Meet the Team" level="h2">Our **People**</Heading>
+                        <Heading overline="Meet the Team" level="h2" headline="Our People" />
                     </Prose>
 
                     <Slider v-if="users.length > 0">
