@@ -22,10 +22,14 @@ export const migration = {
 
         console.log('Running migration 013: Alter project status and add pages system...')
 
-        // 1. Alter projects.status to support new values
-        console.log('  - Altering projects.status field...')
+        // 1. Alter projects.status_old to support new values
+        console.log('  - Altering projects.status_old field...')
         if (isPostgres) {
             // Drop existing constraint if any
+            await db.exec(`
+                ALTER TABLE projects 
+                DROP CONSTRAINT IF EXISTS projects_status_old_check
+            `)
             await db.exec(`
                 ALTER TABLE projects 
                 DROP CONSTRAINT IF EXISTS projects_status_check
@@ -38,15 +42,15 @@ export const migration = {
             // Update existing 'final' to 'active' (if any exist)
             await db.exec(`
                 UPDATE projects 
-                SET status = 'active' 
-                WHERE status = 'final'
+                SET status_old = 'active' 
+                WHERE status_old = 'final'
             `)
 
             // Add new constraint
             await db.exec(`
                 ALTER TABLE projects 
-                ADD CONSTRAINT projects_status_check 
-                CHECK (status IN ('new', 'draft', 'demo', 'active', 'trash'))
+                ADD CONSTRAINT projects_status_old_check 
+                CHECK (status_old IN ('new', 'draft', 'demo', 'active', 'trash'))
             `)
         } else {
             // SQLite: Would need to recreate table, skip for now
@@ -156,7 +160,7 @@ export const migration = {
             CREATE INDEX IF NOT EXISTS idx_form_input_project ON form_input(project)
         `)
 
-        // 5. Create trigger for automatic page creation when project status changes from 'new' to 'draft'
+        // 5. Create trigger for automatic page creation when project status_old changes from 'new' to 'draft'
         console.log('  - Creating trigger for automatic page creation...')
         if (isPostgres) {
             // First, create the trigger function
@@ -164,8 +168,8 @@ export const migration = {
                 CREATE OR REPLACE FUNCTION create_project_pages()
                 RETURNS TRIGGER AS $$
                 BEGIN
-                    -- Only create pages if status changed from 'new' to 'draft'
-                    IF OLD.status = 'new' AND NEW.status = 'draft' THEN
+                    -- Only create pages if status_old changed from 'new' to 'draft'
+                    IF OLD.status_old = 'new' AND NEW.status_old = 'draft' THEN
                         -- Create landing page
                         INSERT INTO pages (project, page_type, header_type)
                         VALUES (NEW.id, 'landing', 'simple');
@@ -198,7 +202,7 @@ export const migration = {
                 CREATE TRIGGER trigger_create_project_pages
                 AFTER UPDATE ON projects
                 FOR EACH ROW
-                WHEN (OLD.status IS DISTINCT FROM NEW.status)
+                WHEN (OLD.status_old IS DISTINCT FROM NEW.status_old)
                 EXECUTE FUNCTION create_project_pages()
             `)
         } else {
@@ -210,7 +214,7 @@ export const migration = {
                 CREATE TRIGGER trigger_create_project_pages
                 AFTER UPDATE ON projects
                 FOR EACH ROW
-                WHEN OLD.status = 'new' AND NEW.status = 'draft'
+                WHEN OLD.status_old = 'new' AND NEW.status_old = 'draft'
                 BEGIN
                     INSERT INTO pages (project, page_type, header_type)
                     VALUES (NEW.id, 'landing', 'simple');

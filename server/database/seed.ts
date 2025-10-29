@@ -136,15 +136,15 @@ async function seedUsersAndProjects(db: DatabaseAdapter, userData: UserProjectDa
         const projectId = user.name
         const userId = `${user.name}@theaterpedia.org`
 
-        // Projects table now has: id, heading, description, status, owner_id, created_at, updated_at
+        // Projects table now has: id, heading, description, status_old, owner_id, created_at, updated_at
         // Note: 'name' field replaced with 'heading', formatted as 'Project Overline **[name]**'
         await db.run(`
-            INSERT INTO projects (id, heading, description, status, owner_id)
+            INSERT INTO projects (id, heading, description, status_old, owner_id)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 heading = excluded.heading,
                 description = excluded.description,
-                status = excluded.status,
+                status_old = excluded.status_old,
                 owner_id = excluded.owner_id
         `, [
             projectId,

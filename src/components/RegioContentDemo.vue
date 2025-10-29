@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useStatus } from '@/composables/useStatus'
 import Section from './Section.vue'
 import Container from './Container.vue'
 import Prose from './Prose.vue'
@@ -58,6 +59,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { getStatusIdByName } = useStatus()
 
 // State
 const regioEvents = ref<any[]>([])
@@ -75,16 +78,20 @@ async function fetchRegioEvents() {
         if (response.ok) {
             const allEvents = await response.json()
 
+            // Get status IDs for 'demo' and 'draft' for projects table
+            const demoStatusId = getStatusIdByName('demo', 'projects')
+            const draftStatusId = getStatusIdByName('draft', 'projects')
+
             // Filter events that belong to projects with matching regio and status demo/draft
             const filtered = await Promise.all(
                 allEvents.map(async (event: any) => {
                     if (!event.project_id) return null
 
-                    // Fetch the project to check its regio and status
+                    // Fetch the project to check its regio and status_id
                     const projectResponse = await fetch(`/api/projects/${encodeURIComponent(event.project_id)}`)
                     if (projectResponse.ok) {
                         const project = await projectResponse.json()
-                        if (project.regio === props.regio && (project.status === 'demo' || project.status === 'draft')) {
+                        if (project.regio === props.regio && (project.status_id === demoStatusId || project.status_id === draftStatusId)) {
                             return event
                         }
                     }
@@ -106,16 +113,20 @@ async function fetchRegioPosts() {
         if (response.ok) {
             const allPosts = await response.json()
 
+            // Get status IDs for 'demo' and 'draft' for projects table
+            const demoStatusId = getStatusIdByName('demo', 'projects')
+            const draftStatusId = getStatusIdByName('draft', 'projects')
+
             // Filter posts that belong to projects with matching regio and status demo/draft
             const filtered = await Promise.all(
                 allPosts.map(async (post: any) => {
                     if (!post.project_id) return null
 
-                    // Fetch the project to check its regio and status
+                    // Fetch the project to check its regio and status_id
                     const projectResponse = await fetch(`/api/projects/${encodeURIComponent(post.project_id)}`)
                     if (projectResponse.ok) {
                         const project = await projectResponse.json()
-                        if (project.regio === props.regio && (project.status === 'demo' || project.status === 'draft')) {
+                        if (project.regio === props.regio && (project.status_id === demoStatusId || project.status_id === draftStatusId)) {
                             return post
                         }
                     }

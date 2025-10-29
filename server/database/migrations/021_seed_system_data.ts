@@ -207,8 +207,9 @@ export const migration = {
         const tpExists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['tp'])
         if (!tpExists) {
             await db.exec(`
-                INSERT INTO projects (domaincode, name, type, description, status)
-                VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active')
+                INSERT INTO projects (domaincode, name, type, description, status_id)
+                VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 
+                    (SELECT id FROM status WHERE name = 'draft' AND "table" = 'projects' LIMIT 1))
             `)
             console.log('    ✓ Created tp project (special)')
         } else {
@@ -219,8 +220,9 @@ export const migration = {
         const regio1Exists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['regio1'])
         if (!regio1Exists) {
             await db.exec(`
-                INSERT INTO projects (domaincode, name, type, description, status)
-                VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
+                INSERT INTO projects (domaincode, name, type, description, status_id)
+                VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 
+                    (SELECT id FROM status WHERE name = 'draft' AND "table" = 'projects' LIMIT 1))
             `)
             console.log('    ✓ Created regio1 project (regio)')
         } else {

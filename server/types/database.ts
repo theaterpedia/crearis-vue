@@ -387,7 +387,8 @@ export interface ProjectsTableFields {
     regio?: number | null
     release?: string | null
     role: string
-    status?: string | null // default: 'new'::text
+    status_old?: string | null // Legacy field, renamed from status in migration 000-019
+    status_id?: number | null // INTEGER FK to status table (added in migration 020)
     team_page?: string | null // default: 'yes'::text
     teaser?: string | null
     theme?: number | null
@@ -671,7 +672,7 @@ export function isValidProjectMembersField(key: string): key is keyof ProjectMem
 
 export function isValidProjectsField(key: string): key is keyof ProjectsTableFields {
     const validFields: (keyof ProjectsTableFields)[] = [
-        'id', 'domaincode', 'name', 'description', 'status', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'username', 'password_hash', 'role', 'release'
+        'id', 'domaincode', 'name', 'description', 'status_old', 'status_id', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'username', 'password_hash', 'role', 'release'
     ]
     return validFields.includes(key as keyof ProjectsTableFields)
 }

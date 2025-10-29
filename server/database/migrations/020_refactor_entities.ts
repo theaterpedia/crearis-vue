@@ -345,13 +345,149 @@ export const migration = {
         }
 
         console.log('\n✅ Chapter 2 completed: i18n_codes table created and seeded')
+
+        // ===================================================================
+        // CHAPTER 3: Add status_id field to projects table
+        // ===================================================================
+        console.log('\n📖 Chapter 3: Add status_id field to projects table')
+
+        // -------------------------------------------------------------------
+        // 3.1: Add status_id field to projects table
+        // -------------------------------------------------------------------
+        console.log('\n  🏷️  Adding status_id field to projects...')
+
+        // Add status_id column with default value 18 (status 'new' for projects)
+        await db.exec(`
+            ALTER TABLE projects 
+            ADD COLUMN status_id INTEGER DEFAULT 18 REFERENCES status(id)
+        `)
+
+        // Update existing entries to have status_id = 18
+        await db.exec(`
+            UPDATE projects 
+            SET status_id = 18 
+            WHERE status_id IS NULL
+        `)
+
+        // Make status_id NOT NULL
+        await db.exec(`
+            ALTER TABLE projects 
+            ALTER COLUMN status_id SET NOT NULL
+        `)
+
+        console.log('    ✓ status_id field added to projects')
+
+        // -------------------------------------------------------------------
+        // 3.2: Create trigger for automatic page creation on status change
+        // -------------------------------------------------------------------
+        console.log('\n  🔄 Creating trigger for automatic page creation...')
+
+        // Drop old trigger from migration 013 if it exists
+        await db.exec(`
+            DROP TRIGGER IF EXISTS trigger_create_project_pages ON projects
+        `)
+        await db.exec(`
+            DROP FUNCTION IF EXISTS create_project_pages()
+        `)
+
+        // Create new trigger function for status_id changes
+        await db.exec(`
+            CREATE OR REPLACE FUNCTION create_project_pages_on_status()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- Only trigger when status_id changes to 19 (demo) or 20 (progress)
+                IF (OLD.status_id IS DISTINCT FROM NEW.status_id) AND 
+                   (NEW.status_id = 19 OR NEW.status_id = 20) THEN
+                    
+                    -- Conditional chain: each creates a page and continues to next
+                    -- (exit on true means: if condition is true, execute and move to next)
+                    
+                    -- 1. If is_service = false, create landing page (if doesn't exist)
+                    IF NEW.is_service = FALSE THEN
+                        INSERT INTO pages (project, page_type, header_type)
+                        SELECT NEW.id, 'landing', 'simple'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM pages 
+                            WHERE project = NEW.id AND page_type = 'landing'
+                        );
+                    END IF;
+                    
+                    -- 2. If is_onepage = false, create posts page (if doesn't exist)
+                    IF NEW.is_onepage = FALSE THEN
+                        INSERT INTO pages (project, page_type, header_type)
+                        SELECT NEW.id, 'post', 'simple'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM pages 
+                            WHERE project = NEW.id AND page_type = 'post'
+                        );
+                    END IF;
+                    
+                    -- 3. If is_topic = false, create events page (if doesn't exist)
+                    IF NEW.is_topic = FALSE THEN
+                        INSERT INTO pages (project, page_type, header_type)
+                        SELECT NEW.id, 'event', 'simple'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM pages 
+                            WHERE project = NEW.id AND page_type = 'event'
+                        );
+                    END IF;
+                    
+                    -- 4. If team_page = 'yes', create team page (if doesn't exist)
+                    IF NEW.team_page = 'yes' THEN
+                        INSERT INTO pages (project, page_type, header_type)
+                        SELECT NEW.id, 'team', 'simple'
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM pages 
+                            WHERE project = NEW.id AND page_type = 'team'
+                        );
+                    END IF;
+                END IF;
+                
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        `)
+
+        // Create the trigger
+        await db.exec(`
+            CREATE TRIGGER trigger_create_project_pages_on_status
+            AFTER UPDATE ON projects
+            FOR EACH ROW
+            WHEN (OLD.status_id IS DISTINCT FROM NEW.status_id)
+            EXECUTE FUNCTION create_project_pages_on_status()
+        `)
+
+        console.log('    ✓ Trigger for automatic page creation created')
+
+        // -------------------------------------------------------------------
+        // 3.3: Create index for status_id
+        // -------------------------------------------------------------------
+        console.log('\n  📇 Creating index for projects.status_id...')
+
+        await db.exec(`
+            CREATE INDEX IF NOT EXISTS idx_projects_status_id ON projects(status_id)
+        `)
+
+        console.log('    ✓ Index created')
+
+        console.log('\n✅ Chapter 3 completed: status_id field added to projects')
         console.log('✅ Migration 020 completed')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
         const isPostgres = db.type === 'postgresql'
 
-        console.log('Migration 020 down: Removing i18n core and i18n_codes table...')
+        console.log('Migration 020 down: Removing i18n core, i18n_codes table, and projects.status_id...')
+
+        // Drop status_id field and related objects from projects (Chapter 3)
+        console.log('  → Removing projects.status_id and related objects...')
+
+        await db.exec(`DROP TRIGGER IF EXISTS trigger_create_project_pages_on_status ON projects`)
+        await db.exec(`DROP FUNCTION IF EXISTS create_project_pages_on_status()`)
+        await db.exec(`DROP INDEX IF EXISTS idx_projects_status_id`)
+        await db.exec(`ALTER TABLE projects DROP COLUMN IF EXISTS status_id`)
+
+        console.log('  ✓ Removed projects.status_id field and related objects')
 
         // Drop i18n_codes table (Chapter 2)
         await db.exec(`DROP TABLE IF EXISTS i18n_codes`)

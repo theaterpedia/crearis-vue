@@ -5,7 +5,8 @@ import { db } from '../../database/init'
 import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
 
 interface ProjectRecord {
-    id: string
+    id: string  // Legacy: stores domaincode for backward compatibility
+    domaincode: string  // NEW: explicit domaincode field (same as id for now)
     name: string  // domaincode
     heading?: string  // heading from database
     username: string
@@ -118,7 +119,8 @@ export default defineEventHandler(async (event) => {
 
     for (const proj of ownedProjects) {
         projectRecords.push({
-            id: proj.domaincode,
+            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+            domaincode: proj.domaincode,  // NEW: explicit domaincode field
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
@@ -147,7 +149,8 @@ export default defineEventHandler(async (event) => {
 
     for (const proj of memberProjects) {
         projectRecords.push({
-            id: proj.domaincode,
+            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+            domaincode: proj.domaincode,  // NEW: explicit domaincode field
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
@@ -193,7 +196,8 @@ export default defineEventHandler(async (event) => {
             existing.isInstructor = true
         } else {
             projectRecords.push({
-                id: proj.domaincode,
+                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+                domaincode: proj.domaincode,  // NEW: explicit domaincode field
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback
@@ -228,7 +232,8 @@ export default defineEventHandler(async (event) => {
             existing.isAuthor = true
         } else {
             projectRecords.push({
-                id: proj.domaincode,
+                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+                domaincode: proj.domaincode,  // NEW: explicit domaincode field
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback

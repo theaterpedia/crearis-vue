@@ -1702,7 +1702,7 @@ export const migration = {
                     domaincode TEXT UNIQUE NOT NULL CHECK (domaincode ~ '^[a-z][a-z0-9_]*$'),
                     name TEXT,
                     description TEXT,
-                    status TEXT DEFAULT 'new',
+                    status_old TEXT DEFAULT 'new',
                     owner_id INTEGER REFERENCES users(id),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT,
@@ -1738,7 +1738,7 @@ export const migration = {
             // Migrate data: domaincode from old id, name from old heading
             await db.exec(`
                 INSERT INTO projects (
-                    domaincode, name, description, status, owner_id, created_at, updated_at,
+                    domaincode, name, description, status_old, owner_id, created_at, updated_at,
                     header_type, header_size, md, html, type, regio, partner_projects,
                     heading, theme, cimg, teaser, team_page, cta_title, cta_form,
                     cta_entity, cta_link, is_company, config, domain_id, member_ids
@@ -1747,7 +1747,7 @@ export const migration = {
                     p.id,  -- old id becomes domaincode
                     p.heading,  -- old heading becomes name
                     p.description,
-                    p.status,
+                    p.status_old,
                     p.owner_id,  -- Already converted to INTEGER in Chapter 2
                     p.created_at,
                     p.updated_at,
@@ -2007,7 +2007,7 @@ export const migration = {
                 CREATE INDEX IF NOT EXISTS idx_projects_type ON projects(type)
             `)
             await db.exec(`
-                CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)
+                CREATE INDEX IF NOT EXISTS idx_projects_status_old ON projects(status_old)
             `)
 
             console.log('    ✓ Indexes created')

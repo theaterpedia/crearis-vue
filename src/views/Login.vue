@@ -7,15 +7,13 @@
 
                     <form @submit.prevent="handleLogin" class="login-form">
                         <div class="form-group">
-                            <label for="userId" class="form-label">User ID (Email)</label>
-                            <Input id="userId" v-model="userId" type="email" placeholder="Enter your email" required
-                                :disabled="isLoading" />
+                            <Input id="userId" name="userId" label="User ID (Email)" v-model="userId" type="email"
+                                placeholder="Enter your email" required :disabled="isLoading" />
                         </div>
 
                         <div class="form-group">
-                            <label for="password" class="form-label">Password</label>
-                            <Input id="password" v-model="password" type="password" placeholder="Enter your password"
-                                required :disabled="isLoading" />
+                            <Input id="password" name="password" label="Password" v-model="password" type="password"
+                                placeholder="Enter your password" required :disabled="isLoading" />
                         </div>
 
                         <div v-if="error" class="error-message">

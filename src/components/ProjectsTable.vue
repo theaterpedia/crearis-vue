@@ -32,9 +32,11 @@
                     </td>
                     <td class="td-description">{{ project.description || '-' }}</td>
                     <td>
-                        <span :class="['status-badge', `status-${project.status}`]">
-                            {{ project.status }}
+                        <span v-if="project.status_id"
+                            :class="['status-badge', `status-${getStatusNameFromId(project.status_id)}`]">
+                            {{ getStatusDisplayName(project.status_id, 'projects', 'de') }}
                         </span>
+                        <span v-else class="status-badge status-unknown">-</span>
                     </td>
                     <td class="td-link">
                         <RouterLink :to="`/sites/${project.name}`" class="project-link" title="Homepage besuchen">
@@ -57,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+import { useStatus } from '@/composables/useStatus'
 import HeadingParser from './HeadingParser.vue'
 
 interface Project {
@@ -64,11 +67,11 @@ interface Project {
     name: string  // domaincode
     heading?: string
     description?: string
-    status: string
+    status_id?: number  // INTEGER FK to status table
     created_at: string
 }
 
-defineProps<{
+const props = defineProps<{
     projects: Project[]
     loading?: boolean
 }>()
@@ -78,6 +81,27 @@ defineEmits<{
     edit: [project: Project]
     delete: [project: Project]
 }>()
+
+const { getStatusDisplayName, getStatusIdByName, cacheInitialized } = useStatus()
+
+// Helper to map status_id to status name for CSS class
+function getStatusNameFromId(statusId: number): string {
+    // Common project status IDs from migration 019:
+    // draft: 53, publish: 54, released: 55
+    // Common statuses: new: 18, demo: 19, progress: 20, done: 21, trash: 22, archived: 23
+    const statusMap: Record<number, string> = {
+        18: 'new',
+        19: 'demo',
+        20: 'progress',
+        21: 'done',
+        22: 'trash',
+        23: 'archived',
+        53: 'draft',
+        54: 'publish',
+        55: 'released'
+    }
+    return statusMap[statusId] || 'unknown'
+}
 
 function formatDate(dateString: string): string {
     try {

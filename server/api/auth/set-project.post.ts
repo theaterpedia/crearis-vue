@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
-import { db } from '../../database/db'
+import { db } from '../../database/init'
 
 // Import sessions from login (in production, use Redis)
 import { sessions } from './login.post'
