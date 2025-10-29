@@ -104,7 +104,7 @@
 
           <!-- pList -->
           <pList v-if="asideOptions.list?.type" :type="asideOptions.list.type" :header="asideOptions.list.header"
-            :isAside="true" :projectId="projectId" />
+            :isAside="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pContext -->
           <pContext v-if="asideOptions.context?.content" :content="asideOptions.context.content" :isAside="true" />
@@ -120,7 +120,7 @@
         <Container v-if="footerOptions">
           <!-- pGallery -->
           <pGallery v-if="footerOptions.gallery?.type" :type="footerOptions.gallery.type"
-            :header="footerOptions.gallery.header" :isFooter="true" :projectId="projectId" />
+            :header="footerOptions.gallery.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pPostit -->
           <pPostit v-if="footerOptions.postit?.enabled" :title="footerOptions.postit.title"
@@ -128,7 +128,7 @@
 
           <!-- pSlider -->
           <pSlider v-if="footerOptions.slider?.type" :type="footerOptions.slider.type"
-            :header="footerOptions.slider.header" :isFooter="true" :projectId="projectId" />
+            :header="footerOptions.slider.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pRepeat -->
           <pRepeat v-if="footerOptions.repeat?.enabled" :title="footerOptions.repeat.title"
@@ -247,7 +247,7 @@ const alertBanner = ref(pageSettings.alertBanner)
 interface Props {
   asideOptions?: AsideOptions
   footerOptions?: FooterOptions
-  projectId?: number
+  projectDomaincode?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {

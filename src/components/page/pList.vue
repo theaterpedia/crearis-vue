@@ -23,7 +23,7 @@ interface Props {
     size?: 'small' | 'medium' | 'large'
     interaction?: 'static' | 'popup' | 'zoom'
     limit?: number
-    projectId?: number
+    projectDomaincode?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,8 +64,8 @@ const apiEndpoint = computed(() => {
 async function fetchItems() {
     loading.value = true
     try {
-        const url = props.projectId
-            ? `${apiEndpoint.value}?project_id=${props.projectId}`
+        const url = props.projectDomaincode
+            ? `${apiEndpoint.value}?project=${encodeURIComponent(props.projectDomaincode)}`
             : apiEndpoint.value
 
         const response = await fetch(url)
@@ -88,7 +88,7 @@ onMounted(() => {
     fetchItems()
 })
 
-watch(() => [props.type, props.projectId], () => {
+watch(() => [props.type, props.projectDomaincode], () => {
     fetchItems()
 })
 </script>

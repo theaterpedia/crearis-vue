@@ -6,7 +6,8 @@
             @save="handleSaveProject" />
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="project.id">
+        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
+            :projectDomaincode="project.domaincode">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Edit Panel Button -->
@@ -210,8 +211,8 @@ const editPanelData = computed<EditPanelData>(() => {
 // Check if current user is the project owner
 const isProjectOwner = computed(() => {
     if (!user.value || !project.value) return false
-    // Check if user is project role and projectId matches
-    return user.value.activeRole === 'project' && user.value.projectId === project.value.id
+    // Check if user is project role and projectId (domaincode) matches
+    return user.value.activeRole === 'project' && user.value.projectId === project.value.domaincode
 })
 
 // Check if user can edit (admin or project owner)
@@ -243,7 +244,7 @@ async function handleSaveProject(data: EditPanelData) {
     if (!project.value) return
 
     try {
-        const response = await fetch(`/api/projects/${encodeURIComponent(project.value.id)}`, {
+        const response = await fetch(`/api/projects/${encodeURIComponent(project.value.domaincode)}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
