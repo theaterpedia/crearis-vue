@@ -1,8 +1,6 @@
 <template>
-    <div class="config-panel">
-        <h4>Navigation</h4>
-        <p class="panel-description">Konfigurieren Sie Navigations-Optionen und Call-to-Action</p>
-
+    <BasePanel :is-open="isOpen" title="Navigation Configuration"
+        subtitle="Configure navigation options and call-to-action" @close="handleClose">
         <div class="config-content">
             <!-- Team Page Toggle -->
             <div class="toggle-item">
@@ -65,20 +63,27 @@
                 </div>
             </div>
         </div>
-    </div>
+    </BasePanel>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import BasePanel from './BasePanel.vue'
 
 interface Props {
     projectId: string
+    isOpen: boolean
     isLocked?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    isLocked: false
+    isLocked: false,
+    isOpen: false
 })
+
+const emit = defineEmits<{
+    close: []
+}>()
 
 const showTeamPage = ref(false)
 const ctaTitle = ref('')
@@ -186,26 +191,14 @@ async function updateConfig() {
         console.error('Error updating navigation config:', error)
     }
 }
+
+function handleClose() {
+    emit('close')
+}
 </script>
 
 <style scoped>
-.config-panel {
-    padding: 1.5rem;
-}
-
-.config-panel h4 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin: 0 0 0.5rem 0;
-}
-
-.panel-description {
-    font-size: 0.875rem;
-    color: var(--color-dimmed);
-    margin: 0 0 1.5rem 0;
-}
-
+/* Config Content */
 .config-content {
     display: flex;
     flex-direction: column;

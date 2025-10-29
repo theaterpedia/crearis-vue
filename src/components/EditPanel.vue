@@ -1,109 +1,84 @@
 <template>
-    <Teleport to="body">
-        <Transition name="slide-panel">
-            <div v-if="isOpen" class="edit-panel" :class="`edit-panel-${panelSize}`" :style="panelStyles">
-                <!-- Header -->
-                <div class="edit-panel-header">
-                    <div class="header-content">
-                        <h2 class="panel-title">{{ title }}</h2>
-                        <p v-if="subtitle" class="panel-subtitle">{{ subtitle }}</p>
-                    </div>
-                    <button class="close-btn" @click="handleClose" aria-label="Close">
-                        <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z">
-                            </path>
-                        </svg>
-                    </button>
+    <BasePanel :is-open="isOpen" :title="title" :subtitle="subtitle" :sidebar-mode="sidebarMode" @close="handleClose">
+        <form @submit.prevent="handleSave" class="edit-form">
+            <!-- Heading + Header Type Row -->
+            <div class="form-row">
+                <div class="form-group form-group-flex">
+                    <label class="form-label" for="edit-heading">
+                        Heading
+                        <span class="required">*</span>
+                    </label>
+                    <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
+                        placeholder="Enter heading..." required />
                 </div>
-
-                <!-- Body with scroll -->
-                <div class="edit-panel-body">
-                    <form @submit.prevent="handleSave" class="edit-form">
-                        <!-- Heading + Header Type Row -->
-                        <div class="form-row">
-                            <div class="form-group form-group-flex">
-                                <label class="form-label" for="edit-heading">
-                                    Heading
-                                    <span class="required">*</span>
-                                </label>
-                                <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
-                                    placeholder="Enter heading..." required />
-                            </div>
-                            <div class="form-group form-group-fixed">
-                                <label class="form-label" for="edit-header-type">Header Type</label>
-                                <select id="edit-header-type" v-model="formData.header_type" class="form-select">
-                                    <option value="">Default</option>
-                                    <option value="hero">Hero</option>
-                                    <option value="banner">Banner</option>
-                                    <option value="minimal">Minimal</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Cover Image URL -->
-                        <div class="form-group">
-                            <label class="form-label" for="edit-cimg">Cover Image URL</label>
-                            <input id="edit-cimg" v-model="formData.cimg" type="url" class="form-input"
-                                placeholder="https://..." />
-                            <div v-if="formData.cimg && !isSmallHeight" class="image-preview">
-                                <img :src="formData.cimg" alt="Preview" @error="handleImageError" />
-                            </div>
-                        </div>
-
-                        <!-- Teaser -->
-                        <div class="form-group">
-                            <label class="form-label" for="edit-teaser">Teaser</label>
-                            <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
-                                placeholder="Brief description..."></textarea>
-                        </div>
-
-                        <!-- Header Size (if available) -->
-                        <div v-if="hasField('header_size')" class="form-group">
-                            <label class="form-label" for="edit-header-size">Header Size</label>
-                            <select id="edit-header-size" v-model="formData.header_size" class="form-select">
-                                <option value="">Default</option>
-                                <option value="small">Small</option>
-                                <option value="medium">Medium</option>
-                                <option value="large">Large</option>
-                                <option value="full">Full</option>
-                            </select>
-                        </div>
-
-                        <!-- Markdown Content -->
-                        <div class="form-group">
-                            <label class="form-label" for="edit-md">
-                                Content (Markdown)
-                                <span class="field-hint">Supports **bold**, *italic*, and basic markdown</span>
-                            </label>
-                            <textarea id="edit-md" v-model="formData.md" class="form-textarea form-textarea-large"
-                                rows="12" placeholder="# Your content here..."></textarea>
-                        </div>
-
-                        <!-- Extension Fields Slot -->
-                        <slot name="extension-fields" :formData="formData" />
-
-                        <!-- Action Buttons -->
-                        <div class="form-actions">
-                            <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSaving">
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn-primary" :disabled="isSaving">
-                                <span v-if="isSaving" class="btn-spinner"></span>
-                                <span>{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
-                            </button>
-                        </div>
-                    </form>
+                <div class="form-group form-group-fixed">
+                    <label class="form-label" for="edit-header-type">Header Type</label>
+                    <select id="edit-header-type" v-model="formData.header_type" class="form-select">
+                        <option value="">Default</option>
+                        <option value="hero">Hero</option>
+                        <option value="banner">Banner</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
                 </div>
             </div>
-        </Transition>
-    </Teleport>
+
+            <!-- Cover Image URL -->
+            <div class="form-group">
+                <label class="form-label" for="edit-cimg">Cover Image URL</label>
+                <input id="edit-cimg" v-model="formData.cimg" type="url" class="form-input" placeholder="https://..." />
+                <div v-if="formData.cimg && !isSmallHeight" class="image-preview">
+                    <img :src="formData.cimg" alt="Preview" @error="handleImageError" />
+                </div>
+            </div>
+
+            <!-- Teaser -->
+            <div class="form-group">
+                <label class="form-label" for="edit-teaser">Teaser</label>
+                <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
+                    placeholder="Brief description..."></textarea>
+            </div>
+
+            <!-- Header Size (if available) -->
+            <div v-if="hasField('header_size')" class="form-group">
+                <label class="form-label" for="edit-header-size">Header Size</label>
+                <select id="edit-header-size" v-model="formData.header_size" class="form-select">
+                    <option :value="null">Default</option>
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+
+            <!-- Markdown Content -->
+            <div class="form-group">
+                <label class="form-label" for="edit-md">
+                    Content (Markdown)
+                    <span class="field-hint">Supports **bold**, *italic*, and basic markdown</span>
+                </label>
+                <textarea id="edit-md" v-model="formData.md" class="form-textarea form-textarea-large" rows="12"
+                    placeholder="# Your content here..."></textarea>
+            </div>
+
+            <!-- Extension Fields Slot -->
+            <slot name="extension-fields" :formData="formData" />
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSaving">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-primary" :disabled="isSaving">
+                    <span v-if="isSaving" class="btn-spinner"></span>
+                    <span>{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
+                </button>
+            </div>
+        </form>
+    </BasePanel>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useTheme } from '@/composables/useTheme'
+import BasePanel from './BasePanel.vue'
 
 export interface EditPanelData {
     heading: string
@@ -139,44 +114,10 @@ const formData = ref<EditPanelData>({ ...props.data })
 const isSaving = ref(false)
 const imageError = ref(false)
 
-// Get theme composable
-const { currentVars, isInverted } = useTheme()
-
-// Auto-adjust placement based on sidebar mode
-const placement = computed(() => {
-    if (props.sidebarMode === 'left') return 'left'
-    return 'right'
-})
-
-// Responsive panel size
-const panelSize = computed(() => {
-    if (typeof window === 'undefined') return 'medium'
-    const width = window.innerWidth
-    if (width < 768) return 'fullscreen'
-    if (width < 1440) return 'medium'
-    return 'large'
-})
-
 // Check if screen height is small (hide image preview if < 900px)
 const isSmallHeight = computed(() => {
     if (typeof window === 'undefined') return false
     return window.innerHeight < 900
-})
-
-// Apply system theme styles to panel (override page theme)
-const panelStyles = computed(() => {
-    // Use system default styles, not the current page theme
-    return {
-        '--color-bg': 'var(--system-bg, #ffffff)',
-        '--color-card-bg': 'var(--system-card-bg, #ffffff)',
-        '--color-border': 'var(--system-border, #e5e7eb)',
-        '--color-contrast': 'var(--system-contrast, #1f2937)',
-        '--color-dimmed': 'var(--system-dimmed, #6b7280)',
-        '--color-primary-bg': 'var(--system-primary, #3b82f6)',
-        '--color-primary-contrast': 'var(--system-primary-contrast, #ffffff)',
-        '--font': 'var(--system-font, system-ui, -apple-system, sans-serif)',
-        '--color-inverted': '0' // Always use non-inverted in editor
-    }
 })
 
 // Check if field is available
@@ -184,21 +125,17 @@ function hasField(fieldName: string): boolean {
     return props.availableFields.includes(fieldName)
 }
 
-// Handle close
+// Handle close (delegated to BasePanel)
 function handleClose() {
     emit('close')
 }
 
 // Handle save
-async function handleSave() {
+function handleSave() {
     isSaving.value = true
-    try {
-        // Emit save event with form data
-        emit('save', { ...formData.value })
-        await new Promise(resolve => setTimeout(resolve, 500)) // Simulate API delay
-    } finally {
-        isSaving.value = false
-    }
+    // Emit save event with form data
+    // Parent component will handle the save and reset isSaving via close or data update
+    emit('save', { ...formData.value })
 }
 
 // Handle image load error
@@ -211,128 +148,21 @@ watch(() => props.data, (newData) => {
     formData.value = { ...newData }
 }, { deep: true })
 
-// Reset form when panel opens
+// Reset form when panel opens/closes
 watch(() => props.isOpen, (isOpen) => {
     if (isOpen) {
         formData.value = { ...props.data }
         imageError.value = false
+        isSaving.value = false
+    } else {
+        // Reset saving state when closing
+        isSaving.value = false
     }
 })
 </script>
 
 <style scoped>
-/* Slide Transition */
-.slide-panel-enter-active,
-.slide-panel-leave-active {
-    transition: transform 0.3s ease-out;
-}
-
-.slide-panel-enter-from {
-    transform: translateX(100%);
-}
-
-.slide-panel-leave-to {
-    transform: translateX(100%);
-}
-
-/* Panel Container */
-.edit-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    max-height: 100vh;
-    background: var(--color-bg);
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
-    display: flex;
-    flex-direction: column;
-    z-index: 1000;
-    font-family: var(--font);
-}
-
-.edit-panel-fullscreen {
-    left: 0;
-    right: 0;
-    width: 100%;
-}
-
-.edit-panel-medium {
-    width: 25rem;
-    /* 400px */
-    right: 0;
-}
-
-.edit-panel-large {
-    width: 37.5rem;
-    /* 600px */
-    right: 0;
-}
-
-/* Panel on left side */
-.edit-panel[style*="left"] {
-    left: 0;
-    right: auto;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-}
-
-/* Header */
-.edit-panel-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-card-bg);
-    flex-shrink: 0;
-}
-
-.header-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.panel-title {
-    margin: 0 0 0.25rem 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-contrast);
-    font-family: var(--font);
-}
-
-.panel-subtitle {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-dimmed);
-}
-
-.close-btn {
-    flex-shrink: 0;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: none;
-    color: var(--color-dimmed);
-    cursor: pointer;
-    border-radius: 0.375rem;
-    transition: all 0.2s;
-    margin-left: 1rem;
-}
-
-.close-btn:hover {
-    background: var(--color-border);
-    color: var(--color-contrast);
-}
-
-/* Body */
-.edit-panel-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem;
-}
-
-/* Form */
+/* Form Styles */
 .edit-form {
     display: flex;
     flex-direction: column;

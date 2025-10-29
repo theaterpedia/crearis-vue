@@ -5,6 +5,10 @@
             subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
             @save="handleSaveProject" />
 
+        <!-- Navigation Config Panel -->
+        <NavigationConfigPanel v-if="project" :is-open="isConfigPanelOpen" :project-id="project.domaincode"
+            @close="closeConfigPanel" />
+
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
             :projectDomaincode="project.domaincode">
@@ -149,6 +153,7 @@ import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
+import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
@@ -174,6 +179,7 @@ const events = ref<any[]>([])
 const users = ref<any[]>([])
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
+const isConfigPanelOpen = ref(false)
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -231,12 +237,13 @@ function closeEditPanel() {
     isEditPanelOpen.value = false
 }
 
-// Open page config (placeholder - implement based on your needs)
+// Open/close config panel
 function openPageConfig() {
-    // TODO: Implement page configuration modal/panel
-    console.log('Opening page configuration...')
-    // You might want to add a modal or navigate to a config page
-    router.push(`/projects`) // Navigate to project editor for now
+    isConfigPanelOpen.value = true
+}
+
+function closeConfigPanel() {
+    isConfigPanelOpen.value = false
 }
 
 // Handle save project
@@ -253,18 +260,18 @@ async function handleSaveProject(data: EditPanelData) {
         })
 
         if (response.ok) {
-            const updatedProject = await response.json()
-            project.value = updatedProject
+            // Reload the project data to get fresh data from server
+            await fetchProject(project.value.domaincode)
             closeEditPanel()
-            // Optional: Show success message
             console.log('Project updated successfully')
         } else {
-            console.error('Failed to update project')
-            // Optional: Show error message
+            const errorText = await response.text()
+            console.error('Failed to update project:', errorText)
+            alert('Failed to update project. Please try again.')
         }
     } catch (error) {
         console.error('Error saving project:', error)
-        // Optional: Show error message
+        alert('Error saving project. Please check your connection.')
     }
 }
 
