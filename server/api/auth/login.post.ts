@@ -78,14 +78,25 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Check and update status if empty/null/undefined - set to 0 (activated)
+    // Check and update status if empty/null/undefined - set to 'new' status for users table
     if (user.status_id === null || user.status_id === undefined) {
-        await db.run(`
-            UPDATE users
-            SET status_id = 0
-            WHERE id = ?
-        `, [user.id])
-        console.log(`[LOGIN] Updated user ${user.id} status to 0 (activated)`)
+        // Get the status.id for value=0 (new) in users table
+        const newStatus = await db.get(`
+            SELECT id FROM status
+            WHERE "table" = 'users' AND value = 0
+        `) as { id: number } | undefined
+
+        if (newStatus) {
+            await db.run(`
+                UPDATE users
+                SET status_id = ?
+                WHERE id = ?
+            `, [newStatus.id, user.id])
+            console.log(`[LOGIN] Updated user ${user.id} status to ${newStatus.id} (new/activated)`)
+            user.status_id = newStatus.id
+        } else {
+            console.warn(`[LOGIN] Warning: Could not find 'new' status (value=0) for users table`)
+        }
     }
 
     // === PROJECT ROLE DETECTION ===
@@ -158,15 +169,16 @@ export default defineEventHandler(async (event) => {
     console.log('[LOGIN] Finding instructor projects')
     let instructorProjects: Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>> = []
 
-    if (user.instructor_id) {
+    if (user.instructor_id && typeof user.instructor_id === 'number') {
         try {
-            // Cast instructor_id to handle potential TEXT type (should be INTEGER after migration)
+            // Note: event_instructors.event_id is TEXT, events.id is INTEGER
+            // Cast event_id to INTEGER for the join
             instructorProjects = await db.all(`
                 SELECT DISTINCT p.domaincode, p.heading, p.owner_id
                 FROM projects p
                 INNER JOIN events e ON p.id = e.project_id
-                INNER JOIN event_instructors ei ON e.id = ei.event_id
-                WHERE ei.instructor_id = CAST(? AS INTEGER)
+                INNER JOIN event_instructors ei ON e.id = ei.event_id::INTEGER
+                WHERE ei.instructor_id = $1
                 ORDER BY p.heading ASC
             `, [user.instructor_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
         } catch (error) {
