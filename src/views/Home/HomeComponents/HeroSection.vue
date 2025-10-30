@@ -23,7 +23,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
 import { useRouter } from 'vue-router'
 import Hero from '@/components/Hero.vue'
 import Banner from '@/components/Banner.vue'

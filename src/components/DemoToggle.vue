@@ -34,6 +34,9 @@ interface DemoPage {
 }
 
 const demoPages: DemoPage[] = [
+    { path: '/demo/float-hard', label: 'Fl. Post-Its (hard)', icon: '🎨' },
+    { path: '/demo/float-dyn', label: 'Fl. Post-Its (dyn)', icon: '🎨' },
+    { path: '/demo/float-markdown', label: 'Fl. Post-Its (md)', icon: '🎨' },
     { path: '/theme-demo', label: 'Themes', icon: '🎨' },
     { path: '/kanban-demo', label: 'Kanban', icon: '📋' },
     { path: '/clist-demo', label: 'Lists', icon: '📝' },

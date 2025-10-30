@@ -29,6 +29,8 @@
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
           <slot name="topnav-actions" />
+        </template>
+      </TopNav>
     </div>
 
     <Sidebar v-show="isSideNav" footerText="30 Jahre Theaterpädagogik Bayern"
