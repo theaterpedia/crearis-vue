@@ -122,6 +122,74 @@
                 </div>
             </section>
 
+            <!-- Main Content -->
+            <Section background="default">
+                <Container>
+                    <Columns gap="medium" align="top">
+
+                        <Column width="2/3">
+                            <Prose>
+                                <Heading overline="Join Us" headline="Theaterpedia Conference 2025" level="h1" />
+
+                                <h2>Munich, Germany</h2>
+                                <p><strong>November 20-23, 2025</strong></p>
+
+                                <h3>About the Conference</h3>
+                                <p>
+                                    Join theater professionals, educators, and enthusiasts from around the world
+                                    for four days of workshops, performances, and networking at the annual
+                                    Theaterpedia Conference.
+                                </p>
+
+                                <h3>What to Expect</h3>
+                                <ul>
+                                    <li><strong>Workshops & Masterclasses:</strong> Learn from industry leaders and
+                                        experienced practitioners</li>
+                                    <li><strong>Performances:</strong> Evening showcase of innovative theater
+                                        productions
+                                    </li>
+                                    <li><strong>Networking:</strong> Connect with theater professionals from across
+                                        Europe
+                                    </li>
+                                    <li><strong>Panel Discussions:</strong> Explore current trends and challenges in
+                                        theater
+                                        education</li>
+                                </ul>
+
+                                <h3>Schedule Overview</h3>
+                                <ul>
+                                    <li><strong>November 20:</strong> Opening Ceremony & Keynote Speech</li>
+                                    <li><strong>November 21:</strong> Workshop Day 1 & Evening Performance</li>
+                                    <li><strong>November 22:</strong> Workshop Day 2 & Panel Discussions</li>
+                                    <li><strong>November 23:</strong> Final Presentations & Closing Event</li>
+                                </ul>
+
+                                <h3>Venue</h3>
+                                <p>
+                                    The conference will be held at the historic <strong>Münchner
+                                        Volkstheater</strong>,
+                                    located in the heart of Munich's cultural district.
+                                </p>
+
+                                <h3>Registration</h3>
+                                <p>
+                                    Early bird registration is now open! Complete the registration form to secure
+                                    your spot. Space is limited to 150 participants.
+                                </p>
+
+                                <p><strong>Registration Fees:</strong></p>
+                                <ul>
+                                    <li>Early Bird (until Oct 31): €250</li>
+                                    <li>Standard (Nov 1-10): €350</li>
+                                    <li>Late Registration (after Nov 10): €450</li>
+                                    <li>Student Rate: €150 (with valid ID)</li>
+                                </ul>
+                            </Prose>
+                        </Column>
+                    </Columns>
+                </Container>
+            </Section>
+
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
 
@@ -144,6 +212,12 @@ import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import StartPageHero from './HomeComponents/StartPageHero.vue'
 import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
+import Section from '@/components/Section.vue'
+import Container from '@/components/Container.vue'
+import Columns from '@/components/Columns.vue'
+import Column from '@/components/Column.vue'
+import Prose from '@/components/Prose.vue'
+import Heading from '@/components/Heading.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'

@@ -1,5 +1,5 @@
 <template>
-    <Hero height-tmp="prominent"
+    <Hero height-tmp="medium"
         img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
         img-tmp-align-x="cover" img-tmp-align-y="cover"
         :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"

@@ -40,7 +40,7 @@ const emit = defineEmits<{
 const router = useRouter()
 
 function handleRegister() {
-    router.push('/getstarted')
+    router.push('/start')
 }
 
 function handleDemoClick(event: MouseEvent) {

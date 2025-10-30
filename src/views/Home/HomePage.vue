@@ -10,7 +10,7 @@
             @close="closeConfigPanel" />
 
         <!-- PageLayout wrapper -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
+        <PageLayout v-if="project" setSiteLayout="centered" :asideOptions="asideOptions" :footerOptions="footerOptions"
             :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="home"
             :alertBanner="pageSettings.alertBanner">
             <!-- TopNav Actions Slot - Edit and Config buttons -->

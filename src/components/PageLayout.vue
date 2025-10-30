@@ -229,6 +229,11 @@ interface Props {
   navItems?: TopnavParentItem[]
   navbarMode?: 'default' | 'home' | 'page' | 'dashboard'
   alertBanner?: { message: string; alertType: 'primary' | 'secondary' | 'muted' | 'accent' | 'positive' | 'negative' | 'warning' } | null
+  // Optional prop to override the site layout for this specific page
+  // Usage: <PageLayout setSiteLayout="fullTwo" /> or <PageLayout setSiteLayout="centered" />
+  // If not provided, uses the global layout from layoutSettings
+  // Available options: 'default' | 'centered' | 'fullTwo' | 'fullThree' | 'sidebar' | 'fullSidebar'
+  setSiteLayout?: SiteLayout
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -236,14 +241,15 @@ const props = withDefaults(defineProps<Props>(), {
   footerOptions: () => ({}),
   navItems: undefined,
   navbarMode: 'default',
-  alertBanner: undefined
+  alertBanner: undefined,
+  setSiteLayout: undefined
 })
 
 // Computed: Use prop if provided, otherwise fall back to pageSettings
 const alertBanner = computed(() => props.alertBanner !== undefined ? props.alertBanner : false)
 
-// NEW LAYOUT SYSTEM: Site Layout - imported from settings
-const siteLayout = ref<SiteLayout>(layoutSettings.siteLayout)
+// NEW LAYOUT SYSTEM: Site Layout - use prop if provided, otherwise fall back to settings
+const siteLayout = ref<SiteLayout>(props.setSiteLayout ?? layoutSettings.siteLayout)
 
 // NEW LAYOUT SYSTEM: Base Layout Props - imported from settings
 const baseWideHeader = ref(layoutSettings.baseWideHeader)
@@ -303,7 +309,7 @@ const showLeftSidebar = computed(() => siteLayout.value === 'fullThree')
 
 // NEW LAYOUT SYSTEM: Show right sidebar for default, fullTwo, and fullThree layouts (when showAside is true)
 const showRightSidebar = computed(() => {
-  if (siteLayout.value === 'sidebar' || siteLayout.value === 'fullSidebar') return false
+  if (siteLayout.value === 'sidebar' || siteLayout.value === 'fullSidebar' || siteLayout.value === 'centered') return false
   return showAside.value
 })
 
