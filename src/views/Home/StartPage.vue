@@ -33,6 +33,57 @@
             <!-- Hero Section -->
             <StartPageHero :user="user" />
 
+            <!-- Registration Section -->
+            <section class="registration-section bg-accent">
+                <div class="container">
+                    <div class="registration-header">
+                        <h2>Konferenz-Anmeldung 2025</h2>
+                        <p>Bitte geben Sie Ihre E-Mail-Adresse ein, um fortzufahren</p>
+                    </div>
+
+                    <!-- Email Input Row -->
+                    <div class="email-input-row">
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-Mail-Adresse</label>
+                            <div class="email-input-wrapper">
+                                <input id="email" v-model="emailInput" type="email" class="form-input"
+                                    placeholder="ihre.email@example.com" @input="handleEmailInput"
+                                    @focus="handleEmailInput" />
+
+                                <!-- Email suggestions dropdown -->
+                                <div v-if="showSuggestions" class="email-suggestions">
+                                    <button v-for="email in emailSuggestions" :key="email" type="button"
+                                        class="suggestion-item" @click="selectEmail(email)">
+                                        {{ email }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <div class="status-display">
+                                <span v-if="!usermode || usermode === 'no'" class="status-badge status-none">
+                                    Keine E-Mail eingegeben
+                                </span>
+                                <span v-else-if="usermode === 'guest'" class="status-badge status-guest">
+                                    Neue Anmeldung
+                                </span>
+                                <span v-else-if="usermode === 'user'" class="status-badge status-user">
+                                    Bestehender Nutzer
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interaction Form -->
+                    <div v-if="showForm && interactionFields" class="form-container">
+                        <CreateInteraction :form-name="interactionFields" :show="showForm" :project-id="project?.id"
+                            :user-email="emailInput" @saved="handleFormSaved" @error="handleFormError" />
+                    </div>
+                </div>
+            </section>
+
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
 
@@ -54,6 +105,7 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import StartPageHero from './HomeComponents/StartPageHero.vue'
 import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
+import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
@@ -77,6 +129,22 @@ const project = ref<any>(null)
 const events = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
+
+// Props for usermode
+interface Props {
+    usermode?: 'no' | 'guest' | 'user'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    usermode: 'no'
+})
+
+// Registration form state
+const usermode = ref<'no' | 'guest' | 'user' | undefined>(props.usermode)
+const emailInput = ref('')
+const emailSuggestions = ref<string[]>([])
+const allUserEmails = ref<string[]>([])
+const showSuggestions = ref(false)
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -121,6 +189,19 @@ const isProjectOwner = computed(() => {
 const canEdit = computed(() => {
     if (!user.value) return false
     return user.value.activeRole === 'admin' || isProjectOwner.value
+})
+
+// Computed: showForm - true if usermode is not 'no' or undefined
+const showForm = computed(() => {
+    return usermode.value && usermode.value !== 'no'
+})
+
+// Computed: interactionFields - return form name based on usermode
+const interactionFields = computed(() => {
+    if (!usermode.value || usermode.value === 'no') {
+        return false
+    }
+    return usermode.value === 'guest' ? 'registration' : 'verification'
 })
 
 // Open/close edit panel
@@ -210,11 +291,86 @@ async function fetchEvents() {
     }
 }
 
+// Fetch all user emails (extmail entries)
+async function fetchUserEmails() {
+    try {
+        const response = await fetch('/api/users')
+        if (response.ok) {
+            const users = await response.json()
+            allUserEmails.value = users
+                .map((u: any) => u.extmail || u.sysmail)
+                .filter((email: string) => email)
+        }
+    } catch (error) {
+        console.error('Error fetching user emails:', error)
+    }
+}
+
+// Handle email input changes with lookahead support
+function handleEmailInput() {
+    const input = emailInput.value.trim()
+
+    // Start lookahead after 10 characters
+    if (input.length >= 10) {
+        emailSuggestions.value = allUserEmails.value.filter((email: string) =>
+            email.toLowerCase().startsWith(input.toLowerCase())
+        )
+        showSuggestions.value = emailSuggestions.value.length > 0
+    } else {
+        emailSuggestions.value = []
+        showSuggestions.value = false
+    }
+
+    // Check if it's a valid email
+    if (isValidEmail(input)) {
+        checkEmailExists(input)
+    }
+}
+
+// Select email from suggestions
+function selectEmail(email: string) {
+    emailInput.value = email
+    showSuggestions.value = false
+    checkEmailExists(email)
+}
+
+// Check if email exists in users table
+function checkEmailExists(email: string) {
+    const exists = allUserEmails.value.some(
+        (userEmail: string) => userEmail.toLowerCase() === email.toLowerCase()
+    )
+
+    if (exists) {
+        usermode.value = 'user'
+    } else {
+        usermode.value = 'guest'
+    }
+}
+
+// Basic email validation
+function isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+}
+
+// Handle form submission success
+function handleFormSaved(interactionId: number) {
+    console.log('Interaction saved with ID:', interactionId)
+    // Could show a success message or redirect
+}
+
+// Handle form submission error
+function handleFormError(error: string) {
+    console.error('Form error:', error)
+    alert('Fehler beim Speichern: ' + error)
+}
+
 // Initialize
 onMounted(async () => {
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await fetchEvents()
+    await fetchUserEmails()
 })
 </script>
 
@@ -247,5 +403,158 @@ onMounted(async () => {
 .config-btn:focus {
     outline: 2px solid var(--color-primary-bg);
     outline-offset: 2px;
+}
+
+/* Registration Section */
+.registration-section {
+    padding: 4rem 0;
+}
+
+.registration-section.bg-accent {
+    background-color: var(--color-accent-bg, #fef3c7);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.registration-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.registration-header h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text, #1f2937);
+}
+
+.registration-header p {
+    color: var(--color-text-muted, #6b7280);
+    font-size: 1.125rem;
+}
+
+.email-input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 768px) {
+    .email-input-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--color-text, #1f2937);
+}
+
+.email-input-wrapper {
+    position: relative;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    background: white;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary, #3b82f6);
+}
+
+.email-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.5rem;
+    margin-top: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 10;
+}
+
+.suggestion-item {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: background-color 0.15s;
+    color: var(--color-text, #1f2937);
+}
+
+.suggestion-item:hover {
+    background: var(--color-primary-lighter, #eff6ff);
+}
+
+.status-display {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-top: 0.75rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-none {
+    background: var(--color-gray-light, #f3f4f6);
+    color: var(--color-gray-dark, #6b7280);
+}
+
+.status-guest {
+    background: var(--color-info-bg, #dbeafe);
+    color: var(--color-info, #2563eb);
+}
+
+.status-user {
+    background: var(--color-success-bg, #dcfce7);
+    color: var(--color-success, #16a34a);
+}
+
+.form-container {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
 }
 </style>
