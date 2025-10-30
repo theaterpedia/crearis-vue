@@ -37,8 +37,7 @@
             <UpcomingEventsSection :events="events" />
 
             <!-- Page Content -->
-            <PageContent page-type="landing" :project-domain-code="project.domaincode"
-                :project-id="project.id" />
+            <PageContent page-type="landing" :project-domain-code="project.domaincode" :project-id="project.id" />
 
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
