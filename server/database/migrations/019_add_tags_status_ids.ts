@@ -87,7 +87,7 @@ export const migration = {
                     id SERIAL PRIMARY KEY,
                     value SMALLINT NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks' , 'interactions')),
                     description TEXT,
                     name_i18n JSONB,
                     desc_i18n JSONB
@@ -116,7 +116,7 @@ export const migration = {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     value INTEGER NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks', 'interactions')),
                     description TEXT,
                     name_i18n TEXT,
                     desc_i18n TEXT,
@@ -298,7 +298,7 @@ export const migration = {
         console.log('\n  📊 Populating common status entries for all tables...')
 
         // Common statuses for projects, events, posts, persons, users
-        const commonTables = ['projects', 'events', 'posts', 'persons', 'users']
+        const commonTables = ['projects', 'events', 'posts', 'persons', 'users', 'users', 'interactions']
         const commonStatuses = [
             { value: 0, name: 'new', description: 'Newly created', name_i18n: { de: 'Neu', en: 'New', cz: 'Nový' }, desc_i18n: { de: 'Neu erstellt', en: 'Newly created', cz: 'Nově vytvořený' } },
             { value: 1, name: 'demo', description: 'Demo/example data', name_i18n: { de: 'Demo', en: 'Demo', cz: 'Demo' }, desc_i18n: { de: 'Demo-/Beispieldaten', en: 'Demo/example data', cz: 'Demonstrační/ukázková data' } },

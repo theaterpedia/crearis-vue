@@ -30,8 +30,13 @@ async function generateSchemaDefinition(version: string) {
 
     await pgClient.connect()
 
-    // Connect to SQLite
-    const sqliteDb = new Database('./demo-data.db')
+    // Connect to SQLite (optional - skip if not available)
+    let sqliteDb: any = null
+    try {
+        sqliteDb = new Database('./demo-data.db')
+    } catch (e) {
+        console.log('⚠️  SQLite database not available, using PostgreSQL only')
+    }
 
     const schema: any = {
         version,
@@ -55,12 +60,12 @@ async function generateSchemaDefinition(version: string) {
 
         // Get SQLite tables
         console.log('🔍 Reading SQLite schema...')
-        const sqliteTables = sqliteDb.prepare(`
+        const sqliteTables = sqliteDb ? sqliteDb.prepare(`
             SELECT name FROM sqlite_master 
             WHERE type='table' 
             AND name NOT LIKE 'sqlite_%'
             ORDER BY name
-        `).all().map((r: any) => r.name)
+        `).all().map((r: any) => r.name) : []
 
         // Process each table
         const allTables = [...new Set([...pgTables, ...sqliteTables])]
@@ -99,7 +104,7 @@ async function generateSchemaDefinition(version: string) {
             }
 
             // Get SQLite columns
-            if (sqliteTables.includes(tableName)) {
+            if (sqliteDb && sqliteTables.includes(tableName)) {
                 const sqliteColumns = sqliteDb.prepare(`PRAGMA table_info(${tableName})`).all() as any[]
 
                 for (const col of sqliteColumns) {
@@ -130,7 +135,7 @@ async function generateSchemaDefinition(version: string) {
 
         // Check for PostgreSQL-only columns
         for (const tableName of pgTables) {
-            if (sqliteTables.includes(tableName)) {
+            if (sqliteDb && sqliteTables.includes(tableName)) {
                 const pgColumns = await pgClient.query(`
                     SELECT column_name
                     FROM information_schema.columns
@@ -175,7 +180,7 @@ async function generateSchemaDefinition(version: string) {
 
     } finally {
         await pgClient.end()
-        sqliteDb.close()
+        if (sqliteDb) sqliteDb.close()
     }
 }
 

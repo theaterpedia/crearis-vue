@@ -471,13 +471,206 @@ export const migration = {
         console.log('    ✓ Index created')
 
         console.log('\n✅ Chapter 3 completed: status_id field added to projects')
+
+        // ===================================================================
+        // CHAPTER 4: Create interactions Table
+        // ===================================================================
+        console.log('\n📖 Chapter 4: Create interactions Table')
+
+        // -------------------------------------------------------------------
+        // 4.1: Create interactions table
+        // -------------------------------------------------------------------
+        console.log('\n  📋 Creating interactions table...')
+
+        if (isPostgres) {
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS interactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    name TEXT NOT NULL,
+                    project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    status_id INTEGER NOT NULL REFERENCES status(id),
+                    actions JSONB,
+                    to_mail TEXT,
+                    from_mail TEXT,
+                    subject TEXT,
+                    md TEXT,
+                    fields JSONB
+                )
+            `)
+
+            // Create trigger to enforce status_id belongs to interactions table
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION check_interactions_status()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM status 
+                        WHERE id = NEW.status_id AND "table" = 'interactions'
+                    ) THEN
+                        RAISE EXCEPTION 'status_id must reference a status entry for table ''interactions''';
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            `)
+
+            await db.exec(`
+                CREATE TRIGGER trigger_check_interactions_status
+                BEFORE INSERT OR UPDATE ON interactions
+                FOR EACH ROW
+                EXECUTE FUNCTION check_interactions_status()
+            `)
+
+            // Create indexes for common query patterns
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_user_id 
+                ON interactions(user_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_project_id 
+                ON interactions(project_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_status_id 
+                ON interactions(status_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_timestamp 
+                ON interactions(timestamp DESC)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_name 
+                ON interactions(name)
+            `)
+
+            console.log('    ✓ Created interactions table with indexes (PostgreSQL)')
+
+            // Seed status entries for interactions table
+            console.log('\n  📝 Seeding status entries for interactions...')
+
+            const interactionsStatuses = [
+                {
+                    value: 0,
+                    name: 'new',
+                    description: 'New interaction',
+                    name_i18n: { de: 'neu', en: 'new', cz: 'nový' },
+                    desc_i18n: { de: 'Neue Interaktion', en: 'New interaction', cz: 'Nová interakce' }
+                },
+                {
+                    value: 1,
+                    name: 'pending',
+                    description: 'Pending review',
+                    name_i18n: { de: 'ausstehend', en: 'pending', cz: 'čekající' },
+                    desc_i18n: { de: 'Ausstehende Überprüfung', en: 'Pending review', cz: 'Čeká na kontrolu' }
+                },
+                {
+                    value: 2,
+                    name: 'processed',
+                    description: 'Processed',
+                    name_i18n: { de: 'verarbeitet', en: 'processed', cz: 'zpracováno' },
+                    desc_i18n: { de: 'Verarbeitet', en: 'Processed', cz: 'Zpracováno' }
+                },
+                {
+                    value: 3,
+                    name: 'completed',
+                    description: 'Completed',
+                    name_i18n: { de: 'abgeschlossen', en: 'completed', cz: 'dokončeno' },
+                    desc_i18n: { de: 'Abgeschlossen', en: 'Completed', cz: 'Dokončeno' }
+                },
+                {
+                    value: 9,
+                    name: 'spam',
+                    description: 'Marked as spam',
+                    name_i18n: { de: 'Spam', en: 'spam', cz: 'spam' },
+                    desc_i18n: { de: 'Als Spam markiert', en: 'Marked as spam', cz: 'Označeno jako spam' }
+                }
+            ]
+
+            for (const status of interactionsStatuses) {
+                await db.run(
+                    `INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                     VALUES ($1, $2, $3, $4, $5, $6)
+                     ON CONFLICT (name, "table") DO NOTHING`,
+                    [
+                        status.value,
+                        status.name,
+                        'interactions',
+                        status.description,
+                        JSON.stringify(status.name_i18n),
+                        JSON.stringify(status.desc_i18n)
+                    ]
+                )
+            }
+
+            console.log(`    ✓ Seeded ${interactionsStatuses.length} status entries for interactions`)
+
+        } else {
+            // SQLite
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS interactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                    name TEXT NOT NULL,
+                    project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    status_id INTEGER NOT NULL REFERENCES status(id),
+                    actions TEXT,
+                    to_mail TEXT,
+                    from_mail TEXT,
+                    subject TEXT,
+                    md TEXT,
+                    fields TEXT
+                )
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_user_id 
+                ON interactions(user_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_project_id 
+                ON interactions(project_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_status_id 
+                ON interactions(status_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_timestamp 
+                ON interactions(timestamp DESC)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_interactions_name 
+                ON interactions(name)
+            `)
+
+            console.log('    ✓ Created interactions table with indexes (SQLite)')
+        }
+
+        console.log('\n✅ Chapter 4 completed: interactions table created')
         console.log('✅ Migration 020 completed')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
         const isPostgres = db.type === 'postgresql'
 
-        console.log('Migration 020 down: Removing i18n core, i18n_codes table, and projects.status_id...')
+        console.log('Rolling back migration 020: Removing i18n core, i18n_codes table, projects.status_id, and interactions table...')
+
+        // Drop interactions table (Chapter 4)
+        await db.exec(`DROP TRIGGER IF EXISTS trigger_check_interactions_status ON interactions`)
+        await db.exec(`DROP FUNCTION IF EXISTS check_interactions_status()`)
+        await db.exec(`DROP TABLE IF EXISTS interactions`)
+        console.log('  ✓ Dropped interactions table and related objects')
 
         // Drop status_id field and related objects from projects (Chapter 3)
         console.log('  → Removing projects.status_id and related objects...')

@@ -207,6 +207,7 @@ export const migration = {
         const tpExists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['tp'])
         if (!tpExists) {
             await db.exec(`
+                INSERT INTO projects (domaincode, name, type, description, status_id)
                 VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 
                     (SELECT id FROM status WHERE name = 'done' AND "table" = 'projects' LIMIT 1))
             `)
