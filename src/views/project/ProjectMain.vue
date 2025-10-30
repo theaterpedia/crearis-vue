@@ -160,8 +160,8 @@
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" />
 
                 <!-- Navigation Mode: status >= 2 -->
-                <ProjectNavigation v-else :project-id="projectId" :visible-tabs="visibleNavigationTabs"
-                    @tab-change="handleTabChange" />
+                <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
+                    :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
             </div>
 
             <!-- Right Column: Editor (60%) -->
@@ -244,7 +244,7 @@ const projectId = computed(() => {
 
 // Project state
 const projectData = ref<any>(null)
-const projectStatus = ref(0) // Default status
+const projectStatusId = ref<number | null>(null) // status_id from DB
 
 // Current step (0-4) for stepper mode
 const currentStep = ref(0)
@@ -253,8 +253,16 @@ const currentStep = ref(0)
 const currentNavTab = ref('events')
 
 // Computed props based on project status
-const isStepper = computed(() => projectStatus.value < 2)
-const isLocked = computed(() => projectStatus.value > 3)
+// Stepper mode: status 'new' (18) or 'demo' (19)
+// Navigation mode: all other statuses
+const isStepper = computed(() => {
+    if (projectStatusId.value === null) return true // Default to stepper while loading
+    return projectStatusId.value === 18 || projectStatusId.value === 19
+})
+const isLocked = computed(() => {
+    // TODO: Define when project should be locked (e.g., status 'released' or higher)
+    return false
+})
 
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
@@ -275,6 +283,14 @@ const visibleNavigationTabs = computed(() => {
     }
 
     return tabs
+})
+
+// Safe project name for display
+const projectName = computed(() => {
+    if (!projectData.value) return undefined
+    const heading = projectData.value.heading?.trim()
+    const name = projectData.value.name?.trim()
+    return heading || name || undefined
 })
 
 // Config dropdown state
@@ -317,7 +333,8 @@ async function loadProjectData() {
         const response = await fetch(`/api/projects/${projectId.value}`)
         if (response.ok) {
             projectData.value = await response.json()
-            projectStatus.value = projectData.value.status || 0
+            // Use status_id (new field after migration 020)
+            projectStatusId.value = projectData.value.status_id ?? null
         }
     } catch (error) {
         console.error('Failed to load project data:', error)

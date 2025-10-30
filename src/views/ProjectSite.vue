@@ -5,8 +5,13 @@
             subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
             @save="handleSaveProject" />
 
+        <!-- Navigation Config Panel -->
+        <NavigationConfigPanel v-if="project" :is-open="isConfigPanelOpen" :project-id="project.domaincode"
+            @close="closeConfigPanel" />
+
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="project.id">
+        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
+            :projectDomaincode="project.domaincode">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Edit Panel Button -->
@@ -38,7 +43,7 @@
             <Section background="muted">
                 <Container>
                     <Prose>
-                        <Heading overline="Project Events" level="h2">Upcoming **Events**</Heading>
+                        <Heading overline="Project Events" level="h2" headline="Upcoming Events" />
                     </Prose>
 
                     <Slider v-if="events.length > 0">
@@ -66,7 +71,7 @@
             <Section background="accent">
                 <Container>
                     <Prose>
-                        <Heading overline="Project Updates" level="h2">Latest **Posts**</Heading>
+                        <Heading overline="Project Updates" level="h2" headline="Latest Posts" />
                     </Prose>
 
                     <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
@@ -91,7 +96,7 @@
             <Section background="muted">
                 <Container>
                     <Prose>
-                        <Heading overline="Meet the Team" level="h2">Our **People**</Heading>
+                        <Heading overline="Meet the Team" level="h2" headline="Our People" />
                     </Prose>
 
                     <Slider v-if="users.length > 0">
@@ -142,12 +147,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
+import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
@@ -173,6 +179,7 @@ const events = ref<any[]>([])
 const users = ref<any[]>([])
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
+const isConfigPanelOpen = ref(false)
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -210,8 +217,8 @@ const editPanelData = computed<EditPanelData>(() => {
 // Check if current user is the project owner
 const isProjectOwner = computed(() => {
     if (!user.value || !project.value) return false
-    // Check if user is project role and projectId matches
-    return user.value.activeRole === 'project' && user.value.projectId === project.value.id
+    // Check if user is project role and projectId (domaincode) matches
+    return user.value.activeRole === 'project' && user.value.projectId === project.value.domaincode
 })
 
 // Check if user can edit (admin or project owner)
@@ -230,12 +237,13 @@ function closeEditPanel() {
     isEditPanelOpen.value = false
 }
 
-// Open page config (placeholder - implement based on your needs)
+// Open/close config panel
 function openPageConfig() {
-    // TODO: Implement page configuration modal/panel
-    console.log('Opening page configuration...')
-    // You might want to add a modal or navigate to a config page
-    router.push(`/projects`) // Navigate to project editor for now
+    isConfigPanelOpen.value = true
+}
+
+function closeConfigPanel() {
+    isConfigPanelOpen.value = false
 }
 
 // Handle save project
@@ -243,7 +251,7 @@ async function handleSaveProject(data: EditPanelData) {
     if (!project.value) return
 
     try {
-        const response = await fetch(`/api/projects/${encodeURIComponent(project.value.id)}`, {
+        const response = await fetch(`/api/projects/${encodeURIComponent(project.value.domaincode)}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -252,18 +260,18 @@ async function handleSaveProject(data: EditPanelData) {
         })
 
         if (response.ok) {
-            const updatedProject = await response.json()
-            project.value = updatedProject
+            // Reload the project data to get fresh data from server
+            await fetchProject(project.value.domaincode)
             closeEditPanel()
-            // Optional: Show success message
             console.log('Project updated successfully')
         } else {
-            console.error('Failed to update project')
-            // Optional: Show error message
+            const errorText = await response.text()
+            console.error('Failed to update project:', errorText)
+            alert('Failed to update project. Please try again.')
         }
     } catch (error) {
         console.error('Error saving project:', error)
-        // Optional: Show error message
+        alert('Error saving project. Please check your connection.')
     }
 }
 

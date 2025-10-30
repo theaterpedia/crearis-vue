@@ -1,8 +1,10 @@
 import { defineEventHandler, readBody, getRouterParam, createError } from 'h3'
 import { db } from '../../database/init'
+import { getStatusIdByName } from '../../utils/status-helpers'
 import type { ProjectsTableFields } from '../../types/database'
 
 // PUT /api/projects/[id] - Update project
+// After Migration 020 Chapter 3: Uses status_id (INTEGER FK to status table)
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, 'id')
     const body = await readBody(event)
@@ -57,7 +59,7 @@ export default defineEventHandler(async (event) => {
             footer_repeat,
             footer_sitemap,
             footer_options_ext
-        } = body as Partial<ProjectsTableFields> & { domaincode?: string }
+        } = body as Partial<ProjectsTableFields> & { domaincode?: string; status?: string }
 
         // Reject attempts to change domaincode (immutable)
         if (newDomaincode !== undefined && newDomaincode !== id) {
@@ -89,10 +91,18 @@ export default defineEventHandler(async (event) => {
             updates.push('description = ?')
             values.push(updateData.description)
         }
+        // Convert status name to status_id
         if (status !== undefined) {
-            updateData.status = status
-            updates.push('status = ?')
-            values.push(updateData.status)
+            const statusId = getStatusIdByName(status, 'projects')
+            if (!statusId) {
+                throw createError({
+                    statusCode: 400,
+                    message: `Invalid status '${status}'. Must be a valid status name for projects.`
+                })
+            }
+            updateData.status_id = statusId
+            updates.push('status_id = ?')
+            values.push(updateData.status_id)
         }
         if (teaser !== undefined) {
             updateData.teaser = teaser
@@ -105,12 +115,20 @@ export default defineEventHandler(async (event) => {
             values.push(updateData.cimg)
         }
         if (header_type !== undefined) {
-            updateData.header_type = header_type
+            updateData.header_type = header_type || null
             updates.push('header_type = ?')
             values.push(updateData.header_type)
         }
         if (header_size !== undefined) {
-            updateData.header_size = header_size
+            // Convert empty string to null, validate against constraint
+            const validSizes = ['small', 'medium', 'large']
+            if (header_size && !validSizes.includes(header_size)) {
+                throw createError({
+                    statusCode: 400,
+                    message: `Invalid header_size '${header_size}'. Must be one of: ${validSizes.join(', ')}`
+                })
+            }
+            updateData.header_size = header_size || null
             updates.push('header_size = ?')
             values.push(updateData.header_size)
         }

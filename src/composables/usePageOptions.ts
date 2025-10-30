@@ -85,11 +85,20 @@ export function parseAsideOptions(data: any): AsideOptions {
             const contextData = typeof data.aside_context === 'string'
                 ? JSON.parse(data.aside_context)
                 : data.aside_context
-            options.context = {
-                content: contextData.content || contextData
+
+            // Ensure content is a string, not an object
+            const contentString = typeof contextData === 'object' && contextData !== null
+                ? contextData.content
+                : contextData
+
+            if (contentString && typeof contentString === 'string') {
+                options.context = { content: contentString }
             }
         } catch (e) {
-            options.context = { content: data.aside_context }
+            // Only set if it's a non-empty string
+            if (typeof data.aside_context === 'string' && data.aside_context.trim()) {
+                options.context = { content: data.aside_context }
+            }
         }
     }
 

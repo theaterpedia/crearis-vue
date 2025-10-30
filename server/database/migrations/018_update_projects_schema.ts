@@ -2,7 +2,7 @@
  * Migration 018: Update projects schema
  * 
  * Changes:
- * - Alter projects.status default to 'new'
+ * - Alter projects.status_old default to 'new'
  * - Add 'topic' to projects.type allowed values (with description: primary focus on blog-posting and research)
  * - Add is_topic computed column: BOOLEAN GENERATED ALWAYS AS (type = 'topic') STORED
  */
@@ -11,19 +11,19 @@ import type { DatabaseAdapter } from '../adapter'
 
 export const migration = {
     id: '018_update_projects_schema',
-    description: 'Update projects schema: status default, type constraint with topic, is_topic column',
+    description: 'Update projects schema: status_old default, type constraint with topic, is_topic column',
 
     async up(db: DatabaseAdapter): Promise<void> {
         const isPostgres = db.type === 'postgresql'
 
         console.log('Running migration 018: Update projects schema...')
 
-        // 1. Alter projects.status default to 'new'
-        console.log('  - Updating projects.status default value to "new"...')
+        // 1. Alter projects.status_old default to 'new'
+        console.log('  - Updating projects.status_old default value to "new"...')
         if (isPostgres) {
             await db.exec(`
                 ALTER TABLE projects 
-                ALTER COLUMN status SET DEFAULT 'new'
+                ALTER COLUMN status_old SET DEFAULT 'new'
             `)
         } else {
             // SQLite doesn't support ALTER COLUMN SET DEFAULT

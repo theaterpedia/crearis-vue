@@ -5,7 +5,13 @@ const router = createRouter({
   routes: [
     // Public routes
     { path: '/login', component: () => import('../views/Login.vue'), meta: { public: true } },
-    { path: '/', component: () => import('../views/Home.vue') },
+    { path: '/', component: () => import('../views/Home/HomePage.vue') },
+    { path: '/start', component: () => import('../views/Home/StartPage.vue') },
+    { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
+    { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
+    { path: '/contact', component: () => import('../views/Home/ContactPage.vue') },
+    { path: '/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
+    { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
     { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
@@ -17,6 +23,11 @@ const router = createRouter({
 
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
+
+    // Demo routes - Floating Post-Its
+    { path: '/demo/float-hard', component: () => import('../views/Demo/DemoFloatHard.vue') },
+    { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
+    { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
 
     // Other routes
     { path: '/home', component: () => import('../views/index.vue') },

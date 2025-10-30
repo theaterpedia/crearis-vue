@@ -32,7 +32,7 @@
                         <span class="section-title">Owner</span>
                     </div>
                     <div class="project-tiles">
-                        <button v-for="project in ownerProjects" :key="project.id" class="project-tile"
+                        <button v-for="project in ownerProjects" :key="project.domaincode" class="project-tile"
                             :class="{ active: currentProjectId === project.domaincode }"
                             @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
@@ -72,7 +72,7 @@
                         <span class="section-title">Team</span>
                     </div>
                     <div class="project-tiles">
-                        <button v-for="project in memberProjects" :key="project.id" class="project-tile"
+                        <button v-for="project in memberProjects" :key="project.domaincode" class="project-tile"
                             :class="{ active: currentProjectId === project.domaincode }"
                             @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
@@ -112,7 +112,7 @@
                         <span class="section-title">Partner</span>
                     </div>
                     <div class="project-tiles">
-                        <button v-for="project in partnerProjects" :key="project.id" class="project-tile"
+                        <button v-for="project in partnerProjects" :key="project.domaincode" class="project-tile"
                             :class="{ active: currentProjectId === project.domaincode }"
                             @click="selectProject(project.domaincode)">
                             <div class="project-tile-header">
@@ -187,7 +187,7 @@ const currentProjectId = computed(() => user.value?.projectId || null)
 const currentProjectName = computed(() => {
     if (!currentProjectId.value) return null
     const project = allProjects.value.find((p: any) => p.domaincode === currentProjectId.value)
-    return project ? (project.name || project.domaincode) : null  // Returns project name or domaincode fallback
+    return project ? (project.heading || project.name || project.domaincode) : null
 })
 
 // Organize projects by category

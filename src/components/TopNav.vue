@@ -1,93 +1,63 @@
 <template>
-  <nav 
-    ref="topnavRef"
-    class="topnav" 
-    :class="[
-      `topnav-scroll-${scrollStyle}`,
-      { 'topnav-scrolled': isScrolled, 'topnav-hidden': isHidden, 'topnav-reappear': shouldReappear }
-    ]"
-  >
+  <nav ref="topnavRef" class="topnav" :class="[
+    `topnav-scroll-${scrollStyle}`,
+    { 'topnav-scrolled': isScrolled, 'topnav-hidden': isHidden, 'topnav-reappear': shouldReappear }
+  ]" :data-mode="navbarMode !== 'default' ? navbarMode : undefined"
+    :data-opacity="opacity !== 'default' ? opacity : undefined"
+    :data-theme="themeColor !== 'default' ? themeColor : undefined">
     <Container v-if="wide">
       <div class="topnav-inner">
-        <!-- Hamburger Menu (Mobile Only) -->
-        <button 
-          class="topnav-hamburger" 
-          @click="handleBurgerClick"
-          aria-label="Toggle menu"
-        >
-          <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path>
-          </svg>
-        </button>
+        <!-- Back Arrow (left side) -->
+        <BackAction v-if="showBackAction"
+          :class="['topnav-back-action', { 'topnav-back-action-hidden': navbarMode === 'home' }]"
+          @click="handleBackClick" />
 
-        <!-- Mobile Menu Dropdown -->
-        <div v-if="isMobileMenuOpen" class="topnav-mobile-menu">
-          <ToggleMenu
-            v-model="selectedMenuItem"
-            :toggleOptions="mobileMenuOptions"
-            :arrayOptions="[]"
-            header="Navigation"
-            @update:modelValue="handleMobileMenuSelect"
-          />
-        </div>
+        <!-- Logo -->
+        <router-link v-if="shouldShowLogo" to="/"
+          :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+          <Logo logoSize="small" />
+        </router-link>
 
-        <!-- Home Button -->
-        <a href="#" class="topnav-home" aria-label="Home">
-          <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z"
-            ></path>
-          </svg>
-        </a>
+        <!-- Command Prompt in dashboard -->
+        <CommandPrompt v-if="shouldShowCommandPrompt && navbarMode === 'dashboard'"
+          :class="['topnav-command-prompt', { 'topnav-command-prompt-desktop-only': showCommandPrompt === 'desktop' }]"
+          :is-collapsible="isCommandPromptCollapsible" :is-expanded="isCommandPromptExpanded"
+          @click="handleCommandClick" @blur="handleCommandPromptBlur" />
 
         <!-- Main Menu -->
         <ul class="topnav-menu">
           <li v-for="(item, index) in items" :key="index" class="topnav-menu-item">
-            <button
-              v-if="item.children && item.children.length > 0"
-              class="topnav-menu-link"
-              @click="toggleDropdown(index)"
-              @mouseenter="openDropdown(index)"
-              @mouseleave="scheduleCloseDropdown(index)"
-            >
+            <button v-if="item.children && item.children.length > 0" class="topnav-menu-link"
+              @click="toggleDropdown(index)" @mouseenter="openDropdown(index)"
+              @mouseleave="scheduleCloseDropdown(index)">
               {{ item.label }}
-              <svg
-                fill="currentColor"
-                height="16"
-                viewBox="0 0 256 256"
-                width="16"
-                xmlns="http://www.w3.org/2000/svg"
-                class="topnav-dropdown-icon"
-              >
-                <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+              <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg"
+                class="topnav-dropdown-icon">
+                <path
+                  d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z">
+                </path>
               </svg>
             </button>
-            <a v-else :href="item.link || '#'" class="topnav-menu-link">
+            <a v-else :href="item.link || '#'" class="topnav-menu-link"
+              :class="{ 'topnav-menu-link-active': isLinkActive(item.link) }"
+              :style="isLinkActive(item.link) ? 'pointer-events: none;' : ''">
               {{ item.label }}
             </a>
 
             <!-- Dropdown Menu -->
-            <ul
-              v-if="item.children && item.children.length > 0"
-              v-show="openDropdowns[index]"
-              class="topnav-dropdown"
-              @mouseenter="openDropdown(index)"
-              @mouseleave="scheduleCloseDropdown(index)"
-            >
+            <ul v-if="item.children && item.children.length > 0" v-show="openDropdowns[index]" class="topnav-dropdown"
+              @mouseenter="openDropdown(index)" @mouseleave="scheduleCloseDropdown(index)">
               <li v-for="(child, childIndex) in item.children" :key="childIndex" class="topnav-dropdown-item">
                 <!-- Second Level with Children -->
-                <div v-if="'children' in child && child.children && child.children.length > 0" class="topnav-dropdown-nested">
+                <div v-if="'children' in child && child.children && child.children.length > 0"
+                  class="topnav-dropdown-nested">
                   <span class="topnav-dropdown-link topnav-dropdown-parent">
                     {{ child.label }}
-                    <svg
-                      fill="currentColor"
-                      height="12"
-                      viewBox="0 0 256 256"
-                      width="12"
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="topnav-nested-icon"
-                    >
-                      <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+                    <svg fill="currentColor" height="12" viewBox="0 0 256 256" width="12"
+                      xmlns="http://www.w3.org/2000/svg" class="topnav-nested-icon">
+                      <path
+                        d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z">
+                      </path>
                     </svg>
                   </span>
                   <ul class="topnav-dropdown-nested-menu">
@@ -107,70 +77,58 @@
           </li>
         </ul>
 
-        <!-- Right Actions Slot -->
-        <div v-if="$slots.actions" class="topnav-actions">
+        <!-- Cancel Action, Right Actions Slot -->
+        <div v-if="shouldShowActions && ($slots.actions || showCancelAction)" class="topnav-actions">
           <slot name="actions" />
+          <CancelAction v-if="showCancelAction" class="topnav-cancel-action" @click="handleCancelClick" />
         </div>
       </div>
     </Container>
     <div v-else class="topnav-inner-narrow">
-      <!-- Home Button -->
-      <a href="#" class="topnav-home" aria-label="Home">
-        <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z"
-          ></path>
-        </svg>
-      </a>
+      <!-- Back Arrow (NO COMMAND PROMPT in narrow layout) -->
+      <BackAction v-if="showBackAction"
+        :class="['topnav-back-action', { 'topnav-back-action-hidden': navbarMode === 'home' }]"
+        @click="handleBackClick" />
+
+      <!-- Logo -->
+      <router-link v-if="shouldShowLogo" to="/"
+        :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+        <Logo />
+      </router-link>
 
       <!-- Main Menu -->
       <ul class="topnav-menu">
         <li v-for="(item, index) in items" :key="index" class="topnav-menu-item">
-          <button
-            v-if="item.children && item.children.length > 0"
-            class="topnav-menu-link"
-            @click="toggleDropdown(index)"
-            @mouseenter="openDropdown(index)"
-            @mouseleave="scheduleCloseDropdown(index)"
-          >
+          <button v-if="item.children && item.children.length > 0" class="topnav-menu-link"
+            @click="toggleDropdown(index)" @mouseenter="openDropdown(index)" @mouseleave="scheduleCloseDropdown(index)">
             {{ item.label }}
-            <svg
-              fill="currentColor"
-              height="16"
-              viewBox="0 0 256 256"
-              width="16"
-              xmlns="http://www.w3.org/2000/svg"
-              class="topnav-dropdown-icon"
-            >
-              <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+            <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg"
+              class="topnav-dropdown-icon">
+              <path
+                d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z">
+              </path>
             </svg>
           </button>
-          <a v-else :href="item.link || '#'" class="topnav-menu-link">
+          <a v-else :href="item.link || '#'" class="topnav-menu-link"
+            :class="{ 'topnav-menu-link-active': isLinkActive(item.link) }"
+            :style="isLinkActive(item.link) ? 'pointer-events: none;' : ''">
             {{ item.label }}
           </a>
 
           <!-- Dropdown Menu -->
-          <ul
-            v-if="item.children && item.children.length > 0"
-            v-show="openDropdowns[index]"
-            class="topnav-dropdown"
-            @mouseenter="openDropdown(index)"
-            @mouseleave="scheduleCloseDropdown(index)"
-          >
+          <ul v-if="item.children && item.children.length > 0" v-show="openDropdowns[index]" class="topnav-dropdown"
+            @mouseenter="openDropdown(index)" @mouseleave="scheduleCloseDropdown(index)">
             <li v-for="(child, childIndex) in item.children" :key="childIndex" class="topnav-dropdown-item">
               <!-- Second Level with Children -->
-              <div v-if="'children' in child && child.children && child.children.length > 0" class="topnav-dropdown-nested">
+              <div v-if="'children' in child && child.children && child.children.length > 0"
+                class="topnav-dropdown-nested">
                 <span class="topnav-dropdown-link topnav-dropdown-parent">
                   {{ child.label }}
-                  <svg
-                    fill="currentColor"
-                    height="12"
-                    viewBox="0 0 256 256"
-                    width="12"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="topnav-nested-icon"
-                  >
-                    <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+                  <svg fill="currentColor" height="12" viewBox="0 0 256 256" width="12"
+                    xmlns="http://www.w3.org/2000/svg" class="topnav-nested-icon">
+                    <path
+                      d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z">
+                    </path>
                   </svg>
                 </span>
                 <ul class="topnav-dropdown-nested-menu">
@@ -190,9 +148,13 @@
         </li>
       </ul>
 
-      <!-- Right Actions Slot -->
-      <div v-if="$slots.actions" class="topnav-actions">
+      <!-- Command Prompt (if not dashboard), Cancel Action, Right Actions Slot -->
+      <div v-if="shouldShowActions && ($slots.actions || showCancelAction)" class="topnav-actions">
         <slot name="actions" />
+        <CommandPrompt v-if="showCommandPrompt" class="topnav-command-prompt"
+          :is-collapsible="isCommandPromptCollapsible" :is-expanded="isCommandPromptExpanded"
+          @click="handleCommandClick" @blur="handleCommandPromptBlur" />
+        <CancelAction v-if="showCancelAction" class="topnav-cancel-action" @click="handleCancelClick" />
       </div>
     </div>
 
@@ -201,23 +163,35 @@
       <!-- Burger or Home Button -->
       <button v-if="showBurger" class="topnav-mobile-burger" @click="handleBurgerClick" aria-label="Open menu">
         <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path>
+          <path
+            d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z">
+          </path>
         </svg>
       </button>
-      <a v-else href="#" class="topnav-mobile-home" aria-label="Home">
+      <a v-else-if="navbarMode !== 'home'" href="#" class="topnav-mobile-home" aria-label="Home">
         <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
           <path
-            d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z"
-          ></path>
+            d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z">
+          </path>
         </svg>
       </a>
 
       <!-- Mobile Menu Dropdown (shown when hamburger is clicked) -->
       <div v-if="isMobileMenuOpen" class="topnav-mobile-menu-dropdown">
-        <!-- Header -->
-        <div class="topnav-mobile-menu-header">
-          <span>Navigation</span>
+
+        <!-- Logo + Header in one row -->
+        <div class="topnav-mobile-menu-header-row">
+          <!-- Logo  -->
+          <router-link v-if="shouldShowLogo" to="/"
+            :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+            <Logo />
+          </router-link>
+          <!-- Header -->
+          <div class="topnav-mobile-menu-header">
+            <span>Navigation</span>
+          </div>
         </div>
+
 
         <!-- Menu Options -->
         <template v-for="(option, index) in mobileMenuOptions" :key="index">
@@ -227,26 +201,18 @@
             <div class="topnav-mobile-section-header">
               {{ option.text }}
             </div>
-            
+
             <!-- Child Items -->
-            <a
-              v-for="(child, childIndex) in option.children"
-              :key="`${index}-${childIndex}`"
-              :href="child.link || '#'"
+            <a v-for="(child, childIndex) in option.children" :key="`${index}-${childIndex}`" :href="child.link || '#'"
               class="topnav-mobile-menu-option topnav-mobile-menu-option-child"
-              @click="handleMobileMenuSelect(child.state)"
-            >
+              @click="handleMobileMenuSelect(child.state)">
               {{ child.text }}
             </a>
           </template>
 
           <!-- Regular option without children -->
-          <a
-            v-else
-            :href="option.link || '#'"
-            class="topnav-mobile-menu-option"
-            @click="handleMobileMenuSelect(option.state)"
-          >
+          <a v-else :href="option.link || '#'" class="topnav-mobile-menu-option"
+            @click="handleMobileMenuSelect(option.state)">
             {{ option.text }}
           </a>
         </template>
@@ -255,22 +221,14 @@
       <!-- Mobile Menu Items -->
       <ul class="topnav-mobile-menu">
         <li v-for="(item, index) in mobileItems" :key="index" class="topnav-mobile-menu-item">
-          <button
-            v-if="item.children && item.children.length > 0"
-            class="topnav-mobile-menu-link"
-            @click="toggleDropdown(index)"
-          >
+          <button v-if="item.children && item.children.length > 0" class="topnav-mobile-menu-link"
+            @click="toggleDropdown(index)">
             {{ item.label }}
-            <svg
-              fill="currentColor"
-              height="16"
-              viewBox="0 0 256 256"
-              width="16"
-              xmlns="http://www.w3.org/2000/svg"
-              class="topnav-mobile-dropdown-icon"
-              :class="{ 'topnav-mobile-dropdown-icon-open': openDropdowns[index] }"
-            >
-              <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+            <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg"
+              class="topnav-mobile-dropdown-icon" :class="{ 'topnav-mobile-dropdown-icon-open': openDropdowns[index] }">
+              <path
+                d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z">
+              </path>
             </svg>
           </button>
           <a v-else :href="item.link || '#'" class="topnav-mobile-menu-link">
@@ -278,11 +236,8 @@
           </a>
 
           <!-- Mobile Dropdown Menu -->
-          <ul
-            v-if="item.children && item.children.length > 0"
-            v-show="openDropdowns[index]"
-            class="topnav-mobile-dropdown"
-          >
+          <ul v-if="item.children && item.children.length > 0" v-show="openDropdowns[index]"
+            class="topnav-mobile-dropdown">
             <li v-for="(child, childIndex) in item.children" :key="childIndex" class="topnav-mobile-dropdown-item">
               <!-- Second Level with Children -->
               <div v-if="'children' in child && child.children && child.children.length > 0">
@@ -291,7 +246,8 @@
                 </span>
                 <ul class="topnav-mobile-dropdown-nested">
                   <li v-for="(nestedChild, nestedIndex) in child.children" :key="nestedIndex">
-                    <a :href="nestedChild.link || '#'" class="topnav-mobile-dropdown-link topnav-mobile-dropdown-nested-link">
+                    <a :href="nestedChild.link || '#'"
+                      class="topnav-mobile-dropdown-link topnav-mobile-dropdown-nested-link">
                       {{ nestedChild.label }}
                     </a>
                   </li>
@@ -306,9 +262,17 @@
         </li>
       </ul>
 
-      <!-- Right Actions Slot (Mobile) -->
-      <div v-if="$slots.actions" class="topnav-mobile-actions">
+      <!-- Back Arrow (Mobile) -->
+      <BackAction v-if="showBackAction" class="topnav-mobile-back-action" @click="handleBackClick" />
+
+      <!-- Command Prompt (Mobile) -->
+      <CommandPrompt v-if="shouldShowCommandPrompt" class="topnav-mobile-command-prompt" :is-collapsible="false"
+        :is-expanded="false" @click="handleCommandClick" @blur="handleCommandPromptBlur" />
+
+      <!-- Cancel Action, Right Actions Slot (Mobile) -->
+      <div v-if="shouldShowActions && ($slots.actions || showCancelAction)" class="topnav-mobile-actions">
         <slot name="actions" />
+        <CancelAction v-if="showCancelAction" class="topnav-mobile-cancel-action" @click="handleCancelClick" />
       </div>
     </div>
   </nav>
@@ -316,8 +280,15 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref, computed, type PropType } from 'vue'
+import { useRoute } from 'vue-router'
 import Container from './Container.vue'
 import ToggleMenu, { type ToggleOption } from './ToggleMenu.vue'
+import Logo from './Logo.vue'
+import CommandPrompt from './CommandPrompt.vue'
+import BackAction from './BackAction.vue'
+import CancelAction from './CancelAction.vue'
+
+const route = useRoute()
 
 export interface TopnavLinkItem {
   label: string
@@ -330,6 +301,12 @@ export interface TopnavParentItem {
   children?: (TopnavLinkItem | TopnavParentItem)[]
 }
 
+const emit = defineEmits<{
+  'back-click': []
+  'cancel-click': []
+  'command-click': []
+}>()
+
 const props = defineProps({
   /**
    * The menu items to display in the top navigation.
@@ -338,7 +315,7 @@ const props = defineProps({
     type: Array as PropType<TopnavParentItem[]>,
     default: () => [],
   },
-  
+
   /**
    * Defines the scroll behavior of the navigation.
    * 
@@ -352,9 +329,10 @@ const props = defineProps({
     type: String as PropType<'simple' | 'overlay' | 'overlay_reappear'>,
     default: 'simple',
   },
-  
+
   /**
    * If true, navigation spans full width. If false, matches the width of boxed content.
+   * If missing, this is equivalent to 'default' and can be controlled by other props.
    * 
    * @default true
    */
@@ -362,6 +340,113 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+
+  /**
+   * default: applies no special styles
+   * home: for the homepage, defaults to a transparent background, hides logo and action-slot, right-aligns menu
+   * page: for regular pages, defaults to a solid background, shows logo and action-slot
+   * dashboard: for the dashboard, defaults to wide=true, solid background, shows command prompt and action-slot, right-aligns menu
+   *
+   * @default 'default'
+   */
+  navbarMode: {
+    type: String as PropType<'default' | 'home' | 'page' | 'dashboard'>,
+    default: 'default',
+  },
+
+  /**
+   * default: applies no special styles
+   * opaque: forces opaque background, overrides navbarMode and scrollStyle
+   * translucent: forces semi-transparent background, overrides navbarMode and scrollStyle
+   * transparent: forces transparent background, overrides navbarMode and scrollStyle
+   *
+   * @default 'default'
+   */
+  opacity: {
+    type: String as PropType<'default' | 'opaque' | 'translucent' | 'transparent'>,
+    default: 'default',
+  },
+
+  /**
+   * default: applies no special styles
+   * primary: uses primary color styles for background and text
+   * secondary: uses secondary color styles for background and text
+   * muted: uses muted color styles for background and text
+   * accent: uses accent color styles for background and text
+   * warning: uses warning color styles for background and text
+   * positive: uses positive color styles for background and text
+   * negative: uses negative color styles for background and text
+   *
+   * @default 'default'
+   */
+  themeColor: {
+    type: String as PropType<'default' | 'primary' | 'secondary' | 'muted' | 'accent' | 'warning' | 'positive' | 'negative'>,
+    default: 'default',
+  },
+
+  /**
+   * default: Actionslot is shown or hidden based on navbarMode
+   * yes: forces showing the actions slot
+   * no: forces hiding the actions slot
+   *
+   * @default 'default'
+   */
+  allowActions: {
+    type: String as PropType<'default' | 'yes' | 'no'>,
+    default: 'default',
+  },
+
+  /**
+   * default: shows Logo based on navbarMode
+   * desktop: shows the logo only on desktop screens (≥768px)
+   * yes: forces showing the logo
+   * no: forces hiding the logo
+   *
+   * @default 'default'
+   */
+  showLogo: {
+    type: String as PropType<'default' | 'desktop' | 'yes' | 'no'>,
+    default: 'default',
+  },
+
+  /**
+   * default: shows Command Prompt based on navbarMode
+   * desktop: shows the command prompt only on desktop screens (≥768px)
+   * yes: forces showing the command prompt
+   * no: forces hiding the command prompt
+   * 
+   * Note: The CommandPrompt is displayed as a full button in dashboard mode, on mobile, and when wide=true.
+   * In all other circumstances, it shrinks to an icon-button and expands to show an input control when clicked,
+   * collapsing again on blur or escape.
+   *
+   * @default 'default'
+   */
+  showCommandPrompt: {
+    type: String as PropType<'default' | 'desktop' | 'yes' | 'no'>,
+    default: 'default',
+  },
+
+  /**
+   * If true, Left back action is shown. If false, it is hidden.
+   * 
+   * @default false
+   */
+  showBackAction: {
+    type: Boolean,
+    default: false,
+  },
+
+
+  /**
+   * If true, right cancel action is shown. If false, it is hidden.
+   * 
+   * @default false
+   */
+  showCancelAction: {
+    type: Boolean,
+    default: false,
+  },
+
 })
 
 const openDropdowns = ref<Record<number, boolean>>({})
@@ -377,6 +462,9 @@ let headerHeight = 0
 const maxMobileItems = 3
 const isMobileMenuOpen = ref(false)
 const selectedMenuItem = ref<string | number | boolean>('')
+
+// CommandPrompt expansion state
+const isCommandPromptExpanded = ref(false)
 
 // Convert first-level items to ToggleMenu options
 const mobileMenuOptions = computed<ToggleOption[]>(() => {
@@ -417,6 +505,77 @@ const mobileItems = props.items.length > maxMobileItems ? props.items.slice(0, m
 // Always show hamburger button on mobile (≤767px) for consistent UX
 const showBurger = true
 
+// Helper function to check if a link is active
+function isLinkActive(link?: string): boolean {
+  if (!link) return false
+  return route.path === link
+}
+
+// Computed properties for conditional display logic
+const shouldShowLogo = computed(() => {
+  if (props.showLogo === 'yes') return true
+  if (props.showLogo === 'no') return false
+  if (props.showLogo === 'desktop') return true // CSS handles desktop-only
+  // Default based on navbarMode
+  if (props.navbarMode === 'home') return false
+  return true
+})
+
+const shouldShowCommandPrompt = computed(() => {
+  if (props.showCommandPrompt === 'yes') return true
+  if (props.showCommandPrompt === 'no') return false
+  if (props.showCommandPrompt === 'desktop') return true // CSS handles desktop-only
+  // Default based on navbarMode
+  if (props.navbarMode === 'dashboard') return true
+  return false
+})
+
+// Determine if CommandPrompt should be collapsible (icon-button)
+// It's NOT collapsible (shown as full) in: dashboard mode, mobile, or when wide=true
+// It IS collapsible (icon-button) in all other circumstances
+const isCommandPromptCollapsible = computed(() => {
+  // Always full in dashboard mode
+  if (props.navbarMode === 'dashboard') return false
+  // Always full when wide
+  if (props.wide) return false
+  // In all other cases, it should be collapsible
+  return true
+})
+
+const shouldShowActions = computed(() => {
+  if (props.allowActions === 'yes') return true
+  if (props.allowActions === 'no') return false
+  // Default based on navbarMode
+  if (props.navbarMode === 'home') return false
+  return true
+})
+
+// Handler functions for actions
+function handleBackClick() {
+  emit('back-click')
+}
+
+function handleCancelClick() {
+  emit('cancel-click')
+}
+
+function handleCommandClick() {
+  // If collapsible, toggle expansion state
+  if (isCommandPromptCollapsible.value) {
+    isCommandPromptExpanded.value = !isCommandPromptExpanded.value
+  } else {
+    // Otherwise, just emit the click event
+    emit('command-click')
+  }
+}
+
+function handleCommandPromptBlur() {
+  // Collapse when focus leaves
+  if (isCommandPromptCollapsible.value) {
+    isCommandPromptExpanded.value = false
+  }
+}
+
 function toggleDropdown(index: number) {
   // Cancel any pending close
   if (closeTimers.value[index]) {
@@ -445,38 +604,38 @@ function scheduleCloseDropdown(index: number) {
 
 function handleScroll() {
   const currentScrollY = window.scrollY
-  
+
   if (props.scrollStyle === 'overlay') {
     // Simple: just detect if scrolled
     isScrolled.value = currentScrollY > 10
   } else if (props.scrollStyle === 'overlay_reappear') {
     isScrolled.value = currentScrollY > 10
-    
+
     // Calculate if header is off-screen
     const headerElement = document.querySelector('.page-header')
     if (headerElement) {
       headerHeight = headerElement.clientHeight
     }
-    
+
     // Scrolling down
     if (currentScrollY > lastScrollY && currentScrollY > 100) {
       isHidden.value = true
       shouldReappear.value = false
     }
-    
+
     // Header scrolled off-screen, show nav
     if (currentScrollY > headerHeight && isHidden.value) {
       shouldReappear.value = true
       isHidden.value = false
     }
-    
+
     // Near top, reset
     if (currentScrollY < 50) {
       isHidden.value = false
       shouldReappear.value = false
     }
   }
-  
+
   lastScrollY = currentScrollY
 }
 
@@ -488,13 +647,13 @@ function handleClickOutside(event: MouseEvent) {
     const mobileMenu = document.querySelector('.topnav-mobile-menu')
     const hamburger = document.querySelector('.topnav-hamburger')
     const mobileBurger = document.querySelector('.topnav-mobile-burger')
-    
+
     // Check both desktop and mobile elements
     const isClickInsideMenu = (mobileMenuDropdown && mobileMenuDropdown.contains(target)) ||
-                               (mobileMenu && mobileMenu.contains(target))
+      (mobileMenu && mobileMenu.contains(target))
     const isClickOnBurger = (hamburger && hamburger.contains(target)) ||
-                             (mobileBurger && mobileBurger.contains(target))
-    
+      (mobileBurger && mobileBurger.contains(target))
+
     if (!isClickInsideMenu && !isClickOnBurger) {
       isMobileMenuOpen.value = false
     }
@@ -572,6 +731,7 @@ onUnmounted(() => {
 
 /* Hide desktop nav on mobile */
 @media (max-width: 767px) {
+
   .topnav-inner,
   .topnav-inner-narrow {
     display: none !important;
@@ -579,7 +739,8 @@ onUnmounted(() => {
 }
 
 .topnav-inner-narrow {
-  max-width: 90rem; /* 1440px - matches Box centered */
+  max-width: 90rem;
+  /* 1440px - matches Box centered */
   margin: 0 auto;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -587,7 +748,8 @@ onUnmounted(() => {
 
 /* Hamburger Menu - Mobile Only */
 .topnav-hamburger {
-  display: none; /* Hidden by default (desktop) */
+  display: none;
+  /* Hidden by default (desktop) */
   align-items: center;
   justify-content: center;
   width: 2.5rem;
@@ -628,34 +790,6 @@ onUnmounted(() => {
   .topnav-mobile-menu {
     display: block;
   }
-}
-
-.topnav-home {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--color-contrast);
-  border-radius: 0.5rem;
-  transition: var(--transition);
-  transition-property: background-color, color;
-}
-
-.topnav-home:hover {
-  background-color: var(--color-muted-bg);
-}
-
-/* Hide home button on mobile */
-@media (max-width: 767px) {
-  .topnav-home {
-    display: none !important;
-  }
-}
-
-.topnav-home svg {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 
 .topnav-menu {
@@ -700,6 +834,15 @@ onUnmounted(() => {
 
 .topnav-menu-link:hover {
   background-color: var(--color-muted-bg);
+}
+
+.topnav-menu-link-active {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.topnav-menu-link-active:hover {
+  background-color: transparent;
 }
 
 .topnav-dropdown-icon {
@@ -841,13 +984,19 @@ onUnmounted(() => {
     z-index: 1000;
   }
 
-  .topnav-mobile-menu-header {
+  .topnav-mobile-menu-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 0.25rem;
+  }
+
+  .topnav-mobile-menu-header {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-contrast);
-    border-bottom: 1px solid var(--color-border);
-    margin-bottom: 0.25rem;
   }
 
   /* Section Header (for grouped items) */
@@ -981,6 +1130,117 @@ onUnmounted(() => {
   .topnav-mobile-dropdown-nested-link {
     font-size: 0.8125rem;
     padding: 0.375rem 0.625rem;
+  }
+}
+
+/* Component-specific styles */
+.topnav-back-action,
+.topnav-logo,
+.topnav-command-prompt,
+.topnav-cancel-action {
+  flex-shrink: 0;
+}
+
+/* Desktop-only visibility */
+.topnav-logo-desktop-only,
+.topnav-command-prompt-desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+
+  .topnav-logo-desktop-only,
+  .topnav-command-prompt-desktop-only {
+    display: flex;
+  }
+}
+
+/* NavbarMode-specific hiding */
+.topnav-back-action-hidden {
+  display: none;
+}
+
+/* Opacity overrides */
+.topnav[data-opacity="opaque"] {
+  background-color: var(--color-bg) !important;
+  backdrop-filter: none !important;
+}
+
+.topnav[data-opacity="translucent"] {
+  background-color: rgba(var(--color-bg-rgb, 255, 255, 255), 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.topnav[data-opacity="transparent"] {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  border-bottom-color: transparent !important;
+}
+
+/* Theme color overrides */
+.topnav[data-theme="primary"] {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+  border-bottom-color: var(--color-primary-bg);
+}
+
+.topnav[data-theme="secondary"] {
+  background-color: var(--color-secondary-bg);
+  color: var(--color-secondary-contrast);
+  border-bottom-color: var(--color-secondary-bg);
+}
+
+.topnav[data-theme="muted"] {
+  background-color: var(--color-muted-bg);
+  color: var(--color-muted-contrast);
+  border-bottom-color: var(--color-muted-bg);
+}
+
+.topnav[data-theme="accent"] {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent-contrast);
+  border-bottom-color: var(--color-accent-bg);
+}
+
+.topnav[data-theme="warning"] {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-contrast);
+  border-bottom-color: var(--color-warning-bg);
+}
+
+.topnav[data-theme="positive"] {
+  background-color: var(--color-positive-bg);
+  color: var(--color-positive-contrast);
+  border-bottom-color: var(--color-positive-bg);
+}
+
+.topnav[data-theme="negative"] {
+  background-color: var(--color-negative-bg);
+  color: var(--color-negative-contrast);
+  border-bottom-color: var(--color-negative-bg);
+}
+
+/* NavbarMode-specific styles */
+.topnav[data-mode="home"] .topnav-menu {
+  margin-left: auto;
+}
+
+.topnav[data-mode="dashboard"] .topnav-menu {
+  margin-left: auto;
+}
+
+.topnav[data-mode="home"] {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
+
+/* Mobile component styles */
+@media (max-width: 767px) {
+
+  .topnav-mobile-back-action,
+  .topnav-mobile-command-prompt,
+  .topnav-mobile-cancel-action {
+    flex-shrink: 0;
   }
 }
 </style>

@@ -291,9 +291,9 @@ export async function createProjectsTable(db: DatabaseAdapter) {
       : "CHECK(id GLOB '[a-z]*' AND id NOT GLOB '* *' AND id NOT GLOB '*[A-Z]*')"},
       heading ${TEXT},
       description ${TEXT},
-      status ${TEXT} DEFAULT 'draft' ${isPostgres
-      ? "CHECK(status IN ('draft', 'active', 'archived'))"
-      : "CHECK(status IN ('draft', 'active', 'archived'))"},
+      status_old ${TEXT} DEFAULT 'draft' ${isPostgres
+      ? "CHECK(status_old IN ('draft', 'active', 'archived'))"
+      : "CHECK(status_old IN ('draft', 'active', 'archived'))"},
       owner_id ${TEXT},
       created_at ${TIMESTAMP},
       updated_at ${TEXT}

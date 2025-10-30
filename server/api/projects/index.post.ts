@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import { getStatusIdByName } from '../../utils/status-helpers'
 import type { ProjectsTableFields } from '../../types/database'
 
 // POST /api/projects - Create new project
@@ -8,6 +9,8 @@ import type { ProjectsTableFields } from '../../types/database'
 // - 'name' is the project title/display name
 // - 'heading' is kept for backward compatibility
 // - 'id' is auto-increment INTEGER (internal DB use only)
+// After Migration 020 Chapter 3:
+// - Added status_id INTEGER field (FK to status table)
 export default defineEventHandler(async (event) => {
     const body = await readBody(event) as {
         domaincode?: string
@@ -50,8 +53,30 @@ export default defineEventHandler(async (event) => {
         const name = body.name || null
         const heading = body.heading || (name ? `Project Overline **${name}**` : `Project Overline **${domaincode}**`)
         const description = body.description || null
-        const status = body.status || 'draft'
         const header_size = body.header_size || null
+
+        // Get status_id from status name (default: 'new')
+        let status_id: number
+        if (body.status) {
+            const foundId = getStatusIdByName(body.status, 'projects')
+            if (!foundId) {
+                throw createError({
+                    statusCode: 400,
+                    message: `Invalid status '${body.status}'. Must be a valid status name for projects.`
+                })
+            }
+            status_id = foundId
+        } else {
+            // Default to 'new' status (id: 18)
+            const foundId = getStatusIdByName('new', 'projects')
+            if (!foundId) {
+                throw createError({
+                    statusCode: 500,
+                    message: 'Default status (new) not found. Run migration 020.'
+                })
+            }
+            status_id = foundId
+        }
 
         // Convert owner_id to INTEGER if provided
         let owner_id = null
@@ -73,14 +98,14 @@ export default defineEventHandler(async (event) => {
             name,
             heading,
             description,
-            status,
+            status_id,
             owner_id,
             header_size
         }
 
         // Insert project
         const stmt = db.prepare(`
-            INSERT INTO projects (domaincode, name, heading, description, status, owner_id, header_size)
+            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `)
 
@@ -89,7 +114,7 @@ export default defineEventHandler(async (event) => {
             projectData.name,
             projectData.heading,
             projectData.description,
-            projectData.status,
+            projectData.status_id,
             projectData.owner_id,
             projectData.header_size
         )

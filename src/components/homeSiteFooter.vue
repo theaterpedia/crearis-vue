@@ -5,7 +5,7 @@
                 <!-- About Section -->
                 <div class="footer-section footer-about">
                     <Prose>
-                        <p><strong>Theaterpedia</strong></p>
+                        <p><strong>Theaterpedia</strong> - {{ pageSettings.claim }}</p>
                         <p>Connecting artists, projects, and audiences in the world of theater. Building the future of
                             theater community platforms.</p>
                     </Prose>
@@ -14,29 +14,25 @@
                 <!-- Quick Links -->
                 <div class="footer-section footer-links">
                     <Prose>
-                        <p><strong>Explore</strong></p>
+                        <p><strong>Seiten</strong></p>
                     </Prose>
                     <ul>
                         <li><a href="/">Home</a></li>
                         <li><a href="/blog">Blog</a></li>
-                        <li><a href="/events">Events</a></li>
-                        <li><a href="/projects">Projects</a></li>
                         <li><a href="/team">Team</a></li>
-                        <li><a href="/search">Search</a></li>
+                        <li><a href="/start">Get Started</a></li>
                     </ul>
                 </div>
 
                 <!-- Resources -->
                 <div class="footer-section footer-resources">
                     <Prose>
-                        <p><strong>Resources</strong></p>
+                        <p><strong>Rechtliches</strong></p>
                     </Prose>
                     <ul>
-                        <li><a href="/getstarted">Get Started</a></li>
-                        <li><a href="/about">About</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/terms">Terms of Use</a></li>
+                        <li><a href="/contact">Kontakt</a></li>
+                        <li><a href="/impressum">Impressum</a></li>
+                        <li><a href="/datenschutz">Datenschutz</a></li>
                     </ul>
                 </div>
 
@@ -45,13 +41,9 @@
                     <Prose>
                         <p><strong>Connect</strong></p>
                     </Prose>
-                    <ul class="social-links">
-                        <li><a href="https://twitter.com/theaterpedia" target="_blank" rel="noopener">Twitter</a></li>
-                        <li><a href="https://facebook.com/theaterpedia" target="_blank" rel="noopener">Facebook</a></li>
-                        <li><a href="https://instagram.com/theaterpedia" target="_blank" rel="noopener">Instagram</a>
-                        </li>
-                        <li><a href="mailto:info@theaterpedia.org">Contact Us</a></li>
-                    </ul>
+                    <div class="footer-social-media">
+                        <SocialMediaSection size="small" :is-vertical="true" />
+                    </div>
                     <div class="copyright">
                         <Prose>
                             <p>&copy; 2025 Theaterpedia.org Network. All rights reserved.</p>
@@ -66,6 +58,8 @@
 <script lang="ts" setup>
 import Container from './Container.vue'
 import Prose from './Prose.vue'
+import SocialMediaSection from '@/views/Home/HomeComponents/SocialMediaSection.vue'
+import { pageSettings } from '@/settings'
 </script>
 
 <style scoped>
@@ -117,6 +111,29 @@ import Prose from './Prose.vue'
 
 .footer-about {
     max-width: 280px;
+}
+
+.footer-social-media {
+    margin: 0;
+}
+
+.footer-social-media :deep(.social-compact-row) {
+    justify-content: flex-start;
+}
+
+.footer-social-media :deep(.social-compact-btn) {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-accent-contrast);
+}
+
+.footer-social-media :deep(.social-compact-btn:hover) {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.footer-social-media :deep(.social-compact-icon) {
+    color: var(--color-accent-contrast);
 }
 
 .social-links {

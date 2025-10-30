@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-10-25T14:43:02.193Z
+ * Generated at: 2025-10-30T13:59:34.420Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -22,8 +22,8 @@
  * Table: crearis_config
  */
 export interface CrearisConfigTableFields {
-    id: number // PRIMARY KEY, default: nextval('crearis_config_id_seq'::regclass)
     config: Record<string, any>
+    id: number // default: nextval('crearis_config_id_seq'::regclass)
 }
 
 /**
@@ -47,7 +47,7 @@ export interface DomainsTableFields {
  */
 export interface EventInstructorsTableFields {
     added_at?: string | null // default: CURRENT_TIMESTAMP
-    event_id: string
+    event_id: number
     instructor_id: number
 }
 
@@ -56,7 +56,6 @@ export interface EventInstructorsTableFields {
  * Table: events
  */
 export interface EventsTableFields {
-    id: number // PRIMARY KEY, default: nextval('events_id_seq'::regclass)
     address_id?: string | null
     cimg?: string | null
     created_at?: string | null
@@ -65,12 +64,12 @@ export interface EventsTableFields {
     event_type?: string | null
     header_type?: string | null
     html?: string | null
+    id: number // default: nextval('events_id_seq'::regclass)
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
     location?: number | null
     md?: string | null
     name?: string | null
-    project?: string | null
     project_id?: number | null
     public_user?: number | null
     rectitle?: string | null
@@ -119,12 +118,12 @@ export interface FormInputTableFields {
  * Table: hero_overrides
  */
 export interface HeroOverridesTableFields {
-    id: string // PRIMARY KEY
     cimg?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     description?: string | null
     event_ids?: string | null
     heading?: string | null
+    id: string
     updated_at?: string | null
 }
 
@@ -148,17 +147,17 @@ export interface I18nCodesTableFields {
  * Table: instructors
  */
 export interface InstructorsTableFields {
-    id: number // PRIMARY KEY, default: nextval('instructors_id_seq'::regclass)
     cimg?: string | null
     city?: string | null
     country_id?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     description?: string | null
     email?: string | null
-    event_id?: string | null
+    event_xmlid?: string | null
     header_size?: string | null
     header_type?: string | null
     html?: string | null
+    id: number // default: nextval('instructors_id_seq'::regclass)
     is_user?: boolean | null // default: false
     isbase?: number | null // default: 0
     lang: string // default: 'de'::text
@@ -167,7 +166,6 @@ export interface InstructorsTableFields {
     name: string
     phone?: string | null
     regio_id?: number | null
-    status?: string | null // default: 'active'
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_id?: number | null
     updated_at?: string | null
@@ -176,20 +174,39 @@ export interface InstructorsTableFields {
 }
 
 /**
+ * Interactions table
+ * Table: interactions
+ */
+export interface InteractionsTableFields {
+    actions?: Record<string, any> | null
+    fields?: Record<string, any> | null
+    from_mail?: string | null
+    id: number // default: nextval('interactions_id_seq'::regclass)
+    md?: string | null
+    name: string
+    project_id?: number | null
+    status_id: number
+    subject?: string | null
+    timestamp: string // default: CURRENT_TIMESTAMP
+    to_mail?: string | null
+    user_id?: number | null
+}
+
+/**
  * Locations table
  * Table: locations
  */
 export interface LocationsTableFields {
-    id: number // PRIMARY KEY, default: nextval('locations_id_seq'::regclass)
     category_id?: string | null
     cimg?: string | null
     city?: string | null
     country_id?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     email?: string | null
-    event_id?: string | null
+    event_xmlid?: string | null
     header_size?: string | null
     header_type?: string | null
+    id: number // default: nextval('locations_id_seq'::regclass)
     is_company?: string | null
     is_location_provider?: string | null
     isbase?: number | null // default: 0
@@ -198,7 +215,6 @@ export interface LocationsTableFields {
     name: string
     phone?: string | null
     project_id?: number | null
-    status?: string | null // default: 'active'
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_id?: number | null
     street?: string | null
@@ -248,20 +264,17 @@ export interface PagesTableFields {
  * Table: participants
  */
 export interface ParticipantsTableFields {
-    id: number // PRIMARY KEY, default: nextval('participants_id_seq'::regclass)
     age?: number | null
     cimg?: string | null
     city?: string | null
     country_id?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     description?: string | null
-    event_id?: string | null
+    event_xmlid?: string | null
+    id: number // default: nextval('participants_id_seq'::regclass)
     is_user?: boolean | null // default: false
-    isbase?: number | null // default: 0
     lang: string // default: 'de'::text
     name: string
-    project_events?: string | null
-    status?: string | null // default: 'active'
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_id?: number | null
     type?: string | null
@@ -275,22 +288,21 @@ export interface ParticipantsTableFields {
  * Table: posts
  */
 export interface PostsTableFields {
-    id: number // PRIMARY KEY, default: nextval('posts_id_seq'::regclass)
     author_id?: string | null
     blog_id?: string | null
     cimg?: string | null
     cover_properties?: string | null
     created_at?: string | null
-    event_id?: string | null
+    event_xmlid?: string | null
     header_type?: string | null
     html?: string | null
+    id: number // default: nextval('posts_id_seq'::regclass)
     is_published?: string | null
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
     md?: string | null
     name?: string | null
     post_date?: string | null
-    project?: string | null
     project_id?: number | null
     public_user?: number | null
     regio_id?: number | null
@@ -335,13 +347,12 @@ export interface ProjectMembersTableFields {
  * Table: projects
  */
 export interface ProjectsTableFields {
-    id: number // PRIMARY KEY, default: nextval('projects_id_seq'::regclass)
-    aside_context?: string | null // default: ''::text
+    aside_context?: Record<string, any> | null // default: '{}'::jsonb
     aside_has_content?: boolean | null
     aside_list?: string | null // default: ''::text
     aside_options_ext?: Record<string, any> | null // default: '{}'::jsonb
     aside_postit?: Record<string, any> | null // default: '{}'::jsonb
-    aside_toc?: string | null // default: ''::text
+    aside_toc?: Record<string, any> | null // default: '{}'::jsonb
     cimg?: string | null
     config?: Record<string, any> | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
@@ -359,7 +370,7 @@ export interface ProjectsTableFields {
     footer_repeat?: Record<string, any> | null // default: '{}'::jsonb
     footer_sitemap?: string | null // default: ''::text
     footer_slider?: string | null // default: ''::text
-    header_alert?: string | null // default: ''::text
+    header_alert?: Record<string, any> | null // default: '{}'::jsonb
     header_has_content?: boolean | null
     header_options_ext?: Record<string, any> | null // default: '{}'::jsonb
     header_postit?: Record<string, any> | null // default: '{}'::jsonb
@@ -367,33 +378,32 @@ export interface ProjectsTableFields {
     header_type?: string | null
     heading?: string | null
     html?: string | null
+    id: number // default: nextval('projects_id_seq'::regclass)
     is_company?: boolean | null // default: false
     is_location_provider?: boolean | null // default: false
     is_onepage?: boolean | null
     is_regio?: boolean | null
     is_service?: boolean | null
+    is_sidebar?: boolean | null
     is_topic?: boolean | null
     md?: string | null
     member_ids?: Record<string, any> | null
     name?: string | null
     owner_id?: number | null
     page_background?: string | null // default: ''::text
-    page_cssvars?: string | null // default: ''::text
+    page_cssvars?: Record<string, any> | null // default: '{}'::jsonb
     page_has_content?: boolean | null
-    page_navigation?: string | null // default: ''::text
+    page_navigation?: Record<string, any> | null // default: '{}'::jsonb
     page_options_ext?: Record<string, any> | null // default: '{}'::jsonb
     partner_projects?: string | null
-    password_hash: string
     regio?: number | null
-    release?: string | null
-    role: string
-    status?: string | null // default: 'new'::text
+    status_id: number // default: 18
+    status_old?: string | null // default: 'new'::text
     team_page?: string | null // default: 'yes'::text
     teaser?: string | null
     theme?: number | null
     type?: string | null // default: 'project'::text
     updated_at?: string | null
-    username: string
 }
 
 /**
@@ -401,9 +411,9 @@ export interface ProjectsTableFields {
  * Table: record_versions
  */
 export interface RecordVersionsTableFields {
-    id: string // PRIMARY KEY
     created_at?: string | null // default: CURRENT_TIMESTAMP
     data: string
+    id: string
     record_id: string
     record_type: string
     version_id: string
@@ -414,9 +424,9 @@ export interface RecordVersionsTableFields {
  * Table: releases
  */
 export interface ReleasesTableFields {
-    id: string // PRIMARY KEY
     created_at?: string | null // default: CURRENT_TIMESTAMP
     description?: string | null
+    id: string
     release_date?: string | null
     state?: string | null // default: 'idea'::text
     updated_at?: string | null
@@ -458,8 +468,8 @@ export interface SysdomainsTableFields {
  * Table: system_config
  */
 export interface SystemConfigTableFields {
-    key: string // PRIMARY KEY
     description?: string | null
+    key: string
     updated_at?: string | null // default: CURRENT_TIMESTAMP
     value: string
 }
@@ -481,7 +491,6 @@ export interface TagsTableFields {
  * Table: tasks
  */
 export interface TasksTableFields {
-    id: string // PRIMARY KEY
     assigned_to?: string | null
     category?: string | null // default: 'project'::text
     cimg?: string | null
@@ -491,7 +500,7 @@ export interface TasksTableFields {
     due_date?: string | null
     entity_name?: string | null
     filter?: string | null
-    image?: string | null
+    id: string
     lang: string // default: 'de'::text
     logic?: string | null
     name: string
@@ -500,10 +509,8 @@ export interface TasksTableFields {
     record_id?: string | null
     record_type?: string | null
     release_id?: string | null
-    status?: string | null // default: 'idea'
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_id: number // default: 2
-    title: string
     updated_at?: string | null
     version_id?: string | null
 }
@@ -523,9 +530,9 @@ export interface TldsTableFields {
  * Table: users
  */
 export interface UsersTableFields {
-    id: number // PRIMARY KEY, default: nextval('users_id_seq'::regclass)
     created_at?: string | null // default: CURRENT_TIMESTAMP
     extmail?: string | null
+    id: number // default: nextval('users_id_seq'::regclass)
     instructor_id?: number | null
     lang: string // default: 'de'::text
     participant_id?: number | null
@@ -543,11 +550,11 @@ export interface UsersTableFields {
  * Table: versions
  */
 export interface VersionsTableFields {
-    id: string // PRIMARY KEY
     created_at?: string | null // default: CURRENT_TIMESTAMP
     created_by?: string | null
     csv_exported?: number | null // default: 0
     description?: string | null
+    id: string
     is_active?: number | null // default: 0
     name: string
     notes?: string | null
@@ -580,7 +587,7 @@ export function isValidEventInstructorsField(key: string): key is keyof EventIns
 
 export function isValidEventsField(key: string): key is keyof EventsTableFields {
     const validFields: (keyof EventsTableFields)[] = [
-        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display', 'project'
+        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
     ]
     return validFields.includes(key as keyof EventsTableFields)
 }
@@ -615,14 +622,21 @@ export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableF
 
 export function isValidInstructorsField(key: string): key is keyof InstructorsTableFields {
     const validFields: (keyof InstructorsTableFields)[] = [
-        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_id', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display', 'status'
+        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof InstructorsTableFields)
 }
 
+export function isValidInteractionsField(key: string): key is keyof InteractionsTableFields {
+    const validFields: (keyof InteractionsTableFields)[] = [
+        'id', 'user_id', 'name', 'project_id', 'timestamp', 'status_id', 'actions', 'to_mail', 'from_mail', 'subject', 'md', 'fields'
+    ]
+    return validFields.includes(key as keyof InteractionsTableFields)
+}
+
 export function isValidLocationsField(key: string): key is keyof LocationsTableFields {
     const validFields: (keyof LocationsTableFields)[] = [
-        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_id', 'version_id', 'status_id', 'project_id', 'isbase', 'created_at', 'updated_at', 'lang', 'status_display', 'status'
+        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_xmlid', 'version_id', 'status_id', 'project_id', 'isbase', 'created_at', 'updated_at', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof LocationsTableFields)
 }
@@ -636,21 +650,21 @@ export function isValidPageSectionsField(key: string): key is keyof PageSections
 
 export function isValidPagesField(key: string): key is keyof PagesTableFields {
     const validFields: (keyof PagesTableFields)[] = [
-        'id', 'project', 'header_type', 'page_type', 'page_options', 'header_options', 'aside_options', 'footer_options', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'created_at', 'updated_at'
+        'id', 'project', 'header_type', 'page_type', 'created_at', 'updated_at', 'page_options', 'header_options', 'aside_options', 'footer_options', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content'
     ]
     return validFields.includes(key as keyof PagesTableFields)
 }
 
 export function isValidParticipantsField(key: string): key is keyof ParticipantsTableFields {
     const validFields: (keyof ParticipantsTableFields)[] = [
-        'id', 'xmlid', 'name', 'age', 'city', 'country_id', 'cimg', 'description', 'event_id', 'type', 'version_id', 'status_id', 'created_at', 'updated_at', 'is_user', 'lang', 'status_display', 'status', 'isbase', 'project_events'
+        'id', 'xmlid', 'name', 'age', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'type', 'version_id', 'status_id', 'created_at', 'updated_at', 'is_user', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof ParticipantsTableFields)
 }
 
 export function isValidPostsField(key: string): key is keyof PostsTableFields {
     const validFields: (keyof PostsTableFields)[] = [
-        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_id', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display', 'project'
+        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_xmlid', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
     ]
     return validFields.includes(key as keyof PostsTableFields)
 }
@@ -671,7 +685,7 @@ export function isValidProjectMembersField(key: string): key is keyof ProjectMem
 
 export function isValidProjectsField(key: string): key is keyof ProjectsTableFields {
     const validFields: (keyof ProjectsTableFields)[] = [
-        'id', 'domaincode', 'name', 'description', 'status', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'username', 'password_hash', 'role', 'release'
+        'id', 'domaincode', 'name', 'description', 'status_old', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'is_sidebar', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'status_id'
     ]
     return validFields.includes(key as keyof ProjectsTableFields)
 }
@@ -720,7 +734,7 @@ export function isValidTagsField(key: string): key is keyof TagsTableFields {
 
 export function isValidTasksField(key: string): key is keyof TasksTableFields {
     const validFields: (keyof TasksTableFields)[] = [
-        'id', 'name', 'description', 'category', 'priority', 'record_type', 'record_id', 'assigned_to', 'created_at', 'updated_at', 'due_date', 'completed_at', 'version_id', 'release_id', 'cimg', 'prompt', 'logic', 'filter', 'entity_name', 'status_id', 'lang', 'status_display', 'title', 'status', 'image'
+        'id', 'name', 'description', 'category', 'priority', 'record_type', 'record_id', 'assigned_to', 'created_at', 'updated_at', 'due_date', 'completed_at', 'version_id', 'release_id', 'cimg', 'prompt', 'logic', 'filter', 'entity_name', 'status_id', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof TasksTableFields)
 }

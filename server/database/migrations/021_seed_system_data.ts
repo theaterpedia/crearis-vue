@@ -207,8 +207,9 @@ export const migration = {
         const tpExists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['tp'])
         if (!tpExists) {
             await db.exec(`
-                INSERT INTO projects (domaincode, name, type, description, status)
-                VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 'active')
+                INSERT INTO projects (domaincode, name, type, description, status_id)
+                VALUES ('tp', 'Project Overline **tp**', 'special', 'default-page', 
+                    (SELECT id FROM status WHERE name = 'done' AND "table" = 'projects' LIMIT 1))
             `)
             console.log('    ✓ Created tp project (special)')
         } else {
@@ -219,8 +220,9 @@ export const migration = {
         const regio1Exists = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['regio1'])
         if (!regio1Exists) {
             await db.exec(`
-                INSERT INTO projects (domaincode, name, type, description, status)
-                VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 'active')
+                INSERT INTO projects (domaincode, name, type, description, status_id)
+                VALUES ('regio1', 'Project Overline **regio1**', 'regio', 'default-regio', 
+                    (SELECT id FROM status WHERE name = 'draft' AND "table" = 'projects' LIMIT 1))
             `)
             console.log('    ✓ Created regio1 project (regio)')
         } else {
@@ -526,13 +528,50 @@ export const migration = {
             }
         }
 
-        console.log('\n✅ Migration 021 completed: All system data seeded (tags, status, config, projects, users, domains, memberships)')
+        // =================================================================
+        // CHAPTER 6: Create Homepage and Teampage
+        // =================================================================
+        console.log('\n📄 Chapter 6: Creating Homepage and Teampage...')
+
+        // Get tp project id
+        const tpProjectForPages = await db.get('SELECT id FROM projects WHERE domaincode = $1', ['tp'])
+
+        if (tpProjectForPages) {
+            // Create Homepage (page_type: landing)
+            const homepageExists = await db.get('SELECT id FROM pages WHERE project = $1 AND page_type = $2', [(tpProjectForPages as any).id, 'landing'])
+            if (!homepageExists) {
+                await db.run(`
+                    INSERT INTO pages (project, page_type, header_type)
+                    VALUES ($1, $2, $3)
+                `, [(tpProjectForPages as any).id, 'landing', 'banner'])
+                console.log('    ✓ Created homepage (page_type: landing) for tp project')
+            } else {
+                console.log('    ℹ️  Homepage already exists for tp project')
+            }
+
+            // Create Teampage (page_type: team)
+            const teampageExists = await db.get('SELECT id FROM pages WHERE project = $1 AND page_type = $2', [(tpProjectForPages as any).id, 'team'])
+            if (!teampageExists) {
+                await db.run(`
+                    INSERT INTO pages (project, page_type, header_type)
+                    VALUES ($1, $2, $3)
+                `, [(tpProjectForPages as any).id, 'team', 'banner'])
+                console.log('    ✓ Created teampage (page_type: team) for tp project')
+            } else {
+                console.log('    ℹ️  Teampage already exists for tp project')
+            }
+        } else {
+            console.log('    ⚠️  Could not find tp project for pages creation')
+        }
+
+        console.log('\n✅ Migration 021 completed: All system data seeded (tags, status, config, projects, users, domains, memberships, pages)')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {
         console.log('Migration 021 down: Removing system data...')
 
         // Remove in reverse order
+        await db.exec('DELETE FROM pages WHERE project_id IN (SELECT id FROM projects WHERE domaincode IN (\'tp\', \'regio1\'))')
         await db.exec('DELETE FROM project_members')
         await db.exec('DELETE FROM projects WHERE domaincode IN (\'tp\', \'regio1\')')
         await db.exec('DELETE FROM users WHERE sysmail IN (\'admin@theaterpedia.org\', \'base@theaterpedia.org\', \'project1@theaterpedia.org\', \'project2@theaterpedia.org\', \'tp@theaterpedia.org\', \'regio1@theaterpedia.org\')')

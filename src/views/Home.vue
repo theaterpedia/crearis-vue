@@ -73,7 +73,8 @@
                                         style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
                                     <Prose>
                                         <h4>{{ project.heading || project.id }}</h4>
-                                        <p v-if="project.status"><strong>Status:</strong> {{ project.status }}</p>
+                                        <p v-if="project.status_id"><strong>Status:</strong> {{
+                                            getStatusDisplayName(project.status_id, 'projects', 'de') }}</p>
                                     </Prose>
                                 </a>
                             </Column>
@@ -124,7 +125,7 @@
                                     <h4>{{ userItem.username }}</h4>
                                     <p><strong>Role:</strong> {{ userItem.role }}</p>
                                     <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                    }}</em>
+                                            }}</em>
                                     </p>
                                 </Prose>
                             </Slide>
@@ -145,6 +146,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStatus } from '@/composables/useStatus'
 import { homeRoutes } from '@/config/homeroutes'
 import AlertBanner from '@/components/AlertBanner.vue'
 import Navbar from '@/components/Navbar.vue'
@@ -167,6 +169,7 @@ import Footer from '@/components/Footer.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 
 const router = useRouter()
+const { getStatusIdByName, getStatusDisplayName, initializeCache } = useStatus()
 
 // State
 const user = ref<any>(null)
@@ -267,8 +270,13 @@ async function fetchProjects() {
             const data = await response.json()
             // API returns { projects: [...], count: ... }
             const projectsArray = data.projects || data
-            // Filter projects with status 'draft' or 'demo'
-            const filteredProjects = projectsArray.filter((p: any) => p.status === 'draft' || p.status === 'demo')
+
+            // Get status IDs for 'draft' and 'demo' for projects table
+            const draftStatusId = getStatusIdByName('draft', 'projects')
+            const demoStatusId = getStatusIdByName('demo', 'projects')
+
+            // Filter projects with status_id matching 'draft' or 'demo'
+            const filteredProjects = projectsArray.filter((p: any) => p.status_id === draftStatusId || p.status_id === demoStatusId)
             projects.value = filteredProjects.slice(0, 8) // Limit to 8 projects
         }
     } catch (error) {

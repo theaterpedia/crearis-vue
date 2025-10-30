@@ -34,9 +34,9 @@ async function seedUsers() {
     const id = nanoid()
 
     await db.run(
-      `INSERT INTO projects (id, username, password_hash, role, name, status, created_at)
+      `INSERT INTO projects (id, username, password_hash, role, name, status_old, created_at)
        VALUES (?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)`,
-      [id, user.username, passwordHash, user.role, user.username, ]
+      [id, user.username, passwordHash, user.role, user.username,]
     )
 
     console.log(`Username: ${user.username}`)

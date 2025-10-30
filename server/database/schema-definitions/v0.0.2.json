@@ -1,8 +1,8 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-10-24T07:12:04.869Z",
-  "description": "Database schema for crearis-demo-data system v0.0.2",
+  "generatedAt": "2025-10-30T13:15:22.682Z",
+  "description": "Database schema for crearis-demo-data system v0.0.1",
   "tables": {
     "crearis_config": {
       "description": "Crearis_config table",
@@ -10,8 +10,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('crearis_config_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('crearis_config_id_seq'::regclass)"
         },
         "config": {
           "type": "JSONB",
@@ -61,7 +60,7 @@
       "description": "Event_instructors table",
       "columns": {
         "event_id": {
-          "type": "TEXT",
+          "type": "INTEGER",
           "nullable": false
         },
         "instructor_id": {
@@ -81,8 +80,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('events_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('events_id_seq'::regclass)"
         },
         "xmlid": {
           "type": "TEXT",
@@ -203,11 +201,6 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
-        },
-        "project": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
         }
       }
     },
@@ -274,8 +267,7 @@
       "columns": {
         "id": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "cimg": {
           "type": "TEXT",
@@ -352,8 +344,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('instructors_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('instructors_id_seq'::regclass)"
         },
         "xmlid": {
           "type": "TEXT",
@@ -387,7 +378,7 @@
           "type": "TEXT",
           "nullable": true
         },
-        "event_id": {
+        "event_xmlid": {
           "type": "TEXT",
           "nullable": true
         },
@@ -451,12 +442,61 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
+        }
+      }
+    },
+    "interactions": {
+      "description": "Interactions table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('interactions_id_seq'::regclass)"
         },
-        "status": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "name": {
           "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false,
-          "default": "'active'"
+          "nullable": false
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "timestamp": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actions": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "to_mail": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "from_mail": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "subject": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "fields": {
+          "type": "JSONB",
+          "nullable": true
         }
       }
     },
@@ -466,8 +506,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('locations_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('locations_id_seq'::regclass)"
         },
         "xmlid": {
           "type": "TEXT",
@@ -529,7 +568,7 @@
           "type": "TEXT",
           "nullable": true
         },
-        "event_id": {
+        "event_xmlid": {
           "type": "TEXT",
           "nullable": true
         },
@@ -567,12 +606,6 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
-        },
-        "status": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false,
-          "default": "'active'"
         }
       }
     },
@@ -633,6 +666,16 @@
           "type": "TEXT",
           "nullable": false
         },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
         "page_options": {
           "type": "JSONB",
           "nullable": true,
@@ -668,16 +711,6 @@
         "footer_has_content": {
           "type": "BOOLEAN",
           "nullable": true
-        },
-        "created_at": {
-          "type": "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable": true,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "type": "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable": true,
-          "default": "CURRENT_TIMESTAMP"
         }
       }
     },
@@ -687,8 +720,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('participants_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('participants_id_seq'::regclass)"
         },
         "xmlid": {
           "type": "TEXT",
@@ -718,7 +750,7 @@
           "type": "TEXT",
           "nullable": true
         },
-        "event_id": {
+        "event_xmlid": {
           "type": "TEXT",
           "nullable": true
         },
@@ -756,23 +788,6 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
-        },
-        "status": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false,
-          "default": "'active'"
-        },
-        "isbase": {
-          "type": "INTEGER",
-          "nullable": true,
-          "primaryKey": false,
-          "default": "0"
-        },
-        "project_events": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
         }
       }
     },
@@ -782,8 +797,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('posts_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('posts_id_seq'::regclass)"
         },
         "xmlid": {
           "type": "TEXT",
@@ -829,7 +843,7 @@
           "type": "TEXT",
           "nullable": true
         },
-        "event_id": {
+        "event_xmlid": {
           "type": "TEXT",
           "nullable": true
         },
@@ -908,11 +922,6 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
-        },
-        "project": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
         }
       }
     },
@@ -963,8 +972,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('projects_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('projects_id_seq'::regclass)"
         },
         "domaincode": {
           "type": "TEXT",
@@ -978,7 +986,7 @@
           "type": "TEXT",
           "nullable": true
         },
-        "status": {
+        "status_old": {
           "type": "TEXT",
           "nullable": true,
           "default": "'new'::text"
@@ -1030,6 +1038,10 @@
           "nullable": true
         },
         "is_service": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "is_sidebar": {
           "type": "BOOLEAN",
           "nullable": true
         },
@@ -1106,14 +1118,14 @@
           "default": "''::text"
         },
         "page_cssvars": {
-          "type": "TEXT",
+          "type": "JSONB",
           "nullable": true,
-          "default": "''::text"
+          "default": "'{}'::jsonb"
         },
         "page_navigation": {
-          "type": "TEXT",
+          "type": "JSONB",
           "nullable": true,
-          "default": "''::text"
+          "default": "'{}'::jsonb"
         },
         "page_options_ext": {
           "type": "JSONB",
@@ -1126,9 +1138,9 @@
           "default": "'{}'::jsonb"
         },
         "aside_toc": {
-          "type": "TEXT",
+          "type": "JSONB",
           "nullable": true,
-          "default": "''::text"
+          "default": "'{}'::jsonb"
         },
         "aside_list": {
           "type": "TEXT",
@@ -1136,9 +1148,9 @@
           "default": "''::text"
         },
         "aside_context": {
-          "type": "TEXT",
+          "type": "JSONB",
           "nullable": true,
-          "default": "''::text"
+          "default": "'{}'::jsonb"
         },
         "aside_options_ext": {
           "type": "JSONB",
@@ -1146,9 +1158,9 @@
           "default": "'{}'::jsonb"
         },
         "header_alert": {
-          "type": "TEXT",
+          "type": "JSONB",
           "nullable": true,
-          "default": "''::text"
+          "default": "'{}'::jsonb"
         },
         "header_postit": {
           "type": "JSONB",
@@ -1206,25 +1218,10 @@
           "type": "BOOLEAN",
           "nullable": true
         },
-        "username": {
-          "type": "TEXT",
+        "status_id": {
+          "type": "INTEGER",
           "nullable": false,
-          "primaryKey": false
-        },
-        "password_hash": {
-          "type": "TEXT",
-          "nullable": false,
-          "primaryKey": false
-        },
-        "role": {
-          "type": "TEXT",
-          "nullable": false,
-          "primaryKey": false
-        },
-        "release": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
+          "default": "18"
         }
       }
     },
@@ -1233,8 +1230,7 @@
       "columns": {
         "id": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "version_id": {
           "type": "TEXT",
@@ -1264,8 +1260,7 @@
       "columns": {
         "id": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "version": {
           "type": "TEXT",
@@ -1376,8 +1371,7 @@
       "columns": {
         "key": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "value": {
           "type": "TEXT",
@@ -1425,8 +1419,7 @@
       "columns": {
         "id": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "name": {
           "type": "TEXT",
@@ -1516,22 +1509,6 @@
         "status_display": {
           "type": "TEXT",
           "nullable": true
-        },
-        "title": {
-          "type": "TEXT",
-          "nullable": false,
-          "primaryKey": false
-        },
-        "status": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false,
-          "default": "'idea'"
-        },
-        "image": {
-          "type": "TEXT",
-          "nullable": true,
-          "primaryKey": false
         }
       }
     },
@@ -1558,8 +1535,7 @@
         "id": {
           "type": "INTEGER",
           "nullable": false,
-          "default": "nextval('users_id_seq'::regclass)",
-          "primaryKey": true
+          "default": "nextval('users_id_seq'::regclass)"
         },
         "sysmail": {
           "type": "TEXT",
@@ -1619,8 +1595,7 @@
       "columns": {
         "id": {
           "type": "TEXT",
-          "nullable": false,
-          "primaryKey": true
+          "nullable": false
         },
         "version_number": {
           "type": "TEXT",
@@ -1665,283 +1640,7 @@
     }
   },
   "databaseDifferences": {
-    "postgresql": {
-      "events": {
-        "additionalColumns": [
-          "xmlid",
-          "event_type",
-          "md",
-          "html",
-          "status_id",
-          "lang",
-          "tags_ids",
-          "tags_display",
-          "project_id",
-          "regio_id",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "instructors": {
-        "additionalColumns": [
-          "xmlid",
-          "status_id",
-          "multiproject",
-          "header_type",
-          "md",
-          "html",
-          "is_user",
-          "header_size",
-          "regio_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "locations": {
-        "additionalColumns": [
-          "xmlid",
-          "status_id",
-          "project_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "participants": {
-        "additionalColumns": [
-          "xmlid",
-          "status_id",
-          "is_user",
-          "lang",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "posts": {
-        "additionalColumns": [
-          "xmlid",
-          "header_type",
-          "md",
-          "html",
-          "status_id",
-          "lang",
-          "tags_ids",
-          "tags_display",
-          "project_id",
-          "regio_id",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "projects": {
-        "additionalColumns": [
-          "domaincode",
-          "owner_id",
-          "header_type",
-          "header_size",
-          "md",
-          "html",
-          "type",
-          "is_regio",
-          "is_topic",
-          "is_onepage",
-          "is_service",
-          "regio",
-          "partner_projects",
-          "heading",
-          "theme",
-          "cimg",
-          "teaser",
-          "team_page",
-          "cta_title",
-          "cta_form",
-          "cta_entity",
-          "cta_link",
-          "is_company",
-          "is_location_provider",
-          "config",
-          "domain_id",
-          "member_ids"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "tasks": {
-        "additionalColumns": [
-          "name",
-          "cimg",
-          "status_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      },
-      "users": {
-        "additionalColumns": [
-          "sysmail",
-          "extmail",
-          "status_id",
-          "instructor_id",
-          "participant_id",
-          "lang",
-          "updated_at",
-          "status_display"
-        ],
-        "description": "PostgreSQL has additional columns"
-      }
-    },
-    "sqlite": {
-      "events": {
-        "missingColumns": [
-          "xmlid",
-          "event_type",
-          "md",
-          "html",
-          "status_id",
-          "lang",
-          "tags_ids",
-          "tags_display",
-          "project_id",
-          "regio_id",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "project"
-        ]
-      },
-      "instructors": {
-        "missingColumns": [
-          "xmlid",
-          "status_id",
-          "multiproject",
-          "header_type",
-          "md",
-          "html",
-          "is_user",
-          "header_size",
-          "regio_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "status"
-        ]
-      },
-      "locations": {
-        "missingColumns": [
-          "xmlid",
-          "status_id",
-          "project_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "status"
-        ]
-      },
-      "participants": {
-        "missingColumns": [
-          "xmlid",
-          "status_id",
-          "is_user",
-          "lang",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "status",
-          "isbase",
-          "project_events"
-        ]
-      },
-      "posts": {
-        "missingColumns": [
-          "xmlid",
-          "header_type",
-          "md",
-          "html",
-          "status_id",
-          "lang",
-          "tags_ids",
-          "tags_display",
-          "project_id",
-          "regio_id",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "project"
-        ]
-      },
-      "projects": {
-        "missingColumns": [
-          "domaincode",
-          "owner_id",
-          "header_type",
-          "header_size",
-          "md",
-          "html",
-          "type",
-          "is_regio",
-          "is_topic",
-          "is_onepage",
-          "is_service",
-          "regio",
-          "partner_projects",
-          "heading",
-          "theme",
-          "cimg",
-          "teaser",
-          "team_page",
-          "cta_title",
-          "cta_form",
-          "cta_entity",
-          "cta_link",
-          "is_company",
-          "is_location_provider",
-          "config",
-          "domain_id",
-          "member_ids"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "username",
-          "password_hash",
-          "role",
-          "release"
-        ]
-      },
-      "tasks": {
-        "missingColumns": [
-          "name",
-          "cimg",
-          "status_id",
-          "lang",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns",
-        "additionalColumns": [
-          "title",
-          "status",
-          "image"
-        ]
-      },
-      "users": {
-        "missingColumns": [
-          "sysmail",
-          "extmail",
-          "status_id",
-          "instructor_id",
-          "participant_id",
-          "lang",
-          "updated_at",
-          "status_display"
-        ],
-        "description": "SQLite is missing these columns"
-      }
-    }
+    "postgresql": {},
+    "sqlite": {}
   }
 }

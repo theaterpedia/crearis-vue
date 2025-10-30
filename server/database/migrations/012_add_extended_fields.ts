@@ -147,7 +147,7 @@ export const migration = {
         await addColumn('projects', 'cta_link', 'TEXT')
 
         // status - Note: Don't add if already exists, as it may have different values
-        // The status field might already exist from base schema
+        // The status_old field might already exist from base schema
         // We're not adding CHECK constraint to avoid breaking existing data
         if (isPostgres) {
             try {
@@ -155,17 +155,17 @@ export const migration = {
                 const result = await db.get(`
                     SELECT column_name 
                     FROM information_schema.columns 
-                    WHERE table_name = 'projects' AND column_name = 'status'
+                    WHERE table_name = 'projects' AND column_name = 'status_old'
                 `)
                 if (!result) {
-                    await db.exec("ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'new'")
+                    await db.exec("ALTER TABLE projects ADD COLUMN status_old TEXT DEFAULT 'new'")
                 }
             } catch (e: any) {
-                console.log('  ℹ️  status column already exists in projects table')
+                console.log('  ℹ️  status_old column already exists in projects table')
             }
         } else {
             try {
-                await db.exec("ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'new'")
+                await db.exec("ALTER TABLE projects ADD COLUMN status_old TEXT DEFAULT 'new'")
             } catch (e: any) {
                 if (!e.message?.includes('duplicate column')) throw e
             }

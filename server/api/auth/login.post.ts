@@ -5,7 +5,8 @@ import { db } from '../../database/init'
 import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
 
 interface ProjectRecord {
-    id: string
+    id: string  // Legacy: stores domaincode for backward compatibility
+    domaincode: string  // NEW: explicit domaincode field (same as id for now)
     name: string  // domaincode
     heading?: string  // heading from database
     username: string
@@ -78,14 +79,25 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Check and update status if empty/null/undefined - set to 0 (activated)
+    // Check and update status if empty/null/undefined - set to 'new' status for users table
     if (user.status_id === null || user.status_id === undefined) {
-        await db.run(`
-            UPDATE users
-            SET status_id = 0
-            WHERE id = ?
-        `, [user.id])
-        console.log(`[LOGIN] Updated user ${user.id} status to 0 (activated)`)
+        // Get the status.id for value=0 (new) in users table
+        const newStatus = await db.get(`
+            SELECT id FROM status
+            WHERE "table" = 'users' AND value = 0
+        `) as { id: number } | undefined
+
+        if (newStatus) {
+            await db.run(`
+                UPDATE users
+                SET status_id = ?
+                WHERE id = ?
+            `, [newStatus.id, user.id])
+            console.log(`[LOGIN] Updated user ${user.id} status to ${newStatus.id} (new/activated)`)
+            user.status_id = newStatus.id
+        } else {
+            console.warn(`[LOGIN] Warning: Could not find 'new' status (value=0) for users table`)
+        }
     }
 
     // === PROJECT ROLE DETECTION ===
@@ -107,7 +119,8 @@ export default defineEventHandler(async (event) => {
 
     for (const proj of ownedProjects) {
         projectRecords.push({
-            id: proj.domaincode,
+            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+            domaincode: proj.domaincode,  // NEW: explicit domaincode field
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
@@ -136,7 +149,8 @@ export default defineEventHandler(async (event) => {
 
     for (const proj of memberProjects) {
         projectRecords.push({
-            id: proj.domaincode,
+            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+            domaincode: proj.domaincode,  // NEW: explicit domaincode field
             name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
             heading: proj.heading || undefined,  // Include heading separately (handle null)
             username: proj.domaincode,  // Use domaincode as username fallback
@@ -158,15 +172,14 @@ export default defineEventHandler(async (event) => {
     console.log('[LOGIN] Finding instructor projects')
     let instructorProjects: Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>> = []
 
-    if (user.instructor_id) {
+    if (user.instructor_id && typeof user.instructor_id === 'number') {
         try {
-            // Cast instructor_id to handle potential TEXT type (should be INTEGER after migration)
             instructorProjects = await db.all(`
                 SELECT DISTINCT p.domaincode, p.heading, p.owner_id
                 FROM projects p
                 INNER JOIN events e ON p.id = e.project_id
                 INNER JOIN event_instructors ei ON e.id = ei.event_id
-                WHERE ei.instructor_id = CAST(? AS INTEGER)
+                WHERE ei.instructor_id = $1
                 ORDER BY p.heading ASC
             `, [user.instructor_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
         } catch (error) {
@@ -183,7 +196,8 @@ export default defineEventHandler(async (event) => {
             existing.isInstructor = true
         } else {
             projectRecords.push({
-                id: proj.domaincode,
+                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+                domaincode: proj.domaincode,  // NEW: explicit domaincode field
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback
@@ -218,7 +232,8 @@ export default defineEventHandler(async (event) => {
             existing.isAuthor = true
         } else {
             projectRecords.push({
-                id: proj.domaincode,
+                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
+                domaincode: proj.domaincode,  // NEW: explicit domaincode field
                 name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
                 heading: proj.heading || undefined,  // Include heading separately (handle null)
                 username: proj.domaincode,  // Use domaincode as username fallback

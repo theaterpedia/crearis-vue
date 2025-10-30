@@ -24,16 +24,11 @@
     <!-- Top Navigation -->
     <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }"
       v-show="!isSideNav">
-      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav">
-        <!-- TODO: Add menu items from Sidebar/MainMenu here -->
-        <!-- HARDCODED: Replace with dynamic navigation actions -->
+      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode">
+        <!-- Actions Slot -->
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
           <slot name="topnav-actions" />
-
-          <!-- Default: Layout Toggle Menu (only show if no topnav-actions slot provided) -->
-          <ToggleMenu v-if="!$slots['topnav-actions']" v-model="siteLayout" :toggleOptions="layoutToggleOptions"
-            :arrayOptions="layoutArrayOptions" header="Layout Options" @update:arrayOption="handleArrayOptionUpdate" />
         </template>
       </TopNav>
     </div>
@@ -104,7 +99,7 @@
 
           <!-- pList -->
           <pList v-if="asideOptions.list?.type" :type="asideOptions.list.type" :header="asideOptions.list.header"
-            :isAside="true" :projectId="projectId" />
+            :isAside="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pContext -->
           <pContext v-if="asideOptions.context?.content" :content="asideOptions.context.content" :isAside="true" />
@@ -120,7 +115,7 @@
         <Container v-if="footerOptions">
           <!-- pGallery -->
           <pGallery v-if="footerOptions.gallery?.type" :type="footerOptions.gallery.type"
-            :header="footerOptions.gallery.header" :isFooter="true" :projectId="projectId" />
+            :header="footerOptions.gallery.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pPostit -->
           <pPostit v-if="footerOptions.postit?.enabled" :title="footerOptions.postit.title"
@@ -128,7 +123,7 @@
 
           <!-- pSlider -->
           <pSlider v-if="footerOptions.slider?.type" :type="footerOptions.slider.type"
-            :header="footerOptions.slider.header" :isFooter="true" :projectId="projectId" />
+            :header="footerOptions.slider.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
 
           <!-- pRepeat -->
           <pRepeat v-if="footerOptions.repeat?.enabled" :title="footerOptions.repeat.title"
@@ -140,24 +135,8 @@
     <!-- Footer -->
     <div class="footer-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && footerWide }">
       <footer class="page-footer" :class="{ 'page-footer-boxed': !footerWide }">
-        <!-- HARDCODED: Replace with dynamic footer content -->
-        <Footer>
-          <p>© 2023 DAS Ei - Theaterpädagogik Bayern</p>
-          <ul>
-            <li><a href="#">Datenschutzerklärung</a></li>
-            <li><a href="#">Impressum</a></li>
-            <li><a href="#">Kontakt</a></li>
-          </ul>
-          <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Ausbildung</a></li>
-            <li><a href="#">Institut</a></li>
-            <li><a href="#">AGB</a></li>
-          </ul>
-          <Prose>
-            <p class="h3 primary"><strong>30 Jahre Theaterpädagogik in Bayern.</strong></p>
-          </Prose>
-        </Footer>
+        <!-- footer-slot -->
+        <slot name="footer" />
       </footer>
     </div>
   </Component>
@@ -241,22 +220,36 @@ const scrollBreak = computed(() => {
 // NEW LAYOUT SYSTEM: Page Props - imported from settings
 const showAside = ref(pageSettings.showAside)
 const showBottom = ref(pageSettings.showBottom)
-const alertBanner = ref(pageSettings.alertBanner)
 
 // NEW: Page Options - for dynamic aside and footer content
 interface Props {
   asideOptions?: AsideOptions
   footerOptions?: FooterOptions
-  projectId?: number
+  projectDomaincode?: string
+  navItems?: TopnavParentItem[]
+  navbarMode?: 'default' | 'home' | 'page' | 'dashboard'
+  alertBanner?: { message: string; alertType: 'primary' | 'secondary' | 'muted' | 'accent' | 'positive' | 'negative' | 'warning' } | null
+  // Optional prop to override the site layout for this specific page
+  // Usage: <PageLayout setSiteLayout="fullTwo" /> or <PageLayout setSiteLayout="centered" />
+  // If not provided, uses the global layout from layoutSettings
+  // Available options: 'default' | 'centered' | 'fullTwo' | 'fullThree' | 'sidebar' | 'fullSidebar'
+  setSiteLayout?: SiteLayout
 }
 
 const props = withDefaults(defineProps<Props>(), {
   asideOptions: () => ({}),
-  footerOptions: () => ({})
+  footerOptions: () => ({}),
+  navItems: undefined,
+  navbarMode: 'default',
+  alertBanner: undefined,
+  setSiteLayout: undefined
 })
 
-// NEW LAYOUT SYSTEM: Site Layout - imported from settings
-const siteLayout = ref<SiteLayout>(layoutSettings.siteLayout)
+// Computed: Use prop if provided, otherwise fall back to pageSettings
+const alertBanner = computed(() => props.alertBanner !== undefined ? props.alertBanner : false)
+
+// NEW LAYOUT SYSTEM: Site Layout - use prop if provided, otherwise fall back to settings
+const siteLayout = ref<SiteLayout>(props.setSiteLayout ?? layoutSettings.siteLayout)
 
 // NEW LAYOUT SYSTEM: Base Layout Props - imported from settings
 const baseWideHeader = ref(layoutSettings.baseWideHeader)
@@ -316,7 +309,7 @@ const showLeftSidebar = computed(() => siteLayout.value === 'fullThree')
 
 // NEW LAYOUT SYSTEM: Show right sidebar for default, fullTwo, and fullThree layouts (when showAside is true)
 const showRightSidebar = computed(() => {
-  if (siteLayout.value === 'sidebar' || siteLayout.value === 'fullSidebar') return false
+  if (siteLayout.value === 'sidebar' || siteLayout.value === 'fullSidebar' || siteLayout.value === 'centered') return false
   return showAside.value
 })
 
@@ -331,8 +324,8 @@ watch([navbarSticky, navbarReappear], ([sticky, reappear]: [boolean, boolean]) =
   }
 }, { immediate: true })
 
-// NEW LAYOUT SYSTEM: Navigation menu items - imported from settings
-const mainMenuItems: Ref<TopnavParentItem[]> = ref(mainMenuItemsConfig)
+// NEW LAYOUT SYSTEM: Navigation menu items - use prop if provided, otherwise use config
+const mainMenuItems: Ref<TopnavParentItem[]> = computed(() => props.navItems || mainMenuItemsConfig)
 
 // NEW LAYOUT SYSTEM: Layout Toggle Options - imported from settings
 // Use shallowRef to avoid making icon objects reactive (prevents Vue warning)

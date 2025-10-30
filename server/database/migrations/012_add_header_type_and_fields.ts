@@ -225,7 +225,7 @@ export const migration = {
             await db.exec('ALTER TABLE projects DROP COLUMN IF EXISTS cta_form')
             await db.exec('ALTER TABLE projects DROP COLUMN IF EXISTS cta_entity')
             await db.exec('ALTER TABLE projects DROP COLUMN IF EXISTS cta_link')
-            await db.exec('ALTER TABLE projects DROP COLUMN IF EXISTS status')
+            await db.exec('ALTER TABLE projects DROP COLUMN IF EXISTS status_old')
 
             await db.exec('ALTER TABLE events DROP COLUMN IF EXISTS md')
             await db.exec('ALTER TABLE events DROP COLUMN IF EXISTS html')

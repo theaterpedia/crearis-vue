@@ -18,6 +18,8 @@ export default defineConfig({
     }),
   ],
 
+
+
   // Build configuration for SPA
   // Output to server/public/ so Nitro can copy it to .output/public/
   build: {

@@ -334,15 +334,23 @@ export const migration = {
                 }
 
                 if (db.type === 'postgresql') {
+                    // Map status text to status_id
+                    const statusName = project.status || 'draft'
+                    const statusResult = await db.get(
+                        'SELECT id FROM status WHERE name = $1 AND "table" = $2 LIMIT 1',
+                        [statusName, 'projects']
+                    )
+                    const statusId = statusResult ? statusResult.id : 18 // Default to 'new' if not found
+
                     await db.run(`
                         INSERT INTO projects 
-                        (domaincode, name, heading, description, status, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
+                        (domaincode, name, heading, description, status_id, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                         ON CONFLICT(domaincode) DO UPDATE SET
                             name = EXCLUDED.name,
                             heading = EXCLUDED.heading,
                             description = EXCLUDED.description,
-                            status = EXCLUDED.status,
+                            status_id = EXCLUDED.status_id,
                             owner_id = EXCLUDED.owner_id,
                             type = EXCLUDED.type,
                             regio = EXCLUDED.regio,
@@ -355,7 +363,7 @@ export const migration = {
                         project.name,
                         project.heading,
                         project.description,
-                        project.status || 'draft',
+                        statusId,
                         ownerId,
                         project.type || 'project',
                         regioId,
@@ -364,15 +372,23 @@ export const migration = {
                         project.cimg
                     ])
                 } else {
+                    // Map status text to status_id for SQLite
+                    const statusName = project.status || 'draft'
+                    const statusResult = await db.get(
+                        'SELECT id FROM status WHERE name = ? AND "table" = ? LIMIT 1',
+                        [statusName, 'projects']
+                    )
+                    const statusId = statusResult ? statusResult.id : 18 // Default to 'new' if not found
+
                     await db.run(`
                         INSERT INTO projects 
-                        (domaincode, name, heading, description, status, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
+                        (domaincode, name, heading, description, status_id, owner_id, type, regio, theme, teaser, cimg, created_at, updated_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
                         ON CONFLICT(domaincode) DO UPDATE SET
                             name = excluded.name,
                             heading = excluded.heading,
                             description = excluded.description,
-                            status = excluded.status,
+                            status_id = excluded.status_id,
                             owner_id = excluded.owner_id,
                             type = excluded.type,
                             regio = excluded.regio,
@@ -385,7 +401,7 @@ export const migration = {
                         project.name,
                         project.heading,
                         project.description,
-                        project.status || 'draft',
+                        statusId,
                         ownerId,
                         project.type || 'project',
                         regioId,
