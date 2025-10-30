@@ -36,8 +36,9 @@
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
 
-            <!-- Content Body Section (bound to project.html) -->
-            <ContentBodySection :html-content="project.html" />
+            <!-- Page Content -->
+            <PageContent page-type="landing" :project-domain-code="project.domaincode"
+                :project-id="project.id" />
 
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
@@ -68,9 +69,9 @@ import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import PageContent from '@/components/PageContent.vue'
 import HeroSection from './HomeComponents/HeroSection.vue'
 import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
-import ContentBodySection from './HomeComponents/ContentBodySection.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import BlogPostsSection from './HomeComponents/BlogPostsSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
