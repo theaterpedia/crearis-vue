@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
             SELECT 
                 i.*,
                 p.domaincode AS project_domaincode,
-                u.name AS user_name,
+                u.username AS user_name,
                 s.name AS status_name,
                 s.name_i18n AS status_name_i18n
             FROM interactions i
@@ -73,6 +73,12 @@ export default defineEventHandler(async (event) => {
             params.push(Number(query.user_id))
         }
 
+        // Filter by user_email (from fields JSONB or from_mail)
+        if (query.user_email) {
+            sql += ` AND (i.from_mail = ? OR i.fields->>'email' = ?)`
+            params.push(query.user_email, query.user_email)
+        }
+
         // Filter by timestamp range
         if (query.timestamp_from) {
             sql += ` AND i.timestamp >= ?`
@@ -114,11 +120,11 @@ export default defineEventHandler(async (event) => {
         // Execute query
         const interactions = await db.all(sql, params)
 
-        // Parse JSON fields
+        // Parse JSON fields (only if they're strings, PostgreSQL JSONB returns objects directly)
         const parsedInteractions = interactions.map((interaction: any) => ({
             ...interaction,
-            fields: interaction.fields ? JSON.parse(interaction.fields) : null,
-            actions: interaction.actions ? JSON.parse(interaction.actions) : null
+            fields: typeof interaction.fields === 'string' ? JSON.parse(interaction.fields) : interaction.fields,
+            actions: typeof interaction.actions === 'string' ? JSON.parse(interaction.actions) : interaction.actions
         }))
 
         return {

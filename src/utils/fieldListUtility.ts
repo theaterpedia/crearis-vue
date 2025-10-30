@@ -34,7 +34,7 @@ const formRegistry: Record<string, FormDefinition> = {
     'registration': {
         name: 'registration',
         title: 'Konferenz-Anmeldung',
-        description: 'Melden Sie sich für die Konferenz vom 20.-23. November an',
+        description: 'Melde dich für die Konferenz vom 20.-23. November an',
         fields: [
             {
                 name: 'name',
@@ -54,7 +54,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 name: 'organization',
                 type: 'text',
                 label: 'Organisation',
-                placeholder: 'Ihre Organisation'
+                placeholder: 'Deine Organisation'
             },
             {
                 name: 'phone',
@@ -67,7 +67,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 type: 'date',
                 subtype: 'conference_start',
                 label: 'Anreisedatum',
-                description: 'Wann reisen Sie an?',
+                description: 'Wann reist du an?',
                 defaultValue: '2025-11-20',
                 required: true
             },
@@ -76,7 +76,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 type: 'date',
                 subtype: 'conference_end',
                 label: 'Abreisedatum',
-                description: 'Wann reisen Sie ab?',
+                description: 'Wann reist du ab?',
                 defaultValue: '2025-11-23',
                 required: true
             },
@@ -84,7 +84,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 name: 'participation_days',
                 type: 'select',
                 label: 'Teilnahmetage',
-                description: 'An welchen Tagen nehmen Sie teil?',
+                description: 'An welchen Tagen nimmst du teil?',
                 required: true,
                 choices: [
                     { value: 'all', name: 'Alle Tage (20.-23. Nov)' },
@@ -122,7 +122,7 @@ const formRegistry: Record<string, FormDefinition> = {
     'verification': {
         name: 'verification',
         title: 'Anmeldung bestätigen',
-        description: 'Bitte bestätigen Sie Ihre Anmeldung und wählen Sie zusätzliche Optionen',
+        description: 'Bitte bestätige deine Anmeldung und wähle zusätzliche Optionen',
         fields: [
             {
                 name: 'name',
@@ -142,7 +142,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 name: 'organization',
                 type: 'text',
                 label: 'Organisation',
-                placeholder: 'Ihre Organisation'
+                placeholder: 'Deine Organisation'
             },
             {
                 name: 'phone',
@@ -155,7 +155,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 type: 'date',
                 subtype: 'conference_start',
                 label: 'Anreisedatum',
-                description: 'Wann reisen Sie an?',
+                description: 'Wann reist du an?',
                 defaultValue: '2025-11-20',
                 required: true
             },
@@ -164,7 +164,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 type: 'date',
                 subtype: 'conference_end',
                 label: 'Abreisedatum',
-                description: 'Wann reisen Sie ab?',
+                description: 'Wann reist du ab?',
                 defaultValue: '2025-11-23',
                 required: true
             },
@@ -172,7 +172,7 @@ const formRegistry: Record<string, FormDefinition> = {
                 name: 'participation_days',
                 type: 'select',
                 label: 'Teilnahmetage',
-                description: 'An welchen Tagen nehmen Sie teil?',
+                description: 'An welchen Tagen nimmst du teil?',
                 required: true,
                 choices: [
                     { value: 'all', name: 'Alle Tage (20.-23. Nov)' },
@@ -245,6 +245,27 @@ export function getFieldList(formName: string): FieldDefinition[] {
 }
 
 /**
+ * Validate email format with allowed TLDs
+ */
+export function isValidEmail(email: string): boolean {
+    if (!email || !email.includes('@')) {
+        return false
+    }
+
+    // Check basic email structure
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+        return false
+    }
+
+    // Check for allowed TLDs
+    const allowedTlds = ['de', 'eu', 'com', 'org', 'info']
+    const emailLower = email.toLowerCase()
+
+    return allowedTlds.some(tld => emailLower.endsWith('.' + tld))
+}
+
+/**
  * Validate field value based on subtype rules
  */
 export function validateField(
@@ -255,6 +276,11 @@ export function validateField(
     // Required field validation
     if (field.required && (!value || value === '')) {
         return `${field.label} ist erforderlich`
+    }
+
+    // Email field validation
+    if (field.type === 'email' && value && !isValidEmail(value)) {
+        return 'Bitte geben Sie eine gültige E-Mail-Adresse ein (.de, .eu, .com, .org, .info)'
     }
 
     // Subtype-specific validation

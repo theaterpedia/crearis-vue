@@ -5,13 +5,15 @@ import { getFormDefinition, validateField, type FieldDefinition } from '@/utils/
 interface Props {
     formName: string
     show?: boolean
-    projectId?: number
+    projectDomaincode?: string
+    userId?: number
     userEmail?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
     show: false,
-    projectId: undefined,
+    projectDomaincode: undefined,
+    userId: undefined,
     userEmail: undefined
 })
 
@@ -96,14 +98,30 @@ async function saveInteraction() {
     saveSuccess.value = false
 
     try {
-        // Determine status_id based on form type
-        // For now, use 'pending' status (assuming status_id = 1)
-        const statusId = 1 // TODO: Query status table for 'pending' status
+        // Get status_id for 'new' status (value = 0) for interactions table
+        let statusId = null
+        try {
+            const statusResponse = await fetch('/api/status?table=interactions&value=0')
+            if (statusResponse.ok) {
+                const statusData = await statusResponse.json()
+                if (statusData.items && statusData.items.length > 0) {
+                    statusId = statusData.items[0].id
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching status:', error)
+        }
+
+        // Fallback if status lookup fails
+        if (!statusId) {
+            throw new Error('Konnte Status nicht ermitteln')
+        }
 
         // Prepare interaction data
         const interactionData = {
             name: props.formName,
-            project_id: props.projectId || null,
+            user_id: props.userId || null,
+            project: props.projectDomaincode || null, // Send domaincode, backend will convert to project_id
             status_id: statusId,
             from_mail: formData.value.email || null,
             to_mail: 'info@theaterpedia.org', // Default recipient

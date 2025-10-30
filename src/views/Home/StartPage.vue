@@ -38,7 +38,22 @@
                 <div class="container">
                     <div class="registration-header">
                         <h2>Konferenz-Anmeldung 2025</h2>
-                        <p>Bitte geben Sie Ihre E-Mail-Adresse ein, um fortzufahren</p>
+                        <p>Bitte gib deine E-Mail-Adresse ein, um fortzufahren</p>
+                    </div>
+
+                    <!-- Double Entry Banner -->
+                    <div v-if="hasExistingInteraction" class="double-entry-banner">
+                        <div class="banner-content">
+                            <p class="banner-message">
+                                Deine Anmeldung ist gespeichert, du erhältst in 1-2 Tagen eine Bestätigungs-Email.
+                                Logge dich hier auch einfach erneut ein, um den Status deiner Anmeldung zu verfolgen.
+                            </p>
+                            <div v-if="interactionStatusValue !== null && interactionStatusValue > 1"
+                                class="banner-confirmed">
+                                <p class="confirmed-text">✓ Anmeldung bestätigt!</p>
+                                <router-link to="/login" class="btn-login">Jetzt einloggen</router-link>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Email Input Row -->
@@ -72,13 +87,34 @@
                                 <span v-else-if="usermode === 'user'" class="status-badge status-user">
                                     Bestehender Nutzer
                                 </span>
+                                <span v-else-if="usermode === 'verified'" class="status-badge status-verified">
+                                    Verifiziert
+                                </span>
+                                <span v-else-if="usermode === 'loggedin'" class="status-badge status-loggedin">
+                                    Eingeloggt
+                                </span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Input for existing users -->
+                    <div v-if="usermode === 'user'" class="password-row">
+                        <div class="form-group">
+                            <label for="password" class="form-label">Passwort</label>
+                            <input id="password" v-model="passwordInput" type="password" class="form-input"
+                                placeholder="Dein Passwort eingeben" @keyup.enter="validatePassword" />
+                        </div>
+                        <div class="form-group">
+                            <button class="btn-primary" @click="validatePassword" :disabled="isValidatingPassword">
+                                {{ isValidatingPassword ? 'Wird überprüft...' : 'OK' }}
+                            </button>
                         </div>
                     </div>
 
                     <!-- Interaction Form -->
                     <div v-if="showForm && interactionFields" class="form-container">
-                        <CreateInteraction :form-name="interactionFields" :show="showForm" :project-id="project?.id"
+                        <CreateInteraction :form-name="interactionFields" :show="showForm"
+                            :project-domaincode="project?.domaincode" :user-id="currentUser?.id"
                             :user-email="emailInput" @saved="handleFormSaved" @error="handleFormError" />
                     </div>
                 </div>
@@ -110,6 +146,7 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
+import { isValidEmail } from '@/utils/fieldListUtility'
 
 const router = useRouter()
 const route = useRoute()
@@ -132,19 +169,28 @@ const isConfigPanelOpen = ref(false)
 
 // Props for usermode
 interface Props {
-    usermode?: 'no' | 'guest' | 'user'
+    usermode?: 'no' | 'guest' | 'user' | 'verified' | 'loggedin'
+    validatedEmail?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    usermode: 'no'
+    usermode: 'no',
+    validatedEmail: ''
 })
 
 // Registration form state
-const usermode = ref<'no' | 'guest' | 'user' | undefined>(props.usermode)
+const usermode = ref<'no' | 'guest' | 'user' | 'verified' | 'loggedin' | undefined>(props.usermode)
+const validatedEmail = ref(props.validatedEmail)
 const emailInput = ref('')
+const passwordInput = ref('')
 const emailSuggestions = ref<string[]>([])
 const allUserEmails = ref<string[]>([])
+const allUsers = ref<any[]>([])
 const showSuggestions = ref(false)
+const isValidatingPassword = ref(false)
+const currentUser = ref<any>(null)
+const hasExistingInteraction = ref(false)
+const interactionStatusValue = ref<number | null>(null)
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -191,9 +237,53 @@ const canEdit = computed(() => {
     return user.value.activeRole === 'admin' || isProjectOwner.value
 })
 
-// Computed: showForm - true if usermode is not 'no' or undefined
+// Check if user already has an interaction entry
+async function checkExistingInteraction() {
+    if (!usermode.value || usermode.value === 'no' || !validatedEmail.value) {
+        hasExistingInteraction.value = false
+        interactionStatusValue.value = null
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/interactions?user_email=${encodeURIComponent(validatedEmail.value)}`)
+        if (response.ok) {
+            const data = await response.json()
+            if (data.items && data.items.length > 0) {
+                hasExistingInteraction.value = true
+                // Get the status value from the most recent interaction
+                const interaction = data.items[0]
+                // Fetch the status to get its value
+                if (interaction.status_id) {
+                    const statusResponse = await fetch(`/api/status?id=${interaction.status_id}`)
+                    if (statusResponse.ok) {
+                        const statusData = await statusResponse.json()
+                        if (statusData.items && statusData.items.length > 0) {
+                            interactionStatusValue.value = statusData.items[0].value
+                        }
+                    }
+                }
+            } else {
+                hasExistingInteraction.value = false
+                interactionStatusValue.value = null
+            }
+        } else {
+            hasExistingInteraction.value = false
+            interactionStatusValue.value = null
+        }
+    } catch (error) {
+        console.error('Error checking for existing interactions:', error)
+        hasExistingInteraction.value = false
+        interactionStatusValue.value = null
+    }
+}
+
+// Computed: showForm - true if usermode allows form display
 const showForm = computed(() => {
-    return usermode.value && usermode.value !== 'no'
+    if (!usermode.value || usermode.value === 'no') return false
+    if (usermode.value === 'guest') return true
+    if (usermode.value === 'verified' || usermode.value === 'loggedin') return true
+    return false
 })
 
 // Computed: interactionFields - return form name based on usermode
@@ -201,7 +291,9 @@ const interactionFields = computed(() => {
     if (!usermode.value || usermode.value === 'no') {
         return false
     }
-    return usermode.value === 'guest' ? 'registration' : 'verification'
+    if (usermode.value === 'guest') return 'registration'
+    if (usermode.value === 'verified' || usermode.value === 'loggedin') return 'verification'
+    return false
 })
 
 // Open/close edit panel
@@ -291,15 +383,23 @@ async function fetchEvents() {
     }
 }
 
-// Fetch all user emails (extmail entries)
+// Fetch all user emails (both extmail and sysmail entries)
 async function fetchUserEmails() {
     try {
         const response = await fetch('/api/users')
         if (response.ok) {
             const users = await response.json()
-            allUserEmails.value = users
-                .map((u: any) => u.extmail || u.sysmail)
-                .filter((email: string) => email)
+            allUsers.value = users
+
+            // Collect all emails (both extmail and sysmail)
+            const emails: string[] = []
+            users.forEach((u: any) => {
+                if (u.extmail) emails.push(u.extmail)
+                if (u.sysmail) emails.push(u.sysmail)
+            })
+            allUserEmails.value = emails.filter((email: string) => email)
+
+            console.log('Loaded user emails:', allUserEmails.value.length)
         }
     } catch (error) {
         console.error('Error fetching user emails:', error)
@@ -310,8 +410,14 @@ async function fetchUserEmails() {
 function handleEmailInput() {
     const input = emailInput.value.trim()
 
-    // Start lookahead after 10 characters
-    if (input.length >= 10) {
+    // Reset usermode and validatedEmail if email is not valid yet
+    if (!isValidEmail(input)) {
+        usermode.value = 'no'
+        validatedEmail.value = ''
+    }
+
+    // Start lookahead after 10 characters (and only if contains @)
+    if (input.length >= 10 && input.includes('@')) {
         emailSuggestions.value = allUserEmails.value.filter((email: string) =>
             email.toLowerCase().startsWith(input.toLowerCase())
         )
@@ -321,8 +427,9 @@ function handleEmailInput() {
         showSuggestions.value = false
     }
 
-    // Check if it's a valid email
+    // Only check if email exists when it's fully valid
     if (isValidEmail(input)) {
+        validatedEmail.value = input
         checkEmailExists(input)
     }
 }
@@ -330,33 +437,150 @@ function handleEmailInput() {
 // Select email from suggestions
 function selectEmail(email: string) {
     emailInput.value = email
+    validatedEmail.value = email
     showSuggestions.value = false
     checkEmailExists(email)
 }
 
 // Check if email exists in users table
-function checkEmailExists(email: string) {
-    const exists = allUserEmails.value.some(
-        (userEmail: string) => userEmail.toLowerCase() === email.toLowerCase()
-    )
+async function checkEmailExists(email: string) {
+    const emailLower = email.toLowerCase()
 
-    if (exists) {
+    // Find user in either extmail or sysmail
+    const foundUser = allUsers.value.find((user: any) => {
+        const extmailMatch = user.extmail && user.extmail.toLowerCase() === emailLower
+        const sysmailMatch = user.sysmail && user.sysmail.toLowerCase() === emailLower
+        return extmailMatch || sysmailMatch
+    })
+
+    console.log('Email check:', email, 'exists:', !!foundUser)
+
+    if (foundUser) {
+        currentUser.value = foundUser
         usermode.value = 'user'
     } else {
+        currentUser.value = null
         usermode.value = 'guest'
+    }
+
+    // Check for existing interaction
+    await checkExistingInteraction()
+}
+
+// Validate password and update user status
+async function validatePassword() {
+    if (!passwordInput.value || !currentUser.value) {
+        return
+    }
+
+    isValidatingPassword.value = true
+
+    try {
+        console.log('=== Password Validation Debug ===')
+        console.log('Current User:', currentUser.value)
+        console.log('Validated Email:', validatedEmail.value)
+        console.log('Password entered (length):', passwordInput.value.length)
+        console.log('User status_id:', currentUser.value?.status_id)
+
+        // For now, we skip actual password authentication
+        // Just validate the password is not empty and proceed with status_id checks
+        if (!passwordInput.value || passwordInput.value.length < 5) {
+            alert('Bitte gib ein gültiges Passwort ein')
+            return
+        }
+
+        console.log('Password check bypassed (not using auth yet)')
+
+        // Check user status_id
+        const statusId = currentUser.value.status_id
+
+        console.log('Checking status_id:', statusId)
+
+        if (statusId === 46 || statusId === 47) {
+            // Case a) - status 46 or 47
+            console.log('Case a) - status 46 or 47')
+            usermode.value = 'verified'
+        } else if (statusId === 48 || statusId === 49) {
+            // Case b) - status 48 or 49
+            console.log('Case b) - status 48 or 49')
+            usermode.value = 'verified'
+            showToast('Login ab 9. NOV verfügbar')
+        } else if (!statusId || statusId === null || statusId === undefined) {
+            // Case c) - no status_id, update to 46
+            console.log('Case c) - no status_id, updating to 46')
+            await updateUserStatus(currentUser.value.id, 46)
+            usermode.value = 'verified'
+        } else {
+            // Case d) - other status
+            console.log('Case d) - other status:', statusId)
+            alert('Ungültiger User-Status')
+            return
+        }
+
+        console.log('New usermode:', usermode.value)
+
+        // Check for existing interaction after verification
+        await checkExistingInteraction()
+    } catch (error) {
+        console.error('Password validation error:', error)
+        alert('Fehler bei der Anmeldung')
+    } finally {
+        isValidatingPassword.value = false
     }
 }
 
-// Basic email validation
-function isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
+// Update user status_id
+async function updateUserStatus(userId: number, statusId: number) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status_id: statusId })
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to update user status')
+        }
+
+        // Update local user object
+        if (currentUser.value) {
+            currentUser.value.status_id = statusId
+        }
+    } catch (error) {
+        console.error('Error updating user status:', error)
+        throw error
+    }
+}
+
+// Show toast message
+function showToast(message: string) {
+    // Simple toast implementation
+    const toast = document.createElement('div')
+    toast.textContent = message
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--color-primary, #3b82f6);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `
+    document.body.appendChild(toast)
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease'
+        setTimeout(() => toast.remove(), 300)
+    }, 3000)
 }
 
 // Handle form submission success
-function handleFormSaved(interactionId: number) {
+async function handleFormSaved(interactionId: number) {
     console.log('Interaction saved with ID:', interactionId)
-    // Could show a success message or redirect
+    // Refresh the interaction status
+    await checkExistingInteraction()
 }
 
 // Handle form submission error
@@ -547,6 +771,111 @@ onMounted(async () => {
     color: var(--color-success, #16a34a);
 }
 
+.status-verified {
+    background: var(--color-success-bg, #dcfce7);
+    color: var(--color-success, #16a34a);
+}
+
+.status-loggedin {
+    background: var(--color-primary-bg, #dbeafe);
+    color: var(--color-primary, #3b82f6);
+}
+
+.double-entry-banner {
+    background: var(--color-primary, #3b82f6);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.banner-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.banner-message {
+    margin: 0;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.banner-confirmed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.confirmed-text {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.btn-login {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background: white;
+    color: var(--color-primary, #3b82f6);
+    text-decoration: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-login:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.password-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    align-items: end;
+}
+
+@media (max-width: 768px) {
+    .password-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.btn-primary {
+    padding: 0.75rem 2rem;
+    background: var(--color-primary, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark, #2563eb);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .form-container {
     margin-top: 2rem;
     padding: 2rem;
@@ -556,5 +885,29 @@ onMounted(async () => {
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 </style>

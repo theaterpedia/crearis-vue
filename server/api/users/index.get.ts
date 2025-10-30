@@ -19,7 +19,9 @@ export default defineEventHandler(async (event) => {
                 u.id,
                 u.username,
                 u.role,
-                u.created_at
+                u.created_at,
+                u.extmail,
+                u.sysmail
             FROM users u
         `
         const params: any[] = []
@@ -35,7 +37,9 @@ export default defineEventHandler(async (event) => {
                         u.id,
                         u.username,
                         u.role,
-                        u.created_at
+                        u.created_at,
+                        u.extmail,
+                        u.sysmail
                     FROM users u
                     INNER JOIN project_members pm ON u.id = pm.user_id
                     WHERE pm.project_id = ?
