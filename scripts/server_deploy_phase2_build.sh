@@ -479,7 +479,8 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000,
+      PORT: 3020,
+      SKIP_MIGRATIONS: true,
       DB_USER: '$DB_USER',
       DB_PASSWORD: '$DB_PASSWORD',
       DB_NAME: '$DB_NAME',
