@@ -32,12 +32,7 @@
 
             <!-- Hero Section -->
             <template #header>
-                <StartPageHero :user="user" />
-            </template>
-
-            <!-- Registration Section -->
-            <section class="registration-section bg-accent">
-                <div class="container">
+                <StartPageHero :user="user">
                     <div class="registration-header">
                         <h2>Konferenz-Anmeldung 2025</h2>
                         <p>Bitte gib deine E-Mail-Adresse ein, um fortzufahren</p>
@@ -64,7 +59,7 @@
                             <label for="email" class="form-label">E-Mail-Adresse</label>
                             <div class="email-input-wrapper">
                                 <input id="email" v-model="emailInput" type="email" class="form-input"
-                                    placeholder="ihre.email@example.com" @input="handleEmailInput"
+                                    placeholder="deine.email@example.com" @input="handleEmailInput"
                                     @focus="handleEmailInput" />
 
                                 <!-- Email suggestions dropdown -->
@@ -112,7 +107,12 @@
                             </button>
                         </div>
                     </div>
+                </StartPageHero>
+            </template>
 
+            <!-- Registration Section -->
+            <section class="registration-section bg-accent">
+                <div class="container">
                     <!-- Interaction Form -->
                     <div v-if="showForm && interactionFields" class="form-container">
                         <CreateInteraction :form-name="interactionFields" :show="showForm"

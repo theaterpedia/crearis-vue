@@ -1,11 +1,11 @@
 <template>
-    <Section background="default">
+    <Section v-if="users.length > 0" background="default">
         <Container>
             <Prose>
                 <Heading overline="Join Us" level="h2" headline="Community **Members**">Community **Members**</Heading>
             </Prose>
 
-            <Slider v-if="users.length > 0">
+            <Slider>
                 <Slide v-for="userItem in users" :key="userItem.id">
                     <img v-if="userItem.cimg" :src="userItem.cimg" :alt="userItem.username"
                         style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem; border-radius: 50%;" />
@@ -16,9 +16,6 @@
                     </Prose>
                 </Slide>
             </Slider>
-            <Prose v-else>
-                <p><em>No members to display.</em></p>
-            </Prose>
         </Container>
     </Section>
 </template>

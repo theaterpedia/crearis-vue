@@ -13,16 +13,10 @@
           @click="handleBackClick" />
 
         <!-- Logo -->
-        <Logo v-if="shouldShowLogo" :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]" />
-
-        <!-- Home Button (hidden when navbarMode='home') -->
-        <a v-if="navbarMode !== 'home'" href="#" class="topnav-home" aria-label="Home">
-          <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z">
-            </path>
-          </svg>
-        </a>
+        <router-link v-if="shouldShowLogo" to="/"
+          :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+          <Logo logoSize="small" />
+        </router-link>
 
         <!-- Command Prompt in dashboard -->
         <CommandPrompt v-if="shouldShowCommandPrompt && navbarMode === 'dashboard'"
@@ -44,7 +38,9 @@
                 </path>
               </svg>
             </button>
-            <a v-else :href="item.link || '#'" class="topnav-menu-link">
+            <a v-else :href="item.link || '#'" class="topnav-menu-link"
+              :class="{ 'topnav-menu-link-active': isLinkActive(item.link) }"
+              :style="isLinkActive(item.link) ? 'pointer-events: none;' : ''">
               {{ item.label }}
             </a>
 
@@ -95,16 +91,10 @@
         @click="handleBackClick" />
 
       <!-- Logo -->
-      <Logo v-if="shouldShowLogo" :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]" />
-
-      <!-- Home Button (hidden when navbarMode='home') -->
-      <a v-if="navbarMode !== 'home'" href="#" class="topnav-home" aria-label="Home">
-        <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68Z">
-          </path>
-        </svg>
-      </a>
+      <router-link v-if="shouldShowLogo" to="/"
+        :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+        <Logo />
+      </router-link>
 
       <!-- Main Menu -->
       <ul class="topnav-menu">
@@ -119,7 +109,9 @@
               </path>
             </svg>
           </button>
-          <a v-else :href="item.link || '#'" class="topnav-menu-link">
+          <a v-else :href="item.link || '#'" class="topnav-menu-link"
+            :class="{ 'topnav-menu-link-active': isLinkActive(item.link) }"
+            :style="isLinkActive(item.link) ? 'pointer-events: none;' : ''">
             {{ item.label }}
           </a>
 
@@ -190,8 +182,10 @@
         <!-- Logo + Header in one row -->
         <div class="topnav-mobile-menu-header-row">
           <!-- Logo  -->
-          <Logo v-if="shouldShowLogo"
-            :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]" />
+          <router-link v-if="shouldShowLogo" to="/"
+            :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
+            <Logo />
+          </router-link>
           <!-- Header -->
           <div class="topnav-mobile-menu-header">
             <span>Navigation</span>
@@ -286,12 +280,15 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref, computed, type PropType } from 'vue'
+import { useRoute } from 'vue-router'
 import Container from './Container.vue'
 import ToggleMenu, { type ToggleOption } from './ToggleMenu.vue'
 import Logo from './Logo.vue'
 import CommandPrompt from './CommandPrompt.vue'
 import BackAction from './BackAction.vue'
 import CancelAction from './CancelAction.vue'
+
+const route = useRoute()
 
 export interface TopnavLinkItem {
   label: string
@@ -436,7 +433,7 @@ const props = defineProps({
    */
   showBackAction: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 
 
@@ -507,6 +504,12 @@ function handleMobileMenuSelect(value: string | number | boolean) {
 const mobileItems = props.items.length > maxMobileItems ? props.items.slice(0, maxMobileItems) : props.items
 // Always show hamburger button on mobile (≤767px) for consistent UX
 const showBurger = true
+
+// Helper function to check if a link is active
+function isLinkActive(link?: string): boolean {
+  if (!link) return false
+  return route.path === link
+}
 
 // Computed properties for conditional display logic
 const shouldShowLogo = computed(() => {
@@ -789,34 +792,6 @@ onUnmounted(() => {
   }
 }
 
-.topnav-home {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--color-contrast);
-  border-radius: 0.5rem;
-  transition: var(--transition);
-  transition-property: background-color, color;
-}
-
-.topnav-home:hover {
-  background-color: var(--color-muted-bg);
-}
-
-/* Hide home button on mobile */
-@media (max-width: 767px) {
-  .topnav-home {
-    display: none !important;
-  }
-}
-
-.topnav-home svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
 .topnav-menu {
   display: flex;
   align-items: center;
@@ -859,6 +834,15 @@ onUnmounted(() => {
 
 .topnav-menu-link:hover {
   background-color: var(--color-muted-bg);
+}
+
+.topnav-menu-link-active {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.topnav-menu-link-active:hover {
+  background-color: transparent;
 }
 
 .topnav-dropdown-icon {

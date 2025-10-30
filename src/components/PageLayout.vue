@@ -240,7 +240,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Computed: Use prop if provided, otherwise fall back to pageSettings
-const alertBanner = computed(() => props.alertBanner !== undefined ? props.alertBanner : pageSettings.alertBanner)
+const alertBanner = computed(() => props.alertBanner !== undefined ? props.alertBanner : false)
 
 // NEW LAYOUT SYSTEM: Site Layout - imported from settings
 const siteLayout = ref<SiteLayout>(layoutSettings.siteLayout)

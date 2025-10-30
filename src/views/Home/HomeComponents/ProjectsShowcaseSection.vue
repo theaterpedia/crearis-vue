@@ -1,12 +1,12 @@
 <template>
-    <Section background="default">
+    <Section v-if="projects.length > 0" background="default">
         <Container>
             <Prose>
                 <Heading overline="Pipeline" level="h2" headline="New **Projects** in the Pipeline">New **Projects** in
                     the Pipeline</Heading>
             </Prose>
 
-            <Columns gap="small" align="top" wrap v-if="projects.length > 0">
+            <Columns gap="small" align="top" wrap>
                 <Column v-for="project in projects.slice(0, 4)" :key="project.id" width="1/4">
                     <a :href="`/sites/${project.id}`" style="text-decoration: none; color: inherit; display: block;">
                         <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
@@ -19,9 +19,6 @@
                     </a>
                 </Column>
             </Columns>
-            <Prose v-else>
-                <p><em>No projects in the pipeline.</em></p>
-            </Prose>
         </Container>
     </Section>
 </template>

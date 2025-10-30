@@ -46,7 +46,7 @@
 
                     <!-- Newsletter Form -->
                     <div class="newsletter-form-container">
-                        <CreateInteraction v-if="!newsletterSubmitted" form-name="newsletter"
+                        <CreateInteraction v-if="!newsletterSubmitted" form-name="newsletter" :show="true"
                             :project-domaincode="project?.domaincode" :user-id="user?.id" @saved="handleNewsletterSaved"
                             @error="handleNewsletterError" />
 

@@ -5,17 +5,7 @@
         :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
         content-align-y="center">
         <Banner transparent>
-            <Prose>
-                <h1><strong>Get Started with Theaterpedia</strong></h1>
-                <p>Join our community and start your theater journey today.</p>
-                <div class="cta-group">
-                    <Button size="medium" variant="primary" @click="handleRegister">
-                        Register for Conference
-                    </Button>
-                    <a v-if="!user" href="/login" class="cta-secondary">Sign In</a>
-                    <a v-else href="/tasks" class="cta-secondary">Go to Dashboard</a>
-                </div>
-            </Prose>
+            <slot />
         </Banner>
     </Hero>
 </template>

@@ -36,7 +36,7 @@
             </template>
 
             <!-- Page Content -->
-            <PageContent page-type="team" :project-domain-code="project.domaincode" :project-id="project.id" />
+            <PageContent page-type="team" :project-domain-code="project.domaincode" :project-id="String(project.id)" />
 
             <!-- Community Members Section -->
             <CommunityMembersSection :users="users" />
@@ -270,7 +270,7 @@ async function fetchProjects() {
         if (response.ok) {
             const data = await response.json()
             // Filter out 'tp' project and limit to 6
-            projects.value = data.filter((p: any) => p.domaincode !== FIXED_PROJECT_ID).slice(0, 6)
+            projects.value = (data.projects || []).filter((p: any) => p.domaincode !== FIXED_PROJECT_ID).slice(0, 6)
         }
     } catch (error) {
         console.error('Failed to fetch projects:', error)
