@@ -12,8 +12,10 @@
                     <Button size="medium" variant="primary" @click="handleRegister">
                         Register for Conference
                     </Button>
-                    <a v-if="!user" href="/login" class="cta-secondary">Sign In</a>
-                    <a v-else href="/tasks" class="cta-secondary">Go to Dashboard</a>
+                    <!-- Trigger 1: Secondary CTA for Demo -->
+                    <button class="cta-secondary cta-demo" @click="handleDemoClick">
+                        Demo erkunden
+                    </button>
                 </div>
             </Prose>
         </Banner>
@@ -32,10 +34,18 @@ const props = defineProps<{
     user?: any
 }>()
 
+const emit = defineEmits<{
+    'trigger-demo': [event: MouseEvent]
+}>()
+
 const router = useRouter()
 
 function handleRegister() {
     router.push('/getstarted')
+}
+
+function handleDemoClick(event: MouseEvent) {
+    emit('trigger-demo', event)
 }
 </script>
 
@@ -52,10 +62,29 @@ function handleRegister() {
     text-decoration: underline;
     font-size: 1.125rem;
     transition: opacity 0.3s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .cta-secondary:hover {
     opacity: 0.8;
+}
+
+.cta-demo {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.cta-demo:hover {
+    background: rgba(255, 255, 255, 0.25);
+    opacity: 1;
 }
 
 @media (max-width: 767px) {

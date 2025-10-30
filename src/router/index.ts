@@ -21,6 +21,11 @@ const router = createRouter({
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
 
+    // Demo routes - Floating Post-Its
+    { path: '/demo/float-hard', component: () => import('../views/Demo/DemoFloatHard.vue') },
+    { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
+    { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
+
     // Other routes
     { path: '/home', component: () => import('../views/index.vue') },
     { path: '/catalog', component: () => import('../views/catalog.vue') },

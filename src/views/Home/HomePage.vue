@@ -31,7 +31,27 @@
             </template>
 
             <!-- Hero Section (replaces header) -->
-            <HeroSection :user="user" />
+            <!-- Trigger 1: Hero secondary CTA -->
+            <HeroSection :user="user" @trigger-demo="handleHeroDemoClick" />
+
+            <!-- Trigger 2: Demo Events Card -->
+            <Section background="default">
+                <Container>
+                    <div class="demo-card" ref="demoCardElement" @click="handleDemoCardClick">
+                        <div class="demo-card-image">
+                            <img v-if="events.length > 0 && events[0].image" :src="events[0].image"
+                                alt="Demo Veranstaltung" />
+                            <div v-else class="demo-card-placeholder">
+                                📅
+                            </div>
+                        </div>
+                        <div class="demo-card-content">
+                            <h3>Demo ausprobieren <strong>Veranstaltungskalender</strong></h3>
+                            <p>Klicke hier, um die Demo-Funktionen zu erkunden</p>
+                        </div>
+                    </div>
+                </Container>
+            </Section>
 
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
@@ -56,14 +76,19 @@
                 <HomeSiteFooter />
             </template>
         </PageLayout>
+
+        <!-- Floating Post-It Renderer -->
+        <FpostitRenderer />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, createApp } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStatus } from '@/composables/useStatus'
 import PageLayout from '@/components/PageLayout.vue'
+import Section from '@/components/Section.vue'
+import Container from '@/components/Container.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
@@ -75,6 +100,9 @@ import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vu
 import BlogPostsSection from './HomeComponents/BlogPostsSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
+import InvertedToggle from '@/components/InvertedToggle.vue'
+import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
+import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
@@ -102,6 +130,11 @@ const projects = ref<any[]>([])
 const users = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
+
+// Floating Post-Its
+const controller = useFpostitController()
+const demoCardElement = ref<HTMLElement>()
+const currentHeaderType = ref<'bauchbinde' | 'cover'>('cover')
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -284,6 +317,148 @@ async function fetchUsers() {
     }
 }
 
+// Floating Post-Its Setup
+function setupFloatingPostits() {
+    // Post-It 1: Themes ausprobieren
+    controller.create({
+        key: 'p1',
+        title: 'Themes ausprobieren',
+        content: `
+            <p>Theaterpedia bietet verschiedene Themes für individuelle Gestaltung. Probiere es direkt aus!</p>
+            <p>Wechsle zwischen hellem und dunklem Modus mit diesem Toggle:</p>
+            <div id="fpostit-theme-toggle" style="margin: 1rem 0;"></div>
+        `,
+        color: 'accent',
+        hlogic: 'right',
+        hOffset: 0,
+        actions: [
+            {
+                label: 'Verstanden!',
+                handler: (close) => close()
+            }
+        ]
+    })
+
+    // Post-It 2: Der erste Eindruck zählt
+    controller.create({
+        key: 'p2',
+        title: 'Der erste Eindruck zählt',
+        content: `
+            <p>Die Hero-Komponente unterstützt zwei Modi:</p>
+            <ul>
+                <li><strong>Bauchbinde:</strong> Kompakte Darstellung mit Text im unteren Bereich</li>
+                <li><strong>Cover:</strong> Vollflächige Darstellung mit zentriertem Inhalt (aktuell aktiv)</li>
+            </ul>
+            <div style="margin: 1rem 0;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Header-Typ wählen:</label>
+                <select id="fpostit-header-type" style="width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.375rem; background: var(--color-bg); color: var(--color-contrast);">
+                    <option value="cover" selected>Cover (Vollbild)</option>
+                    <option value="bauchbinde">Bauchbinde (Kompakt)</option>
+                </select>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--color-dimmed);">Hinweis: Diese Demo ändert nur die Ansicht, nicht die tatsächlichen Einstellungen.</p>
+        `,
+        color: 'primary',
+        hlogic: 'right',
+        hOffset: 25, // 400px = 25rem
+        actions: [
+            {
+                label: 'Alles klar!',
+                handler: (close) => close()
+            }
+        ]
+    })
+
+    // Post-It 3: Mit Demodaten einsteigen
+    controller.create({
+        key: 'p3',
+        title: 'Mit Demodaten einsteigen',
+        content: `
+            <p>Entdecke die Funktionen von Theaterpedia mit unseren Demo-Daten:</p>
+            <p><strong>Events:</strong> Sieh dir Beispiel-Veranstaltungen an und wie sie im Kalender dargestellt werden. Von Premieren über Workshops bis hin zu Festivals.</p>
+            <p><strong>Akteure:</strong> Erkunde Profile von Theaterschaffenden, Gruppen und Ensembles. Verstehe, wie Vernetzung in der Theaterwelt funktioniert.</p>
+            <p>Die Demo-Umgebung ist dein Spielplatz – probiere aus, teste Funktionen und lerne das System kennen, ohne echte Daten zu beeinflussen!</p>
+        `,
+        color: 'positive',
+        hlogic: 'element',
+        actions: [
+            {
+                label: 'Events ansehen',
+                handler: (close) => {
+                    router.push('/sites/tp/events')
+                    close()
+                }
+            },
+            {
+                label: 'Akteure entdecken',
+                handler: (close) => {
+                    router.push('/sites/tp/actors')
+                    close()
+                }
+            }
+        ]
+    })
+}
+
+// Handler for Hero Demo Click (Trigger 1)
+function handleHeroDemoClick(event: MouseEvent) {
+    const trigger = event.currentTarget as HTMLElement
+
+    // Open both post-its at once
+    controller.openPostit('p1', trigger)
+
+    // Small delay for stacking effect
+    setTimeout(() => {
+        controller.openPostit('p2', trigger)
+    }, 100)
+}
+
+// Handler for Demo Card Click (Trigger 2)
+function handleDemoCardClick(event: MouseEvent) {
+    if (demoCardElement.value) {
+        controller.openPostit('p3', demoCardElement.value)
+    }
+}
+
+// Watch for post-it opens and inject interactive components
+function watchPostItOpens() {
+    // Watch for p1 (Theme Toggle)
+    const p1Interval = setInterval(() => {
+        const themeContainer = document.getElementById('fpostit-theme-toggle')
+        if (themeContainer && controller.isOpen('p1')) {
+            clearInterval(p1Interval)
+            // Create and mount InvertedToggle component
+            import('@/components/InvertedToggle.vue').then(module => {
+                const InvertedToggleComp = module.default
+                const app = createApp(InvertedToggleComp)
+                app.mount(themeContainer)
+            }).catch(err => console.error('Failed to load InvertedToggle:', err))
+        }
+    }, 100)
+
+    // Watch for p2 (Header Type Selector)
+    const p2Interval = setInterval(() => {
+        const headerTypeSelect = document.getElementById('fpostit-header-type') as HTMLSelectElement
+        if (headerTypeSelect && controller.isOpen('p2')) {
+            clearInterval(p2Interval)
+            headerTypeSelect.value = currentHeaderType.value
+            headerTypeSelect.addEventListener('change', (e) => {
+                const newType = (e.target as HTMLSelectElement).value as 'bauchbinde' | 'cover'
+                currentHeaderType.value = newType
+                // Note: This is demo only - would need to actually update Hero component in real implementation
+                console.log('Header type changed to:', newType)
+                alert(`Header-Typ zu "${newType}" geändert! (Demo-Modus - keine echte Änderung)`)
+            })
+        }
+    }, 100)
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+        clearInterval(p1Interval)
+        clearInterval(p2Interval)
+    })
+}
+
 // Initialize
 onMounted(async () => {
     await checkAuth()
@@ -294,6 +469,12 @@ onMounted(async () => {
         fetchProjects(),
         fetchUsers()
     ])
+
+    // Setup floating post-its after data is loaded
+    setupFloatingPostits()
+
+    // Start watching for post-it opens
+    watchPostItOpens()
 })
 </script>
 
@@ -326,5 +507,79 @@ onMounted(async () => {
 .config-btn:focus {
     outline: 2px solid var(--color-primary-bg);
     outline-offset: 2px;
+}
+
+/* Demo Card Styles */
+.demo-card {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 2rem 0;
+}
+
+.demo-card:hover {
+    border-color: var(--color-primary-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.demo-card-image {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.demo-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.demo-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-muted-bg);
+    font-size: 3rem;
+}
+
+.demo-card-content {
+    flex: 1;
+}
+
+.demo-card-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--color-text);
+}
+
+.demo-card-content h3 strong {
+    color: var(--color-primary-bg);
+}
+
+.demo-card-content p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--color-dimmed);
+}
+
+@media (max-width: 767px) {
+    .demo-card {
+        flex-direction: column;
+    }
+
+    .demo-card-image {
+        width: 100%;
+        height: 200px;
+    }
 }
 </style>
