@@ -24,18 +24,11 @@
     <!-- Top Navigation -->
     <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }"
       v-show="!isSideNav">
-      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav">
-        <!-- TODO: Add menu items from Sidebar/MainMenu here -->
-        <!-- HARDCODED: Replace with dynamic navigation actions -->
+      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode">
+        <!-- Actions Slot -->
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
           <slot name="topnav-actions" />
-
-          <!-- Default: Layout Toggle Menu (only show if no topnav-actions slot provided) -->
-          <ToggleMenu v-if="!$slots['topnav-actions']" v-model="siteLayout" :toggleOptions="layoutToggleOptions"
-            :arrayOptions="layoutArrayOptions" header="Layout Options" @update:arrayOption="handleArrayOptionUpdate" />
-        </template>
-      </TopNav>
     </div>
 
     <Sidebar v-show="isSideNav" footerText="30 Jahre Theaterpädagogik Bayern"
@@ -248,11 +241,15 @@ interface Props {
   asideOptions?: AsideOptions
   footerOptions?: FooterOptions
   projectDomaincode?: string
+  navItems?: TopnavParentItem[]
+  navbarMode?: 'default' | 'home' | 'page' | 'dashboard'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   asideOptions: () => ({}),
-  footerOptions: () => ({})
+  footerOptions: () => ({}),
+  navItems: undefined,
+  navbarMode: 'default'
 })
 
 // NEW LAYOUT SYSTEM: Site Layout - imported from settings
@@ -331,8 +328,8 @@ watch([navbarSticky, navbarReappear], ([sticky, reappear]: [boolean, boolean]) =
   }
 }, { immediate: true })
 
-// NEW LAYOUT SYSTEM: Navigation menu items - imported from settings
-const mainMenuItems: Ref<TopnavParentItem[]> = ref(mainMenuItemsConfig)
+// NEW LAYOUT SYSTEM: Navigation menu items - use prop if provided, otherwise use config
+const mainMenuItems: Ref<TopnavParentItem[]> = computed(() => props.navItems || mainMenuItemsConfig)
 
 // NEW LAYOUT SYSTEM: Layout Toggle Options - imported from settings
 // Use shallowRef to avoid making icon objects reactive (prevents Vue warning)

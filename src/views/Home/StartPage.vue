@@ -1,8 +1,8 @@
 <template>
-    <div class="home-page">
+    <div class="start-page">
         <!-- Edit Panel -->
-        <EditPanel v-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Home'}`"
-            subtitle="Update home page information and content" :data="editPanelData" @close="closeEditPanel"
+        <EditPanel v-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Start'}`"
+            subtitle="Update start page information and content" :data="editPanelData" @close="closeEditPanel"
             @save="handleSaveProject" />
 
         <!-- Navigation Config Panel -->
@@ -11,7 +11,7 @@
 
         <!-- PageLayout wrapper -->
         <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="home">
+            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="page">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Edit Panel Button -->
@@ -30,26 +30,11 @@
                 </button>
             </template>
 
-            <!-- Hero Section (replaces header) -->
-            <HeroSection :user="user" />
+            <!-- Hero Section -->
+            <StartPageHero :user="user" />
 
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
-
-            <!-- Content Body Section (bound to project.html) -->
-            <ContentBodySection :html-content="project.html" />
-
-            <!-- Projects Showcase Section -->
-            <ProjectsShowcaseSection :projects="projects" />
-
-            <!-- Blog Posts Section -->
-            <BlogPostsSection :posts="posts" />
-
-            <!-- Community Members Section -->
-            <CommunityMembersSection :users="users" />
-
-            <!-- Social Media Section -->
-            <SocialMediaSection />
 
             <!-- Footer -->
             <template #footer>
@@ -62,19 +47,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useStatus } from '@/composables/useStatus'
 import PageLayout from '@/components/PageLayout.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
-import HeroSection from './HomeComponents/HeroSection.vue'
+import StartPageHero from './HomeComponents/StartPageHero.vue'
 import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
-import ContentBodySection from './HomeComponents/ContentBodySection.vue'
-import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
-import BlogPostsSection from './HomeComponents/BlogPostsSection.vue'
-import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
-import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
@@ -82,7 +61,6 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 
 const router = useRouter()
 const route = useRoute()
-const { getStatusIdByName } = useStatus()
 
 // Get public navigation items
 const navItems = computed<TopnavParentItem[]>(() => {
@@ -96,10 +74,7 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
-const posts = ref<any[]>([])
 const events = ref<any[]>([])
-const projects = ref<any[]>([])
-const users = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 
@@ -222,19 +197,6 @@ async function fetchProject(domaincode: string) {
     }
 }
 
-// Fetch posts
-async function fetchPosts() {
-    try {
-        const response = await fetch('/api/posts')
-        if (response.ok) {
-            const data = await response.json()
-            posts.value = data.slice(0, 6)
-        }
-    } catch (error) {
-        console.error('Failed to fetch posts:', error)
-    }
-}
-
 // Fetch events
 async function fetchEvents() {
     try {
@@ -248,57 +210,16 @@ async function fetchEvents() {
     }
 }
 
-// Fetch projects (filtered)
-async function fetchProjects() {
-    try {
-        const response = await fetch('/api/projects')
-        if (response.ok) {
-            const data = await response.json()
-            const projectsArray = data.projects || data
-
-            // Get status IDs for 'draft' and 'demo'
-            const draftStatusId = getStatusIdByName('draft', 'projects')
-            const demoStatusId = getStatusIdByName('demo', 'projects')
-
-            // Filter projects
-            const filteredProjects = projectsArray.filter((p: any) =>
-                p.status_id === draftStatusId || p.status_id === demoStatusId
-            )
-            projects.value = filteredProjects.slice(0, 8)
-        }
-    } catch (error) {
-        console.error('Failed to fetch projects:', error)
-    }
-}
-
-// Fetch users
-async function fetchUsers() {
-    try {
-        const response = await fetch('/api/users')
-        if (response.ok) {
-            const data = await response.json()
-            users.value = data.filter((u: any) => !['admin', 'base'].includes(u.username)).slice(0, 10)
-        }
-    } catch (error) {
-        console.error('Failed to fetch users:', error)
-    }
-}
-
 // Initialize
 onMounted(async () => {
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
-    await Promise.all([
-        fetchPosts(),
-        fetchEvents(),
-        fetchProjects(),
-        fetchUsers()
-    ])
+    await fetchEvents()
 })
 </script>
 
 <style scoped>
-.home-page {
+.start-page {
     min-height: 100vh;
     background-color: var(--color-bg);
     color: var(--color-contrast);

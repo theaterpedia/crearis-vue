@@ -5,7 +5,10 @@ const router = createRouter({
   routes: [
     // Public routes
     { path: '/login', component: () => import('../views/Login.vue'), meta: { public: true } },
-    { path: '/', component: () => import('../views/Home.vue') },
+    { path: '/', component: () => import('../views/Home/HomePage.vue') },
+    { path: '/start', component: () => import('../views/Home/StartPage.vue') },
+    { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
+    { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
     { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
