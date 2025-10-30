@@ -147,9 +147,51 @@ import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOp
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { isValidEmail } from '@/utils/fieldListUtility'
+import { pageSettings } from '@/settings'
 
 const router = useRouter()
 const route = useRoute()
+
+// SEO: Set meta tags from settings (Start/Conference page)
+function setStartPageSeoMeta() {
+    // Set title
+    document.title = `Konferenz - ${pageSettings.seo_title}`;
+
+    // Helper to set or update meta tag
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (value) {
+                element!.setAttribute(key, value);
+            }
+        });
+    };
+
+    // Basic meta tags
+    const startDescription = `Anmeldung zur Theaterpedia-Konferenz. ${pageSettings.seo_description}`;
+    const startKeywords = `${pageSettings.seo_keywords}, Konferenz, Anmeldung, Event`;
+
+    setMeta('meta[name="description"]', { name: 'description', content: startDescription });
+    setMeta('meta[name="keywords"]', { name: 'keywords', content: startKeywords });
+
+    // Open Graph tags
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: `Konferenz - ${pageSettings.og_title}` });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: startDescription });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    setMeta('meta[property="og:image"]', { property: 'og:image', content: pageSettings.seo_image });
+
+    // Twitter Card tags
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: pageSettings.twitter_card });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: `Konferenz - ${pageSettings.og_title}` });
+    setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: startDescription });
+    setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: pageSettings.seo_image });
+}
 
 // Get public navigation items
 const navItems = computed<TopnavParentItem[]>(() => {
@@ -591,6 +633,9 @@ function handleFormError(error: string) {
 
 // Initialize
 onMounted(async () => {
+    // Set SEO meta tags
+    setStartPageSeoMeta()
+
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await fetchEvents()

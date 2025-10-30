@@ -104,14 +104,87 @@ WHERE domaincode = 'munich-festival';
 ## Home Routes vs Project Sites
 
 ### Home Routes
-- Use static configuration in `src/config/homeroutes.ts`
-- Applied in `Home.vue`, `GetStarted.vue`, etc.
-- Hardcoded values for network homepage routes
+
+Home routes (StartPage, HomePage, BlogPage, TeamPage) use centralized SEO configuration from `src/settings.ts`:
+
+```typescript
+// src/settings.ts
+export const pageSettings = {
+  // SEO Meta Tags (aligned with project SEO naming)
+  seo_title: 'Theaterpedia Netzwerk für Theaterpädagogik',
+  seo_description: 'Theaterpedia - werde Teil einer neuen Bewegung! Vernetzung, Austausch und Weiterbildung für Theaterpädagog*innen im deutschsprachigen Raum.',
+  seo_keywords: 'Theaterpädagogik, Vernetzung, Veranstaltungen, Theatervermittlung, Performance, kreative Gemeinschaft, Weiterbildung, Theater',
+  seo_image: 'https://www.theaterpedia.org/images/og-theaterpedia-network.jpg',
+  og_title: 'Theaterpedia - Netzwerk für Theaterpädagogik',
+  og_description: 'Werde Teil einer neuen Bewegung! Vernetzung, Austausch und Weiterbildung für Theaterpädagog*innen.',
+  twitter_card: 'summary_large_image' as const,
+  // ... other layout settings
+}
+```
+
+#### Home Route Implementation
+
+Each home route applies SEO in its `onMounted` hook:
+
+```typescript
+import { pageSettings } from '@/settings'
+
+function setHomePageSeoMeta() {
+    document.title = pageSettings.seo_title;
+    
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (value) element!.setAttribute(key, value);
+        });
+    };
+    
+    setMeta('meta[name="description"]', { name: 'description', content: pageSettings.seo_description });
+    setMeta('meta[name="keywords"]', { name: 'keywords', content: pageSettings.seo_keywords });
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: pageSettings.og_title });
+    // ... etc
+}
+
+onMounted(async () => {
+    setHomePageSeoMeta()
+    // ... other initialization
+})
+```
+
+#### Page-Specific Titles
+
+Each route customizes the title while using shared SEO data:
+
+- **HomePage**: `pageSettings.seo_title`
+- **BlogPage**: `Blog - ${pageSettings.seo_title}`
+- **TeamPage**: `Team - ${pageSettings.seo_title}`
+- **StartPage**: `Konferenz - ${pageSettings.seo_title}`
+
+#### Updating Home Route SEO
+
+To update home route SEO, edit `src/settings.ts`:
+
+```typescript
+// Change network-wide SEO
+export const pageSettings = {
+  seo_title: 'New Title',
+  seo_description: 'New description...',
+  // ...
+}
+```
 
 ### Project Sites
+
 - Use dynamic data from `projects.config` JSONB field
 - Applied in `ProjectSite.vue`
 - Fallback to project properties if SEO fields not set
+- Configured per-project via API or database
 
 ## Migration Timeline
 

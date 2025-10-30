@@ -13,10 +13,20 @@ import type { ToggleOption } from './components/ToggleMenu.vue'
 // ============================================================================
 
 export const pageSettings = {
+  // SEO Meta Tags (aligned with PROJECT_SEO_CONFIGURATION.md naming)
+  seo_title: 'Theaterpedia Netzwerk für Theaterpädagogik',
+  seo_description: 'Theaterpedia - werde Teil einer neuen Bewegung! Vernetzung, Austausch und Weiterbildung für Theaterpädagog*innen im deutschsprachigen Raum.',
+  seo_keywords: 'Theaterpädagogik, Vernetzung, Veranstaltungen, Theatervermittlung, Performance, kreative Gemeinschaft, Weiterbildung, Theater',
+  seo_image: 'https://www.theaterpedia.org/images/og-theaterpedia-network.jpg',
+  og_title: 'Theaterpedia - Netzwerk für Theaterpädagogik',
+  og_description: 'Werde Teil einer neuen Bewegung! Vernetzung, Austausch und Weiterbildung für Theaterpädagog*innen.',
+  twitter_card: 'summary_large_image' as const,
+
+  // Layout options
   showAside: true,
   showBottom: true,
   alertBanner: {
-    message: 'Wichtiger Hinweis: Anmeldeschluss für den Herbstkurs ist der 15. September 2023!',
+    message: 'Wichtiger Hinweis: Anmeldeschluss für die Theaterpedia-Konferenz ist der 7. November 2025!',
     alertType: 'warning' as const,
   },
 }

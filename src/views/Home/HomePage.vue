@@ -107,10 +107,49 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
+import { pageSettings } from '@/settings'
 
 const router = useRouter()
 const route = useRoute()
 const { getStatusIdByName } = useStatus()
+
+// SEO: Set meta tags from settings
+function setHomePageSeoMeta() {
+    // Set title
+    document.title = pageSettings.seo_title;
+
+    // Helper to set or update meta tag
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (value) {
+                element!.setAttribute(key, value);
+            }
+        });
+    };
+
+    // Basic meta tags
+    setMeta('meta[name="description"]', { name: 'description', content: pageSettings.seo_description });
+    setMeta('meta[name="keywords"]', { name: 'keywords', content: pageSettings.seo_keywords });
+
+    // Open Graph tags
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: pageSettings.og_title });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: pageSettings.og_description });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    setMeta('meta[property="og:image"]', { property: 'og:image', content: pageSettings.seo_image });
+
+    // Twitter Card tags
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: pageSettings.twitter_card });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: pageSettings.og_title });
+    setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: pageSettings.og_description });
+    setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: pageSettings.seo_image });
+}
 
 // Get public navigation items
 const navItems = computed<TopnavParentItem[]>(() => {
@@ -461,6 +500,9 @@ function watchPostItOpens() {
 
 // Initialize
 onMounted(async () => {
+    // Set SEO meta tags
+    setHomePageSeoMeta()
+
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await Promise.all([

@@ -66,9 +66,51 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
+import { pageSettings } from '@/settings'
 
 const router = useRouter()
 const route = useRoute()
+
+// SEO: Set meta tags from settings (Team page)
+function setTeamPageSeoMeta() {
+    // Set title
+    document.title = `Team - ${pageSettings.seo_title}`;
+
+    // Helper to set or update meta tag
+    const setMeta = (selector: string, attributes: Record<string, string>) => {
+        let element = document.head.querySelector(selector);
+        if (!element) {
+            const tagMatch = selector.match(/^(\w+)\[/);
+            const tag = tagMatch && tagMatch[1] ? tagMatch[1] : 'meta';
+            element = document.createElement(tag);
+            document.head.appendChild(element);
+        }
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (value) {
+                element!.setAttribute(key, value);
+            }
+        });
+    };
+
+    // Basic meta tags
+    const teamDescription = `Das Team und die Community hinter Theaterpedia. ${pageSettings.seo_description}`;
+    const teamKeywords = `${pageSettings.seo_keywords}, Team, Community, Mitglieder`;
+
+    setMeta('meta[name="description"]', { name: 'description', content: teamDescription });
+    setMeta('meta[name="keywords"]', { name: 'keywords', content: teamKeywords });
+
+    // Open Graph tags
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: `Team - ${pageSettings.og_title}` });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: teamDescription });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    setMeta('meta[property="og:image"]', { property: 'og:image', content: pageSettings.seo_image });
+
+    // Twitter Card tags
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: pageSettings.twitter_card });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: `Team - ${pageSettings.og_title}` });
+    setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: teamDescription });
+    setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: pageSettings.seo_image });
+}
 
 // Get public navigation items
 const navItems = computed<TopnavParentItem[]>(() => {
@@ -235,6 +277,9 @@ async function fetchProjects() {
 
 // Initialize
 onMounted(async () => {
+    // Set SEO meta tags
+    setTeamPageSeoMeta()
+
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await fetchUsers()
