@@ -2,7 +2,7 @@
     <Section background="default">
         <Container>
             <Prose>
-                <Heading overline="Join Us" level="h2">Community **Members**</Heading>
+                <Heading overline="Join Us" level="h2" headline="Community **Members**">Community **Members**</Heading>
             </Prose>
 
             <Slider v-if="users.length > 0">

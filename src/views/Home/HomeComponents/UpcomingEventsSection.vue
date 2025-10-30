@@ -2,7 +2,7 @@
     <Section background="muted">
         <Container>
             <Prose>
-                <Heading overline="What's Happening" level="h2">Upcoming **Events**</Heading>
+                <Heading overline="What's Happening" level="h2" headline="Upcoming Events">Upcoming **Events**</Heading>
             </Prose>
 
             <Slider v-if="events.length > 0">

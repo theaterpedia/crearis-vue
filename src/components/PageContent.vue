@@ -31,27 +31,50 @@ async function fetchPageData() {
         // First, fetch the page by project and page_type
         const pageResponse = await fetch(`/api/pages?projectId=${props.projectId}&pageType=${props.pageType}`)
         if (!pageResponse.ok) {
-            console.error('Failed to fetch page')
+            // Silently return - no page content is valid
             return
         }
 
-        const pageData = await pageResponse.json()
-        pages.value = Array.isArray(pageData) ? pageData : [pageData]
+        const responseText = await pageResponse.text()
+        if (!responseText || responseText.trim() === '') {
+            // Silently return - no content is valid
+            return
+        }
+
+        try {
+            const pageData = JSON.parse(responseText)
+            pages.value = Array.isArray(pageData) ? pageData : [pageData]
+        } catch (parseError) {
+            // Invalid JSON - silently return
+            return
+        }
 
         // If we have a page, fetch its sections
         if (pages.value.length > 0 && pages.value[0].id) {
             const pageId = pages.value[0].id
             const sectionsResponse = await fetch(`/api/page-sections?pageId=${pageId}`)
             if (!sectionsResponse.ok) {
-                console.error('Failed to fetch page sections')
+                // Silently return - no sections is valid
                 return
             }
 
-            const sectionsData = await sectionsResponse.json()
-            pageSections.value = Array.isArray(sectionsData) ? sectionsData : []
+            const sectionsText = await sectionsResponse.text()
+            if (!sectionsText || sectionsText.trim() === '') {
+                // Silently return - no sections is valid
+                return
+            }
+
+            try {
+                const sectionsData = JSON.parse(sectionsText)
+                pageSections.value = Array.isArray(sectionsData) ? sectionsData : []
+            } catch (parseError) {
+                // Invalid JSON - silently return
+                return
+            }
         }
     } catch (error) {
-        console.error('Error fetching page data:', error)
+        // Network or other errors - silently return
+        // Component will simply not display anything
     }
 }
 

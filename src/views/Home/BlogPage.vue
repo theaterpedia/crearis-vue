@@ -31,13 +31,15 @@
             </template>
 
             <!-- Hero Section -->
-            <BlogPageHero :user="user" />
+            <template #header>
+                <BlogPageHero :user="user" />
+            </template>
 
             <!-- Blog Posts Section -->
             <BlogPostsSection :posts="posts" :show-posts="3" />
 
             <!-- Social Media Section -->
-            <SocialMediaSection />
+            <SocialMediaSection size="small" :is-vertical="false" />
 
             <!-- Footer -->
             <template #footer>

@@ -11,7 +11,8 @@
 
         <!-- PageLayout wrapper -->
         <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="home">
+            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="home"
+            :alertBanner="pageSettings.alertBanner">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Edit Panel Button -->
@@ -30,9 +31,10 @@
                 </button>
             </template>
 
-            <!-- Hero Section (replaces header) -->
-            <!-- Trigger 1: Hero secondary CTA -->
-            <HeroSection :user="user" @trigger-demo="handleHeroDemoClick" />
+            <!-- Hero Section -->
+            <template #header>
+                <HeroSection :user="user" @trigger-demo="handleHeroDemoClick" />
+            </template>
 
             <!-- Trigger 2: Demo Events Card -->
             <Section background="default">
@@ -57,7 +59,8 @@
             <UpcomingEventsSection :events="events" />
 
             <!-- Page Content -->
-            <PageContent page-type="landing" :project-domain-code="project.domaincode" :project-id="project.id" />
+            <PageContent page-type="landing" :project-domain-code="project.domaincode"
+                :project-id="String(project.id)" />
 
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
@@ -67,9 +70,6 @@
 
             <!-- Community Members Section -->
             <CommunityMembersSection :users="users" />
-
-            <!-- Social Media Section -->
-            <SocialMediaSection />
 
             <!-- Footer -->
             <template #footer>
@@ -174,6 +174,8 @@ const isConfigPanelOpen = ref(false)
 const controller = useFpostitController()
 const demoCardElement = ref<HTMLElement>()
 const currentHeaderType = ref<'bauchbinde' | 'cover'>('cover')
+const p1Interval = ref<number | null>(null)
+const p2Interval = ref<number | null>(null)
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -218,6 +220,12 @@ const isProjectOwner = computed(() => {
 const canEdit = computed(() => {
     if (!user.value) return false
     return user.value.activeRole === 'admin' || isProjectOwner.value
+})
+
+// Cleanup intervals on component unmount
+onUnmounted(() => {
+    if (p1Interval.value) clearInterval(p1Interval.value)
+    if (p2Interval.value) clearInterval(p2Interval.value)
 })
 
 // Open/close edit panel
@@ -462,10 +470,10 @@ function handleDemoCardClick(event: MouseEvent) {
 // Watch for post-it opens and inject interactive components
 function watchPostItOpens() {
     // Watch for p1 (Theme Toggle)
-    const p1Interval = setInterval(() => {
+    p1Interval.value = setInterval(() => {
         const themeContainer = document.getElementById('fpostit-theme-toggle')
         if (themeContainer && controller.isOpen('p1')) {
-            clearInterval(p1Interval)
+            if (p1Interval.value) clearInterval(p1Interval.value)
             // Create and mount InvertedToggle component
             import('@/components/InvertedToggle.vue').then(module => {
                 const InvertedToggleComp = module.default
@@ -473,13 +481,13 @@ function watchPostItOpens() {
                 app.mount(themeContainer)
             }).catch(err => console.error('Failed to load InvertedToggle:', err))
         }
-    }, 100)
+    }, 100) as unknown as number
 
     // Watch for p2 (Header Type Selector)
-    const p2Interval = setInterval(() => {
+    p2Interval.value = setInterval(() => {
         const headerTypeSelect = document.getElementById('fpostit-header-type') as HTMLSelectElement
         if (headerTypeSelect && controller.isOpen('p2')) {
-            clearInterval(p2Interval)
+            if (p2Interval.value) clearInterval(p2Interval.value)
             headerTypeSelect.value = currentHeaderType.value
             headerTypeSelect.addEventListener('change', (e) => {
                 const newType = (e.target as HTMLSelectElement).value as 'bauchbinde' | 'cover'
@@ -489,13 +497,7 @@ function watchPostItOpens() {
                 alert(`Header-Typ zu "${newType}" geändert! (Demo-Modus - keine echte Änderung)`)
             })
         }
-    }, 100)
-
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearInterval(p1Interval)
-        clearInterval(p2Interval)
-    })
+    }, 100) as unknown as number
 }
 
 // Initialize

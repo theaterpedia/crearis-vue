@@ -2,7 +2,8 @@
     <Section background="accent" v-if="displayedPosts.length > 0">
         <Container>
             <Prose>
-                <Heading overline="Recent Articles" level="h2">Latest from Our **Blog**</Heading>
+                <Heading overline="Recent Articles" level="h2" headline="Latest from Our **Blog**">Latest from Our
+                    **Blog**</Heading>
             </Prose>
 
             <Columns gap="medium" align="top" wrap>

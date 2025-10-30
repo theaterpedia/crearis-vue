@@ -135,24 +135,8 @@
     <!-- Footer -->
     <div class="footer-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && footerWide }">
       <footer class="page-footer" :class="{ 'page-footer-boxed': !footerWide }">
-        <!-- HARDCODED: Replace with dynamic footer content -->
-        <Footer>
-          <p>© 2023 DAS Ei - Theaterpädagogik Bayern</p>
-          <ul>
-            <li><a href="#">Datenschutzerklärung</a></li>
-            <li><a href="#">Impressum</a></li>
-            <li><a href="#">Kontakt</a></li>
-          </ul>
-          <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Ausbildung</a></li>
-            <li><a href="#">Institut</a></li>
-            <li><a href="#">AGB</a></li>
-          </ul>
-          <Prose>
-            <p class="h3 primary"><strong>30 Jahre Theaterpädagogik in Bayern.</strong></p>
-          </Prose>
-        </Footer>
+        <!-- footer-slot -->
+        <slot name="footer" />
       </footer>
     </div>
   </Component>
@@ -236,7 +220,6 @@ const scrollBreak = computed(() => {
 // NEW LAYOUT SYSTEM: Page Props - imported from settings
 const showAside = ref(pageSettings.showAside)
 const showBottom = ref(pageSettings.showBottom)
-const alertBanner = ref(pageSettings.alertBanner)
 
 // NEW: Page Options - for dynamic aside and footer content
 interface Props {
@@ -245,14 +228,19 @@ interface Props {
   projectDomaincode?: string
   navItems?: TopnavParentItem[]
   navbarMode?: 'default' | 'home' | 'page' | 'dashboard'
+  alertBanner?: { message: string; alertType: 'primary' | 'secondary' | 'muted' | 'accent' | 'positive' | 'negative' | 'warning' } | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   asideOptions: () => ({}),
   footerOptions: () => ({}),
   navItems: undefined,
-  navbarMode: 'default'
+  navbarMode: 'default',
+  alertBanner: undefined
 })
+
+// Computed: Use prop if provided, otherwise fall back to pageSettings
+const alertBanner = computed(() => props.alertBanner !== undefined ? props.alertBanner : pageSettings.alertBanner)
 
 // NEW LAYOUT SYSTEM: Site Layout - imported from settings
 const siteLayout = ref<SiteLayout>(layoutSettings.siteLayout)

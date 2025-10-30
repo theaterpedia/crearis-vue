@@ -2,7 +2,8 @@
     <Section background="default">
         <Container>
             <Prose>
-                <Heading overline="Pipeline" level="h2">New **Projects** in the Pipeline</Heading>
+                <Heading overline="Pipeline" level="h2" headline="New **Projects** in the Pipeline">New **Projects** in
+                    the Pipeline</Heading>
             </Prose>
 
             <Columns gap="small" align="top" wrap v-if="projects.length > 0">

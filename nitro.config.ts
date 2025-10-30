@@ -13,8 +13,12 @@ export default {
   },
 
   // Public assets configuration
-  // Nitro will copy server/public/ to .output/public/ during build
+  // Nitro will copy server/public/ and public/ to .output/public/ during build
   publicAssets: [
+    {
+      dir: 'public', // Vite public folder (favicon.ico, etc.)
+      maxAge: 60 * 60 * 24 * 365 // Cache for 1 year
+    },
     {
       dir: 'server/public',
       maxAge: 0 // Root files (index.html) should not be cached

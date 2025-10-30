@@ -226,6 +226,27 @@ const formRegistry: Record<string, FormDefinition> = {
                 placeholder: 'Weitere Informationen oder Fragen...'
             }
         ]
+    },
+    'newsletter': {
+        name: 'newsletter',
+        title: 'Newsletter-Anmeldung',
+        description: 'Bleibe auf dem Laufenden mit unserem Newsletter',
+        fields: [
+            {
+                name: 'name',
+                type: 'text',
+                label: 'Name',
+                required: true,
+                placeholder: 'Dein Name'
+            },
+            {
+                name: 'email',
+                type: 'email',
+                label: 'E-Mail',
+                required: true,
+                placeholder: 'name@example.com'
+            }
+        ]
     }
 }
 

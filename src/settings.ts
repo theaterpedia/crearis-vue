@@ -13,6 +13,9 @@ import type { ToggleOption } from './components/ToggleMenu.vue'
 // ============================================================================
 
 export const pageSettings = {
+  // Organization Identity
+  claim: 'neuartige Vernetzung Theaterpädagogik',
+
   // SEO Meta Tags (aligned with PROJECT_SEO_CONFIGURATION.md naming)
   seo_title: 'Theaterpedia Netzwerk für Theaterpädagogik',
   seo_description: 'Theaterpedia - werde Teil einer neuen Bewegung! Vernetzung, Austausch und Weiterbildung für Theaterpädagog*innen im deutschsprachigen Raum.',
@@ -29,9 +32,7 @@ export const pageSettings = {
     message: 'Wichtiger Hinweis: Anmeldeschluss für die Theaterpedia-Konferenz ist der 7. November 2025!',
     alertType: 'warning' as const,
   },
-}
-
-// ============================================================================
+}// ============================================================================
 // LAYOUT SETTINGS
 // ============================================================================
 

@@ -31,7 +31,9 @@
             </template>
 
             <!-- Hero Section -->
-            <TeamPageHero :user="user" />
+            <template #header>
+                <TeamPageHero :user="user" />
+            </template>
 
             <!-- Page Content -->
             <PageContent page-type="team" :project-domain-code="project.domaincode" :project-id="project.id" />

@@ -31,7 +31,9 @@
             </template>
 
             <!-- Hero Section -->
-            <StartPageHero :user="user" />
+            <template #header>
+                <StartPageHero :user="user" />
+            </template>
 
             <!-- Registration Section -->
             <section class="registration-section bg-accent">
