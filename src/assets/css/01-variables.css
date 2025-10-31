@@ -19,6 +19,15 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --duration: 150ms;
   --transition: all var(--duration) var(--ease);
+
+  /* Image rendition dimensions */
+  --cimg-avatar-width: 64px;
+  --cimg-avatar-height: 64px;
+  --cimg-card-width: 320px;
+  --cimg-card-height: 180px;
+  --cimg-hero-width: 1280px;
+  --cimg-hero-height: 720px;
+
   /*--radius: var(--radius-medium) ... and a lot more
   -> 00-theme.ts > shall not be expoted here,
   -> export via package/themes/theme.ts */

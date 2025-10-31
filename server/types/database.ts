@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-10-30T13:59:34.420Z
+ * Generated at: 2025-10-31T18:36:08.367Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -58,6 +58,7 @@ export interface EventInstructorsTableFields {
 export interface EventsTableFields {
     address_id?: string | null
     cimg?: string | null
+    cimg_id?: number | null
     created_at?: string | null
     date_begin?: string | null
     date_end?: string | null
@@ -143,11 +144,56 @@ export interface I18nCodesTableFields {
 }
 
 /**
+ * Images table
+ * Table: images
+ */
+export interface ImagesTableFields {
+    alt_text?: string | null
+    av_x?: number | null
+    av_y?: number | null
+    av_z?: number | null // default: 100
+    ca_x?: number | null
+    ca_y?: number | null
+    ca_z?: number | null // default: 100
+    copyright?: string | null
+    created_at?: string | null // default: CURRENT_TIMESTAMP
+    date: string // default: CURRENT_TIMESTAMP
+    domaincode?: string | null
+    fileformat: string // default: 'none'::text
+    function?: string | null
+    geo?: Record<string, any> | null
+    has_audio: boolean // default: false
+    has_video: boolean // default: false
+    he_x?: number | null
+    he_y?: number | null
+    he_z?: number | null // default: 100
+    id: number // default: nextval('images_id_seq'::regclass)
+    is_dark: boolean // default: false
+    is_light: boolean // default: false
+    is_private: boolean // default: false
+    is_public: boolean // default: false
+    length?: number | null
+    mediaformat?: string | null
+    name: string
+    owner_id?: number | null
+    provider?: number | null
+    status_id: number // default: 0
+    tags: number // default: 0
+    title?: string | null
+    updated_at?: string | null // default: CURRENT_TIMESTAMP
+    url: string
+    x?: number | null
+    xmlid?: string | null
+    y?: number | null
+}
+
+/**
  * Instructors table
  * Table: instructors
  */
 export interface InstructorsTableFields {
     cimg?: string | null
+    cimg_id?: number | null
     city?: string | null
     country_id?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
@@ -199,6 +245,7 @@ export interface InteractionsTableFields {
 export interface LocationsTableFields {
     category_id?: string | null
     cimg?: string | null
+    cimg_id?: number | null
     city?: string | null
     country_id?: string | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
@@ -291,6 +338,7 @@ export interface PostsTableFields {
     author_id?: string | null
     blog_id?: string | null
     cimg?: string | null
+    cimg_id?: number | null
     cover_properties?: string | null
     created_at?: string | null
     event_xmlid?: string | null
@@ -354,6 +402,7 @@ export interface ProjectsTableFields {
     aside_postit?: Record<string, any> | null // default: '{}'::jsonb
     aside_toc?: Record<string, any> | null // default: '{}'::jsonb
     cimg?: string | null
+    cimg_id?: number | null
     config?: Record<string, any> | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     cta_entity?: string | null
@@ -530,6 +579,7 @@ export interface TldsTableFields {
  * Table: users
  */
 export interface UsersTableFields {
+    cimg_id?: number | null
     created_at?: string | null // default: CURRENT_TIMESTAMP
     extmail?: string | null
     id: number // default: nextval('users_id_seq'::regclass)
@@ -587,7 +637,7 @@ export function isValidEventInstructorsField(key: string): key is keyof EventIns
 
 export function isValidEventsField(key: string): key is keyof EventsTableFields {
     const validFields: (keyof EventsTableFields)[] = [
-        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
+        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'cimg_id', 'status_display'
     ]
     return validFields.includes(key as keyof EventsTableFields)
 }
@@ -620,9 +670,16 @@ export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableF
     return validFields.includes(key as keyof I18nCodesTableFields)
 }
 
+export function isValidImagesField(key: string): key is keyof ImagesTableFields {
+    const validFields: (keyof ImagesTableFields)[] = [
+        'id', 'xmlid', 'name', 'url', 'fileformat', 'mediaformat', 'function', 'length', 'provider', 'has_video', 'has_audio', 'is_public', 'is_private', 'is_dark', 'is_light', 'domaincode', 'owner_id', 'date', 'geo', 'x', 'y', 'copyright', 'alt_text', 'title', 'status_id', 'tags', 'av_z', 'av_x', 'av_y', 'ca_z', 'ca_x', 'ca_y', 'he_z', 'he_x', 'he_y', 'created_at', 'updated_at'
+    ]
+    return validFields.includes(key as keyof ImagesTableFields)
+}
+
 export function isValidInstructorsField(key: string): key is keyof InstructorsTableFields {
     const validFields: (keyof InstructorsTableFields)[] = [
-        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display'
+        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'cimg_id', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof InstructorsTableFields)
 }
@@ -636,7 +693,7 @@ export function isValidInteractionsField(key: string): key is keyof Interactions
 
 export function isValidLocationsField(key: string): key is keyof LocationsTableFields {
     const validFields: (keyof LocationsTableFields)[] = [
-        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_xmlid', 'version_id', 'status_id', 'project_id', 'isbase', 'created_at', 'updated_at', 'lang', 'status_display'
+        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_xmlid', 'version_id', 'status_id', 'project_id', 'isbase', 'cimg_id', 'created_at', 'updated_at', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof LocationsTableFields)
 }
@@ -664,7 +721,7 @@ export function isValidParticipantsField(key: string): key is keyof Participants
 
 export function isValidPostsField(key: string): key is keyof PostsTableFields {
     const validFields: (keyof PostsTableFields)[] = [
-        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_xmlid', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
+        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_xmlid', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'cimg_id', 'status_display'
     ]
     return validFields.includes(key as keyof PostsTableFields)
 }
@@ -685,7 +742,7 @@ export function isValidProjectMembersField(key: string): key is keyof ProjectMem
 
 export function isValidProjectsField(key: string): key is keyof ProjectsTableFields {
     const validFields: (keyof ProjectsTableFields)[] = [
-        'id', 'domaincode', 'name', 'description', 'status_old', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'is_sidebar', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'status_id'
+        'id', 'domaincode', 'name', 'description', 'status_old', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'is_sidebar', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'cimg_id', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'status_id'
     ]
     return validFields.includes(key as keyof ProjectsTableFields)
 }
@@ -748,7 +805,7 @@ export function isValidTldsField(key: string): key is keyof TldsTableFields {
 
 export function isValidUsersField(key: string): key is keyof UsersTableFields {
     const validFields: (keyof UsersTableFields)[] = [
-        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'created_at', 'updated_at', 'status_display'
+        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'cimg_id', 'created_at', 'updated_at', 'status_display'
     ]
     return validFields.includes(key as keyof UsersTableFields)
 }

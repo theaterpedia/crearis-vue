@@ -1,8 +1,8 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-10-30T13:15:22.682Z",
-  "description": "Database schema for crearis-demo-data system v0.0.1",
+  "generatedAt": "2025-10-31T18:35:57.562Z",
+  "description": "Database schema for crearis-demo-data system v0.0.2",
   "tables": {
     "crearis_config": {
       "description": "Crearis_config table",
@@ -198,6 +198,10 @@
           "type": "INTEGER",
           "nullable": true
         },
+        "cimg_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
         "status_display": {
           "type": "TEXT",
           "nullable": true
@@ -338,6 +342,175 @@
         }
       }
     },
+    "images": {
+      "description": "Images table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('images_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "url": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "fileformat": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'none'::text"
+        },
+        "mediaformat": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "function": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "length": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "provider": {
+          "type": "SMALLINT",
+          "nullable": true
+        },
+        "has_video": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "has_audio": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "is_public": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "is_private": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "is_dark": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "is_light": {
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": "false"
+        },
+        "domaincode": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "owner_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "date": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "geo": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "copyright": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "alt_text": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "title": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "0"
+        },
+        "tags": {
+          "type": "SMALLINT",
+          "nullable": false,
+          "default": "0"
+        },
+        "av_z": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "100"
+        },
+        "av_x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "av_y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "ca_z": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "100"
+        },
+        "ca_x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "ca_y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "he_z": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "100"
+        },
+        "he_x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "he_y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
     "instructors": {
       "description": "Instructors table",
       "columns": {
@@ -411,6 +584,10 @@
           "type": "INTEGER",
           "nullable": true,
           "default": "0"
+        },
+        "cimg_id": {
+          "type": "INTEGER",
+          "nullable": true
         },
         "created_at": {
           "type": "TIMESTAMP WITHOUT TIME ZONE",
@@ -588,6 +765,10 @@
           "type": "INTEGER",
           "nullable": true,
           "default": "0"
+        },
+        "cimg_id": {
+          "type": "INTEGER",
+          "nullable": true
         },
         "created_at": {
           "type": "TIMESTAMP WITHOUT TIME ZONE",
@@ -919,6 +1100,10 @@
           "type": "INTEGER",
           "nullable": true
         },
+        "cimg_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
         "status_display": {
           "type": "TEXT",
           "nullable": true
@@ -1110,6 +1295,10 @@
         },
         "member_ids": {
           "type": "JSONB",
+          "nullable": true
+        },
+        "cimg_id": {
+          "type": "INTEGER",
           "nullable": true
         },
         "page_background": {
@@ -1573,6 +1762,10 @@
           "type": "TEXT",
           "nullable": false,
           "default": "'de'::text"
+        },
+        "cimg_id": {
+          "type": "INTEGER",
+          "nullable": true
         },
         "created_at": {
           "type": "TIMESTAMP WITHOUT TIME ZONE",

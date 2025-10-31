@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
             name: body.name,
             teaser: body.teaser || null,
             cimg: body.cimg || null,
+            cimg_id: body.cimg_id || null,
             date_begin: body.date_begin || null,
             date_end: body.date_end || null,
             event_type: body.event_type || 'workshop',
@@ -48,9 +49,9 @@ export default defineEventHandler(async (event) => {
         // Insert event (id is auto-generated)
         const sql = `
             INSERT INTO events (
-                xmlid, name, teaser, cimg, date_begin, date_end,
+                xmlid, name, teaser, cimg, cimg_id, date_begin, date_end,
                 event_type, isbase, project_id, template, public_user, location
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -59,6 +60,7 @@ export default defineEventHandler(async (event) => {
             eventData.name,
             eventData.teaser,
             eventData.cimg,
+            eventData.cimg_id,
             eventData.date_begin,
             eventData.date_end,
             eventData.event_type,

@@ -87,7 +87,7 @@ export const migration = {
                     id SERIAL PRIMARY KEY,
                     value SMALLINT NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks' , 'interactions')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks' , 'interactions', 'images')),
                     description TEXT,
                     name_i18n JSONB,
                     desc_i18n JSONB
@@ -116,7 +116,7 @@ export const migration = {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     value INTEGER NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks', 'interactions')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks', 'interactions', 'images')),
                     description TEXT,
                     name_i18n TEXT,
                     desc_i18n TEXT,
@@ -416,6 +416,37 @@ export const migration = {
 
         console.log('    ✓ Persons-specific statuses populated')
 
+        // -------------------------------------------------------------------
+        // 1.10: Populate images statuses
+        // -------------------------------------------------------------------
+        console.log('\n  🖼️  Populating images statuses...')
+
+        const imagesStatuses = [
+            { value: 0, name: 'new', description: 'Newly uploaded image', name_i18n: { de: 'Neu', en: 'New', cz: 'Nový' }, desc_i18n: { de: 'Neu hochgeladenes Bild', en: 'Newly uploaded image', cz: 'Nově nahraný obrázek' } },
+            { value: 1, name: 'demo', description: 'Demo/example image', name_i18n: { de: 'Demo', en: 'Demo', cz: 'Demo' }, desc_i18n: { de: 'Demo-/Beispielbild', en: 'Demo/example image', cz: 'Demonstrační/ukázkový obrázek' } },
+            { value: 2, name: 'draft', description: 'Draft image', name_i18n: { de: 'Entwurf', en: 'Draft', cz: 'Koncept' }, desc_i18n: { de: 'Entwurfsbild', en: 'Draft image', cz: 'Konceptový obrázek' } },
+            { value: 4, name: 'done', description: 'Processed and ready', name_i18n: { de: 'Fertig', en: 'Done', cz: 'Hotovo' }, desc_i18n: { de: 'Verarbeitet und bereit', en: 'Processed and ready', cz: 'Zpracováno a připraveno' } },
+            { value: 16, name: 'trash', description: 'In trash/deleted', name_i18n: { de: 'Papierkorb', en: 'Trash', cz: 'Koš' }, desc_i18n: { de: 'Im Papierkorb/gelöscht', en: 'In trash/deleted', cz: 'V koši/smazáno' } },
+            { value: 32, name: 'archived', description: 'Archived image', name_i18n: { de: 'Archiviert', en: 'Archived', cz: 'Archivováno' }, desc_i18n: { de: 'Archiviertes Bild', en: 'Archived image', cz: 'Archivovaný obrázek' } }
+        ]
+
+        for (const status of imagesStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'images', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'images', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Images statuses populated (new, demo, draft, done, trash, archived)')
+
         console.log('\n✅ Chapter 1 completed: All status entries populated for all tables')
 
         // ===================================================================
@@ -461,6 +492,7 @@ export const migration = {
                     instructor_id TEXT,
                     participant_id INTEGER,
                     lang TEXT NOT NULL DEFAULT 'de' CHECK (lang IN ('de', 'en', 'cz')),
+                    cimg_id INTEGER DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -685,6 +717,7 @@ export const migration = {
                     role TEXT NOT NULL CHECK (role IN ('user', 'admin', 'base')),
                     status_id INTEGER REFERENCES status(id),
                     instructor_id TEXT REFERENCES instructors(id),
+                    cimg_id INTEGER DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -792,6 +825,7 @@ export const migration = {
                     md TEXT,
                     html TEXT,
                     isbase INTEGER DEFAULT 0,
+                    cimg_id INTEGER DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT
                 )
@@ -929,6 +963,7 @@ export const migration = {
                     status_id INTEGER REFERENCES status(id),
                     project_id TEXT,
                     isbase INTEGER DEFAULT 0,
+                    cimg_id INTEGER DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT
                 )
@@ -1448,6 +1483,203 @@ export const migration = {
         }
 
         // ===================================================================
+        // CHAPTER 3.5: Create Images Table
+        // ===================================================================
+        console.log('\n📖 Chapter 3.5: Create Images Table')
+        console.log('  ℹ️  Creating after users/instructors migration to ensure FK compatibility')
+
+        // -------------------------------------------------------------------
+        // 3.5.1: Create images table
+        // -------------------------------------------------------------------
+        console.log('\n  🖼️  Creating images table...')
+
+        if (isPostgres) {
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS images (
+                    id SERIAL PRIMARY KEY,
+                    xmlid TEXT DEFAULT NULL,
+                    name TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    fileformat TEXT NOT NULL DEFAULT 'none' CHECK (fileformat IN (
+                        'none', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 
+                        'tiff', 'tif', 'ico', 'heic', 'heif', 'avif'
+                    )),
+                    mediaformat TEXT DEFAULT NULL CHECK (mediaformat IS NULL OR mediaformat IN (
+                        'mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv',
+                        'mp3', 'wav', 'aac', 'flac', 'm4a', 'wma', 'opus'
+                    )),
+                    function TEXT DEFAULT NULL,
+                    length INTEGER DEFAULT NULL,
+                    provider SMALLINT DEFAULT NULL,
+                    has_video BOOLEAN NOT NULL DEFAULT FALSE,
+                    has_audio BOOLEAN NOT NULL DEFAULT FALSE,
+                    is_public BOOLEAN NOT NULL DEFAULT FALSE,
+                    is_private BOOLEAN NOT NULL DEFAULT FALSE,
+                    is_dark BOOLEAN NOT NULL DEFAULT FALSE,
+                    is_light BOOLEAN NOT NULL DEFAULT FALSE,
+                    domaincode TEXT DEFAULT NULL,
+                    owner_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
+                    date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    geo JSONB DEFAULT NULL,
+                    x INTEGER DEFAULT NULL,
+                    y INTEGER DEFAULT NULL,
+                    copyright TEXT DEFAULT NULL,
+                    alt_text TEXT DEFAULT NULL,
+                    title TEXT DEFAULT NULL,
+                    status_id INTEGER NOT NULL DEFAULT 0,
+                    tags SMALLINT NOT NULL DEFAULT 0,
+                    av_z INTEGER DEFAULT 100 CHECK (av_z >= 20 AND av_z <= 500),
+                    av_x INTEGER DEFAULT NULL,
+                    av_y INTEGER DEFAULT NULL,
+                    ca_z INTEGER DEFAULT 100 CHECK (ca_z >= 30 AND ca_z <= 300),
+                    ca_x INTEGER DEFAULT NULL,
+                    ca_y INTEGER DEFAULT NULL,
+                    he_z INTEGER DEFAULT 100 CHECK (he_z >= 50 AND he_z <= 200),
+                    he_x INTEGER DEFAULT NULL,
+                    he_y INTEGER DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `)
+
+            // Create indexes
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_domaincode ON images(domaincode)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_owner_id ON images(owner_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_status_id ON images(status_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_tags ON images(tags)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_is_public ON images(is_public)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_provider ON images(provider)
+            `)
+
+        } else {
+            // SQLite
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS images (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    xmlid TEXT DEFAULT NULL,
+                    name TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    fileformat TEXT NOT NULL DEFAULT 'none' CHECK (fileformat IN (
+                        'none', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 
+                        'tiff', 'tif', 'ico', 'heic', 'heif', 'avif'
+                    )),
+                    mediaformat TEXT DEFAULT NULL CHECK (mediaformat IS NULL OR mediaformat IN (
+                        'mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv',
+                        'mp3', 'wav', 'aac', 'flac', 'm4a', 'wma', 'opus'
+                    )),
+                    function TEXT DEFAULT NULL,
+                    length INTEGER DEFAULT NULL,
+                    provider INTEGER DEFAULT NULL,
+                    has_video INTEGER NOT NULL DEFAULT 0,
+                    has_audio INTEGER NOT NULL DEFAULT 0,
+                    is_public INTEGER NOT NULL DEFAULT 0,
+                    is_private INTEGER NOT NULL DEFAULT 0,
+                    is_dark INTEGER NOT NULL DEFAULT 0,
+                    is_light INTEGER NOT NULL DEFAULT 0,
+                    domaincode TEXT DEFAULT NULL,
+                    owner_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
+                    date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    geo TEXT DEFAULT NULL,
+                    x INTEGER DEFAULT NULL,
+                    y INTEGER DEFAULT NULL,
+                    copyright TEXT DEFAULT NULL,
+                    alt_text TEXT DEFAULT NULL,
+                    title TEXT DEFAULT NULL,
+                    status_id INTEGER NOT NULL DEFAULT 0,
+                    tags INTEGER NOT NULL DEFAULT 0,
+                    av_z INTEGER DEFAULT 100 CHECK (av_z >= 20 AND av_z <= 500),
+                    av_x INTEGER DEFAULT NULL,
+                    av_y INTEGER DEFAULT NULL,
+                    ca_z INTEGER DEFAULT 100 CHECK (ca_z >= 30 AND ca_z <= 300),
+                    ca_x INTEGER DEFAULT NULL,
+                    ca_y INTEGER DEFAULT NULL,
+                    he_z INTEGER DEFAULT 100 CHECK (he_z >= 50 AND he_z <= 200),
+                    he_x INTEGER DEFAULT NULL,
+                    he_y INTEGER DEFAULT NULL,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_domaincode ON images(domaincode)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_owner_id ON images(owner_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_status_id ON images(status_id)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_tags ON images(tags)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_is_public ON images(is_public)
+            `)
+
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_provider ON images(provider)
+            `)
+        }
+
+        console.log('    ✓ Images table created with all fields and indexes')
+        console.log('    ✓ Supported image formats: jpg, jpeg, png, gif, webp, svg, bmp, tiff, tif, ico, heic, heif, avif')
+        console.log('    ✓ Supported media formats: mp4, webm, ogg, mov, avi, mkv, flv, wmv, mp3, wav, aac, flac, m4a, wma, opus')
+        console.log('    ✓ Tags bitmatrix: 1=adult | 2=teen | 4=child | 8=group | 16=portrait | 32=detail | 64=location | 128=system')
+
+        // -------------------------------------------------------------------
+        // 3.5.2: Add foreign key constraints for cimg_id fields (users, instructors, locations)
+        // -------------------------------------------------------------------
+        console.log('\n  🔗 Adding cimg_id foreign key constraints for migrated tables...')
+
+        if (isPostgres) {
+            await db.exec(`
+                ALTER TABLE users 
+                ADD CONSTRAINT users_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added users.cimg_id FK')
+
+            await db.exec(`
+                ALTER TABLE instructors 
+                ADD CONSTRAINT instructors_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added instructors.cimg_id FK')
+
+            await db.exec(`
+                ALTER TABLE locations 
+                ADD CONSTRAINT locations_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added locations.cimg_id FK')
+
+            console.log('    ℹ️  Note: projects, events, posts FK constraints will be added after their migrations')
+        }
+
+        console.log('\n✅ Chapter 3.5 completed: Images table created and FK constraints added for users/instructors/locations')
+
+        // ===================================================================
         // CHAPTER 4: Integrate Users, Participants and Instructors
         // ===================================================================
         console.log('\n📖 Chapter 4: Integrate Users, Participants and Instructors')
@@ -1731,7 +1963,8 @@ export const migration = {
                     is_location_provider BOOLEAN DEFAULT FALSE,
                     config JSONB,
                     domain_id INTEGER REFERENCES domains(id),
-                    member_ids JSONB
+                    member_ids JSONB,
+                    cimg_id INTEGER DEFAULT NULL
                 )
             `)
 
@@ -2219,6 +2452,29 @@ export const migration = {
 
             console.log('\n✅ Chapter 5B completed: Events and Posts project references converted to INTEGER FK')
 
+            // -------------------------------------------------------------------
+            // 5B.1: Add remaining cimg_id and images.domaincode FK constraints
+            // -------------------------------------------------------------------
+            console.log('\n  🔗 Adding remaining foreign key constraints for images system...')
+
+            // Add domaincode FK to images table (references projects)
+            await db.exec(`
+                ALTER TABLE images 
+                ADD CONSTRAINT images_domaincode_fkey 
+                FOREIGN KEY (domaincode) REFERENCES projects(domaincode) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added images.domaincode FK (references projects)')
+
+            // Add cimg_id FK to projects
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD CONSTRAINT projects_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added projects.cimg_id FK')
+
+            console.log('    ℹ️  Note: events and posts cimg_id FK constraints will be added in Chapter 8')
+
         } else {
             // SQLite implementation
             console.log('    ⚠️  SQLite: Events/Posts project conversion requires manual handling')
@@ -2472,6 +2728,64 @@ export const migration = {
             } else {
                 console.log('    ⚠️  posts.lang already exists, skipping')
             }
+
+            // -------------------------------------------------------------------
+            // 8.1b: Add cimg_id field to events and posts
+            // -------------------------------------------------------------------
+            console.log('\n  🖼️  Adding cimg_id field to events and posts...')
+
+            // Add cimg_id to events
+            const eventsCimgCol = await db.all(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'events' AND column_name = 'cimg_id'
+            `, [])
+
+            if (eventsCimgCol.length === 0) {
+                await db.exec(`
+                    ALTER TABLE events 
+                    ADD COLUMN cimg_id INTEGER DEFAULT NULL
+                `)
+                console.log('    ✓ Added events.cimg_id field')
+            } else {
+                console.log('    ⚠️  events.cimg_id already exists, skipping')
+            }
+
+            // Add cimg_id to posts
+            const postsCimgCol = await db.all(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'posts' AND column_name = 'cimg_id'
+            `, [])
+
+            if (postsCimgCol.length === 0) {
+                await db.exec(`
+                    ALTER TABLE posts 
+                    ADD COLUMN cimg_id INTEGER DEFAULT NULL
+                `)
+                console.log('    ✓ Added posts.cimg_id field')
+            } else {
+                console.log('    ⚠️  posts.cimg_id already exists, skipping')
+            }
+
+            // -------------------------------------------------------------------
+            // 8.1c: Add FK constraints for events and posts cimg_id
+            // -------------------------------------------------------------------
+            console.log('\n  🔗 Adding cimg_id foreign key constraints for events and posts...')
+
+            await db.exec(`
+                ALTER TABLE events 
+                ADD CONSTRAINT events_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added events.cimg_id FK')
+
+            await db.exec(`
+                ALTER TABLE posts 
+                ADD CONSTRAINT posts_cimg_id_fkey 
+                FOREIGN KEY (cimg_id) REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added posts.cimg_id FK')
 
             // -------------------------------------------------------------------
             // 8.2: Verify junction tables for tags exist

@@ -100,13 +100,14 @@ export default defineEventHandler(async (event) => {
             description,
             status_id,
             owner_id,
-            header_size
+            header_size,
+            cimg_id: body.cimg_id || null
         }
 
         // Insert project
         const stmt = db.prepare(`
-            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size, cimg_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
         stmt.run(
@@ -116,7 +117,8 @@ export default defineEventHandler(async (event) => {
             projectData.description,
             projectData.status_id,
             projectData.owner_id,
-            projectData.header_size
+            projectData.header_size,
+            projectData.cimg_id
         )
 
         // Return created project (with auto-generated id)

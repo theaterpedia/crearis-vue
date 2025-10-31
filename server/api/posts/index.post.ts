@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
             subtitle: body.subtitle || null,
             teaser: body.teaser || null,
             cimg: body.cimg || null,
+            cimg_id: body.cimg_id || null,
             post_date: body.post_date || null,
             isbase: body.isbase || 0,
             project_id: projectId,
@@ -46,9 +47,9 @@ export default defineEventHandler(async (event) => {
         // Insert post (id is auto-generated)
         const sql = `
             INSERT INTO posts (
-                xmlid, name, subtitle, teaser, cimg, post_date,
+                xmlid, name, subtitle, teaser, cimg, cimg_id, post_date,
                 isbase, project_id, template, public_user
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -58,6 +59,7 @@ export default defineEventHandler(async (event) => {
             postData.subtitle,
             postData.teaser,
             postData.cimg,
+            postData.cimg_id,
             postData.post_date,
             postData.isbase,
             postData.project_id,
