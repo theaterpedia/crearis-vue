@@ -3,12 +3,25 @@
         <div class="registry-header">
             <h3>Image Registry</h3>
             <div class="registry-actions">
-                <button @click="$emit('import')" class="action-btn primary">
-                    + Import Images
+                <button @click="handleImport" class="action-btn primary">
+                    Json-Img-Import
+                </button>
+                <button @click="showImportDialog = true" class="action-btn primary">
+                    + Add Images
                 </button>
                 <button @click="loadImages" :disabled="loading" class="action-btn">
                     ↻ Refresh
                 </button>
+            </div>
+        </div>
+
+        <!-- Import Dialog -->
+        <div v-if="showImportDialog" class="modal-overlay" @click.self="showImportDialog = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button @click="showImportDialog = false" class="close-btn">✕</button>
+                </div>
+                <CimgImport @imported="handleImported" />
             </div>
         </div>
 
@@ -126,6 +139,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import CimgRendition from './cimgRendition.vue'
+import CimgImport from './cimgImport.vue'
 
 /**
  * CimgRegistry Component
@@ -163,6 +177,7 @@ const loading = ref(false)
 const error = ref('')
 const currentPage = ref(1)
 const pageSize = 24
+const showImportDialog = ref(false)
 
 // Filters
 const filters = ref({
@@ -258,6 +273,69 @@ const loadImages = async () => {
     } finally {
         loading.value = false
     }
+}
+
+// Handle import
+const handleImport = async () => {
+    // Show file picker for JSON import
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+
+    input.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0]
+        if (!file) return
+
+        try {
+            loading.value = true
+            const text = await file.text()
+            const importData = JSON.parse(text)
+
+            // Validate it's an array
+            if (!Array.isArray(importData)) {
+                throw new Error('JSON file must contain an array of images')
+            }
+
+            // Batch import via API (max 100 at a time)
+            let imported = 0
+            let failed = 0
+
+            for (let i = 0; i < importData.length; i += 100) {
+                const batch = importData.slice(i, i + 100)
+
+                const response = await fetch('/api/images/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ images: batch })
+                })
+
+                if (!response.ok) {
+                    throw new Error(`Batch import failed: ${response.statusText}`)
+                }
+
+                const result = await response.json()
+                imported += result.success.length
+                failed += result.failed.length
+            }
+
+            alert(`Import complete!\nImported: ${imported}\nFailed: ${failed}`)
+            await loadImages()
+            emit('import')
+        } catch (err) {
+            console.error('Import error:', err)
+            alert(`Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    input.click()
+}
+
+// Handle imported event from CimgImport component
+const handleImported = async () => {
+    showImportDialog.value = false
+    await loadImages()
 }
 
 // Handle delete
@@ -518,5 +596,62 @@ onMounted(() => {
 
 .action-btn.primary:hover {
     background-color: var(--color-primary-dark, #2563eb);
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.modal-content {
+    background-color: var(--color-bg, #fff);
+    border-radius: 0.5rem;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: relative;
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem;
+    background-color: var(--color-bg, #fff);
+    z-index: 10;
+}
+
+.close-btn {
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    background-color: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--color-text-secondary, #666);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background-color: var(--color-bg-hover, #f3f4f6);
+    color: var(--color-text, #000);
 }
 </style>

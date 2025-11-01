@@ -638,7 +638,13 @@ Automatically runs in **Migration 022, Chapter 0** (before CSV seeding):
 // Migration checks for /server/data/images/root.json
 // If present, imports all images with ON CONFLICT handling
 // Skips existing records (by xmlid)
+// Gracefully handles empty or missing files
 ```
+
+**Behavior:**
+- File missing: Skips import, continues migration
+- File empty: Skips import, continues migration
+- File has data: Imports all images with conflict resolution
 
 ### CSV Integration
 

@@ -62,14 +62,37 @@
                 <div class="options-grid">
                     <div class="option-field">
                         <label for="default-project">Project (domaincode)</label>
-                        <input id="default-project" v-model="defaultOptions.domaincode" type="text"
-                            placeholder="project_name" />
+                        <div class="autocomplete-wrapper">
+                            <input id="default-project" v-model="defaultOptions.domaincode" type="text"
+                                placeholder="project_name" @input="handleProjectInput"
+                                @focus="showProjectDropdown = true" @blur="hideProjectDropdown" />
+                            <div v-if="showProjectDropdown && filteredProjects.length > 0"
+                                class="autocomplete-dropdown">
+                                <div v-for="project in filteredProjects" :key="project" class="autocomplete-item"
+                                    @mousedown.prevent="selectProject(project)">
+                                    {{ project }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="option-field">
                         <label for="default-owner">Owner (email/username)</label>
-                        <input id="default-owner" v-model="defaultOptions.owner" type="text"
-                            placeholder="user@example.com" />
+                        <div class="autocomplete-wrapper">
+                            <input id="default-owner" v-model="defaultOptions.owner" type="text"
+                                placeholder="user@example.com" @input="handleOwnerInput" @focus="handleOwnerFocus"
+                                @blur="hideOwnerDropdown" />
+                            <div v-if="showOwnerDropdown && filteredUsers.length > 0"
+                                class="autocomplete-dropdown owner-dropdown">
+                                <div v-for="user in filteredUsers" :key="user.id" class="autocomplete-item"
+                                    @mousedown.prevent="selectUser(user)">
+                                    <div class="user-option">
+                                        <span class="user-email">{{ user.sysmail }}</span>
+                                        <span v-if="user.extmail" class="user-extmail">({{ user.extmail }})</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="option-field">
@@ -152,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import CimgTags from './cimgTags.vue'
 
 /**
@@ -191,6 +214,12 @@ const jsonText = ref('')
 const jsonError = ref('')
 const importing = ref(false)
 const importResults = ref<any>(null)
+
+// Autocomplete state
+const showProjectDropdown = ref(false)
+const showOwnerDropdown = ref(false)
+const projects = ref<string[]>([])
+const users = ref<Array<{ id: number; sysmail: string; extmail: string | null }>>([])
 
 // Default options
 const defaultOptions = ref({
@@ -247,6 +276,110 @@ const parsedJsonItems = computed(() => {
         return []
     }
 })
+
+// Filtered projects based on input
+const filteredProjects = computed(() => {
+    const search = defaultOptions.value.domaincode.toLowerCase()
+    if (search.length === 0) return []
+    return projects.value.filter(project =>
+        project.toLowerCase().includes(search)
+    ).slice(0, 10) // Limit to 10 results
+})
+
+// Filtered users based on input
+const filteredUsers = computed(() => {
+    const search = defaultOptions.value.owner.toLowerCase()
+    // Only show dropdown after '.' or '@' is entered
+    if (!search.includes('.') && !search.includes('@')) return []
+
+    return users.value.filter(user => {
+        const sysmailMatch = user.sysmail.toLowerCase().includes(search)
+        const extmailMatch = user.extmail?.toLowerCase().includes(search)
+        return sysmailMatch || extmailMatch
+    }).slice(0, 10) // Limit to 10 results
+})
+
+// Load projects from API
+const loadProjects = async () => {
+    try {
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+            const data = await response.json()
+            // API returns { projects: [...], count: ... }
+            const projectList = data.projects || data
+            projects.value = projectList.map((p: any) => p.domaincode).filter(Boolean)
+        }
+    } catch (err) {
+        console.error('Failed to load projects:', err)
+    }
+}
+
+// Load users from API
+const loadUsers = async () => {
+    try {
+        const response = await fetch('/api/users')
+        if (response.ok) {
+            const data = await response.json()
+            users.value = data.map((u: any) => ({
+                id: u.id,
+                sysmail: u.sysmail,
+                extmail: u.extmail || null
+            }))
+        }
+    } catch (err) {
+        console.error('Failed to load users:', err)
+    }
+}
+
+// Handle project input
+const handleProjectInput = () => {
+    if (defaultOptions.value.domaincode.length > 0) {
+        showProjectDropdown.value = true
+    }
+}
+
+// Handle owner input
+const handleOwnerInput = () => {
+    const value = defaultOptions.value.owner
+    if (value.includes('.') || value.includes('@')) {
+        showOwnerDropdown.value = true
+    } else {
+        showOwnerDropdown.value = false
+    }
+}
+
+// Handle owner focus
+const handleOwnerFocus = () => {
+    const value = defaultOptions.value.owner
+    if (value.includes('.') || value.includes('@')) {
+        showOwnerDropdown.value = true
+    }
+}
+
+// Select project from dropdown
+const selectProject = (project: string) => {
+    defaultOptions.value.domaincode = project
+    showProjectDropdown.value = false
+}
+
+// Select user from dropdown
+const selectUser = (user: { id: number; sysmail: string; extmail: string | null }) => {
+    defaultOptions.value.owner = user.sysmail
+    showOwnerDropdown.value = false
+}
+
+// Hide dropdowns with delay for click handling
+const hideProjectDropdown = () => {
+    setTimeout(() => {
+        showProjectDropdown.value = false
+    }, 200)
+}
+
+const hideOwnerDropdown = () => {
+    setTimeout(() => {
+        showOwnerDropdown.value = false
+    }, 200)
+}
 
 // Convert tag names to bitmatrix
 const tagNamesToBits = (tagNames: string): number => {
@@ -390,6 +523,12 @@ const handleReset = () => {
         is_public: false
     }
 }
+
+// Load data on mount
+onMounted(() => {
+    loadProjects()
+    loadUsers()
+})
 </script>
 
 <style scoped>
@@ -499,10 +638,60 @@ const handleReset = () => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    position: relative;
 }
 
 .option-field.full-width {
     grid-column: 1 / -1;
+}
+
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 100;
+    margin-top: 0.25rem;
+}
+
+.autocomplete-dropdown.owner-dropdown {
+    width: 200%;
+    right: auto;
+}
+
+.autocomplete-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.autocomplete-item:hover {
+    background-color: var(--color-bg-hover, #f3f4f6);
+}
+
+.user-option {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.user-email {
+    font-weight: 500;
+}
+
+.user-extmail {
+    color: var(--color-text-secondary, #666);
+    font-size: 0.875rem;
 }
 
 .option-field label {

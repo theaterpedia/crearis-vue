@@ -64,98 +64,108 @@ export const migration = {
             if (fs.existsSync(imagesJsonPath)) {
                 console.log(`  - Loading images from: ${imagesJsonPath}`)
                 const imagesJson = fs.readFileSync(imagesJsonPath, 'utf-8')
-                const images = JSON.parse(imagesJson)
 
-                console.log(`  - Found ${images.length} images to import`)
+                // Check if file is empty or invalid
+                if (!imagesJson || imagesJson.trim() === '') {
+                    console.log('  ℹ️  Images JSON file is empty, skipping import.')
+                } else {
+                    const images = JSON.parse(imagesJson)
 
-                let imported = 0
-                let skipped = 0
-                let errors = 0
+                    if (!Array.isArray(images) || images.length === 0) {
+                        console.log('  ℹ️  No images found in JSON file, skipping import.')
+                    } else {
+                        console.log(`  - Found ${images.length} images to import`)
 
-                for (const img of images) {
-                    try {
-                        // Check if image already exists by xmlid
-                        const existing = await db.get('SELECT id FROM images WHERE xmlid = ?', [img.xmlid])
+                        let imported = 0
+                        let skipped = 0
+                        let errors = 0
 
-                        if (existing) {
-                            console.log(`    ⏭️  Skipping existing image: ${img.xmlid}`)
-                            skipped++
-                            continue
+                        for (const img of images) {
+                            try {
+                                // Check if image already exists by xmlid
+                                const existing = await db.get('SELECT id FROM images WHERE xmlid = ?', [img.xmlid])
+
+                                if (existing) {
+                                    console.log(`    ⏭️  Skipping existing image: ${img.xmlid}`)
+                                    skipped++
+                                    continue
+                                }
+
+                                // Convert geo object back to JSONB string if present
+                                const geoJson = img.geo ? JSON.stringify(img.geo) : null
+
+                                // Insert image with all 42 fields
+                                if (db.type === 'postgresql') {
+                                    await db.run(`
+                                        INSERT INTO images (
+                                            xmlid, name, url, fileformat, mediaformat, function, length, provider,
+                                            has_video, has_audio, is_public, is_private, is_dark, is_light,
+                                            domaincode, owner_id, date, geo, x, y, copyright, alt_text, title,
+                                            status_id, tags, av_x, av_y, av_z, ca_x, ca_y, ca_z, he_x, he_y, he_z,
+                                            created_at, updated_at
+                                        ) VALUES (
+                                            $1, $2, $3, $4, $5, $6, $7, $8,
+                                            $9, $10, $11, $12, $13, $14,
+                                            $15, $16, $17, $18, $19, $20, $21, $22, $23,
+                                            $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34,
+                                            $35, $36
+                                        )
+                                        ON CONFLICT (xmlid) DO NOTHING
+                                    `, [
+                                        img.xmlid, img.name, img.url, img.fileformat, img.mediaformat,
+                                        img.function, img.length, img.provider,
+                                        img.has_video, img.has_audio, img.is_public, img.is_private,
+                                        img.is_dark, img.is_light,
+                                        img.domaincode, img.owner_id, img.date, geoJson, img.x, img.y,
+                                        img.copyright, img.alt_text, img.title,
+                                        img.status_id, img.tags, img.av_x, img.av_y, img.av_z,
+                                        img.ca_x, img.ca_y, img.ca_z, img.he_x, img.he_y, img.he_z,
+                                        img.created_at, img.updated_at
+                                    ])
+                                } else {
+                                    await db.run(`
+                                        INSERT OR IGNORE INTO images (
+                                            xmlid, name, url, fileformat, mediaformat, function, length, provider,
+                                            has_video, has_audio, is_public, is_private, is_dark, is_light,
+                                            domaincode, owner_id, date, geo, x, y, copyright, alt_text, title,
+                                            status_id, tags, av_x, av_y, av_z, ca_x, ca_y, ca_z, he_x, he_y, he_z,
+                                            created_at, updated_at
+                                        ) VALUES (
+                                            ?, ?, ?, ?, ?, ?, ?, ?,
+                                            ?, ?, ?, ?, ?, ?,
+                                            ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                            ?, ?
+                                        )
+                                    `, [
+                                        img.xmlid, img.name, img.url, img.fileformat, img.mediaformat,
+                                        img.function, img.length, img.provider,
+                                        img.has_video ? 1 : 0, img.has_audio ? 1 : 0, img.is_public ? 1 : 0,
+                                        img.is_private ? 1 : 0, img.is_dark ? 1 : 0, img.is_light ? 1 : 0,
+                                        img.domaincode, img.owner_id, img.date, geoJson, img.x, img.y,
+                                        img.copyright, img.alt_text, img.title,
+                                        img.status_id, img.tags, img.av_x, img.av_y, img.av_z,
+                                        img.ca_x, img.ca_y, img.ca_z, img.he_x, img.he_y, img.he_z,
+                                        img.created_at, img.updated_at
+                                    ])
+                                }
+
+                                imported++
+                                if (imported % 10 === 0) {
+                                    console.log(`    ✓ Imported ${imported} images...`)
+                                }
+                            } catch (error) {
+                                console.error(`    ❌ Error importing image ${img.xmlid}:`, error)
+                                errors++
+                            }
                         }
 
-                        // Convert geo object back to JSONB string if present
-                        const geoJson = img.geo ? JSON.stringify(img.geo) : null
-
-                        // Insert image with all 42 fields
-                        if (db.type === 'postgresql') {
-                            await db.run(`
-                                INSERT INTO images (
-                                    xmlid, name, url, fileformat, mediaformat, function, length, provider,
-                                    has_video, has_audio, is_public, is_private, is_dark, is_light,
-                                    domaincode, owner_id, date, geo, x, y, copyright, alt_text, title,
-                                    status_id, tags, av_x, av_y, av_z, ca_x, ca_y, ca_z, he_x, he_y, he_z,
-                                    created_at, updated_at
-                                ) VALUES (
-                                    $1, $2, $3, $4, $5, $6, $7, $8,
-                                    $9, $10, $11, $12, $13, $14,
-                                    $15, $16, $17, $18, $19, $20, $21, $22, $23,
-                                    $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34,
-                                    $35, $36
-                                )
-                                ON CONFLICT (xmlid) DO NOTHING
-                            `, [
-                                img.xmlid, img.name, img.url, img.fileformat, img.mediaformat,
-                                img.function, img.length, img.provider,
-                                img.has_video, img.has_audio, img.is_public, img.is_private,
-                                img.is_dark, img.is_light,
-                                img.domaincode, img.owner_id, img.date, geoJson, img.x, img.y,
-                                img.copyright, img.alt_text, img.title,
-                                img.status_id, img.tags, img.av_x, img.av_y, img.av_z,
-                                img.ca_x, img.ca_y, img.ca_z, img.he_x, img.he_y, img.he_z,
-                                img.created_at, img.updated_at
-                            ])
-                        } else {
-                            await db.run(`
-                                INSERT OR IGNORE INTO images (
-                                    xmlid, name, url, fileformat, mediaformat, function, length, provider,
-                                    has_video, has_audio, is_public, is_private, is_dark, is_light,
-                                    domaincode, owner_id, date, geo, x, y, copyright, alt_text, title,
-                                    status_id, tags, av_x, av_y, av_z, ca_x, ca_y, ca_z, he_x, he_y, he_z,
-                                    created_at, updated_at
-                                ) VALUES (
-                                    ?, ?, ?, ?, ?, ?, ?, ?,
-                                    ?, ?, ?, ?, ?, ?,
-                                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                    ?, ?
-                                )
-                            `, [
-                                img.xmlid, img.name, img.url, img.fileformat, img.mediaformat,
-                                img.function, img.length, img.provider,
-                                img.has_video ? 1 : 0, img.has_audio ? 1 : 0, img.is_public ? 1 : 0,
-                                img.is_private ? 1 : 0, img.is_dark ? 1 : 0, img.is_light ? 1 : 0,
-                                img.domaincode, img.owner_id, img.date, geoJson, img.x, img.y,
-                                img.copyright, img.alt_text, img.title,
-                                img.status_id, img.tags, img.av_x, img.av_y, img.av_z,
-                                img.ca_x, img.ca_y, img.ca_z, img.he_x, img.he_y, img.he_z,
-                                img.created_at, img.updated_at
-                            ])
-                        }
-
-                        imported++
-                        if (imported % 10 === 0) {
-                            console.log(`    ✓ Imported ${imported} images...`)
-                        }
-                    } catch (error) {
-                        console.error(`    ❌ Error importing image ${img.xmlid}:`, error)
-                        errors++
+                        console.log(`  ✅ Images import complete:`)
+                        console.log(`     - Imported: ${imported}`)
+                        console.log(`     - Skipped: ${skipped}`)
+                        console.log(`     - Errors: ${errors}`)
                     }
                 }
-
-                console.log(`  ✅ Images import complete:`)
-                console.log(`     - Imported: ${imported}`)
-                console.log(`     - Skipped: ${skipped}`)
-                console.log(`     - Errors: ${errors}`)
             } else {
                 console.log(`  ℹ️  No images JSON file found at: ${imagesJsonPath}`)
                 console.log('     Skipping images import.')
