@@ -1,4 +1,4 @@
-# Crearis Vue
+# Crearis Vue / THeaterpedia.org ALPHA-RELEASE
 
 > **Website Accelerator for the Theaterpedia.org Network** - A full-stack Vue 3 application serving as the central platform for creating and managing theater project websites across the Theaterpedia network, powered by ODOO API integration.
 
