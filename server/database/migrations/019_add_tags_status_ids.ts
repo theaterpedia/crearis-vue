@@ -1,12 +1,17 @@
 /**
  * Migration 019: Add Tags, Status, and IDs
  * 
+ * IMPORTANT: Support for SQLite is completely dropped from migration 019 onwards.
+ * Reason: Implementation follows PostgreSQL-specific syntax (custom types, computed columns, etc.)
+ * 
  * Migration Chapters:
  * - Chapter 1: Add System Tables (tags, status)
  * - Chapter 2: Migrate Users to Support Auto-ID
  * - Chapter 3: Migrate File Tables to Support Auto-ID and Status
  * - Chapter 4: Integrate Users, Participants and Instructors
  * - Chapter 5: Align Projects, Add Auto-ID
+ * - Chapter 5B: Convert Events/Posts project to project_id
+ * - Chapter 5B.4: Create Images Table with Custom Types
  * - Chapter 6: Align Tasks, Add Status FK
  * - Chapter 7: Align Instructors, Add header_size
  * - Chapter 8: Enable Native Tags (events, posts)
@@ -14,6 +19,8 @@
  * - Chapter 10: Block Publishing of Invalid Events
  * - Chapter 11: Extend Projects with Page/Aside/Header/Footer Options
  * - Chapter 12: Extend Pages with Page/Aside/Header/Footer Options
+ * - Chapter 13: Add img_id Foreign Key to Entity Tables
+ * - Chapter 14: Add Image Performance Fields to Entity Tables
  * 
  * This migration creates the foundational tables for the tag and status system,
  * and migrates the users table, file tables, and projects to use auto-incrementing IDs.
@@ -87,7 +94,7 @@ export const migration = {
                     id SERIAL PRIMARY KEY,
                     value SMALLINT NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks' , 'interactions')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users' , 'tasks' , 'interactions', 'images')),
                     description TEXT,
                     name_i18n JSONB,
                     desc_i18n JSONB
@@ -116,7 +123,7 @@ export const migration = {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     value INTEGER NOT NULL,
                     name TEXT NOT NULL,
-                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks', 'interactions')),
+                    "table" TEXT NOT NULL CHECK ("table" IN ('projects', 'events', 'posts', 'persons', 'users', 'tasks', 'interactions', 'images')),
                     description TEXT,
                     name_i18n TEXT,
                     desc_i18n TEXT,
@@ -415,6 +422,33 @@ export const migration = {
         }
 
         console.log('    ✓ Persons-specific statuses populated')
+
+        // Images-specific statuses
+        const imagesSpecificStatuses = [
+            { value: 0, name: 'new', description: 'New image', name_i18n: { de: 'Neu', en: 'New', cz: 'Nový' }, desc_i18n: { de: 'Neues Bild', en: 'New image', cz: 'Nový obrázek' } },
+            { value: 1, name: 'demo', description: 'Demo image', name_i18n: { de: 'Demo', en: 'Demo', cz: 'Demo' }, desc_i18n: { de: 'Demo-Bild', en: 'Demo image', cz: 'Demo obrázek' } },
+            { value: 2, name: 'draft', description: 'Draft image', name_i18n: { de: 'Entwurf', en: 'Draft', cz: 'Koncept' }, desc_i18n: { de: 'Entwurf-Bild', en: 'Draft image', cz: 'Koncept obrázku' } },
+            { value: 4, name: 'done', description: 'Published image', name_i18n: { de: 'Fertig', en: 'Done', cz: 'Hotovo' }, desc_i18n: { de: 'Veröffentlichtes Bild', en: 'Published image', cz: 'Publikovaný obrázek' } },
+            { value: 16, name: 'trash', description: 'Trashed image', name_i18n: { de: 'Papierkorb', en: 'Trash', cz: 'Koš' }, desc_i18n: { de: 'Gelöschtes Bild', en: 'Trashed image', cz: 'Smazaný obrázek' } },
+            { value: 32, name: 'archived', description: 'Archived image', name_i18n: { de: 'Archiviert', en: 'Archived', cz: 'Archivováno' }, desc_i18n: { de: 'Archiviertes Bild', en: 'Archived image', cz: 'Archivovaný obrázek' } }
+        ]
+
+        for (const status of imagesSpecificStatuses) {
+            if (isPostgres) {
+                await db.exec(`
+                    INSERT INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'images', '${status.description}', '${JSON.stringify(status.name_i18n)}'::jsonb, '${JSON.stringify(status.desc_i18n)}'::jsonb)
+                    ON CONFLICT (name, "table") DO NOTHING
+                `)
+            } else {
+                await db.exec(`
+                    INSERT OR IGNORE INTO status (value, name, "table", description, name_i18n, desc_i18n)
+                    VALUES (${status.value}, '${status.name}', 'images', '${status.description}', '${JSON.stringify(status.name_i18n)}', '${JSON.stringify(status.desc_i18n)}')
+                `)
+            }
+        }
+
+        console.log('    ✓ Images-specific statuses populated')
 
         console.log('\n✅ Chapter 1 completed: All status entries populated for all tables')
 
@@ -2226,6 +2260,262 @@ export const migration = {
         }
 
         // ===================================================================
+        // CHAPTER 5B.4: Create Images Table with Custom Types
+        // ===================================================================
+        console.log('\n📖 Chapter 5B.4: Create Images Table with Custom Types')
+
+        if (isPostgres) {
+            // Create custom types for images system
+            console.log('  Creating custom types for images system...')
+
+            // Shape option type
+            await db.exec(`
+                DO $$ BEGIN
+                    CREATE TYPE shape_opt_type AS ENUM ('param', 'json', 'url');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `)
+            console.log('    ✓ Created shape_opt_type')
+
+            // Image file type
+            await db.exec(`
+                DO $$ BEGIN
+                    CREATE TYPE image_file_type AS ENUM ('none', 'jpeg', 'webp', 'avif', 'svg', 'gif', 'png');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `)
+            console.log('    ✓ Created image_file_type')
+
+            // Embed file type (video and audio formats)
+            await db.exec(`
+                DO $$ BEGIN
+                    CREATE TYPE embed_file_type AS ENUM ('pptx', 'pdf', 'mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `)
+            console.log('    ✓ Created embed_file_type')
+
+            // Media licence
+            await db.exec(`
+                DO $$ BEGIN
+                    CREATE TYPE media_licence AS ENUM ('undefined', 'BY', 'BY-SA', 'BY-ND', 'BY-NC', 'BY-NC-SA', 'CC0', 'BY-ND-NC', 'BY-ND-NC-ND', 'unsplash', 'commercial', 'private');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `)
+            console.log('    ✓ Created media_licence')
+
+            // Media adapter type
+            await db.exec(`
+                DO $$ BEGIN
+                    CREATE TYPE media_adapter_type AS ENUM ('unsplash', 'cloudinary', 'canva', 'msteams', 'vimeo', 'youtube', 'cloudflare', 'signal', 'instagram', 'obsidian', 'crearis', 'odoo', 'pruvious');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `)
+            console.log('    ✓ Created media_adapter_type')
+
+            // Media adapter composite type
+            await db.exec(`
+                DROP TYPE IF EXISTS media_adapter CASCADE;
+                CREATE TYPE media_adapter AS (
+                    adapter      media_adapter_type,
+                    file_id      text,
+                    account_id   text,
+                    folder_id    text,
+                    info         text,
+                    config       jsonb
+                );
+            `)
+            console.log('    ✓ Created media_adapter composite type')
+
+            // Image shape composite type
+            await db.exec(`
+                DROP TYPE IF EXISTS image_shape CASCADE;
+                CREATE TYPE image_shape AS (
+                    x            numeric,
+                    y            numeric,
+                    z            numeric,
+                    url          text,
+                    json         jsonb
+                );
+            `)
+            console.log('    ✓ Created image_shape composite type')
+
+            // Image variation composite type
+            await db.exec(`
+                DROP TYPE IF EXISTS image_variation CASCADE;
+                CREATE TYPE image_variation AS (
+                    parent_id    integer,
+                    alike_ids    integer[],
+                    release_id   integer,
+                    info         text
+                );
+            `)
+            console.log('    ✓ Created image_variation composite type')
+
+            // Create images table
+            console.log('  Creating images table...')
+            await db.exec(`
+                CREATE TABLE IF NOT EXISTS images (
+                    id SERIAL PRIMARY KEY,
+                    xmlid TEXT DEFAULT NULL,
+                    name TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    domaincode TEXT DEFAULT NULL,
+                    status_id INTEGER DEFAULT 0,
+                    owner_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
+                    alt_text TEXT DEFAULT NULL,
+                    title TEXT DEFAULT NULL,
+                    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    geo JSONB DEFAULT NULL,
+                    x INTEGER DEFAULT NULL,
+                    y INTEGER DEFAULT NULL,
+                    shape_wide image_shape DEFAULT NULL,
+                    shape_square image_shape DEFAULT NULL,
+                    shape_vertical image_shape DEFAULT NULL,
+                    shape_thumb image_shape DEFAULT NULL,
+                    fileformat image_file_type DEFAULT 'none',
+                    embedformat embed_file_type DEFAULT NULL,
+                    license media_licence DEFAULT 'BY',
+                    length INTEGER DEFAULT NULL,
+                    about TEXT DEFAULT NULL,
+                    author media_adapter DEFAULT NULL,
+                    producer media_adapter DEFAULT NULL,
+                    publisher media_adapter DEFAULT NULL,
+                    variations image_variation DEFAULT NULL,
+                    root_id INTEGER DEFAULT NULL,
+                    use_player BOOLEAN DEFAULT FALSE,
+                    ctags BYTEA DEFAULT '\\x00',
+                    is_public BOOLEAN DEFAULT FALSE,
+                    is_private BOOLEAN DEFAULT FALSE,
+                    is_internal BOOLEAN DEFAULT FALSE,
+                    is_deprecated BOOLEAN DEFAULT FALSE,
+                    has_issues BOOLEAN DEFAULT FALSE,
+                    rtags BYTEA DEFAULT '\\x00',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            `)
+            console.log('    ✓ Created images table')
+
+            // Create trigger function to compute computed fields
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_image_computed_fields()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    -- Compute about field
+                    IF (NEW.author).account_id IS NOT NULL THEN
+                        NEW.about := '(c) ' || (NEW.author).account_id || ' via ' || (NEW.author).adapter::text;
+                    ELSIF NEW.owner_id IS NOT NULL THEN
+                        NEW.about := '(c) owner_id:' || NEW.owner_id::text;
+                    ELSE
+                        NEW.about := NULL;
+                    END IF;
+                    
+                    -- Compute use_player
+                    NEW.use_player := NEW.publisher IS NOT NULL AND 
+                                     ((NEW.publisher).adapter = 'vimeo' OR (NEW.publisher).adapter = 'youtube');
+                    
+                    -- Compute is_public, is_private, is_internal from bits 4+5 of ctags
+                    NEW.is_public := (get_byte(NEW.ctags, 0) & 48) = 16;
+                    NEW.is_private := (get_byte(NEW.ctags, 0) & 48) = 32;
+                    NEW.is_internal := (get_byte(NEW.ctags, 0) & 48) = 48;
+                    
+                    -- Compute is_deprecated, has_issues from bits 6+7 of ctags
+                    NEW.is_deprecated := (get_byte(NEW.ctags, 0) & 192) = 64;
+                    NEW.has_issues := (get_byte(NEW.ctags, 0) & 192) IN (128, 192);
+                    
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS trigger_update_image_computed_fields ON images;
+                CREATE TRIGGER trigger_update_image_computed_fields
+                BEFORE INSERT OR UPDATE ON images
+                FOR EACH ROW
+                EXECUTE FUNCTION update_image_computed_fields();
+            `)
+            console.log('    ✓ Created trigger for computed fields')
+
+            // Create trigger function for root_id computation
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION compute_image_root_id(img_id INTEGER, depth INTEGER DEFAULT 0) 
+                RETURNS INTEGER AS $$
+                DECLARE
+                    parent INTEGER;
+                    result INTEGER;
+                BEGIN
+                    -- Prevent infinite recursion
+                    IF depth > 5 THEN
+                        RAISE EXCEPTION 'Nesting too deep or endless loop detected for image_id=%', img_id;
+                    END IF;
+
+                    -- Get parent_id from variations
+                    SELECT (variations).parent_id INTO parent
+                    FROM images
+                    WHERE id = img_id;
+
+                    -- If no parent, this is the root
+                    IF parent IS NULL THEN
+                        RETURN NULL;
+                    END IF;
+
+                    -- Recursively find the root
+                    SELECT compute_image_root_id(parent, depth + 1) INTO result;
+
+                    -- If parent's root is NULL, parent is the root
+                    IF result IS NULL THEN
+                        RETURN parent;
+                    ELSE
+                        RETURN result;
+                    END IF;
+                END;
+                $$ LANGUAGE plpgsql;
+            `)
+            console.log('    ✓ Created compute_image_root_id function')
+
+            // Create trigger to auto-compute root_id
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_image_root_id() 
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF NEW.variations IS NOT NULL AND (NEW.variations).parent_id IS NOT NULL THEN
+                        NEW.root_id := compute_image_root_id(NEW.id);
+                    ELSE
+                        NEW.root_id := NULL;
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS trigger_update_image_root_id ON images;
+                CREATE TRIGGER trigger_update_image_root_id
+                BEFORE INSERT OR UPDATE ON images
+                FOR EACH ROW
+                EXECUTE FUNCTION update_image_root_id();
+            `)
+            console.log('    ✓ Created trigger for root_id computation')
+
+            // Create indexes
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_images_domaincode ON images(domaincode);
+                CREATE INDEX IF NOT EXISTS idx_images_owner_id ON images(owner_id);
+                CREATE INDEX IF NOT EXISTS idx_images_status_id ON images(status_id);
+                CREATE INDEX IF NOT EXISTS idx_images_root_id ON images(root_id);
+                CREATE INDEX IF NOT EXISTS idx_images_xmlid ON images(xmlid);
+            `)
+            console.log('    ✓ Created indexes on images table')
+
+            console.log('\n✅ Chapter 5B.4 completed: Images table created with all types and triggers')
+        } else {
+            console.log('    ⚠️  SQLite: Images table creation not supported (requires PostgreSQL)')
+        }
+
+        // ===================================================================
         // CHAPTER 6: Align Tasks, Add Status FK
         // ===================================================================
         console.log('\n📖 Chapter 6: Align Tasks, Add Status FK')
@@ -3281,7 +3571,246 @@ export const migration = {
             console.log('    ⚠️  SQLite: Pages schema extension not yet implemented')
         }
 
-        console.log('\n✅ Migration 019 completed: All chapters complete - tables migrated, tags enabled, regio surfaced, validations added, and project/pages options extended')
+        // ===================================================================
+        // CHAPTER 13: Add img_id to Entity Tables
+        // ===================================================================
+        console.log('\n📖 Chapter 13: Add img_id Foreign Key to Entity Tables')
+
+        if (isPostgres) {
+            // Add img_id to users
+            await db.exec(`
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to users')
+
+            // Add img_id to instructors
+            await db.exec(`
+                ALTER TABLE instructors 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to instructors')
+
+            // Add img_id to events
+            await db.exec(`
+                ALTER TABLE events 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to events')
+
+            // Add img_id to locations
+            await db.exec(`
+                ALTER TABLE locations 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to locations')
+
+            // Add img_id to posts
+            await db.exec(`
+                ALTER TABLE posts 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to posts')
+
+            // Add img_id to projects
+            await db.exec(`
+                ALTER TABLE projects 
+                ADD COLUMN IF NOT EXISTS img_id INTEGER DEFAULT NULL REFERENCES images(id) ON DELETE SET NULL
+            `)
+            console.log('    ✓ Added img_id to projects')
+
+            // Create indexes
+            await db.exec(`
+                CREATE INDEX IF NOT EXISTS idx_users_img_id ON users(img_id);
+                CREATE INDEX IF NOT EXISTS idx_instructors_img_id ON instructors(img_id);
+                CREATE INDEX IF NOT EXISTS idx_events_img_id ON events(img_id);
+                CREATE INDEX IF NOT EXISTS idx_locations_img_id ON locations(img_id);
+                CREATE INDEX IF NOT EXISTS idx_posts_img_id ON posts(img_id);
+                CREATE INDEX IF NOT EXISTS idx_projects_img_id ON projects(img_id);
+            `)
+            console.log('    ✓ Created indexes on img_id columns')
+
+            console.log('\n✅ Chapter 13 completed: img_id foreign key added to all 6 entity tables')
+        } else {
+            console.log('    ⚠️  SQLite: img_id column addition not supported')
+        }
+
+        // ===================================================================
+        // CHAPTER 14: Add Performance Optimization Fields for Images
+        // ===================================================================
+        console.log('\n📖 Chapter 14: Add Image Performance Fields to Entity Tables')
+
+        if (isPostgres) {
+            // Create helper function to reduce image_shape to URL or JSON
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION reduce_image_shape(shape image_shape) 
+                RETURNS TEXT AS $$
+                DECLARE
+                    result_json JSONB;
+                BEGIN
+                    IF shape IS NULL THEN
+                        RETURN NULL;
+                    END IF;
+                    
+                    -- Option a) Preferred: if shape.json exists, serialize it with type=json
+                    IF (shape).json IS NOT NULL THEN
+                        result_json := jsonb_build_object('type', 'json') || (shape).json;
+                        RETURN result_json::text;
+                    END IF;
+                    
+                    -- Option b) Alternative: if x/y/z exist, create params JSON
+                    IF (shape).x IS NOT NULL OR (shape).y IS NOT NULL OR (shape).z IS NOT NULL THEN
+                        result_json := jsonb_build_object(
+                            'type', 'param',
+                            'x', (shape).x,
+                            'y', (shape).y,
+                            'z', (shape).z
+                        );
+                        RETURN result_json::text;
+                    END IF;
+                    
+                    -- Fallback: return url
+                    RETURN (shape).url;
+                END;
+                $$ LANGUAGE plpgsql IMMUTABLE;
+            `)
+            console.log('    ✓ Created reduce_image_shape helper function')
+
+            const tables = ['users', 'instructors', 'events', 'locations', 'posts', 'projects']
+
+            // Add plain columns (cannot be GENERATED since they require JOIN to images table)
+            for (const table of tables) {
+                await db.exec(`
+                    ALTER TABLE ${table}
+                    ADD COLUMN IF NOT EXISTS img_show BOOLEAN DEFAULT FALSE,
+                    ADD COLUMN IF NOT EXISTS img_thumb TEXT DEFAULT 'dummy',
+                    ADD COLUMN IF NOT EXISTS img_square TEXT DEFAULT 'dummy',
+                    ADD COLUMN IF NOT EXISTS img_wide TEXT DEFAULT 'dummy',
+                    ADD COLUMN IF NOT EXISTS img_vert TEXT DEFAULT 'dummy'
+                `)
+                console.log(`    ✓ Added 5 image performance fields to ${table}`)
+            }
+
+            // Create trigger function to compute image performance fields
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_entity_image_fields()
+                RETURNS TRIGGER AS $$
+                DECLARE
+                    img_record RECORD;
+                    show_img BOOLEAN;
+                BEGIN
+                    -- If img_id is NULL, set all to defaults
+                    IF NEW.img_id IS NULL THEN
+                        NEW.img_show := FALSE;
+                        NEW.img_thumb := 'dummy';
+                        NEW.img_square := 'dummy';
+                        NEW.img_wide := 'dummy';
+                        NEW.img_vert := 'dummy';
+                        RETURN NEW;
+                    END IF;
+
+                    -- Fetch image data
+                    SELECT * INTO img_record FROM images WHERE id = NEW.img_id;
+
+                    IF NOT FOUND THEN
+                        NEW.img_show := FALSE;
+                        NEW.img_thumb := 'dummy';
+                        NEW.img_square := 'dummy';
+                        NEW.img_wide := 'dummy';
+                        NEW.img_vert := 'dummy';
+                        RETURN NEW;
+                    END IF;
+
+                    -- Compute img_show: true if status is ok (bits 6+7 = 0) or is_deprecated (bits 6+7 = 64)
+                    show_img := (get_byte(img_record.ctags, 0) & 192) IN (0, 64);
+                    NEW.img_show := show_img;
+
+                    -- Compute img_thumb
+                    IF NOT show_img THEN
+                        NEW.img_thumb := 'dummy';
+                    ELSIF img_record.shape_thumb IS NOT NULL THEN
+                        NEW.img_thumb := reduce_image_shape(img_record.shape_thumb);
+                    ELSIF img_record.shape_square IS NOT NULL THEN
+                        NEW.img_thumb := reduce_image_shape(img_record.shape_square);
+                    ELSE
+                        NEW.img_thumb := img_record.url;
+                    END IF;
+
+                    -- Compute img_square
+                    IF NOT show_img THEN
+                        NEW.img_square := 'dummy';
+                    ELSIF img_record.shape_square IS NOT NULL THEN
+                        NEW.img_square := reduce_image_shape(img_record.shape_square);
+                    ELSE
+                        NEW.img_square := img_record.url;
+                    END IF;
+
+                    -- Compute img_wide
+                    IF NOT show_img THEN
+                        NEW.img_wide := 'dummy';
+                    ELSIF img_record.shape_wide IS NOT NULL THEN
+                        NEW.img_wide := reduce_image_shape(img_record.shape_wide);
+                    ELSE
+                        NEW.img_wide := 'dummy';
+                    END IF;
+
+                    -- Compute img_vert
+                    IF NOT show_img THEN
+                        NEW.img_vert := 'dummy';
+                    ELSIF img_record.shape_vertical IS NOT NULL THEN
+                        NEW.img_vert := reduce_image_shape(img_record.shape_vertical);
+                    ELSE
+                        NEW.img_vert := 'dummy';
+                    END IF;
+
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            `)
+            console.log('    ✓ Created update_entity_image_fields trigger function')
+
+            // Create triggers for each table
+            for (const table of tables) {
+                await db.exec(`
+                    DROP TRIGGER IF EXISTS trigger_update_${table}_image_fields ON ${table};
+                    CREATE TRIGGER trigger_update_${table}_image_fields
+                    BEFORE INSERT OR UPDATE OF img_id ON ${table}
+                    FOR EACH ROW
+                    EXECUTE FUNCTION update_entity_image_fields();
+                `)
+                console.log(`    ✓ Created trigger for ${table}`)
+            }
+
+            // Also need a trigger on images table to update all referencing entities when image changes
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_referencing_entities_on_image_change()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    -- Update all tables that reference this image
+                    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    UPDATE instructors SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    UPDATE events SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    UPDATE locations SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    UPDATE projects SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS trigger_update_referencing_entities ON images;
+                CREATE TRIGGER trigger_update_referencing_entities
+                AFTER UPDATE OF ctags, shape_thumb, shape_square, shape_wide, shape_vertical, url ON images
+                FOR EACH ROW
+                EXECUTE FUNCTION update_referencing_entities_on_image_change();
+            `)
+            console.log('    ✓ Created trigger to cascade image updates to entities')
+
+            console.log('\n✅ Chapter 14 completed: Performance optimization fields and triggers added to all 6 entity tables')
+        } else {
+            console.log('    ⚠️  SQLite: Computed columns and triggers not supported')
+        }
+
+        console.log('\n✅ Migration 019 completed: All chapters complete - tables migrated, tags enabled, regio surfaced, validations added, project/pages options extended, and images system fully integrated')
     },
 
     async down(db: DatabaseAdapter): Promise<void> {

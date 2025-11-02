@@ -1,6 +1,9 @@
 /**
  * Migration 022: Seed CSV Data
  * 
+ * IMPORTANT: Support for SQLite is completely dropped from migration 019 onwards.
+ * Reason: Implementation follows PostgreSQL-specific syntax (custom types, computed columns, etc.)
+ * 
  * Chapter 1: Imports core seed data from 'root' fileset (users, projects)
  * Chapter 2: Imports demo data from 'base' fileset (events, posts, locations, instructors, participants) - DEACTIVATED
  * 

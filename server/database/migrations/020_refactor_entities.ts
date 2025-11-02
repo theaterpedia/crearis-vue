@@ -1,6 +1,9 @@
 /**
  * Migration 020: Add i18n Core
  * 
+ * IMPORTANT: Support for SQLite is completely dropped from migration 019 onwards.
+ * Reason: Implementation follows PostgreSQL-specific syntax (custom types, computed columns, etc.)
+ * 
  * Chapter 1: Add Language Support
  * - Add 'lang' field to participants, instructors, tasks, locations, users
  * - Add 'status_display' computed column for translated status names

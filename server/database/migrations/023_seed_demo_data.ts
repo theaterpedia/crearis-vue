@@ -1,6 +1,9 @@
 /**
  * Migration 023: Seed Demo Data
  * 
+ * IMPORTANT: Support for SQLite is completely dropped from migration 019 onwards.
+ * Reason: Implementation follows PostgreSQL-specific syntax (custom types, computed columns, etc.)
+ * 
  * This migration contains all demo/test data previously spread across migrations 019, 020, 021.
  * Includes:
  * - Demo users (from migrations 019, 021)

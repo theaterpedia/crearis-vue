@@ -1,6 +1,9 @@
 /**
  * Migration 021: System Data Seeding
  * 
+ * IMPORTANT: Support for SQLite is completely dropped from migration 019 onwards.
+ * Reason: Implementation follows PostgreSQL-specific syntax (custom types, computed columns, etc.)
+ * 
  * Migration Chapters:
  * - Chapter 1: Seed System Tables (tags, status)
  * - Chapter 2: Seed Core System Data (config, projects, users, domains, memberships)
