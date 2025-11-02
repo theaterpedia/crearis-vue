@@ -51,6 +51,19 @@ async function createTestUsers(db: DatabaseAdapter) {
     `)
 }
 
+// Helper to create test projects
+async function createTestProjects(db: DatabaseAdapter) {
+    // Create test projects with different domaincodes
+    await db.run(`
+        INSERT INTO projects (id, name, domaincode, status_id)
+        VALUES 
+            (1, 'TP Project', 'tp', 18),
+            (2, 'Regio1 Project', 'regio1', 18),
+            (3, 'Demo Project', 'demo', 18)
+        ON CONFLICT (id) DO NOTHING
+    `)
+}
+
 describeOrSkip('Images API - POST /api/images', () => {
     let db: DatabaseAdapter
 
@@ -87,9 +100,12 @@ describeOrSkip('Images API - POST /api/images', () => {
     })
 
     it('should create image with all optional fields', async () => {
+        // Create test project first
+        await createTestProjects(db)
+
         const result = await db.run(`
             INSERT INTO images (
-                name, url, domaincode, xmlid, alt_text, title,
+                name, url, project_id, xmlid, alt_text, title,
                 x, y, status_id, owner_id
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -97,7 +113,7 @@ describeOrSkip('Images API - POST /api/images', () => {
         `, [
             'Full Image',
             'https://example.com/full.jpg',
-            'tp',
+            1, // project_id for 'tp' project
             'img001',
             'Alt text',
             'Image title',
@@ -111,7 +127,8 @@ describeOrSkip('Images API - POST /api/images', () => {
         const image = await db.get('SELECT * FROM images WHERE id = ?', [imageId])
 
         expect(image.name).toBe('Full Image')
-        expect(image.domaincode).toBe('tp')
+        expect(image.project_id).toBe(1)
+        expect(image.project_domaincode).toBe('tp') // Computed from project
         expect(image.xmlid).toBe('img001')
         expect(image.alt_text).toBe('Alt text')
         expect(image.x).toBe(1920)
@@ -160,16 +177,17 @@ describeOrSkip('Images API - GET /api/images', () => {
         db = sharedDb
         await db.exec('TRUNCATE TABLE images RESTART IDENTITY CASCADE')
 
-        // Create prerequisite users
+        // Create prerequisite data
         await createTestUsers(db)
+        await createTestProjects(db)
 
-        // Insert test images
+        // Insert test images with project_id
         await db.run(`
-            INSERT INTO images (name, url, domaincode, status_id, owner_id)
+            INSERT INTO images (name, url, project_id, status_id, owner_id)
             VALUES 
-                ('Image 1', 'https://example.com/img1.jpg', 'tp', 18, 1),
-                ('Image 2', 'https://example.com/img2.jpg', 'tp', 0, 1),
-                ('Image 3', 'https://example.com/img3.jpg', 'regio1', 18, 2),
+                ('Image 1', 'https://example.com/img1.jpg', 1, 18, 1),
+                ('Image 2', 'https://example.com/img2.jpg', 1, 0, 1),
+                ('Image 3', 'https://example.com/img3.jpg', 2, 18, 2),
                 ('Image 4', 'https://example.com/img4.jpg', NULL, 18, NULL)
         `)
     })
@@ -183,14 +201,23 @@ describeOrSkip('Images API - GET /api/images', () => {
         expect(result).toHaveLength(4)
     })
 
-    it('should filter by domaincode', async () => {
+    it('should filter by project_domaincode', async () => {
         const result = await db.all(
-            'SELECT * FROM images WHERE domaincode = ?',
+            'SELECT * FROM images WHERE project_domaincode = ?',
             ['tp']
         )
         expect(result).toHaveLength(2)
-        expect(result[0].domaincode).toBe('tp')
-        expect(result[1].domaincode).toBe('tp')
+        expect(result[0].project_domaincode).toBe('tp')
+        expect(result[1].project_domaincode).toBe('tp')
+    })
+
+    it('should filter by project_id', async () => {
+        const result = await db.all(
+            'SELECT * FROM images WHERE project_id = ?',
+            [1]
+        )
+        expect(result).toHaveLength(2)
+        expect(result[0].project_id).toBe(1)
     })
 
     it('should filter by owner_id', async () => {
@@ -226,14 +253,15 @@ describeOrSkip('Images API - GET /api/images/:id', () => {
         db = sharedDb
         await db.exec('TRUNCATE TABLE images RESTART IDENTITY CASCADE')
 
-        // Create prerequisite users
+        // Create prerequisite data
         await createTestUsers(db)
+        await createTestProjects(db)
 
         const result = await db.run(`
-            INSERT INTO images (name, url, domaincode, owner_id)
+            INSERT INTO images (name, url, project_id, owner_id)
             VALUES (?, ?, ?, ?)
             RETURNING id
-        `, ['Test Image', 'https://example.com/test.jpg', 'tp', 1])
+        `, ['Test Image', 'https://example.com/test.jpg', 1, 1])
 
         testImageId = result.rows?.[0]?.id
     })

@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
         const values: any[] = []
 
         const allowedFields: (keyof ImagesTableFields)[] = [
-            'name', 'url', 'alt_text', 'title', 'domaincode', 'status_id',
+            'name', 'url', 'alt_text', 'title', 'project_id', 'status_id',
             'owner_id', 'x', 'y', 'fileformat', 'embedformat', 'license', 'length'
         ]
 

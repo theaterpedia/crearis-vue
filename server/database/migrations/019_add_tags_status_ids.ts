@@ -2365,7 +2365,8 @@ export const migration = {
                     xmlid TEXT DEFAULT NULL,
                     name TEXT NOT NULL,
                     url TEXT NOT NULL,
-                    domaincode TEXT DEFAULT NULL,
+                    project_id INTEGER DEFAULT NULL REFERENCES projects(id) ON DELETE SET NULL,
+                    project_domaincode TEXT DEFAULT NULL,
                     status_id INTEGER DEFAULT 0,
                     owner_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
                     alt_text TEXT DEFAULT NULL,
@@ -2500,9 +2501,34 @@ export const migration = {
             `)
             console.log('    ✓ Created trigger for root_id computation')
 
+            // Create trigger to auto-populate project_domaincode from project
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION update_image_project_domaincode()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF NEW.project_id IS NOT NULL THEN
+                        SELECT domaincode INTO NEW.project_domaincode
+                        FROM projects
+                        WHERE id = NEW.project_id;
+                    ELSE
+                        NEW.project_domaincode := NULL;
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS trigger_update_image_project_domaincode ON images;
+                CREATE TRIGGER trigger_update_image_project_domaincode
+                BEFORE INSERT OR UPDATE ON images
+                FOR EACH ROW
+                EXECUTE FUNCTION update_image_project_domaincode();
+            `)
+            console.log('    ✓ Created trigger for project_domaincode auto-population')
+
             // Create indexes
             await db.exec(`
-                CREATE INDEX IF NOT EXISTS idx_images_domaincode ON images(domaincode);
+                CREATE INDEX IF NOT EXISTS idx_images_project_id ON images(project_id);
+                CREATE INDEX IF NOT EXISTS idx_images_project_domaincode ON images(project_domaincode);
                 CREATE INDEX IF NOT EXISTS idx_images_owner_id ON images(owner_id);
                 CREATE INDEX IF NOT EXISTS idx_images_status_id ON images(status_id);
                 CREATE INDEX IF NOT EXISTS idx_images_root_id ON images(root_id);

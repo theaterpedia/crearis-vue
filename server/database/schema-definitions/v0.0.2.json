@@ -1,7 +1,7 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-11-02T10:04:30.139Z",
+  "generatedAt": "2025-11-02T11:53:22.342Z",
   "description": "Database schema for crearis-demo-data system v0.0.2",
   "tables": {
     "crearis_config": {
@@ -387,7 +387,11 @@
           "type": "TEXT",
           "nullable": false
         },
-        "domaincode": {
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "project_domaincode": {
           "type": "TEXT",
           "nullable": true
         },

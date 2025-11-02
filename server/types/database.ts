@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-11-02T10:04:54.756Z
+ * Generated at: 2025-11-02T11:53:33.386Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -159,7 +159,6 @@ export interface ImagesTableFields {
     created_at?: string | null // default: CURRENT_TIMESTAMP
     ctags?: any | null // default: '\x00'::bytea
     date?: string | null // default: CURRENT_TIMESTAMP
-    domaincode?: string | null
     embedformat?: any | null
     fileformat?: any | null // default: 'none'::image_file_type
     geo?: Record<string, any> | null
@@ -174,6 +173,8 @@ export interface ImagesTableFields {
     name: string
     owner_id?: number | null
     producer?: any | null
+    project_domaincode?: string | null
+    project_id?: number | null
     publisher?: any | null
     root_id?: number | null
     rtags?: any | null // default: '\x00'::bytea
@@ -702,7 +703,7 @@ export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableF
 
 export function isValidImagesField(key: string): key is keyof ImagesTableFields {
     const validFields: (keyof ImagesTableFields)[] = [
-        'id', 'xmlid', 'name', 'url', 'domaincode', 'status_id', 'owner_id', 'alt_text', 'title', 'date', 'geo', 'x', 'y', 'shape_wide', 'shape_square', 'shape_vertical', 'shape_thumb', 'fileformat', 'embedformat', 'license', 'length', 'about', 'author', 'producer', 'publisher', 'variations', 'root_id', 'use_player', 'ctags', 'is_public', 'is_private', 'is_internal', 'is_deprecated', 'has_issues', 'rtags', 'created_at', 'updated_at'
+        'id', 'xmlid', 'name', 'url', 'project_id', 'project_domaincode', 'status_id', 'owner_id', 'alt_text', 'title', 'date', 'geo', 'x', 'y', 'shape_wide', 'shape_square', 'shape_vertical', 'shape_thumb', 'fileformat', 'embedformat', 'license', 'length', 'about', 'author', 'producer', 'publisher', 'variations', 'root_id', 'use_player', 'ctags', 'is_public', 'is_private', 'is_internal', 'is_deprecated', 'has_issues', 'rtags', 'created_at', 'updated_at'
     ]
     return validFields.includes(key as keyof ImagesTableFields)
 }
