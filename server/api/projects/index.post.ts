@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
         status?: string
         owner_id?: string | number
         header_size?: string
+        img_id?: number
     }
 
     try {
@@ -100,13 +101,14 @@ export default defineEventHandler(async (event) => {
             description,
             status_id,
             owner_id,
-            header_size
+            header_size,
+            img_id: body.img_id || null
         }
 
         // Insert project
         const stmt = db.prepare(`
-            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size, img_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
         stmt.run(
@@ -116,7 +118,8 @@ export default defineEventHandler(async (event) => {
             projectData.description,
             projectData.status_id,
             projectData.owner_id,
-            projectData.header_size
+            projectData.header_size,
+            projectData.img_id
         )
 
         // Return created project (with auto-generated id)

@@ -40,15 +40,16 @@ export default defineEventHandler(async (event) => {
             isbase: body.isbase || 0,
             project_id: projectId,
             template: body.template || null,
-            public_user: body.public_user || null
+            public_user: body.public_user || null,
+            img_id: body.img_id || null
         }
 
         // Insert post (id is auto-generated)
         const sql = `
             INSERT INTO posts (
                 xmlid, name, subtitle, teaser, cimg, post_date,
-                isbase, project_id, template, public_user
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                isbase, project_id, template, public_user, img_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -62,7 +63,8 @@ export default defineEventHandler(async (event) => {
             postData.isbase,
             postData.project_id,
             postData.template,
-            postData.public_user
+            postData.public_user,
+            postData.img_id
         ])
 
         // Extract the new post ID from the result

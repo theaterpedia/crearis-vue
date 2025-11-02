@@ -16,7 +16,13 @@ async function loadPostgreSQLAdapter(): Promise<typeof import('./adapters/postgr
 let dbAdapter: DatabaseAdapter
 
 if (dbConfig.type === 'sqlite') {
+  // ⚠️ SQLite is deprecated since Migration 019 - will throw error
   const dbPath = dbConfig.sqlite?.path || join(__dirname, '../../demo-data.db')
+  console.error('\n⚠️  WARNING: Attempting to use deprecated SQLite adapter')
+  console.error(`    Database path: ${dbPath}`)
+  console.error('    This will fail - PostgreSQL is required for Migration 019+\n')
+
+  // This will throw an error and stop execution
   dbAdapter = new SQLiteAdapter(dbPath)
   console.log(`✅ Connected to SQLite database at: ${dbPath}`)
 } else if (dbConfig.type === 'postgresql') {

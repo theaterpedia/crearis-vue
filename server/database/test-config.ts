@@ -44,7 +44,11 @@ export function getTestDatabaseConfig(): TestDatabaseConfig {
         }
     }
 
-    // SQLite in-memory database (default for tests)
+    // SQLite in-memory database (DEPRECATED - will fail in Migration 019+)
+    console.warn('\n⚠️  WARNING: SQLite test mode is deprecated (Migration 019+)')
+    console.warn('   Set TEST_DATABASE_TYPE=postgresql to run tests')
+    console.warn('   Tests will fail if schema uses PostgreSQL-specific features\n')
+
     return {
         type: 'sqlite',
         dbPath: ':memory:'

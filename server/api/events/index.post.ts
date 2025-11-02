@@ -42,15 +42,16 @@ export default defineEventHandler(async (event) => {
             project_id: projectId,
             template: body.template || null,
             public_user: body.public_user || null,
-            location: body.location || null
+            location: body.location || null,
+            img_id: body.img_id || null
         }
 
         // Insert event (id is auto-generated)
         const sql = `
             INSERT INTO events (
                 xmlid, name, teaser, cimg, date_begin, date_end,
-                event_type, isbase, project_id, template, public_user, location
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                event_type, isbase, project_id, template, public_user, location, img_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -66,7 +67,8 @@ export default defineEventHandler(async (event) => {
             eventData.project_id,
             eventData.template,
             eventData.public_user,
-            eventData.location
+            eventData.location,
+            eventData.img_id
         ])
 
         // Extract the new event ID from the result

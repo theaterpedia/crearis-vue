@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-10-30T13:59:34.420Z
+ * Generated at: 2025-11-02T10:04:54.756Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -65,6 +65,12 @@ export interface EventsTableFields {
     header_type?: string | null
     html?: string | null
     id: number // default: nextval('events_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
     location?: number | null
@@ -143,6 +149,50 @@ export interface I18nCodesTableFields {
 }
 
 /**
+ * Images table
+ * Table: images
+ */
+export interface ImagesTableFields {
+    about?: string | null
+    alt_text?: string | null
+    author?: any | null
+    created_at?: string | null // default: CURRENT_TIMESTAMP
+    ctags?: any | null // default: '\x00'::bytea
+    date?: string | null // default: CURRENT_TIMESTAMP
+    domaincode?: string | null
+    embedformat?: any | null
+    fileformat?: any | null // default: 'none'::image_file_type
+    geo?: Record<string, any> | null
+    has_issues?: boolean | null // default: false
+    id: number // default: nextval('images_id_seq'::regclass)
+    is_deprecated?: boolean | null // default: false
+    is_internal?: boolean | null // default: false
+    is_private?: boolean | null // default: false
+    is_public?: boolean | null // default: false
+    length?: number | null
+    license?: any | null // default: 'BY'::media_licence
+    name: string
+    owner_id?: number | null
+    producer?: any | null
+    publisher?: any | null
+    root_id?: number | null
+    rtags?: any | null // default: '\x00'::bytea
+    shape_square?: any | null
+    shape_thumb?: any | null
+    shape_vertical?: any | null
+    shape_wide?: any | null
+    status_id?: number | null // default: 0
+    title?: string | null
+    updated_at?: string | null // default: CURRENT_TIMESTAMP
+    url: string
+    use_player?: boolean | null // default: false
+    variations?: any | null
+    x?: number | null
+    xmlid?: string | null
+    y?: number | null
+}
+
+/**
  * Instructors table
  * Table: instructors
  */
@@ -158,6 +208,12 @@ export interface InstructorsTableFields {
     header_type?: string | null
     html?: string | null
     id: number // default: nextval('instructors_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     is_user?: boolean | null // default: false
     isbase?: number | null // default: 0
     lang: string // default: 'de'::text
@@ -207,6 +263,12 @@ export interface LocationsTableFields {
     header_size?: string | null
     header_type?: string | null
     id: number // default: nextval('locations_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     is_company?: string | null
     is_location_provider?: string | null
     isbase?: number | null // default: 0
@@ -297,6 +359,12 @@ export interface PostsTableFields {
     header_type?: string | null
     html?: string | null
     id: number // default: nextval('posts_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     is_published?: string | null
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
@@ -379,6 +447,12 @@ export interface ProjectsTableFields {
     heading?: string | null
     html?: string | null
     id: number // default: nextval('projects_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     is_company?: boolean | null // default: false
     is_location_provider?: boolean | null // default: false
     is_onepage?: boolean | null
@@ -533,6 +607,12 @@ export interface UsersTableFields {
     created_at?: string | null // default: CURRENT_TIMESTAMP
     extmail?: string | null
     id: number // default: nextval('users_id_seq'::regclass)
+    img_id?: number | null
+    img_show?: boolean | null // default: false
+    img_square?: string | null // default: 'dummy'::text
+    img_thumb?: string | null // default: 'dummy'::text
+    img_vert?: string | null // default: 'dummy'::text
+    img_wide?: string | null // default: 'dummy'::text
     instructor_id?: number | null
     lang: string // default: 'de'::text
     participant_id?: number | null
@@ -587,7 +667,7 @@ export function isValidEventInstructorsField(key: string): key is keyof EventIns
 
 export function isValidEventsField(key: string): key is keyof EventsTableFields {
     const validFields: (keyof EventsTableFields)[] = [
-        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
+        'id', 'xmlid', 'name', 'date_begin', 'date_end', 'address_id', 'user_id', 'seats_max', 'cimg', 'header_type', 'rectitle', 'teaser', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'location', 'event_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_display'
     ]
     return validFields.includes(key as keyof EventsTableFields)
 }
@@ -620,9 +700,16 @@ export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableF
     return validFields.includes(key as keyof I18nCodesTableFields)
 }
 
+export function isValidImagesField(key: string): key is keyof ImagesTableFields {
+    const validFields: (keyof ImagesTableFields)[] = [
+        'id', 'xmlid', 'name', 'url', 'domaincode', 'status_id', 'owner_id', 'alt_text', 'title', 'date', 'geo', 'x', 'y', 'shape_wide', 'shape_square', 'shape_vertical', 'shape_thumb', 'fileformat', 'embedformat', 'license', 'length', 'about', 'author', 'producer', 'publisher', 'variations', 'root_id', 'use_player', 'ctags', 'is_public', 'is_private', 'is_internal', 'is_deprecated', 'has_issues', 'rtags', 'created_at', 'updated_at'
+    ]
+    return validFields.includes(key as keyof ImagesTableFields)
+}
+
 export function isValidInstructorsField(key: string): key is keyof InstructorsTableFields {
     const validFields: (keyof InstructorsTableFields)[] = [
-        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'lang', 'status_display'
+        'id', 'xmlid', 'name', 'email', 'phone', 'city', 'country_id', 'cimg', 'description', 'event_xmlid', 'version_id', 'status_id', 'multiproject', 'header_type', 'md', 'html', 'isbase', 'created_at', 'updated_at', 'is_user', 'header_size', 'regio_id', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof InstructorsTableFields)
 }
@@ -636,7 +723,7 @@ export function isValidInteractionsField(key: string): key is keyof Interactions
 
 export function isValidLocationsField(key: string): key is keyof LocationsTableFields {
     const validFields: (keyof LocationsTableFields)[] = [
-        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_xmlid', 'version_id', 'status_id', 'project_id', 'isbase', 'created_at', 'updated_at', 'lang', 'status_display'
+        'id', 'xmlid', 'name', 'phone', 'email', 'city', 'zip', 'street', 'country_id', 'is_company', 'category_id', 'cimg', 'header_type', 'header_size', 'md', 'is_location_provider', 'event_xmlid', 'version_id', 'status_id', 'project_id', 'isbase', 'created_at', 'updated_at', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'lang', 'status_display'
     ]
     return validFields.includes(key as keyof LocationsTableFields)
 }
@@ -664,7 +751,7 @@ export function isValidParticipantsField(key: string): key is keyof Participants
 
 export function isValidPostsField(key: string): key is keyof PostsTableFields {
     const validFields: (keyof PostsTableFields)[] = [
-        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_xmlid', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'status_display'
+        'id', 'xmlid', 'name', 'subtitle', 'teaser', 'author_id', 'blog_id', 'tag_ids', 'website_published', 'is_published', 'post_date', 'cover_properties', 'event_xmlid', 'cimg', 'version_id', 'created_at', 'updated_at', 'status', 'isbase', 'template', 'public_user', 'header_type', 'md', 'html', 'status_id', 'lang', 'tags_ids', 'tags_display', 'project_id', 'regio_id', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_display'
     ]
     return validFields.includes(key as keyof PostsTableFields)
 }
@@ -685,7 +772,7 @@ export function isValidProjectMembersField(key: string): key is keyof ProjectMem
 
 export function isValidProjectsField(key: string): key is keyof ProjectsTableFields {
     const validFields: (keyof ProjectsTableFields)[] = [
-        'id', 'domaincode', 'name', 'description', 'status_old', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'is_sidebar', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'status_id'
+        'id', 'domaincode', 'name', 'description', 'status_old', 'owner_id', 'created_at', 'updated_at', 'header_type', 'header_size', 'md', 'html', 'type', 'is_regio', 'is_topic', 'is_onepage', 'is_service', 'is_sidebar', 'regio', 'partner_projects', 'heading', 'theme', 'cimg', 'teaser', 'team_page', 'cta_title', 'cta_form', 'cta_entity', 'cta_link', 'is_company', 'is_location_provider', 'config', 'domain_id', 'member_ids', 'page_background', 'page_cssvars', 'page_navigation', 'page_options_ext', 'aside_postit', 'aside_toc', 'aside_list', 'aside_context', 'aside_options_ext', 'header_alert', 'header_postit', 'header_options_ext', 'footer_gallery', 'footer_postit', 'footer_slider', 'footer_repeat', 'footer_sitemap', 'footer_options_ext', 'page_has_content', 'aside_has_content', 'header_has_content', 'footer_has_content', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_id'
     ]
     return validFields.includes(key as keyof ProjectsTableFields)
 }
@@ -748,7 +835,7 @@ export function isValidTldsField(key: string): key is keyof TldsTableFields {
 
 export function isValidUsersField(key: string): key is keyof UsersTableFields {
     const validFields: (keyof UsersTableFields)[] = [
-        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'created_at', 'updated_at', 'status_display'
+        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'created_at', 'updated_at', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_display'
     ]
     return validFields.includes(key as keyof UsersTableFields)
 }

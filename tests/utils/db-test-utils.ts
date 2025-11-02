@@ -38,10 +38,17 @@ export async function createTestDatabase(): Promise<DatabaseAdapter> {
             postgresSchemaInitialized = true
         }
     } else {
-        // SQLite in-memory database
-        adapter = new SQLiteAdapter(':memory:')
-        // Always initialize schema for SQLite (each test gets its own instance)
-        await initializeTestSchema(adapter)
+        // SQLite in-memory database - DEPRECATED since Migration 019
+        console.error('\n⚠️  SQLite is no longer supported for tests (Migration 019+)')
+        console.error('    Set TEST_DATABASE_TYPE=postgresql in your environment')
+        console.error('    Tests require PostgreSQL-specific features (custom types, triggers, BYTEA)\n')
+
+        throw new Error(
+            'SQLite test database is deprecated. ' +
+            'Set TEST_DATABASE_TYPE=postgresql to run tests. ' +
+            'Migration 019+ requires PostgreSQL-specific features.'
+        )
+
     }
 
     return adapter

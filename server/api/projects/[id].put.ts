@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
             header_type,
             header_size,
             md,
+            img_id,
             // Chapter 11: Page options
             page_background,
             page_cssvars,
@@ -136,6 +137,11 @@ export default defineEventHandler(async (event) => {
             updateData.md = md
             updates.push('md = ?')
             values.push(updateData.md)
+        }
+        if (img_id !== undefined) {
+            updateData.img_id = img_id
+            updates.push('img_id = ?')
+            values.push(updateData.img_id)
         }
 
         // Chapter 11: Page options

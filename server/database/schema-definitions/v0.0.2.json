@@ -1,8 +1,8 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-10-30T13:15:22.682Z",
-  "description": "Database schema for crearis-demo-data system v0.0.1",
+  "generatedAt": "2025-11-02T10:04:30.139Z",
+  "description": "Database schema for crearis-demo-data system v0.0.2",
   "tables": {
     "crearis_config": {
       "description": "Crearis_config table",
@@ -198,6 +198,35 @@
           "type": "INTEGER",
           "nullable": true
         },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
         "status_display": {
           "type": "TEXT",
           "nullable": true
@@ -338,6 +367,174 @@
         }
       }
     },
+    "images": {
+      "description": "Images table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('images_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "url": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "domaincode": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "owner_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "alt_text": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "title": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "date": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "geo": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "shape_wide": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_square": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_vertical": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_thumb": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "fileformat": {
+          "type": "USER-DEFINED",
+          "nullable": true,
+          "default": "'none'::image_file_type"
+        },
+        "embedformat": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "license": {
+          "type": "USER-DEFINED",
+          "nullable": true,
+          "default": "'BY'::media_licence"
+        },
+        "length": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "about": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "author": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "producer": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "publisher": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "variations": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "root_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "use_player": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "ctags": {
+          "type": "BYTEA",
+          "nullable": true,
+          "default": "'\\x00'::bytea"
+        },
+        "is_public": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_private": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_internal": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_deprecated": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "has_issues": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "rtags": {
+          "type": "BYTEA",
+          "nullable": true,
+          "default": "'\\x00'::bytea"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
     "instructors": {
       "description": "Instructors table",
       "columns": {
@@ -433,6 +630,35 @@
         "regio_id": {
           "type": "INTEGER",
           "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
         },
         "lang": {
           "type": "TEXT",
@@ -597,6 +823,35 @@
         "updated_at": {
           "type": "TEXT",
           "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
         },
         "lang": {
           "type": "TEXT",
@@ -919,6 +1174,35 @@
           "type": "INTEGER",
           "nullable": true
         },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
         "status_display": {
           "type": "TEXT",
           "nullable": true
@@ -1217,6 +1501,35 @@
         "footer_has_content": {
           "type": "BOOLEAN",
           "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
         },
         "status_id": {
           "type": "INTEGER",
@@ -1583,6 +1896,35 @@
           "type": "TIMESTAMP WITHOUT TIME ZONE",
           "nullable": true,
           "default": "CURRENT_TIMESTAMP"
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_square": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_wide": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
+        },
+        "img_vert": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'dummy'::text"
         },
         "status_display": {
           "type": "TEXT",

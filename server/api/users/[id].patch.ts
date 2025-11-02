@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
         const params: any[] = []
 
         // Fields that can be updated
-        const allowedFields = ['username', 'password', 'role', 'instructor_id', 'status_id']
+        const allowedFields = ['username', 'password', 'role', 'instructor_id', 'status_id', 'img_id']
 
         for (const field of allowedFields) {
             if (body[field] !== undefined && body[field] !== null && body[field] !== '') {
