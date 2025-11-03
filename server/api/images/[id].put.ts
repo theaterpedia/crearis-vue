@@ -33,8 +33,40 @@ export default defineEventHandler(async (event) => {
         const allowedFields: (keyof ImagesTableFields)[] = [
             'name', 'url', 'alt_text', 'title', 'project_id', 'status_id',
             'owner_id', 'x', 'y', 'fileformat', 'embedformat', 'license', 'length',
-            'xmlid', 'author'
+            'xmlid', 'author', 'shape_square', 'shape_wide', 'shape_vertical', 'shape_thumb'
         ]
+
+        // Helper to format composite types
+        const formatComposite = (values: (string | number | null)[], isShapeType: boolean = false) => {
+            return `(${values.map((v: string | number | null, idx: number) => {
+                if (v === null || v === '' || v === undefined) return ''
+
+                // For shape types: (x numeric, y numeric, z numeric, url text, json jsonb)
+                // x, y, z (indices 0,1,2) are numeric - don't quote
+                // url (index 3) is text - always quote if not empty
+                // json (index 4) is jsonb - would need special handling but we don't use it yet
+                if (isShapeType) {
+                    if (idx === 3) {
+                        // URL - always quote
+                        const str = String(v)
+                        return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+                    } else if (idx === 4) {
+                        // JSON - would need special handling, but not used yet
+                        return ''
+                    } else {
+                        // x, y, z numeric values - don't quote
+                        return String(v)
+                    }
+                }
+
+                // For other composite types, quote if contains special characters
+                const str = String(v)
+                if (/[,()"\\\s]/.test(str)) {
+                    return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+                }
+                return str
+            }).join(',')})`
+        }
 
         for (const field of allowedFields) {
             if (body[field] !== undefined) {
@@ -49,10 +81,23 @@ export default defineEventHandler(async (event) => {
                         author.username || '',
                         author.attribution || ''
                     ]
-                    // Format as PostgreSQL composite type: (adapter,file_id,account_id,folder_id,username,attribution)
-                    const formatted = `(${compositeValues.map((v: string) => v === '' || v === null ? '' : `"${v.replace(/"/g, '\\"')}"`).join(',')})`
                     updates.push(`${field} = ?`)
-                    values.push(formatted)
+                    values.push(formatComposite(compositeValues))
+                } else if (field === 'shape_square' || field === 'shape_wide' || field === 'shape_vertical' || field === 'shape_thumb') {
+                    // Handle shape fields as PostgreSQL composite type (x, y, z, url, json)
+                    // Matching image_shape type: (x numeric, y numeric, z numeric, url text, json jsonb)
+                    const shape = body[field]
+                    if (shape) {
+                        const compositeValues = [
+                            shape.x || null,
+                            shape.y || null,
+                            null,  // z - not used yet
+                            shape.url || '',
+                            null   // json - not used yet
+                        ]
+                        updates.push(`${field} = ?`)
+                        values.push(formatComposite(compositeValues, true))
+                    }
                 } else {
                     updates.push(`${field} = ?`)
                     values.push(body[field])

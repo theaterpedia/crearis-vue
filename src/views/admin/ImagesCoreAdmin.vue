@@ -15,6 +15,7 @@ const loading = ref(false)
 const isDirty = ref(false)
 const statusOptions = ref<Array<{ id: number; value: number; name: string }>>([])
 const authorAdapter = ref<'unsplash' | 'cloudinary'>('unsplash')
+const activeShapeTab = ref<'square' | 'wide' | 'vertical' | 'thumb'>('square')
 
 // Filters state
 const filterStatusId = ref<number | null>(null)
@@ -107,6 +108,40 @@ const filteredImages = computed(() => {
     })
 })
 
+// Computed for current shape based on active tab
+const currentShape = computed(() => {
+    if (!selectedImage.value) return null
+    const shapeKey = `shape_${activeShapeTab.value}`
+    return selectedImage.value[shapeKey]
+})
+
+// Helper to get shape field name
+const getShapeFieldName = (tab: string) => `shape_${tab}`
+
+// Update shape when tab changes
+const changeShapeTab = (tab: 'square' | 'wide' | 'vertical' | 'thumb') => {
+    activeShapeTab.value = tab
+}
+
+// Update shape fields
+const updateShapeField = (field: 'x' | 'y' | 'url', value: string | null) => {
+    if (!selectedImage.value) return
+
+    const shapeKey = getShapeFieldName(activeShapeTab.value)
+
+    if (!selectedImage.value[shapeKey]) {
+        selectedImage.value[shapeKey] = { x: null, y: null, url: '' }
+    }
+
+    if (typeof selectedImage.value[shapeKey] === 'string') {
+        // Parse composite type if needed
+        selectedImage.value[shapeKey] = { x: null, y: null, url: selectedImage.value[shapeKey] }
+    }
+
+    selectedImage.value[shapeKey][field] = value
+    checkDirty()
+}
+
 // Fetch status options from API
 const fetchStatusOptions = async () => {
     try {
@@ -144,12 +179,94 @@ function selectImage(image: any) {
     selectedImage.value = { ...image }
 
     // Parse author if it's a string (database composite type)
+    // Format: (adapter,file_id,account_id,folder_id,username,attribution)
     if (typeof selectedImage.value.author === 'string') {
-        try {
-            selectedImage.value.author = JSON.parse(selectedImage.value.author)
-        } catch {
-            selectedImage.value.author = { adapter: 'unsplash' }
+        const match = selectedImage.value.author.match(/^\((.*)\)$/)
+        if (match) {
+            const parts = match[1].split(',')
+            selectedImage.value.author = {
+                adapter: parts[0] || 'unsplash',
+                file_id: parts[1] || '',
+                account_id: parts[2] || '',
+                folder_id: parts[3] || '',
+                username: parts[4] || '',
+                attribution: parts[5] || ''
+            }
+        } else {
+            try {
+                selectedImage.value.author = JSON.parse(selectedImage.value.author)
+            } catch {
+                selectedImage.value.author = {
+                    adapter: 'unsplash',
+                    file_id: '',
+                    account_id: '',
+                    folder_id: '',
+                    username: '',
+                    attribution: ''
+                }
+            }
         }
+    }
+
+    // Ensure author has all fields
+    if (!selectedImage.value.author) {
+        selectedImage.value.author = {
+            adapter: 'unsplash',
+            file_id: '',
+            account_id: '',
+            folder_id: '',
+            username: '',
+            attribution: ''
+        }
+    }
+
+    // Parse shape fields if they're strings (database composite type)
+    // Format: (x,y,z,url,json) matching image_shape type definition
+    const parseShape = (shapeStr: string) => {
+        if (!shapeStr || typeof shapeStr !== 'string') return { url: '', x: null, y: null }
+
+        const match = shapeStr.match(/^\((.*)\)$/)
+        if (!match) return { url: '', x: null, y: null }
+
+        // Split by comma, but handle quoted strings and empty values
+        const parts: string[] = []
+        let current = ''
+        let inQuotes = false
+
+        for (let i = 0; i < match[1].length; i++) {
+            const char = match[1][i]
+            if (char === '"') {
+                inQuotes = !inQuotes
+            } else if (char === ',' && !inQuotes) {
+                parts.push(current)
+                current = ''
+            } else {
+                current += char
+            }
+        }
+        parts.push(current)
+
+        // Database format: (x, y, z, url, json)
+        // We only use x, y, and url
+        return {
+            x: parts[0] ? parseInt(parts[0]) : null,
+            y: parts[1] ? parseInt(parts[1]) : null,
+            url: parts[3] || ''
+        }
+    }
+
+    // Parse all shape fields
+    if (selectedImage.value.shape_square) {
+        selectedImage.value.shape_square = parseShape(selectedImage.value.shape_square)
+    }
+    if (selectedImage.value.shape_wide) {
+        selectedImage.value.shape_wide = parseShape(selectedImage.value.shape_wide)
+    }
+    if (selectedImage.value.shape_vertical) {
+        selectedImage.value.shape_vertical = parseShape(selectedImage.value.shape_vertical)
+    }
+    if (selectedImage.value.shape_thumb) {
+        selectedImage.value.shape_thumb = parseShape(selectedImage.value.shape_thumb)
     }
 
     // Deep clone for dirty detection
@@ -167,11 +284,22 @@ function checkDirty() {
         return
     }
 
-    // Ensure author is an object
+    // Ensure author is an object and update only the adapter field
     if (typeof selectedImage.value.author !== 'object' || selectedImage.value.author === null) {
-        selectedImage.value.author = { adapter: authorAdapter.value }
+        selectedImage.value.author = {
+            adapter: authorAdapter.value,
+            file_id: '',
+            account_id: '',
+            folder_id: '',
+            username: '',
+            attribution: ''
+        }
     } else {
-        selectedImage.value.author.adapter = authorAdapter.value
+        // Preserve all existing author fields, only update adapter
+        selectedImage.value.author = {
+            ...selectedImage.value.author,
+            adapter: authorAdapter.value
+        }
     }
 
     // Convert Uint8Array to arrays for comparison
@@ -180,9 +308,14 @@ function checkDirty() {
         name: selectedImage.value.name,
         alt_text: selectedImage.value.alt_text,
         xmlid: selectedImage.value.xmlid,
+        url: selectedImage.value.url,
         ctags: selectedImage.value.ctags ? Array.from(new Uint8Array(selectedImage.value.ctags)) : null,
         rtags: selectedImage.value.rtags ? Array.from(new Uint8Array(selectedImage.value.rtags)) : null,
-        author: selectedImage.value.author
+        author: selectedImage.value.author,
+        shape_square: selectedImage.value.shape_square,
+        shape_wide: selectedImage.value.shape_wide,
+        shape_vertical: selectedImage.value.shape_vertical,
+        shape_thumb: selectedImage.value.shape_thumb
     }
 
     const original = {
@@ -190,9 +323,14 @@ function checkDirty() {
         name: originalImage.value.name,
         alt_text: originalImage.value.alt_text,
         xmlid: originalImage.value.xmlid,
+        url: originalImage.value.url,
         ctags: originalImage.value.ctags ? Array.from(new Uint8Array(originalImage.value.ctags)) : null,
         rtags: originalImage.value.rtags ? Array.from(new Uint8Array(originalImage.value.rtags)) : null,
-        author: typeof originalImage.value.author === 'object' ? originalImage.value.author : {}
+        author: typeof originalImage.value.author === 'object' ? originalImage.value.author : {},
+        shape_square: originalImage.value.shape_square,
+        shape_wide: originalImage.value.shape_wide,
+        shape_vertical: originalImage.value.shape_vertical,
+        shape_thumb: originalImage.value.shape_thumb
     }
 
     const currentStr = JSON.stringify(current)
@@ -225,9 +363,14 @@ const saveChanges = async () => {
             name: selectedImage.value.name,
             alt_text: selectedImage.value.alt_text,
             xmlid: selectedImage.value.xmlid,
+            url: selectedImage.value.url,
             ctags: ctagsArray,
             rtags: rtagsArray,
-            author: selectedImage.value.author
+            author: selectedImage.value.author,
+            shape_square: selectedImage.value.shape_square,
+            shape_wide: selectedImage.value.shape_wide,
+            shape_vertical: selectedImage.value.shape_vertical,
+            shape_thumb: selectedImage.value.shape_thumb
         }
 
         console.log('Saving image with payload:', payload)
@@ -566,18 +709,90 @@ onMounted(() => {
                                 </div>
                             </div>
 
+                            <!-- Divider -->
+                            <hr class="form-divider">
 
                             <!-- Author Adapter Tabs -->
-                            <div class="edit-section">
-                                <div class="tabs-container">
-                                    <button class="tab-button" :class="{ active: authorAdapter === 'unsplash' }"
+                            <div class="edit-section author-section">
+                                <div class="tabs-container author-tabs">
+                                    <button class="tab-button author-tab"
+                                        :class="{ active: authorAdapter === 'unsplash' }"
                                         @click="authorAdapter = 'unsplash'; checkDirty()">
                                         Unsplash
                                     </button>
-                                    <button class="tab-button" :class="{ active: authorAdapter === 'cloudinary' }"
+                                    <button class="tab-button author-tab"
+                                        :class="{ active: authorAdapter === 'cloudinary' }"
                                         @click="authorAdapter = 'cloudinary'; checkDirty()">
                                         Cloudinary
                                     </button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- Root URL -->
+                                    <div class="edit-row">
+                                        <label>Root URL:</label>
+                                        <textarea v-model="selectedImage.url" class="edit-textarea url-textarea"
+                                            rows="2" placeholder="Main image URL" @input="checkDirty()"></textarea>
+                                    </div>
+
+                                    <!-- Shape Tabs -->
+                                    <div class="edit-section">
+                                        <h4>Image Shapes</h4>
+                                        <div class="tabs-container">
+                                            <button class="tab-button" :class="{ active: activeShapeTab === 'square' }"
+                                                @click="changeShapeTab('square')">
+                                                Square
+                                            </button>
+                                            <button class="tab-button" :class="{ active: activeShapeTab === 'wide' }"
+                                                @click="changeShapeTab('wide')">
+                                                Wide
+                                            </button>
+                                            <button class="tab-button"
+                                                :class="{ active: activeShapeTab === 'vertical' }"
+                                                @click="changeShapeTab('vertical')">
+                                                Vertical
+                                            </button>
+                                            <button class="tab-button" :class="{ active: activeShapeTab === 'thumb' }"
+                                                @click="changeShapeTab('thumb')">
+                                                Thumb
+                                            </button>
+                                        </div>
+
+                                        <!-- JSON Row -->
+                                        <div class="edit-row" style="margin-top: 1rem;">
+                                            <label>JSON:</label>
+                                            <span class="label-hint" style="flex: 1;">highest prio: deactivated</span>
+                                        </div>
+
+                                        <!-- Params Row -->
+                                        <div class="edit-row">
+                                            <label>Params: XYZ</label>
+                                            <div class="params-group">
+                                                <div class="param-field">
+                                                    <input :value="currentShape?.x || ''"
+                                                        @input="updateShapeField('x', ($event.target as HTMLInputElement).value || null)"
+                                                        type="number" class="edit-input" placeholder="—" />
+                                                </div>
+                                                <div class="param-field">
+                                                    <input :value="currentShape?.y || ''"
+                                                        @input="updateShapeField('y', ($event.target as HTMLInputElement).value || null)"
+                                                        type="number" class="edit-input" placeholder="—" />
+                                                </div>
+                                                <div class="param-field">
+                                                    <input type="number" class="edit-input" placeholder="—" disabled />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- URL Row (only visible if X and Y are empty) -->
+                                        <div class="edit-row" v-if="!currentShape?.x && !currentShape?.y">
+                                            <label>URL:</label>
+                                            <textarea :value="currentShape?.url || ''"
+                                                @input="updateShapeField('url', ($event.target as HTMLTextAreaElement).value)"
+                                                class="edit-textarea url-textarea" rows="2"
+                                                placeholder="Enter image URL"></textarea>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -596,7 +811,7 @@ onMounted(() => {
 .admin-logo {
     font-weight: 600;
     font-size: 1.25rem;
-    color: hsl(var(--color-primary-base));
+    color: var(--color-primary-base);
 }
 
 /* Header preview */
@@ -605,10 +820,10 @@ onMounted(() => {
     max-width: 100%;
     display: flex;
     justify-content: center;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
     overflow: hidden;
-    box-shadow: 0 4px 12px hsla(0, 0%, 0%, 0.1);
+    box-shadow: 0 4px 12px oklcha(0, 0%, 0%, 0.1);
 }
 
 .header-preview .preview-image {
@@ -629,17 +844,17 @@ onMounted(() => {
 
 .filter-select {
     padding: 0.5rem 0.75rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     font-size: 0.875rem;
     cursor: pointer;
 }
 
 .btn-reset-filters {
     padding: 0.5rem 1rem;
-    background: hsl(var(--color-muted-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     font-size: 0.875rem;
     cursor: pointer;
@@ -647,7 +862,7 @@ onMounted(() => {
 }
 
 .btn-reset-filters:hover {
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
 }
 
 /* Main content area */
@@ -660,7 +875,7 @@ onMounted(() => {
 .empty-state {
     padding: 2rem;
     text-align: center;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .image-list {
@@ -680,12 +895,12 @@ onMounted(() => {
 }
 
 .image-row:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .image-row.selected {
-    background: hsla(var(--color-primary-base), 0.1);
-    border: 2px solid hsl(var(--color-primary-base));
+    background: oklcha(var(--color-primary-base), 0.1);
+    border: 2px solid var(--color-primary-base);
 }
 
 .image-avatar {
@@ -694,7 +909,7 @@ onMounted(() => {
     flex-shrink: 0;
     border-radius: var(--radius-small);
     overflow: hidden;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .image-avatar img {
@@ -718,7 +933,7 @@ onMounted(() => {
 
 .field-label {
     font-weight: 600;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     min-width: 60px;
 }
 
@@ -731,7 +946,6 @@ onMounted(() => {
 
 /* Aside content (image details) */
 .aside-content {
-    padding: 1.5rem;
     overflow-y: auto;
     max-height: calc(100vh - 200px);
 }
@@ -739,27 +953,26 @@ onMounted(() => {
 .no-selection {
     padding: 4rem 2rem;
     text-align: center;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     font-size: 1.125rem;
 }
 
 .image-details {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
 }
 
 .save-section {
     display: flex;
     justify-content: center;
     padding: 1rem 0;
-    border-bottom: 2px solid hsl(var(--color-border));
+    border-bottom: 2px solid var(--color-border);
 }
 
 .btn-save {
     padding: 0.75rem 2rem;
-    background: hsl(var(--color-muted-bg));
-    border: 2px solid hsl(var(--color-border));
+    background: var(--color-muted-bg);
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-medium);
     font-size: 1rem;
     font-weight: 600;
@@ -769,17 +982,17 @@ onMounted(() => {
 }
 
 .btn-save.dirty {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
-    border-color: hsl(var(--color-primary-base));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-base);
     cursor: pointer;
     opacity: 1;
 }
 
 .btn-save.dirty:hover {
-    background: hsl(var(--color-primary-hover, var(--color-primary-base)));
+    background: var(--color-primary-hover, var(--color-primary-base));
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px hsla(0, 0%, 0%, 0.15);
+    box-shadow: 0 4px 8px oklcha(0, 0%, 0%, 0.15);
 }
 
 .btn-save:disabled {
@@ -789,20 +1002,20 @@ onMounted(() => {
 .editable-fields {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
 }
 
 .edit-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    margin: 0rem;
+    gap: 0.2rem;
 }
 
 .edit-row>label {
     min-width: 120px;
     font-weight: 600;
     font-size: 0.875rem;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     flex-shrink: 0;
 }
 
@@ -821,7 +1034,7 @@ onMounted(() => {
     min-width: 120px;
     font-weight: 600;
     font-size: 0.875rem;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -831,7 +1044,7 @@ onMounted(() => {
 .label-hint {
     font-size: 0.7rem;
     font-weight: normal;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     font-style: italic;
 }
 
@@ -843,23 +1056,50 @@ onMounted(() => {
 .edit-input {
     flex: 1;
     min-width: 0;
-    padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
+    padding: 0.5rem 0rem;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     font-size: 0.875rem;
     transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
 }
 
 .edit-input:focus {
     outline: none;
-    border-color: hsl(var(--color-primary-base));
-    background: hsl(var(--color-card-bg-hover, var(--color-card-bg)));
+    border-color: var(--color-primary-base);
+    background: var(--color-card-bg-hover, var(--color-card-bg));
+}
+
+.edit-textarea {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    background: var(--color-card-bg);
+    font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.edit-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary-base);
+}
+
+.url-textarea {
+    background: white;
+    font-size: 0.7rem;
+}
+
+.url-textarea:focus {
+    background: white;
 }
 
 .edit-section {
-    padding: 1.5rem;
-    background: hsl(var(--color-muted-bg));
+    padding-top: 1rem;
+    background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -872,7 +1112,7 @@ onMounted(() => {
 .tabs-container {
     display: flex;
     gap: 0;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     overflow: hidden;
 }
@@ -880,12 +1120,12 @@ onMounted(() => {
 .tab-button {
     flex: 1;
     padding: 0.5rem 1rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border: none;
-    border-right: 1px solid hsl(var(--color-border));
+    border-right: 1px solid var(--color-border);
     font-size: 0.875rem;
     font-weight: 500;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     opacity: 0.6;
     cursor: pointer;
     transition: all var(--duration) var(--ease);
@@ -900,9 +1140,56 @@ onMounted(() => {
 }
 
 .tab-button.active {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-text-bright));
+    background: var(--color-primary-base);
+    color: var(--color-text-bright);
     opacity: 1;
     font-weight: 600;
+}
+
+.form-divider {
+    border: none;
+    border-top: 4px solid var(--color-white);
+    margin: 2rem 0;
+}
+
+.author-section {
+    background: var(--color-grey-base);
+}
+
+.author-tabs .author-tab.active {
+    background: var(--color-neutral-base);
+    color: var(--color-contrast);
+}
+
+.tab-content {
+    margin-top: 1.5rem;
+}
+
+/* Shape tabs - inactive tabs with neutral background */
+.edit-section:has(.tabs-container:not(.author-tabs)) .tab-button:not(.active) {
+    background: var(--color-neutral-base);
+}
+
+.params-group {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+}
+
+.param-field {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.param-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-muted-contrast);
+    min-width: 20px;
+}
+
+.param-field .edit-input {
+    flex: 1;
 }
 </style>
