@@ -24,6 +24,7 @@ const router = createRouter({
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true, role: 'base' } },
+    { path: '/admin/images_core', component: () => import('../views/admin/ImagesCoreAdmin.vue'), meta: { requiresAuth: true, role: 'admin' } },
 
     // User routes
     { path: '/users/:id/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true } },

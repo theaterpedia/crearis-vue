@@ -5,6 +5,7 @@ import { Dropdown } from 'floating-vue'
 interface TagsMultiToggleProps {
     modelValue: number[] // byte values (0-255)
     mode?: 'free' | 'choose-one' | 'toggle-two'
+    size?: 'small' | 'medium' | 'large'
     maxTags?: number
     availableTags?: Array<{ label: string; value: number }>
     placeholder?: string
@@ -12,6 +13,7 @@ interface TagsMultiToggleProps {
 
 const props = withDefaults(defineProps<TagsMultiToggleProps>(), {
     mode: 'free',
+    size: 'medium',
     maxTags: 10,
     availableTags: () => [],
     placeholder: 'Add tags...'
@@ -96,8 +98,8 @@ const handleClickOutside = () => {
 </script>
 
 <template>
-    <div class="tags-multi-toggle">
-        <Dropdown v-model:shown="isDropdownOpen" :triggers="[]" :autoHide="false" placement="bottom-start"
+    <div class="tags-multi-toggle" :class="`size-${size}`">
+        <Dropdown v-model:shown="isDropdownOpen" :triggers="[]" :autoHide="true" placement="bottom-start"
             @apply-hide="handleClickOutside">
             <!-- Trigger: Input field with selected tags -->
             <div class="tags-input" @click="toggleDropdown">
@@ -154,13 +156,55 @@ const handleClickOutside = () => {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.5rem;
     background: hsl(var(--color-card-bg));
     border: 1px solid hsl(var(--color-border));
-    border-radius: var(--radius-medium);
+    border-radius: var(--radius-small);
     cursor: text;
-    min-height: 3rem;
+    min-height: 2.5rem;
     transition: border-color var(--duration) var(--ease);
+}
+
+/* Size variants */
+.tags-multi-toggle.size-small .tags-input {
+    padding: 0.25rem 0.5rem;
+    min-height: 2rem;
+    gap: 0.25rem;
+}
+
+.tags-multi-toggle.size-small .tag-pill {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.tags-multi-toggle.size-small .tag-search-input {
+    font-size: 0.75rem;
+    min-width: 80px;
+}
+
+.tags-multi-toggle.size-medium .tags-input {
+    padding: 0.5rem;
+    min-height: 2.5rem;
+}
+
+.tags-multi-toggle.size-medium .tag-pill {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.tags-multi-toggle.size-large .tags-input {
+    padding: 0.75rem;
+    min-height: 3rem;
+    gap: 0.75rem;
+}
+
+.tags-multi-toggle.size-large .tag-pill {
+    padding: 0.375rem 1rem;
+    font-size: 1rem;
+}
+
+.tags-multi-toggle.size-large .tag-search-input {
+    font-size: 1rem;
 }
 
 .tags-input:focus-within {

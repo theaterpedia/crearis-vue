@@ -89,7 +89,13 @@
       <SideContent v-if="showRightSidebar" placement="right"
         :layoutMode="siteLayout === 'fullTwo' ? 'fullTwo' : siteLayout === 'fullThree' ? 'fullThree' : null">
         <!-- Dynamic aside content based on asideOptions -->
+
+        <slot name="aside" />
+
         <Section v-if="asideOptions">
+
+
+
           <!-- pPostit -->
           <pPostit v-if="asideOptions.postit?.enabled" :title="asideOptions.postit.title"
             :content="asideOptions.postit.content" :color="asideOptions.postit.color" :isAside="true" />
@@ -325,7 +331,13 @@ watch([navbarSticky, navbarReappear], ([sticky, reappear]: [boolean, boolean]) =
 }, { immediate: true })
 
 // NEW LAYOUT SYSTEM: Navigation menu items - use prop if provided, otherwise use config
-const mainMenuItems: Ref<TopnavParentItem[]> = computed(() => props.navItems || mainMenuItemsConfig)
+// In dashboard mode, don't load standard navigation unless explicitly provided via navItems prop
+const mainMenuItems: Ref<TopnavParentItem[]> = computed(() => {
+  if (props.navbarMode === 'dashboard' && !props.navItems) {
+    return []
+  }
+  return props.navItems || mainMenuItemsConfig
+})
 
 // NEW LAYOUT SYSTEM: Layout Toggle Options - imported from settings
 // Use shallowRef to avoid making icon objects reactive (prevents Vue warning)

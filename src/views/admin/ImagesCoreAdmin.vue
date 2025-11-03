@@ -1,0 +1,908 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import PageLayout from '@/components/PageLayout.vue'
+import tagsMultiToggle from '@/components/images/tagsMultiToggle.vue'
+
+// Router
+const router = useRouter()
+
+// State
+const images = ref<any[]>([])
+const selectedImage = ref<any | null>(null)
+const originalImage = ref<any | null>(null)
+const loading = ref(false)
+const isDirty = ref(false)
+const statusOptions = ref<Array<{ id: number; value: number; name: string }>>([])
+const authorAdapter = ref<'unsplash' | 'cloudinary'>('unsplash')
+
+// Filters state
+const filterStatusId = ref<number | null>(null)
+const filterAgeGroup = ref<number | null>(null) // bits 0+1
+const filterSubjectType = ref<number | null>(null) // bits 2+3
+const filterAccessLevel = ref<number | null>(null) // bits 4+5
+const filterQuality = ref<number | null>(null) // bits 6+7
+
+// Filter options extracted from ctags bits
+const ageGroupOptions = [
+    { label: 'Other', value: 0 },
+    { label: 'Child', value: 1 },
+    { label: 'Teen', value: 2 },
+    { label: 'Adult', value: 3 }
+]
+
+const subjectTypeOptions = [
+    { label: 'Other', value: 0 },
+    { label: 'Group', value: 1 },
+    { label: 'Person', value: 2 },
+    { label: 'Portrait', value: 3 }
+]
+
+const accessLevelOptions = [
+    { label: 'Project', value: 0 },
+    { label: 'Public', value: 1 },
+    { label: 'Private', value: 2 },
+    { label: 'Internal', value: 3 }
+]
+
+const qualityOptions = [
+    { label: 'OK', value: 0 },
+    { label: 'Deprecated', value: 1 },
+    { label: 'Technical Error', value: 2 },
+    { label: 'Check Quality', value: 3 }
+]
+
+// RTags options (for choose-one role tags)
+const rtagsOptions = ref([
+    { label: 'Hero', value: 10 },
+    { label: 'Thumbnail', value: 20 },
+    { label: 'Background', value: 30 },
+    { label: 'Icon', value: 40 }
+])
+
+// Extract bits from ctags byte array
+const extractBits = (bytea: Uint8Array | null, startBit: number, numBits: number): number => {
+    if (!bytea || bytea.length === 0) return 0
+    const byte = bytea[0]
+    const mask = (1 << numBits) - 1
+    return (byte >> startBit) & mask
+}
+
+// Computed filtered images
+const filteredImages = computed(() => {
+    return images.value.filter(img => {
+        // Filter by status
+        if (filterStatusId.value !== null && img.status_id !== filterStatusId.value) {
+            return false
+        }
+
+        // Extract ctags bits
+        const ctags = img.ctags ? new Uint8Array(img.ctags) : null
+
+        // Filter by age group (bits 0-1)
+        if (filterAgeGroup.value !== null) {
+            const ageGroup = extractBits(ctags, 0, 2)
+            if (ageGroup !== filterAgeGroup.value) return false
+        }
+
+        // Filter by subject type (bits 2-3)
+        if (filterSubjectType.value !== null) {
+            const subjectType = extractBits(ctags, 2, 2)
+            if (subjectType !== filterSubjectType.value) return false
+        }
+
+        // Filter by access level (bits 4-5)
+        if (filterAccessLevel.value !== null) {
+            const accessLevel = extractBits(ctags, 4, 2)
+            if (accessLevel !== filterAccessLevel.value) return false
+        }
+
+        // Filter by quality (bits 6-7)
+        if (filterQuality.value !== null) {
+            const quality = extractBits(ctags, 6, 2)
+            if (quality !== filterQuality.value) return false
+        }
+
+        return true
+    })
+})
+
+// Fetch status options from API
+const fetchStatusOptions = async () => {
+    try {
+        const response = await fetch('/api/status?table=images')
+        if (!response.ok) throw new Error('Failed to fetch status options')
+        const data = await response.json()
+        statusOptions.value = data.items || []
+    } catch (error) {
+        console.error('Error fetching status options:', error)
+    }
+}
+
+// Fetch images from API
+const fetchImages = async () => {
+    loading.value = true
+    try {
+        const response = await fetch('/api/images')
+        if (!response.ok) throw new Error('Failed to fetch images')
+        const data = await response.json()
+        // API returns array directly, not wrapped in { images: [...] }
+        images.value = Array.isArray(data) ? data : []
+        if (images.value.length > 0 && !selectedImage.value) {
+            selectImage(images.value[0])
+        }
+    } catch (error) {
+        console.error('Error fetching images:', error)
+        alert('Failed to load images')
+    } finally {
+        loading.value = false
+    }
+}
+
+// Select an image for editing
+function selectImage(image: any) {
+    selectedImage.value = { ...image }
+
+    // Parse author if it's a string (database composite type)
+    if (typeof selectedImage.value.author === 'string') {
+        try {
+            selectedImage.value.author = JSON.parse(selectedImage.value.author)
+        } catch {
+            selectedImage.value.author = { adapter: 'unsplash' }
+        }
+    }
+
+    // Deep clone for dirty detection
+    originalImage.value = JSON.parse(JSON.stringify(selectedImage.value))
+
+    // Set authorAdapter from image data
+    authorAdapter.value = selectedImage.value.author?.adapter || 'unsplash'
+    isDirty.value = false
+}
+
+// Check if form is dirty
+function checkDirty() {
+    if (!selectedImage.value || !originalImage.value) {
+        isDirty.value = false
+        return
+    }
+
+    // Ensure author is an object
+    if (typeof selectedImage.value.author !== 'object' || selectedImage.value.author === null) {
+        selectedImage.value.author = { adapter: authorAdapter.value }
+    } else {
+        selectedImage.value.author.adapter = authorAdapter.value
+    }
+
+    // Convert Uint8Array to arrays for comparison
+    const current = {
+        status_id: selectedImage.value.status_id,
+        name: selectedImage.value.name,
+        alt_text: selectedImage.value.alt_text,
+        xmlid: selectedImage.value.xmlid,
+        ctags: selectedImage.value.ctags ? Array.from(new Uint8Array(selectedImage.value.ctags)) : null,
+        rtags: selectedImage.value.rtags ? Array.from(new Uint8Array(selectedImage.value.rtags)) : null,
+        author: selectedImage.value.author
+    }
+
+    const original = {
+        status_id: originalImage.value.status_id,
+        name: originalImage.value.name,
+        alt_text: originalImage.value.alt_text,
+        xmlid: originalImage.value.xmlid,
+        ctags: originalImage.value.ctags ? Array.from(new Uint8Array(originalImage.value.ctags)) : null,
+        rtags: originalImage.value.rtags ? Array.from(new Uint8Array(originalImage.value.rtags)) : null,
+        author: typeof originalImage.value.author === 'object' ? originalImage.value.author : {}
+    }
+
+    const currentStr = JSON.stringify(current)
+    const originalStr = JSON.stringify(original)
+
+    isDirty.value = currentStr !== originalStr
+
+    if (isDirty.value) {
+        console.log('Form is dirty - changes detected')
+        console.log('Current:', current)
+        console.log('Original:', original)
+    }
+}
+
+// Save all changes
+const saveChanges = async () => {
+    if (!selectedImage.value || !isDirty.value) return
+
+    try {
+        // Convert Uint8Array to array, but keep null if empty
+        const ctagsArray = selectedImage.value.ctags && selectedImage.value.ctags.length > 0
+            ? Array.from(new Uint8Array(selectedImage.value.ctags))
+            : null
+        const rtagsArray = selectedImage.value.rtags && selectedImage.value.rtags.length > 0
+            ? Array.from(new Uint8Array(selectedImage.value.rtags))
+            : null
+
+        const payload = {
+            status_id: selectedImage.value.status_id,
+            name: selectedImage.value.name,
+            alt_text: selectedImage.value.alt_text,
+            xmlid: selectedImage.value.xmlid,
+            ctags: ctagsArray,
+            rtags: rtagsArray,
+            author: selectedImage.value.author
+        }
+
+        console.log('Saving image with payload:', payload)
+
+        const response = await fetch(`/api/images/${selectedImage.value.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Server error:', errorText)
+            throw new Error(`Failed to update image: ${response.status} ${errorText}`)
+        }
+
+        const updatedImage = await response.json()
+        console.log('Server returned:', updatedImage)
+
+        // Update local state with server response
+        const index = images.value.findIndex(img => img.id === selectedImage.value.id)
+        if (index !== -1) {
+            images.value[index] = { ...updatedImage }
+            selectedImage.value = { ...updatedImage }
+        }
+
+        // Reset dirty state
+        originalImage.value = JSON.parse(JSON.stringify(selectedImage.value))
+        isDirty.value = false
+
+        console.log('Save completed successfully')
+    } catch (error) {
+        console.error('Error saving changes:', error)
+        alert(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+}
+
+// Set bits in ctags byte array
+const setBits = (bytea: Uint8Array | null, startBit: number, numBits: number, value: number): Uint8Array => {
+    const buffer = bytea && bytea.length > 0 ? new Uint8Array(bytea) : new Uint8Array(1)
+    const mask = (1 << numBits) - 1
+    const clearedByte = buffer[0] & ~(mask << startBit)
+    buffer[0] = clearedByte | ((value & mask) << startBit)
+    return buffer
+}
+
+// Update ctags - now just marks as dirty
+const updateCtags = (bitGroup: number, value: number) => {
+    if (!selectedImage.value) return
+
+    // bitGroup: 0=age(0-1), 1=subject(2-3), 2=access(4-5), 3=quality(6-7)
+    const startBit = bitGroup * 2
+    const currentCtags = selectedImage.value.ctags ? new Uint8Array(selectedImage.value.ctags) : null
+    selectedImage.value.ctags = setBits(currentCtags, startBit, 2, value)
+    checkDirty()
+}
+
+// Update rtags - now just marks as dirty
+const updateRtags = (newRtags: number[]) => {
+    if (!selectedImage.value) return
+    selectedImage.value.rtags = new Uint8Array(newRtags)
+    checkDirty()
+}
+
+// Update author subfields - now just marks as dirty
+const updateAuthor = (field: string, value: string) => {
+    if (!selectedImage.value) return
+    if (!selectedImage.value.author) {
+        selectedImage.value.author = {}
+    }
+    selectedImage.value.author[field] = value
+    checkDirty()
+}
+
+// Extract ctags bit groups for editing
+const ctagsAgeGroup = computed(() => {
+    if (!selectedImage.value?.ctags) return 0
+    const ctags = new Uint8Array(selectedImage.value.ctags)
+    return extractBits(ctags, 0, 2)
+})
+
+const ctagsSubjectType = computed(() => {
+    if (!selectedImage.value?.ctags) return 0
+    const ctags = new Uint8Array(selectedImage.value.ctags)
+    return extractBits(ctags, 2, 2)
+})
+
+const ctagsAccessLevel = computed(() => {
+    if (!selectedImage.value?.ctags) return 0
+    const ctags = new Uint8Array(selectedImage.value.ctags)
+    return extractBits(ctags, 4, 2)
+})
+
+const ctagsQuality = computed(() => {
+    if (!selectedImage.value?.ctags) return 0
+    const ctags = new Uint8Array(selectedImage.value.ctags)
+    return extractBits(ctags, 6, 2)
+})
+
+const rtagsAsArray = computed(() => {
+    if (!selectedImage.value?.rtags) return []
+    const rtags = new Uint8Array(selectedImage.value.rtags)
+    return Array.from(rtags)
+})
+
+// Get status name by value
+const getStatusName = (statusValue: number) => {
+    const status = statusOptions.value.find(s => s.value === statusValue)
+    return status ? status.name : `Status ${statusValue}`
+}
+
+// Reset filters
+const resetFilters = () => {
+    filterStatusId.value = null
+    filterAgeGroup.value = null
+    filterSubjectType.value = null
+    filterAccessLevel.value = null
+    filterQuality.value = null
+}
+
+onMounted(() => {
+    fetchStatusOptions()
+    fetchImages()
+})
+</script>
+
+<template>
+    <div class="images-core-admin">
+        <PageLayout setSiteLayout="fullTwo" navbarMode="dashboard">
+            <template #logo>
+                <span class="admin-logo">Images Core</span>
+            </template>
+
+            <!-- Navbar with filters -->
+            <template #topnav-actions>
+                <div class="filters-navbar">
+                    <!-- Status filter -->
+                    <select v-model="filterStatusId" class="filter-select">
+                        <option :value="null">All Status</option>
+                        <option v-for="status in statusOptions" :key="status.id" :value="status.value">
+                            {{ status.name }}
+                        </option>
+                    </select>
+
+                    <!-- Age Group filter (bits 0-1) -->
+                    <select v-model="filterAgeGroup" class="filter-select">
+                        <option :value="null">All Ages</option>
+                        <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+
+                    <!-- Subject Type filter (bits 2-3) -->
+                    <select v-model="filterSubjectType" class="filter-select">
+                        <option :value="null">All Subjects</option>
+                        <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+
+                    <!-- Access Level filter (bits 4-5) -->
+                    <select v-model="filterAccessLevel" class="filter-select">
+                        <option :value="null">All Access</option>
+                        <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+
+                    <!-- Quality filter (bits 6-7) -->
+                    <select v-model="filterQuality" class="filter-select">
+                        <option :value="null">All Quality</option>
+                        <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+
+                    <button class="btn-reset-filters" @click="resetFilters">
+                        Reset Filters
+                    </button>
+                </div>
+            </template>
+
+            <!-- Main content: Image list -->
+            <div class="main-content">
+                <div v-if="loading" class="loading-state">Loading images...</div>
+
+                <div v-else-if="filteredImages.length === 0" class="empty-state">
+                    No images found
+                </div>
+
+                <div v-else class="image-list">
+                    <div v-for="image in filteredImages" :key="image.id" class="image-row"
+                        :class="{ 'selected': selectedImage?.id === image.id }" @click="selectImage(image)">
+                        <!-- Avatar -->
+                        <div class="image-avatar">
+                            <img :src="image.shape_square || image.url || '/dummy.svg'" :alt="image.name" />
+                        </div>
+
+                        <!-- Fields -->
+                        <div class="image-fields">
+                            <div class="field-row">
+                                <span class="field-label">Status:</span>
+                                <span class="field-value">{{ getStatusName(image.status_id) }}</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label">Name:</span>
+                                <span class="field-value">{{ image.name || 'Untitled' }}</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label">Alt:</span>
+                                <span class="field-value">{{ image.alt_text || '—' }}</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label">XML ID:</span>
+                                <span class="field-value">{{ image.xmlid || '—' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header: Image preview -->
+            <template #header>
+                <div v-if="selectedImage" class="header-preview">
+                    <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
+                </div>
+            </template>
+
+            <!-- Aside: Selected image details -->
+            <template #aside>
+                <div class="aside-content">
+                    <div v-if="!selectedImage" class="no-selection">
+                        Select an image to view details
+                    </div>
+
+                    <div v-else class="image-details">
+                        <!-- Save button -->
+                        <div class="save-section">
+                            <button class="btn-save" :class="{ 'dirty': isDirty }" :disabled="!isDirty"
+                                @click="saveChanges">
+                                {{ isDirty ? 'Save Changes' : 'No Changes' }}
+                            </button>
+                        </div>
+
+                        <!-- Editable fields -->
+                        <div class="editable-fields">
+                            <!-- Status -->
+                            <div class="edit-row">
+                                <label>Status:</label>
+                                <select v-model="selectedImage.status_id" class="filter-select" @change="checkDirty()">
+                                    <option v-for="status in statusOptions" :key="status.id" :value="status.value">
+                                        {{ status.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Name -->
+                            <div class="edit-row">
+                                <label>Name:</label>
+                                <input v-model="selectedImage.name" type="text" class="edit-input"
+                                    placeholder="Untitled" @input="checkDirty()" />
+                            </div>
+
+                            <!-- Alt Text -->
+                            <div class="edit-row">
+                                <label>Alt Text:</label>
+                                <input v-model="selectedImage.alt_text" type="text" class="edit-input" placeholder="—"
+                                    @input="checkDirty()" />
+                            </div>
+
+                            <!-- XML ID -->
+                            <div class="edit-row">
+                                <label>XML ID:</label>
+                                <input v-model="selectedImage.xmlid" type="text" class="edit-input" placeholder="—"
+                                    @input="checkDirty()" />
+                            </div>
+
+                            <!-- CTags: 2-bit toggle groups -->
+                            <div class="edit-section">
+                                <h4>Content Tags (CTags)</h4>
+
+                                <div class="edit-row-with-hint">
+                                    <label>
+                                        Age Group
+                                        <span class="label-hint">bits 0-1</span>
+                                    </label>
+                                    <select :value="ctagsAgeGroup"
+                                        @change="updateCtags(0, parseInt(($event.target as HTMLSelectElement).value))"
+                                        class="filter-select">
+                                        <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="edit-row-with-hint">
+                                    <label>
+                                        Subject Type
+                                        <span class="label-hint">bits 2-3</span>
+                                    </label>
+                                    <select :value="ctagsSubjectType"
+                                        @change="updateCtags(1, parseInt(($event.target as HTMLSelectElement).value))"
+                                        class="filter-select">
+                                        <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="edit-row-with-hint">
+                                    <label>
+                                        Access Level
+                                        <span class="label-hint">bits 4-5</span>
+                                    </label>
+                                    <select :value="ctagsAccessLevel"
+                                        @change="updateCtags(2, parseInt(($event.target as HTMLSelectElement).value))"
+                                        class="filter-select">
+                                        <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="edit-row-with-hint">
+                                    <label>
+                                        Quality
+                                        <span class="label-hint">bits 6-7</span>
+                                    </label>
+                                    <select :value="ctagsQuality"
+                                        @change="updateCtags(3, parseInt(($event.target as HTMLSelectElement).value))"
+                                        class="filter-select">
+                                        <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                            <!-- Author Adapter Tabs -->
+                            <div class="edit-section">
+                                <div class="tabs-container">
+                                    <button class="tab-button" :class="{ active: authorAdapter === 'unsplash' }"
+                                        @click="authorAdapter = 'unsplash'; checkDirty()">
+                                        Unsplash
+                                    </button>
+                                    <button class="tab-button" :class="{ active: authorAdapter === 'cloudinary' }"
+                                        @click="authorAdapter = 'cloudinary'; checkDirty()">
+                                        Cloudinary
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </PageLayout>
+    </div>
+</template>
+
+<style scoped>
+.images-core-admin {
+    min-height: 100vh;
+}
+
+.admin-logo {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: hsl(var(--color-primary-base));
+}
+
+/* Header preview */
+.header-preview {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    background: hsl(var(--color-muted-bg));
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    box-shadow: 0 4px 12px hsla(0, 0%, 0%, 0.1);
+}
+
+.header-preview .preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+/* Filters navbar */
+.filters-navbar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-small);
+    background: hsl(var(--color-card-bg));
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.btn-reset-filters {
+    padding: 0.5rem 1rem;
+    background: hsl(var(--color-muted-bg));
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background var(--duration) var(--ease);
+}
+
+.btn-reset-filters:hover {
+    background: hsl(var(--color-accent-bg));
+}
+
+/* Main content area */
+.main-content {
+    padding: 2rem;
+    min-height: calc(100vh - 200px);
+}
+
+.loading-state,
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: hsl(var(--color-muted-contrast));
+}
+
+.image-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.image-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem;
+    height: 72px;
+    border-radius: var(--radius-medium);
+    cursor: pointer;
+    transition: background var(--duration) var(--ease);
+}
+
+.image-row:hover {
+    background: hsl(var(--color-muted-bg));
+}
+
+.image-row.selected {
+    background: hsla(var(--color-primary-base), 0.1);
+    border: 2px solid hsl(var(--color-primary-base));
+}
+
+.image-avatar {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: var(--radius-small);
+    overflow: hidden;
+    background: hsl(var(--color-muted-bg));
+}
+
+.image-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    font-size: 0.75rem;
+}
+
+.field-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.field-label {
+    font-weight: 600;
+    color: hsl(var(--color-muted-contrast));
+    min-width: 60px;
+}
+
+.field-value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Aside content (image details) */
+.aside-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.no-selection {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: hsl(var(--color-muted-contrast));
+    font-size: 1.125rem;
+}
+
+.image-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.save-section {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+    border-bottom: 2px solid hsl(var(--color-border));
+}
+
+.btn-save {
+    padding: 0.75rem 2rem;
+    background: hsl(var(--color-muted-bg));
+    border: 2px solid hsl(var(--color-border));
+    border-radius: var(--radius-medium);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    transition: all var(--duration) var(--ease);
+    opacity: 0.5;
+}
+
+.btn-save.dirty {
+    background: hsl(var(--color-primary-base));
+    color: hsl(var(--color-primary-contrast));
+    border-color: hsl(var(--color-primary-base));
+    cursor: pointer;
+    opacity: 1;
+}
+
+.btn-save.dirty:hover {
+    background: hsl(var(--color-primary-hover, var(--color-primary-base)));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px hsla(0, 0%, 0%, 0.15);
+}
+
+.btn-save:disabled {
+    cursor: not-allowed;
+}
+
+.editable-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.edit-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.edit-row>label {
+    min-width: 120px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: hsl(var(--color-muted-contrast));
+    flex-shrink: 0;
+}
+
+.edit-row .filter-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.edit-row-with-hint {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.edit-row-with-hint>label {
+    min-width: 120px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: hsl(var(--color-muted-contrast));
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.label-hint {
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: hsl(var(--color-muted-contrast));
+    font-style: italic;
+}
+
+.edit-row-with-hint .filter-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.edit-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem;
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-small);
+    background: hsl(var(--color-card-bg));
+    font-size: 0.875rem;
+    transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: hsl(var(--color-primary-base));
+    background: hsl(var(--color-card-bg-hover, var(--color-card-bg)));
+}
+
+.edit-section {
+    padding: 1.5rem;
+    background: hsl(var(--color-muted-bg));
+    border-radius: var(--radius-medium);
+}
+
+.edit-section h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.tabs-container {
+    display: flex;
+    gap: 0;
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-small);
+    overflow: hidden;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    background: hsl(var(--color-muted-bg));
+    border: none;
+    border-right: 1px solid hsl(var(--color-border));
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--color-muted-contrast));
+    opacity: 0.6;
+    cursor: pointer;
+    transition: all var(--duration) var(--ease);
+}
+
+.tab-button:last-child {
+    border-right: none;
+}
+
+.tab-button:hover {
+    opacity: 0.8;
+}
+
+.tab-button.active {
+    background: hsl(var(--color-primary-base));
+    color: hsl(var(--color-text-bright));
+    opacity: 1;
+    font-weight: 600;
+}
+</style>
