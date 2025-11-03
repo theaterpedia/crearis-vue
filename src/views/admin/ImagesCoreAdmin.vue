@@ -204,9 +204,6 @@ function selectImage(image: any) {
         selectedImage.value.rtags = new Uint8Array([])
     }
 
-    console.log('Selected image ctags:', selectedImage.value.ctags)
-    console.log('CTags byte value:', selectedImage.value.ctags[0])
-
     // Parse author if it's a string (database composite type)
     // Format: (adapter,file_id,account_id,folder_id,username,attribution)
     if (typeof selectedImage.value.author === 'string') {
@@ -366,11 +363,44 @@ function checkDirty() {
     const originalStr = JSON.stringify(original)
 
     isDirty.value = currentStr !== originalStr
+}
 
-    if (isDirty.value) {
-        console.log('Form is dirty - changes detected')
-        console.log('Current:', current)
-        console.log('Original:', original)
+// Delete image
+const deleteImage = async () => {
+    if (!selectedImage.value) return
+
+    if (!confirm(`Are you sure you want to delete "${selectedImage.value.name || 'this image'}"?`)) {
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/images/${selectedImage.value.id}`, {
+            method: 'DELETE'
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Server error:', errorText)
+            throw new Error(`Failed to delete image: ${response.status} ${errorText}`)
+        }
+
+        // Remove from local list
+        const index = images.value.findIndex(img => img.id === selectedImage.value.id)
+        if (index !== -1) {
+            images.value.splice(index, 1)
+        }
+
+        // Select next or previous image
+        if (images.value.length > 0) {
+            const nextIndex = Math.min(index, images.value.length - 1)
+            selectImage(images.value[nextIndex])
+        } else {
+            selectedImage.value = null
+            originalImage.value = null
+        }
+    } catch (error) {
+        console.error('Error deleting image:', error)
+        alert(`Failed to delete image: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
 }
 
@@ -402,8 +432,6 @@ const saveChanges = async () => {
             shape_thumb: selectedImage.value.shape_thumb
         }
 
-        console.log('Saving image with payload:', payload)
-
         const response = await fetch(`/api/images/${selectedImage.value.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -417,7 +445,6 @@ const saveChanges = async () => {
         }
 
         const updatedImage = await response.json()
-        console.log('Server returned:', updatedImage)
 
         // Convert Buffer to Uint8Array for ctags/rtags (same as selectImage)
         if (updatedImage.ctags) {
@@ -440,8 +467,6 @@ const saveChanges = async () => {
             updatedImage.rtags = new Uint8Array([])
         }
 
-        console.log('CTags byte value after conversion:', updatedImage.ctags[0])
-
         // Update local state with server response
         const index = images.value.findIndex(img => img.id === selectedImage.value.id)
         if (index !== -1) {
@@ -452,8 +477,6 @@ const saveChanges = async () => {
         // Reset dirty state
         originalImage.value = JSON.parse(JSON.stringify(selectedImage.value))
         isDirty.value = false
-
-        console.log('Save completed successfully')
     } catch (error) {
         console.error('Error saving changes:', error)
         alert(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -501,33 +524,25 @@ const updateAuthor = (field: string, value: string) => {
 const ctagsAgeGroup = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    const value = extractBits(ctags, 0, 2)
-    console.log('ctagsAgeGroup computed:', value)
-    return value
+    return extractBits(ctags, 0, 2)
 })
 
 const ctagsSubjectType = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    const value = extractBits(ctags, 2, 2)
-    console.log('ctagsSubjectType computed:', value)
-    return value
+    return extractBits(ctags, 2, 2)
 })
 
 const ctagsAccessLevel = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    const value = extractBits(ctags, 4, 2)
-    console.log('ctagsAccessLevel computed:', value)
-    return value
+    return extractBits(ctags, 4, 2)
 })
 
 const ctagsQuality = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    const value = extractBits(ctags, 6, 2)
-    console.log('ctagsQuality computed:', value)
-    return value
+    return extractBits(ctags, 6, 2)
 })
 
 const rtagsAsArray = computed(() => {
@@ -553,9 +568,7 @@ const resetFilters = () => {
 
 // Handle import save
 const handleImportSave = async (importedImages: any[]) => {
-    console.log('Importing images:', importedImages)
-    // TODO: Implement actual import logic via API
-    // For now, just close the modal and refresh
+    // Close the modal and refresh the image list
     showImportModal.value = false
     await fetchImages()
 }
@@ -681,8 +694,11 @@ onMounted(() => {
                     </div>
 
                     <div v-else class="image-details">
-                        <!-- Save button -->
+                        <!-- Save and Delete buttons -->
                         <div class="save-section">
+                            <button class="btn-delete" @click="deleteImage">
+                                Delete
+                            </button>
                             <button class="btn-save" :class="{ 'dirty': isDirty }" :disabled="!isDirty"
                                 @click="saveChanges">
                                 {{ isDirty ? 'Save Changes' : 'No Changes' }}
@@ -969,9 +985,10 @@ onMounted(() => {
     color: var(--color-muted-contrast);
 }
 
+/* Two-column tile layout */
 .image-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
     gap: 0.5rem;
 }
 
@@ -1056,8 +1073,28 @@ onMounted(() => {
 .save-section {
     display: flex;
     justify-content: center;
+    gap: 1rem;
     padding: 1rem 0;
     border-bottom: 2px solid var(--color-border);
+}
+
+.btn-delete {
+    padding: 0.75rem 2rem;
+    background: var(--color-error-bg, #fee);
+    color: var(--color-error-contrast, #c00);
+    border: 2px solid var(--color-error-base, #c00);
+    border-radius: var(--radius-medium);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration) var(--ease);
+}
+
+.btn-delete:hover {
+    background: var(--color-error-base, #c00);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px oklcha(0, 0%, 0%, 0.15);
 }
 
 .btn-save {

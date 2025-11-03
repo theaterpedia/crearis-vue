@@ -158,10 +158,9 @@ const buildCtags = (): Uint8Array => {
     byte |= (ctagsSubjectType.value & 0x03) << 2    // bits 2-3
     byte |= (ctagsAccessLevel.value & 0x03) << 4    // bits 4-5
     byte |= (ctagsQuality.value & 0x03) << 6        // bits 6-7
-    return new Uint8Array([byte])
-}
 
-// Handle save - actually call the import API
+    return new Uint8Array([byte])
+}// Handle save - actually call the import API
 const handleSave = async () => {
     if (importedImages.value.length === 0) {
         alert('Please add at least one image URL')
@@ -272,7 +271,7 @@ watch(() => props.isOpen, (newValue) => {
 </script>
 
 <template>
-    <Dropdown :shown="isOpen" :triggers="[]" :autoHide="false" placement="center">
+    <Dropdown :shown="isOpen" :triggers="[]" :autoHide="false">
         <template #popper>
             <div class="cimg-import-modal">
                 <div class="modal-header">
@@ -368,7 +367,7 @@ watch(() => props.isOpen, (newValue) => {
                                 Age Group
                                 <span class="label-hint">bits 0-1</span>
                             </label>
-                            <select v-model="ctagsAgeGroup" class="form-select">
+                            <select v-model.number="ctagsAgeGroup" class="form-select">
                                 <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
                                 </option>
@@ -380,7 +379,7 @@ watch(() => props.isOpen, (newValue) => {
                                 Subject Type
                                 <span class="label-hint">bits 2-3</span>
                             </label>
-                            <select v-model="ctagsSubjectType" class="form-select">
+                            <select v-model.number="ctagsSubjectType" class="form-select">
                                 <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
                                 </option>
@@ -392,7 +391,7 @@ watch(() => props.isOpen, (newValue) => {
                                 Access Level
                                 <span class="label-hint">bits 4-5</span>
                             </label>
-                            <select v-model="ctagsAccessLevel" class="form-select">
+                            <select v-model.number="ctagsAccessLevel" class="form-select">
                                 <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
                                 </option>
@@ -404,7 +403,7 @@ watch(() => props.isOpen, (newValue) => {
                                 Quality
                                 <span class="label-hint">bits 6-7</span>
                             </label>
-                            <select v-model="ctagsQuality" class="form-select">
+                            <select v-model.number="ctagsQuality" class="form-select">
                                 <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
                                 </option>
