@@ -91,7 +91,7 @@ export default defineEventHandler(async (event) => {
                         const compositeValues = [
                             shape.x || null,
                             shape.y || null,
-                            null,  // z - not used yet
+                            shape.z || null,
                             shape.url || '',
                             null   // json - not used yet
                         ]

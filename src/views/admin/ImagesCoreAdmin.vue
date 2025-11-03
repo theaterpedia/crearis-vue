@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import tagsMultiToggle from '@/components/images/tagsMultiToggle.vue'
+import cimgImport from '@/components/images/cimgImport.vue'
 
 // Router
 const router = useRouter()
@@ -16,6 +17,7 @@ const isDirty = ref(false)
 const statusOptions = ref<Array<{ id: number; value: number; name: string }>>([])
 const authorAdapter = ref<'unsplash' | 'cloudinary'>('unsplash')
 const activeShapeTab = ref<'square' | 'wide' | 'vertical' | 'thumb'>('square')
+const showImportModal = ref(false)
 
 // Filters state
 const filterStatusId = ref<number | null>(null)
@@ -124,18 +126,18 @@ const changeShapeTab = (tab: 'square' | 'wide' | 'vertical' | 'thumb') => {
 }
 
 // Update shape fields
-const updateShapeField = (field: 'x' | 'y' | 'url', value: string | null) => {
+const updateShapeField = (field: 'x' | 'y' | 'z' | 'url', value: string | null) => {
     if (!selectedImage.value) return
 
     const shapeKey = getShapeFieldName(activeShapeTab.value)
 
     if (!selectedImage.value[shapeKey]) {
-        selectedImage.value[shapeKey] = { x: null, y: null, url: '' }
+        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: '' }
     }
 
     if (typeof selectedImage.value[shapeKey] === 'string') {
         // Parse composite type if needed
-        selectedImage.value[shapeKey] = { x: null, y: null, url: selectedImage.value[shapeKey] }
+        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: selectedImage.value[shapeKey] }
     }
 
     selectedImage.value[shapeKey][field] = value
@@ -247,10 +249,10 @@ function selectImage(image: any) {
         parts.push(current)
 
         // Database format: (x, y, z, url, json)
-        // We only use x, y, and url
         return {
             x: parts[0] ? parseInt(parts[0]) : null,
             y: parts[1] ? parseInt(parts[1]) : null,
+            z: parts[2] ? parseInt(parts[2]) : null,
             url: parts[3] || ''
         }
     }
@@ -491,6 +493,15 @@ const resetFilters = () => {
     filterQuality.value = null
 }
 
+// Handle import save
+const handleImportSave = async (importedImages: any[]) => {
+    console.log('Importing images:', importedImages)
+    // TODO: Implement actual import logic via API
+    // For now, just close the modal and refresh
+    showImportModal.value = false
+    await fetchImages()
+}
+
 onMounted(() => {
     fetchStatusOptions()
     fetchImages()
@@ -550,6 +561,10 @@ onMounted(() => {
                     <button class="btn-reset-filters" @click="resetFilters">
                         Reset Filters
                     </button>
+
+                    <button class="btn-import" @click="showImportModal = true">
+                        Import Images
+                    </button>
                 </div>
             </template>
 
@@ -566,7 +581,8 @@ onMounted(() => {
                         :class="{ 'selected': selectedImage?.id === image.id }" @click="selectImage(image)">
                         <!-- Avatar -->
                         <div class="image-avatar">
-                            <img :src="image.shape_square || image.url || '/dummy.svg'" :alt="image.name" />
+                            <img :src="(image.url || '/dummy.svg') + (image.url ? '?w=72&h=72&fit=crop' : '')"
+                                :alt="image.name" />
                         </div>
 
                         <!-- Fields -->
@@ -732,7 +748,7 @@ onMounted(() => {
                                     <div class="edit-row">
                                         <label>Root URL:</label>
                                         <textarea v-model="selectedImage.url" class="edit-textarea url-textarea"
-                                            rows="2" placeholder="Main image URL" @input="checkDirty()"></textarea>
+                                            rows="5" placeholder="Main image URL" @input="checkDirty()"></textarea>
                                     </div>
 
                                     <!-- Shape Tabs -->
@@ -779,7 +795,9 @@ onMounted(() => {
                                                         type="number" class="edit-input" placeholder="—" />
                                                 </div>
                                                 <div class="param-field">
-                                                    <input type="number" class="edit-input" placeholder="—" disabled />
+                                                    <input :value="currentShape?.z || ''"
+                                                        @input="updateShapeField('z', ($event.target as HTMLInputElement).value || null)"
+                                                        type="number" class="edit-input" placeholder="—" />
                                                 </div>
                                             </div>
                                         </div>
@@ -789,7 +807,7 @@ onMounted(() => {
                                             <label>URL:</label>
                                             <textarea :value="currentShape?.url || ''"
                                                 @input="updateShapeField('url', ($event.target as HTMLTextAreaElement).value)"
-                                                class="edit-textarea url-textarea" rows="2"
+                                                class="edit-textarea url-textarea" rows="5"
                                                 placeholder="Enter image URL"></textarea>
                                         </div>
                                     </div>
@@ -800,6 +818,9 @@ onMounted(() => {
                 </div>
             </template>
         </PageLayout>
+
+        <!-- Import Modal -->
+        <cimgImport :isOpen="showImportModal" @update:isOpen="showImportModal = $event" @save="handleImportSave" />
     </div>
 </template>
 
@@ -851,7 +872,8 @@ onMounted(() => {
     cursor: pointer;
 }
 
-.btn-reset-filters {
+.btn-reset-filters,
+.btn-import {
     padding: 0.5rem 1rem;
     background: var(--color-muted-bg);
     border: 1px solid var(--color-border);
@@ -861,8 +883,19 @@ onMounted(() => {
     transition: background var(--duration) var(--ease);
 }
 
-.btn-reset-filters:hover {
+.btn-reset-filters:hover,
+.btn-import:hover {
     background: var(--color-accent-bg);
+}
+
+.btn-import {
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-base);
+}
+
+.btn-import:hover {
+    opacity: 0.9;
 }
 
 /* Main content area */
