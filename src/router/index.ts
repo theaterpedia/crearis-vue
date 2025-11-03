@@ -23,6 +23,13 @@ const router = createRouter({
 
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/admin/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true, role: 'base' } },
+
+    // User routes
+    { path: '/users/:id/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true } },
+
+    // Site routes
+    { path: '/sites/:id/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true } },
 
     // Demo routes - Floating Post-Its
     { path: '/demo/float-hard', component: () => import('../views/Demo/DemoFloatHard.vue') },

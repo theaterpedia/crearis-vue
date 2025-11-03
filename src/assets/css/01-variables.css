@@ -19,6 +19,19 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --duration: 150ms;
   --transition: all var(--duration) var(--ease);
+
+  /* Image system dimensions (336px base = 21rem) */
+  --tagline-small-height: 1.09rem;
+  /* 17.43px */
+  --card-heading: 3.585rem;
+  /* 57.36px */
+  --card-height-min: 10.5rem;
+  /* 168px */
+  --card-height: 14.125rem;
+  /* 226px */
+  --avatar: 10.5rem;
+  /* 168px */
+
   /*--radius: var(--radius-medium) ... and a lot more
   -> 00-theme.ts > shall not be expoted here,
   -> export via package/themes/theme.ts */
