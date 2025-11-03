@@ -399,4 +399,194 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             await db.run('DELETE FROM images WHERE id = $1', [testImageId])
         })
     })
+
+    // ====================================================================
+    // SCENARIO H: Propagation to Entity Tables
+    // ====================================================================
+    describe('Scenario H: img_* fields propagate to entity tables', () => {
+        it('should propagate img_* fields when image is inserted', async () => {
+            // 1. Create an image
+            const imageResult = await db.get(`
+                INSERT INTO images (name, url, ctags, shape_thumb, shape_square, shape_wide, shape_vertical)
+                VALUES ('Test Image', $1, $2, $3, $4, $5, $6)
+                RETURNING id, img_show, img_thumb, img_square, img_wide, img_vert
+            `, [
+                'https://images.unsplash.com/test-propagation',
+                Buffer.from([0x01]), // quality ok
+                '(,,,https://thumb.test.com/image.jpg,)',
+                '(,,,https://square.test.com/image.jpg,)',
+                '(,,,https://wide.test.com/image.jpg,)',
+                '(,,,https://vert.test.com/image.jpg,)'
+            ])
+            const imageId = imageResult.id
+
+            // 2. Create a user with this image
+            const userResult = await db.get(`
+                INSERT INTO users (sysmail, username, password, role, img_id)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+            `, ['test-propagation@example.com', 'Test User', 'password', 'user', imageId])
+            const userId = userResult.id
+
+            // Manually trigger propagation by updating a field
+            await db.run(`UPDATE images SET img_show = img_show WHERE id = $1`, [imageId])
+
+            // 3. Fetch user and verify img_* fields were propagated
+            const user = await db.get(`
+                SELECT img_show, img_thumb, img_square, img_wide, img_vert
+                FROM users
+                WHERE id = $1
+            `, [userId])
+
+            expect(user.img_show).toBe(true)
+            expect(user.img_thumb).toEqual({ url: 'https://thumb.test.com/image.jpg' })
+            expect(user.img_square).toEqual({ url: 'https://square.test.com/image.jpg' })
+            expect(user.img_wide).toEqual({ url: 'https://wide.test.com/image.jpg' })
+            expect(user.img_vert).toEqual({ url: 'https://vert.test.com/image.jpg' })
+
+            // Cleanup
+            await db.run('DELETE FROM users WHERE id = $1', [userId])
+            await db.run('DELETE FROM images WHERE id = $1', [imageId])
+        })
+
+        it('should propagate img_* fields when image is updated', async () => {
+            // 1. Create an image
+            const imageResult = await db.get(`
+                INSERT INTO images (name, url, ctags, shape_square)
+                VALUES ('Test Image', $1, $2, $3)
+                RETURNING id
+            `, [
+                'https://images.unsplash.com/test-update',
+                Buffer.from([0x01]),
+                '(,,,https://square-v1.test.com/image.jpg,)'
+            ])
+            const imageId = imageResult.id
+
+            // 2. Create an event with this image
+            const eventResult = await db.get(`
+                INSERT INTO events (name, img_id)
+                VALUES ($1, $2)
+                RETURNING id
+            `, ['Test Event', imageId])
+            const eventId = eventResult.id
+
+            // 3. Update the image (this should trigger propagation to events)
+            await db.run(`
+                UPDATE images
+                SET shape_square = $1,
+                    shape_wide = $2
+                WHERE id = $3
+            `, [
+                '(,,,https://square-v2.test.com/image.jpg,)',
+                '(,,,https://wide-v2.test.com/image.jpg,)',
+                imageId
+            ])
+
+            // 4. Fetch event and verify img_* fields were updated
+            const event = await db.get(`
+                SELECT img_square, img_wide
+                FROM events
+                WHERE id = $1
+            `, [eventId])
+
+            expect(event.img_square).toEqual({ url: 'https://square-v2.test.com/image.jpg' })
+            expect(event.img_wide).toEqual({ url: 'https://wide-v2.test.com/image.jpg' })
+
+            // Cleanup
+            await db.run('DELETE FROM events WHERE id = $1', [eventId])
+            await db.run('DELETE FROM images WHERE id = $1', [imageId])
+        })
+
+        it('should propagate to multiple entity tables simultaneously', async () => {
+            // 1. Create an image
+            const imageResult = await db.get(`
+                INSERT INTO images (name, url, ctags, shape_square)
+                VALUES ('Test Image', $1, $2, $3)
+                RETURNING id
+            `, [
+                'https://images.unsplash.com/test-multi',
+                Buffer.from([0x40]), // is_deprecated (quality = 64)
+                '(,,,https://square-multi.test.com/image.jpg,)'
+            ])
+            const imageId = imageResult.id
+
+            // 2. Create entities in different tables with this image
+            const userResult = await db.get(`
+                INSERT INTO users (sysmail, username, password, role, img_id)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+            `, ['multi-1@example.com', 'Test User Multi', 'password', 'user', imageId])
+
+            const instructorResult = await db.get(`
+                INSERT INTO instructors (name, img_id)
+                VALUES ($1, $2)
+                RETURNING id
+            `, ['Test Instructor', imageId])
+
+            const postResult = await db.get(`
+                INSERT INTO posts (name, img_id)
+                VALUES ($1, $2)
+                RETURNING id
+            `, ['Test Post', imageId])
+
+            // Trigger propagation
+            await db.run(`UPDATE images SET img_show = img_show WHERE id = $1`, [imageId])
+
+            // 3. Verify all entity tables received the img_* fields
+            const user = await db.get(`SELECT img_show, img_square FROM users WHERE id = $1`, [userResult.id])
+            const instructor = await db.get(`SELECT img_show, img_square FROM instructors WHERE id = $1`, [instructorResult.id])
+            const post = await db.get(`SELECT img_show, img_square FROM posts WHERE id = $1`, [postResult.id])
+
+            // img_show should be true for all (quality = 64 = is_deprecated, which is "ok" status)
+            expect(user.img_show).toBe(true)
+            expect(instructor.img_show).toBe(true)
+            expect(post.img_show).toBe(true)
+
+            // All should have the same img_square
+            const expectedSquare = { url: 'https://square-multi.test.com/image.jpg' }
+            expect(user.img_square).toEqual(expectedSquare)
+            expect(instructor.img_square).toEqual(expectedSquare)
+            expect(post.img_square).toEqual(expectedSquare)
+
+            // Cleanup
+            await db.run('DELETE FROM users WHERE id = $1', [userResult.id])
+            await db.run('DELETE FROM instructors WHERE id = $1', [instructorResult.id])
+            await db.run('DELETE FROM posts WHERE id = $1', [postResult.id])
+            await db.run('DELETE FROM images WHERE id = $1', [imageId])
+        })
+
+        it('should backfill img_* fields for existing entities', async () => {
+            // This test verifies the migration backfill worked correctly
+            // We'll use the test image with id=5 from beforeAll
+
+            // 1. Create a project with the existing test image (id=5)
+            // Projects requires domaincode (NOT NULL, lowercase with underscores only)
+            const projectResult = await db.get(`
+                INSERT INTO projects (name, domaincode, img_id)
+                VALUES ($1, $2, $3)
+                RETURNING id
+            `, ['Test Project for Backfill', 'test_backfill_project', 5])
+            const projectId = projectResult.id
+
+            // Trigger propagation
+            await db.run(`UPDATE images SET img_show = img_show WHERE id = $1`, [5])
+
+            // 2. Verify the project has img_* fields from image id=5
+            const project = await db.get(`
+                SELECT img_show, img_thumb, img_square, img_wide, img_vert
+                FROM projects
+                WHERE id = $1
+            `, [projectId])
+
+            // Should match the expected values from test image id=5
+            expect(project.img_show).toBe(true) // ctags = 0x01, quality ok
+            expect(project.img_thumb).toHaveProperty('url')
+            expect(project.img_thumb.url).toContain('thumb.images.unsplash.com')
+            expect(project.img_square).toHaveProperty('url')
+            expect(project.img_square.url).toContain('square.images.unsplash.com')
+
+            // Cleanup
+            await db.run('DELETE FROM projects WHERE id = $1', [projectId])
+        })
+    })
 })

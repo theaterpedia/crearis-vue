@@ -3813,6 +3813,121 @@ export const migration = {
             console.log('    ✓ Created trigger_compute_image_shapes on images table')
 
             console.log('\n✅ Chapter 14 completed: Image shape reducer trigger added to images table')
+
+            // ---------------------------------------------------------------
+            // 14.2: Add img_* fields to entity tables
+            // ---------------------------------------------------------------
+            console.log('\n  📊 Adding img_* fields to entity tables for performance...')
+
+            const entityTables = ['users', 'instructors', 'events', 'locations', 'posts', 'projects']
+
+            for (const table of entityTables) {
+                await db.exec(`
+                    ALTER TABLE ${table}
+                    ADD COLUMN IF NOT EXISTS img_show BOOLEAN DEFAULT FALSE,
+                    ADD COLUMN IF NOT EXISTS img_thumb JSONB,
+                    ADD COLUMN IF NOT EXISTS img_square JSONB,
+                    ADD COLUMN IF NOT EXISTS img_wide JSONB,
+                    ADD COLUMN IF NOT EXISTS img_vert JSONB
+                `)
+                console.log(`    ✓ Added img_* fields to ${table}`)
+            }
+
+            // ---------------------------------------------------------------
+            // 14.3: Create trigger to propagate img_* changes to entity tables
+            // ---------------------------------------------------------------
+            console.log('\n  🔧 Creating trigger to propagate img_* changes to entity tables...')
+
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION propagate_image_fields_to_entities()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    -- Update all entity tables that reference this image
+                    UPDATE users SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    UPDATE instructors SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    UPDATE events SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    UPDATE locations SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    UPDATE posts SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    UPDATE projects SET 
+                        img_show = NEW.img_show,
+                        img_thumb = NEW.img_thumb,
+                        img_square = NEW.img_square,
+                        img_wide = NEW.img_wide,
+                        img_vert = NEW.img_vert
+                    WHERE img_id = NEW.id;
+
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            `)
+            console.log('    ✓ Created propagate_image_fields_to_entities() function')
+
+            await db.exec(`
+                DROP TRIGGER IF EXISTS trigger_propagate_to_entities ON images;
+                CREATE TRIGGER trigger_propagate_to_entities
+                AFTER INSERT OR UPDATE OF img_show, img_thumb, img_square, img_wide, img_vert, 
+                    shape_thumb, shape_square, shape_wide, shape_vertical ON images
+                FOR EACH ROW
+                EXECUTE FUNCTION propagate_image_fields_to_entities();
+            `)
+            console.log('    ✓ Created trigger_propagate_to_entities on images table (fires on img_* and shape_* changes)')
+
+            // ---------------------------------------------------------------
+            // 14.4: Backfill existing data
+            // ---------------------------------------------------------------
+            console.log('\n  🔄 Backfilling img_* fields for existing entity records...')
+
+            for (const table of entityTables) {
+                await db.exec(`
+                    UPDATE ${table} e
+                    SET 
+                        img_show = i.img_show,
+                        img_thumb = i.img_thumb,
+                        img_square = i.img_square,
+                        img_wide = i.img_wide,
+                        img_vert = i.img_vert
+                    FROM images i
+                    WHERE e.img_id = i.id
+                `)
+                console.log(`    ✓ Backfilled img_* fields for ${table}`)
+            }
+
+            console.log('\n✅ Chapter 14 completed: Image fields added to entity tables with propagation trigger')
         } else {
             console.log('    ⚠️  SQLite: Computed columns and triggers not supported')
         }
