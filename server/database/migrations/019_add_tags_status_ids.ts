@@ -3702,136 +3702,117 @@ export const migration = {
             `)
             console.log('    ✓ Created reduce_image_shape helper function')
 
-            const tables = ['users', 'instructors', 'events', 'locations', 'posts', 'projects']
-
-            // Add plain columns (cannot be GENERATED since they require JOIN to images table)
-            for (const table of tables) {
-                await db.exec(`
-                    ALTER TABLE ${table}
-                    ADD COLUMN IF NOT EXISTS img_show BOOLEAN DEFAULT FALSE,
-                    ADD COLUMN IF NOT EXISTS img_thumb TEXT DEFAULT 'dummy',
-                    ADD COLUMN IF NOT EXISTS img_square TEXT DEFAULT 'dummy',
-                    ADD COLUMN IF NOT EXISTS img_wide TEXT DEFAULT 'dummy',
-                    ADD COLUMN IF NOT EXISTS img_vert TEXT DEFAULT 'dummy'
-                `)
-                console.log(`    ✓ Added 5 image performance fields to ${table}`)
-            }
-
-            // Create trigger function to compute image performance fields
+            // TODO: READD Fields
+            // Add img_thumb, img_square, img_wide, img_vert (JSONB) and img_show (BOOLEAN) 
+            // to images table
+            console.log('\n  📊 Adding computed fields to images table...')
             await db.exec(`
-                CREATE OR REPLACE FUNCTION update_entity_image_fields()
+                ALTER TABLE images
+                ADD COLUMN IF NOT EXISTS img_show BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS img_thumb JSONB,
+                ADD COLUMN IF NOT EXISTS img_square JSONB,
+                ADD COLUMN IF NOT EXISTS img_wide JSONB,
+                ADD COLUMN IF NOT EXISTS img_vert JSONB
+            `)
+            console.log('    ✓ Added img_show (BOOLEAN) and 4 JSONB fields (img_thumb, img_square, img_wide, img_vert) to images table')
+
+            // TODO: READD reduceImageShape
+            // Create trigger on images table to compute the 4 JSONB fields based on shape composites
+            // This will be a row-level trigger that only operates on the images table itself
+            console.log('\n  🔧 Creating image shape reducer trigger...')
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION compute_image_shape_fields()
                 RETURNS TRIGGER AS $$
                 DECLARE
-                    img_record RECORD;
-                    show_img BOOLEAN;
+                    fallback_json JSONB;
                 BEGIN
-                    -- If img_id is NULL, set all to defaults
-                    IF NEW.img_id IS NULL THEN
-                        NEW.img_show := FALSE;
-                        NEW.img_thumb := 'dummy';
-                        NEW.img_square := 'dummy';
-                        NEW.img_wide := 'dummy';
-                        NEW.img_vert := 'dummy';
-                        RETURN NEW;
-                    END IF;
+                    -- Compute img_show: true if quality bits (6+7) are 0 (ok) or 64 (is_deprecated)
+                    NEW.img_show := (get_byte(NEW.ctags, 0) & 192) IN (0, 64);
 
-                    -- Fetch image data
-                    SELECT * INTO img_record FROM images WHERE id = NEW.img_id;
-
-                    IF NOT FOUND THEN
-                        NEW.img_show := FALSE;
-                        NEW.img_thumb := 'dummy';
-                        NEW.img_square := 'dummy';
-                        NEW.img_wide := 'dummy';
-                        NEW.img_vert := 'dummy';
-                        RETURN NEW;
-                    END IF;
-
-                    -- Compute img_show: true if status is ok (bits 6+7 = 0) or is_deprecated (bits 6+7 = 64)
-                    show_img := (get_byte(img_record.ctags, 0) & 192) IN (0, 64);
-                    NEW.img_show := show_img;
-
-                    -- Compute img_thumb
-                    IF NOT show_img THEN
-                        NEW.img_thumb := 'dummy';
-                    ELSIF (img_record.shape_thumb).url IS NOT NULL THEN
-                        NEW.img_thumb := reduce_image_shape(img_record.shape_thumb);
-                    ELSIF (img_record.shape_square).url IS NOT NULL THEN
-                        NEW.img_thumb := reduce_image_shape(img_record.shape_square);
+                    -- Loop 1: Compute img_square (creates fallback for img_thumb)
+                    IF (NEW.shape_square).json IS NOT NULL THEN
+                        NEW.img_square := (NEW.shape_square).json;
+                    ELSIF (NEW.shape_square).x IS NOT NULL OR (NEW.shape_square).y IS NOT NULL OR (NEW.shape_square).z IS NOT NULL THEN
+                        NEW.img_square := jsonb_build_object(
+                            'type', 'params',
+                            'x', (NEW.shape_square).x,
+                            'y', (NEW.shape_square).y,
+                            'z', (NEW.shape_square).z
+                        );
+                    ELSIF (NEW.shape_square).url IS NOT NULL THEN
+                        NEW.img_square := jsonb_build_object('url', (NEW.shape_square).url);
                     ELSE
-                        NEW.img_thumb := img_record.url;
+                        NEW.img_square := jsonb_build_object('error', true);
+                    END IF;
+                    
+                    -- Store fallback for Loop 2
+                    fallback_json := NEW.img_square;
+
+                    -- Loop 2: Compute img_thumb (can use fallback from img_square)
+                    IF (NEW.shape_thumb).json IS NOT NULL THEN
+                        NEW.img_thumb := (NEW.shape_thumb).json;
+                    ELSIF (NEW.shape_thumb).x IS NOT NULL OR (NEW.shape_thumb).y IS NOT NULL OR (NEW.shape_thumb).z IS NOT NULL THEN
+                        NEW.img_thumb := jsonb_build_object(
+                            'type', 'params',
+                            'x', (NEW.shape_thumb).x,
+                            'y', (NEW.shape_thumb).y,
+                            'z', (NEW.shape_thumb).z
+                        );
+                    ELSIF (NEW.shape_thumb).url IS NOT NULL THEN
+                        NEW.img_thumb := jsonb_build_object('url', (NEW.shape_thumb).url);
+                    ELSE
+                        -- Use fallback from img_square
+                        NEW.img_thumb := fallback_json;
                     END IF;
 
-                    -- Compute img_square
-                    IF NOT show_img THEN
-                        NEW.img_square := 'dummy';
-                    ELSIF (img_record.shape_square).url IS NOT NULL THEN
-                        NEW.img_square := reduce_image_shape(img_record.shape_square);
+                    -- Loop 3: Compute img_wide (no fallback, use enabled:false)
+                    IF (NEW.shape_wide).json IS NOT NULL THEN
+                        NEW.img_wide := (NEW.shape_wide).json;
+                    ELSIF (NEW.shape_wide).x IS NOT NULL OR (NEW.shape_wide).y IS NOT NULL OR (NEW.shape_wide).z IS NOT NULL THEN
+                        NEW.img_wide := jsonb_build_object(
+                            'type', 'params',
+                            'x', (NEW.shape_wide).x,
+                            'y', (NEW.shape_wide).y,
+                            'z', (NEW.shape_wide).z
+                        );
+                    ELSIF (NEW.shape_wide).url IS NOT NULL THEN
+                        NEW.img_wide := jsonb_build_object('url', (NEW.shape_wide).url);
                     ELSE
-                        NEW.img_square := img_record.url;
+                        NEW.img_wide := jsonb_build_object('enabled', false);
                     END IF;
 
-                    -- Compute img_wide
-                    IF NOT show_img THEN
-                        NEW.img_wide := 'dummy';
-                    ELSIF (img_record.shape_wide).url IS NOT NULL THEN
-                        NEW.img_wide := reduce_image_shape(img_record.shape_wide);
+                    -- Loop 4: Compute img_vert (no fallback, use enabled:false)
+                    IF (NEW.shape_vertical).json IS NOT NULL THEN
+                        NEW.img_vert := (NEW.shape_vertical).json;
+                    ELSIF (NEW.shape_vertical).x IS NOT NULL OR (NEW.shape_vertical).y IS NOT NULL OR (NEW.shape_vertical).z IS NOT NULL THEN
+                        NEW.img_vert := jsonb_build_object(
+                            'type', 'params',
+                            'x', (NEW.shape_vertical).x,
+                            'y', (NEW.shape_vertical).y,
+                            'z', (NEW.shape_vertical).z
+                        );
+                    ELSIF (NEW.shape_vertical).url IS NOT NULL THEN
+                        NEW.img_vert := jsonb_build_object('url', (NEW.shape_vertical).url);
                     ELSE
-                        NEW.img_wide := 'dummy';
-                    END IF;
-
-                    -- Compute img_vert
-                    IF NOT show_img THEN
-                        NEW.img_vert := 'dummy';
-                    ELSIF (img_record.shape_vertical).url IS NOT NULL THEN
-                        NEW.img_vert := reduce_image_shape(img_record.shape_vertical);
-                    ELSE
-                        NEW.img_vert := 'dummy';
+                        NEW.img_vert := jsonb_build_object('enabled', false);
                     END IF;
 
                     RETURN NEW;
                 END;
                 $$ LANGUAGE plpgsql;
             `)
-            console.log('    ✓ Created update_entity_image_fields trigger function')
+            console.log('    ✓ Created compute_image_shape_fields() function')
 
-            // Create triggers for each table
-            for (const table of tables) {
-                await db.exec(`
-                    DROP TRIGGER IF EXISTS trigger_update_${table}_image_fields ON ${table};
-                    CREATE TRIGGER trigger_update_${table}_image_fields
-                    BEFORE INSERT OR UPDATE OF img_id ON ${table}
-                    FOR EACH ROW
-                    EXECUTE FUNCTION update_entity_image_fields();
-                `)
-                console.log(`    ✓ Created trigger for ${table}`)
-            }
-
-            // Also need a trigger on images table to update all referencing entities when image changes
             await db.exec(`
-                CREATE OR REPLACE FUNCTION update_referencing_entities_on_image_change()
-                RETURNS TRIGGER AS $$
-                BEGIN
-                    -- Update all tables that reference this image
-                    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    UPDATE instructors SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    UPDATE events SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    UPDATE locations SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    UPDATE projects SET updated_at = CURRENT_TIMESTAMP WHERE img_id = NEW.id;
-                    RETURN NEW;
-                END;
-                $$ LANGUAGE plpgsql;
-
-                DROP TRIGGER IF EXISTS trigger_update_referencing_entities ON images;
-                CREATE TRIGGER trigger_update_referencing_entities
-                AFTER UPDATE OF ctags, shape_thumb, shape_square, shape_wide, shape_vertical, url ON images
+                DROP TRIGGER IF EXISTS trigger_compute_image_shapes ON images;
+                CREATE TRIGGER trigger_compute_image_shapes
+                BEFORE INSERT OR UPDATE ON images
                 FOR EACH ROW
-                EXECUTE FUNCTION update_referencing_entities_on_image_change();
+                EXECUTE FUNCTION compute_image_shape_fields();
             `)
-            console.log('    ✓ Created trigger to cascade image updates to entities')
+            console.log('    ✓ Created trigger_compute_image_shapes on images table')
 
-            console.log('\n✅ Chapter 14 completed: Performance optimization fields and triggers added to all 6 entity tables')
+            console.log('\n✅ Chapter 14 completed: Image shape reducer trigger added to images table')
         } else {
             console.log('    ⚠️  SQLite: Computed columns and triggers not supported')
         }
