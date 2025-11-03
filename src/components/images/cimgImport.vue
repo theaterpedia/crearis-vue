@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Dropdown } from 'floating-vue'
-import tagsMultiToggle from './tagsMultiToggle.vue'
 
 interface ImportedImage {
     url: string
@@ -23,36 +22,94 @@ const urlInput = ref('')
 const importedImages = ref<ImportedImage[]>([])
 const selectedProject = ref<number | null>(null)
 const selectedOwner = ref<number | null>(null)
-const ctags = ref<number[]>([])
-const rtags = ref<number[]>([])
 const keepOpen = ref(false)
+const xmlRoot = ref('')
+const altText = ref('')
+const license = ref('BY')
 
-// Mock data for dropdowns
-const projects = ref([
-    { id: 1, name: 'Project Alpha' },
-    { id: 2, name: 'Project Beta' },
-    { id: 3, name: 'Project Gamma' }
-])
+// CTags state (using bit groups like ImagesCoreAdmin)
+const ctagsAgeGroup = ref(0)
+const ctagsSubjectType = ref(0)
+const ctagsAccessLevel = ref(0)
+const ctagsQuality = ref(0)
 
-const owners = ref([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Bob Johnson' }
-])
+// Data for dropdowns
+const projects = ref<Array<{ id: number; name: string; domaincode?: string }>>([])
+const owners = ref<Array<{ id: number; name: string; email?: string }>>([])
+const loadingProjects = ref(false)
+const loadingOwners = ref(false)
 
-// Mock tag options
-const ctagOptions = [
-    { label: 'Nature', value: 1 },
-    { label: 'Architecture', value: 2 },
-    { label: 'People', value: 3 },
-    { label: 'Technology', value: 4 }
+// Fetch projects from API
+const fetchProjects = async () => {
+    if (loadingProjects.value || projects.value.length > 0) return
+    loadingProjects.value = true
+    try {
+        const response = await fetch('/api/projects')
+        if (!response.ok) throw new Error('Failed to fetch projects')
+        const data = await response.json()
+        projects.value = Array.isArray(data) ? data : (data.projects || [])
+        console.log('Loaded projects:', projects.value.length)
+    } catch (error) {
+        console.error('Error fetching projects:', error)
+        projects.value = []
+    } finally {
+        loadingProjects.value = false
+    }
+}
+
+// Fetch users/owners from API
+const fetchOwners = async () => {
+    if (loadingOwners.value || owners.value.length > 0) return
+    loadingOwners.value = true
+    try {
+        const response = await fetch('/api/users')
+        if (!response.ok) throw new Error('Failed to fetch users')
+        const data = await response.json()
+        owners.value = Array.isArray(data) ? data : (data.users || [])
+        console.log('Loaded owners:', owners.value.length)
+    } catch (error) {
+        console.error('Error fetching owners:', error)
+        owners.value = []
+    } finally {
+        loadingOwners.value = false
+    }
+}
+
+// CTags options (matching ImagesCoreAdmin)
+const ageGroupOptions = [
+    { label: 'Other', value: 0 },
+    { label: 'Child', value: 1 },
+    { label: 'Teen', value: 2 },
+    { label: 'Adult', value: 3 }
 ]
 
-const rtagOptions = [
-    { label: 'Featured', value: 10 },
-    { label: 'Hero', value: 20 },
-    { label: 'Thumbnail', value: 30 },
-    { label: 'Background', value: 40 }
+const subjectTypeOptions = [
+    { label: 'Other', value: 0 },
+    { label: 'Group', value: 1 },
+    { label: 'Person', value: 2 },
+    { label: 'Portrait', value: 3 }
+]
+
+const accessLevelOptions = [
+    { label: 'Project', value: 0 },
+    { label: 'Public', value: 1 },
+    { label: 'Private', value: 2 },
+    { label: 'Internal', value: 3 }
+]
+
+const qualityOptions = [
+    { label: 'OK', value: 0 },
+    { label: 'Deprecated', value: 1 },
+    { label: 'Technical Error', value: 2 },
+    { label: 'Check Quality', value: 3 }
+]
+
+const licenseOptions = [
+    { label: 'BY (Attribution)', value: 'BY' },
+    { label: 'BY-SA (ShareAlike)', value: 'BY-SA' },
+    { label: 'BY-ND (NoDerivatives)', value: 'BY-ND' },
+    { label: 'BY-NC (NonCommercial)', value: 'BY-NC' },
+    { label: 'CC0 (Public Domain)', value: 'CC0' }
 ]
 
 // Validate URL
@@ -74,7 +131,7 @@ const addUrl = () => {
     }
 
     // Check if already added
-    if (importedImages.value.some(img => img.url === url)) {
+    if (importedImages.value.some((img: ImportedImage) => img.url === url)) {
         alert('This URL is already in the list')
         return
     }
@@ -94,26 +151,89 @@ const removeImage = (index: number) => {
     importedImages.value.splice(index, 1)
 }
 
-// Handle save
-const handleSave = () => {
+// Build ctags byte from bit groups
+const buildCtags = (): Uint8Array => {
+    let byte = 0
+    byte |= (ctagsAgeGroup.value & 0x03) << 0      // bits 0-1
+    byte |= (ctagsSubjectType.value & 0x03) << 2    // bits 2-3
+    byte |= (ctagsAccessLevel.value & 0x03) << 4    // bits 4-5
+    byte |= (ctagsQuality.value & 0x03) << 6        // bits 6-7
+    return new Uint8Array([byte])
+}
+
+// Handle save - actually call the import API
+const handleSave = async () => {
     if (importedImages.value.length === 0) {
         alert('Please add at least one image URL')
         return
     }
 
-    if (!selectedProject.value || !selectedOwner.value) {
-        alert('Please select a project and owner')
+    if (!selectedOwner.value) {
+        alert('Please select an owner')
         return
     }
 
-    emit('save', importedImages.value)
+    try {
+        // Build ctags buffer
+        const ctagsBuffer = Array.from(buildCtags())
 
-    if (!keepOpen.value) {
-        handleClose()
-    } else {
-        // Clear only the images, keep other settings
-        importedImages.value = []
-        urlInput.value = ''
+        // Get selected project's domaincode
+        const selectedProjectData = projects.value.find(p => p.id === selectedProject.value)
+
+        // Prepare batch data
+        const batchData: any = {
+            owner_id: selectedOwner.value,
+            alt_text: altText.value || 'Batch imported from URL',
+            license: license.value,
+            xml_root: xmlRoot.value || `batch_${new Date().toISOString().split('T')[0]}`,
+            ctags: ctagsBuffer
+        }
+
+        // Add domaincode if project selected
+        if (selectedProject.value && selectedProjectData?.domaincode) {
+            batchData.domaincode = selectedProjectData.domaincode
+        }
+
+        const payload = {
+            urls: importedImages.value.map((img: ImportedImage) => img.url),
+            batch: batchData
+        }
+
+        console.log('Importing images with payload:', payload)
+        console.log('Selected project:', selectedProjectData)
+        console.log('Selected owner ID:', selectedOwner.value)
+
+        // Call import API
+        const response = await fetch('/api/images/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Failed to import images: ${response.status} ${errorText}`)
+        }
+
+        const result = await response.json()
+        console.log('Import result:', result)
+
+        // Show success message
+        alert(`Successfully imported ${result.successful} of ${result.total} images!`)
+
+        // Emit save event for parent to refresh
+        emit('save', importedImages.value)
+
+        if (!keepOpen.value) {
+            handleClose()
+        } else {
+            // Clear only the images, keep other settings
+            importedImages.value = []
+            urlInput.value = ''
+        }
+    } catch (error) {
+        console.error('Error importing images:', error)
+        alert(`Failed to import images: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
 }
 
@@ -126,17 +246,28 @@ const handleClose = () => {
         importedImages.value = []
         selectedProject.value = null
         selectedOwner.value = null
-        ctags.value = []
-        rtags.value = []
+        ctagsAgeGroup.value = 0
+        ctagsSubjectType.value = 0
+        ctagsAccessLevel.value = 0
+        ctagsQuality.value = 0
+        xmlRoot.value = ''
+        altText.value = ''
+        license.value = 'BY'
         keepOpen.value = false
     }, 300)
 }
 
 // Computed validation
 const canSave = computed(() => {
-    return importedImages.value.length > 0 &&
-        selectedProject.value !== null &&
-        selectedOwner.value !== null
+    return importedImages.value.length > 0 && selectedOwner.value !== null
+})
+
+// Watch for modal opening to fetch data
+watch(() => props.isOpen, (newValue) => {
+    if (newValue) {
+        fetchProjects()
+        fetchOwners()
+    }
 })
 </script>
 
@@ -181,9 +312,11 @@ const canSave = computed(() => {
                     <!-- Project and owner selection -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Project</label>
-                            <select v-model="selectedProject" class="form-select">
-                                <option :value="null">Select project...</option>
+                            <label>Project (Optional)</label>
+                            <select v-model="selectedProject" class="form-select" :disabled="loadingProjects">
+                                <option :value="null">
+                                    {{ loadingProjects ? 'Loading projects...' : 'Select project...' }}
+                                </option>
                                 <option v-for="project in projects" :key="project.id" :value="project.id">
                                     {{ project.name }}
                                 </option>
@@ -191,9 +324,11 @@ const canSave = computed(() => {
                         </div>
 
                         <div class="form-group">
-                            <label>Owner</label>
-                            <select v-model="selectedOwner" class="form-select">
-                                <option :value="null">Select owner...</option>
+                            <label>Owner *</label>
+                            <select v-model="selectedOwner" class="form-select" :disabled="loadingOwners">
+                                <option :value="null">
+                                    {{ loadingOwners ? 'Loading owners...' : 'Select owner...' }}
+                                </option>
                                 <option v-for="owner in owners" :key="owner.id" :value="owner.id">
                                     {{ owner.name }}
                                 </option>
@@ -201,17 +336,80 @@ const canSave = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Tags -->
-                    <div class="form-section">
-                        <label>Content Tags (ctags)</label>
-                        <tagsMultiToggle v-model="ctags" mode="free" :availableTags="ctagOptions"
-                            placeholder="Select content tags..." />
+                    <!-- Batch metadata -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>XML Root ID</label>
+                            <input v-model="xmlRoot" type="text" class="form-input"
+                                :placeholder="`batch_${new Date().toISOString().split('T')[0]}`" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>License</label>
+                            <select v-model="license" class="form-select">
+                                <option v-for="opt in licenseOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-section">
-                        <label>Role Tags (rtags)</label>
-                        <tagsMultiToggle v-model="rtags" mode="choose-one" :availableTags="rtagOptions"
-                            placeholder="Select role tag..." />
+                        <label>Alt Text (applies to all)</label>
+                        <input v-model="altText" type="text" class="form-input" placeholder="Batch imported from URL" />
+                    </div>
+
+                    <!-- CTags -->
+                    <div class="ctags-section">
+                        <h4>Content Tags (CTags)</h4>
+
+                        <div class="ctags-row">
+                            <label class="ctags-label">
+                                Age Group
+                                <span class="label-hint">bits 0-1</span>
+                            </label>
+                            <select v-model="ctagsAgeGroup" class="form-select">
+                                <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="ctags-row">
+                            <label class="ctags-label">
+                                Subject Type
+                                <span class="label-hint">bits 2-3</span>
+                            </label>
+                            <select v-model="ctagsSubjectType" class="form-select">
+                                <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="ctags-row">
+                            <label class="ctags-label">
+                                Access Level
+                                <span class="label-hint">bits 4-5</span>
+                            </label>
+                            <select v-model="ctagsAccessLevel" class="form-select">
+                                <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="ctags-row">
+                            <label class="ctags-label">
+                                Quality
+                                <span class="label-hint">bits 6-7</span>
+                            </label>
+                            <select v-model="ctagsQuality" class="form-select">
+                                <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Keep open checkbox -->
@@ -241,9 +439,9 @@ const canSave = computed(() => {
     width: 90vw;
     max-width: 700px;
     max-height: 85vh;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-large);
-    box-shadow: 0 8px 32px hsla(0, 0%, 0%, 0.2);
+    box-shadow: 0 8px 32px oklch(0 0 0 / 0.2);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -254,7 +452,7 @@ const canSave = computed(() => {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    border-bottom: 1px solid hsl(var(--color-border));
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
@@ -275,7 +473,7 @@ const canSave = computed(() => {
 }
 
 .btn-close:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .modal-content {
@@ -297,7 +495,7 @@ const canSave = computed(() => {
 .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: hsl(var(--color-text));
+    color: var(--color-text);
 }
 
 .url-input-group {
@@ -305,19 +503,21 @@ const canSave = computed(() => {
     gap: 0.5rem;
 }
 
-.url-input {
+.url-input,
+.form-input {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
+    color: var(--color-text);
     font-size: 0.875rem;
 }
 
 .btn-add {
     padding: 0.75rem 1.5rem;
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: var(--radius-medium);
     font-weight: 600;
@@ -334,7 +534,7 @@ const canSave = computed(() => {
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -348,7 +548,7 @@ const canSave = computed(() => {
 .btn-clear-all {
     padding: 0.25rem 0.75rem;
     background: transparent;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     font-size: 0.75rem;
     cursor: pointer;
@@ -356,9 +556,9 @@ const canSave = computed(() => {
 }
 
 .btn-clear-all:hover {
-    background: hsl(var(--color-danger-bg));
-    color: hsl(var(--color-danger-contrast));
-    border-color: hsl(var(--color-danger));
+    background: var(--color-danger-bg);
+    color: var(--color-danger-contrast);
+    border-color: var(--color-danger);
 }
 
 .preview-grid {
@@ -372,7 +572,7 @@ const canSave = computed(() => {
     aspect-ratio: 17 / 10;
     border-radius: var(--radius-small);
     overflow: hidden;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
 }
 
 .preview-image {
@@ -388,7 +588,7 @@ const canSave = computed(() => {
     width: 1.5rem;
     height: 1.5rem;
     border: none;
-    background: hsla(0, 0%, 0%, 0.7);
+    background: oklch(0 0 0 / 0.7);
     color: white;
     border-radius: 50%;
     font-size: 1.25rem;
@@ -416,10 +616,16 @@ const canSave = computed(() => {
 
 .form-select {
     padding: 0.75rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
+    color: var(--color-text);
     font-size: 0.875rem;
+}
+
+.form-select option {
+    background: var(--color-card-bg);
+    color: var(--color-text);
 }
 
 .checkbox-label {
@@ -442,8 +648,8 @@ const canSave = computed(() => {
     align-items: center;
     gap: 1rem;
     padding: 1.5rem;
-    border-top: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-muted-bg));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-muted-bg);
 }
 
 .btn-cancel,
@@ -457,15 +663,15 @@ const canSave = computed(() => {
 
 .btn-cancel {
     background: transparent;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
 }
 
 .btn-cancel:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .btn-save {
-    background: hsl(var(--color-success));
+    background: var(--color-success);
     color: white;
     border: none;
 }
@@ -477,5 +683,50 @@ const canSave = computed(() => {
 .btn-save:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* CTags section styling */
+.ctags-section {
+    padding: 1rem;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-medium);
+}
+
+.ctags-section h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ctags-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.ctags-row:last-child {
+    margin-bottom: 0;
+}
+
+.ctags-label {
+    min-width: 120px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-muted-contrast);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label-hint {
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: var(--color-muted-contrast);
+    font-style: italic;
+}
+
+.ctags-row .form-select {
+    flex: 1;
 }
 </style>

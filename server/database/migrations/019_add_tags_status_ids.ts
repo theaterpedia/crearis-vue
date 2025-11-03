@@ -3754,9 +3754,9 @@ export const migration = {
                     -- Compute img_thumb
                     IF NOT show_img THEN
                         NEW.img_thumb := 'dummy';
-                    ELSIF img_record.shape_thumb IS NOT NULL THEN
+                    ELSIF (img_record.shape_thumb).url IS NOT NULL THEN
                         NEW.img_thumb := reduce_image_shape(img_record.shape_thumb);
-                    ELSIF img_record.shape_square IS NOT NULL THEN
+                    ELSIF (img_record.shape_square).url IS NOT NULL THEN
                         NEW.img_thumb := reduce_image_shape(img_record.shape_square);
                     ELSE
                         NEW.img_thumb := img_record.url;
@@ -3765,7 +3765,7 @@ export const migration = {
                     -- Compute img_square
                     IF NOT show_img THEN
                         NEW.img_square := 'dummy';
-                    ELSIF img_record.shape_square IS NOT NULL THEN
+                    ELSIF (img_record.shape_square).url IS NOT NULL THEN
                         NEW.img_square := reduce_image_shape(img_record.shape_square);
                     ELSE
                         NEW.img_square := img_record.url;
@@ -3774,7 +3774,7 @@ export const migration = {
                     -- Compute img_wide
                     IF NOT show_img THEN
                         NEW.img_wide := 'dummy';
-                    ELSIF img_record.shape_wide IS NOT NULL THEN
+                    ELSIF (img_record.shape_wide).url IS NOT NULL THEN
                         NEW.img_wide := reduce_image_shape(img_record.shape_wide);
                     ELSE
                         NEW.img_wide := 'dummy';
@@ -3783,7 +3783,7 @@ export const migration = {
                     -- Compute img_vert
                     IF NOT show_img THEN
                         NEW.img_vert := 'dummy';
-                    ELSIF img_record.shape_vertical IS NOT NULL THEN
+                    ELSIF (img_record.shape_vertical).url IS NOT NULL THEN
                         NEW.img_vert := reduce_image_shape(img_record.shape_vertical);
                     ELSE
                         NEW.img_vert := 'dummy';

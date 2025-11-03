@@ -180,6 +180,33 @@ const fetchImages = async () => {
 function selectImage(image: any) {
     selectedImage.value = { ...image }
 
+    // Ensure ctags and rtags are Uint8Array
+    if (selectedImage.value.ctags) {
+        if (selectedImage.value.ctags.type === 'Buffer' && Array.isArray(selectedImage.value.ctags.data)) {
+            // Convert Buffer object to Uint8Array
+            selectedImage.value.ctags = new Uint8Array(selectedImage.value.ctags.data)
+        } else if (!(selectedImage.value.ctags instanceof Uint8Array)) {
+            // Convert any other array-like to Uint8Array
+            selectedImage.value.ctags = new Uint8Array(selectedImage.value.ctags)
+        }
+    } else {
+        // Initialize with default byte if missing
+        selectedImage.value.ctags = new Uint8Array([0])
+    }
+
+    if (selectedImage.value.rtags) {
+        if (selectedImage.value.rtags.type === 'Buffer' && Array.isArray(selectedImage.value.rtags.data)) {
+            selectedImage.value.rtags = new Uint8Array(selectedImage.value.rtags.data)
+        } else if (!(selectedImage.value.rtags instanceof Uint8Array)) {
+            selectedImage.value.rtags = new Uint8Array(selectedImage.value.rtags)
+        }
+    } else {
+        selectedImage.value.rtags = new Uint8Array([])
+    }
+
+    console.log('Selected image ctags:', selectedImage.value.ctags)
+    console.log('CTags byte value:', selectedImage.value.ctags[0])
+
     // Parse author if it's a string (database composite type)
     // Format: (adapter,file_id,account_id,folder_id,username,attribution)
     if (typeof selectedImage.value.author === 'string') {
@@ -392,6 +419,29 @@ const saveChanges = async () => {
         const updatedImage = await response.json()
         console.log('Server returned:', updatedImage)
 
+        // Convert Buffer to Uint8Array for ctags/rtags (same as selectImage)
+        if (updatedImage.ctags) {
+            if (updatedImage.ctags.type === 'Buffer' && Array.isArray(updatedImage.ctags.data)) {
+                updatedImage.ctags = new Uint8Array(updatedImage.ctags.data)
+            } else if (!(updatedImage.ctags instanceof Uint8Array)) {
+                updatedImage.ctags = new Uint8Array(updatedImage.ctags)
+            }
+        } else {
+            updatedImage.ctags = new Uint8Array([0])
+        }
+
+        if (updatedImage.rtags) {
+            if (updatedImage.rtags.type === 'Buffer' && Array.isArray(updatedImage.rtags.data)) {
+                updatedImage.rtags = new Uint8Array(updatedImage.rtags.data)
+            } else if (!(updatedImage.rtags instanceof Uint8Array)) {
+                updatedImage.rtags = new Uint8Array(updatedImage.rtags)
+            }
+        } else {
+            updatedImage.rtags = new Uint8Array([])
+        }
+
+        console.log('CTags byte value after conversion:', updatedImage.ctags[0])
+
         // Update local state with server response
         const index = images.value.findIndex(img => img.id === selectedImage.value.id)
         if (index !== -1) {
@@ -451,25 +501,33 @@ const updateAuthor = (field: string, value: string) => {
 const ctagsAgeGroup = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    return extractBits(ctags, 0, 2)
+    const value = extractBits(ctags, 0, 2)
+    console.log('ctagsAgeGroup computed:', value)
+    return value
 })
 
 const ctagsSubjectType = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    return extractBits(ctags, 2, 2)
+    const value = extractBits(ctags, 2, 2)
+    console.log('ctagsSubjectType computed:', value)
+    return value
 })
 
 const ctagsAccessLevel = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    return extractBits(ctags, 4, 2)
+    const value = extractBits(ctags, 4, 2)
+    console.log('ctagsAccessLevel computed:', value)
+    return value
 })
 
 const ctagsQuality = computed(() => {
     if (!selectedImage.value?.ctags) return 0
     const ctags = new Uint8Array(selectedImage.value.ctags)
-    return extractBits(ctags, 6, 2)
+    const value = extractBits(ctags, 6, 2)
+    console.log('ctagsQuality computed:', value)
+    return value
 })
 
 const rtagsAsArray = computed(() => {
