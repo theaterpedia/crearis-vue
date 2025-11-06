@@ -96,7 +96,19 @@ const unsplashUrl = computed(() => {
 
     try {
         const urlObj = new URL(url)
-        // Set/update parameters
+
+        // If URL already has focal-point crop parameters (fp-x, fp-y, or fp-z),
+        // don't override w, h, fit as they're already set correctly
+        const hasFocalCrop = urlObj.searchParams.has('fp-x') ||
+            urlObj.searchParams.has('fp-y') ||
+            urlObj.searchParams.has('fp-z')
+
+        if (hasFocalCrop) {
+            // Focal-crop is already configured, return as-is
+            return urlObj.toString()
+        }
+
+        // Set/update parameters for standard crop
         urlObj.searchParams.set('w', Math.round(width).toString())
         urlObj.searchParams.set('h', Math.round(height).toString())
         urlObj.searchParams.set('fit', 'crop')

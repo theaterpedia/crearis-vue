@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import Columns from '@/components/Columns.vue'
@@ -34,6 +34,10 @@ const cardWideZ = ref<number | null>(null)
 const tileSquareX = ref<number | null>(null)
 const tileSquareY = ref<number | null>(null)
 const tileSquareZ = ref<number | null>(null)
+
+// Preview and correction for card/wide focal-crop
+const PreviewWide = ref<string>('')
+const CorrectionWide = ref<string>('')
 
 // Filters state
 const filterStatusId = ref<number | null>(null)
@@ -157,6 +161,17 @@ const updateShapeField = (field: 'x' | 'y' | 'z' | 'url', value: string | null) 
     }
 
     selectedImage.value[shapeKey][field] = value
+
+    // Update PreviewWide if we're editing the 'wide' shape URL
+    if (activeShapeTab.value === 'wide' && field === 'url') {
+        const adapter = selectedImage.value.author?.adapter || 'unsplash'
+        if (adapter === 'unsplash') {
+            PreviewWide.value = (value || '') + (CorrectionWide.value || '')
+        } else if (adapter === 'cloudinary') {
+            PreviewWide.value = value || ''
+        }
+    }
+
     checkDirty()
 }
 
@@ -316,6 +331,27 @@ function selectImage(image: any) {
 
     // Set authorAdapter from image data
     authorAdapter.value = selectedImage.value.author?.adapter || 'unsplash'
+
+    // Reset X, Y, Z values when loading a record
+    cardWideX.value = null
+    cardWideY.value = null
+    cardWideZ.value = null
+    tileSquareX.value = null
+    tileSquareY.value = null
+    tileSquareZ.value = null
+
+    // Initialize PreviewWide for card/wide focal-crop
+    const adapter = selectedImage.value.author?.adapter || 'unsplash'
+    if (adapter === 'unsplash') {
+        PreviewWide.value = (selectedImage.value.shape_wide?.url || '') + (CorrectionWide.value || '')
+    } else if (adapter === 'cloudinary') {
+        PreviewWide.value = selectedImage.value.shape_wide?.url || ''
+        // TODO: Add Positioning to c_crop,g_face,h_150,w_150
+    }
+
+    // Reset CorrectionWide
+    CorrectionWide.value = ''
+
     isDirty.value = false
 }
 
@@ -589,7 +625,102 @@ const handleImportSave = async (importedImages: any[]) => {
     await fetchImages()
 }
 
-// Save card/wide shape URL
+// Computed: Check if Y and Z should be disabled for card/wide
+const cardWideYZDisabled = computed(() => cardWideX.value === null)
+
+// Computed: Get card/wide data with PreviewWide URL when available
+const cardWidePreviewData = computed(() => {
+    if (!selectedImage.value?.shape_wide) return null
+
+    // If PreviewWide has content and is different from the base URL, use it
+    if (PreviewWide.value && PreviewWide.value !== selectedImage.value.shape_wide.url) {
+        return {
+            ...selectedImage.value.shape_wide,
+            url: PreviewWide.value
+        }
+    }
+
+    return selectedImage.value.shape_wide
+})
+
+// Watch cardWideX: When X is set from null to a value, initialize Y and Z to 0
+watch(cardWideX, (newVal, oldVal) => {
+    if (oldVal === null && newVal !== null) {
+        if (cardWideY.value === null) cardWideY.value = 0
+        if (cardWideZ.value === null) cardWideZ.value = 0
+    }
+})
+
+// Handle Enter key on X input: Set to 50 (middle) if NULL or empty
+const handleCardWideXEnter = () => {
+    if (cardWideX.value === null || cardWideX.value === undefined || isNaN(cardWideX.value)) {
+        cardWideX.value = 50
+    }
+}
+
+// Preview card/wide with focal-crop
+const previewCardWide = () => {
+    if (!selectedImage.value?.shape_wide?.url) return
+
+    const adapter = selectedImage.value.author?.adapter || 'unsplash'
+
+    if (adapter === 'unsplash') {
+        // Compute imgix focal-crop parameters
+        // https://docs.imgix.com/en-US/apis/rendering/focal-point-crop
+        const x = cardWideX.value
+        const y = cardWideY.value
+        const z = cardWideZ.value
+
+        if (x !== null) {
+            try {
+                const baseUrl = selectedImage.value.shape_wide.url
+                const urlObj = new URL(baseUrl)
+
+                // Set crop=focalpoint for Unsplash focal-point cropping
+                urlObj.searchParams.set('crop', 'focalpoint')
+
+                // Set dimensions for card/wide (672x224 based on 2x card width)
+                urlObj.searchParams.set('w', '672')
+                urlObj.searchParams.set('h', '224')
+                urlObj.searchParams.set('fit', 'crop')
+
+                // fp-x: horizontal position (0-1, where 0.5 is center)
+                // Convert from our scale (0-100) to imgix scale (0-1)
+                urlObj.searchParams.set('fp-x', (x / 100).toFixed(2))
+
+                // fp-y: vertical position (0-1, where 0.5 is center)
+                if (y !== null) {
+                    urlObj.searchParams.set('fp-y', (y / 100).toFixed(2))
+                }
+
+                // fp-z: zoom level (1+, where 1 is no zoom)
+                // Convert from our scale (0-100) to imgix scale (1-2)
+                if (z !== null && z !== 0) {
+                    urlObj.searchParams.set('fp-z', (z / 100 + 1).toFixed(2))
+                }
+
+                // Force reactivity by temporarily clearing and then setting
+                const newPreviewUrl = urlObj.toString()
+                PreviewWide.value = ''
+                CorrectionWide.value = ''
+
+                // Use nextTick to ensure Vue processes the change
+                setTimeout(() => {
+                    PreviewWide.value = newPreviewUrl
+                    CorrectionWide.value = newPreviewUrl.substring(baseUrl.length)
+                }, 0)
+            } catch (error) {
+                console.error('Error creating preview URL:', error)
+                PreviewWide.value = selectedImage.value.shape_wide.url
+                CorrectionWide.value = ''
+            }
+        }
+    } else if (adapter === 'cloudinary') {
+        // TODO: Add Positioning to c_crop,g_face,h_150,w_150
+        PreviewWide.value = selectedImage.value.shape_wide.url
+        CorrectionWide.value = ''
+    }
+}// Save card/wide shape URL
 const saveCardWideUrl = () => {
     if (!selectedImage.value) return
 
@@ -744,7 +875,7 @@ onMounted(() => {
                         <Column width="2/5">
                             <!-- Row 1: Card/Wide shape -->
                             <div class="shape-row">
-                                <ImgShape v-if="selectedImage.shape_wide" :data="selectedImage.shape_wide" shape="card"
+                                <ImgShape v-if="cardWidePreviewData" :data="cardWidePreviewData" shape="card"
                                     variant="wide" class="CardShape"
                                     @shapeUrl="(url: string) => cardWideShapeUrl = url" />
                             </div>
@@ -768,21 +899,28 @@ onMounted(() => {
                         <Column width="1/5">
                             <!-- XYZ Label -->
                             <div class="control-section dimmed-bg">
-                                <span class="control-label">X | Y | Z</span>
+                                <span class="control-label">X% | Y% | Z%</span>
                             </div>
 
                             <!-- Card/Wide controls -->
                             <div class="control-section">
                                 <div class="control-header dimmed-bg">
-                                    <span class="control-label">card/wide</span>
+                                    <span class="control-label">card/wide Zoom and Position</span>
+                                    <div v-if="CorrectionWide" class="correction-preview">{{ CorrectionWide }}</div>
                                 </div>
                                 <div class="control-inputs">
-                                    <input type="number" v-model.number="cardWideX" placeholder="X"
-                                        class="control-input" />
-                                    <input type="number" v-model.number="cardWideY" placeholder="Y"
-                                        class="control-input" />
-                                    <input type="number" v-model.number="cardWideZ" placeholder="Z"
-                                        class="control-input" />
+                                    <input type="number" v-model.number="cardWideX" placeholder="X%"
+                                        class="control-input" min="0" max="100" step="1"
+                                        @keydown.enter="handleCardWideXEnter" />
+                                    <input type="number" v-model.number="cardWideY" placeholder="Y%"
+                                        class="control-input" :disabled="cardWideYZDisabled" min="0" max="100"
+                                        step="1" />
+                                    <input type="number" v-model.number="cardWideZ" placeholder="Z%"
+                                        class="control-input" :disabled="cardWideYZDisabled" min="0" max="100"
+                                        step="1" />
+                                    <button @click="previewCardWide" class="btn-preview-url" title="Preview">
+                                        👁️
+                                    </button>
                                     <button @click="saveCardWideUrl" class="btn-save-url" title="Save URL">
                                         💾
                                     </button>
@@ -1120,6 +1258,16 @@ onMounted(() => {
     text-transform: uppercase;
 }
 
+.correction-preview {
+    font-size: 0.75rem;
+    font-weight: 400;
+    font-family: monospace;
+    color: var(--color-text-base);
+    margin-top: 0.25rem;
+    text-transform: none;
+    word-break: break-all;
+}
+
 .control-header {
     margin-bottom: 0.5rem;
 }
@@ -1132,17 +1280,39 @@ onMounted(() => {
 
 .control-input {
     flex: 1;
-    padding: 0.5rem;
+    padding: 0.2rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     background: var(--color-card-bg);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     min-width: 0;
 }
 
 .control-input:focus {
     outline: none;
     border-color: var(--color-primary-base);
+}
+
+.control-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--color-muted-bg);
+}
+
+.btn-preview-url {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    border: none;
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: opacity 0.2s;
+}
+
+.btn-preview-url:hover {
+    opacity: 0.9;
 }
 
 .btn-save-url {
