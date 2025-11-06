@@ -19,20 +19,24 @@ Added img_* fields (img_show, img_thumb, img_square, img_wide, img_vert) to all 
    ├── shape_wide: (x, y, z, url, json)
    └── shape_vertical: (x, y, z, url, json)
    
-2. BEFORE Trigger: compute_image_shape_fields()
+2. BEFORE Trigger (on images): compute_image_shape_fields()
    ├── Computes img_square (with error fallback)
    ├── Computes img_thumb (with img_square fallback)
    ├── Computes img_wide (with enabled:false fallback)
    ├── Computes img_vert (with enabled:false fallback)
    └── Computes img_show (from ctags bits 6+7)
    
-3. AFTER Trigger: propagate_image_fields_to_entities()
+3. AFTER Trigger (on images): propagate_image_fields_to_entities()
    ├── UPDATE users SET img_* WHERE img_id = NEW.id
    ├── UPDATE instructors SET img_* WHERE img_id = NEW.id
    ├── UPDATE events SET img_* WHERE img_id = NEW.id
    ├── UPDATE locations SET img_* WHERE img_id = NEW.id
    ├── UPDATE posts SET img_* WHERE img_id = NEW.id
    └── UPDATE projects SET img_* WHERE img_id = NEW.id
+
+4. BEFORE Trigger (on entity tables): sync_image_fields_on_img_id_change()
+   ├── IF img_id set to NULL → Clear all img_* fields, set img_show = FALSE
+   └── IF img_id changed → SELECT img_* FROM images WHERE id = NEW.img_id
 ```
 
 ### Trigger Details
@@ -49,6 +53,46 @@ Added img_* fields (img_show, img_thumb, img_square, img_wide, img_vert) to all 
 - **Purpose:** Propagates computed img_* fields to all entity tables
 - **Triggers On:** Changes to img_show, img_thumb, img_square, img_wide, img_vert, shape_thumb, shape_square, shape_wide, shape_vertical
 - **Timing:** Fires AFTER the image row is committed, ensuring entity updates see final values
+
+**Trigger 3: sync_image_fields_on_img_id_change()**
+- **Type:** BEFORE INSERT OR UPDATE OF img_id
+- **Tables:** users, instructors, events, locations, posts, projects
+- **Purpose:** Synchronizes img_* fields when img_id is changed on entity tables
+- **Behavior:**
+  - When img_id → NULL: Sets img_show = FALSE, clears img_thumb/square/wide/vert
+  - When img_id → valid ID: Fetches img_* fields from images table
+- **Timing:** Fires BEFORE the entity row is written, allowing modification of NEW values
+
+### Bidirectional Synchronization
+
+The system maintains synchronization in both directions:
+
+**Direction 1: Images → Entities (AFTER trigger)**
+- When an image's img_* or shape_* fields change
+- The propagate_image_fields_to_entities() trigger fires
+- Updates all entity rows that reference that image
+
+**Direction 2: Entities → Images (BEFORE trigger)**
+- When an entity's img_id field changes
+- The sync_image_fields_on_img_id_change() trigger fires
+- Fetches current img_* values from the referenced image
+- Or clears img_* fields if img_id is set to NULL
+
+**Example Flow:**
+```sql
+-- Scenario 1: Update image shape
+UPDATE images SET shape_square = '(100,100,,,)' WHERE id = 5;
+-- → Trigger 1 (BEFORE): Recomputes img_square from shape_square
+-- → Trigger 2 (AFTER): Propagates img_square to all entities with img_id=5
+
+-- Scenario 2: Assign image to user
+UPDATE users SET img_id = 5 WHERE id = 10;
+-- → Trigger 3 (BEFORE): Fetches img_* from images.id=5 into user row
+
+-- Scenario 3: Remove image from event
+UPDATE events SET img_id = NULL WHERE id = 20;
+-- → Trigger 3 (BEFORE): Sets img_show=FALSE, clears img_thumb/square/wide/vert
+```
 
 ### Why This Approach?
 

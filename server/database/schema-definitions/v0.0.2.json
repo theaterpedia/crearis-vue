@@ -1,7 +1,7 @@
 {
   "version": "0.0.2",
   "schemaVersion": 1,
-  "generatedAt": "2025-11-02T11:53:22.342Z",
+  "generatedAt": "2025-11-05T21:24:52.777Z",
   "description": "Database schema for crearis-demo-data system v0.0.2",
   "tables": {
     "crearis_config": {
@@ -208,24 +208,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "status_display": {
           "type": "TEXT",
@@ -536,6 +532,27 @@
           "type": "TIMESTAMP WITHOUT TIME ZONE",
           "nullable": true,
           "default": "CURRENT_TIMESTAMP"
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
         }
       }
     },
@@ -645,24 +662,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "lang": {
           "type": "TEXT",
@@ -838,24 +851,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "lang": {
           "type": "TEXT",
@@ -1188,24 +1197,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "status_display": {
           "type": "TEXT",
@@ -1516,24 +1521,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "status_id": {
           "type": "INTEGER",
@@ -1911,24 +1912,20 @@
           "default": "false"
         },
         "img_thumb": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_square": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_wide": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "img_vert": {
-          "type": "TEXT",
-          "nullable": true,
-          "default": "'dummy'::text"
+          "type": "JSONB",
+          "nullable": true
         },
         "status_display": {
           "type": "TEXT",

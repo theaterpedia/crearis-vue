@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-11-02T11:53:33.386Z
+ * Generated at: 2025-11-05T21:25:00.692Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 
@@ -67,10 +67,10 @@ export interface EventsTableFields {
     id: number // default: nextval('events_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
     location?: number | null
@@ -164,6 +164,11 @@ export interface ImagesTableFields {
     geo?: Record<string, any> | null
     has_issues?: boolean | null // default: false
     id: number // default: nextval('images_id_seq'::regclass)
+    img_show?: boolean | null // default: false
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     is_deprecated?: boolean | null // default: false
     is_internal?: boolean | null // default: false
     is_private?: boolean | null // default: false
@@ -211,10 +216,10 @@ export interface InstructorsTableFields {
     id: number // default: nextval('instructors_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     is_user?: boolean | null // default: false
     isbase?: number | null // default: 0
     lang: string // default: 'de'::text
@@ -266,10 +271,10 @@ export interface LocationsTableFields {
     id: number // default: nextval('locations_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     is_company?: string | null
     is_location_provider?: string | null
     isbase?: number | null // default: 0
@@ -362,10 +367,10 @@ export interface PostsTableFields {
     id: number // default: nextval('posts_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     is_published?: string | null
     isbase?: number | null // default: 0
     lang?: string | null // default: 'de'::text
@@ -450,10 +455,10 @@ export interface ProjectsTableFields {
     id: number // default: nextval('projects_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     is_company?: boolean | null // default: false
     is_location_provider?: boolean | null // default: false
     is_onepage?: boolean | null
@@ -610,10 +615,10 @@ export interface UsersTableFields {
     id: number // default: nextval('users_id_seq'::regclass)
     img_id?: number | null
     img_show?: boolean | null // default: false
-    img_square?: string | null // default: 'dummy'::text
-    img_thumb?: string | null // default: 'dummy'::text
-    img_vert?: string | null // default: 'dummy'::text
-    img_wide?: string | null // default: 'dummy'::text
+    img_square?: Record<string, any> | null
+    img_thumb?: Record<string, any> | null
+    img_vert?: Record<string, any> | null
+    img_wide?: Record<string, any> | null
     instructor_id?: number | null
     lang: string // default: 'de'::text
     participant_id?: number | null
@@ -703,7 +708,7 @@ export function isValidI18nCodesField(key: string): key is keyof I18nCodesTableF
 
 export function isValidImagesField(key: string): key is keyof ImagesTableFields {
     const validFields: (keyof ImagesTableFields)[] = [
-        'id', 'xmlid', 'name', 'url', 'project_id', 'project_domaincode', 'status_id', 'owner_id', 'alt_text', 'title', 'date', 'geo', 'x', 'y', 'shape_wide', 'shape_square', 'shape_vertical', 'shape_thumb', 'fileformat', 'embedformat', 'license', 'length', 'about', 'author', 'producer', 'publisher', 'variations', 'root_id', 'use_player', 'ctags', 'is_public', 'is_private', 'is_internal', 'is_deprecated', 'has_issues', 'rtags', 'created_at', 'updated_at'
+        'id', 'xmlid', 'name', 'url', 'project_id', 'project_domaincode', 'status_id', 'owner_id', 'alt_text', 'title', 'date', 'geo', 'x', 'y', 'shape_wide', 'shape_square', 'shape_vertical', 'shape_thumb', 'fileformat', 'embedformat', 'license', 'length', 'about', 'author', 'producer', 'publisher', 'variations', 'root_id', 'use_player', 'ctags', 'is_public', 'is_private', 'is_internal', 'is_deprecated', 'has_issues', 'rtags', 'created_at', 'updated_at', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert'
     ]
     return validFields.includes(key as keyof ImagesTableFields)
 }

@@ -29,6 +29,12 @@ export default defineEventHandler(async (event) => {
                 username,
                 role,
                 instructor_id,
+                img_id,
+                img_show,
+                img_thumb,
+                img_square,
+                img_wide,
+                img_vert,
                 created_at
             FROM users
             WHERE id = ?

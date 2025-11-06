@@ -3908,6 +3908,59 @@ export const migration = {
             console.log('    ✓ Created trigger_propagate_to_entities on images table (fires on img_* and shape_* changes)')
 
             // ---------------------------------------------------------------
+            // 14.3b: Create reverse trigger on entity tables (img_id changes)
+            // ---------------------------------------------------------------
+            console.log('\n  📝 Creating reverse propagation trigger on entity tables...')
+
+            // Create trigger function for entity tables
+            await db.exec(`
+                CREATE OR REPLACE FUNCTION sync_image_fields_on_img_id_change()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    -- If img_id is set to NULL, clear all img_* fields
+                    IF NEW.img_id IS NULL THEN
+                        NEW.img_show := FALSE;
+                        NEW.img_thumb := NULL;
+                        NEW.img_square := NULL;
+                        NEW.img_wide := NULL;
+                        NEW.img_vert := NULL;
+                    -- If img_id is set to a value (either INSERT or changed on UPDATE)
+                    ELSIF NEW.img_id IS NOT NULL AND (TG_OP = 'INSERT' OR OLD.img_id IS NULL OR OLD.img_id != NEW.img_id) THEN
+                        SELECT 
+                            i.img_show,
+                            i.img_thumb,
+                            i.img_square,
+                            i.img_wide,
+                            i.img_vert
+                        INTO 
+                            NEW.img_show,
+                            NEW.img_thumb,
+                            NEW.img_square,
+                            NEW.img_wide,
+                            NEW.img_vert
+                        FROM images i
+                        WHERE i.id = NEW.img_id;
+                    END IF;
+                    
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            `)
+            console.log('    ✓ Created sync_image_fields_on_img_id_change() function')
+
+            // Apply trigger to each entity table
+            for (const table of entityTables) {
+                await db.exec(`
+                    DROP TRIGGER IF EXISTS trigger_sync_img_fields ON ${table};
+                    CREATE TRIGGER trigger_sync_img_fields
+                    BEFORE INSERT OR UPDATE OF img_id ON ${table}
+                    FOR EACH ROW
+                    EXECUTE FUNCTION sync_image_fields_on_img_id_change();
+                `)
+                console.log(`    ✓ Created trigger_sync_img_fields on ${table} (fires on img_id changes)`)
+            }
+
+            // ---------------------------------------------------------------
             // 14.4: Backfill existing data
             // ---------------------------------------------------------------
             console.log('\n  🔄 Backfilling img_* fields for existing entity records...')
