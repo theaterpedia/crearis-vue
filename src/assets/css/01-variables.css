@@ -21,16 +21,28 @@
   --transition: all var(--duration) var(--ease);
 
   /* Image system dimensions (336px base = 21rem) */
-  --tagline-small-height: 1.09rem;
-  /* 17.43px */
-  --card-heading: 3.585rem;
-  /* 57.36px */
+  /* card-width and card-height are the basis for medium image components */
+  /* ALWAYS APPLY these vars in rem, not refs to other vars, no px */
+  --card-width: 21rem;
   --card-height-min: 10.5rem;
   /* 168px */
-  --card-height: 14.125rem;
-  /* 226px */
-  --avatar: 10.5rem;
-  /* 168px */
+  --card-height: 14rem;  /* was: 14.125rem : 226px */
+  /* 224px */
+
+  /* tile is the basis for dense image components */
+  --tile-width: 10.5rem;
+  --tile-height: 7rem;
+  --tile-height-square: 10.5rem;
+
+  /* avatar is the basis for small image components */
+  --avatar: 5.25rem;
+  /* 84px */
+
+  --tagline-small-height: 1.1rem;
+  /* 17.6px */
+  --card-heading: 3.5rem;
+  /* 56px */
+
 
   /*--radius: var(--radius-medium) ... and a lot more
   -> 00-theme.ts > shall not be expoted here,
