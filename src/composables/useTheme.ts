@@ -18,6 +18,23 @@ const themesCache = ref<any[]>([])
 const themeVarsCache = ref<Map<number, Record<string, string>>>(new Map())
 const isInverted = ref<boolean>(false)
 
+// Image dimension state (extracted from CSS variables)
+const imageDimensions = ref<{
+    cardWidth: number | null
+    cardHeight: number | null
+    tileWidth: number | null
+    tileHeight: number | null
+    avatarWidth: number | null
+    isCorrupted: boolean
+}>({
+    cardWidth: null,
+    cardHeight: null,
+    tileWidth: null,
+    tileHeight: null,
+    avatarWidth: null,
+    isCorrupted: false
+})
+
 export interface Theme {
     id: number
     name: string
@@ -189,6 +206,8 @@ export function useTheme() {
         // By default, no theme is active (null = site CSS)
         // Apply initial inverted state
         applyInvertedToDocument()
+        // Extract image dimensions from CSS variables
+        extractImageDimensions()
     }
 
     /**
@@ -226,6 +245,106 @@ export function useTheme() {
         root.style.setProperty('--color-inverted', isInverted.value ? '1' : '0')
     }
 
+    /**
+     * Extract image dimension CSS variables and convert to pixels
+     * Validates that all values are in rem units
+     */
+    const extractImageDimensions = (): void => {
+        if (typeof document === 'undefined') {
+            console.warn('Cannot extract image dimensions: document not available')
+            return
+        }
+
+        const root = document.documentElement
+        const computedStyle = getComputedStyle(root)
+
+        // Helper to convert rem to pixels
+        const remToPx = (remValue: string): number | null => {
+            const match = remValue.trim().match(/^([\d.]+)rem$/)
+            if (!match || !match[1]) return null
+
+            const remNum = parseFloat(match[1])
+            const fontSize = parseFloat(computedStyle.fontSize) || 16
+            return remNum * fontSize
+        }
+
+        // Helper to extract and validate CSS variable
+        const extractVar = (varName: string): number | null => {
+            const value = computedStyle.getPropertyValue(varName).trim()
+            if (!value) {
+                console.error(`CSS variable ${varName} not found`)
+                return null
+            }
+
+            const pxValue = remToPx(value)
+            if (pxValue === null) {
+                console.error(`⚠️ CORRUPTED STYLESHEET: ${varName} has value "${value}" - must be in rem units only!`)
+                imageDimensions.value.isCorrupted = true
+                return null
+            }
+
+            return pxValue
+        }
+
+        // Extract dimensions
+        const cardWidth = extractVar('--card-width')
+        const cardHeight = extractVar('--card-height')
+        const tileWidth = extractVar('--tile-width')
+
+        // Calculate tile height as 0.5 * card-height
+        const tileHeight = cardHeight ? cardHeight * 0.5 : extractVar('--tile-height')
+
+        const avatarWidth = extractVar('--avatar')
+
+        // Update state
+        imageDimensions.value = {
+            cardWidth,
+            cardHeight,
+            tileWidth,
+            tileHeight,
+            avatarWidth,
+            isCorrupted: imageDimensions.value.isCorrupted
+        }
+
+        // Log heavy warning if corrupted
+        if (imageDimensions.value.isCorrupted) {
+            console.error('🔴 CORRUPTED STYLESHEET: Always provide CSS vars for card, tile, avatar in rem only!')
+        } else {
+            console.log('✅ Image dimensions extracted:', {
+                cardWidth: `${cardWidth}px`,
+                cardHeight: `${cardHeight}px`,
+                tileWidth: `${tileWidth}px`,
+                tileHeight: `${tileHeight}px`,
+                avatarWidth: `${avatarWidth}px`
+            })
+        }
+    }
+
+    /**
+     * Get current image dimensions in pixels
+     * Returns null values if not yet extracted or if stylesheet is corrupted
+     */
+    const getImageDimensions = () => {
+        return {
+            cardWidth: imageDimensions.value.cardWidth,
+            cardHeight: imageDimensions.value.cardHeight,
+            tileWidth: imageDimensions.value.tileWidth,
+            tileHeight: imageDimensions.value.tileHeight,
+            avatarWidth: imageDimensions.value.avatarWidth,
+            isCorrupted: imageDimensions.value.isCorrupted
+        }
+    }
+
+    /**
+     * Computed properties for easy access to dimensions
+     */
+    const cardWidth = computed(() => imageDimensions.value.cardWidth)
+    const cardHeight = computed(() => imageDimensions.value.cardHeight)
+    const tileWidth = computed(() => imageDimensions.value.tileWidth)
+    const tileHeight = computed(() => imageDimensions.value.tileHeight)
+    const avatarWidth = computed(() => imageDimensions.value.avatarWidth)
+    const dimensionsCorrupted = computed(() => imageDimensions.value.isCorrupted)
+
     return {
         // Core functions
         setTheme,
@@ -242,6 +361,16 @@ export function useTheme() {
         // Computed state
         currentVars,
         currentTheme,
+
+        // Image dimensions
+        extractImageDimensions,
+        getImageDimensions,
+        cardWidth,
+        cardHeight,
+        tileWidth,
+        tileHeight,
+        avatarWidth,
+        dimensionsCorrupted,
 
         // Helpers
         getVarsAsStyleString,

@@ -1,10 +1,14 @@
 <template>
-    <div class="item-card" :class="[sizeClass, { 'has-background': cimg }]">
-        <!-- Background Image with Lazy Loading -->
-        <img v-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
+    <div class="item-card" :class="[sizeClass, { 'has-background': hasImage }]">
+        <!-- Background Image with data mode -->
+        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'card'" :variant="variant || 'default'"
+            class="card-background-image" />
+
+        <!-- Legacy Background Image -->
+        <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
 
         <!-- Background Fade Overlay -->
-        <div v-if="cimg" class="card-background-fade"></div>
+        <div v-if="hasImage" class="card-background-fade"></div>
 
         <!-- Card Content -->
         <div class="card-content">
@@ -22,18 +26,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
+import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
     heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
+    data?: ImgShapeData
+    shape?: 'card' | 'tile' | 'avatar'
+    variant?: 'default' | 'square' | 'wide' | 'vertical'
 }
 
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium'
 })
+
+const dataMode = computed(() => props.data !== undefined)
+const hasImage = computed(() => dataMode.value || props.cimg !== undefined)
 
 const sizeClass = computed(() => `size-${props.size}`)
 

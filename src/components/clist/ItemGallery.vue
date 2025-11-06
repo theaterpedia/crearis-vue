@@ -1,7 +1,9 @@
 <template>
     <div v-if="interaction === 'static'" class="item-gallery-container">
-        <div class="item-gallery" :class="itemTypeClass">
-            <component :is="itemComponent" v-for="(item, index) in items" :key="index" :heading="item.heading"
+        <div v-if="loading" class="item-gallery-loading">Loading...</div>
+        <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
+        <div v-else class="item-gallery" :class="itemTypeClass">
+            <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
                 :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
@@ -18,8 +20,10 @@
                     <button class="popup-close-btn" @click="closePopup" aria-label="Close">×</button>
                 </div>
                 <div class="popup-content">
-                    <div class="item-gallery" :class="itemTypeClass">
-                        <component :is="itemComponent" v-for="(item, index) in items" :key="index"
+                    <div v-if="loading" class="item-gallery-loading">Loading...</div>
+                    <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
+                    <div v-else class="item-gallery" :class="itemTypeClass">
+                        <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
                             :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                             <template v-if="item.slot" #default>
                                 <component :is="item.slot" />
@@ -39,9 +43,11 @@
         </div>
         <div v-if="isZoomed" class="zoom-overlay" @click.self="toggleZoom">
             <div class="zoom-container">
-                <div class="item-gallery" :class="itemTypeClass">
-                    <component :is="itemComponent" v-for="(item, index) in items" :key="index" :heading="item.heading"
-                        :cimg="item.cimg" :size="size" v-bind="item.props || {}">
+                <div v-if="loading" class="item-gallery-loading">Loading...</div>
+                <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
+                <div v-else class="item-gallery" :class="itemTypeClass">
+                    <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
+                        :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}">
                         <template v-if="item.slot" #default>
                             <component :is="item.slot" />
                         </template>
@@ -53,10 +59,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import ItemTile from './ItemTile.vue'
 import ItemCard from './ItemCard.vue'
 import ItemRow from './ItemRow.vue'
+import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface GalleryItem {
     heading: string
@@ -65,10 +72,22 @@ interface GalleryItem {
     slot?: any
 }
 
+interface EntityItem {
+    id: number
+    title?: string
+    entityname?: string
+    img_thumb?: string
+    img_square?: string
+}
+
 interface Props {
-    items: GalleryItem[]
+    items?: GalleryItem[]
+    entity?: 'posts' | 'events' | 'instructors' | 'all'
+    project?: string
+    images?: number[]
     itemType?: 'tile' | 'card' | 'row'
-    size?: 'small' | 'medium' | 'large'
+    size?: 'small' | 'medium'
+    variant?: 'default' | 'square' | 'wide' | 'vertical'
     interaction?: 'static' | 'popup' | 'zoom'
     title?: string
     modelValue?: boolean
@@ -77,6 +96,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     itemType: 'card',
     size: 'medium',
+    variant: 'default',
     interaction: 'static'
 })
 
@@ -87,10 +107,104 @@ const emit = defineEmits<{
 
 const isOpen = computed({
     get: () => props.modelValue ?? false,
-    set: (value) => emit('update:modelValue', value)
+    set: (value: boolean) => emit('update:modelValue', value)
 })
 
 const isZoomed = ref(false)
+const entityData = ref<EntityItem[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+
+const dataMode = computed(() => {
+    return props.entity !== undefined || props.images !== undefined
+})
+
+const shape = computed<'card' | 'tile' | 'avatar'>(() => {
+    if (props.size === 'small') return 'tile'
+    return 'card'
+})
+
+const fetchEntityData = async () => {
+    if (!dataMode.value) return
+
+    loading.value = true
+    error.value = null
+
+    try {
+        let url = ''
+
+        if (props.images) {
+            console.warn('Image-specific fetching not yet implemented')
+            return
+        }
+
+        if (props.entity === 'posts') {
+            url = '/api/posts'
+        } else if (props.entity === 'events') {
+            url = '/api/events'
+        } else if (props.entity === 'instructors') {
+            url = '/api/instructors'
+        } else if (props.entity === 'all') {
+            console.warn('Combined entity fetching not yet implemented')
+            return
+        }
+
+        if (props.project) {
+            url += `?project=${encodeURIComponent(props.project)}`
+        }
+
+        const response = await fetch(url)
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ${props.entity}: ${response.statusText}`)
+        }
+
+        entityData.value = await response.json()
+    } catch (err) {
+        error.value = err instanceof Error ? err.message : 'Unknown error'
+        console.error('Error fetching entity data:', err)
+    } finally {
+        loading.value = false
+    }
+}
+
+const parseImageData = (jsonString: string | undefined): ImgShapeData | null => {
+    if (!jsonString) return null
+
+    try {
+        const parsed = JSON.parse(jsonString)
+        return {
+            type: 'url',
+            url: parsed.url || '',
+            x: parsed.x ?? null,
+            y: parsed.y ?? null,
+            z: parsed.z ?? null,
+            options: parsed.options ?? null
+        }
+    } catch {
+        return null
+    }
+}
+
+const entities = computed(() => {
+    if (dataMode.value) {
+        return entityData.value.map((entity: EntityItem) => {
+            const imageField = props.variant === 'square' ? entity.img_square : entity.img_thumb
+            const imageData = parseImageData(imageField)
+
+            return {
+                heading: entity.title || entity.entityname || `Item ${entity.id}`,
+                cimg: undefined,
+                props: {
+                    data: imageData,
+                    shape: shape.value,
+                    variant: props.variant
+                }
+            }
+        })
+    }
+
+    return props.items || []
+})
 
 const itemComponent = computed(() => {
     switch (props.itemType) {
@@ -115,10 +229,17 @@ const toggleZoom = () => {
     isZoomed.value = !isZoomed.value
 }
 
+onMounted(() => {
+    if (dataMode.value) {
+        fetchEntityData()
+    }
+})
+
 defineExpose({
     open: () => { isOpen.value = true },
     close: closePopup,
-    toggleZoom
+    toggleZoom,
+    refresh: fetchEntityData
 })
 </script>
 
@@ -131,6 +252,20 @@ defineExpose({
 .item-gallery {
     display: grid;
     gap: 1.5rem;
+}
+
+.item-gallery-loading,
+.item-gallery-error {
+    padding: 2rem;
+    text-align: center;
+    color: var(--color-dimmed);
+    font-family: var(--headings);
+}
+
+.item-gallery-error {
+    color: var(--color-negative-contrast);
+    background: var(--color-negative-bg);
+    border-radius: 0.5rem;
 }
 
 /* Grid layouts based on item type - gallery has larger items */

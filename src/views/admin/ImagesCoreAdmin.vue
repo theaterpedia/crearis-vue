@@ -2,6 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
+import Columns from '@/components/Columns.vue'
+import Column from '@/components/Column.vue'
+import ImgShape from '@/components/images/ImgShape.vue'
 import tagsMultiToggle from '@/components/images/tagsMultiToggle.vue'
 import cimgImport from '@/components/images/cimgImport.vue'
 
@@ -18,6 +21,19 @@ const statusOptions = ref<Array<{ id: number; value: number; name: string }>>([]
 const authorAdapter = ref<'unsplash' | 'cloudinary'>('unsplash')
 const activeShapeTab = ref<'square' | 'wide' | 'vertical' | 'thumb'>('square')
 const showImportModal = ref(false)
+
+// Shape URL refs for ImgShape emits
+const cardWideShapeUrl = ref<string>('')
+const tileWideShapeUrl = ref<string>('')
+const avatarThumbShapeUrl = ref<string>('')
+
+// Temporary XYZ inputs for shape URL construction
+const cardWideX = ref<number | null>(null)
+const cardWideY = ref<number | null>(null)
+const cardWideZ = ref<number | null>(null)
+const tileSquareX = ref<number | null>(null)
+const tileSquareY = ref<number | null>(null)
+const tileSquareZ = ref<number | null>(null)
 
 // Filters state
 const filterStatusId = ref<number | null>(null)
@@ -573,6 +589,40 @@ const handleImportSave = async (importedImages: any[]) => {
     await fetchImages()
 }
 
+// Save card/wide shape URL
+const saveCardWideUrl = () => {
+    if (!selectedImage.value) return
+
+    if (!selectedImage.value.shape_wide) {
+        selectedImage.value.shape_wide = { url: '', x: null, y: null, z: null }
+    }
+
+    selectedImage.value.shape_wide.url = cardWideShapeUrl.value
+    selectedImage.value.shape_wide.x = cardWideX.value
+    selectedImage.value.shape_wide.y = cardWideY.value
+    selectedImage.value.shape_wide.z = cardWideZ.value
+
+    checkDirty()
+    alert('Card/Wide URL saved to shape_wide')
+}
+
+// Save tile/square shape URL
+const saveTileSquareUrl = () => {
+    if (!selectedImage.value) return
+
+    if (!selectedImage.value.shape_thumb) {
+        selectedImage.value.shape_thumb = { url: '', x: null, y: null, z: null }
+    }
+
+    selectedImage.value.shape_thumb.url = tileWideShapeUrl.value
+    selectedImage.value.shape_thumb.x = tileSquareX.value
+    selectedImage.value.shape_thumb.y = tileSquareY.value
+    selectedImage.value.shape_thumb.z = tileSquareZ.value
+
+    checkDirty()
+    alert('Tile/Square URL saved to shape_thumb')
+}
+
 onMounted(() => {
     fetchStatusOptions()
     fetchImages()
@@ -682,7 +732,82 @@ onMounted(() => {
             <!-- Header: Image preview -->
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
-                    <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
+                    <Columns gap="medium">
+                        <!-- Column 1: Original preview image -->
+                        <Column width="2/5">
+                            <div class="preview-image-wrapper">
+                                <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
+                            </div>
+                        </Column>
+
+                        <!-- Column 2: Shape previews (2/5 width) -->
+                        <Column width="2/5">
+                            <!-- Row 1: Card/Wide shape -->
+                            <div class="shape-row">
+                                <ImgShape v-if="selectedImage.shape_wide" :data="selectedImage.shape_wide" shape="card"
+                                    variant="wide" class="CardShape"
+                                    @shapeUrl="(url: string) => cardWideShapeUrl = url" />
+                            </div>
+
+                            <!-- Row 2: Two smaller shapes side by side -->
+                            <div class="shape-row shape-row-split">
+                                <div class="shape-col">
+                                    <ImgShape v-if="selectedImage.shape_thumb" :data="selectedImage.shape_thumb"
+                                        shape="tile" variant="wide" class="TileShape"
+                                        @shapeUrl="(url: string) => tileWideShapeUrl = url" />
+                                </div>
+                                <div class="shape-col">
+                                    <ImgShape v-if="selectedImage.shape_thumb" :data="selectedImage.shape_thumb"
+                                        shape="avatar" class="AvatarShape"
+                                        @shapeUrl="(url: string) => avatarThumbShapeUrl = url" />
+                                </div>
+                            </div>
+                        </Column>
+
+                        <!-- Column 3: Controls (1/5 width) -->
+                        <Column width="1/5">
+                            <!-- XYZ Label -->
+                            <div class="control-section dimmed-bg">
+                                <span class="control-label">X | Y | Z</span>
+                            </div>
+
+                            <!-- Card/Wide controls -->
+                            <div class="control-section">
+                                <div class="control-header dimmed-bg">
+                                    <span class="control-label">card/wide</span>
+                                </div>
+                                <div class="control-inputs">
+                                    <input type="number" v-model.number="cardWideX" placeholder="X"
+                                        class="control-input" />
+                                    <input type="number" v-model.number="cardWideY" placeholder="Y"
+                                        class="control-input" />
+                                    <input type="number" v-model.number="cardWideZ" placeholder="Z"
+                                        class="control-input" />
+                                    <button @click="saveCardWideUrl" class="btn-save-url" title="Save URL">
+                                        💾
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tile/Square controls -->
+                            <div class="control-section">
+                                <div class="control-header dimmed-bg">
+                                    <span class="control-label">tile/square</span>
+                                </div>
+                                <div class="control-inputs">
+                                    <input type="number" v-model.number="tileSquareX" placeholder="X"
+                                        class="control-input" />
+                                    <input type="number" v-model.number="tileSquareY" placeholder="Y"
+                                        class="control-input" />
+                                    <input type="number" v-model.number="tileSquareZ" placeholder="Z"
+                                        class="control-input" />
+                                    <button @click="saveTileSquareUrl" class="btn-save-url" title="Save URL">
+                                        💾
+                                    </button>
+                                </div>
+                            </div>
+                        </Column>
+                    </Columns>
                 </div>
             </template>
 
@@ -913,20 +1038,127 @@ onMounted(() => {
 .header-preview {
     width: 100%;
     max-width: 100%;
-    display: flex;
-    justify-content: center;
     background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
-    overflow: hidden;
+    padding: 1.5rem;
     box-shadow: 0 4px 12px oklcha(0, 0%, 0%, 0.1);
 }
 
-.header-preview .preview-image {
+.preview-image-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--color-card-bg);
+    border-radius: var(--radius-small);
+    overflow: hidden;
+    min-height: 300px;
+}
+
+.preview-image {
     max-width: 100%;
     max-height: 400px;
     height: auto;
     display: block;
     object-fit: contain;
+}
+
+/* Shape preview rows */
+.shape-row {
+    margin-bottom: 1rem;
+    background: var(--color-card-bg);
+    border-radius: var(--radius-small);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+}
+
+.shape-row-split {
+    display: flex;
+    gap: 1rem;
+    min-height: auto;
+}
+
+.shape-col {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--color-card-bg);
+    border-radius: var(--radius-small);
+    overflow: hidden;
+    min-height: 120px;
+    padding: 0.5rem;
+}
+
+.CardShape,
+.TileShape,
+.AvatarShape {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Control sections */
+.control-section {
+    margin-bottom: 1rem;
+}
+
+.dimmed-bg {
+    background: var(--color-muted-bg);
+    padding: 0.75rem;
+    border-radius: var(--radius-small);
+    text-align: center;
+}
+
+.control-label {
+    font-family: var(--headings);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-dimmed);
+    text-transform: uppercase;
+}
+
+.control-header {
+    margin-bottom: 0.5rem;
+}
+
+.control-inputs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.control-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    background: var(--color-card-bg);
+    font-size: 0.875rem;
+    min-width: 0;
+}
+
+.control-input:focus {
+    outline: none;
+    border-color: var(--color-primary-base);
+}
+
+.btn-save-url {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    border: none;
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: opacity 0.2s;
+}
+
+.btn-save-url:hover {
+    opacity: 0.9;
 }
 
 /* Filters navbar */

@@ -1,7 +1,11 @@
 <template>
     <div class="item-tile" :class="sizeClass">
-        <!-- Background Image with Lazy Loading -->
-        <img v-if="cimg" :src="cimg" :alt="heading" class="tile-background" loading="lazy" />
+        <!-- Background Image with data mode -->
+        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'tile'" :variant="variant || 'default'"
+            class="tile-background" />
+
+        <!-- Legacy Background Image -->
+        <img v-else-if="cimg" :src="cimg" :alt="heading" class="tile-background" loading="lazy" />
 
         <!-- Content -->
         <div class="tile-content">
@@ -14,18 +18,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
+import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
     heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
+    data?: ImgShapeData
+    shape?: 'card' | 'tile' | 'avatar'
+    variant?: 'default' | 'square' | 'wide' | 'vertical'
 }
 
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium'
 })
+
+const dataMode = computed(() => props.data !== undefined)
 
 const sizeClass = computed(() => `size-${props.size}`)
 

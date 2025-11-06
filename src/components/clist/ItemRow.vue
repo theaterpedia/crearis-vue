@@ -1,7 +1,12 @@
 <template>
     <div class="item-row" :class="sizeClass" @click="$emit('click', $event)">
         <div class="row-col-image">
-            <img v-if="cimg" :src="cimg" :alt="heading" class="image-box" loading="lazy" />
+            <!-- Image with data mode -->
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'tile'" :variant="variant || 'default'"
+                class="image-box" />
+            <!-- Legacy image -->
+            <img v-else-if="cimg" :src="cimg" :alt="heading" class="image-box" loading="lazy" />
+            <!-- Placeholder -->
             <div v-else class="image-box image-placeholder"></div>
         </div>
         <div class="row-col-content">
@@ -14,14 +19,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
+import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
     heading: string
     cimg?: string
     size?: 'small' | 'medium' | 'large'
     cols?: 1 | 2 | 3
+    data?: ImgShapeData
+    shape?: 'card' | 'tile' | 'avatar'
+    variant?: 'default' | 'square' | 'wide' | 'vertical'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,6 +41,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     click: [event: MouseEvent]
 }>()
+
+const dataMode = computed(() => props.data !== undefined)
 
 const sizeClass = computed(() => `size-${props.size}`)
 
