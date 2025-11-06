@@ -753,7 +753,7 @@ onMounted(() => {
                             <div class="shape-row shape-row-split">
                                 <div class="shape-col">
                                     <ImgShape v-if="selectedImage.shape_thumb" :data="selectedImage.shape_thumb"
-                                        shape="tile" variant="wide" class="TileShape"
+                                        shape="tile" variant="square" class="TileShape"
                                         @shapeUrl="(url: string) => tileWideShapeUrl = url" />
                                 </div>
                                 <div class="shape-col">

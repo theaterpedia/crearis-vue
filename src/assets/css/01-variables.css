@@ -26,17 +26,18 @@
   --card-width: 21rem;
   --card-height-min: 10.5rem;
   /* 168px */
-  --card-height: 14rem;  /* was: 14.125rem : 226px */
+  --card-height: 14rem;
+  /* was: 14.125rem : 226px */
   /* 224px */
 
   /* tile is the basis for dense image components */
-  --tile-width: 10.5rem;
-  --tile-height: 7rem;
-  --tile-height-square: 10.5rem;
+  --tile-width: 8rem;
+  --tile-height: 4rem;
+  --tile-height-square: 8rem;
 
   /* avatar is the basis for small image components */
-  --avatar: 5.25rem;
-  /* 84px */
+  --avatar: 4rem;
+  /* 64px */
 
   --tagline-small-height: 1.1rem;
   /* 17.6px */
