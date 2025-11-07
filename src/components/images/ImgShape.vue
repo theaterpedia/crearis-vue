@@ -202,6 +202,57 @@ watch(displayUrl, (url: string) => {
         emit('shapeUrl', url)
     }
 }, { immediate: true })
+
+// Expose a small API so parent components can query current preview/settings
+// without duplicating state in the parent. Returns the effective display URL
+// and any focal-point params (x/y/z) parsed from the URL (if present).
+function getPreviewData() {
+    const result: any = {
+        url: displayUrl.value || null,
+        originalUrl: props.data?.url || null,
+        adapter: props.data?.adapter || null,
+        shape: props.shape || null,
+        variant: props.variant || null,
+        params: {
+            x: null,
+            y: null,
+            z: null,
+        },
+    }
+
+    try {
+        // Use a base origin so URL parsing doesn't fail for relative/odd strings
+        const u = new URL(displayUrl.value || props.data?.url || '', window.location.origin)
+        const sp = u.searchParams
+        const fpX = sp.get('fp-x')
+        const fpY = sp.get('fp-y')
+        const fpZ = sp.get('fp-z')
+
+        if (fpX != null) {
+            const n = parseFloat(fpX)
+            if (!isNaN(n)) result.params.x = Math.round(n * 100)
+        }
+        if (fpY != null) {
+            const n = parseFloat(fpY)
+            if (!isNaN(n)) result.params.y = Math.round(n * 100)
+        }
+        if (fpZ != null) {
+            const n = parseFloat(fpZ)
+            if (!isNaN(n)) {
+                result.params.z = Math.round((n - 1) * 100)
+            }
+        }
+    } catch (e) {
+        // ignore URL parse failures
+    }
+
+    return result
+}
+
+// Make the getter available to parent via template ref
+// (used by ImagesCoreAdmin to read current preview/state from each ImgShape)
+// @ts-ignore - defineExpose available in script setup
+defineExpose({ getPreviewData })
 </script>
 
 <template>

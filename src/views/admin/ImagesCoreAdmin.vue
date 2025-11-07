@@ -27,6 +27,12 @@ const cardWideShapeUrl = ref<string>('')
 const tileWideShapeUrl = ref<string>('')
 const avatarThumbShapeUrl = ref<string>('')
 
+// Template refs to ImgShape component instances so we can query them
+// for current preview/settings without duplicating state in this parent.
+const cardShapeRef = ref<any | null>(null)
+const tileShapeRef = ref<any | null>(null)
+const avatarShapeRef = ref<any | null>(null)
+
 // Temporary XYZ inputs for shape URL construction
 const cardWideX = ref<number | null>(null)
 const cardWideY = ref<number | null>(null)
@@ -720,44 +726,66 @@ const previewCardWide = () => {
         PreviewWide.value = selectedImage.value.shape_wide.url
         CorrectionWide.value = ''
     }
-}// Save card/wide shape URL
-const saveCardWideUrl = () => {
-    if (!selectedImage.value) return
+    // Save card/wide shape URL. Prefer reading the current preview/state from the
+    // child ImgShape component via its exposed getPreviewData(). Falls back to
+    // the local refs if the child doesn't provide data.
+    const saveCardWideUrl = () => {
+        if (!selectedImage.value) return
 
-    if (!selectedImage.value.shape_wide) {
-        selectedImage.value.shape_wide = { url: '', x: null, y: null, z: null }
+        if (!selectedImage.value.shape_wide) {
+            selectedImage.value.shape_wide = { url: '', x: null, y: null, z: null }
+        }
+
+        // Try to read from child component first
+        const preview = cardShapeRef.value?.getPreviewData?.()
+
+        if (preview && preview.url) {
+            selectedImage.value.shape_wide.url = preview.url
+            selectedImage.value.shape_wide.x = preview.params?.x ?? cardWideX.value
+            selectedImage.value.shape_wide.y = preview.params?.y ?? cardWideY.value
+            selectedImage.value.shape_wide.z = preview.params?.z ?? cardWideZ.value
+        } else {
+            // Fallback to previous approach
+            selectedImage.value.shape_wide.url = cardWideShapeUrl.value
+            selectedImage.value.shape_wide.x = cardWideX.value
+            selectedImage.value.shape_wide.y = cardWideY.value
+            selectedImage.value.shape_wide.z = cardWideZ.value
+        }
+
+        checkDirty()
+        alert('Card/Wide URL saved to shape_wide')
     }
 
-    selectedImage.value.shape_wide.url = cardWideShapeUrl.value
-    selectedImage.value.shape_wide.x = cardWideX.value
-    selectedImage.value.shape_wide.y = cardWideY.value
-    selectedImage.value.shape_wide.z = cardWideZ.value
+    // Save tile/square shape URL. Prefer reading from ImgShape child component.
+    const saveTileSquareUrl = () => {
+        if (!selectedImage.value) return
 
-    checkDirty()
-    alert('Card/Wide URL saved to shape_wide')
-}
+        if (!selectedImage.value.shape_thumb) {
+            selectedImage.value.shape_thumb = { url: '', x: null, y: null, z: null }
+        }
 
-// Save tile/square shape URL
-const saveTileSquareUrl = () => {
-    if (!selectedImage.value) return
+        const preview = tileShapeRef.value?.getPreviewData?.()
 
-    if (!selectedImage.value.shape_thumb) {
-        selectedImage.value.shape_thumb = { url: '', x: null, y: null, z: null }
+        if (preview && preview.url) {
+            selectedImage.value.shape_thumb.url = preview.url
+            selectedImage.value.shape_thumb.x = preview.params?.x ?? tileSquareX.value
+            selectedImage.value.shape_thumb.y = preview.params?.y ?? tileSquareY.value
+            selectedImage.value.shape_thumb.z = preview.params?.z ?? tileSquareZ.value
+        } else {
+            selectedImage.value.shape_thumb.url = tileWideShapeUrl.value
+            selectedImage.value.shape_thumb.x = tileSquareX.value
+            selectedImage.value.shape_thumb.y = tileSquareY.value
+            selectedImage.value.shape_thumb.z = tileSquareZ.value
+        }
+
+        checkDirty()
+        alert('Tile/Square URL saved to shape_thumb')
     }
 
-    selectedImage.value.shape_thumb.url = tileWideShapeUrl.value
-    selectedImage.value.shape_thumb.x = tileSquareX.value
-    selectedImage.value.shape_thumb.y = tileSquareY.value
-    selectedImage.value.shape_thumb.z = tileSquareZ.value
-
-    checkDirty()
-    alert('Tile/Square URL saved to shape_thumb')
-}
-
-onMounted(() => {
-    fetchStatusOptions()
-    fetchImages()
-})
+    onMounted(() => {
+        fetchStatusOptions()
+        fetchImages()
+    })
 </script>
 
 <template>
@@ -875,21 +903,21 @@ onMounted(() => {
                         <Column width="2/5">
                             <!-- Row 1: Card/Wide shape -->
                             <div class="shape-row">
-                                <ImgShape v-if="cardWidePreviewData" :data="cardWidePreviewData" shape="card"
-                                    variant="wide" class="CardShape"
+                                <ImgShape ref="cardShapeRef" v-if="cardWidePreviewData" :data="cardWidePreviewData"
+                                    shape="card" variant="wide" class="CardShape"
                                     @shapeUrl="(url: string) => cardWideShapeUrl = url" />
                             </div>
 
                             <!-- Row 2: Two smaller shapes side by side -->
                             <div class="shape-row shape-row-split">
                                 <div class="shape-col">
-                                    <ImgShape v-if="selectedImage.shape_thumb" :data="selectedImage.shape_thumb"
-                                        shape="tile" variant="square" class="TileShape"
-                                        @shapeUrl="(url: string) => tileWideShapeUrl = url" />
+                                    <ImgShape ref="tileShapeRef" v-if="selectedImage.shape_thumb"
+                                        :data="selectedImage.shape_thumb" shape="tile" variant="square"
+                                        class="TileShape" @shapeUrl="(url: string) => tileWideShapeUrl = url" />
                                 </div>
                                 <div class="shape-col">
-                                    <ImgShape v-if="selectedImage.shape_thumb" :data="selectedImage.shape_thumb"
-                                        shape="avatar" class="AvatarShape"
+                                    <ImgShape ref="avatarShapeRef" v-if="selectedImage.shape_thumb"
+                                        :data="selectedImage.shape_thumb" shape="avatar" class="AvatarShape"
                                         @shapeUrl="(url: string) => avatarThumbShapeUrl = url" />
                                 </div>
                             </div>
