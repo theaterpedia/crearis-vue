@@ -21,17 +21,25 @@ const statusOptions = ref<Array<{ id: number; value: number; name: string }>>([]
 const authorAdapter = ref<'unsplash' | 'cloudinary'>('unsplash')
 const activeShapeTab = ref<'square' | 'wide' | 'vertical' | 'thumb'>('square')
 const showImportModal = ref(false)
+const blurImagesPreview = ref(false) // Toggle for blur preview mode
+
+// Dropdown menu states
+const showFiltersMenu = ref(false)
+const showDataMenu = ref(false)
+const showSettingsMenu = ref(false)
 
 // Shape URL refs for ImgShape emits
 const cardWideShapeUrl = ref<string>('')
 const tileWideShapeUrl = ref<string>('')
 const avatarThumbShapeUrl = ref<string>('')
+const verticalShapeUrl = ref<string>('')
 
 // Template refs to ImgShape component instances so we can query them
 // for current preview/settings without duplicating state in this parent.
 const cardShapeRef = ref<any | null>(null)
 const tileShapeRef = ref<any | null>(null)
 const avatarShapeRef = ref<any | null>(null)
+const verticalShapeRef = ref<any | null>(null)
 
 // Temporary XYZ inputs for shape URL construction
 const cardWideX = ref<number | null>(null)
@@ -158,12 +166,12 @@ const updateShapeField = (field: 'x' | 'y' | 'z' | 'url', value: string | null) 
     const shapeKey = getShapeFieldName(activeShapeTab.value)
 
     if (!selectedImage.value[shapeKey]) {
-        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: '' }
+        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: '', json: null, blur: null, turl: null, tpar: null }
     }
 
     if (typeof selectedImage.value[shapeKey] === 'string') {
         // Parse composite type if needed
-        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: selectedImage.value[shapeKey] }
+        selectedImage.value[shapeKey] = { x: null, y: null, z: null, url: selectedImage.value[shapeKey], json: null, blur: null, turl: null, tpar: null }
     }
 
     selectedImage.value[shapeKey][field] = value
@@ -284,12 +292,12 @@ function selectImage(image: any) {
     }
 
     // Parse shape fields if they're strings (database composite type)
-    // Format: (x,y,z,url,json) matching image_shape type definition
+    // Format: (x,y,z,url,json,blur,turl,tpar) matching image_shape type definition
     const parseShape = (shapeStr: string) => {
-        if (!shapeStr || typeof shapeStr !== 'string') return { url: '', x: null, y: null }
+        if (!shapeStr || typeof shapeStr !== 'string') return { url: '', x: null, y: null, z: null, blur: null, turl: null, tpar: null }
 
         const match = shapeStr.match(/^\((.*)\)$/)
-        if (!match) return { url: '', x: null, y: null }
+        if (!match) return { url: '', x: null, y: null, z: null, blur: null, turl: null, tpar: null }
 
         // Split by comma, but handle quoted strings and empty values
         const parts: string[] = []
@@ -309,12 +317,16 @@ function selectImage(image: any) {
         }
         parts.push(current)
 
-        // Database format: (x, y, z, url, json)
+        // Database format: (x, y, z, url, json, blur, turl, tpar)
         return {
             x: parts[0] ? parseInt(parts[0]) : null,
             y: parts[1] ? parseInt(parts[1]) : null,
             z: parts[2] ? parseInt(parts[2]) : null,
-            url: parts[3] || ''
+            url: parts[3] || '',
+            json: parts[4] || null,  // json field (not used yet)
+            blur: parts[5] || null,  // BlurHash
+            turl: parts[6] || null,  // thumbnail URL
+            tpar: parts[7] || null   // thumbnail parameters
         }
     }
 
@@ -726,66 +738,80 @@ const previewCardWide = () => {
         PreviewWide.value = selectedImage.value.shape_wide.url
         CorrectionWide.value = ''
     }
-    // Save card/wide shape URL. Prefer reading the current preview/state from the
-    // child ImgShape component via its exposed getPreviewData(). Falls back to
-    // the local refs if the child doesn't provide data.
-    const saveCardWideUrl = () => {
-        if (!selectedImage.value) return
+}
 
-        if (!selectedImage.value.shape_wide) {
-            selectedImage.value.shape_wide = { url: '', x: null, y: null, z: null }
-        }
+// Save card/wide shape URL. Prefer reading the current preview/state from the
+// child ImgShape component via its exposed getPreviewData(). Falls back to
+// the local refs if the child doesn't provide data.
+const saveCardWideUrl = () => {
+    if (!selectedImage.value) return
 
-        // Try to read from child component first
-        const preview = cardShapeRef.value?.getPreviewData?.()
-
-        if (preview && preview.url) {
-            selectedImage.value.shape_wide.url = preview.url
-            selectedImage.value.shape_wide.x = preview.params?.x ?? cardWideX.value
-            selectedImage.value.shape_wide.y = preview.params?.y ?? cardWideY.value
-            selectedImage.value.shape_wide.z = preview.params?.z ?? cardWideZ.value
-        } else {
-            // Fallback to previous approach
-            selectedImage.value.shape_wide.url = cardWideShapeUrl.value
-            selectedImage.value.shape_wide.x = cardWideX.value
-            selectedImage.value.shape_wide.y = cardWideY.value
-            selectedImage.value.shape_wide.z = cardWideZ.value
-        }
-
-        checkDirty()
-        alert('Card/Wide URL saved to shape_wide')
+    if (!selectedImage.value.shape_wide) {
+        selectedImage.value.shape_wide = { url: '', x: null, y: null, z: null, json: null, blur: null, turl: null, tpar: null }
     }
 
-    // Save tile/square shape URL. Prefer reading from ImgShape child component.
-    const saveTileSquareUrl = () => {
-        if (!selectedImage.value) return
+    // Try to read from child component first
+    const preview = cardShapeRef.value?.getPreviewData?.()
 
-        if (!selectedImage.value.shape_thumb) {
-            selectedImage.value.shape_thumb = { url: '', x: null, y: null, z: null }
+    if (preview && preview.url) {
+        selectedImage.value.shape_wide = {
+            ...selectedImage.value.shape_wide,
+            url: preview.url,
+            x: preview.params?.x ?? cardWideX.value,
+            y: preview.params?.y ?? cardWideY.value,
+            z: preview.params?.z ?? cardWideZ.value
         }
-
-        const preview = tileShapeRef.value?.getPreviewData?.()
-
-        if (preview && preview.url) {
-            selectedImage.value.shape_thumb.url = preview.url
-            selectedImage.value.shape_thumb.x = preview.params?.x ?? tileSquareX.value
-            selectedImage.value.shape_thumb.y = preview.params?.y ?? tileSquareY.value
-            selectedImage.value.shape_thumb.z = preview.params?.z ?? tileSquareZ.value
-        } else {
-            selectedImage.value.shape_thumb.url = tileWideShapeUrl.value
-            selectedImage.value.shape_thumb.x = tileSquareX.value
-            selectedImage.value.shape_thumb.y = tileSquareY.value
-            selectedImage.value.shape_thumb.z = tileSquareZ.value
+    } else {
+        // Fallback to previous approach
+        selectedImage.value.shape_wide = {
+            ...selectedImage.value.shape_wide,
+            url: cardWideShapeUrl.value,
+            x: cardWideX.value,
+            y: cardWideY.value,
+            z: cardWideZ.value
         }
-
-        checkDirty()
-        alert('Tile/Square URL saved to shape_thumb')
     }
 
-    onMounted(() => {
-        fetchStatusOptions()
-        fetchImages()
-    })
+    checkDirty()
+    alert('Card/Wide URL saved to shape_wide')
+}
+
+// Save tile/square shape URL. Prefer reading from ImgShape child component.
+const saveTileSquareUrl = () => {
+    if (!selectedImage.value) return
+
+    if (!selectedImage.value.shape_thumb) {
+        selectedImage.value.shape_thumb = { url: '', x: null, y: null, z: null, json: null, blur: null, turl: null, tpar: null }
+    }
+
+    const preview = tileShapeRef.value?.getPreviewData?.()
+
+    if (preview && preview.url) {
+        selectedImage.value.shape_thumb = {
+            ...selectedImage.value.shape_thumb,
+            url: preview.url,
+            x: preview.params?.x ?? tileSquareX.value,
+            y: preview.params?.y ?? tileSquareY.value,
+            z: preview.params?.z ?? tileSquareZ.value
+        }
+    } else {
+        selectedImage.value.shape_thumb = {
+            ...selectedImage.value.shape_thumb,
+            url: tileWideShapeUrl.value,
+            x: tileSquareX.value,
+            y: tileSquareY.value,
+            z: tileSquareZ.value
+        }
+    }
+
+    checkDirty()
+    alert('Tile/Square URL saved to shape_thumb')
+}
+
+onMounted(() => {
+    fetchStatusOptions()
+    fetchImages()
+})
 </script>
 
 <template>
@@ -795,56 +821,107 @@ const previewCardWide = () => {
                 <span class="admin-logo">Images Core</span>
             </template>
 
-            <!-- Navbar with filters -->
+            <!-- Navbar with dropdown menus -->
             <template #topnav-actions>
-                <div class="filters-navbar">
-                    <!-- Status filter -->
-                    <select v-model="filterStatusId" class="filter-select">
-                        <option :value="null">All Status</option>
-                        <option v-for="status in statusOptions" :key="status.id" :value="status.value">
-                            {{ status.name }}
-                        </option>
-                    </select>
+                <div class="topnav-menus">
+                    <!-- Filters Menu -->
+                    <div class="menu-dropdown">
+                        <button class="menu-button" @click="showFiltersMenu = !showFiltersMenu">
+                            Filters ▼
+                        </button>
+                        <div v-if="showFiltersMenu" class="menu-content">
+                            <!-- Status filter -->
+                            <div class="menu-item">
+                                <label>Status:</label>
+                                <select v-model="filterStatusId" class="filter-select">
+                                    <option :value="null">All Status</option>
+                                    <option v-for="status in statusOptions" :key="status.id" :value="status.value">
+                                        {{ status.name }}
+                                    </option>
+                                </select>
+                            </div>
 
-                    <!-- Age Group filter (bits 0-1) -->
-                    <select v-model="filterAgeGroup" class="filter-select">
-                        <option :value="null">All Ages</option>
-                        <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                            <!-- Age Group filter (bits 0-1) -->
+                            <div class="menu-item">
+                                <label>Age Group:</label>
+                                <select v-model="filterAgeGroup" class="filter-select">
+                                    <option :value="null">All Ages</option>
+                                    <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </div>
 
-                    <!-- Subject Type filter (bits 2-3) -->
-                    <select v-model="filterSubjectType" class="filter-select">
-                        <option :value="null">All Subjects</option>
-                        <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                            <!-- Subject Type filter (bits 2-3) -->
+                            <div class="menu-item">
+                                <label>Subject Type:</label>
+                                <select v-model="filterSubjectType" class="filter-select">
+                                    <option :value="null">All Subjects</option>
+                                    <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </div>
 
-                    <!-- Access Level filter (bits 4-5) -->
-                    <select v-model="filterAccessLevel" class="filter-select">
-                        <option :value="null">All Access</option>
-                        <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                            <!-- Access Level filter (bits 4-5) -->
+                            <div class="menu-item">
+                                <label>Access Level:</label>
+                                <select v-model="filterAccessLevel" class="filter-select">
+                                    <option :value="null">All Access</option>
+                                    <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </div>
 
-                    <!-- Quality filter (bits 6-7) -->
-                    <select v-model="filterQuality" class="filter-select">
-                        <option :value="null">All Quality</option>
-                        <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                            <!-- Quality filter (bits 6-7) -->
+                            <div class="menu-item">
+                                <label>Quality:</label>
+                                <select v-model="filterQuality" class="filter-select">
+                                    <option :value="null">All Quality</option>
+                                    <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </div>
 
-                    <button class="btn-reset-filters" @click="resetFilters">
-                        Reset Filters
-                    </button>
+                            <div class="menu-divider"></div>
 
-                    <button class="btn-import" @click="showImportModal = true">
-                        Import Images
-                    </button>
+                            <button class="menu-action-button" @click="resetFilters(); showFiltersMenu = false">
+                                Reset Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Data Menu -->
+                    <div class="menu-dropdown">
+                        <button class="menu-button" @click="showDataMenu = !showDataMenu">
+                            Data ▼
+                        </button>
+                        <div v-if="showDataMenu" class="menu-content">
+                            <button class="menu-action-button" @click="showImportModal = true; showDataMenu = false">
+                                Import Images
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Settings Menu -->
+                    <div class="menu-dropdown">
+                        <button class="menu-button" @click="showSettingsMenu = !showSettingsMenu">
+                            Settings ▼
+                        </button>
+                        <div v-if="showSettingsMenu" class="menu-content">
+                            <div class="menu-section-title">Image Preview</div>
+
+                            <div class="menu-item menu-toggle">
+                                <label>Blur Images:</label>
+                                <button class="toggle-button" :class="{ active: blurImagesPreview }"
+                                    @click="blurImagesPreview = !blurImagesPreview">
+                                    {{ blurImagesPreview ? 'ON' : 'OFF' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </template>
 
@@ -892,19 +969,29 @@ const previewCardWide = () => {
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
                     <Columns gap="medium">
-                        <!-- Column 1: Original preview image -->
+                        <!-- Column 1: Original preview image (1/5 width) -->
                         <Column width="2/5">
                             <div class="preview-image-wrapper">
                                 <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
                             </div>
                         </Column>
 
-                        <!-- Column 2: Shape previews (2/5 width) -->
-                        <Column width="2/5">
+                        <!-- Column 2: Vertical shape preview (1/5 width) -->
+                        <Column width="1/5">
+                            <div class="shape-row shape-row-vertical">
+                                <ImgShape ref="verticalShapeRef" v-if="selectedImage.shape_vertical"
+                                    :data="selectedImage.shape_vertical" shape="card" variant="vertical"
+                                    class="VerticalShape" :forceBlur="blurImagesPreview"
+                                    @shapeUrl="(url: string) => verticalShapeUrl = url" />
+                            </div>
+                        </Column>
+
+                        <!-- Column 3: Shape previews (2/5 width) -->
+                        <Column width="1/5">
                             <!-- Row 1: Card/Wide shape -->
                             <div class="shape-row">
                                 <ImgShape ref="cardShapeRef" v-if="cardWidePreviewData" :data="cardWidePreviewData"
-                                    shape="card" variant="wide" class="CardShape"
+                                    shape="card" variant="wide" class="CardShape" :forceBlur="blurImagesPreview"
                                     @shapeUrl="(url: string) => cardWideShapeUrl = url" />
                             </div>
 
@@ -913,17 +1000,19 @@ const previewCardWide = () => {
                                 <div class="shape-col">
                                     <ImgShape ref="tileShapeRef" v-if="selectedImage.shape_thumb"
                                         :data="selectedImage.shape_thumb" shape="tile" variant="square"
-                                        class="TileShape" @shapeUrl="(url: string) => tileWideShapeUrl = url" />
+                                        class="TileShape" :forceBlur="blurImagesPreview"
+                                        @shapeUrl="(url: string) => tileWideShapeUrl = url" />
                                 </div>
                                 <div class="shape-col">
                                     <ImgShape ref="avatarShapeRef" v-if="selectedImage.shape_thumb"
                                         :data="selectedImage.shape_thumb" shape="avatar" class="AvatarShape"
+                                        :forceBlur="blurImagesPreview"
                                         @shapeUrl="(url: string) => avatarThumbShapeUrl = url" />
                                 </div>
                             </div>
                         </Column>
 
-                        <!-- Column 3: Controls (1/5 width) -->
+                        <!-- Column 4: Controls (1/5 width) -->
                         <Column width="1/5">
                             <!-- XYZ Label -->
                             <div class="control-section dimmed-bg">
@@ -1241,6 +1330,11 @@ const previewCardWide = () => {
     min-height: 150px;
 }
 
+.shape-row-vertical {
+    min-height: 100%;
+    margin-bottom: 0;
+}
+
 .shape-row-split {
     display: flex;
     gap: 1rem;
@@ -1359,12 +1453,119 @@ const previewCardWide = () => {
     opacity: 0.9;
 }
 
-/* Filters navbar */
-.filters-navbar {
+/* Topnav dropdown menus */
+.topnav-menus {
     display: flex;
-    gap: 0.75rem;
+    gap: 1rem;
     align-items: center;
-    flex-wrap: wrap;
+}
+
+.menu-dropdown {
+    position: relative;
+}
+
+.menu-button {
+    padding: 0.5rem 1rem;
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border: none;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.menu-button:hover {
+    opacity: 0.9;
+}
+
+.menu-content {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+    box-shadow: 0 4px 12px oklcha(0, 0%, 0%, 0.15);
+    min-width: 250px;
+    max-width: 350px;
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.menu-item label {
+    min-width: 100px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-base);
+}
+
+.menu-item .filter-select {
+    flex: 1;
+}
+
+.menu-toggle {
+    justify-content: space-between;
+}
+
+.menu-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-dimmed);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.menu-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 0.75rem 0;
+}
+
+.menu-action-button {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    border: none;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.menu-action-button:hover {
+    opacity: 0.9;
+}
+
+.toggle-button {
+    padding: 0.25rem 0.75rem;
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 50px;
+}
+
+.toggle-button.active {
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-base);
 }
 
 .filter-select {
@@ -1374,32 +1575,6 @@ const previewCardWide = () => {
     background: var(--color-card-bg);
     font-size: 0.875rem;
     cursor: pointer;
-}
-
-.btn-reset-filters,
-.btn-import {
-    padding: 0.5rem 1rem;
-    background: var(--color-muted-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-small);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: background var(--duration) var(--ease);
-}
-
-.btn-reset-filters:hover,
-.btn-import:hover {
-    background: var(--color-accent-bg);
-}
-
-.btn-import {
-    background: var(--color-primary-base);
-    color: var(--color-primary-contrast);
-    border-color: var(--color-primary-base);
-}
-
-.btn-import:hover {
-    opacity: 0.9;
 }
 
 /* Main content area */

@@ -1,6 +1,7 @@
 import { defineEventHandler, getRouterParam, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { ImagesTableFields } from '../../types/database'
+import { generateShapeBlurHashes } from '../../utils/blurhash'
 
 /**
  * PATCH /api/images/:id - Partially update image
@@ -20,12 +21,19 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        const existing = await db.get('SELECT id FROM images WHERE id = ?', [id])
+        const existing = await db.get('SELECT id, url FROM images WHERE id = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
                 message: 'Image not found'
             })
+        }
+
+        // Generate BlurHash if URL changed
+        let blurHashes: any = null
+        if (body.url && body.url !== existing.url) {
+            console.log('[PATCH /api/images/:id] URL changed, regenerating BlurHash')
+            blurHashes = await generateShapeBlurHashes(body.url)
         }
 
         const updates: string[] = []
@@ -83,15 +91,22 @@ export default defineEventHandler(async (event) => {
                     updates.push(`${field} = ?`)
                     values.push(formatComposite(compositeValues))
                 } else if (field === 'shape_square' || field === 'shape_wide' || field === 'shape_vertical' || field === 'shape_thumb') {
-                    // Handle shape fields as PostgreSQL composite type
+                    // Handle shape fields as PostgreSQL composite type (x, y, z, url, json, blur, turl, tpar)
                     const shape = body[field]
                     if (shape) {
+                        // Use provided blur or newly generated one
+                        const shapeKey = field.replace('shape_', '') as 'square' | 'wide' | 'vertical' | 'thumb'
+                        const blur = shape.blur || (blurHashes ? blurHashes[shapeKey] : null)
+
                         const compositeValues = [
                             shape.x || null,
                             shape.y || null,
                             shape.z || null,
                             shape.url || '',
-                            null // json - not used yet
+                            null,   // json - not used yet
+                            blur,   // blur - BlurHash string
+                            shape.turl || null,  // turl
+                            shape.tpar || null   // tpar
                         ]
                         updates.push(`${field} = ?`)
                         values.push(formatComposite(compositeValues, true))

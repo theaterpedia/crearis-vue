@@ -85,10 +85,10 @@ export default defineEventHandler(async (event) => {
     if (user.instructor_id) availableRoles.push('instructor')
 
     // Default active role - prefer admin, then instructor, then user
-    const activeRole = availableRoles.includes('admin') 
-        ? 'admin' 
-        : availableRoles.includes('instructor') 
-            ? 'instructor' 
+    const activeRole = availableRoles.includes('admin')
+        ? 'admin'
+        : availableRoles.includes('instructor')
+            ? 'instructor'
             : 'user'
 
     // Default to first project if available

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import { useBlurHash } from '@/composables/useBlurHash'
 
 export interface ImgShapeData {
     type?: 'url' | 'params' | 'json'
@@ -9,6 +10,9 @@ export interface ImgShapeData {
     y?: number | null
     z?: number | null
     options?: Record<string, any> | null
+    blur?: string
+    turl?: string
+    tpar?: string
 }
 
 interface Props {
@@ -16,11 +20,13 @@ interface Props {
     shape: 'card' | 'tile' | 'avatar'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
     adapter?: 'detect' | 'unsplash' | 'cloudinary' | 'vimeo' | 'none'
+    forceBlur?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
     variant: 'default',
-    adapter: 'detect'
+    adapter: 'detect',
+    forceBlur: false
 })
 
 const emit = defineEmits<{
@@ -194,6 +200,24 @@ const cssClasses = computed(() => {
     ]
 })
 
+// BlurHash placeholder
+const imageLoaded = ref(false)
+const showPlaceholder = computed(() => {
+    // If forceBlur is true, always show placeholder (if blur exists)
+    if (props.forceBlur && props.data.blur) return true
+    // Otherwise, show placeholder only while image is loading
+    return !imageLoaded.value && !!props.data.blur
+})
+const { canvasRef, isDecoded } = useBlurHash({
+    hash: computed(() => props.data.blur || ''),
+    width: 32,
+    height: 32
+})
+
+const onImageLoad = () => {
+    imageLoaded.value = true
+}
+
 /**
  * Emit the constructed URL whenever it changes
  */
@@ -256,15 +280,38 @@ defineExpose({ getPreviewData })
 </script>
 
 <template>
-    <img v-if="displayUrl" :src="displayUrl" :alt="altText" :class="cssClasses" />
+    <div class="img-shape-wrapper">
+        <canvas v-if="showPlaceholder" ref="canvasRef" class="img-shape-placeholder" />
+        <img v-if="displayUrl && !forceBlur" :src="displayUrl" :alt="altText" :class="cssClasses"
+            :style="{ opacity: imageLoaded ? 1 : 0 }" @load="onImageLoad" />
+    </div>
 </template>
 
 <style scoped>
+.img-shape-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.img-shape-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    filter: blur(10px);
+    z-index: 1;
+}
+
 .img-shape {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.3s ease-in-out;
+    position: relative;
+    z-index: 2;
 }
 
 .img-shape--card {

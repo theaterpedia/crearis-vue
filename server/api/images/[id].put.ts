@@ -1,13 +1,14 @@
 import { defineEventHandler, getRouterParam, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { ImagesTableFields } from '../../types/database'
+import { generateShapeBlurHashes } from '../../utils/blurhash'
 
 /**
  * PUT /api/images/:id - Update image
  */
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, 'id')
-    const body = await readBody(event)
+    const body = await readBody(event) as any
 
     console.log(`[PUT /api/images/${id}] Received body:`, body)
 
@@ -19,12 +20,29 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        const existing = await db.get('SELECT id FROM images WHERE id = ?', [id])
+        const existing = await db.get('SELECT id, url, shape_wide, shape_square, shape_vertical, shape_thumb FROM images WHERE id = ?', [id])
         if (!existing) {
             throw createError({
                 statusCode: 404,
                 message: 'Image not found'
             })
+        }
+
+        // Generate BlurHash if:
+        // 1. URL changed, OR
+        // 2. Any shape field is being updated but doesn't have blur yet
+        let blurHashes: any = null
+        const urlChanged = body.url && body.url !== existing.url
+        const needsBlurHash = urlChanged ||
+            (body.shape_wide && !body.shape_wide.blur) ||
+            (body.shape_square && !body.shape_square.blur) ||
+            (body.shape_vertical && !body.shape_vertical.blur) ||
+            (body.shape_thumb && !body.shape_thumb.blur)
+
+        if (needsBlurHash) {
+            const urlToUse = body.url || existing.url
+            console.log('[PUT /api/images/:id] Generating BlurHash for URL:', urlToUse)
+            blurHashes = await generateShapeBlurHashes(urlToUse)
         }
 
         const updates: string[] = []
@@ -84,16 +102,23 @@ export default defineEventHandler(async (event) => {
                     updates.push(`${field} = ?`)
                     values.push(formatComposite(compositeValues))
                 } else if (field === 'shape_square' || field === 'shape_wide' || field === 'shape_vertical' || field === 'shape_thumb') {
-                    // Handle shape fields as PostgreSQL composite type (x, y, z, url, json)
-                    // Matching image_shape type: (x numeric, y numeric, z numeric, url text, json jsonb)
+                    // Handle shape fields as PostgreSQL composite type (x, y, z, url, json, blur, turl, tpar)
+                    // Matching image_shape type: (x numeric, y numeric, z numeric, url text, json jsonb, blur varchar(50), turl text, tpar text)
                     const shape = body[field]
                     if (shape) {
+                        // Use provided blur or newly generated one
+                        const shapeKey = field.replace('shape_', '') as 'square' | 'wide' | 'vertical' | 'thumb'
+                        const blur = shape.blur || (blurHashes ? blurHashes[shapeKey] : null)
+
                         const compositeValues = [
                             shape.x || null,
                             shape.y || null,
                             shape.z || null,
                             shape.url || '',
-                            null   // json - not used yet
+                            null,   // json - not used yet
+                            blur,   // blur - BlurHash string
+                            shape.turl || null,  // turl
+                            shape.tpar || null   // tpar
                         ]
                         updates.push(`${field} = ?`)
                         values.push(formatComposite(compositeValues, true))

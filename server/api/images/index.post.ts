@@ -1,13 +1,14 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { ImagesTableFields } from '../../types/database'
+import { generateShapeBlurHashes } from '../../utils/blurhash'
 
 /**
  * POST /api/images - Create new image record
  */
 export default defineEventHandler(async (event) => {
     try {
-        const body = await readBody(event)
+        const body = await readBody(event) as any
 
         if (!body.name || !body.url) {
             throw createError({
@@ -15,6 +16,10 @@ export default defineEventHandler(async (event) => {
                 message: 'Missing required fields: name and url'
             })
         }
+
+        // Generate BlurHash for all shapes
+        console.log('[POST /api/images] Generating BlurHash for URL:', body.url)
+        const blurHashes = await generateShapeBlurHashes(body.url)
 
         const imageData: Partial<ImagesTableFields> = {
             xmlid: body.xmlid || null,
@@ -33,11 +38,38 @@ export default defineEventHandler(async (event) => {
             length: body.length || null
         }
 
+        // Helper to format composite type with blur
+        const formatShape = (shapeData: any, blur: string | null, shapeType: string) => {
+            const x = shapeData?.x || null
+            const y = shapeData?.y || null
+            const z = shapeData?.z || null
+            const url = shapeData?.url || body.url
+            const json = null // Not used yet
+            const blurVal = blur || null
+            const turl = shapeData?.turl || null
+            const tpar = shapeData?.tpar || null
+
+            // Format: (x, y, z, url, json, blur, turl, tpar)
+            const parts = [
+                x === null ? '' : String(x),
+                y === null ? '' : String(y),
+                z === null ? '' : String(z),
+                url ? `"${url.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : '',
+                '', // json placeholder
+                blurVal ? `"${blurVal}"` : '',
+                turl ? `"${turl.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : '',
+                tpar ? `"${tpar.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : ''
+            ]
+
+            return `(${parts.join(',')})`
+        }
+
         const sql = `
             INSERT INTO images (
                 xmlid, name, url, project_id, status_id, owner_id,
-                alt_text, title, x, y, fileformat, embedformat, license, length
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                alt_text, title, x, y, fileformat, embedformat, license, length,
+                shape_square, shape_wide, shape_vertical, shape_thumb
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -55,7 +87,11 @@ export default defineEventHandler(async (event) => {
             imageData.fileformat,
             imageData.embedformat,
             imageData.license,
-            imageData.length
+            imageData.length,
+            formatShape(body.shape_square, blurHashes.square || null, 'square'),
+            formatShape(body.shape_wide, blurHashes.wide || null, 'wide'),
+            formatShape(body.shape_vertical, blurHashes.vertical || null, 'vertical'),
+            formatShape(body.shape_thumb, blurHashes.thumb || null, 'thumb')
         ])
 
         const newId = result.rows?.[0]?.id || result.lastID
