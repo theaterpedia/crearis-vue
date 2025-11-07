@@ -16,10 +16,10 @@
  * - url: https://images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0
  * - ctags: \x01 (byte value 1, quality bits 6+7 = 0, meaning "ok" status)
  * - rtags: empty
- * - shape_thumb: (,,,https://thumb.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=200,)
- * - shape_square: (,,,https://square.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=1080,)
- * - shape_wide: (,,,https://wide.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=85,)
- * - shape_vertical: (,,,https://vertical.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0,)
+ * - shape_thumb: (,,,https://thumb.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=200,,,,)
+ * - shape_square: (,,,https://square.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=1080,,,,)
+ * - shape_wide: (,,,https://wide.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=85,,,,)
+ * - shape_vertical: (,,,https://vertical.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0,,,,)
  * - license: unsplash
  * - alt_text: Batch imported from Unsplash
  * - author: (cloudinary,,,,,)
@@ -96,10 +96,10 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             'https://images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0',
             Buffer.from([0x01]), // ctags = 1, quality bits = 0 (ok)
             Buffer.from([]), // rtags = empty
-            '(,,,https://thumb.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=200,)',
-            '(,,,https://square.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=1080,)',
-            '(,,,https://wide.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=85,)',
-            '(,,,https://vertical.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0,)',
+            '(,,,https://thumb.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=200,,,,)',
+            '(,,,https://square.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=80&w=1080,,,,)',
+            '(,,,https://wide.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0&q=85,,,,)',
+            '(,,,https://vertical.images.unsplash.com/photo-1737416372938-b3f2e1c21bb4?ixid=M3w0MDg1MTV8MHwxfGFsbHx8fHx8fHx8fDE3NjIxNTg0MDB8&ixlib=rb-4.1.0,,,,)',
             'unsplash',
             'Batch imported from Unsplash'
         ])
@@ -175,7 +175,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-fallback',
                 Buffer.from([0x01]), // quality = ok
-                '(,,,https://square.images.unsplash.com/test-fallback,)'
+                '(,,,https://square.images.unsplash.com/test-fallback,,,,)'
             ])
             testImageId = result.id
         })
@@ -211,7 +211,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-params',
                 Buffer.from([0x01]),
-                '(100,200,300,,)' // x=100, y=200, z=300, url=NULL, json=NULL
+                '(100,200,300,,,,,)' // x=100, y=200, z=300, url=NULL, json=NULL, blur=NULL, turl=NULL, tpar=NULL
             ])
             testImageId = result.id
         })
@@ -248,7 +248,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-json',
                 Buffer.from([0x01]),
-                '(,,,,"{\\"custom\\": \\"data\\", \\"width\\": 1080}")'
+                '(,,,,"{\\"custom\\": \\"data\\", \\"width\\": 1080}",,,)' // json with custom data, blur=NULL, turl=NULL, tpar=NULL
             ])
             testImageId = result.id
         })
@@ -316,7 +316,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-null-variants',
                 Buffer.from([0x01]),
-                '(,,,https://square.images.unsplash.com/test,)'
+                '(,,,https://square.images.unsplash.com/test,,,,)'
             ])
             testImageId = result.id
         })
@@ -370,7 +370,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-deprecated',
                 Buffer.from([0x40]), // 0x40 = 64 = bits 6+7 set to 01 (is_deprecated)
-                '(,,,https://square.images.unsplash.com/test,)'
+                '(,,,https://square.images.unsplash.com/test,,,,)'
             ])
             testImageId = result.id
 
@@ -389,7 +389,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-not-ok',
                 Buffer.from([0x80]), // 0x80 = 128 = bits 6+7 set to 10 (not ok)
-                '(,,,https://square.images.unsplash.com/test,)'
+                '(,,,https://square.images.unsplash.com/test,,,,)'
             ])
             testImageId = result.id
 
@@ -413,10 +413,10 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-propagation',
                 Buffer.from([0x01]), // quality ok
-                '(,,,https://thumb.test.com/image.jpg,)',
-                '(,,,https://square.test.com/image.jpg,)',
-                '(,,,https://wide.test.com/image.jpg,)',
-                '(,,,https://vert.test.com/image.jpg,)'
+                '(,,,https://thumb.test.com/image.jpg,,,,)',
+                '(,,,https://square.test.com/image.jpg,,,,)',
+                '(,,,https://wide.test.com/image.jpg,,,,)',
+                '(,,,https://vert.test.com/image.jpg,,,,)'
             ])
             const imageId = imageResult.id
 
@@ -458,7 +458,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-update',
                 Buffer.from([0x01]),
-                '(,,,https://square-v1.test.com/image.jpg,)'
+                '(,,,https://square-v1.test.com/image.jpg,,,,)'
             ])
             const imageId = imageResult.id
 
@@ -477,8 +477,8 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
                     shape_wide = $2
                 WHERE id = $3
             `, [
-                '(,,,https://square-v2.test.com/image.jpg,)',
-                '(,,,https://wide-v2.test.com/image.jpg,)',
+                '(,,,https://square-v2.test.com/image.jpg,,,,)',
+                '(,,,https://wide-v2.test.com/image.jpg,,,,)',
                 imageId
             ])
 
@@ -506,7 +506,7 @@ describe('Image Shape Reducer - JSONB Computed Fields', () => {
             `, [
                 'https://images.unsplash.com/test-multi',
                 Buffer.from([0x40]), // is_deprecated (quality = 64)
-                '(,,,https://square-multi.test.com/image.jpg,)'
+                '(,,,https://square-multi.test.com/image.jpg,,,,)'
             ])
             const imageId = imageResult.id
 

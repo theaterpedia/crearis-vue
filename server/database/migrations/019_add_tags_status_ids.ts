@@ -2340,7 +2340,10 @@ export const migration = {
                     y            numeric,
                     z            numeric,
                     url          text,
-                    json         jsonb
+                    json         jsonb,
+                    blur         varchar(50),
+                    turl         text,
+                    tpar         text
                 );
             `)
             console.log('    ✓ Created image_shape composite type')
@@ -3745,6 +3748,17 @@ export const migration = {
                         NEW.img_square := jsonb_build_object('error', true);
                     END IF;
                     
+                    -- Add blur/turl/tpar if present
+                    IF (NEW.shape_square).blur IS NOT NULL THEN
+                        NEW.img_square := NEW.img_square || jsonb_build_object('blur', (NEW.shape_square).blur);
+                    END IF;
+                    IF (NEW.shape_square).turl IS NOT NULL THEN
+                        NEW.img_square := NEW.img_square || jsonb_build_object('turl', (NEW.shape_square).turl);
+                    END IF;
+                    IF (NEW.shape_square).tpar IS NOT NULL THEN
+                        NEW.img_square := NEW.img_square || jsonb_build_object('tpar', (NEW.shape_square).tpar);
+                    END IF;
+                    
                     -- Store fallback for Loop 2
                     fallback_json := NEW.img_square;
 
@@ -3765,6 +3779,17 @@ export const migration = {
                         NEW.img_thumb := fallback_json;
                     END IF;
 
+                    -- Add blur/turl/tpar if present
+                    IF (NEW.shape_thumb).blur IS NOT NULL THEN
+                        NEW.img_thumb := NEW.img_thumb || jsonb_build_object('blur', (NEW.shape_thumb).blur);
+                    END IF;
+                    IF (NEW.shape_thumb).turl IS NOT NULL THEN
+                        NEW.img_thumb := NEW.img_thumb || jsonb_build_object('turl', (NEW.shape_thumb).turl);
+                    END IF;
+                    IF (NEW.shape_thumb).tpar IS NOT NULL THEN
+                        NEW.img_thumb := NEW.img_thumb || jsonb_build_object('tpar', (NEW.shape_thumb).tpar);
+                    END IF;
+
                     -- Loop 3: Compute img_wide (no fallback, use enabled:false)
                     IF (NEW.shape_wide).json IS NOT NULL THEN
                         NEW.img_wide := (NEW.shape_wide).json;
@@ -3781,6 +3806,17 @@ export const migration = {
                         NEW.img_wide := jsonb_build_object('enabled', false);
                     END IF;
 
+                    -- Add blur/turl/tpar if present
+                    IF (NEW.shape_wide).blur IS NOT NULL THEN
+                        NEW.img_wide := NEW.img_wide || jsonb_build_object('blur', (NEW.shape_wide).blur);
+                    END IF;
+                    IF (NEW.shape_wide).turl IS NOT NULL THEN
+                        NEW.img_wide := NEW.img_wide || jsonb_build_object('turl', (NEW.shape_wide).turl);
+                    END IF;
+                    IF (NEW.shape_wide).tpar IS NOT NULL THEN
+                        NEW.img_wide := NEW.img_wide || jsonb_build_object('tpar', (NEW.shape_wide).tpar);
+                    END IF;
+
                     -- Loop 4: Compute img_vert (no fallback, use enabled:false)
                     IF (NEW.shape_vertical).json IS NOT NULL THEN
                         NEW.img_vert := (NEW.shape_vertical).json;
@@ -3795,6 +3831,17 @@ export const migration = {
                         NEW.img_vert := jsonb_build_object('url', (NEW.shape_vertical).url);
                     ELSE
                         NEW.img_vert := jsonb_build_object('enabled', false);
+                    END IF;
+
+                    -- Add blur/turl/tpar if present
+                    IF (NEW.shape_vertical).blur IS NOT NULL THEN
+                        NEW.img_vert := NEW.img_vert || jsonb_build_object('blur', (NEW.shape_vertical).blur);
+                    END IF;
+                    IF (NEW.shape_vertical).turl IS NOT NULL THEN
+                        NEW.img_vert := NEW.img_vert || jsonb_build_object('turl', (NEW.shape_vertical).turl);
+                    END IF;
+                    IF (NEW.shape_vertical).tpar IS NOT NULL THEN
+                        NEW.img_vert := NEW.img_vert || jsonb_build_object('tpar', (NEW.shape_vertical).tpar);
                     END IF;
 
                     RETURN NEW;

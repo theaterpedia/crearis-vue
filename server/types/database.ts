@@ -2,7 +2,7 @@
  * Database Table Field Types
  * 
  * AUTO-GENERATED from schema definition v0.0.2
- * Generated at: 2025-11-05T21:25:00.692Z
+ * Generated at: 2025-11-07T10:56:45.137Z
  * 
  * SCHEMA_REGISTRY: server/database/schema-definitions/v0.0.2.json
  * 

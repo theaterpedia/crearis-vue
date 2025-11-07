@@ -25,6 +25,8 @@ import { migration as migration019 } from './019_add_tags_status_ids'
 import { migration as migration020 } from './020_refactor_entities'
 import { migration as migration021 } from './021_seed_system_data'
 import { migration as migration022 } from './022_seed_csv_data'
+import { migration as migration023 } from './023_seed_demo_data'
+import { migration as migration024 } from './024_add_project_images'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -34,6 +36,7 @@ interface Migration {
         version: string
         date: string
     }
+    manualOnly?: boolean  // If true, skip in auto-run (requires env flag)
 }
 
 // Registry of all available migrations
@@ -57,8 +60,10 @@ const migrations: Migration[] = [
     { run: migration018.up, metadata: { id: migration018.id, description: migration018.description, version: '0.0.11', date: '2025-10-22' } },
     { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
     { run: migration020.up, metadata: { id: migration020.id, description: migration020.description, version: '0.0.13', date: '2025-10-22' } },
-    { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' } },
-    { run: migration022.up, metadata: { id: migration022.id, description: migration022.description, version: '0.0.15', date: '2025-10-24' } },
+    { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' }, manualOnly: true },
+    { run: migration022.up, metadata: { id: migration022.id, description: migration022.description, version: '0.0.15', date: '2025-10-24' }, manualOnly: true },
+    { run: migration023.up, metadata: { id: migration023.id, description: migration023.description, version: '0.0.16', date: '2025-10-24' }, manualOnly: true },
+    { run: migration024.up, metadata: { id: migration024.id, description: migration024.description, version: '0.0.17', date: '2025-10-24' }, manualOnly: true },
 ]
 
 /**
@@ -126,12 +131,21 @@ export async function runMigrations(db: DatabaseAdapter, verbose = true) {
     }
 
     const migrationsRun = await getMigrationsRun(db)
+    const runManualMigrations = process.env.RUN_MANUAL_MIGRATIONS === 'true'
     let ranCount = 0
 
     for (const migration of migrations) {
         if (migrationsRun.includes(migration.metadata.id)) {
             if (verbose) {
                 console.log(`⏭️  Skipping migration: ${migration.metadata.id} (already run)`)
+            }
+            continue
+        }
+
+        // Skip manual-only migrations unless explicitly enabled
+        if (migration.manualOnly && !runManualMigrations) {
+            if (verbose) {
+                console.log(`⏸️  Skipping manual migration: ${migration.metadata.id} (set RUN_MANUAL_MIGRATIONS=true to run)`)
             }
             continue
         }
