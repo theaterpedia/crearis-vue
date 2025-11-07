@@ -39,7 +39,17 @@ export default defineConfig({
       // Proxy API calls to Nitro server during development
       '/api': {
         target: 'http://localhost:3000',
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false,
+        // Enable cookies to be sent between frontend (3001) and backend (3000)
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Forward cookies from the original request
+            if (req.headers.cookie) {
+              proxyReq.setHeader('Cookie', req.headers.cookie)
+            }
+          })
+        }
       }
     }
   },
