@@ -439,6 +439,26 @@ function checkDirty() {
     isDirty.value = currentStr !== originalStr
 }
 
+// Export all images to JSON
+const exportImages = async () => {
+    try {
+        const response = await fetch('/api/images/export', {
+            method: 'POST'
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Export failed: ${response.status} ${errorText}`)
+        }
+
+        const result = await response.json()
+        alert(`✅ Exported ${result.count} images to ${result.path}`)
+    } catch (error) {
+        console.error('Export error:', error)
+        alert(`❌ Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+}
+
 // Delete image
 const deleteImage = async () => {
     if (!selectedImage.value) return
@@ -905,6 +925,9 @@ onMounted(() => {
                         <div v-if="showDataMenu" class="menu-content">
                             <button class="menu-action-button" @click="showImportModal = true; showDataMenu = false">
                                 Import Images
+                            </button>
+                            <button class="menu-action-button" @click="exportImages(); showDataMenu = false">
+                                Export JSON
                             </button>
                         </div>
                     </div>

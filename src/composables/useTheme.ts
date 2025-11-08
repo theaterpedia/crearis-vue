@@ -35,6 +35,10 @@ const imageDimensions = ref<{
     isCorrupted: false
 })
 
+// Mobile width constants (26rem = 416px at 16px base)
+export const MOBILE_WIDTH_REM = 26
+export const MOBILE_WIDTH_PX = 416
+
 export interface Theme {
     id: number
     name: string
@@ -345,6 +349,24 @@ export function useTheme() {
     const avatarWidth = computed(() => imageDimensions.value.avatarWidth)
     const dimensionsCorrupted = computed(() => imageDimensions.value.isCorrupted)
 
+    /**
+     * Calculate mobile-responsive dimensions
+     * Scales image to fit within mobile width while preserving aspect ratio
+     */
+    const calculateMobileDimensions = (width: number, height: number): { width: number; height: number } => {
+        if (width <= MOBILE_WIDTH_PX) {
+            // Already fits mobile width
+            return { width, height }
+        }
+
+        // Scale down to mobile width
+        const scale = MOBILE_WIDTH_PX / width
+        return {
+            width: MOBILE_WIDTH_PX,
+            height: Math.round(height * scale)
+        }
+    }
+
     return {
         // Core functions
         setTheme,
@@ -371,6 +393,11 @@ export function useTheme() {
         tileHeight,
         avatarWidth,
         dimensionsCorrupted,
+        calculateMobileDimensions,
+
+        // Constants
+        MOBILE_WIDTH_REM,
+        MOBILE_WIDTH_PX,
 
         // Helpers
         getVarsAsStyleString,

@@ -156,26 +156,55 @@ const isValidUrl = (url: string) => {
 
 // Add URL to import list
 const addUrl = () => {
-    const url = urlInput.value.trim()
-    if (!url || !isValidUrl(url)) {
-        alert('Please enter a valid URL')
+    const input = urlInput.value.trim()
+    if (!input) {
+        alert('Please enter at least one URL')
         return
     }
 
-    // Check if already added
-    if (importedImages.value.some((img: ImportedImage) => img.url === url)) {
-        alert('This URL is already in the list')
-        return
+    // Split by comma, newline, or space and filter valid URLs
+    const urls = input
+        .split(/[,\n\s]+/)
+        .map(url => url.trim())
+        .filter(url => url.length > 0)
+
+    let addedCount = 0
+    let invalidCount = 0
+    let duplicateCount = 0
+
+    for (const url of urls) {
+        if (!isValidUrl(url)) {
+            invalidCount++
+            continue
+        }
+
+        // Check if already added
+        if (importedImages.value.some((img: ImportedImage) => img.url === url)) {
+            duplicateCount++
+            continue
+        }
+
+        // Add to list
+        importedImages.value.push({
+            url,
+            previewUrl: url,
+            status: 'pending'
+        })
+        addedCount++
     }
 
-    // Add to list
-    importedImages.value.push({
-        url,
-        previewUrl: url,
-        status: 'pending'
-    })
-
+    // Clear input
     urlInput.value = ''
+
+    // Show feedback
+    const messages = []
+    if (addedCount > 0) messages.push(`✅ Added ${addedCount} URL(s)`)
+    if (duplicateCount > 0) messages.push(`⚠️ ${duplicateCount} duplicate(s) skipped`)
+    if (invalidCount > 0) messages.push(`❌ ${invalidCount} invalid URL(s)`)
+
+    if (messages.length > 0) {
+        console.log(messages.join(' • '))
+    }
 }
 
 // Remove image from list
@@ -314,12 +343,15 @@ watch(() => props.isOpen, (newValue) => {
                 <div class="modal-content">
                     <!-- URL input -->
                     <div class="form-section">
-                        <label>Image URL</label>
+                        <label>Image URLs (one per line or comma-separated)</label>
                         <div class="url-input-group">
-                            <input v-model="urlInput" type="url" placeholder="https://example.com/image.jpg"
-                                @keydown.enter="addUrl" class="url-input" />
-                            <button class="btn-add" @click="addUrl">Add</button>
+                            <textarea v-model="urlInput"
+                                placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;or comma-separated..."
+                                @keydown.ctrl.enter="addUrl" @keydown.meta.enter="addUrl" class="url-textarea"
+                                rows="3"></textarea>
+                            <button class="btn-add" @click="addUrl">Add URLs</button>
                         </div>
+                        <small class="form-hint">Supports multiple URLs (separated by comma, newline, or space)</small>
                     </div>
 
                     <!-- Image previews list -->
@@ -535,9 +567,11 @@ watch(() => props.isOpen, (newValue) => {
 
 .url-input-group {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
 }
 
+.url-textarea,
 .url-input,
 .form-input {
     flex: 1;
@@ -547,6 +581,12 @@ watch(() => props.isOpen, (newValue) => {
     background: var(--color-card-bg);
     color: var(--color-text);
     font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.url-textarea {
+    min-height: 80px;
 }
 
 .btn-add {
@@ -558,6 +598,7 @@ watch(() => props.isOpen, (newValue) => {
     font-weight: 600;
     cursor: pointer;
     transition: opacity var(--duration) var(--ease);
+    align-self: flex-start;
 }
 
 .btn-add:hover {
@@ -656,11 +697,18 @@ watch(() => props.isOpen, (newValue) => {
     background: var(--color-card-bg);
     color: var(--color-text);
     font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.form-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .form-select option {
-    background: var(--color-card-bg);
+    background: var(--color-background);
     color: var(--color-text);
+    padding: 0.5rem;
 }
 
 .checkbox-label {

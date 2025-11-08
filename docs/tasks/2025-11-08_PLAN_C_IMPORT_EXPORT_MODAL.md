@@ -2,7 +2,41 @@
 
 **Date**: November 8, 2025  
 **Priority**: High  
-**Status**: 🔄 In Progress
+**Status**: ✅ Partially Complete - Core Tasks Done
+
+---
+
+## 🎯 Implementation Status
+
+### ✅ Completed Tasks
+
+1. **Task 1: JSON Export** ✅
+   - Created `/api/images/export.post.ts` endpoint
+   - Added export button to ImagesCoreAdmin Data menu
+   - Exports to `/data/images/images-export-{timestamp}.json`
+
+2. **Task 3A: Owner Dropdown Styling** ✅
+   - Enhanced `.form-select` styles with theme integration
+   - Added disabled state styling
+   - Improved option contrast
+
+3. **Task 3B: Multiple URLs Support** ✅
+   - Changed input to textarea (resizable, 3 rows)
+   - Parse comma, newline, or space-separated URLs
+   - Shows feedback: added/duplicates/invalid counts
+   - Ctrl/Cmd+Enter keyboard shortcut
+
+4. **Task 6: useTheme Mobile Constants** ✅
+   - Added `MOBILE_WIDTH_REM = 26` and `MOBILE_WIDTH_PX = 416`
+   - Added `calculateMobileDimensions()` helper function
+   - Exported constants in composable
+
+### ⏳ Remaining Tasks (Deferred)
+
+- **Task 2**: JSON Import with options modal
+- **Task 3C**: ImgShape preview in import modal
+- **Task 5**: turl/tpar system implementation (moved to future sprint)
+- **Task 8**: Integration tests (moved to Plan G)
 
 ---
 

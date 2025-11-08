@@ -948,6 +948,45 @@ const bannerText = computed(() => {
 
 ---
 
+## 📱 Device Detection & Mobile Width Standard
+
+**Mobile Width Standard**: `416px` (26rem at 16px base)
+
+### Entry Points for Further Planning
+
+1. **useTheme Composable** (`src/composables/useTheme.ts`)
+   - Exports: `MOBILE_WIDTH_REM = 26`, `MOBILE_WIDTH_PX = 416`
+   - Helper: `calculateMobileDimensions(width, height)` - scales to fit mobile width
+   - Integration: Use these constants for all responsive logic
+
+2. **Hero.vue Detection Strategy**
+   - Two breakpoints: `≤416px` (mobile/vertical), `>416px` (desktop/wide)
+   - CSS media queries: `@media (max-width: 26rem)`
+   - JavaScript detection: `window.innerWidth <= MOBILE_WIDTH_PX`
+   - Load strategy: BlurHash → mobile shape → desktop shape (conditional)
+
+3. **Shape Selection Logic**
+   - Mobile (`≤416px`): Use `shape_vertical` (126×224 base, scales to 416×739)
+   - Desktop (`>416px`): Use `shape_wide` (336×168 base, scales proportionally)
+   - Fallback: Use main `url` if shapes unavailable
+
+4. **turl/tpar Mobile Optimization** (Plan C Task 5)
+   - Extract transformation params to `turl` field
+   - Build `tpar` template with `{turl}` placeholder
+   - Mobile dimensions calculated via `calculateMobileDimensions()`
+   - Example: 336×168 → 416×208 (wide), 126×224 → 416×739 (vertical)
+
+5. **Integration Points**
+   - Hero.vue: Viewport detection + shape selection
+   - ImgShape.vue: Responsive image loading
+   - Import adapters: Generate mobile-optimized URLs with turl/tpar
+   - Tests: Verify correct shape loads at each breakpoint
+
+**Status**: Constants implemented, ready for Hero integration  
+**Next**: Implement Hero.vue responsive logic using `MOBILE_WIDTH_PX`
+
+---
+
 ## ✅ Decision Summary
 
 | Question | Decision | Reasoning |

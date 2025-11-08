@@ -2,7 +2,9 @@
 
 **Date**: November 8, 2025  
 **Priority**: Medium  
-**Status**: Planning phase - To be detailed later
+**Status**: ⚠️ OUTDATED - Superseded by Plan C
+
+**Note**: This document contains inconsistent specifications. Refer to Plan C for correct turl/tpar implementation.
 
 ---
 
