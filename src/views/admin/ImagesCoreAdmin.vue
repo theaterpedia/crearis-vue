@@ -162,14 +162,14 @@ const filteredImages = computed(() => {
 // Get current XYZ values for active shape (Plan G Enhancement)
 const activeShapeXYZ = computed(() => {
     if (!activeShape.value) return { x: null, y: null, z: null }
-    
+
     const shape = activeShape.value.shape
     if (shape === 'wide' || shape === 'card') {
         return { x: cardWideX.value, y: cardWideY.value, z: cardWideZ.value }
     } else if (shape === 'square' || shape === 'tile' || shape === 'thumb' || shape === 'avatar') {
         return { x: tileSquareX.value, y: tileSquareY.value, z: tileSquareZ.value }
     }
-    
+
     return { x: null, y: null, z: null }
 })
 
@@ -913,13 +913,13 @@ const saveTileSquareUrl = () => {
 // Get ref for active shape
 const getActiveShapeRef = () => {
     if (!activeShape.value) return null
-    
+
     const shape = activeShape.value.shape
     if (shape === 'wide' || shape === 'card') return cardShapeRef.value
     if (shape === 'square' || shape === 'tile' || shape === 'thumb') return tileShapeRef.value
     if (shape === 'vertical') return verticalShapeRef.value
     if (shape === 'avatar') return avatarShapeRef.value
-    
+
     return null
 }
 
@@ -934,7 +934,7 @@ const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z
     if (!selectedImage.value || !activeShape.value) return
 
     const shape = activeShape.value.shape
-    
+
     // Update local XYZ state
     if (shape === 'wide' || shape === 'card') {
         if (data.x !== undefined) cardWideX.value = data.x
@@ -945,7 +945,7 @@ const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z
         if (data.y !== undefined) tileSquareY.value = data.y
         if (data.z !== undefined) tileSquareZ.value = data.z
     }
-    
+
     // Update ImgShape preview in real-time
     const shapeRef = getActiveShapeRef()
     if (shapeRef && shapeRef.updatePreview) {
@@ -965,7 +965,7 @@ const handleShapePreview = () => {
     if (!activeShape.value) return
 
     const shape = activeShape.value.shape
-    
+
     // Call appropriate preview/save function based on shape
     if (shape === 'wide' || shape === 'card') {
         previewCardWide()
@@ -986,7 +986,7 @@ const handleShapeReset = () => {
     if (!activeShape.value) return
 
     const shape = activeShape.value.shape
-    
+
     // Reset local XYZ state
     if (shape === 'wide' || shape === 'card') {
         cardWideX.value = null
@@ -997,7 +997,7 @@ const handleShapeReset = () => {
         tileSquareY.value = null
         tileSquareZ.value = null
     }
-    
+
     // Reset ImgShape preview
     const shapeRef = getActiveShapeRef()
     if (shapeRef && shapeRef.resetPreview) {
@@ -1268,21 +1268,15 @@ onMounted(() => {
 
                         <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
                         <div v-if="activeShape" class="shape-editor-section">
-                            <ShapeEditor 
-                                :shape="activeShape.shape as any" 
-                                :variant="activeShape.variant"
-                                :adapter="activeShape.adapter as any" 
-                                :data="{
+                            <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
+                                :adapter="activeShape.adapter as any" :data="{
                                     x: activeShapeXYZ.x,
                                     y: activeShapeXYZ.y,
                                     z: activeShapeXYZ.z,
                                     url: selectedImage.url,
                                     tpar: selectedImage.tpar || null
-                                }" 
-                                @update="handleShapeUpdate" 
-                                @preview="handleShapePreview"
-                                @reset="handleShapeReset" 
-                            />
+                                }" @update="handleShapeUpdate" @preview="handleShapePreview"
+                                @reset="handleShapeReset" />
                         </div>
 
                         <!-- Editable fields -->
