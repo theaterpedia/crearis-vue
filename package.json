@@ -46,6 +46,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "test:unit": "SKIP_MIGRATIONS=true vitest run",
     "test:coverage": "vitest run --coverage",
     "test:sqlite": "TEST_DATABASE_TYPE=sqlite vitest run",
     "test:pg": "TEST_DATABASE_TYPE=postgresql vitest run",

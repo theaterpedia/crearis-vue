@@ -15,6 +15,18 @@ export default async function globalSetup() {
     // Load environment variables from .env file
     loadEnv()
 
+    // Check if we should skip migrations (for pure unit tests)
+    const skipMigrations = process.env.SKIP_MIGRATIONS === 'true'
+
+    if (skipMigrations) {
+        console.log('\n🧪 Test Environment Setup (Unit Tests)')
+        console.log('=========================================')
+        console.log('⚡ SKIP_MIGRATIONS=true - skipping database setup')
+        console.log('   Tests run in isolation without DB migrations')
+        console.log('   This makes unit tests much faster!\n')
+        return
+    }
+
     const config = getTestDatabaseConfig()
 
     console.log('\n🧪 Test Environment Setup')

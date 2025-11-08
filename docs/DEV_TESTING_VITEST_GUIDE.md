@@ -14,7 +14,10 @@ This guide demonstrates how to write integration tests using Vitest with Postgre
 ## Running Tests
 
 ```bash
-# Run specific test file
+# Run unit tests (fast - no database migrations)
+pnpm test:unit tests/unit/imgshape-core.test.ts
+
+# Run specific integration test file with PostgreSQL
 TEST_DATABASE_TYPE=postgresql pnpm vitest run tests/integration/images-api.test.ts
 
 # Run with verbose output
@@ -22,7 +25,24 @@ TEST_DATABASE_TYPE=postgresql pnpm vitest run tests/integration/images-api.test.
 
 # Run in watch mode
 TEST_DATABASE_TYPE=postgresql pnpm vitest tests/integration/images-api.test.ts
+
+# Run all integration tests
+pnpm test:pg
 ```
+
+### Test Types
+
+**Unit Tests** (`pnpm test:unit`)
+- Fast execution (< 1 second typical)
+- No database setup or migrations
+- Perfect for component logic, helpers, utilities
+- Use `SKIP_MIGRATIONS=true` environment flag
+
+**Integration Tests** (`pnpm test:pg`)
+- Full database migrations run before tests
+- Tests database schema, triggers, constraints
+- Slower execution (3+ seconds with migration overhead)
+- Use `TEST_DATABASE_TYPE=postgresql` environment flag
 
 ## Test Structure
 

@@ -159,6 +159,20 @@ const filteredImages = computed(() => {
     })
 })
 
+// Get current XYZ values for active shape (Plan G Enhancement)
+const activeShapeXYZ = computed(() => {
+    if (!activeShape.value) return { x: null, y: null, z: null }
+    
+    const shape = activeShape.value.shape
+    if (shape === 'wide' || shape === 'card') {
+        return { x: cardWideX.value, y: cardWideY.value, z: cardWideZ.value }
+    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb' || shape === 'avatar') {
+        return { x: tileSquareX.value, y: tileSquareY.value, z: tileSquareZ.value }
+    }
+    
+    return { x: null, y: null, z: null }
+})
+
 // Computed for current shape based on active tab
 const currentShape = computed(() => {
     if (!selectedImage.value) return null
@@ -893,8 +907,21 @@ const saveTileSquareUrl = () => {
 }
 
 // =====================================================================
-// Shape Editor Integration (Plan D Task 2.4)
+// Shape Editor Integration (Plan D Task 2.4 + Plan G Enhancement)
 // =====================================================================
+
+// Get ref for active shape
+const getActiveShapeRef = () => {
+    if (!activeShape.value) return null
+    
+    const shape = activeShape.value.shape
+    if (shape === 'wide' || shape === 'card') return cardShapeRef.value
+    if (shape === 'square' || shape === 'tile' || shape === 'thumb') return tileShapeRef.value
+    if (shape === 'vertical') return verticalShapeRef.value
+    if (shape === 'avatar') return avatarShapeRef.value
+    
+    return null
+}
 
 // Handle ImgShape activation (click-to-edit)
 const handleShapeActivate = (data: { shape: string; variant: string; adapter: string }) => {
@@ -902,35 +929,56 @@ const handleShapeActivate = (data: { shape: string; variant: string; adapter: st
     console.log('[ShapeEditor] Activated:', data)
 }
 
-// Handle shape editor updates
+// Handle shape editor updates (XYZ changes)
 const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z: number | null; url: string; tpar: string | null }>) => {
     if (!selectedImage.value || !activeShape.value) return
 
-    // Update the appropriate shape based on activeShape
     const shape = activeShape.value.shape
-    if (shape === 'wide') {
+    
+    // Update local XYZ state
+    if (shape === 'wide' || shape === 'card') {
         if (data.x !== undefined) cardWideX.value = data.x
         if (data.y !== undefined) cardWideY.value = data.y
         if (data.z !== undefined) cardWideZ.value = data.z
-    } else if (shape === 'square' || shape === 'thumb') {
+    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
         if (data.x !== undefined) tileSquareX.value = data.x
         if (data.y !== undefined) tileSquareY.value = data.y
         if (data.z !== undefined) tileSquareZ.value = data.z
     }
+    
+    // Update ImgShape preview in real-time
+    const shapeRef = getActiveShapeRef()
+    if (shapeRef && shapeRef.updatePreview) {
+        shapeRef.updatePreview(
+            data.url || selectedImage.value.url,
+            { x: data.x, y: data.y, z: data.z },
+            'preview'
+        )
+    }
 
-    console.log('[ShapeEditor] Updated:', data)
+    console.log('[ShapeEditor] Updated:', data, 'ShapeRef:', !!shapeRef)
+    checkDirty()
 }
 
-// Handle shape editor preview
+// Handle shape editor preview button
 const handleShapePreview = () => {
     if (!activeShape.value) return
 
     const shape = activeShape.value.shape
-    if (shape === 'wide') {
+    
+    // Call appropriate preview/save function based on shape
+    if (shape === 'wide' || shape === 'card') {
         previewCardWide()
+    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
+        // For tile/square, just ensure preview is showing in ImgShape
+        const shapeRef = getActiveShapeRef()
+        if (shapeRef && shapeRef.getPreviewData) {
+            const preview = shapeRef.getPreviewData()
+            console.log('[ShapeEditor] Current tile preview:', preview)
+        }
     }
 
-    console.log('[ShapeEditor] Preview for:', shape)
+    console.log('[ShapeEditor] Preview triggered for:', shape)
 }
 
 // Handle shape editor reset
@@ -938,23 +986,28 @@ const handleShapeReset = () => {
     if (!activeShape.value) return
 
     const shape = activeShape.value.shape
-    if (shape === 'wide') {
+    
+    // Reset local XYZ state
+    if (shape === 'wide' || shape === 'card') {
         cardWideX.value = null
         cardWideY.value = null
         cardWideZ.value = null
-        // Also reset the ImgShape preview
-        cardShapeRef.value?.resetPreview?.()
-    } else if (shape === 'square' || shape === 'thumb') {
+    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
         tileSquareX.value = null
         tileSquareY.value = null
         tileSquareZ.value = null
-        tileShapeRef.value?.resetPreview?.()
+    }
+    
+    // Reset ImgShape preview
+    const shapeRef = getActiveShapeRef()
+    if (shapeRef && shapeRef.resetPreview) {
+        shapeRef.resetPreview()
     }
 
     console.log('[ShapeEditor] Reset:', shape)
 }
 
-// Clear active shape when loading new record
+// Clear active shape when loading new record or after save
 const clearShapeEditor = () => {
     activeShape.value = null
 }
@@ -1213,17 +1266,23 @@ onMounted(() => {
                             </button>
                         </div>
 
-                        <!-- Shape Editor (Plan D Task 2.4) -->
+                        <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
                         <div v-if="activeShape" class="shape-editor-section">
-                            <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
-                                :adapter="activeShape.adapter as any" :data="{
-                                    x: activeShape.shape === 'wide' ? cardWideX : tileSquareX,
-                                    y: activeShape.shape === 'wide' ? cardWideY : tileSquareY,
-                                    z: activeShape.shape === 'wide' ? cardWideZ : tileSquareZ,
+                            <ShapeEditor 
+                                :shape="activeShape.shape as any" 
+                                :variant="activeShape.variant"
+                                :adapter="activeShape.adapter as any" 
+                                :data="{
+                                    x: activeShapeXYZ.x,
+                                    y: activeShapeXYZ.y,
+                                    z: activeShapeXYZ.z,
                                     url: selectedImage.url,
                                     tpar: selectedImage.tpar || null
-                                }" @update="handleShapeUpdate" @preview="handleShapePreview"
-                                @reset="handleShapeReset" />
+                                }" 
+                                @update="handleShapeUpdate" 
+                                @preview="handleShapePreview"
+                                @reset="handleShapeReset" 
+                            />
                         </div>
 
                         <!-- Editable fields -->
