@@ -1,17 +1,44 @@
 /**
- * ImgShape Component - Core Functionality Tests
+ * ImgShape Component Core Tests
  * 
- * Tests for Plan D implementation:
- * - Dimension validation
- * - Avatar shape detection
- * - Preview state management
- * - Click-to-edit activation
+ * Tests dimension validation, avatar shape detection,
+ * preview state management, and click-to-edit behavior
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ImgShape from '@/components/images/ImgShape.vue'
-import type { ImgShapeData } from '@/components/images/ImgShape.vue'
+import type { Image } from '@/types/database'
+import { setupCSSVariableMocks } from '../utils/test-helpers'
+
+// Sample test data
+const sampleImage: Image = {
+  id: 1,
+  xmlid: 'img001',
+  user_id: 1,
+  adapter: 'unsplash',
+  urlpath: 'photo-1234567890',
+  blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+  width: 3000,
+  height: 2000,
+  tpar: 'fit=crop&w={W}&h={H}',
+  turl: null,
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z'
+}
+
+let cleanupCSS: (() => void) | null = null
+
+beforeEach(() => {
+  cleanupCSS = setupCSSVariableMocks()
+})
+
+afterEach(() => {
+  if (cleanupCSS) {
+    cleanupCSS()
+    cleanupCSS = null
+  }
+})
 
 describe('ImgShape Component', () => {
     // ===================================================================
@@ -19,44 +46,47 @@ describe('ImgShape Component', () => {
     // ===================================================================
 
     describe('Dimension Validation', () => {
-        it('should show error overlay when dimensions invalid', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide'
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            // Check for error state
-            const errorOverlay = wrapper.find('.img-shape__error-overlay')
-            expect(errorOverlay.exists()).toBe(true)
-            expect(errorOverlay.text()).toContain('Unknown dimensions')
-        })
-
-        it('should NOT show error overlay when dimensions are valid', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide'
-                },
-                global: {
-                    stubs: {
-                        // Stub CSS var reading to return valid dimensions
-                    }
-                }
-            })
-
-            // For this test to pass, we need to mock CSS variable reading
-            // This is environment-specific and may need adjustment
-        })
+  it('should show error overlay when dimensions are invalid', async () => {
+    // Temporarily break CSS variables
+    const originalGetComputedStyle = window.getComputedStyle
+    window.getComputedStyle = function() {
+      return {
+        getPropertyValue: () => ''
+      } as CSSStyleDeclaration
+    } as typeof window.getComputedStyle
+    
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project'
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    const errorOverlay = wrapper.find('.error-overlay')
+    expect(errorOverlay.exists()).toBe(true)
+    expect(errorOverlay.text()).toContain('Invalid dimensions')
+    
+    // Restore
+    window.getComputedStyle = originalGetComputedStyle
+  })
+  
+  it('should not show error overlay when dimensions are valid', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project'
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    const errorOverlay = wrapper.find('.error-overlay')
+    expect(errorOverlay.exists()).toBe(false)
+  })
 
         it('should display BlurHash placeholder in error state', async () => {
             const wrapper = mount(ImgShape, {
@@ -287,138 +317,130 @@ describe('ImgShape Component', () => {
     // Click-to-Edit Tests
     // ===================================================================
 
-    describe('Click-to-Edit', () => {
-        it('should emit activate event when editable and clicked', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide',
-                    adapter: 'unsplash',
-                    editable: true
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            // Find the wrapper div and click it
-            const wrapperDiv = wrapper.find('.img-shape')
-            await wrapperDiv.trigger('click')
-
-            // Check that activate event was emitted
-            expect(wrapper.emitted('activate')).toBeTruthy()
-            expect(wrapper.emitted('activate')![0]).toEqual([{
-                shape: 'card',
-                variant: 'wide',
-                adapter: 'unsplash'
-            }])
-        })
-
-        it('should NOT emit activate when not editable', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide',
-                    editable: false
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            const wrapperDiv = wrapper.find('.img-shape')
-            await wrapperDiv.trigger('click')
-
-            // No activate event should be emitted
-            expect(wrapper.emitted('activate')).toBeFalsy()
-        })
-
-        it('should NOT emit activate when in error state', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide',
-                    editable: true
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            // Component should be in error state (no dimensions)
-            const wrapperDiv = wrapper.find('.img-shape')
-            await wrapperDiv.trigger('click')
-
-            // No activate event should be emitted when in error state
-            expect(wrapper.emitted('activate')).toBeFalsy()
-        })
-
-        it('should pass shape/variant/adapter in activate event', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://images.unsplash.com/photo-123'
-                    } as ImgShapeData,
-                    shape: 'tile',
-                    variant: 'square',
-                    adapter: 'unsplash',
-                    editable: true
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            const wrapperDiv = wrapper.find('.img-shape')
-            await wrapperDiv.trigger('click')
-
-            const emitted = wrapper.emitted('activate')
-            if (emitted) {
-                expect(emitted[0][0]).toEqual({
-                    shape: 'tile',
-                    variant: 'square',
-                    adapter: 'unsplash'
-                })
-            }
-        })
-
-        it('should add editable class when editable prop is true', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide',
-                    editable: true
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            expect(wrapper.html()).toContain('img-shape--editable')
-        })
-
-        it('should add active class when active prop is true', async () => {
-            const wrapper = mount(ImgShape, {
-                props: {
-                    data: {
-                        url: 'https://example.com/image.jpg'
-                    } as ImgShapeData,
-                    shape: 'card',
-                    variant: 'wide',
-                    active: true
-                }
-            })
-
-            await wrapper.vm.$nextTick()
-
-            expect(wrapper.html()).toContain('img-shape--active')
-        })
+  describe('Click-to-Edit Behavior', () => {
+  it('should emit activate event when clicked and editable', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project',
+        editable: true
+      }
     })
+    
+    await wrapper.vm.$nextTick()
+    
+    const wrapperDiv = wrapper.find('.img-shape-wrapper')
+    await wrapperDiv.trigger('click')
+    
+    expect(wrapper.emitted('activate')).toBeTruthy()
+    expect(wrapper.emitted('activate')![0]).toEqual([{
+      shape: 'card',
+      context: 'project',
+      adapter: 'unsplash'
+    }])
+  })
+  
+  it('should NOT emit activate when not editable', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project',
+        editable: false
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    const wrapperDiv = wrapper.find('.img-shape-wrapper')
+    await wrapperDiv.trigger('click')
+    
+    expect(wrapper.emitted('activate')).toBeFalsy()
+  })
+  
+  it('should NOT emit activate when in error state', async () => {
+    // Temporarily break CSS variables to trigger error state
+    const originalGetComputedStyle = window.getComputedStyle
+    window.getComputedStyle = function() {
+      return {
+        getPropertyValue: () => ''
+      } as CSSStyleDeclaration
+    } as typeof window.getComputedStyle
+    
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project',
+        editable: true
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    const wrapperDiv = wrapper.find('.img-shape-wrapper')
+    await wrapperDiv.trigger('click')
+    
+    expect(wrapper.emitted('activate')).toBeFalsy()
+    
+    // Restore
+    window.getComputedStyle = originalGetComputedStyle
+  })
+  
+  it('should pass shape/context/adapter in activate event', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'tile',
+        context: 'user',
+        editable: true
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    const wrapperDiv = wrapper.find('.img-shape-wrapper')
+    await wrapperDiv.trigger('click')
+    
+    const emitted = wrapper.emitted('activate')
+    expect(emitted).toBeTruthy()
+    expect(emitted![0][0]).toEqual({
+      shape: 'tile',
+      context: 'user',
+      adapter: 'unsplash'
+    })
+  })
+  
+  it('should add editable class when editable prop is true', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project',
+        editable: true
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    expect(wrapper.html()).toContain('editable')
+  })
+  
+  it('should add active class when activeEdit is true', async () => {
+    const wrapper = mount(ImgShape, {
+      props: {
+        image: sampleImage,
+        shape: 'card',
+        context: 'project',
+        editable: true,
+        activeEdit: true
+      }
+    })
+    
+    await wrapper.vm.$nextTick()
+    
+    expect(wrapper.html()).toContain('active')
+  })
+  })
 })
