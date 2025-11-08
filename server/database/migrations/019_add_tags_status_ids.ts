@@ -2411,13 +2411,16 @@ export const migration = {
                 CREATE OR REPLACE FUNCTION update_image_computed_fields()
                 RETURNS TRIGGER AS $$
                 BEGIN
-                    -- Compute about field
-                    IF (NEW.author).account_id IS NOT NULL THEN
-                        NEW.about := '(c) ' || (NEW.author).account_id || ' via ' || (NEW.author).adapter::text;
-                    ELSIF NEW.owner_id IS NOT NULL THEN
-                        NEW.about := '(c) owner_id:' || NEW.owner_id::text;
-                    ELSE
-                        NEW.about := NULL;
+                    -- Compute about field only if not already set
+                    -- (Allow adapters to provide pre-formatted about field)
+                    IF NEW.about IS NULL OR NEW.about = '' THEN
+                        IF (NEW.author).account_id IS NOT NULL THEN
+                            NEW.about := '(c) ' || (NEW.author).account_id || ' via ' || (NEW.author).adapter::text;
+                        ELSIF NEW.owner_id IS NOT NULL THEN
+                            NEW.about := '(c) owner_id:' || NEW.owner_id::text;
+                        ELSE
+                            NEW.about := NULL;
+                        END IF;
                     END IF;
                     
                     -- Compute use_player

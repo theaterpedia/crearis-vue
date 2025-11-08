@@ -49,6 +49,14 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 }
             }
 
+            // Construct xmlid: {domaincode}.image.{xml_subject}-{image_identifier}
+            // Example: crearis.image.child-abc123 or crearis.image.instructor-sample_photo
+            let xmlid: string | null = null
+            if (batchData?.domaincode && (batchData as any).imageIdentifier) {
+                const xmlSubject = batchData.xml_subject || 'mixed'
+                xmlid = `${batchData.domaincode}.image.${xmlSubject}-${(batchData as any).imageIdentifier}`
+            }
+
             // Merge metadata with batch data
             const imageData = {
                 name: metadata.name || this.extractFilename(url),
@@ -61,7 +69,7 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 y: metadata.y || null,
                 fileformat: metadata.fileformat || 'none',
                 license: batchData?.license || metadata.license || 'BY',
-                xmlid: batchData?.xml_root || null, // Will be updated with sequence
+                xmlid,
                 geo: metadata.geo ? JSON.stringify(metadata.geo) : null,
                 date: metadata.date || null,
                 about: metadata.about || null,
@@ -100,8 +108,51 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
 
             const imageId = result.rows?.[0]?.id
 
-            // Update shape fields if available
+            // Generate BlurHash for all shape URLs before saving shape fields
             if (imageId && (metadata.shape_square || metadata.shape_thumb || metadata.shape_wide || metadata.shape_vertical)) {
+                try {
+                    // Import BlurHash utility
+                    const { generateBlurHash } = await import('../utils/blurhash')
+
+                    console.log(`Generating BlurHash for image ${imageId}...`)
+
+                    // Generate BlurHash for each shape (if URL exists)
+                    // Using type assertion to add blur property
+                    if (metadata.shape_square?.url) {
+                        const blur = await generateBlurHash(metadata.shape_square.url, {
+                            componentX: 4, componentY: 3, width: 32, height: 32
+                        });
+                        (metadata.shape_square as any).blur = blur
+                    }
+
+                    if (metadata.shape_thumb?.url) {
+                        const blur = await generateBlurHash(metadata.shape_thumb.url, {
+                            componentX: 4, componentY: 3, width: 32, height: 32
+                        });
+                        (metadata.shape_thumb as any).blur = blur
+                    }
+
+                    if (metadata.shape_wide?.url) {
+                        const blur = await generateBlurHash(metadata.shape_wide.url, {
+                            componentX: 4, componentY: 3, width: 32, height: 32
+                        });
+                        (metadata.shape_wide as any).blur = blur
+                    }
+
+                    if (metadata.shape_vertical?.url) {
+                        const blur = await generateBlurHash(metadata.shape_vertical.url, {
+                            componentX: 4, componentY: 3, width: 32, height: 32
+                        });
+                        (metadata.shape_vertical as any).blur = blur
+                    }
+
+                    console.log(`✓ BlurHash generated for image ${imageId}`)
+                } catch (blurError) {
+                    // Log warning but don't fail import if BlurHash generation fails
+                    console.warn(`⚠ Failed to generate BlurHash for image ${imageId}:`, blurError)
+                }
+
+                // Now update shape fields with blur hashes included
                 await this.updateShapeFields(imageId, metadata)
             }
 
@@ -124,29 +175,66 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
 
     /**
      * Update shape fields for an image
+     * Uses 8-field composite type: (x, y, z, url, json, blur, turl, tpar)
      */
     protected async updateShapeFields(imageId: number, metadata: MediaMetadata): Promise<void> {
         const updates: string[] = []
         const values: any[] = []
 
         if (metadata.shape_square) {
-            updates.push('shape_square = ROW(?, ?, ?, ?, ?)::image_shape')
-            values.push(metadata.shape_square.x || null, metadata.shape_square.y || null, null, metadata.shape_square.url, null)
+            updates.push('shape_square = ROW(?, ?, ?, ?, ?, ?, ?, ?)::image_shape')
+            values.push(
+                metadata.shape_square.x || null,
+                metadata.shape_square.y || null,
+                null, // z
+                metadata.shape_square.url,
+                null, // json
+                (metadata.shape_square as any).blur || null, // blur
+                null, // turl
+                null  // tpar
+            )
         }
 
         if (metadata.shape_thumb) {
-            updates.push('shape_thumb = ROW(?, ?, ?, ?, ?)::image_shape')
-            values.push(metadata.shape_thumb.x || null, metadata.shape_thumb.y || null, null, metadata.shape_thumb.url, null)
+            updates.push('shape_thumb = ROW(?, ?, ?, ?, ?, ?, ?, ?)::image_shape')
+            values.push(
+                metadata.shape_thumb.x || null,
+                metadata.shape_thumb.y || null,
+                null, // z
+                metadata.shape_thumb.url,
+                null, // json
+                (metadata.shape_thumb as any).blur || null, // blur
+                null, // turl
+                null  // tpar
+            )
         }
 
         if (metadata.shape_wide) {
-            updates.push('shape_wide = ROW(?, ?, ?, ?, ?)::image_shape')
-            values.push(metadata.shape_wide.x || null, metadata.shape_wide.y || null, null, metadata.shape_wide.url, null)
+            updates.push('shape_wide = ROW(?, ?, ?, ?, ?, ?, ?, ?)::image_shape')
+            values.push(
+                metadata.shape_wide.x || null,
+                metadata.shape_wide.y || null,
+                null, // z
+                metadata.shape_wide.url,
+                null, // json
+                (metadata.shape_wide as any).blur || null, // blur
+                null, // turl
+                null  // tpar
+            )
         }
 
         if (metadata.shape_vertical) {
-            updates.push('shape_vertical = ROW(?, ?, ?, ?, ?)::image_shape')
-            values.push(metadata.shape_vertical.x || null, metadata.shape_vertical.y || null, null, metadata.shape_vertical.url, null)
+            updates.push('shape_vertical = ROW(?, ?, ?, ?, ?, ?, ?, ?)::image_shape')
+            values.push(
+                metadata.shape_vertical.x || null,
+                metadata.shape_vertical.y || null,
+                null, // z
+                metadata.shape_vertical.url,
+                null, // json
+                (metadata.shape_vertical as any).blur || null, // blur
+                null, // turl
+                null  // tpar
+            )
         }
 
         if (updates.length > 0) {

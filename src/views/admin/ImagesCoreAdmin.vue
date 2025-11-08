@@ -333,15 +333,19 @@ function selectImage(image: any) {
     // Parse all shape fields
     if (selectedImage.value.shape_square) {
         selectedImage.value.shape_square = parseShape(selectedImage.value.shape_square)
+        console.log('[ImagesCoreAdmin] shape_square parsed:', selectedImage.value.shape_square)
     }
     if (selectedImage.value.shape_wide) {
         selectedImage.value.shape_wide = parseShape(selectedImage.value.shape_wide)
+        console.log('[ImagesCoreAdmin] shape_wide parsed:', selectedImage.value.shape_wide)
     }
     if (selectedImage.value.shape_vertical) {
         selectedImage.value.shape_vertical = parseShape(selectedImage.value.shape_vertical)
+        console.log('[ImagesCoreAdmin] shape_vertical parsed:', selectedImage.value.shape_vertical)
     }
     if (selectedImage.value.shape_thumb) {
         selectedImage.value.shape_thumb = parseShape(selectedImage.value.shape_thumb)
+        console.log('[ImagesCoreAdmin] shape_thumb parsed:', selectedImage.value.shape_thumb)
     }
 
     // Deep clone for dirty detection

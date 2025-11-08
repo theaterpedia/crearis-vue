@@ -2,6 +2,11 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { adapterRegistry } from '../../adapters/registry'
 import type { ImageImportBatch, ImageImportResult } from '../../types/adapters'
 
+interface ImportRequestBody {
+    urls: string[]
+    batch?: ImageImportBatch
+}
+
 /**
  * POST /api/images/import - Import images by URLs
  * 
@@ -16,7 +21,7 @@ import type { ImageImportBatch, ImageImportResult } from '../../types/adapters'
  *     owner_id?: number,    // User ID
  *     alt_text?: string,
  *     license?: string,
- *     xml_root?: string,    // Base for xmlid, will append .00, .01, .02...
+ *     xml_subject?: string, // Subject type for xmlid construction
  *     ctags?: Buffer,
  *     rtags?: Buffer
  *   }
@@ -24,7 +29,15 @@ import type { ImageImportBatch, ImageImportResult } from '../../types/adapters'
  */
 export default defineEventHandler(async (event) => {
     try {
-        const body = await readBody(event)
+        const body = await readBody<ImportRequestBody>(event)
+
+        // Validate body exists
+        if (!body) {
+            throw createError({
+                statusCode: 400,
+                message: 'Request body is required'
+            })
+        }
 
         // Validate input
         if (!body.urls || !Array.isArray(body.urls) || body.urls.length === 0) {
@@ -57,16 +70,36 @@ export default defineEventHandler(async (event) => {
                     continue
                 }
 
-                // Prepare batch data with sequence number for xmlid
-                const batchWithSequence = { ...batchData }
-                if (batchData.xml_root) {
-                    const sequence = String(i).padStart(2, '0')
-                    batchWithSequence.xml_root = `${batchData.xml_root}.${sequence}`
+                // Prepare batch data with xmlid constructed from domaincode, xml_subject, and image ID
+                const batchWithContext: ImageImportBatch & { imageIdentifier?: string } = { ...batchData }
+                
+                // Extract image-specific identifier from URL for xmlid construction
+                let imageIdentifier = ''
+                if (adapter.type === 'unsplash') {
+                    // Extract Unsplash photo ID from URL
+                    const unsplashMatch = url.match(/photo-([a-zA-Z0-9_-]+)/) || url.match(/photos\/([^/?]+)/)
+                    imageIdentifier = unsplashMatch ? unsplashMatch[1] : `img_${i}`
+                } else if (adapter.type === 'cloudinary') {
+                    // Extract filename without extension from Cloudinary URL
+                    const cloudinaryMatch = url.match(/\/v\d+\/(.+?)(?:\?|$)/)
+                    if (cloudinaryMatch) {
+                        const fullPath = cloudinaryMatch[1]
+                        const filename = fullPath.split('/').pop() || ''
+                        imageIdentifier = filename.replace(/\.[^.]+$/, '') // Remove file extension
+                    } else {
+                        imageIdentifier = `img_${i}`
+                    }
+                } else {
+                    imageIdentifier = `img_${i}`
                 }
+                
+                // Store image identifier and xml_subject for xmlid construction in adapter
+                batchWithContext.imageIdentifier = imageIdentifier
+                batchWithContext.xml_subject = batchData.xml_subject || 'mixed'
 
                 // Import using detected adapter
                 console.log(`Importing image ${i + 1}/${urls.length} via ${adapter.type} adapter...`)
-                const result = await adapter.importImage(url, batchWithSequence)
+                const result = await adapter.importImage(url, batchWithContext)
 
                 results.push(result)
 

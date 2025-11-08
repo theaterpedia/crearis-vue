@@ -34,7 +34,7 @@ export interface ImageImportBatch {
     owner_id?: number | null
     alt_text?: string | null
     license?: string | null
-    xml_root?: string | null  // Base xmlid, will append .00, .01, .02...
+    xml_subject?: string | null  // Subject type (mixed, child, teen, adult, instructor, post, event, location)
     ctags?: Buffer | null
     rtags?: Buffer | null
 }
@@ -126,6 +126,16 @@ export interface UnsplashPhoto {
     blur_hash: string
     description: string | null
     alt_description: string | null
+    alternative_slugs?: {
+        en?: string
+        es?: string
+        ja?: string
+        fr?: string
+        it?: string
+        ko?: string
+        de?: string
+        pt?: string
+    }
     urls: {
         raw: string
         full: string

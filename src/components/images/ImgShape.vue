@@ -59,7 +59,8 @@ const dimensions = computed<[number, number] | null>(() => {
     const shape = props.shape
     const variant = props.variant
 
-    // Avatar is always square
+    // Avatar is always square (4rem = 64px)
+    // Note: Avatar/Thumb are synonymous but separate from square due to different zoom/focal points
     if (shape === 'avatar') {
         const w = avatarWidth.value
         return w ? [w, w] : null
@@ -71,6 +72,7 @@ const dimensions = computed<[number, number] | null>(() => {
         const h = tileHeight.value
         if (!w || !h) return null
 
+        // tile-height-square: 8rem = 128px (same as tile-width)
         if (variant === 'square') return [w, w]
         if (variant === 'wide') return [w * 2, h]
         return [w, h] // default
@@ -82,10 +84,14 @@ const dimensions = computed<[number, number] | null>(() => {
         const h = cardHeight.value
         if (!w || !h) return null
 
-        if (variant === 'square') return [w, w]
-        if (variant === 'wide') return [w * 2, h]
-        if (variant === 'vertical') return [w, h * 2]
-        return [w, h] // default
+        // For card square, use tile-height-square (8rem = 128px), not card-width
+        if (variant === 'square') return [128, 128]
+        // Card wide: card-width × card-height-min (21rem × 10.5rem = 336px × 168px)
+        // Using cardHeight * 0.75 to get 168px from 224px
+        if (variant === 'wide') return [w, Math.round(h * 0.75)]
+        // Card vertical: 9:16 aspect ratio × card-height (7.875rem × 14rem = 126px × 224px)
+        if (variant === 'vertical') return [Math.round(h * 9 / 16), h]
+        return [w, Math.round(h * 0.75)] // default = wide
     }
 
     return null
@@ -203,11 +209,26 @@ const cssClasses = computed(() => {
 // BlurHash placeholder
 const imageLoaded = ref(false)
 const showPlaceholder = computed(() => {
+    // Debug: Log blur hash presence
+    if (props.data.blur && import.meta.env.DEV) {
+        console.log(`[ImgShape] blur hash present for ${props.shape}-${props.variant}:`, props.data.blur.substring(0, 20) + '...')
+        console.log(`[ImgShape] showPlaceholder check: imageLoaded=${imageLoaded.value}, forceBlur=${props.forceBlur}, isDecoded=${isDecoded.value}`)
+    }
     // If forceBlur is true, always show placeholder (if blur exists)
     if (props.forceBlur && props.data.blur) return true
     // Otherwise, show placeholder only while image is loading
-    return !imageLoaded.value && !!props.data.blur
+    const result = !imageLoaded.value && !!props.data.blur
+    if (result && import.meta.env.DEV) {
+        console.log(`[ImgShape] ✅ Showing placeholder for ${props.shape}-${props.variant}`)
+    }
+    return result
 })
+
+// Reset imageLoaded when URL changes
+watch(() => props.data.url, (newUrl) => {
+    console.log(`[ImgShape] URL changed for ${props.shape}-${props.variant}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 50))
+    imageLoaded.value = false
+}, { immediate: true })
 const { canvasRef, isDecoded } = useBlurHash({
     hash: computed(() => props.data.blur || ''),
     width: 32,
@@ -215,6 +236,7 @@ const { canvasRef, isDecoded } = useBlurHash({
 })
 
 const onImageLoad = () => {
+    console.log(`[ImgShape] Image loaded for ${props.shape}-${props.variant}`)
     imageLoaded.value = true
 }
 

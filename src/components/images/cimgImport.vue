@@ -23,7 +23,7 @@ const importedImages = ref<ImportedImage[]>([])
 const selectedProject = ref<number | null>(null)
 const selectedOwner = ref<number | null>(null)
 const keepOpen = ref(false)
-const xmlRoot = ref('')
+const xmlSubject = ref('mixed')
 const altText = ref('')
 const license = ref('BY')
 
@@ -112,6 +112,38 @@ const licenseOptions = [
     { label: 'CC0 (Public Domain)', value: 'CC0' }
 ]
 
+const xmlSubjectOptions = [
+    { label: 'Mixed', value: 'mixed' },
+    { label: 'Child', value: 'child' },
+    { label: 'Teen', value: 'teen' },
+    { label: 'Adult', value: 'adult' },
+    { label: 'Instructor', value: 'instructor' },
+    { label: 'Post', value: 'post' },
+    { label: 'Event', value: 'event' },
+    { label: 'Location', value: 'location' }
+]
+
+// Auto-set ctags based on xml_subject
+watch(xmlSubject, (newSubject) => {
+    if (!newSubject || newSubject === 'mixed') return
+    
+    // Auto-set age group
+    if (newSubject === 'child') {
+        ctagsAgeGroup.value = 1 // Child
+    } else if (newSubject === 'teen') {
+        ctagsAgeGroup.value = 2 // Teen
+    } else if (newSubject === 'adult') {
+        ctagsAgeGroup.value = 3 // Adult
+    }
+    
+    // Auto-set subject type
+    if (newSubject === 'instructor') {
+        ctagsSubjectType.value = 3 // Portrait
+    } else if (newSubject === 'event') {
+        ctagsSubjectType.value = 1 // Group
+    }
+})
+
 // Validate URL
 const isValidUrl = (url: string) => {
     try {
@@ -184,7 +216,7 @@ const handleSave = async () => {
             owner_id: selectedOwner.value,
             alt_text: altText.value || 'Batch imported from URL',
             license: license.value,
-            xml_root: xmlRoot.value || `batch_${new Date().toISOString().split('T')[0]}`,
+            xml_subject: xmlSubject.value,
             ctags: ctagsBuffer
         }
 
@@ -249,7 +281,7 @@ const handleClose = () => {
         ctagsSubjectType.value = 0
         ctagsAccessLevel.value = 0
         ctagsQuality.value = 0
-        xmlRoot.value = ''
+        xmlSubject.value = 'mixed'
         altText.value = ''
         license.value = 'BY'
         keepOpen.value = false
@@ -338,9 +370,13 @@ watch(() => props.isOpen, (newValue) => {
                     <!-- Batch metadata -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>XML Root ID</label>
-                            <input v-model="xmlRoot" type="text" class="form-input"
-                                :placeholder="`batch_${new Date().toISOString().split('T')[0]}`" />
+                            <label>Subject Type</label>
+                            <select v-model="xmlSubject" class="form-select">
+                                <option v-for="opt in xmlSubjectOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                            <small class="form-hint">Auto-sets age and subject tags</small>
                         </div>
 
                         <div class="form-group">
@@ -721,6 +757,14 @@ watch(() => props.isOpen, (newValue) => {
 .label-hint {
     font-size: 0.7rem;
     font-weight: normal;
+    color: var(--color-muted-contrast);
+    font-style: italic;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
     color: var(--color-muted-contrast);
     font-style: italic;
 }

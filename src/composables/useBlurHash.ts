@@ -1,8 +1,8 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, type Ref, type ComputedRef, unref } from 'vue'
 import { decode } from 'blurhash'
 
 export interface UseBlurHashOptions {
-    hash: string | null | undefined
+    hash: string | Ref<string> | ComputedRef<string> | null | undefined
     width?: number
     height?: number
     punch?: number  // Controls contrast (default: 1)
@@ -19,7 +19,8 @@ export function useBlurHash(options: UseBlurHashOptions) {
     const isDecoded = ref(false)
 
     const decodeHash = () => {
-        if (!options.hash || !canvasRef.value) return
+        const hashValue = unref(options.hash)
+        if (!hashValue || !canvasRef.value) return
 
         const canvas = canvasRef.value
         const width = options.width || 32
@@ -28,7 +29,7 @@ export function useBlurHash(options: UseBlurHashOptions) {
 
         try {
             // Decode BlurHash into pixel array
-            const pixels = decode(options.hash, width, height, punch)
+            const pixels = decode(hashValue, width, height, punch)
 
             // Draw to canvas
             canvas.width = width
@@ -48,14 +49,14 @@ export function useBlurHash(options: UseBlurHashOptions) {
     }
 
     // Decode when canvas ref is available or hash changes
-    watch([canvasRef, () => options.hash], () => {
-        if (canvasRef.value && options.hash) {
+    watch([canvasRef, () => unref(options.hash)], () => {
+        if (canvasRef.value && unref(options.hash)) {
             decodeHash()
         }
     })
 
     onMounted(() => {
-        if (canvasRef.value && options.hash) {
+        if (canvasRef.value && unref(options.hash)) {
             decodeHash()
         }
     })
