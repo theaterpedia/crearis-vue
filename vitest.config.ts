@@ -1,13 +1,16 @@
 import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import vue from '@vitejs/plugin-vue'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+    plugins: [vue()],
+    
     test: {
-        // Test environment
-        environment: 'node',
+        // Test environment - use happy-dom for Vue component tests
+        environment: 'happy-dom',
 
         // Global setup and teardown
         globalSetup: './tests/setup/global-setup.ts',
