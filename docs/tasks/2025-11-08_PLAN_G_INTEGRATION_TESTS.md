@@ -1,21 +1,105 @@
 # Plan G: Integration Tests for Image System
 
 **Date**: November 8, 2025  
-**Priority**: Medium  
-**Status**: 📋 Ready to Implement  
-**Related Plans**: Plan C (Import/Export), Plan D (ImgShape), Plan E (ImageAdmin)
+**Priority**: High (Updated - Required before E/F completion)  
+**Status**: � Partial Implementation - Critical tests identified  
+**Related Plans**: Plan C (Import/Export), Plan D (ImgShape), Plan E (ImageAdmin), Plan F (Hero)
 
 ---
 
-## 🎯 Overview
+## 🎯 CRITICAL UPDATE: Test-First Strategy
 
-Create comprehensive integration tests for the image system's import/export functionality, turl/tpar system, and UI components.
+After completing Plan D (ImgShape), we need targeted testing BEFORE finishing Plans E and F.
+
+### ⚡ DO IMMEDIATELY - Pre-Implementation Tests
+
+These tests verify Plan D is solid and safe for E/F to use:
+
+**1. ImgShape Core Functionality (30 min)**
+```typescript
+// tests/unit/imgshape-core.test.ts
+describe('ImgShape Component', () => {
+  describe('Dimension Validation', () => {
+    it('should show error overlay when dimensions invalid')
+    it('should show error overlay when dimensions missing')
+    it('should display BlurHash placeholder in error state')
+    it('should validate dimensions on mount and when props change')
+  })
+  
+  describe('Avatar Shape Detection', () => {
+    it('should detect square avatar from "project" in xmlid')
+    it('should detect square avatar from "event" in xmlid')
+    it('should detect round avatar from "user" in xmlid')
+    it('should default to round avatar when no pattern match')
+  })
+  
+  describe('Preview State Management', () => {
+    it('should expose getPreviewData() function')
+    it('should expose resetPreview() function')
+    it('should expose updatePreview() function')
+    it('should return correct state from getPreviewData()')
+    it('should clear state when resetPreview() called')
+  })
+  
+  describe('Click-to-Edit', () => {
+    it('should emit activate event when editable and clicked')
+    it('should NOT emit activate when not editable')
+    it('should NOT emit activate when in error state')
+    it('should pass shape/variant/adapter in activate event')
+  })
+})
+```
+
+**2. ShapeEditor Component (20 min)**
+```typescript
+// tests/unit/shape-editor.test.ts
+describe('ShapeEditor Component', () => {
+  describe('Mode Switching', () => {
+    it('should render automation mode by default')
+    it('should switch to XYZ mode when clicked')
+    it('should switch to direct mode when clicked')
+  })
+  
+  describe('XYZ Input', () => {
+    it('should emit update event with x value')
+    it('should emit update event with y value')
+    it('should emit update event with z value')
+    it('should accept values 0-100')
+  })
+  
+  describe('Preview/Reset', () => {
+    it('should emit preview event when preview button clicked')
+    it('should emit reset event when reset button clicked')
+  })
+})
+```
+
+**3. ImageAdmin Integration (20 min)**
+```typescript
+// tests/integration/imageadmin-shapeeditor.test.ts
+describe('ImageAdmin + ShapeEditor Integration', () => {
+  describe('Activation Flow', () => {
+    it('should show ShapeEditor when ImgShape clicked')
+    it('should hide ShapeEditor when another shape clicked')
+    it('should clear activeShape on record load')
+    it('should clear activeShape after save')
+  })
+  
+  describe('State Management', () => {
+    it('should update XYZ values when ShapeEditor emits update')
+    it('should trigger preview when ShapeEditor emits preview')
+    it('should clear values when ShapeEditor emits reset')
+  })
+})
+```
+
+**Result**: ✅ If these pass, Plans E/F can safely use ImgShape/ShapeEditor
 
 ---
 
-## 📋 Test Categories
+## 📋 DEFERRED - Full Integration Tests (After E/F)
 
-### 1. Export API Tests
+### 1. Export API Tests (Already Working from Plan C)
 
 **File**: `tests/integration/images-export-api.test.ts`
 
@@ -30,20 +114,11 @@ describe('POST /api/images/export', () => {
 })
 ```
 
-**Test Data**:
-- Sample images with all shape variants
-- Images with turl/tpar fields populated
-- Images with null/missing fields
-
-**Verification**:
-- File created in correct location
-- JSON format valid
-- All fields preserved
-- Timestamp format correct
+**Status**: ⏳ Can wait - export already tested manually in Plan C
 
 ---
 
-### 2. Import UI Tests
+### 2. Import UI Tests (Already Working from Plan C)
 
 **File**: `tests/integration/images-import-ui.test.ts`
 

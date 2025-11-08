@@ -27,6 +27,9 @@ const blurImagesPreview = ref(false) // Toggle for blur preview mode
 // Shape editor state
 const activeShape = ref<{ shape: string; variant: string; adapter: string } | null>(null)
 
+// Hero preview toggle state (Plan E Task 1.1)
+const heroPreviewShape = ref<'wide' | 'square' | 'vertical'>('wide')
+
 // Dropdown menu states
 const showFiltersMenu = ref(false)
 const showDataMenu = ref(false)
@@ -369,6 +372,9 @@ function selectImage(image: any) {
     // Clear shape editor state (Plan D Task 2.5)
     clearShapeEditor()
 
+    // Reset hero preview to wide (Plan E Task 1.1)
+    heroPreviewShape.value = 'wide'
+
     // Initialize PreviewWide for card/wide focal-crop
     const adapter = selectedImage.value.author?.adapter || 'unsplash'
     if (adapter === 'unsplash') {
@@ -675,6 +681,42 @@ const handleImportSave = async (importedImages: any[]) => {
     // Close the modal and refresh the image list
     showImportModal.value = false
     await fetchImages()
+}
+
+// =====================================================================
+// Hero Preview Toggle (Plan E Task 1.1)
+// =====================================================================
+
+// Computed hero preview URL based on selected shape
+const heroPreviewUrl = computed(() => {
+    if (!selectedImage.value) return ''
+    
+    const shapeMap = {
+        wide: 'shape_wide',
+        square: 'shape_square',
+        vertical: 'shape_vertical'
+    }
+    
+    const shapeKey = shapeMap[heroPreviewShape.value]
+    const shapeData = selectedImage.value[shapeKey]
+    
+    if (!shapeData) return selectedImage.value.url || ''
+    
+    // Use tpar + turl if available (mobile optimization)
+    if (shapeData.tpar && shapeData.turl) {
+        return shapeData.tpar.replace('{turl}', shapeData.turl)
+    }
+    
+    // Fall back to URL
+    return shapeData.url || selectedImage.value.url || ''
+})
+
+// Toggle between shapes (wide → square → vertical → repeat)
+const toggleHeroPreviewShape = () => {
+    const shapes: Array<'wide' | 'square' | 'vertical'> = ['wide', 'square', 'vertical']
+    const currentIndex = shapes.indexOf(heroPreviewShape.value)
+    const nextIndex = (currentIndex + 1) % shapes.length
+    heroPreviewShape.value = shapes[nextIndex]
 }
 
 // Computed: Check if Y and Z should be disabled for card/wide
@@ -1073,10 +1115,14 @@ onMounted(() => {
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
                     <Columns gap="medium">
-                        <!-- Column 1: Hero preview image (1/5 width) -->
+                        <!-- Column 1: Hero preview image (2/5 width → will change to fill) -->
                         <Column width="2/5">
-                            <div class="preview-image-wrapper">
-                                <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
+                            <div class="preview-image-wrapper" @click="toggleHeroPreviewShape">
+                                <img :src="heroPreviewUrl" :alt="selectedImage.name" class="preview-image hero-preview" />
+                                <!-- Shape indicator badge -->
+                                <div class="hero-shape-indicator">
+                                    <span class="indicator-badge">{{ heroPreviewShape }}</span>
+                                </div>
                             </div>
                         </Column>
 
@@ -1435,6 +1481,7 @@ onMounted(() => {
 }
 
 .preview-image-wrapper {
+    position: relative;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -1443,6 +1490,12 @@ onMounted(() => {
     border-radius: var(--radius-small);
     overflow: hidden;
     min-height: 300px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.preview-image-wrapper:hover {
+    transform: scale(1.01);
 }
 
 .preview-image {
@@ -1451,6 +1504,28 @@ onMounted(() => {
     height: auto;
     display: block;
     object-fit: contain;
+}
+
+.hero-preview {
+    cursor: pointer;
+}
+
+.hero-shape-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+}
+
+.indicator-badge {
+    padding: 0.5rem 1rem;
+    background: oklch(0 0 0 / 0.7);
+    color: white;
+    border-radius: var(--radius-medium);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    backdrop-filter: blur(10px);
 }
 
 /* Shape preview rows */
