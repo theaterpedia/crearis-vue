@@ -43,6 +43,17 @@ const emit = defineEmits<{
 const hasError = ref(false)
 const errorMessage = ref('')
 
+// Preview state (internal to ImgShape - single source of truth)
+const previewState = ref({
+    url: '',
+    params: {
+        x: null as number | null,
+        y: null as number | null,
+        z: null as number | null
+    },
+    mode: 'original' as 'original' | 'preview' | 'saved'
+})
+
 const { cardWidth, cardHeight, tileWidth, tileHeight, avatarWidth } = useTheme()
 
 /**
@@ -322,56 +333,56 @@ watch(displayUrl, (url: string) => {
     }
 }, { immediate: true })
 
-// Expose a small API so parent components can query current preview/settings
-// without duplicating state in the parent. Returns the effective display URL
-// and any focal-point params (x/y/z) parsed from the URL (if present).
+// =====================================================================
+// PREVIEW STATE MANAGEMENT - API for parent components
+// =====================================================================
+
+/**
+ * Get current preview state data.
+ * Returns url, params (x/y/z), and mode from internal state.
+ * Parent components should use this instead of maintaining duplicate state.
+ */
 function getPreviewData() {
-    const result: any = {
-        url: displayUrl.value || null,
+    return {
+        url: previewState.value.url || displayUrl.value,
         originalUrl: props.data?.url || null,
         adapter: props.data?.adapter || null,
         shape: props.shape || null,
         variant: props.variant || null,
-        params: {
-            x: null,
-            y: null,
-            z: null,
-        },
+        params: { ...previewState.value.params },
+        mode: previewState.value.mode
     }
-
-    try {
-        // Use a base origin so URL parsing doesn't fail for relative/odd strings
-        const u = new URL(displayUrl.value || props.data?.url || '', window.location.origin)
-        const sp = u.searchParams
-        const fpX = sp.get('fp-x')
-        const fpY = sp.get('fp-y')
-        const fpZ = sp.get('fp-z')
-
-        if (fpX != null) {
-            const n = parseFloat(fpX)
-            if (!isNaN(n)) result.params.x = Math.round(n * 100)
-        }
-        if (fpY != null) {
-            const n = parseFloat(fpY)
-            if (!isNaN(n)) result.params.y = Math.round(n * 100)
-        }
-        if (fpZ != null) {
-            const n = parseFloat(fpZ)
-            if (!isNaN(n)) {
-                result.params.z = Math.round((n - 1) * 100)
-            }
-        }
-    } catch (e) {
-        // ignore URL parse failures
-    }
-
-    return result
 }
 
-// Make the getter available to parent via template ref
-// (used by ImagesCoreAdmin to read current preview/state from each ImgShape)
+/**
+ * Reset preview state to original/empty.
+ */
+const resetPreview = () => {
+    previewState.value.url = ''
+    previewState.value.params.x = null
+    previewState.value.params.y = null
+    previewState.value.params.z = null
+    previewState.value.mode = 'original'
+}
+
+/**
+ * Update preview state (called by parent ShapeEditor).
+ */
+const updatePreview = (url: string, params: { x?: number | null, y?: number | null, z?: number | null }, mode: 'preview' | 'saved') => {
+    previewState.value.url = url
+    previewState.value.params.x = params.x ?? null
+    previewState.value.params.y = params.y ?? null
+    previewState.value.params.z = params.z ?? null
+    previewState.value.mode = mode
+}
+
+// Make the API available to parent via template ref
 // @ts-ignore - defineExpose available in script setup
-defineExpose({ getPreviewData })
+defineExpose({ getPreviewData, resetPreview, updatePreview })
+
+// =====================================================================
+// EDITABLE MODE CLICK HANDLER
+// =====================================================================
 
 // Click handler for editable mode
 const handleClick = () => {
