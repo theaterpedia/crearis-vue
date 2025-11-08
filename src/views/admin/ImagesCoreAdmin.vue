@@ -1110,6 +1110,9 @@ onMounted(() => {
                                 Export JSON
                             </button>
                         </div>
+                        
+                        <!-- Import Modal (positioned relative to Data menu) -->
+                        <cimgImport :isOpen="showImportModal" @update:isOpen="showImportModal = $event" @save="handleImportSave" />
                     </div>
 
                     <!-- Settings Menu -->
@@ -1176,8 +1179,8 @@ onMounted(() => {
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
                     <Columns gap="medium">
-                        <!-- Column 1: Hero preview image (2/5 width → will change to fill) -->
-                        <Column width="2/5">
+                        <!-- Column 1: Hero preview image (fills remaining width - Plan E Task 1.1) -->
+                        <Column width="fill">
                             <div class="preview-image-wrapper" @click="toggleHeroPreviewShape">
                                 <img :src="heroPreviewUrl" :alt="selectedImage.name"
                                     class="preview-image hero-preview" />
@@ -1376,99 +1379,13 @@ onMounted(() => {
                             <!-- Divider -->
                             <hr class="form-divider">
 
-                            <!-- Author Adapter Tabs -->
-                            <div class="edit-section author-section">
-                                <div class="tabs-container author-tabs">
-                                    <button class="tab-button author-tab"
-                                        :class="{ active: authorAdapter === 'unsplash' }"
-                                        @click="authorAdapter = 'unsplash'; checkDirty()">
-                                        Unsplash
-                                    </button>
-                                    <button class="tab-button author-tab"
-                                        :class="{ active: authorAdapter === 'cloudinary' }"
-                                        @click="authorAdapter = 'cloudinary'; checkDirty()">
-                                        Cloudinary
-                                    </button>
-                                </div>
+                            <!-- RTags section would go here if needed -->
 
-                                <div class="tab-content">
-                                    <!-- Root URL -->
-                                    <div class="edit-row">
-                                        <label>Root URL:</label>
-                                        <textarea v-model="selectedImage.url" class="edit-textarea url-textarea"
-                                            rows="5" placeholder="Main image URL" @input="checkDirty()"></textarea>
-                                    </div>
-
-                                    <!-- Shape Tabs -->
-                                    <div class="edit-section">
-                                        <h4>Image Shapes</h4>
-                                        <div class="tabs-container">
-                                            <button class="tab-button" :class="{ active: activeShapeTab === 'square' }"
-                                                @click="changeShapeTab('square')">
-                                                Square
-                                            </button>
-                                            <button class="tab-button" :class="{ active: activeShapeTab === 'wide' }"
-                                                @click="changeShapeTab('wide')">
-                                                Wide
-                                            </button>
-                                            <button class="tab-button"
-                                                :class="{ active: activeShapeTab === 'vertical' }"
-                                                @click="changeShapeTab('vertical')">
-                                                Vertical
-                                            </button>
-                                            <button class="tab-button" :class="{ active: activeShapeTab === 'thumb' }"
-                                                @click="changeShapeTab('thumb')">
-                                                Thumb
-                                            </button>
-                                        </div>
-
-                                        <!-- JSON Row -->
-                                        <div class="edit-row" style="margin-top: 1rem;">
-                                            <label>JSON:</label>
-                                            <span class="label-hint" style="flex: 1;">highest prio: deactivated</span>
-                                        </div>
-
-                                        <!-- Params Row -->
-                                        <div class="edit-row">
-                                            <label>Params: XYZ</label>
-                                            <div class="params-group">
-                                                <div class="param-field">
-                                                    <input :value="currentShape?.x || ''"
-                                                        @input="updateShapeField('x', ($event.target as HTMLInputElement).value || null)"
-                                                        type="number" class="edit-input" placeholder="—" />
-                                                </div>
-                                                <div class="param-field">
-                                                    <input :value="currentShape?.y || ''"
-                                                        @input="updateShapeField('y', ($event.target as HTMLInputElement).value || null)"
-                                                        type="number" class="edit-input" placeholder="—" />
-                                                </div>
-                                                <div class="param-field">
-                                                    <input :value="currentShape?.z || ''"
-                                                        @input="updateShapeField('z', ($event.target as HTMLInputElement).value || null)"
-                                                        type="number" class="edit-input" placeholder="—" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- URL Row (only visible if X and Y are empty) -->
-                                        <div class="edit-row" v-if="!currentShape?.x && !currentShape?.y">
-                                            <label>URL:</label>
-                                            <textarea :value="currentShape?.url || ''"
-                                                @input="updateShapeField('url', ($event.target as HTMLTextAreaElement).value)"
-                                                class="edit-textarea url-textarea" rows="5"
-                                                placeholder="Enter image URL"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </template>
         </PageLayout>
-
-        <!-- Import Modal -->
-        <cimgImport :isOpen="showImportModal" @update:isOpen="showImportModal = $event" @save="handleImportSave" />
     </div>
 </template>
 
