@@ -1182,53 +1182,13 @@ onMounted(() => {
                             </div>
                         </Column>
 
-                        <!-- Column 4: Controls (1/5 width) -->
+                        <!-- Column 4: Controls (1/5 width) - Simplified (Plan E Task 1.3) -->
                         <Column width="1/5">
-                            <!-- XYZ Label -->
-                            <div class="control-section dimmed-bg">
-                                <span class="control-label">X% | Y% | Z%</span>
-                            </div>
-
-                            <!-- Card/Wide controls -->
-                            <div class="control-section">
-                                <div class="control-header dimmed-bg">
-                                    <span class="control-label">card/wide Zoom and Position</span>
-                                    <div v-if="CorrectionWide" class="correction-preview">{{ CorrectionWide }}</div>
-                                </div>
-                                <div class="control-inputs">
-                                    <input type="number" v-model.number="cardWideX" placeholder="X%"
-                                        class="control-input" min="0" max="100" step="1"
-                                        @keydown.enter="handleCardWideXEnter" />
-                                    <input type="number" v-model.number="cardWideY" placeholder="Y%"
-                                        class="control-input" :disabled="cardWideYZDisabled" min="0" max="100"
-                                        step="1" />
-                                    <input type="number" v-model.number="cardWideZ" placeholder="Z%"
-                                        class="control-input" :disabled="cardWideYZDisabled" min="0" max="100"
-                                        step="1" />
-                                    <button @click="previewCardWide" class="btn-preview-url" title="Preview">
-                                        👁️
-                                    </button>
-                                    <button @click="saveCardWideUrl" class="btn-save-url" title="Save URL">
-                                        💾
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Tile/Square controls -->
-                            <div class="control-section">
-                                <div class="control-header dimmed-bg">
-                                    <span class="control-label">tile/square</span>
-                                </div>
-                                <div class="control-inputs">
-                                    <input type="number" v-model.number="tileSquareX" placeholder="X"
-                                        class="control-input" />
-                                    <input type="number" v-model.number="tileSquareY" placeholder="Y"
-                                        class="control-input" />
-                                    <input type="number" v-model.number="tileSquareZ" placeholder="Z"
-                                        class="control-input" />
-                                    <button @click="saveTileSquareUrl" class="btn-save-url" title="Save URL">
-                                        💾
-                                    </button>
+                            <div class="controls-placeholder">
+                                <p class="placeholder-text">Click a shape to edit</p>
+                                <div v-if="activeShape" class="active-shape-info">
+                                    <span class="shape-badge">{{ activeShape.shape }}</span>
+                                    <span class="adapter-badge">{{ activeShape.adapter }}</span>
                                 </div>
                             </div>
                         </Column>
@@ -1582,6 +1542,49 @@ onMounted(() => {
 .AvatarShape {
     max-width: 100%;
     height: auto;
+}
+
+/* Controls placeholder (Plan E Task 1.3) */
+.controls-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 300px;
+    text-align: center;
+    padding: 2rem;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-medium);
+}
+
+.placeholder-text {
+    font-size: 0.875rem;
+    color: var(--color-text-dimmed);
+    margin-bottom: 1rem;
+}
+
+.active-shape-info {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.shape-badge,
+.adapter-badge {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: var(--radius-small);
+    font-weight: 600;
+}
+
+.shape-badge {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.adapter-badge {
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
 }
 
 /* Control sections */
