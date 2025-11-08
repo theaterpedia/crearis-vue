@@ -32,6 +32,7 @@ export interface ImageShape {
 export interface ImageImportBatch {
     domaincode?: string | null  // Will be converted to project_id
     owner_id?: number | null
+    owner_name?: string | null  // Author name for Cloudinary imports
     alt_text?: string | null
     license?: string | null
     xml_subject?: string | null  // Subject type (mixed, child, teen, adult, instructor, post, event, location)

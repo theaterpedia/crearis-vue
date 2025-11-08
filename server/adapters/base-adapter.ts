@@ -24,16 +24,18 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
 
     /**
      * Fetch metadata from the external service
+     * @param url Image URL
+     * @param batchData Optional batch import data (for Cloudinary owner_name, etc.)
      */
-    abstract fetchMetadata(url: string): Promise<MediaMetadata>
+    abstract fetchMetadata(url: string, batchData?: ImageImportBatch): Promise<MediaMetadata>
 
     /**
      * Import image into database with metadata and batch data
      */
     async importImage(url: string, batchData?: ImageImportBatch): Promise<ImageImportResult> {
         try {
-            // Fetch metadata from external service
-            const metadata = await this.fetchMetadata(url)
+            // Fetch metadata from external service (pass batchData for Cloudinary)
+            const metadata = await this.fetchMetadata(url, batchData)
 
             // Resolve project_id from domaincode if provided
             let project_id: number | null = null

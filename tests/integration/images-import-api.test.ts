@@ -670,7 +670,7 @@ describeOrSkip('License and About Field Tests', () => {
     it('should format about field as "author | license | year" for Unsplash', async () => {
         // Ensure clean state - delete any existing images with this photo ID
         await sharedDb.run(`DELETE FROM images WHERE url LIKE '%photo-${TEST_UNSPLASH_ID_1}%'`)
-        
+
         const result = await importImages(
             [`https://images.unsplash.com/photo-${TEST_UNSPLASH_ID_1}`],
             {
@@ -777,7 +777,7 @@ describeOrSkip('License and About Field Tests', () => {
         // Real names typically have capital letters and/or spaces
         expect(authorName.length).toBeGreaterThan(0)
         expect(authorName).not.toMatch(/^[a-z0-9-_]+$/) // Not just lowercase/numbers/dashes
-        
+
         console.log('Extracted author name:', authorName)
     })
 
@@ -809,12 +809,162 @@ describeOrSkip('License and About Field Tests', () => {
         // 2. Contain spaces (hyphens replaced)
         // 3. NOT contain photo ID at end
         expect(image.alt_text).toMatch(/^[A-ZÄÖÜ]/) // Starts with capital
-        
+
         // Should be readable text, not a slug with hyphens
         if (image.alt_text.includes('-')) {
             console.warn('Alt text still contains hyphens:', image.alt_text)
         }
 
         console.log('German alt text:', image.alt_text)
+    })
+})
+
+describeOrSkip('Cloudinary Import Tests', () => {
+    beforeEach(async () => {
+        await createTestData(sharedDb)
+    })
+
+    afterEach(async () => {
+        await cleanupTestData(sharedDb)
+    })
+
+    it('should import Cloudinary image with folder and transformations', async () => {
+        const cloudinaryUrl = 'https://res.cloudinary.com/little-papillon/image/upload/c_crop,h_2000,w_2800,x_500/c_scale,h_1000,w_1400/v1735162309/dasei/Lichtdesign_rxwwbj.jpg'
+
+        const result = await importImages(
+            [cloudinaryUrl],
+            {
+                owner_id: 101,
+                owner_name: 'Hans Dönitz'
+            }
+        )
+
+        expect(result.successful).toBe(1)
+
+        const image = await sharedDb.get(
+            'SELECT * FROM images WHERE id = $1',
+            [result.results[0].image_id]
+        )
+
+        expect(image).toBeDefined()
+        
+        // License should be 'private'
+        expect(image.license).toBe('private')
+        
+        // Alt text should be extracted from folder + filename minus suffix
+        // dasei/Lichtdesign_rxwwbj → "Dasei Lichtdesign"
+        expect(image.alt_text).toBe('Dasei Lichtdesign')
+        
+        // About field format: (c) Hans Dönitz | Private | 2024
+        expect(image.about).toMatch(/^\(c\) Hans Dönitz \| Private \| \d{4}$/)
+        expect(image.about).toContain('2024') // v1735162309 → 2024
+        
+        // Author should have Cloudinary metadata
+        const author = image.author
+        if (typeof author === 'string') {
+            expect(author).toContain('cloudinary')
+            expect(author).toContain('little-papillon')
+            expect(author).toContain('dasei/Lichtdesign_rxwwbj')
+        }
+        
+        console.log('Cloudinary image imported:', {
+            name: image.name,
+            alt_text: image.alt_text,
+            about: image.about,
+            license: image.license
+        })
+    })
+
+    it('should import Cloudinary image without folder', async () => {
+        const cloudinaryUrl = 'https://res.cloudinary.com/little-papillon/image/upload/v1665139609/theaterpedia_lichtpunkte_ea_rh.jpg'
+
+        const result = await importImages(
+            [cloudinaryUrl],
+            {
+                owner_id: 101,
+                owner_name: 'Test User'
+            }
+        )
+
+        expect(result.successful).toBe(1)
+
+        const image = await sharedDb.get(
+            'SELECT * FROM images WHERE id = $1',
+            [result.results[0].image_id]
+        )
+
+        expect(image).toBeDefined()
+        
+        // Alt text: theaterpedia_lichtpunkte_ea_rh → remove _ea_rh and _ea → "Theaterpedia lichtpunkte"
+        expect(image.alt_text).toBe('Theaterpedia lichtpunkte')
+        
+        // About field with year from v1665139609 → 2022
+        expect(image.about).toMatch(/^\(c\) Test User \| Private \| \d{4}$/)
+        expect(image.about).toContain('2022')
+        
+        console.log('Cloudinary simple import:', {
+            alt_text: image.alt_text,
+            about: image.about
+        })
+    })
+
+    it('should generate correct shape URLs with transformations', async () => {
+        const cloudinaryUrl = 'https://res.cloudinary.com/little-papillon/image/upload/v1665139609/theaterpedia_lichtpunkte_ea_rh.jpg'
+
+        const result = await importImages(
+            [cloudinaryUrl],
+            {
+                owner_id: 101
+            }
+        )
+
+        expect(result.successful).toBe(1)
+
+        const image = await sharedDb.get(
+            'SELECT * FROM images WHERE id = $1',
+            [result.results[0].image_id]
+        )
+
+        // Parse shape URLs and verify transformations
+        const parseCompositeType = (str: string) => {
+            if (!str) return null
+            const match = str.match(/^\((.*)\)$/)
+            if (!match) return null
+            
+            // PostgreSQL composite format with quoted strings
+            // Extract the URL (quoted field) and BlurHash (6th field)
+            const urlMatch = match[1].match(/"([^"]+)"/)
+            const url = urlMatch ? urlMatch[1] : ''
+            
+            // BlurHash is the 6th field - split carefully to avoid breaking on URL commas
+            const parts = match[1].split(',,')
+            const blur = parts[2]?.replace(/"/g, '').trim() || null
+            
+            return { url, blur }
+        }
+        
+        const square = parseCompositeType(image.shape_square)
+        expect(square?.url).toContain('c_crop')
+        expect(square?.url).toContain('w_128')
+        expect(square?.url).toContain('h_128')
+        expect(square?.blur).toBeTruthy()
+
+        const thumb = parseCompositeType(image.shape_thumb)
+        expect(thumb?.url).toContain('c_crop')
+        expect(thumb?.url).toContain('w_64')
+        expect(thumb?.url).toContain('h_64')
+        expect(thumb?.blur).toBeTruthy()
+
+        const wide = parseCompositeType(image.shape_wide)
+        expect(wide?.url).toContain('c_crop')
+        expect(wide?.url).toContain('w_336')
+        expect(wide?.url).toContain('h_168')
+        expect(wide?.blur).toBeTruthy()
+
+        const vertical = parseCompositeType(image.shape_vertical)
+        expect(vertical?.url).toContain('c_crop')
+        expect(vertical?.url).toContain('w_126')
+        expect(vertical?.url).toContain('h_224')
+        expect(vertical?.blur).toBeTruthy()
     })
 })

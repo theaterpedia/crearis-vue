@@ -6,7 +6,7 @@
  */
 
 import { BaseMediaAdapter } from './base-adapter'
-import type { MediaMetadata, UnsplashPhoto } from '../types/adapters'
+import type { MediaMetadata, UnsplashPhoto, ImageImportBatch } from '../types/adapters'
 
 export class UnsplashAdapter extends BaseMediaAdapter {
     readonly type = 'unsplash' as const
@@ -71,7 +71,7 @@ export class UnsplashAdapter extends BaseMediaAdapter {
     /**
      * Fetch photo metadata from Unsplash API
      */
-    async fetchMetadata(url: string): Promise<MediaMetadata> {
+    async fetchMetadata(url: string, batchData?: ImageImportBatch): Promise<MediaMetadata> {
         const photoId = this.extractPhotoId(url)
 
         if (!photoId) {
@@ -205,21 +205,21 @@ export class UnsplashAdapter extends BaseMediaAdapter {
         // Try German slug first
         if (photo.alternative_slugs?.de) {
             const germanSlug = photo.alternative_slugs.de
-            
+
             // Remove photo ID from end (usually last segment after final hyphen)
             // Photo IDs are typically 11 characters: alphanumeric + hyphens
             const parts = germanSlug.split('-')
-            
+
             // If last part looks like a photo ID (alphanumeric, ~11 chars), remove it
             if (parts.length > 1 && parts[parts.length - 1].length >= 10) {
                 parts.pop()
             }
-            
+
             // Join with spaces and capitalize first letter
             const text = parts.join(' ')
             return text.charAt(0).toUpperCase() + text.slice(1)
         }
-        
+
         // Fallback to English descriptions
         return photo.alt_description || photo.description || ''
     }

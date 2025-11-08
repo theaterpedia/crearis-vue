@@ -1,12 +1,16 @@
 /**
  * Cloudinary Adapter
  * 
- * Handles image imports from Cloudinary.
- * Generates shape URLs with crop transformations.
+ * Handles image imports from Cloudinary without API access.
+ * Extracts metadata from URL structure (folder, filename, version).
+ * 
+ * ENV Variables:
+ * - CLOUDINARY_ACCOUNT: Default account name (e.g., 'little-papillon')
+ * - CLOUDINARY_INITIAL_VERSION: Fallback version for year extraction (e.g., 'v1665139609')
  */
 
 import { BaseMediaAdapter } from './base-adapter'
-import type { MediaMetadata } from '../types/adapters'
+import type { MediaMetadata, ImageImportBatch } from '../types/adapters'
 
 export class CloudinaryAdapter extends BaseMediaAdapter {
     readonly type = 'cloudinary' as const
@@ -14,29 +18,38 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
     canHandle(url: string): boolean {
         try {
             const urlObj = new URL(url)
-            return urlObj.hostname.includes('cloudinary.com') ||
-                urlObj.hostname.includes('res.cloudinary.com')
+            return urlObj.hostname.includes('cloudinary.com')
         } catch {
             return false
         }
     }
 
-    async fetchMetadata(url: string): Promise<MediaMetadata> {
-        // For now, create basic metadata with shape URLs
-        // TODO: Implement full metadata extraction using Cloudinary MCP
-
-        const filename = this.extractFilename(url)
+    async fetchMetadata(url: string, batchData?: ImageImportBatch): Promise<MediaMetadata> {
+        // Extract all components from URL
+        const cloudName = this.extractCloudName(url)
+        const publicId = this.extractPublicId(url)
+        const folder = this.extractFolder(publicId)
+        const filename = this.extractFilenameFromPublicId(publicId)
+        const version = this.extractVersion(url)
         const fileformat = this.detectFileFormat(url)
-        const year = new Date().getFullYear()
-
-        // Build about field: owner | license | year
-        // For Cloudinary, we use "Private" as license and current year
-        const about = `(c) Owner | Private | ${year}`
+        
+        // Extract year from version timestamp
+        const year = this.extractYearFromVersion(version) || 
+                     this.extractYearFromVersion(process.env.CLOUDINARY_INITIAL_VERSION || 'v1665139609')
+        
+        // Generate alt_text from folder + filename, removing suffix
+        const altText = this.extractAltText(folder, filename)
+        
+        // Get author name from batch data or use default
+        const authorName = batchData?.owner_name || 'Hans Dönitz'
+        
+        // Build about field: (c) Author | Private | Year
+        const about = `(c) ${authorName} | Private | ${year}`
 
         return {
             url,
-            name: filename,
-            alt_text: '',
+            name: filename || 'Cloudinary Image',
+            alt_text: altText,
 
             // Basic dimensions (unknown without API call)
             x: undefined,
@@ -46,10 +59,10 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
             // Author info for Cloudinary
             author: {
                 adapter: 'cloudinary',
-                file_id: this.extractPublicId(url) || null,
-                account_id: this.extractCloudName(url) || null,
-                folder_id: null,
-                info: null,
+                file_id: publicId || null,
+                account_id: cloudName || null,
+                folder_id: folder || null,
+                info: authorName,
                 config: null
             },
 
@@ -77,7 +90,7 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
 
             license: 'private',
             about: about,
-            raw_data: { url, source: 'cloudinary' }
+            raw_data: { url, source: 'cloudinary', version, folder, filename }
         }
     }
 
@@ -155,16 +168,111 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
     }
 
     /**
-     * Extract Cloudinary public ID from URL
+     * Extract Cloudinary public ID from URL (full path including folder)
+     * Example: dasei/Lichtdesign_rxwwbj or theaterpedia_lichtpunkte_ea_rh
      */
     private extractPublicId(url: string): string | null {
         try {
-            // Pattern: /v{version}/{path}
+            // Remove any existing transformations first
+            // Pattern: /v{version}/{path}.{ext}
             const match = url.match(/\/v\d+\/(.+?)(?:\?|$)/)
+            if (match) {
+                const pathWithExt = match[1]
+                // Remove file extension
+                return pathWithExt.replace(/\.[^.]+$/, '')
+            }
+            return null
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * Extract folder path from public ID
+     * Example: "dasei/Lichtdesign_rxwwbj" → "dasei"
+     * Example: "theaterpedia_lichtpunkte_ea_rh" → null
+     */
+    private extractFolder(publicId: string | null): string | null {
+        if (!publicId) return null
+        const parts = publicId.split('/')
+        if (parts.length > 1) {
+            // Return all parts except the last one (filename)
+            return parts.slice(0, -1).join('/')
+        }
+        return null
+    }
+
+    /**
+     * Extract filename from public ID (without folder)
+     * Example: "dasei/Lichtdesign_rxwwbj" → "Lichtdesign_rxwwbj"
+     * Example: "theaterpedia_lichtpunkte_ea_rh" → "theaterpedia_lichtpunkte_ea_rh"
+     */
+    private extractFilenameFromPublicId(publicId: string | null): string | null {
+        if (!publicId) return null
+        const parts = publicId.split('/')
+        return parts[parts.length - 1]
+    }
+
+    /**
+     * Extract version from URL
+     * Example: "v1735162309" or "v1665139609"
+     */
+    private extractVersion(url: string): string | null {
+        try {
+            const match = url.match(/\/(v\d+)\//)
             return match ? match[1] : null
         } catch {
             return null
         }
+    }
+
+    /**
+     * Extract year from Cloudinary version (Unix timestamp)
+     * Example: v1735162309 → 2024, v1665139609 → 2022
+     */
+    private extractYearFromVersion(version: string | null): number | null {
+        if (!version) return null
+        try {
+            // Remove 'v' prefix and parse as integer
+            const timestamp = parseInt(version.substring(1))
+            if (isNaN(timestamp)) return null
+            
+            // Convert Unix timestamp (seconds) to JavaScript timestamp (milliseconds)
+            const date = new Date(timestamp * 1000)
+            return date.getFullYear()
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * Generate alt_text from folder and filename
+     * Rules:
+     * 1. Combine folder + filename
+     * 2. Remove suffix (last underscore part matching pattern _xx)
+     * 3. Replace underscores with spaces
+     * 4. Capitalize first letter
+     * 
+     * Examples:
+     * - folder="dasei", filename="Lichtdesign_rxwwbj" → "Dasei Lichtdesign"
+     * - folder=null, filename="theaterpedia_lichtpunkte_ea_rh" → "Theaterpedia lichtpunkte"
+     */
+    private extractAltText(folder: string | null, filename: string | null): string {
+        if (!filename) return ''
+        
+        // Start with folder + filename (or just filename)
+        let text = folder ? `${folder} ${filename}` : filename
+        
+        // Remove Cloudinary hash suffix pattern (underscore followed by lowercase letters/numbers, typically 6 chars)
+        // Examples: _rxwwbj, _ea_rh, _hd, _tp
+        text = text.replace(/_[a-z0-9]{2,}$/i, '') // Remove hash/suffix at end
+        text = text.replace(/_[a-z]{2}$/i, '')     // Remove any remaining 2-char suffix
+        
+        // Replace remaining underscores with spaces
+        text = text.replace(/_/g, ' ')
+        
+        // Capitalize first letter
+        return text.charAt(0).toUpperCase() + text.slice(1)
     }
 
     /**

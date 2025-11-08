@@ -7,8 +7,8 @@
 
 import type { IMediaAdapter } from '../types/adapters'
 import { UnsplashAdapter } from './unsplash-adapter'
+import { CloudinaryAdapter } from './cloudinary-adapter'
 // Import other adapters as they're implemented
-// import { CloudinaryAdapter } from './cloudinary-adapter'
 // import { CanvaAdapter } from './canva-adapter'
 // import { VimeoAdapter } from './vimeo-adapter'
 
@@ -28,9 +28,11 @@ class AdapterRegistry {
     private registerAdapters(): void {
         // Register Unsplash adapter
         this.adapters.push(new UnsplashAdapter())
+        
+        // Register Cloudinary adapter
+        this.adapters.push(new CloudinaryAdapter())
 
         // TODO: Register other adapters as they're implemented
-        // this.adapters.push(new CloudinaryAdapter())
         // this.adapters.push(new CanvaAdapter())
         // this.adapters.push(new VimeoAdapter())
     }

@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
                 // Prepare batch data with xmlid constructed from domaincode, xml_subject, and image ID
                 const batchWithContext: ImageImportBatch & { imageIdentifier?: string } = { ...batchData }
-                
+
                 // Extract image-specific identifier from URL for xmlid construction
                 let imageIdentifier = ''
                 if (adapter.type === 'unsplash') {
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
                 } else {
                     imageIdentifier = `img_${i}`
                 }
-                
+
                 // Store image identifier and xml_subject for xmlid construction in adapter
                 batchWithContext.imageIdentifier = imageIdentifier
                 batchWithContext.xml_subject = batchData.xml_subject || 'mixed'

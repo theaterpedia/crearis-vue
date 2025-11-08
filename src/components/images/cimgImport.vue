@@ -126,7 +126,7 @@ const xmlSubjectOptions = [
 // Auto-set ctags based on xml_subject
 watch(xmlSubject, (newSubject) => {
     if (!newSubject || newSubject === 'mixed') return
-    
+
     // Auto-set age group
     if (newSubject === 'child') {
         ctagsAgeGroup.value = 1 // Child
@@ -135,7 +135,7 @@ watch(xmlSubject, (newSubject) => {
     } else if (newSubject === 'adult') {
         ctagsAgeGroup.value = 3 // Adult
     }
-    
+
     // Auto-set subject type
     if (newSubject === 'instructor') {
         ctagsSubjectType.value = 3 // Portrait
