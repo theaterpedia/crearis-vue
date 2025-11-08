@@ -543,7 +543,9 @@ const handleClick = () => {
 }
 
 .img-shape--vertical.img-shape--card {
-    width: var(--card-width);
-    height: calc(var(--card-height) * 2);
+    width: var(--tile-width);
+    /* 8rem = 128px (9 units) */
+    height: calc(var(--tile-width) * 16 / 9);
+    /* 128px × 16/9 = ~227.5px (16 units) - 9:16 aspect ratio */
 }
 </style>

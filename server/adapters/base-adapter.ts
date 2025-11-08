@@ -81,6 +81,14 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 author: metadata.author ? `(${metadata.author.adapter},"${metadata.author.file_id || ''}","${metadata.author.account_id || ''}","${metadata.author.folder_id || ''}","${metadata.author.info || ''}",${metadata.author.config ? `"${JSON.stringify(metadata.author.config).replace(/"/g, '\\"')}"` : 'null'})` : null
             }
 
+            console.log(`[${this.type}] Image data prepared:`, {
+                name: imageData.name,
+                alt_text: imageData.alt_text,
+                alt_text_source: batchData?.alt_text ? 'batch' : 'metadata',
+                about: imageData.about,
+                url: imageData.url.substring(0, 80) + '...'
+            })
+
             // Insert image
             const result = await db.run(`
                 INSERT INTO images (

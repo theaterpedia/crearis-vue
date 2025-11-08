@@ -8,6 +8,10 @@ import ImgShape from '@/components/images/ImgShape.vue'
 import ShapeEditor from '@/components/images/ShapeEditor.vue'
 import tagsMultiToggle from '@/components/images/tagsMultiToggle.vue'
 import cimgImport from '@/components/images/cimgImport.vue'
+import { useTheme } from '@/composables/useTheme'
+
+// Initialize theme dimensions
+const { extractImageDimensions } = useTheme()
 
 // Router
 const router = useRouter()
@@ -230,6 +234,44 @@ const fetchStatusOptions = async () => {
     }
 }
 
+// Helper function to parse composite shape from DB string
+function parseShape(shapeStr: string | object): any {
+    if (!shapeStr) return null
+    if (typeof shapeStr === 'object') return shapeStr  // Already parsed
+
+    // Remove outer parentheses and split by commas (handling quoted strings)
+    const trimmed = shapeStr.trim().replace(/^\(/, '').replace(/\)$/, '')
+    const parts: string[] = []
+    let current = ''
+    let inQuotes = false
+
+    for (let i = 0; i < trimmed.length; i++) {
+        const char = trimmed[i]
+        if (char === '"') {
+            inQuotes = !inQuotes
+            // Don't include the quote in the value
+        } else if (char === ',' && !inQuotes) {
+            parts.push(current)
+            current = ''
+            continue
+        } else {
+            current += char
+        }
+    }
+    parts.push(current)  // Push the last part
+
+    return {
+        x: parts[0] ? parseInt(parts[0]) : null,
+        y: parts[1] ? parseInt(parts[1]) : null,
+        z: parts[2] ? parseInt(parts[2]) : null,
+        url: parts[3] || '',
+        json: parts[4] || null,  // json field (not used yet)
+        blur: parts[5] || null,  // BlurHash (quotes stripped)
+        turl: parts[6] || null,  // thumbnail URL
+        tpar: parts[7] || null   // thumbnail parameters
+    }
+}
+
 // Fetch images from API
 const fetchImages = async () => {
     loading.value = true
@@ -238,7 +280,18 @@ const fetchImages = async () => {
         if (!response.ok) throw new Error('Failed to fetch images')
         const data = await response.json()
         // API returns array directly, not wrapped in { images: [...] }
-        images.value = Array.isArray(data) ? data : []
+        const rawImages = Array.isArray(data) ? data : []
+
+        // Parse all shape fields for each image
+        images.value = rawImages.map(img => {
+            const parsed = { ...img }
+            if (parsed.shape_square) parsed.shape_square = parseShape(parsed.shape_square)
+            if (parsed.shape_wide) parsed.shape_wide = parseShape(parsed.shape_wide)
+            if (parsed.shape_vertical) parsed.shape_vertical = parseShape(parsed.shape_vertical)
+            if (parsed.shape_thumb) parsed.shape_thumb = parseShape(parsed.shape_thumb)
+            return parsed
+        })
+
         if (images.value.length > 0 && !selectedImage.value) {
             selectImage(images.value[0])
         }
@@ -283,7 +336,31 @@ function selectImage(image: any) {
     if (typeof selectedImage.value.author === 'string') {
         const match = selectedImage.value.author.match(/^\((.*)\)$/)
         if (match) {
-            const parts = match[1].split(',')
+            // Split by comma, but handle quoted strings properly
+            const parts: string[] = []
+            let current = ''
+            let inQuotes = false
+            let escapeNext = false
+
+            for (let i = 0; i < match[1].length; i++) {
+                const char = match[1][i]
+
+                if (escapeNext) {
+                    current += char
+                    escapeNext = false
+                } else if (char === '\\') {
+                    escapeNext = true
+                } else if (char === '"') {
+                    inQuotes = !inQuotes
+                } else if (char === ',' && !inQuotes) {
+                    parts.push(current)
+                    current = ''
+                } else {
+                    current += char
+                }
+            }
+            parts.push(current) // Push the last part
+
             selectedImage.value.author = {
                 adapter: parts[0] || 'unsplash',
                 file_id: parts[1] || '',
@@ -320,59 +397,20 @@ function selectImage(image: any) {
         }
     }
 
-    // Parse shape fields if they're strings (database composite type)
-    // Format: (x,y,z,url,json,blur,turl,tpar) matching image_shape type definition
-    const parseShape = (shapeStr: string) => {
-        if (!shapeStr || typeof shapeStr !== 'string') return { url: '', x: null, y: null, z: null, blur: null, turl: null, tpar: null }
-
-        const match = shapeStr.match(/^\((.*)\)$/)
-        if (!match) return { url: '', x: null, y: null, z: null, blur: null, turl: null, tpar: null }
-
-        // Split by comma, but handle quoted strings and empty values
-        const parts: string[] = []
-        let current = ''
-        let inQuotes = false
-
-        for (let i = 0; i < match[1].length; i++) {
-            const char = match[1][i]
-            if (char === '"') {
-                inQuotes = !inQuotes
-            } else if (char === ',' && !inQuotes) {
-                parts.push(current)
-                current = ''
-            } else {
-                current += char
-            }
-        }
-        parts.push(current)
-
-        // Database format: (x, y, z, url, json, blur, turl, tpar)
-        return {
-            x: parts[0] ? parseInt(parts[0]) : null,
-            y: parts[1] ? parseInt(parts[1]) : null,
-            z: parts[2] ? parseInt(parts[2]) : null,
-            url: parts[3] || '',
-            json: parts[4] || null,  // json field (not used yet)
-            blur: parts[5] || null,  // BlurHash
-            turl: parts[6] || null,  // thumbnail URL
-            tpar: parts[7] || null   // thumbnail parameters
-        }
-    }
-
-    // Parse all shape fields
-    if (selectedImage.value.shape_square) {
+    // Shape fields should already be parsed from fetchImages, but handle strings just in case
+    if (typeof selectedImage.value.shape_square === 'string') {
         selectedImage.value.shape_square = parseShape(selectedImage.value.shape_square)
         console.log('[ImagesCoreAdmin] shape_square parsed:', selectedImage.value.shape_square)
     }
-    if (selectedImage.value.shape_wide) {
+    if (typeof selectedImage.value.shape_wide === 'string') {
         selectedImage.value.shape_wide = parseShape(selectedImage.value.shape_wide)
         console.log('[ImagesCoreAdmin] shape_wide parsed:', selectedImage.value.shape_wide)
     }
-    if (selectedImage.value.shape_vertical) {
+    if (typeof selectedImage.value.shape_vertical === 'string') {
         selectedImage.value.shape_vertical = parseShape(selectedImage.value.shape_vertical)
         console.log('[ImagesCoreAdmin] shape_vertical parsed:', selectedImage.value.shape_vertical)
     }
-    if (selectedImage.value.shape_thumb) {
+    if (typeof selectedImage.value.shape_thumb === 'string') {
         selectedImage.value.shape_thumb = parseShape(selectedImage.value.shape_thumb)
         console.log('[ImagesCoreAdmin] shape_thumb parsed:', selectedImage.value.shape_thumb)
     }
@@ -383,13 +421,30 @@ function selectImage(image: any) {
     // Set authorAdapter from image data
     authorAdapter.value = selectedImage.value.author?.adapter || 'unsplash'
 
-    // Reset X, Y, Z values when loading a record
-    cardWideX.value = null
-    cardWideY.value = null
-    cardWideZ.value = null
-    tileSquareX.value = null
-    tileSquareY.value = null
-    tileSquareZ.value = null
+    // Load X, Y, Z values from shape objects (FIX: was resetting to null)
+    // Card/Wide and Vertical shapes share same XYZ
+    if (selectedImage.value.shape_wide) {
+        cardWideX.value = selectedImage.value.shape_wide.x ?? null
+        cardWideY.value = selectedImage.value.shape_wide.y ?? null
+        cardWideZ.value = selectedImage.value.shape_wide.z ?? null
+        console.log('[ImagesCoreAdmin] Loaded cardWide XYZ:', { x: cardWideX.value, y: cardWideY.value, z: cardWideZ.value })
+    } else {
+        cardWideX.value = null
+        cardWideY.value = null
+        cardWideZ.value = null
+    }
+
+    // Tile/Square/Thumb/Avatar shapes share same XYZ
+    if (selectedImage.value.shape_thumb) {
+        tileSquareX.value = selectedImage.value.shape_thumb.x ?? null
+        tileSquareY.value = selectedImage.value.shape_thumb.y ?? null
+        tileSquareZ.value = selectedImage.value.shape_thumb.z ?? null
+        console.log('[ImagesCoreAdmin] Loaded tileSquare XYZ:', { x: tileSquareX.value, y: tileSquareY.value, z: tileSquareZ.value })
+    } else {
+        tileSquareX.value = null
+        tileSquareY.value = null
+        tileSquareZ.value = null
+    }
 
     // Clear shape editor state (Plan D Task 2.5)
     clearShapeEditor()
@@ -410,6 +465,83 @@ function selectImage(image: any) {
     CorrectionWide.value = ''
 
     isDirty.value = false
+}
+
+/**
+ * Rebuild shape URL with XYZ focal point parameters
+ * @param baseUrl - Original shape URL
+ * @param x - Focal point X (0-1, null for auto)
+ * @param y - Focal point Y (0-1, null for auto)
+ * @param z - Focal point Z (zoom level, null for auto)
+ * @returns Updated URL with focal point parameters
+ */
+function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | null, z: number | null): string {
+    if (!baseUrl) return baseUrl
+
+    try {
+        const url = new URL(baseUrl)
+
+        // Detect adapter
+        const isUnsplash = url.hostname.includes('unsplash.com')
+        const isCloudinary = url.hostname.includes('cloudinary.com')
+
+        if (isUnsplash) {
+            // For Unsplash: switch crop mode based on XYZ values
+            if (x !== null && y !== null && z !== null) {
+                // XYZ mode: use focalpoint crop
+                url.searchParams.set('crop', 'focalpoint')
+                url.searchParams.set('fp-x', x.toString())
+                url.searchParams.set('fp-y', y.toString())
+                url.searchParams.set('fp-z', z.toString())
+            } else {
+                // Auto mode: use entropy crop
+                url.searchParams.set('crop', 'entropy')
+                // Remove focal point parameters
+                url.searchParams.delete('fp-x')
+                url.searchParams.delete('fp-y')
+                url.searchParams.delete('fp-z')
+            }
+            url.searchParams.set('fit', 'crop')
+        } else if (isCloudinary) {
+            // For Cloudinary: update transformation parameters
+            const match = baseUrl.match(/^(https?:\/\/[^\/]+\/[^\/]+\/image\/upload\/)([^\/]*)\/(.+)$/)
+            if (match) {
+                const [, prefix, transformations, suffix] = match
+
+                // Parse existing transformations
+                const params = new Map<string, string>()
+                if (transformations) {
+                    transformations.split(',').forEach(param => {
+                        const [key, value] = param.split('_')
+                        if (key && value) params.set(key, value)
+                    })
+                }
+
+                if (x !== null && y !== null) {
+                    // XYZ mode: set gravity to custom coordinates
+                    params.set('c', 'fill')
+                    params.set('g', `xy_center`)
+                    params.set('x', Math.round((x - 0.5) * (params.get('w') ? parseInt(params.get('w')!) : 400)).toString())
+                    params.set('y', Math.round((y - 0.5) * (params.get('h') ? parseInt(params.get('h')!) : 400)).toString())
+                } else {
+                    // Auto mode: use auto gravity
+                    params.set('c', 'fill')
+                    params.set('g', 'auto')
+                    params.delete('x')
+                    params.delete('y')
+                }
+
+                // Rebuild transformation string
+                const newTransformations = Array.from(params.entries()).map(([k, v]) => `${k}_${v}`).join(',')
+                return `${prefix}${newTransformations}/${suffix}`
+            }
+        }
+
+        return url.toString()
+    } catch (e) {
+        console.error('Failed to rebuild URL with XYZ:', e)
+        return baseUrl
+    }
 }
 
 // Check if form is dirty
@@ -538,6 +670,123 @@ const saveChanges = async () => {
     if (!selectedImage.value || !isDirty.value) return
 
     try {
+        // Update shape objects with current XYZ values before saving
+        // Card/Wide shape
+        if (selectedImage.value.shape_wide) {
+            const cardPreview = cardShapeRef.value?.getPreviewData?.()
+            if (cardPreview) {
+                selectedImage.value.shape_wide = {
+                    ...selectedImage.value.shape_wide,
+                    url: cardPreview.url || selectedImage.value.shape_wide.url,
+                    x: cardPreview.params?.x ?? cardWideX.value,
+                    y: cardPreview.params?.y ?? cardWideY.value,
+                    z: cardPreview.params?.z ?? cardWideZ.value
+                }
+            } else {
+                // Rebuild URL with XYZ parameters
+                const newUrl = rebuildShapeUrlWithXYZ(
+                    selectedImage.value.shape_wide.url,
+                    cardWideX.value,
+                    cardWideY.value,
+                    cardWideZ.value
+                )
+                selectedImage.value.shape_wide = {
+                    ...selectedImage.value.shape_wide,
+                    url: newUrl,
+                    x: cardWideX.value,
+                    y: cardWideY.value,
+                    z: cardWideZ.value
+                }
+            }
+        }
+
+        // Vertical shape
+        if (selectedImage.value.shape_vertical) {
+            const verticalPreview = verticalShapeRef.value?.getPreviewData?.()
+            if (verticalPreview) {
+                selectedImage.value.shape_vertical = {
+                    ...selectedImage.value.shape_vertical,
+                    url: verticalPreview.url || selectedImage.value.shape_vertical.url,
+                    x: verticalPreview.params?.x ?? cardWideX.value,
+                    y: verticalPreview.params?.y ?? cardWideY.value,
+                    z: verticalPreview.params?.z ?? cardWideZ.value
+                }
+            } else {
+                // Rebuild URL with XYZ parameters
+                const newUrl = rebuildShapeUrlWithXYZ(
+                    selectedImage.value.shape_vertical.url,
+                    cardWideX.value,
+                    cardWideY.value,
+                    cardWideZ.value
+                )
+                selectedImage.value.shape_vertical = {
+                    ...selectedImage.value.shape_vertical,
+                    url: newUrl,
+                    x: cardWideX.value,
+                    y: cardWideY.value,
+                    z: cardWideZ.value
+                }
+            }
+        }
+
+        // Tile/Square shape (uses shape_thumb)
+        if (selectedImage.value.shape_thumb) {
+            const tilePreview = tileShapeRef.value?.getPreviewData?.()
+            if (tilePreview) {
+                selectedImage.value.shape_thumb = {
+                    ...selectedImage.value.shape_thumb,
+                    url: tilePreview.url || selectedImage.value.shape_thumb.url,
+                    x: tilePreview.params?.x ?? tileSquareX.value,
+                    y: tilePreview.params?.y ?? tileSquareY.value,
+                    z: tilePreview.params?.z ?? tileSquareZ.value
+                }
+            } else {
+                // Rebuild URL with XYZ parameters
+                const newUrl = rebuildShapeUrlWithXYZ(
+                    selectedImage.value.shape_thumb.url,
+                    tileSquareX.value,
+                    tileSquareY.value,
+                    tileSquareZ.value
+                )
+                selectedImage.value.shape_thumb = {
+                    ...selectedImage.value.shape_thumb,
+                    url: newUrl,
+                    x: tileSquareX.value,
+                    y: tileSquareY.value,
+                    z: tileSquareZ.value
+                }
+            }
+        }
+
+        // Avatar uses same XYZ as tile/square
+        if (selectedImage.value.shape_square) {
+            const avatarPreview = avatarShapeRef.value?.getPreviewData?.()
+            if (avatarPreview) {
+                selectedImage.value.shape_square = {
+                    ...selectedImage.value.shape_square,
+                    url: avatarPreview.url || selectedImage.value.shape_square.url,
+                    x: avatarPreview.params?.x ?? tileSquareX.value,
+                    y: avatarPreview.params?.y ?? tileSquareY.value,
+                    z: avatarPreview.params?.z ?? tileSquareZ.value
+                }
+            } else {
+                // Rebuild URL with XYZ parameters
+                const newUrl = rebuildShapeUrlWithXYZ(
+                    selectedImage.value.shape_square.url,
+                    tileSquareX.value,
+                    tileSquareY.value,
+                    tileSquareZ.value
+                )
+                selectedImage.value.shape_square = {
+                    ...selectedImage.value.shape_square,
+                    url: newUrl,
+                    x: tileSquareX.value,
+                    y: tileSquareY.value,
+                    z: tileSquareZ.value
+                }
+            }
+        }
+
         // Convert Uint8Array to array, but keep null if empty
         const ctagsArray = selectedImage.value.ctags && selectedImage.value.ctags.length > 0
             ? Array.from(new Uint8Array(selectedImage.value.ctags))
@@ -724,13 +973,59 @@ const heroPreviewUrl = computed(() => {
 
     if (!shapeData) return selectedImage.value.url || ''
 
-    // Use tpar + turl if available (mobile optimization)
-    if (shapeData.tpar && shapeData.turl) {
-        return shapeData.tpar.replace('{turl}', shapeData.turl)
+    // Always use 416px width for preview, calculate height based on shape aspect ratio
+    const baseUrl = shapeData.url || selectedImage.value.url || ''
+    if (!baseUrl) return ''
+
+    // Calculate height based on shape aspect ratio
+    // Shape aspect ratios:
+    // - wide: 2:1 (336:168) → 416:208
+    // - square: 1:1 (128:128) → 416:416
+    // - vertical: 9:16 (126:224) → 416:~741
+    let height: number
+    switch (heroPreviewShape.value) {
+        case 'wide':
+            height = 208  // 416 / 2
+            break
+        case 'square':
+            height = 416  // 416 / 1
+            break
+        case 'vertical':
+            height = Math.round(416 * (224 / 126))  // 416 * 1.778 = ~741
+            break
+        default:
+            height = 416
     }
 
-    // Fall back to URL
-    return shapeData.url || selectedImage.value.url || ''
+    // Detect adapter
+    const adapter = baseUrl.includes('images.unsplash.com') ? 'unsplash'
+        : baseUrl.includes('cloudinary.com') ? 'cloudinary'
+            : 'external'
+
+    // Build 416px URL with correct aspect ratio
+    if (adapter === 'unsplash') {
+        try {
+            const url = new URL(baseUrl)
+            url.searchParams.set('w', '416')
+            url.searchParams.set('h', height.toString())
+            url.searchParams.set('fit', 'crop')
+            return url.toString()
+        } catch (e) {
+            return baseUrl
+        }
+    } else if (adapter === 'cloudinary') {
+        try {
+            const match = baseUrl.match(/^(https?:\/\/[^\/]+\/[^\/]+\/image\/upload\/)([^\/]*)\/(.+)$/)
+            if (match) {
+                const [, prefix, , suffix] = match
+                return `${prefix}c_fill,w_416,h_${height}/${suffix}`
+            }
+        } catch (e) {
+            return baseUrl
+        }
+    }
+
+    return baseUrl
 })
 
 // Toggle between shapes (wide → square → vertical → repeat)
@@ -987,7 +1282,7 @@ const handleShapeReset = () => {
 
     const shape = activeShape.value.shape
 
-    // Reset local XYZ state
+    // Reset local XYZ state to NULL
     if (shape === 'wide' || shape === 'card') {
         cardWideX.value = null
         cardWideY.value = null
@@ -1004,7 +1299,10 @@ const handleShapeReset = () => {
         shapeRef.resetPreview()
     }
 
-    console.log('[ShapeEditor] Reset:', shape)
+    // Mark as dirty since XYZ values changed (ERR2 fix)
+    checkDirty()
+
+    console.log('[ShapeEditor] Reset:', shape, '- marked as dirty')
 }
 
 // Clear active shape when loading new record or after save
@@ -1013,6 +1311,8 @@ const clearShapeEditor = () => {
 }
 
 onMounted(() => {
+    // Extract image dimensions from CSS variables for ImgShape components
+    extractImageDimensions()
     fetchStatusOptions()
     fetchImages()
 })
@@ -1110,9 +1410,10 @@ onMounted(() => {
                                 Export JSON
                             </button>
                         </div>
-                        
+
                         <!-- Import Modal (positioned relative to Data menu) -->
-                        <cimgImport :isOpen="showImportModal" @update:isOpen="showImportModal = $event" @save="handleImportSave" />
+                        <cimgImport :isOpen="showImportModal" @update:isOpen="showImportModal = $event"
+                            @save="handleImportSave" />
                     </div>
 
                     <!-- Settings Menu -->
@@ -1146,9 +1447,11 @@ onMounted(() => {
                 <div v-else class="image-list">
                     <div v-for="image in filteredImages" :key="image.id" class="image-row"
                         :class="{ 'selected': selectedImage?.id === image.id }" @click="selectImage(image)">
-                        <!-- Avatar -->
+                        <!-- Avatar using ImgShape tile/square variant -->
                         <div class="image-avatar">
-                            <img :src="(image.url || '/dummy.svg') + (image.url ? '?w=72&h=72&fit=crop' : '')"
+                            <ImgShape v-if="image.shape_thumb" :data="image.shape_thumb" shape="tile" variant="square"
+                                class="image-list-thumb" :forceBlur="false" />
+                            <img v-else :src="(image.url || '/dummy.svg') + (image.url ? '?w=72&h=72&fit=crop' : '')"
                                 :alt="image.name" />
                         </div>
 

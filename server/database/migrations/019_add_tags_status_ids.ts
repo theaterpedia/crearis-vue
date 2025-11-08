@@ -2414,7 +2414,11 @@ export const migration = {
                     -- Compute about field only if not already set
                     -- (Allow adapters to provide pre-formatted about field)
                     IF NEW.about IS NULL OR NEW.about = '' THEN
-                        IF (NEW.author).account_id IS NOT NULL THEN
+                        IF (NEW.author).info IS NOT NULL AND (NEW.author).info != '' THEN
+                            -- Use author.info (user's name) if available
+                            NEW.about := '(c) ' || (NEW.author).info || ' via ' || (NEW.author).adapter::text;
+                        ELSIF (NEW.author).account_id IS NOT NULL THEN
+                            -- Fallback to account_id if info not available
                             NEW.about := '(c) ' || (NEW.author).account_id || ' via ' || (NEW.author).adapter::text;
                         ELSIF NEW.owner_id IS NOT NULL THEN
                             NEW.about := '(c) owner_id:' || NEW.owner_id::text;

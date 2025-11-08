@@ -21,7 +21,55 @@ const emit = defineEmits<{
     reset: []
 }>()
 
-const editMode = ref<'automation' | 'xyz' | 'direct'>('automation')
+/**
+ * Detect mode based on XYZ values (ERROR 2 & 3)
+ * If X is not NULL, use XYZ mode (user has set explicit focal point)
+ * If X is NULL, use Auto mode (adapter's default cropping)
+ */
+const detectMode = (): 'automation' | 'xyz' | 'direct' => {
+    console.log('[ShapeEditor] Detecting mode for shape:', props.shape, 'XYZ:', { x: props.data.x, y: props.data.y, z: props.data.z })
+    if (props.data.x !== null && props.data.x !== undefined) {
+        console.log('[ShapeEditor] Mode detected: XYZ')
+        return 'xyz'
+    }
+    console.log('[ShapeEditor] Mode detected: Auto')
+    return 'automation'
+}
+
+const editMode = ref<'automation' | 'xyz' | 'direct'>(detectMode())
+
+// Track if user manually switched mode
+let userManualSwitch = false
+
+// Computed property that watches props and auto-updates mode
+const currentMode = computed(() => {
+    const detectedMode = detectMode()
+
+    // If user hasn't manually switched, use detected mode
+    if (!userManualSwitch) {
+        // Update editMode to match detected mode
+        if (editMode.value !== detectedMode) {
+            editMode.value = detectedMode
+            console.log('[ShapeEditor] Mode auto-updated to:', detectedMode)
+        }
+    }
+
+    return editMode.value
+})
+
+// Override mode switching to track user changes
+const switchMode = (mode: 'automation' | 'xyz' | 'direct') => {
+    userManualSwitch = true
+    editMode.value = mode
+    console.log('[ShapeEditor] User switched to:', mode)
+
+    // Reset flag after a short delay to allow auto-detection on next shape change
+    setTimeout(() => {
+        userManualSwitch = false
+        console.log('[ShapeEditor] Reset manual switch flag')
+    }, 100)
+}
+
 
 // Automation presets per shape + adapter
 const automationPresets: Record<string, Record<string, Record<string, string>>> = {
@@ -126,20 +174,20 @@ const updateTpar = (event: Event) => {
 
             <!-- Mode Switcher -->
             <div class="mode-switcher">
-                <button :class="{ active: editMode === 'automation' }" @click="editMode = 'automation'">
+                <button :class="{ active: currentMode === 'automation' }" @click="switchMode('automation')">
                     Auto
                 </button>
-                <button :class="{ active: editMode === 'xyz' }" @click="editMode = 'xyz'">
+                <button :class="{ active: currentMode === 'xyz' }" @click="switchMode('xyz')">
                     XYZ
                 </button>
-                <button :class="{ active: editMode === 'direct' }" @click="editMode = 'direct'">
+                <button :class="{ active: currentMode === 'direct' }" @click="switchMode('direct')">
                     Direct
                 </button>
             </div>
         </div>
 
         <!-- Mode 1: Automation -->
-        <div v-if="editMode === 'automation'" class="editor-content">
+        <div v-if="currentMode === 'automation'" class="editor-content">
             <h5>Shape-based Automation</h5>
             <p class="hint">Optimized settings for {{ shape }} on {{ adapter }}</p>
 
@@ -166,7 +214,8 @@ const updateTpar = (event: Event) => {
         </div>
 
         <!-- Mode 2: XYZ Input -->
-        <div v-else-if="editMode === 'xyz'" class="editor-content">
+        <!-- Mode 2: XYZ -->
+        <div v-else-if="currentMode === 'xyz'" class="editor-content">
             <h5>Manual Parameters</h5>
             <p class="hint">Focal point (X/Y) and zoom (Z) adjustments</p>
 
@@ -309,7 +358,8 @@ const updateTpar = (event: Event) => {
 }
 
 .mode-switcher button.active {
-    background: var(--color-card-bg);
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
     font-weight: 600;
 }
 

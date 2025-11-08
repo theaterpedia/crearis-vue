@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Dropdown } from 'floating-vue'
 
 interface ImportedImage {
     url: string
@@ -243,10 +242,14 @@ const handleSave = async () => {
         // Prepare batch data
         const batchData: any = {
             owner_id: selectedOwner.value,
-            alt_text: altText.value || 'Batch imported from URL',
             license: license.value,
             xml_subject: xmlSubject.value,
             ctags: ctagsBuffer
+        }
+
+        // Only include alt_text if user provided a value (let adapter extract it otherwise)
+        if (altText.value && altText.value.trim().length > 0) {
+            batchData.alt_text = altText.value
         }
 
         // Add domaincode if project selected
@@ -332,177 +335,189 @@ watch(() => props.isOpen, (newValue) => {
 </script>
 
 <template>
-    <Dropdown :shown="isOpen" :triggers="[]" :autoHide="false">
-        <template #popper>
-            <div class="cimg-import-modal">
-                <div class="modal-header">
-                    <h3>Import Images from URLs</h3>
-                    <button class="btn-close" @click="handleClose">×</button>
+    <div v-if="isOpen" class="cimg-import-modal-overlay" @click.self="handleClose">
+        <div class="cimg-import-modal">
+            <div class="modal-header">
+                <h3>Import Images from URLs</h3>
+                <button class="btn-close" @click="handleClose">×</button>
+            </div>
+
+            <div class="modal-content">
+                <!-- URL input -->
+                <div class="form-section">
+                    <label>Image URLs (one per line or comma-separated)</label>
+                    <div class="url-input-group">
+                        <textarea v-model="urlInput"
+                            placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;or comma-separated..."
+                            @keydown.ctrl.enter="addUrl" @keydown.meta.enter="addUrl" class="url-textarea"
+                            rows="3"></textarea>
+                        <button class="btn-add" @click="addUrl">Add URLs</button>
+                    </div>
+                    <small class="form-hint">Supports multiple URLs (separated by comma, newline, or space)</small>
                 </div>
 
-                <div class="modal-content">
-                    <!-- URL input -->
-                    <div class="form-section">
-                        <label>Image URLs (one per line or comma-separated)</label>
-                        <div class="url-input-group">
-                            <textarea v-model="urlInput"
-                                placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;or comma-separated..."
-                                @keydown.ctrl.enter="addUrl" @keydown.meta.enter="addUrl" class="url-textarea"
-                                rows="3"></textarea>
-                            <button class="btn-add" @click="addUrl">Add URLs</button>
-                        </div>
-                        <small class="form-hint">Supports multiple URLs (separated by comma, newline, or space)</small>
+                <!-- Image previews list -->
+                <div v-if="importedImages.length > 0" class="preview-list">
+                    <div class="preview-list-header">
+                        <span>{{ importedImages.length }} image(s)</span>
+                        <button class="btn-clear-all" @click="importedImages = []">
+                            Clear all
+                        </button>
                     </div>
-
-                    <!-- Image previews list -->
-                    <div v-if="importedImages.length > 0" class="preview-list">
-                        <div class="preview-list-header">
-                            <span>{{ importedImages.length }} image(s)</span>
-                            <button class="btn-clear-all" @click="importedImages = []">
-                                Clear all
+                    <div class="preview-grid">
+                        <div v-for="(image, index) in importedImages" :key="index" class="preview-item">
+                            <img :src="image.previewUrl" alt="Preview" class="preview-image" loading="lazy" />
+                            <button class="btn-remove-image" @click="removeImage(index)" aria-label="Remove image">
+                                ×
                             </button>
                         </div>
-                        <div class="preview-grid">
-                            <div v-for="(image, index) in importedImages" :key="index" class="preview-item">
-                                <img :src="image.previewUrl" alt="Preview" class="preview-image" loading="lazy" />
-                                <button class="btn-remove-image" @click="removeImage(index)" aria-label="Remove image">
-                                    ×
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Project and owner selection -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Project (Optional)</label>
-                            <select v-model="selectedProject" class="form-select" :disabled="loadingProjects">
-                                <option :value="null">
-                                    {{ loadingProjects ? 'Loading projects...' : 'Select project...' }}
-                                </option>
-                                <option v-for="project in projects" :key="project.id" :value="project.id">
-                                    {{ project.name }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Owner *</label>
-                            <select v-model="selectedOwner" class="form-select" :disabled="loadingOwners">
-                                <option :value="null">
-                                    {{ loadingOwners ? 'Loading owners...' : 'Select owner...' }}
-                                </option>
-                                <option v-for="owner in owners" :key="owner.id" :value="owner.id">
-                                    {{ owner.name }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Batch metadata -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Subject Type</label>
-                            <select v-model="xmlSubject" class="form-select">
-                                <option v-for="opt in xmlSubjectOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                            <small class="form-hint">Auto-sets age and subject tags</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label>License</label>
-                            <select v-model="license" class="form-select">
-                                <option v-for="opt in licenseOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <label>Alt Text (applies to all)</label>
-                        <input v-model="altText" type="text" class="form-input" placeholder="Batch imported from URL" />
-                    </div>
-
-                    <!-- CTags -->
-                    <div class="ctags-section">
-                        <h4>Content Tags (CTags)</h4>
-
-                        <div class="ctags-row">
-                            <label class="ctags-label">
-                                Age Group
-                                <span class="label-hint">bits 0-1</span>
-                            </label>
-                            <select v-model.number="ctagsAgeGroup" class="form-select">
-                                <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="ctags-row">
-                            <label class="ctags-label">
-                                Subject Type
-                                <span class="label-hint">bits 2-3</span>
-                            </label>
-                            <select v-model.number="ctagsSubjectType" class="form-select">
-                                <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="ctags-row">
-                            <label class="ctags-label">
-                                Access Level
-                                <span class="label-hint">bits 4-5</span>
-                            </label>
-                            <select v-model.number="ctagsAccessLevel" class="form-select">
-                                <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="ctags-row">
-                            <label class="ctags-label">
-                                Quality
-                                <span class="label-hint">bits 6-7</span>
-                            </label>
-                            <select v-model.number="ctagsQuality" class="form-select">
-                                <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Keep open checkbox -->
-                    <div class="form-section">
-                        <label class="checkbox-label">
-                            <input v-model="keepOpen" type="checkbox" />
-                            <span>Keep me open after save (for batch imports)</span>
-                        </label>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button class="btn-cancel" @click="handleClose">
-                        Cancel
-                    </button>
-                    <button class="btn-save" :disabled="!canSave" @click="handleSave">
-                        Save {{ importedImages.length }} image(s)
-                    </button>
+                <!-- Project and owner selection -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Project (Optional)</label>
+                        <select v-model="selectedProject" class="form-select" :disabled="loadingProjects">
+                            <option :value="null">
+                                {{ loadingProjects ? 'Loading projects...' : 'Select project...' }}
+                            </option>
+                            <option v-for="project in projects" :key="project.id" :value="project.id">
+                                {{ project.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Owner *</label>
+                        <select v-model="selectedOwner" class="form-select" :disabled="loadingOwners">
+                            <option :value="null">
+                                {{ loadingOwners ? 'Loading owners...' : 'Select owner...' }}
+                            </option>
+                            <option v-for="owner in owners" :key="owner.id" :value="owner.id">
+                                {{ owner.name }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Batch metadata -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subject Type</label>
+                        <select v-model="xmlSubject" class="form-select">
+                            <option v-for="opt in xmlSubjectOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                        <small class="form-hint">Auto-sets age and subject tags</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>License</label>
+                        <select v-model="license" class="form-select">
+                            <option v-for="opt in licenseOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label>Alt Text (applies to all)</label>
+                    <input v-model="altText" type="text" class="form-input" placeholder="Batch imported from URL" />
+                </div>
+
+                <!-- CTags -->
+                <div class="ctags-section">
+                    <h4>Content Tags (CTags)</h4>
+
+                    <div class="ctags-row">
+                        <label class="ctags-label">
+                            Age Group
+                            <span class="label-hint">bits 0-1</span>
+                        </label>
+                        <select v-model.number="ctagsAgeGroup" class="form-select">
+                            <option v-for="opt in ageGroupOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="ctags-row">
+                        <label class="ctags-label">
+                            Subject Type
+                            <span class="label-hint">bits 2-3</span>
+                        </label>
+                        <select v-model.number="ctagsSubjectType" class="form-select">
+                            <option v-for="opt in subjectTypeOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="ctags-row">
+                        <label class="ctags-label">
+                            Access Level
+                            <span class="label-hint">bits 4-5</span>
+                        </label>
+                        <select v-model.number="ctagsAccessLevel" class="form-select">
+                            <option v-for="opt in accessLevelOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="ctags-row">
+                        <label class="ctags-label">
+                            Quality
+                            <span class="label-hint">bits 6-7</span>
+                        </label>
+                        <select v-model.number="ctagsQuality" class="form-select">
+                            <option v-for="opt in qualityOptions" :key="opt.value" :value="opt.value">
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Keep open checkbox -->
+                <div class="form-section">
+                    <label class="checkbox-label">
+                        <input v-model="keepOpen" type="checkbox" />
+                        <span>Keep me open after save (for batch imports)</span>
+                    </label>
                 </div>
             </div>
-        </template>
-    </Dropdown>
-</template>
 
+            <div class="modal-footer">
+                <button class="btn-cancel" @click="handleClose">
+                    Cancel
+                </button>
+                <button class="btn-save" :disabled="!canSave" @click="handleSave">
+                    Save {{ importedImages.length }} image(s)
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
 <style scoped>
+.cimg-import-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
 .cimg-import-modal {
+    position: relative;
     width: 90vw;
     max-width: 700px;
     max-height: 85vh;
@@ -512,6 +527,7 @@ watch(() => props.isOpen, (newValue) => {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    margin: auto;
 }
 
 .modal-header {
@@ -695,9 +711,12 @@ watch(() => props.isOpen, (newValue) => {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
     background: var(--color-card-bg);
-    color: var(--color-text);
+    color: var(--color-contrast) !important;
     font-size: 0.875rem;
     cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 .form-select:disabled {
@@ -706,9 +725,18 @@ watch(() => props.isOpen, (newValue) => {
 }
 
 .form-select option {
-    background: var(--color-background);
-    color: var(--color-text);
+    background: var(--color-card-bg);
+    color: var(--color-contrast) !important;
     padding: 0.5rem;
+}
+
+.form-select option:first-child {
+    color: var(--color-muted-contrast) !important;
+}
+
+/* Ensure selected option text is visible */
+.form-select:not(:disabled) {
+    color: var(--color-text) !important;
 }
 
 .checkbox-label {

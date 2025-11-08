@@ -49,17 +49,33 @@ export default defineEventHandler(async (event) => {
         // Helper to format composite types
         const formatComposite = (values: (string | number | null)[], isShapeType: boolean = false) => {
             return `(${values.map((v: string | number | null, idx: number) => {
-                if (v === null || v === '' || v === undefined) return ''
+                // Handle null/undefined/empty - must be literal NULL for PostgreSQL composite types
+                if (v === null || v === undefined || v === '') {
+                    return ''  // Empty string between commas represents NULL in PostgreSQL composite literals
+                }
 
-                // For shape types: (x numeric, y numeric, z numeric, url text, json jsonb)
+                // For shape types: (x numeric, y numeric, z numeric, url text, json jsonb, blur varchar(50), turl text, tpar text)
+                // x, y, z (indices 0,1,2) are numeric - don't quote
+                // url (index 3) is text - always quote if not empty
+                // json (index 4) is jsonb - would need special handling but we don't use it yet
+                // blur (index 5) is varchar - quote if has special chars
+                // turl (index 6) is text - quote if has special chars  
+                // tpar (index 7) is text - quote if has special chars
                 if (isShapeType) {
-                    if (idx === 3) {
-                        // URL - always quote
+                    if (idx === 3 || idx === 6 || idx === 7) {
+                        // URL, turl, tpar - always quote
                         const str = String(v)
                         return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
                     } else if (idx === 4) {
                         // JSON - would need special handling, but not used yet
                         return ''
+                    } else if (idx === 5) {
+                        // blur - quote if contains special characters
+                        const str = String(v)
+                        if (/[,()"\\\s]/.test(str)) {
+                            return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+                        }
+                        return str
                     } else {
                         // x, y, z numeric values - don't quote
                         return String(v)

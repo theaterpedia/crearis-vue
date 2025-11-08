@@ -94,8 +94,30 @@ export default defineEventHandler(async (event) => {
                 let imageIdentifier = ''
                 if (adapter.type === 'unsplash') {
                     // Extract Unsplash photo ID from URL
-                    const unsplashMatch = url.match(/photo-([a-zA-Z0-9_-]+)/) || url.match(/photos\/([^/?]+)/)
-                    imageIdentifier = unsplashMatch ? unsplashMatch[1] : `img_${i}`
+                    // Unsplash IDs are the last segment of the slug, typically 11 characters
+                    // Examples:
+                    // - https://images.unsplash.com/photo-1234567890123-Imjn4Q8HHG8?... -> Imjn4Q8HHG8
+                    // - https://unsplash.com/photos/people-sitting-on-ground-Imjn4Q8HHG8 -> Imjn4Q8HHG8
+
+                    const photoMatch = url.match(/photo-([a-zA-Z0-9_-]+)/)
+                    if (photoMatch) {
+                        // Extract from images.unsplash.com URL
+                        const fullSlug = photoMatch[1]
+                        // Photo ID is the last segment (typically 11 chars, alphanumeric + hyphens)
+                        const parts = fullSlug.split('-')
+                        imageIdentifier = parts[parts.length - 1]
+                    } else {
+                        // Try unsplash.com/photos/ format
+                        const slugMatch = url.match(/photos\/([^/?]+)/)
+                        if (slugMatch) {
+                            const fullSlug = slugMatch[1]
+                            // Photo ID is the last segment after hyphens
+                            const parts = fullSlug.split('-')
+                            imageIdentifier = parts[parts.length - 1]
+                        } else {
+                            imageIdentifier = `img_${i}`
+                        }
+                    }
                 } else if (adapter.type === 'cloudinary') {
                     // Extract filename without extension from Cloudinary URL
                     const cloudinaryMatch = url.match(/\/v\d+\/(.+?)(?:\?|$)/)

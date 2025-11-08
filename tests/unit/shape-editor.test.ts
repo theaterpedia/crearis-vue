@@ -13,7 +13,7 @@ describe('ShapeEditor Component', () => {
     // ===================================================================
     // Mode Switching Tests
     // ===================================================================
-    
+
     describe('Mode Switching', () => {
         it('should render automation mode by default', () => {
             const wrapper = mount(ShapeEditor, {
@@ -119,7 +119,7 @@ describe('ShapeEditor Component', () => {
     // ===================================================================
     // XYZ Input Tests
     // ===================================================================
-    
+
     describe('XYZ Input', () => {
         it('should emit update event with x value', async () => {
             const wrapper = mount(ShapeEditor, {
@@ -310,7 +310,7 @@ describe('ShapeEditor Component', () => {
     // ===================================================================
     // Preview/Reset Tests
     // ===================================================================
-    
+
     describe('Preview/Reset', () => {
         it('should emit preview event when preview button clicked', async () => {
             const wrapper = mount(ShapeEditor, {
@@ -396,7 +396,7 @@ describe('ShapeEditor Component', () => {
     // ===================================================================
     // Props Handling Tests
     // ===================================================================
-    
+
     describe('Props Handling', () => {
         it('should display shape name in header', () => {
             const wrapper = mount(ShapeEditor, {
@@ -455,7 +455,7 @@ describe('ShapeEditor Component', () => {
         })
 
         it('should handle different shape types', () => {
-            const shapes: Array<'square' | 'wide' | 'vertical' | 'thumb' | 'avatar'> = 
+            const shapes: Array<'square' | 'wide' | 'vertical' | 'thumb' | 'avatar'> =
                 ['square', 'wide', 'vertical', 'thumb', 'avatar']
 
             shapes.forEach(shape => {
@@ -478,7 +478,7 @@ describe('ShapeEditor Component', () => {
         })
 
         it('should handle different adapters', () => {
-            const adapters: Array<'unsplash' | 'cloudinary' | 'vimeo' | 'external'> = 
+            const adapters: Array<'unsplash' | 'cloudinary' | 'vimeo' | 'external'> =
                 ['unsplash', 'cloudinary', 'vimeo', 'external']
 
             adapters.forEach(adapter => {
@@ -504,7 +504,7 @@ describe('ShapeEditor Component', () => {
     // ===================================================================
     // Automation Presets Tests
     // ===================================================================
-    
+
     describe('Automation Presets', () => {
         it('should show correct presets for unsplash wide', () => {
             const wrapper = mount(ShapeEditor, {

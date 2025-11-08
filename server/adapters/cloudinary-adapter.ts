@@ -67,25 +67,28 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
             },
 
             // Shape variations with default crop dimensions
+            // Shapes with auto-generated URLs
+            // NOTE: X, Y, Z are set to NULL on import. Shape editor will set them when user edits.
+            // If X is not NULL, it indicates XYZ mode (explicit focal point positioning).
             shape_square: {
                 url: this.buildShapeUrl(url, 'square'),
-                x: 128,
-                y: 128
+                x: null,
+                y: null
             },
             shape_thumb: {
                 url: this.buildShapeUrl(url, 'thumb'),
-                x: 64,
-                y: 64
+                x: null,
+                y: null
             },
             shape_wide: {
                 url: this.buildShapeUrl(url, 'wide'),
-                x: 336,
-                y: 168
+                x: null,
+                y: null
             },
             shape_vertical: {
                 url: this.buildShapeUrl(url, 'vertical'),
-                x: 126,
-                y: 224
+                x: null,
+                y: null
             },
 
             license: 'private',

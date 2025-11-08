@@ -104,11 +104,19 @@ export class UnsplashAdapter extends BaseMediaAdapter {
      * Transform Unsplash photo data to our metadata format
      */
     private transformMetadata(photo: UnsplashPhoto): MediaMetadata {
+        // Log user data for debugging
+        console.log(`[Unsplash] Photo user data:`, {
+            id: photo.user.id,
+            username: photo.user.username,
+            name: photo.user.name
+        })
+
         // Extract year from creation date for attribution
         const year = photo.created_at ? new Date(photo.created_at).getFullYear() : new Date().getFullYear()
 
         // Build about field in format: author | license | year
         const about = this.buildAboutField(photo, year)
+        console.log(`[Unsplash] About field constructed: "${about}"`)
 
         // Detect file format from URL
         const fileformat = this.detectFileFormat(photo.urls.raw)
@@ -155,25 +163,28 @@ export class UnsplashAdapter extends BaseMediaAdapter {
 
             // Shape variations with default crop dimensions (SSR-optimized smallest usable sizes)
             // Dimensions match ImgShape.vue and CSS variables (--tile-height-square: 8rem, --avatar: 4rem, etc.)
+            // Shapes with auto-generated URLs
+            // NOTE: X, Y, Z are set to NULL on import. Shape editor will set them when user edits.
+            // If X is not NULL, it indicates XYZ mode (explicit focal point positioning).
             shape_square: {
                 url: this.buildShapeUrl(cleanBaseUrl, 'square'),
-                x: 128,  // 8rem tile-height-square
-                y: 128
+                x: null,
+                y: null
             },
             shape_thumb: {
                 url: this.buildShapeUrl(cleanBaseUrl, 'thumb'),
-                x: 64,   // 4rem avatar (synonymous with thumb, face-focused crop)
-                y: 64
+                x: null,
+                y: null
             },
             shape_wide: {
                 url: this.buildShapeUrl(cleanBaseUrl, 'wide'),
-                x: 336,  // 21rem card-width
-                y: 168   // 10.5rem card-height-min
+                x: null,
+                y: null
             },
             shape_vertical: {
                 url: this.buildShapeUrl(cleanBaseUrl, 'vertical'),
-                x: 126,  // 7.875rem (9:16 aspect ratio)
-                y: 224   // 14rem card-height
+                x: null,
+                y: null
             },
 
             // Location
@@ -205,6 +216,7 @@ export class UnsplashAdapter extends BaseMediaAdapter {
         // Try German slug first
         if (photo.alternative_slugs?.de) {
             const germanSlug = photo.alternative_slugs.de
+            console.log(`[Unsplash] Extracting German alt text from slug: "${germanSlug}"`)
 
             // Remove photo ID from end (usually last segment after final hyphen)
             // Photo IDs are typically 11 characters: alphanumeric + hyphens
@@ -217,11 +229,15 @@ export class UnsplashAdapter extends BaseMediaAdapter {
 
             // Join with spaces and capitalize first letter
             const text = parts.join(' ')
-            return text.charAt(0).toUpperCase() + text.slice(1)
+            const result = text.charAt(0).toUpperCase() + text.slice(1)
+            console.log(`[Unsplash] ✓ German alt text extracted: "${result}"`)
+            return result
         }
 
         // Fallback to English descriptions
-        return photo.alt_description || photo.description || ''
+        const fallback = photo.alt_description || photo.description || ''
+        console.log(`[Unsplash] ⚠ No German slug found, using fallback: "${fallback}"`)
+        return fallback
     }
 
     /**

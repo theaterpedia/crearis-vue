@@ -19,11 +19,18 @@ export interface MediaAdapterInfo {
 
 /**
  * Image shape/variation information
+ * 
+ * X, Y, Z coordinates:
+ * - NULL: Auto mode (uses Unsplash's default crop=entropy or Cloudinary's auto-focal)
+ * - NOT NULL: XYZ mode (explicit focal point positioning)
+ * 
+ * Shape editor checks: if X is not NULL, switch to XYZ mode for manual control.
  */
 export interface ImageShape {
     url: string
-    x?: number
-    y?: number
+    x?: number | null
+    y?: number | null
+    z?: number | null
 }
 
 /**
