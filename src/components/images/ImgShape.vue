@@ -13,6 +13,7 @@ export interface ImgShapeData {
     blur?: string
     turl?: string
     tpar?: string
+    xmlid?: string  // For avatar shape detection
 }
 
 interface Props {
@@ -21,17 +22,26 @@ interface Props {
     variant?: 'default' | 'square' | 'wide' | 'vertical'
     adapter?: 'detect' | 'unsplash' | 'cloudinary' | 'vimeo' | 'none'
     forceBlur?: boolean
+    editable?: boolean
+    active?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
     variant: 'default',
     adapter: 'detect',
-    forceBlur: false
+    forceBlur: false,
+    editable: false,
+    active: false
 })
 
 const emit = defineEmits<{
     shapeUrl: [url: string]
+    activate: [data: { shape: string, variant: string, adapter: string }]
 }>()
+
+// Error state
+const hasError = ref(false)
+const errorMessage = ref('')
 
 const { cardWidth, cardHeight, tileWidth, tileHeight, avatarWidth } = useTheme()
 
@@ -49,6 +59,21 @@ const detectedAdapter = computed(() => {
     if (url.includes('vimeo.com')) return 'vimeo'
 
     return 'none'
+})
+
+/**
+ * Detect avatar shape (round vs square) based on xmlid
+ * Square avatars used for: projects, events, locations, posts
+ * Round avatars used for: users, instructors, people (default)
+ */
+const avatarShape = computed(() => {
+    if (props.shape !== 'avatar') return null
+    
+    const xmlid = props.data.xmlid || ''
+    const squarePatterns = ['project', 'event', 'location', 'post']
+    const isSquare = squarePatterns.some(pattern => xmlid.toLowerCase().includes(pattern))
+    
+    return isSquare ? 'square' : 'round'
 })
 
 /**
@@ -96,6 +121,39 @@ const dimensions = computed<[number, number] | null>(() => {
 
     return null
 })
+
+/**
+ * Validate dimensions
+ * Dimensions must be known and valid for proper display
+ */
+const validateDimensions = () => {
+    // Reset error state
+    hasError.value = false
+    errorMessage.value = ''
+    
+    // Check if dimensions can be calculated
+    if (!dimensions.value) {
+        hasError.value = true
+        errorMessage.value = 'Unknown dimensions'
+        return false
+    }
+    
+    const [width, height] = dimensions.value
+    
+    // Validate width and height are positive
+    if (width <= 0 || height <= 0) {
+        hasError.value = true
+        errorMessage.value = 'Invalid dimensions'
+        return false
+    }
+    
+    return true
+}
+
+// Validate on mount and when dimensions change
+watch(dimensions, () => {
+    validateDimensions()
+}, { immediate: true })
 
 /**
  * Manipulate Unsplash URL to add/update crop parameters
@@ -199,15 +257,30 @@ const altText = computed(() => {
  * CSS classes based on shape
  */
 const cssClasses = computed(() => {
-    return [
+    const classes = [
         'img-shape',
         `img-shape--${props.shape}`,
         `img-shape--${props.variant}`
     ]
+    
+    // Add avatar shape class
+    if (props.shape === 'avatar' && avatarShape.value) {
+        classes.push(`img-shape--avatar-${avatarShape.value}`)
+    }
+    
+    return classes
 })
 
 // BlurHash placeholder
 const imageLoaded = ref(false)
+
+// Create a simple gray placeholder as data URL for error state
+const defaultPlaceholderUrl = 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+        <rect width="32" height="32" fill="#e0e0e0"/>
+    </svg>
+`)
+
 const showPlaceholder = computed(() => {
     // Debug: Log blur hash presence
     if (props.data.blur && import.meta.env.DEV) {
@@ -299,13 +372,45 @@ function getPreviewData() {
 // (used by ImagesCoreAdmin to read current preview/state from each ImgShape)
 // @ts-ignore - defineExpose available in script setup
 defineExpose({ getPreviewData })
+
+// Click handler for editable mode
+const handleClick = () => {
+    if (props.editable && !hasError.value) {
+        emit('activate', {
+            shape: props.shape,
+            variant: props.variant || 'default',
+            adapter: detectedAdapter.value
+        })
+    }
+}
 </script>
 
 <template>
-    <div class="img-shape-wrapper">
-        <canvas v-if="showPlaceholder" ref="canvasRef" class="img-shape-placeholder" />
-        <img v-if="displayUrl && !forceBlur" :src="displayUrl" :alt="altText" :class="cssClasses"
-            :style="{ opacity: imageLoaded ? 1 : 0 }" @load="onImageLoad" />
+    <div 
+        class="img-shape-wrapper" 
+        :class="{ 
+            'editable': editable, 
+            'active': active,
+            'has-error': hasError 
+        }"
+        @click="handleClick"
+    >
+        <!-- Error State: BlurHash + Overlay -->
+        <div v-if="hasError" class="error-state">
+            <canvas v-if="data.blur" ref="canvasRef" class="img-shape-placeholder" />
+            <img v-else :src="defaultPlaceholderUrl" alt="Error" class="img-shape-placeholder" />
+            <div class="error-overlay">
+                <span class="error-text">Image-Shape-Error</span>
+                <span class="error-detail">{{ errorMessage }}</span>
+            </div>
+        </div>
+        
+        <!-- Normal State -->
+        <template v-else>
+            <canvas v-if="showPlaceholder" ref="canvasRef" class="img-shape-placeholder" />
+            <img v-if="displayUrl && !forceBlur" :src="displayUrl" :alt="altText" :class="cssClasses"
+                :style="{ opacity: imageLoaded ? 1 : 0 }" @load="onImageLoad" />
+        </template>
     </div>
 </template>
 
@@ -314,6 +419,55 @@ defineExpose({ getPreviewData })
     position: relative;
     width: 100%;
     height: 100%;
+}
+
+.img-shape-wrapper.editable {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.img-shape-wrapper.editable:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px oklch(0 0 0 / 0.2);
+}
+
+.img-shape-wrapper.active {
+    outline: 2px solid var(--color-primary-base);
+    outline-offset: 2px;
+}
+
+.error-state {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.error-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: oklch(1 0 0 / 0.5); /* 50% opacity white */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.25rem;
+    z-index: 10;
+}
+
+.error-text {
+    font-family: var(--headings);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-error-base);
+    text-align: center;
+}
+
+.error-detail {
+    font-size: 0.625rem;
+    color: var(--color-text-dimmed);
 }
 
 .img-shape-placeholder {
@@ -349,7 +503,14 @@ defineExpose({ getPreviewData })
 .img-shape--avatar {
     width: var(--avatar);
     height: var(--avatar);
+}
+
+.img-shape--avatar-round {
     border-radius: 50%;
+}
+
+.img-shape--avatar-square {
+    border-radius: var(--radius-small);
 }
 
 /* Variant overrides */
