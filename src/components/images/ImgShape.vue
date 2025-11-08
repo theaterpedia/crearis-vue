@@ -79,11 +79,11 @@ const detectedAdapter = computed(() => {
  */
 const avatarShape = computed(() => {
     if (props.shape !== 'avatar') return null
-    
+
     const xmlid = props.data.xmlid || ''
     const squarePatterns = ['project', 'event', 'location', 'post']
     const isSquare = squarePatterns.some(pattern => xmlid.toLowerCase().includes(pattern))
-    
+
     return isSquare ? 'square' : 'round'
 })
 
@@ -141,23 +141,23 @@ const validateDimensions = () => {
     // Reset error state
     hasError.value = false
     errorMessage.value = ''
-    
+
     // Check if dimensions can be calculated
     if (!dimensions.value) {
         hasError.value = true
         errorMessage.value = 'Unknown dimensions'
         return false
     }
-    
+
     const [width, height] = dimensions.value
-    
+
     // Validate width and height are positive
     if (width <= 0 || height <= 0) {
         hasError.value = true
         errorMessage.value = 'Invalid dimensions'
         return false
     }
-    
+
     return true
 }
 
@@ -273,12 +273,12 @@ const cssClasses = computed(() => {
         `img-shape--${props.shape}`,
         `img-shape--${props.variant}`
     ]
-    
+
     // Add avatar shape class
     if (props.shape === 'avatar' && avatarShape.value) {
         classes.push(`img-shape--avatar-${avatarShape.value}`)
     }
-    
+
     return classes
 })
 
@@ -397,15 +397,11 @@ const handleClick = () => {
 </script>
 
 <template>
-    <div 
-        class="img-shape-wrapper" 
-        :class="{ 
-            'editable': editable, 
-            'active': active,
-            'has-error': hasError 
-        }"
-        @click="handleClick"
-    >
+    <div class="img-shape-wrapper" :class="{
+        'editable': editable,
+        'active': active,
+        'has-error': hasError
+    }" @click="handleClick">
         <!-- Error State: BlurHash + Overlay -->
         <div v-if="hasError" class="error-state">
             <canvas v-if="data.blur" ref="canvasRef" class="img-shape-placeholder" />
@@ -415,7 +411,7 @@ const handleClick = () => {
                 <span class="error-detail">{{ errorMessage }}</span>
             </div>
         </div>
-        
+
         <!-- Normal State -->
         <template v-else>
             <canvas v-if="showPlaceholder" ref="canvasRef" class="img-shape-placeholder" />
@@ -459,7 +455,8 @@ const handleClick = () => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: oklch(1 0 0 / 0.5); /* 50% opacity white */
+    background: oklch(1 0 0 / 0.5);
+    /* 50% opacity white */
     display: flex;
     flex-direction: column;
     justify-content: center;

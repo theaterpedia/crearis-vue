@@ -279,20 +279,20 @@ const blurHashUrl = computed(() => {
 // Build responsive image URL
 const buildImageUrl = (shapeData: any, width: number, height: number): string => {
   if (!shapeData?.url) return ''
-  
+
   // Use tpar + turl if available (mobile optimization)
   if (shapeData.tpar && shapeData.turl) {
     return shapeData.tpar.replace('{turl}', shapeData.turl)
   }
-  
+
   const adapter = detectAdapter(shapeData.url)
-  
+
   if (adapter === 'unsplash') {
     return buildUnsplashUrl(shapeData.url, width, height)
   } else if (adapter === 'cloudinary') {
     return buildCloudinaryUrl(shapeData.url, width, height)
   }
-  
+
   return shapeData.url
 }
 
@@ -311,22 +311,22 @@ const initializeBackgroundImage = () => {
     }
     return
   }
-  
+
   // Start with BlurHash
   if (blurHashUrl.value) {
     backgroundImage.value = blurHashUrl.value
   }
-  
+
   // Check if mobile
   isMobile.value = window.innerWidth <= MOBILE_WIDTH_PX
-  
+
   // Load appropriate shape
   const shape = currentShape.value
   if (shape) {
     const width = isMobile.value ? 416 : 672 // 2x for better quality
     const height = isMobile.value ? 739 : 336
     const imageUrl = buildImageUrl(shape, width, height)
-    
+
     // Preload and swap
     const img = new Image()
     img.onload = () => {
@@ -338,7 +338,7 @@ const initializeBackgroundImage = () => {
 
 onMounted(() => {
   initializeBackgroundImage()
-  
+
   // Optional: Handle resize for desktop upgrade
   let resizeTimeout: number
   const handleResize = () => {
@@ -346,7 +346,7 @@ onMounted(() => {
     resizeTimeout = setTimeout(() => {
       const wasMobile = isMobile.value
       isMobile.value = window.innerWidth <= MOBILE_WIDTH_PX
-      
+
       // Upgrade to desktop image if needed
       if (wasMobile && !isMobile.value && props.image?.shape_wide) {
         const imageUrl = buildImageUrl(props.image.shape_wide, 672, 336)
@@ -358,9 +358,9 @@ onMounted(() => {
       }
     }, 100)
   }
-  
+
   window.addEventListener('resize', handleResize)
-  
+
   return () => {
     window.removeEventListener('resize', handleResize)
     clearTimeout(resizeTimeout)

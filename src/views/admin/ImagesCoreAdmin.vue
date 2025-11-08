@@ -592,7 +592,7 @@ const saveChanges = async () => {
         // Reset dirty state
         originalImage.value = JSON.parse(JSON.stringify(selectedImage.value))
         isDirty.value = false
-        
+
         // Clear shape editor state after save (Plan D Task 2.5)
         clearShapeEditor()
     } catch (error) {
@@ -698,23 +698,23 @@ const handleImportSave = async (importedImages: any[]) => {
 // Computed hero preview URL based on selected shape
 const heroPreviewUrl = computed(() => {
     if (!selectedImage.value) return ''
-    
+
     const shapeMap = {
         wide: 'shape_wide',
         square: 'shape_square',
         vertical: 'shape_vertical'
     }
-    
+
     const shapeKey = shapeMap[heroPreviewShape.value]
     const shapeData = selectedImage.value[shapeKey]
-    
+
     if (!shapeData) return selectedImage.value.url || ''
-    
+
     // Use tpar + turl if available (mobile optimization)
     if (shapeData.tpar && shapeData.turl) {
         return shapeData.tpar.replace('{turl}', shapeData.turl)
     }
-    
+
     // Fall back to URL
     return shapeData.url || selectedImage.value.url || ''
 })
@@ -905,7 +905,7 @@ const handleShapeActivate = (data: { shape: string; variant: string; adapter: st
 // Handle shape editor updates
 const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z: number | null; url: string; tpar: string | null }>) => {
     if (!selectedImage.value || !activeShape.value) return
-    
+
     // Update the appropriate shape based on activeShape
     const shape = activeShape.value.shape
     if (shape === 'wide') {
@@ -917,26 +917,26 @@ const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z
         if (data.y !== undefined) tileSquareY.value = data.y
         if (data.z !== undefined) tileSquareZ.value = data.z
     }
-    
+
     console.log('[ShapeEditor] Updated:', data)
 }
 
 // Handle shape editor preview
 const handleShapePreview = () => {
     if (!activeShape.value) return
-    
+
     const shape = activeShape.value.shape
     if (shape === 'wide') {
         previewCardWide()
     }
-    
+
     console.log('[ShapeEditor] Preview for:', shape)
 }
 
 // Handle shape editor reset
 const handleShapeReset = () => {
     if (!activeShape.value) return
-    
+
     const shape = activeShape.value.shape
     if (shape === 'wide') {
         cardWideX.value = null
@@ -950,7 +950,7 @@ const handleShapeReset = () => {
         tileSquareZ.value = null
         tileShapeRef.value?.resetPreview?.()
     }
-    
+
     console.log('[ShapeEditor] Reset:', shape)
 }
 
@@ -1126,7 +1126,8 @@ onMounted(() => {
                         <!-- Column 1: Hero preview image (2/5 width → will change to fill) -->
                         <Column width="2/5">
                             <div class="preview-image-wrapper" @click="toggleHeroPreviewShape">
-                                <img :src="heroPreviewUrl" :alt="selectedImage.name" class="preview-image hero-preview" />
+                                <img :src="heroPreviewUrl" :alt="selectedImage.name"
+                                    class="preview-image hero-preview" />
                                 <!-- Shape indicator badge -->
                                 <div class="hero-shape-indicator">
                                     <span class="indicator-badge">{{ heroPreviewShape }}</span>
@@ -1139,8 +1140,7 @@ onMounted(() => {
                             <div class="shape-row shape-row-vertical">
                                 <ImgShape ref="verticalShapeRef" v-if="selectedImage.shape_vertical"
                                     :data="selectedImage.shape_vertical" shape="card" variant="vertical"
-                                    class="VerticalShape" :forceBlur="blurImagesPreview"
-                                    :editable="true"
+                                    class="VerticalShape" :forceBlur="blurImagesPreview" :editable="true"
                                     :active="activeShape?.shape === 'card' && activeShape?.variant === 'vertical'"
                                     @shapeUrl="(url: string) => verticalShapeUrl = url"
                                     @activate="handleShapeActivate" />
@@ -1164,8 +1164,7 @@ onMounted(() => {
                                 <div class="shape-col">
                                     <ImgShape ref="tileShapeRef" v-if="selectedImage.shape_thumb"
                                         :data="selectedImage.shape_thumb" shape="tile" variant="square"
-                                        class="TileShape" :forceBlur="blurImagesPreview"
-                                        :editable="true"
+                                        class="TileShape" :forceBlur="blurImagesPreview" :editable="true"
                                         :active="activeShape?.shape === 'tile' && activeShape?.variant === 'square'"
                                         @shapeUrl="(url: string) => tileWideShapeUrl = url"
                                         @activate="handleShapeActivate" />
@@ -1173,8 +1172,7 @@ onMounted(() => {
                                 <div class="shape-col">
                                     <ImgShape ref="avatarShapeRef" v-if="selectedImage.shape_thumb"
                                         :data="selectedImage.shape_thumb" shape="avatar" class="AvatarShape"
-                                        :forceBlur="blurImagesPreview"
-                                        :editable="true"
+                                        :forceBlur="blurImagesPreview" :editable="true"
                                         :active="activeShape?.shape === 'avatar'"
                                         @shapeUrl="(url: string) => avatarThumbShapeUrl = url"
                                         @activate="handleShapeActivate" />
@@ -1217,21 +1215,15 @@ onMounted(() => {
 
                         <!-- Shape Editor (Plan D Task 2.4) -->
                         <div v-if="activeShape" class="shape-editor-section">
-                            <ShapeEditor
-                                :shape="activeShape.shape as any"
-                                :variant="activeShape.variant"
-                                :adapter="activeShape.adapter as any"
-                                :data="{
+                            <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
+                                :adapter="activeShape.adapter as any" :data="{
                                     x: activeShape.shape === 'wide' ? cardWideX : tileSquareX,
                                     y: activeShape.shape === 'wide' ? cardWideY : tileSquareY,
                                     z: activeShape.shape === 'wide' ? cardWideZ : tileSquareZ,
                                     url: selectedImage.url,
                                     tpar: selectedImage.tpar || null
-                                }"
-                                @update="handleShapeUpdate"
-                                @preview="handleShapePreview"
-                                @reset="handleShapeReset"
-                            />
+                                }" @update="handleShapeUpdate" @preview="handleShapePreview"
+                                @reset="handleShapeReset" />
                         </div>
 
                         <!-- Editable fields -->
@@ -1514,7 +1506,8 @@ onMounted(() => {
 }
 
 .shape-row-vertical {
-    width: 7.875rem; /* 126px exact */
+    width: 7.875rem;
+    /* 126px exact */
     min-height: 100%;
     margin-bottom: 0;
 }

@@ -71,7 +71,7 @@ const transformationString = computed(() => {
 const updateTransformation = (newTransform: string) => {
     try {
         let newUrl = props.data.url
-        
+
         if (props.adapter === 'unsplash') {
             const url = new URL(props.data.url)
             newUrl = `${url.origin}${url.pathname}?${newTransform}`
@@ -81,7 +81,7 @@ const updateTransformation = (newTransform: string) => {
                 `/image/upload/${newTransform}/`
             )
         }
-        
+
         emit('update', { url: newUrl })
     } catch (e) {
         // Invalid URL transformation
@@ -123,35 +123,26 @@ const updateTpar = (event: Event) => {
                 <span class="shape-name">{{ shape }}<span v-if="variant" class="variant">:{{ variant }}</span></span>
                 <span class="adapter-badge">{{ adapter }}</span>
             </div>
-            
+
             <!-- Mode Switcher -->
             <div class="mode-switcher">
-                <button 
-                    :class="{ active: editMode === 'automation' }"
-                    @click="editMode = 'automation'"
-                >
+                <button :class="{ active: editMode === 'automation' }" @click="editMode = 'automation'">
                     Auto
                 </button>
-                <button 
-                    :class="{ active: editMode === 'xyz' }"
-                    @click="editMode = 'xyz'"
-                >
+                <button :class="{ active: editMode === 'xyz' }" @click="editMode = 'xyz'">
                     XYZ
                 </button>
-                <button 
-                    :class="{ active: editMode === 'direct' }"
-                    @click="editMode = 'direct'"
-                >
+                <button :class="{ active: editMode === 'direct' }" @click="editMode = 'direct'">
                     Direct
                 </button>
             </div>
         </div>
-        
+
         <!-- Mode 1: Automation -->
         <div v-if="editMode === 'automation'" class="editor-content">
             <h5>Shape-based Automation</h5>
             <p class="hint">Optimized settings for {{ shape }} on {{ adapter }}</p>
-            
+
             <div v-if="Object.keys(currentPreset).length > 0" class="preset-info">
                 <strong>Applied Params:</strong>
                 <ul>
@@ -163,7 +154,7 @@ const updateTpar = (event: Event) => {
             <div v-else class="no-preset">
                 <p>No automation preset available for this combination.</p>
             </div>
-            
+
             <div class="action-buttons">
                 <button @click="$emit('preview')" class="btn-preview">
                     Apply & Preview
@@ -173,50 +164,29 @@ const updateTpar = (event: Event) => {
                 </button>
             </div>
         </div>
-        
+
         <!-- Mode 2: XYZ Input -->
         <div v-else-if="editMode === 'xyz'" class="editor-content">
             <h5>Manual Parameters</h5>
             <p class="hint">Focal point (X/Y) and zoom (Z) adjustments</p>
-            
+
             <div class="param-inputs">
                 <div class="param-field">
                     <label>X (horizontal %)</label>
-                    <input 
-                        type="number" 
-                        :value="data.x ?? ''"
-                        @input="updateX"
-                        min="0" 
-                        max="100"
-                        placeholder="50"
-                    />
+                    <input type="number" :value="data.x ?? ''" @input="updateX" min="0" max="100" placeholder="50" />
                 </div>
-                
+
                 <div class="param-field">
                     <label>Y (vertical %)</label>
-                    <input 
-                        type="number" 
-                        :value="data.y ?? ''"
-                        @input="updateY"
-                        min="0" 
-                        max="100"
-                        placeholder="50"
-                    />
+                    <input type="number" :value="data.y ?? ''" @input="updateY" min="0" max="100" placeholder="50" />
                 </div>
-                
+
                 <div class="param-field">
                     <label>Z (zoom %)</label>
-                    <input 
-                        type="number" 
-                        :value="data.z ?? ''"
-                        @input="updateZ"
-                        min="0" 
-                        max="100"
-                        placeholder="0"
-                    />
+                    <input type="number" :value="data.z ?? ''" @input="updateZ" min="0" max="100" placeholder="0" />
                 </div>
             </div>
-            
+
             <div class="action-buttons">
                 <button @click="$emit('preview')" class="btn-preview">
                     Preview with XYZ
@@ -226,12 +196,12 @@ const updateTpar = (event: Event) => {
                 </button>
             </div>
         </div>
-        
+
         <!-- Mode 3: Direct URL Edit -->
         <div v-else class="editor-content">
             <h5>Direct Edit</h5>
             <p class="hint">Edit transformation string and URL template</p>
-            
+
             <!-- Transformation String -->
             <div class="url-editor">
                 <label>Transformation String</label>
@@ -239,31 +209,22 @@ const updateTpar = (event: Event) => {
                     <span class="url-prefix dimmed">
                         {{ adapter === 'unsplash' ? '...?' : '.../upload/' }}
                     </span>
-                    <input 
-                        type="text" 
-                        :value="transformationString"
+                    <input type="text" :value="transformationString"
                         @input="updateTransformation(($event.target as HTMLInputElement).value)"
-                        placeholder="w=336&h=168&fit=crop"
-                        class="transform-input"
-                    />
+                        placeholder="w=336&h=168&fit=crop" class="transform-input" />
                     <span class="url-suffix dimmed">
                         {{ adapter === 'unsplash' ? '' : '/v123/...' }}
                     </span>
                 </div>
             </div>
-            
+
             <!-- tpar (URL Template) -->
             <div class="url-editor">
                 <label>tpar (URL Template)</label>
-                <textarea 
-                    :value="data.tpar ?? ''"
-                    @input="updateTpar"
-                    rows="3"
-                    placeholder="https://.../{turl}/..."
-                    class="tpar-input"
-                />
+                <textarea :value="data.tpar ?? ''" @input="updateTpar" rows="3" placeholder="https://.../{turl}/..."
+                    class="tpar-input" />
             </div>
-            
+
             <!-- Available Params Reference -->
             <div v-if="availableParams.length > 0" class="params-reference">
                 <strong>Available Params:</strong>
@@ -273,7 +234,7 @@ const updateTpar = (event: Event) => {
                     </span>
                 </div>
             </div>
-            
+
             <div class="action-buttons">
                 <button @click="$emit('preview')" class="btn-preview">
                     Preview Changes
