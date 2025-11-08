@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
     plugins: [vue()],
-    
+
     test: {
         // Test environment - use happy-dom for Vue component tests
         environment: 'happy-dom',
