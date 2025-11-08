@@ -30,6 +30,14 @@ const activeShape = ref<{ shape: string; variant: string; adapter: string } | nu
 // Hero preview toggle state (Plan E Task 1.1)
 const heroPreviewShape = ref<'wide' | 'square' | 'vertical'>('wide')
 
+// Vertical column dimensions (Plan E Task 1.2)
+const VERTICAL_SHAPE_WIDTH = 126 // px
+const VERTICAL_SHAPE_MARGIN_LEFT = 16 // px (1rem)
+const verticalColumnWidth = computed(() => {
+    const widthRem = (VERTICAL_SHAPE_WIDTH + VERTICAL_SHAPE_MARGIN_LEFT) / 16
+    return `${widthRem}rem` // 8.875rem
+})
+
 // Dropdown menu states
 const showFiltersMenu = ref(false)
 const showDataMenu = ref(false)
@@ -1126,8 +1134,8 @@ onMounted(() => {
                             </div>
                         </Column>
 
-                        <!-- Column 2: Vertical shape preview (1/5 width) -->
-                        <Column width="1/5">
+                        <!-- Column 2: Vertical shape preview (exact width: 142px = 8.875rem) -->
+                        <Column :width="verticalColumnWidth" class="vertical-column">
                             <div class="shape-row shape-row-vertical">
                                 <ImgShape ref="verticalShapeRef" v-if="selectedImage.shape_vertical"
                                     :data="selectedImage.shape_vertical" shape="card" variant="vertical"
@@ -1540,7 +1548,13 @@ onMounted(() => {
     min-height: 150px;
 }
 
+.vertical-column {
+    margin-left: 1rem;
+    margin-right: 0;
+}
+
 .shape-row-vertical {
+    width: 7.875rem; /* 126px exact */
     min-height: 100%;
     margin-bottom: 0;
 }
