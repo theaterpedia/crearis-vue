@@ -3,7 +3,34 @@
 **Date**: November 8, 2025  
 **Type**: Decision-Making & Planning Document  
 **Priority**: High  
-**Status**: 🔍 Analysis & Decision Phase
+**Status**: ✅ COMPLETE (Plan F)
+
+**Completion Date**: January 8, 2025  
+**Commit**: 63de164 - "feat(plan-f): Hero image system integration"
+
+---
+
+## ✅ Completion Summary
+
+**What Was Implemented**:
+- ✅ Image prop with shape system (shape_vertical, shape_wide, shape_square)
+- ✅ Deprecated imgTmp prop with migration warning
+- ✅ Mobile breakpoint: 416px (MOBILE_WIDTH_PX constant)
+- ✅ Adapter detection for Unsplash, Cloudinary, Vimeo, external
+- ✅ URL builders with responsive dimensions
+- ✅ BlurHash support (32×32 placeholder)
+- ✅ Responsive loading: vertical (mobile) → wide (desktop)
+- ✅ Template URL optimization (tpar+turl)
+- ✅ Progressive image loading with resize handler
+
+**Strategy Used**: Copied ImgShape logic patterns, NOT component integration
+- Background-image preserved for scroll effects
+- Same adapter detection and URL building logic
+- BlurHash canvas converted to data URL
+- Mobile-first responsive loading (416px breakpoint)
+
+**Files Modified**:
+- src/components/Hero.vue (+216 lines)
 
 ---
 
