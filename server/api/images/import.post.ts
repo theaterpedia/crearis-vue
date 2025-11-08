@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { adapterRegistry } from '../../adapters/registry'
 import type { ImageImportBatch, ImageImportResult } from '../../types/adapters'
+import { db } from '../../database/init'
 
 interface ImportRequestBody {
     urls: string[]
@@ -49,6 +50,22 @@ export default defineEventHandler(async (event) => {
 
         const urls: string[] = body.urls
         const batchData: ImageImportBatch = body.batch || {}
+
+        // Fetch owner name if owner_id is provided
+        if (batchData.owner_id && !batchData.owner_name) {
+            try {
+                const owner = await db.get(
+                    'SELECT username FROM users WHERE id = ?',
+                    [batchData.owner_id]
+                )
+                if (owner) {
+                    batchData.owner_name = owner.username
+                }
+            } catch (error) {
+                console.warn('Failed to fetch owner name:', error)
+                // Continue without owner_name - adapter will use default
+            }
+        }
 
         // Process each URL sequentially
         const results: ImageImportResult[] = []

@@ -847,18 +847,18 @@ describeOrSkip('Cloudinary Import Tests', () => {
         )
 
         expect(image).toBeDefined()
-        
+
         // License should be 'private'
         expect(image.license).toBe('private')
-        
+
         // Alt text should be extracted from folder + filename minus suffix
         // dasei/Lichtdesign_rxwwbj → "Dasei Lichtdesign"
         expect(image.alt_text).toBe('Dasei Lichtdesign')
-        
+
         // About field format: (c) Hans Dönitz | Private | 2024
         expect(image.about).toMatch(/^\(c\) Hans Dönitz \| Private \| \d{4}$/)
         expect(image.about).toContain('2024') // v1735162309 → 2024
-        
+
         // Author should have Cloudinary metadata
         const author = image.author
         if (typeof author === 'string') {
@@ -866,7 +866,7 @@ describeOrSkip('Cloudinary Import Tests', () => {
             expect(author).toContain('little-papillon')
             expect(author).toContain('dasei/Lichtdesign_rxwwbj')
         }
-        
+
         console.log('Cloudinary image imported:', {
             name: image.name,
             alt_text: image.alt_text,
@@ -894,14 +894,14 @@ describeOrSkip('Cloudinary Import Tests', () => {
         )
 
         expect(image).toBeDefined()
-        
+
         // Alt text: theaterpedia_lichtpunkte_ea_rh → remove _ea_rh and _ea → "Theaterpedia lichtpunkte"
         expect(image.alt_text).toBe('Theaterpedia lichtpunkte')
-        
+
         // About field with year from v1665139609 → 2022
         expect(image.about).toMatch(/^\(c\) Test User \| Private \| \d{4}$/)
         expect(image.about).toContain('2022')
-        
+
         console.log('Cloudinary simple import:', {
             alt_text: image.alt_text,
             about: image.about
@@ -930,19 +930,19 @@ describeOrSkip('Cloudinary Import Tests', () => {
             if (!str) return null
             const match = str.match(/^\((.*)\)$/)
             if (!match) return null
-            
+
             // PostgreSQL composite format with quoted strings
             // Extract the URL (quoted field) and BlurHash (6th field)
             const urlMatch = match[1].match(/"([^"]+)"/)
             const url = urlMatch ? urlMatch[1] : ''
-            
+
             // BlurHash is the 6th field - split carefully to avoid breaking on URL commas
             const parts = match[1].split(',,')
             const blur = parts[2]?.replace(/"/g, '').trim() || null
-            
+
             return { url, blur }
         }
-        
+
         const square = parseCompositeType(image.shape_square)
         expect(square?.url).toContain('c_crop')
         expect(square?.url).toContain('w_128')

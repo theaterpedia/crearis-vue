@@ -32,17 +32,17 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
         const filename = this.extractFilenameFromPublicId(publicId)
         const version = this.extractVersion(url)
         const fileformat = this.detectFileFormat(url)
-        
+
         // Extract year from version timestamp
-        const year = this.extractYearFromVersion(version) || 
-                     this.extractYearFromVersion(process.env.CLOUDINARY_INITIAL_VERSION || 'v1665139609')
-        
+        const year = this.extractYearFromVersion(version) ||
+            this.extractYearFromVersion(process.env.CLOUDINARY_INITIAL_VERSION || 'v1665139609')
+
         // Generate alt_text from folder + filename, removing suffix
         const altText = this.extractAltText(folder, filename)
-        
+
         // Get author name from batch data or use default
         const authorName = batchData?.owner_name || 'Hans Dönitz'
-        
+
         // Build about field: (c) Author | Private | Year
         const about = `(c) ${authorName} | Private | ${year}`
 
@@ -236,7 +236,7 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
             // Remove 'v' prefix and parse as integer
             const timestamp = parseInt(version.substring(1))
             if (isNaN(timestamp)) return null
-            
+
             // Convert Unix timestamp (seconds) to JavaScript timestamp (milliseconds)
             const date = new Date(timestamp * 1000)
             return date.getFullYear()
@@ -259,18 +259,18 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
      */
     private extractAltText(folder: string | null, filename: string | null): string {
         if (!filename) return ''
-        
+
         // Start with folder + filename (or just filename)
         let text = folder ? `${folder} ${filename}` : filename
-        
+
         // Remove Cloudinary hash suffix pattern (underscore followed by lowercase letters/numbers, typically 6 chars)
         // Examples: _rxwwbj, _ea_rh, _hd, _tp
         text = text.replace(/_[a-z0-9]{2,}$/i, '') // Remove hash/suffix at end
         text = text.replace(/_[a-z]{2}$/i, '')     // Remove any remaining 2-char suffix
-        
+
         // Replace remaining underscores with spaces
         text = text.replace(/_/g, ' ')
-        
+
         // Capitalize first letter
         return text.charAt(0).toUpperCase() + text.slice(1)
     }

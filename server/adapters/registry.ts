@@ -28,7 +28,7 @@ class AdapterRegistry {
     private registerAdapters(): void {
         // Register Unsplash adapter
         this.adapters.push(new UnsplashAdapter())
-        
+
         // Register Cloudinary adapter
         this.adapters.push(new CloudinaryAdapter())
 

@@ -973,7 +973,7 @@ onMounted(() => {
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
                     <Columns gap="medium">
-                        <!-- Column 1: Original preview image (1/5 width) -->
+                        <!-- Column 1: Hero preview image (1/5 width) -->
                         <Column width="2/5">
                             <div class="preview-image-wrapper">
                                 <img :src="selectedImage.url" :alt="selectedImage.name" class="preview-image" />
