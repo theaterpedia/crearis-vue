@@ -2,8 +2,43 @@
 
 **Date**: November 8, 2025  
 **Priority**: High  
-**Status**: 🔄 Ready to Implement  
+**Status**: ✅ COMPLETE  
+**Completion Date**: November 8, 2025  
+**Commit**: 5edcf1a - "feat(plan-e): Complete ImagesCoreAdmin UI refinements"  
 **Related Plans**: Plan D (ImgShape), Plan F (Hero Integration)
+
+---
+
+## ✅ Completion Summary
+
+**What Was Implemented**:
+
+**Task 1: Header Layout**
+- ✅ 1.1: Hero preview column changed from `2/5` to `fill` width
+- ✅ 1.2: Vertical column exact width (already implemented with computed property)
+- ✅ 1.3: Controls column simplified (already implemented)
+
+**Task 2: Aside Cleanup**
+- ✅ 2.1: Removed old shape editing controls:
+  - Author Adapter Tabs
+  - Root URL textarea
+  - Shape Tabs (Square/Wide/Vertical/Thumb)
+  - JSON row
+  - Params XYZ inputs
+  - URL textarea
+- ✅ 2.2: ShapeEditor properly positioned after Save/Delete buttons
+
+**Task 3: Import Modal Positioning**
+- ✅ 3.1: Moved cimgImport inside Data menu dropdown structure
+- ✅ 3.2: Now uses floating-vue dropdown positioning below trigger button
+
+**Final Aside Structure**:
+1. Save/Delete buttons
+2. ShapeEditor (when active shape selected)
+3. Editable fields (Status, Name, Alt Text, XML ID)
+4. CTags section (4 × 2-bit toggle groups)
+
+**Result**: ImagesCoreAdmin UI is now clean and focused. Shape editing happens via ImgShape click-to-edit + ShapeEditor integration (Plan D + Plan G). All old controls removed.
 
 ---
 
