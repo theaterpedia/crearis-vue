@@ -3766,6 +3766,11 @@ export const migration = {
                         NEW.img_square := NEW.img_square || jsonb_build_object('tpar', (NEW.shape_square).tpar);
                     END IF;
                     
+                    -- Add alt_text if present
+                    IF NEW.alt_text IS NOT NULL AND NEW.alt_text != '' THEN
+                        NEW.img_square := NEW.img_square || jsonb_build_object('alt_text', NEW.alt_text);
+                    END IF;
+                    
                     -- Store fallback for Loop 2
                     fallback_json := NEW.img_square;
 
@@ -3796,6 +3801,11 @@ export const migration = {
                     IF (NEW.shape_thumb).tpar IS NOT NULL THEN
                         NEW.img_thumb := NEW.img_thumb || jsonb_build_object('tpar', (NEW.shape_thumb).tpar);
                     END IF;
+                    
+                    -- Add alt_text if present
+                    IF NEW.alt_text IS NOT NULL AND NEW.alt_text != '' THEN
+                        NEW.img_thumb := NEW.img_thumb || jsonb_build_object('alt_text', NEW.alt_text);
+                    END IF;
 
                     -- Loop 3: Compute img_wide (no fallback, use enabled:false)
                     IF (NEW.shape_wide).json IS NOT NULL THEN
@@ -3823,6 +3833,11 @@ export const migration = {
                     IF (NEW.shape_wide).tpar IS NOT NULL THEN
                         NEW.img_wide := NEW.img_wide || jsonb_build_object('tpar', (NEW.shape_wide).tpar);
                     END IF;
+                    
+                    -- Add alt_text if present
+                    IF NEW.alt_text IS NOT NULL AND NEW.alt_text != '' THEN
+                        NEW.img_wide := NEW.img_wide || jsonb_build_object('alt_text', NEW.alt_text);
+                    END IF;
 
                     -- Loop 4: Compute img_vert (no fallback, use enabled:false)
                     IF (NEW.shape_vertical).json IS NOT NULL THEN
@@ -3849,6 +3864,11 @@ export const migration = {
                     END IF;
                     IF (NEW.shape_vertical).tpar IS NOT NULL THEN
                         NEW.img_vert := NEW.img_vert || jsonb_build_object('tpar', (NEW.shape_vertical).tpar);
+                    END IF;
+                    
+                    -- Add alt_text if present
+                    IF NEW.alt_text IS NOT NULL AND NEW.alt_text != '' THEN
+                        NEW.img_vert := NEW.img_vert || jsonb_build_object('alt_text', NEW.alt_text);
                     END IF;
 
                     RETURN NEW;

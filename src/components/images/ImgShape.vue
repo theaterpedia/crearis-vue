@@ -14,6 +14,7 @@ export interface ImgShapeData {
     turl?: string
     tpar?: string
     xmlid?: string  // For avatar shape detection
+    alt_text?: string  // Alt text for accessibility
 }
 
 interface Props {
@@ -258,10 +259,19 @@ const displayUrl = computed(() => {
 })
 
 /**
- * Alt text from options or fallback
+ * Alt text from data.alt_text (priority), options.alt, or fallback
  */
 const altText = computed(() => {
-    return props.data.options?.alt || `${props.shape} image`
+    // Priority 1: alt_text field from JSONB data
+    if (props.data.alt_text) {
+        return props.data.alt_text
+    }
+    // Priority 2: options.alt (legacy/manual override)
+    if (props.data.options?.alt) {
+        return props.data.options.alt
+    }
+    // Priority 3: Fallback descriptive text
+    return `${props.shape} image`
 })
 
 /**

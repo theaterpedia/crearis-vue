@@ -199,7 +199,11 @@ const parseImageData = (jsonString: string | undefined): ImgShapeData | null => 
             x: parsed.x ?? null,
             y: parsed.y ?? null,
             z: parsed.z ?? null,
-            options: parsed.options ?? null
+            options: parsed.options ?? null,
+            blur: parsed.blur ?? undefined,
+            turl: parsed.turl ?? undefined,
+            tpar: parsed.tpar ?? undefined,
+            alt_text: parsed.alt_text ?? undefined
         }
     } catch {
         return null

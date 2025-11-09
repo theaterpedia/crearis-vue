@@ -1589,6 +1589,17 @@ onMounted(() => {
                                     <span class="adapter-badge">{{ activeShape.adapter }}</span>
                                 </div>
                             </div>
+                            <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
+                            <div v-if="activeShape" class="shape-editor-section">
+                                <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
+                                    :adapter="activeShape.adapter as any" :data="{
+                                        x: activeShapeXYZ.x,
+                                        y: activeShapeXYZ.y,
+                                        z: activeShapeXYZ.z,
+                                        url: selectedImage.url,
+                                        tpar: selectedImage.tpar || null
+                                    }" @update="handleShapeUpdate" @preview="handleShapePreview" @reset="handleShapeReset" />
+                            </div>                            
                         </Column>
                     </Columns>
                 </div>
@@ -1611,19 +1622,6 @@ onMounted(() => {
                                 @click="saveChanges">
                                 {{ isDirty ? 'Save Changes' : 'No Changes' }}
                             </button>
-                        </div>
-
-                        <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
-                        <div v-if="activeShape" class="shape-editor-section">
-                            <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
-                                :adapter="activeShape.adapter as any" :data="{
-                                    x: activeShapeXYZ.x,
-                                    y: activeShapeXYZ.y,
-                                    z: activeShapeXYZ.z,
-                                    url: selectedImage.url,
-                                    tpar: selectedImage.tpar || null
-                                }" @update="handleShapeUpdate" @preview="handleShapePreview"
-                                @reset="handleShapeReset" />
                         </div>
 
                         <!-- Editable fields -->
