@@ -1,16 +1,14 @@
 <template>
     <div class="p-list" :class="{ 'is-aside': isAside, 'is-footer': isFooter }">
         <Heading v-if="showHeader && header" :headline="header" :as="headingLevel" />
-        <ItemList v-if="items.length > 0" :items="items" :item-type="itemType" :size="size"
+        <!-- CL2: Use entity fetching built into ItemList -->
+        <ItemList :entity="entityType" :project="projectDomaincode" :item-type="itemType" :size="size"
             :interaction="interaction" />
-        <div v-else-if="!loading" class="p-list-empty">
-            <p>No {{ type }} available</p>
-        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import { ItemList } from '@/components/clist'
 import Heading from '@/components/Heading.vue'
 
@@ -22,7 +20,7 @@ interface Props {
     itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
     interaction?: 'static' | 'popup' | 'zoom'
-    limit?: number
+    limit?: number // Note: limit not yet supported by ItemList, will show all
     projectDomaincode?: string
 }
 
@@ -35,9 +33,6 @@ const props = withDefaults(defineProps<Props>(), {
     limit: 6
 })
 
-const items = ref<any[]>([])
-const loading = ref(false)
-
 const showHeader = computed(() => props.isAside || props.isFooter)
 
 const headingLevel = computed(() => {
@@ -46,50 +41,15 @@ const headingLevel = computed(() => {
     return 'h3'
 })
 
-const apiEndpoint = computed(() => {
-    switch (props.type) {
-        case 'posts':
-            return '/api/posts'
-        case 'events':
-            return '/api/events'
-        case 'instructors':
-            return '/api/public-users'
-        case 'projects':
-            return '/api/projects'
-        default:
-            return '/api/posts'
+// Map component type to ItemList entity type
+const entityType = computed<'posts' | 'events' | 'instructors' | undefined>(() => {
+    // ItemList currently supports: 'posts', 'events', 'instructors'
+    // 'projects' not yet supported - would need API endpoint
+    if (props.type === 'projects') {
+        console.warn('[pList] CL2: projects entity not yet supported by ItemList, showing posts instead')
+        return 'posts'
     }
-})
-
-async function fetchItems() {
-    loading.value = true
-    try {
-        const url = props.projectDomaincode
-            ? `${apiEndpoint.value}?project=${encodeURIComponent(props.projectDomaincode)}`
-            : apiEndpoint.value
-
-        const response = await fetch(url)
-        if (response.ok) {
-            const data = await response.json()
-            items.value = data.slice(0, props.limit).map((item: any) => ({
-                heading: item.heading || item.name || item.title || `${props.type} #${item.id}`,
-                cimg: item.cimg || `https://picsum.photos/400/300?random=${item.id}`,
-                teaser: item.teaser
-            }))
-        }
-    } catch (error) {
-        console.error(`Error fetching ${props.type}:`, error)
-    } finally {
-        loading.value = false
-    }
-}
-
-onMounted(() => {
-    fetchItems()
-})
-
-watch(() => [props.type, props.projectDomaincode], () => {
-    fetchItems()
+    return props.type as 'posts' | 'events' | 'instructors'
 })
 </script>
 
