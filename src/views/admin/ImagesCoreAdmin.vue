@@ -1581,7 +1581,7 @@ onMounted(() => {
                         </Column>
 
                         <!-- Column 4: Controls (1/5 width) - Simplified (Plan E Task 1.3) -->
-                        <Column width="1/5">
+                        <Column width="auto">
                             <div class="controls-placeholder">
                                 <p class="placeholder-text">Click a shape to edit</p>
                                 <div v-if="activeShape" class="active-shape-info">
@@ -1598,8 +1598,9 @@ onMounted(() => {
                                         z: activeShapeXYZ.z,
                                         url: selectedImage.url,
                                         tpar: selectedImage.tpar || null
-                                    }" @update="handleShapeUpdate" @preview="handleShapePreview" @reset="handleShapeReset" />
-                            </div>                            
+                                    }" @update="handleShapeUpdate" @preview="handleShapePreview"
+                                    @reset="handleShapeReset" />
+                            </div>
                         </Column>
                     </Columns>
                 </div>

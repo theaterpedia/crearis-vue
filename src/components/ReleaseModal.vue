@@ -231,7 +231,7 @@ function handleSubmit() {
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-contrast);
 }
 
 .form-group textarea {
@@ -260,7 +260,7 @@ function handleSubmit() {
 }
 
 .btn-primary {
-    background: var(--color-accent);
+    background: var(--color-accent-bg);
     color: white;
 }
 
@@ -278,7 +278,7 @@ function handleSubmit() {
 
 .btn-secondary:hover {
     background: var(--color-surface);
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-contrast);
 }
 
 /* Modal transition */

@@ -290,7 +290,7 @@ onUnmounted(() => {
 
 .action-button:hover {
     background: var(--color-surface);
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-contrast);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

@@ -437,7 +437,7 @@ onUnmounted(() => {
 }
 
 .layout-toggle-switch-active {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-);
 }
 
 .layout-toggle-switch-thumb {

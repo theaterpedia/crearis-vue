@@ -307,7 +307,7 @@ function handleCancel() {
 
 .field-input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-contrast);
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb, 59, 130, 246), 0.1);
 }
 
@@ -351,9 +351,9 @@ function handleCancel() {
 }
 
 .btn-primary {
-  background: var(--color-primary);
+  background: var(--color-primary-bg);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-contrast);
 }
 
 .btn-primary:hover {

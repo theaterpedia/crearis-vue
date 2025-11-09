@@ -358,7 +358,7 @@ const updateTpar = (event: Event) => {
 }
 
 .mode-switcher button.active {
-    background: var(--color-primary);
+    background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     font-weight: 600;
 }

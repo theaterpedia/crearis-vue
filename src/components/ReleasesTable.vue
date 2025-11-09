@@ -197,7 +197,7 @@ function formatDate(dateStr?: string): string {
 
 .task-count {
     display: inline-block;
-    background: var(--color-accent);
+    background: var(--color-accent-bg);
     color: white;
     padding: 0.25rem 0.5rem;
     border-radius: 12px;
@@ -251,7 +251,7 @@ function formatDate(dateStr?: string): string {
 }
 
 .btn-primary {
-    background: var(--color-accent);
+    background: var(--color-accent-bg);
     color: white;
 }
 
@@ -269,7 +269,7 @@ function formatDate(dateStr?: string): string {
 
 .btn-secondary:hover {
     background: var(--color-surface);
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-contrast);
 }
 
 .btn-icon {

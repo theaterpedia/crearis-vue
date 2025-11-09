@@ -272,7 +272,7 @@ onUnmounted(() => {
     align-items: flex-start;
     padding: 1.5rem;
     border-bottom: 1px solid var(--color-border);
-    background: var(--color-accent);
+    background: var(--color-accent-bg);
     color: var(--color-primary-contrast);
     border-radius: 8px 8px 0 0;
 }
@@ -491,7 +491,7 @@ input[type="checkbox"]:checked+.toggle-switch-base {
 
 .action-button:hover {
     background: var(--color-surface);
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-contrast);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

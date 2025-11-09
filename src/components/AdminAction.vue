@@ -307,9 +307,9 @@ watch(() => [props.initStep, props.finalStep], () => {
 }
 
 .step-icon-current {
-  background: var(--color-primary);
+  background: var(--color-primary-bg);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-contrast);
 }
 
 .step-icon-complete {
