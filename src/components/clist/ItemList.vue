@@ -94,7 +94,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    itemType: 'tile',
+    itemType: 'row',
     size: 'medium',
     variant: 'default',
     interaction: 'static'

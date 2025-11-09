@@ -57,6 +57,7 @@
 
             <!-- Upcoming Events Section -->
             <UpcomingEventsSection :events="events" />
+            <UpcomingEventsSectionOld :events="events" />
 
             <!-- Page Content -->
             <PageContent page-type="landing" :project-domain-code="project.domaincode"
@@ -67,6 +68,7 @@
 
             <!-- Blog Posts Section -->
             <BlogPostsSection :posts="posts" />
+            <BlogPostsSectionOld :posts="posts" />
 
             <!-- Community Members Section -->
             <CommunityMembersSection :users="users" />
