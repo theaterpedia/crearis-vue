@@ -31,7 +31,9 @@ This plan is divided into focused implementation steps, each with its own detail
 2. **MR2: Export System & JSON Schema** → [MR2_EXPORT_SYSTEM.md](./MR2_EXPORT_SYSTEM.md)
    - [x] **✅ Completed** - JSON export with late-seeding and detail tables
    - Files: backup-schema.ts, late-seed-config.ts, export.ts, test-export.ts
-   - Commit: d5d10dc
+   - Features: 12 entity tables, xmlid/sysmail/domaincode index strategy, deprecated column exclusion
+   - Export moves tarball to `backup/` folder (temp_backup/ and backup/ in .gitignore)
+   - Commit: d5d10dc, 5b3f94b
 
 3. **MR3: Export API & Admin UI** → [MR3_EXPORT_API.md](./MR3_EXPORT_API.md)
    - [x] **✅ Completed** - API endpoint and admin UI integration

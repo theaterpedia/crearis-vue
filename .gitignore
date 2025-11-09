@@ -27,6 +27,10 @@ demo-data.db
 demo-data.db-*
 projectnames_and_users.csv
 
+# Backup files
+temp_backup/
+backup/
+
 # Sensitive data
 server/data/PASSWORDS.md
 server/data/PASSWORDS.csv

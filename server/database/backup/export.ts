@@ -258,10 +258,19 @@ export async function exportDatabase(
     await fs.rm(tempDir, { recursive: true, force: true });
     console.log(`✓ Temporary directory removed`);
 
-    console.log(`\n=== Export Complete ===`);
-    console.log(`Tarball: ${tarballPath}`);
+    // Move tarball to backup folder
+    const backupDir = path.join(process.cwd(), 'backup');
+    await fs.mkdir(backupDir, { recursive: true });
+    
+    const finalPath = path.join(backupDir, backupIndex.tarballName);
+    await fs.rename(tarballPath, finalPath);
+    
+    console.log(`✓ Tarball moved to: ${finalPath}`);
 
-    return tarballPath;
+    console.log(`\n=== Export Complete ===`);
+    console.log(`Backup location: backup/${backupIndex.tarballName}`);
+
+    return finalPath;
 }
 
 /**
