@@ -4,6 +4,7 @@
  */
 
 import type { DatabaseAdapter } from '../adapter'
+import { getMigrationPackageRange, filterMigrationsByPackage } from './packages'
 import { runBaseSchemaMigration, metadata as baseMeta } from './000_base_schema'
 import { runConfigTableMigration, metadata as configMeta } from './001_init_schema'
 import { runSchemaAlignmentMigration, metadata as alignMeta } from './002_align_schema'
@@ -24,9 +25,7 @@ import { migration as migration018 } from './018_update_projects_schema'
 import { migration as migration019 } from './019_add_tags_status_ids'
 import { migration as migration020 } from './020_refactor_entities'
 import { migration as migration021 } from './021_seed_system_data'
-import { migration as migration022 } from './022_seed_csv_data'
-import { migration as migration023 } from './023_seed_demo_data'
-import { migration as migration024 } from './024_add_project_images'
+// Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
@@ -61,9 +60,7 @@ const migrations: Migration[] = [
     { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
     { run: migration020.up, metadata: { id: migration020.id, description: migration020.description, version: '0.0.13', date: '2025-10-22' } },
     { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' }, manualOnly: true },
-    { run: migration022.up, metadata: { id: migration022.id, description: migration022.description, version: '0.0.15', date: '2025-10-24' }, manualOnly: true },
-    { run: migration023.up, metadata: { id: migration023.id, description: migration023.description, version: '0.0.16', date: '2025-10-24' }, manualOnly: true },
-    { run: migration024.up, metadata: { id: migration024.id, description: migration024.description, version: '0.0.17', date: '2025-10-24' }, manualOnly: true },
+    // Migrations 022-024 archived (will be replaced by data packages datA-datG)
 ]
 
 /**
@@ -126,15 +123,41 @@ async function markMigrationRun(db: DatabaseAdapter, migrationId: string) {
  * Run all pending migrations
  */
 export async function runMigrations(db: DatabaseAdapter, verbose = true) {
+    // Read environment variables for package filtering
+    const startPackage = process.env.DB_MIGRATION_STARTWITH
+    const endPackage = process.env.DB_MIGRATION_ENDWITH
+    
     if (verbose) {
         console.log('\n🔄 Starting database migrations...\n')
+        
+        if (startPackage || endPackage) {
+            const range = getMigrationPackageRange(startPackage, endPackage)
+            if (range) {
+                console.log(`🎯 Running migrations package ${startPackage || 'A'} to ${endPackage || 'E'}`)
+                console.log(`   Range: ${range.start.toString().padStart(3, '0')} - ${range.end.toString().padStart(3, '0')}\n`)
+            } else {
+                console.error(`❌ Invalid package range: ${startPackage}-${endPackage}`)
+                throw new Error('Invalid migration package range')
+            }
+        }
     }
 
     const migrationsRun = await getMigrationsRun(db)
     const runManualMigrations = process.env.RUN_MANUAL_MIGRATIONS === 'true'
+    
+    // Filter migrations by package if specified
+    let migrationsToRun = migrations
+    if (startPackage || endPackage) {
+        const beforeFilter = migrationsToRun.length
+        migrationsToRun = filterMigrationsByPackage(migrationsToRun, startPackage, endPackage)
+        if (verbose) {
+            console.log(`   Filtered ${beforeFilter} → ${migrationsToRun.length} migrations\n`)
+        }
+    }
+    
     let ranCount = 0
 
-    for (const migration of migrations) {
+    for (const migration of migrationsToRun) {
         if (migrationsRun.includes(migration.metadata.id)) {
             if (verbose) {
                 console.log(`⏭️  Skipping migration: ${migration.metadata.id} (already run)`)
