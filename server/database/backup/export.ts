@@ -261,10 +261,10 @@ export async function exportDatabase(
     // Move tarball to backup folder
     const backupDir = path.join(process.cwd(), 'backup');
     await fs.mkdir(backupDir, { recursive: true });
-    
+
     const finalPath = path.join(backupDir, backupIndex.tarballName);
     await fs.rename(tarballPath, finalPath);
-    
+
     console.log(`✓ Tarball moved to: ${finalPath}`);
 
     console.log(`\n=== Export Complete ===`);

@@ -1,15 +1,83 @@
-# MR5: Validation & Data Integrity
+# MR5: Validation & Data Integrity (DEPRECATED)
 
-**Status**: 🔴 Not Started  
-**Estimated Time**: 2-3 hours  
-**Prerequisites**: [MR4: Import System & Data Packages](./MR4_IMPORT_SYSTEM.md)  
-**Next Step**: [MRT: Testing & Integration](./MRT_TESTING.md)
+**Status**: 🔴 Deprecated - Moved to MRT  
+**Estimated Time**: N/A  
+**Prerequisites**: N/A  
+**Next Step**: See [MRT: Testing & Future Features](./MRT_TESTING.md)
 
 ---
 
-## 🎯 Objective
+## ⚠️ Notice
 
-Implement comprehensive data validation suite (datH_validation) with ~40 tests covering table existence, record counts, foreign key integrity, xmlid uniqueness, and data consistency.
+**This document has been deprecated.** The comprehensive validation suite (~40 tests) described here has been **moved to [MRT: Testing & Future Features](./MRT_TESTING.md)** as part of the production import system.
+
+---
+
+## Why Deprecated?
+
+1. **Export system is complete** - MR1-MR3 provide fully functional export functionality
+2. **Import system deferred** - Complex import features moved to MRT for future implementation
+3. **Validation belongs with import** - The 40+ validation tests make sense when implementing the full import system
+
+---
+
+## What Was Planned Here?
+
+The original MR5 included:
+
+- **datH_validation Test Suite** (~40 tests):
+  - Table existence checks
+  - Record count validation
+  - Foreign key integrity
+  - xmlid uniqueness verification
+  - Data consistency checks
+  - Schema constraints validation
+
+- **Error Reporting**:
+  - Automated test runner
+  - Pass/fail summary
+  - Detailed error messages
+  - Recovery recommendations
+
+- **Data Integrity Tools**:
+  - FK consistency validators
+  - Orphaned record detection
+  - Cross-table reference checks
+  - Late-seed resolution verification
+
+---
+
+## Where Is This Now?
+
+All content from this document has been **integrated into [MRT: Testing & Future Features](./MRT_TESTING.md)**.
+
+When you implement the production import system (6-8 hours), you'll build:
+- The complete validation suite
+- All data integrity checks
+- Error handling and recovery
+- End-to-end testing scenarios
+
+---
+
+## Current State
+
+**You have**: Complete export system (MR1-MR3) that creates validated JSON backups
+
+**You need**: Nothing right now - export system works and is production-ready
+
+**Later**: When you build the import system, implement the validation suite described in MRT
+
+---
+
+## Next Steps
+
+1. ✅ **Skip this document** - it's no longer relevant for current phase
+2. ✅ **Use export system** - deploy MR1-MR3 to production
+3. ⏳ **Build import later** - see MRT when you need master-slave sync
+
+---
+
+**For current implementation status, see [Master Plan](./2025-11-09_MIGRATION_REFACTOR_PLAN.md)**
 
 ---
 

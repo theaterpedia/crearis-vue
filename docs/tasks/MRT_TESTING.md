@@ -1,15 +1,68 @@
-# MRT: Testing & Integration
+# MRT: Testing & Future Features
 
 **Status**: 🔴 Not Started  
-**Estimated Time**: 2-3 hours  
-**Prerequisites**: [MR5: Validation & Data Integrity](./MR5_VALIDATION.md)  
-**Next Step**: Production deployment
+**Estimated Time**: 6-8 hours (when needed)  
+**Prerequisites**: Export system deployed and validated in production  
+**Next Step**: Implement when master-slave sync is required
 
 ---
 
 ## 🎯 Objective
 
-Comprehensive end-to-end testing of the complete migration refactor system. Validate export/import workflows, master-slave synchronization, and production safety procedures.
+**Complete production-grade import system** with bash orchestration, late-seeding resolver, comprehensive validation, and end-to-end testing.
+
+**Note**: This phase is **DEFERRED** until export system is validated in production and actual import requirements are understood.
+
+---
+
+## 📦 Deferred Features from MR4 & MR5
+
+### Production Import System
+
+Features moved from simplified MR4 to this phase:
+
+1. **Bash Orchestration Script** (`scripts/data-sync.sh`)
+   - Multiple modes: init, replace, update, append
+   - Error handling and recovery
+   - Transaction management
+   - Backup before import
+   - Rollback on failure
+
+2. **Data Packages** (datA-datG)
+   - `datA_config.ts` - Setup dummy records for late-seeding
+   - `datB_base.ts` - Import base entity tables (users, tags, projects)
+   - `datC_parts.ts` - Import component tables (images, pages)
+   - `datD_entities.ts` - Import main entities (events, posts)
+   - `datE_participants.ts` - Import participant relationships
+   - `datF_assignments.ts` - Resolve all late-seed references (xmlid → id)
+   - `datG_propagation.ts` - Import detail tables with resolved FK references
+
+3. **Late-Seeding Resolver**
+   - Tracks xmlid → id mappings
+   - Resolves cross-table references
+   - Handles sysmail (users) and domaincode (projects) special cases
+   - Batch UPDATE for performance
+
+4. **Validation Suite** (`datH_validation.ts`)
+   - 40+ automated tests:
+     - Table existence checks
+     - Record count validation
+     - Foreign key integrity
+     - xmlid uniqueness
+     - No orphaned records
+     - Detail table completeness
+     - Late-seed resolution verification
+   - Automated pass/fail reporting
+
+5. **Import Modes**:
+   - **init**: Fresh database, create setup dummies, resolve references
+   - **replace**: Update existing records by xmlid
+   - **update**: Merge changes (update existing, insert new)
+   - **append**: Add new records only
+
+---
+
+## 📋 Test Scenarios (When Implementing)
 
 ---
 

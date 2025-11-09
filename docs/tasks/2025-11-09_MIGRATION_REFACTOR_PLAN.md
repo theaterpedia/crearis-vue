@@ -33,69 +33,67 @@ This plan is divided into focused implementation steps, each with its own detail
    - Files: backup-schema.ts, late-seed-config.ts, export.ts, test-export.ts
    - Features: 12 entity tables, xmlid/sysmail/domaincode index strategy, deprecated column exclusion
    - Export moves tarball to `backup/` folder (temp_backup/ and backup/ in .gitignore)
-   - Commit: d5d10dc, 5b3f94b
+   - Commits: d5d10dc, 5b3f94b, 51402c4
 
 3. **MR3: Export API & Admin UI** → [MR3_EXPORT_API.md](./MR3_EXPORT_API.md)
    - [x] **✅ Completed** - API endpoint and admin UI integration
    - Files: export.post.ts, ImagesCoreAdmin.vue
    - Tested: API logic validates successfully, UI button added to Data menu
+   - Commit: 5ada553
 
-4. **[MR4: Import System & Data Packages](./MR4_IMPORT_SYSTEM.md)** ⏱️ 3-4 hours
-   - Create bash import manager script
-   - Implement datA_config (system data + setup dummies)
-   - Implement datB_base (entity import with late-seed extraction)
-   - Implement datC_parts, datD_entities packages
-   - Implement datF_assignments (late-seeding resolver)
-   - Implement datG_propagation (detail tables)
-
-5. **[MR5: Validation & Data Integrity](./MR5_VALIDATION.md)** ⏱️ 2-3 hours
-   - Implement datH_validation test suite (~40 tests)
-   - Create data integrity checks
-   - Build FK consistency validators
-   - Add error reporting and recovery
+4. **[MR4: Basic Import System](./MR4_IMPORT_SYSTEM.md)** ⏱️ Optional (2-3 hours)
+   - **Status**: 🟡 OPTIONAL - Can skip and proceed to production
+   - Simple proof-of-concept import for testing export/import cycle
+   - **Recommendation**: Deploy export system first, build import when needed
+   - Complex features deferred to MRT (see below)
 
 ### Testing & Future Work
 
-6. **[MRT: Testing & Integration](./MRT_TESTING.md)** ⏱️ 2-3 hours
+5. **[MRT: Testing & Future Features](./MRT_TESTING.md)** ⏱️ 6-8 hours (when needed)
+   - **Status**: 🔴 DEFERRED - Implement after export validation in production
+   - **Production Import System** (moved from MR4):
+     - Bash orchestration (data-sync.sh) with init/replace/update/append modes
+     - Data packages: datA-datG for phased import
+     - Late-seeding resolver for xmlid references
+     - 40+ validation tests (datH_validation)
+     - Error handling and recovery
    - End-to-end testing scenarios
-   - Production-dev sync workflow validation
-   - Backup/restore testing
+   - Production-dev sync workflow
    - Performance benchmarking
-   - Troubleshooting guide
 
-7. **[MRX: Extended Features](./MRX_EXTENDED_FEATURES.md)** ⏱️ Future
-   - Update mode (merge changes)
-   - Append mode (add new records only)
-   - Migration 021 refactoring (separate schema/data)
+6. **[MRX: Extended Features](./MRX_EXTENDED_FEATURES.md)** ⏱️ Future
    - Incremental sync optimization
+   - Encryption and compression options
+   - Cloud storage integration
+   - Migration 021 refactoring (separate schema/data)
    - Cross-database adapter support
 
 ---
 
 ## ⏱️ Time Estimates
 
-| Step | Focus | Estimated Time |
-|------|-------|----------------|
-| MR1 | Package System | 2-3 hours |
-| MR2 | Export System | 2-3 hours |
-| MR3 | Export API/UI | 1-2 hours |
-| MR4 | Import System | 3-4 hours |
-| MR5 | Validation | 2-3 hours |
-| MRT | Testing | 2-3 hours |
-| **Total Core** | MR1-MR5 | **10-15 hours** |
-| **Total with Testing** | MR1-MRT | **12-18 hours** |
+| Step | Focus | Estimated Time | Status |
+|------|-------|----------------|--------|
+| MR1 | Package System | 2-3 hours | ✅ Complete |
+| MR2 | Export System | 2-3 hours | ✅ Complete |
+| MR3 | Export API/UI | 1-2 hours | ✅ Complete |
+| MR4 | Basic Import (optional) | 2-3 hours | 🟡 Optional |
+| **Core Export System** | **MR1-MR3** | **5-8 hours** | **✅ DONE** |
+| MRT | Production Import + Testing | 6-8 hours | 🔴 Deferred |
+| MRX | Extended Features | TBD | 🔵 Future |
 
 ---
 
 ## 🚦 Implementation Status
 
-- [x] **[MR1](./MR1_MIGRATION_PACKAGES.md)**: Migration Package System ✅ Completed
-- [ ] **[MR2](./MR2_EXPORT_SYSTEM.md)**: Export System & JSON Schema
-- [ ] **[MR3](./MR3_EXPORT_API.md)**: Export API & Admin UI
-- [ ] **[MR4](./MR4_IMPORT_SYSTEM.md)**: Import System & Data Packages
-- [ ] **[MR5](./MR5_VALIDATION.md)**: Validation & Data Integrity
-- [ ] **[MRT](./MRT_TESTING.md)**: Testing & Integration
-- [ ] **[MRX](./MRX_EXTENDED_FEATURES.md)**: Extended Features (Future)
+- [x] **[MR1](./MR1_MIGRATION_PACKAGES.md)**: Migration Package System ✅ **Completed** (776538d)
+- [x] **[MR2](./MR2_EXPORT_SYSTEM.md)**: Export System & JSON Schema ✅ **Completed** (d5d10dc, 5b3f94b, 51402c4)
+- [x] **[MR3](./MR3_EXPORT_API.md)**: Export API & Admin UI ✅ **Completed** (5ada553)
+- [ ] **[MR4](./MR4_IMPORT_SYSTEM.md)**: Basic Import System 🟡 **Optional** (skip recommended)
+- [ ] **[MRT](./MRT_TESTING.md)**: Production Import & Testing 🔴 **Deferred** (6-8 hours when needed)
+- [ ] **[MRX](./MRX_EXTENDED_FEATURES.md)**: Extended Features 🔵 **Future**
+
+**Current Recommendation**: **Proceed to production deployment** with export-only functionality. Build import system later when actual requirements are clear.
 
 ---
 
