@@ -126,10 +126,10 @@ export async function runMigrations(db: DatabaseAdapter, verbose = true) {
     // Read environment variables for package filtering
     const startPackage = process.env.DB_MIGRATION_STARTWITH
     const endPackage = process.env.DB_MIGRATION_ENDWITH
-    
+
     if (verbose) {
         console.log('\n🔄 Starting database migrations...\n')
-        
+
         if (startPackage || endPackage) {
             const range = getMigrationPackageRange(startPackage, endPackage)
             if (range) {
@@ -144,7 +144,7 @@ export async function runMigrations(db: DatabaseAdapter, verbose = true) {
 
     const migrationsRun = await getMigrationsRun(db)
     const runManualMigrations = process.env.RUN_MANUAL_MIGRATIONS === 'true'
-    
+
     // Filter migrations by package if specified
     let migrationsToRun = migrations
     if (startPackage || endPackage) {
@@ -154,7 +154,7 @@ export async function runMigrations(db: DatabaseAdapter, verbose = true) {
             console.log(`   Filtered ${beforeFilter} → ${migrationsToRun.length} migrations\n`)
         }
     }
-    
+
     let ranCount = 0
 
     for (const migration of migrationsToRun) {
