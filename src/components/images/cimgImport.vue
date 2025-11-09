@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import sysDropDown from '@/components/sysDropDown.vue'
 
 interface ImportedImage {
     url: string
@@ -34,7 +35,7 @@ const ctagsQuality = ref(0)
 
 // Data for dropdowns
 const projects = ref<Array<{ id: number; name: string; domaincode?: string }>>([])
-const owners = ref<Array<{ id: number; name: string; email?: string }>>([])
+const owners = ref<Array<{ id: number; username: string; extmail?: string }>>([])
 const loadingProjects = ref(false)
 const loadingOwners = ref(false)
 
@@ -65,7 +66,11 @@ const fetchOwners = async () => {
         if (!response.ok) throw new Error('Failed to fetch users')
         const data = await response.json()
         owners.value = Array.isArray(data) ? data : (data.users || [])
-        console.log('Loaded owners:', owners.value.length)
+        console.log('=== OWNERS DEBUG ===')
+        console.log('Raw API data:', data)
+        console.log('Owners array:', owners.value)
+        console.log('First owner sample:', owners.value[0])
+        console.log('Loaded owners count:', owners.value.length)
     } catch (error) {
         console.error('Error fetching owners:', error)
         owners.value = []
@@ -121,6 +126,20 @@ const xmlSubjectOptions = [
     { label: 'Event', value: 'event' },
     { label: 'Location', value: 'location' }
 ]
+
+// Transform owners for dropdown (id, name, description)
+const ownersDropdownItems = computed(() => {
+    const items = owners.value.map(owner => ({
+        id: owner.id,
+        name: owner.username,
+        description: owner.extmail || undefined
+    }))
+    console.log('=== DROPDOWN ITEMS DEBUG ===')
+    console.log('Transformed items:', items)
+    console.log('First item sample:', items[0])
+    console.log('Items count:', items.length)
+    return items
+})
 
 // Auto-set ctags based on xml_subject
 watch(xmlSubject, (newSubject) => {
@@ -376,6 +395,7 @@ watch(() => props.isOpen, (newValue) => {
 
                 <!-- Project and owner selection -->
                 <div class="form-row">
+
                     <div class="form-group">
                         <label>Project (Optional)</label>
                         <select v-model="selectedProject" class="form-select" :disabled="loadingProjects">
@@ -388,17 +408,8 @@ watch(() => props.isOpen, (newValue) => {
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label>Owner *</label>
-                        <select v-model="selectedOwner" class="form-select" :disabled="loadingOwners">
-                            <option :value="null">
-                                {{ loadingOwners ? 'Loading owners...' : 'Select owner...' }}
-                            </option>
-                            <option v-for="owner in owners" :key="owner.id" :value="owner.id">
-                                {{ owner.name }}
-                            </option>
-                        </select>
-                    </div>
+                    <sysDropDown v-model="selectedOwner" :items="ownersDropdownItems" label="Owner *"
+                        placeholder="Select an owner..." :disabled="loadingOwners" />
                 </div>
 
                 <!-- Batch metadata -->
@@ -707,36 +718,27 @@ watch(() => props.isOpen, (newValue) => {
 }
 
 .form-select {
-    padding: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-medium);
-    background: var(--color-card-bg);
-    color: var(--color-contrast) !important;
+    border-radius: 6px;
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
     font-size: 0.875rem;
-    cursor: pointer;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    font-family: var(--font);
+    transition: all 0.2s;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary-bg);
+    background: var(--color-bg);
+    color: var(--color-contrast);
 }
 
 .form-select:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-}
-
-.form-select option {
-    background: var(--color-card-bg);
-    color: var(--color-contrast) !important;
-    padding: 0.5rem;
-}
-
-.form-select option:first-child {
-    color: var(--color-muted-contrast) !important;
-}
-
-/* Ensure selected option text is visible */
-.form-select:not(:disabled) {
-    color: var(--color-text) !important;
 }
 
 .checkbox-label {

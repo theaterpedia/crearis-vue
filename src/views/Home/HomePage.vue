@@ -41,9 +41,7 @@
                 <Container>
                     <div class="demo-card" ref="demoCardElement" @click="handleDemoCardClick">
                         <div class="demo-card-image">
-                            <img v-if="events.length > 0 && events[0].image" :src="events[0].image"
-                                alt="Demo Veranstaltung" />
-                            <div v-else class="demo-card-placeholder">
+                            <div class="demo-card-placeholder">
                                 📅
                             </div>
                         </div>

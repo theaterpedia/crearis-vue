@@ -1582,13 +1582,6 @@ onMounted(() => {
 
                         <!-- Column 4: Controls (1/5 width) - Simplified (Plan E Task 1.3) -->
                         <Column width="auto">
-                            <div class="controls-placeholder">
-                                <p class="placeholder-text">Click a shape to edit</p>
-                                <div v-if="activeShape" class="active-shape-info">
-                                    <span class="shape-badge">{{ activeShape.shape }}</span>
-                                    <span class="adapter-badge">{{ activeShape.adapter }}</span>
-                                </div>
-                            </div>
                             <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
                             <div v-if="activeShape" class="shape-editor-section">
                                 <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
@@ -1600,6 +1593,9 @@ onMounted(() => {
                                         tpar: selectedImage.tpar || null
                                     }" @update="handleShapeUpdate" @preview="handleShapePreview"
                                     @reset="handleShapeReset" />
+                            </div>
+                            <div v-else>
+                                <p class="placeholder-text">Click a shape to edit</p>
                             </div>
                         </Column>
                     </Columns>
@@ -1649,6 +1645,13 @@ onMounted(() => {
                                 <label>Alt Text:</label>
                                 <input v-model="selectedImage.alt_text" type="text" class="edit-input" placeholder="—"
                                     @input="checkDirty()" />
+                            </div>
+
+                            <!-- About -->
+                            <div class="edit-row">
+                                <label>About:</label>
+                                <textarea v-model="selectedImage.about" class="edit-textarea" placeholder="—" rows="3"
+                                    @input="checkDirty()"></textarea>
                             </div>
 
                             <!-- XML ID -->
