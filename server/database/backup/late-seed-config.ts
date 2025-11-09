@@ -423,24 +423,24 @@ export const EXPORT_ENTITIES = [
     // Phase 0: System tables (no dependencies)
     'tags',             // Referenced by events_tags, posts_tags
     'status',           // Referenced by all entity tables via status_id FK
-    
+
     // Phase 1: Core entity tables
     'users',            // Index: sysmail (referenced by images.owner_id)
     'projects',         // Index: domaincode (referenced by images.project_id)
     'images',           // Index: xmlid (referenced by entities via img_id FK)
-    
+
     // Phase 2: Entity tables with dependencies
     'instructors',      // Index: xmlid
     'locations',        // Index: xmlid
     'participants',     // Index: xmlid
     'posts',            // Index: xmlid
     'events',           // Index: xmlid
-    
+
     // Phase 3: System tables with dependencies
     'interactions',     // System table (may reference entities)
     'pages',            // System table
     'tasks',            // System table (references status)
-    
+
     // Note: project_members, events_tags, posts_tags, event_instructors are exported as detail tables
 ];
 
