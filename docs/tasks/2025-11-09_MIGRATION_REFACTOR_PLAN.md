@@ -22,25 +22,19 @@ Transform the monolithic migration system into a phased architecture supporting:
 
 This plan is divided into focused implementation steps, each with its own detailed documentation:
 
-### Core Implementation Steps
+### Implementation Steps
 
-1. **[MR1: Migration Package System](./MR1_MIGRATION_PACKAGES.md)** ⏱️ 2-3 hours
-   - Archive old data migrations (022-024)
-   - Implement package filtering system (A-E ranges)
-   - Update migration runner with environment variable support
-   - Test migration package execution
+1. **MR1: Migration Package System** → [MR1_MIGRATION_PACKAGES.md](./MR1_MIGRATION_PACKAGES.md)
+   - [x] **✅ Completed** - Package-based migration filtering (A-E)
+   - Commit: 776538d
 
-2. **[MR2: Export System & JSON Schema](./MR2_EXPORT_SYSTEM.md)** ⏱️ 2-3 hours
-   - Design backup JSON schema for entities and detail tables
-   - Implement late-seeding column configuration
-   - Create export functions for entity and detail tables
-   - Build tarball creation system
+2. **MR2: Export System & JSON Schema** → [MR2_EXPORT_SYSTEM.md](./MR2_EXPORT_SYSTEM.md)
+   - [x] **✅ Completed** - JSON export with late-seeding and detail tables
+   - Files: backup-schema.ts, late-seed-config.ts, export.ts, test-export.ts
 
-3. **[MR3: Export API & Admin UI](./MR3_EXPORT_API.md)** ⏱️ 1-2 hours
-   - Create backup export API endpoint
-   - Add export button to ImagesCoreAdmin
-   - Implement backup metadata tracking
-   - Test export workflow end-to-end
+3. **MR3: Export API & Admin UI** → [MR3_EXPORT_API.md](./MR3_EXPORT_API.md)
+   - [ ] Create export API endpoint
+   - [ ] Add UI to ImagesCoreAdmin
 
 4. **[MR4: Import System & Data Packages](./MR4_IMPORT_SYSTEM.md)** ⏱️ 3-4 hours
    - Create bash import manager script
@@ -91,7 +85,7 @@ This plan is divided into focused implementation steps, each with its own detail
 
 ## 🚦 Implementation Status
 
-- [ ] **[MR1](./MR1_MIGRATION_PACKAGES.md)**: Migration Package System
+- [x] **[MR1](./MR1_MIGRATION_PACKAGES.md)**: Migration Package System ✅ Completed
 - [ ] **[MR2](./MR2_EXPORT_SYSTEM.md)**: Export System & JSON Schema
 - [ ] **[MR3](./MR3_EXPORT_API.md)**: Export API & Admin UI
 - [ ] **[MR4](./MR4_IMPORT_SYSTEM.md)**: Import System & Data Packages
