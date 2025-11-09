@@ -31,10 +31,12 @@ This plan is divided into focused implementation steps, each with its own detail
 2. **MR2: Export System & JSON Schema** → [MR2_EXPORT_SYSTEM.md](./MR2_EXPORT_SYSTEM.md)
    - [x] **✅ Completed** - JSON export with late-seeding and detail tables
    - Files: backup-schema.ts, late-seed-config.ts, export.ts, test-export.ts
+   - Commit: d5d10dc
 
 3. **MR3: Export API & Admin UI** → [MR3_EXPORT_API.md](./MR3_EXPORT_API.md)
-   - [ ] Create export API endpoint
-   - [ ] Add UI to ImagesCoreAdmin
+   - [x] **✅ Completed** - API endpoint and admin UI integration
+   - Files: export.post.ts, ImagesCoreAdmin.vue
+   - Tested: API logic validates successfully, UI button added to Data menu
 
 4. **[MR4: Import System & Data Packages](./MR4_IMPORT_SYSTEM.md)** ⏱️ 3-4 hours
    - Create bash import manager script

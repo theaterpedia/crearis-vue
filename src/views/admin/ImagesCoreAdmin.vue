@@ -626,6 +626,42 @@ const exportImages = async () => {
     }
 }
 
+// System Backup (MR3)
+const exportSystemBackup = async () => {
+    if (!confirm('Create a full system backup? This will export all database tables to a tarball.')) {
+        return
+    }
+
+    try {
+        const response = await fetch('/api/admin/backup/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                database: 'demo-data.db',
+                migrationPackage: 'A',
+                description: `Manual backup from Images Admin - ${new Date().toLocaleString()}`
+            })
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Backup failed: ${response.status} ${errorText}`)
+        }
+
+        const result = await response.json()
+        if (result.success) {
+            alert(`✅ System backup created successfully!\n\nFilename: ${result.data.filename}\nPackage: ${result.data.migrationPackage}\nTimestamp: ${new Date(result.data.timestamp).toLocaleString()}`)
+        } else {
+            throw new Error('Backup failed: ' + (result.message || 'Unknown error'))
+        }
+    } catch (error) {
+        console.error('System backup error:', error)
+        alert(`❌ System backup failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+}
+
 // Delete image
 const deleteImage = async () => {
     if (!selectedImage.value) return
@@ -1408,6 +1444,11 @@ onMounted(() => {
                             </button>
                             <button class="menu-action-button" @click="exportImages(); showDataMenu = false">
                                 Export JSON
+                            </button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-section-title">System Administration</div>
+                            <button class="menu-action-button" @click="exportSystemBackup(); showDataMenu = false">
+                                Create System Backup
                             </button>
                         </div>
 
