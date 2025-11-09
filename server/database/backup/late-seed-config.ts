@@ -336,6 +336,13 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
             exportValue: false,
         },
     ],
+    status: [
+        {
+            column: 'id',
+            reason: 'Auto-generated serial, but stable across systems (seeded by migrations)',
+            exportValue: true,
+        },
+    ],
     interactions: [
         {
             column: 'id',
@@ -403,23 +410,37 @@ export const DETAIL_TABLES_CONFIG: Record<string, DetailTableConfig[]> = {
  * List of entity tables to export (in order)
  * Detail tables are automatically included via DETAIL_TABLES_CONFIG
  * 
- * Entity tables with xmlid index: instructors, locations, participants, posts, events
+ * CRITICAL ORDER:
+ * 1. System tables without dependencies (tags, status) - MUST BE FIRST!
+ * 2. Entity tables with index columns (users, projects)
+ * 3. Entity tables that reference system tables (images, events, posts, etc.)
+ * 
+ * Entity tables with xmlid index: instructors, locations, participants, posts, events, images
  * Entity tables with other indexes: users (sysmail), projects (domaincode)
- * System tables: tags, images, interactions, pages, tasks
+ * System tables without xmlid: tags, status, interactions, pages, tasks
  */
 export const EXPORT_ENTITIES = [
-    'users',            // Index: sysmail
-    'tags',             // System table
-    'projects',         // Index: domaincode
-    'images',           // System table
-    'interactions',     // System table
+    // Phase 0: System tables (no dependencies)
+    'tags',             // Referenced by events_tags, posts_tags
+    'status',           // Referenced by all entity tables via status_id FK
+    
+    // Phase 1: Core entity tables
+    'users',            // Index: sysmail (referenced by images.owner_id)
+    'projects',         // Index: domaincode (referenced by images.project_id)
+    'images',           // Index: xmlid (referenced by entities via img_id FK)
+    
+    // Phase 2: Entity tables with dependencies
     'instructors',      // Index: xmlid
     'locations',        // Index: xmlid
     'participants',     // Index: xmlid
-    'pages',            // System table
     'posts',            // Index: xmlid
     'events',           // Index: xmlid
-    'tasks',            // System table
+    
+    // Phase 3: System tables with dependencies
+    'interactions',     // System table (may reference entities)
+    'pages',            // System table
+    'tasks',            // System table (references status)
+    
     // Note: project_members, events_tags, posts_tags, event_instructors are exported as detail tables
 ];
 

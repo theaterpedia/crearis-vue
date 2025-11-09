@@ -662,6 +662,53 @@ const exportSystemBackup = async () => {
     }
 }
 
+// System Restore (MR4)
+const importSystemBackup = async () => {
+    const tarballPath = prompt('Enter backup tarball path (e.g., backup_demo-data.db_1234567890.tar.gz):')
+
+    if (!tarballPath) return
+
+    if (!confirm(`⚠️ WARNING: This will import data from:\n${tarballPath}\n\nDuplicates will be skipped. Continue?`)) {
+        return
+    }
+
+    try {
+        const response = await fetch('/api/admin/backup/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                tarballPath,
+                mode: 'skip'
+            })
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Import failed: ${response.status} ${errorText}`)
+        }
+
+        const result = await response.json()
+        if (result.success) {
+            const stats = result.data.stats
+            const summary = Object.entries(stats)
+                .map(([table, stat]: [string, any]) => `${table}: ${stat.imported}/${stat.total} imported`)
+                .join('\n')
+
+            alert(`✅ System backup imported successfully!\n\n${summary}`)
+
+            // Refresh image list
+            await fetchImages()
+        } else {
+            throw new Error('Import failed: ' + (result.message || 'Unknown error'))
+        }
+    } catch (error) {
+        console.error('System import error:', error)
+        alert(`❌ System import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+}
+
 // Delete image
 const deleteImage = async () => {
     if (!selectedImage.value) return
@@ -1449,6 +1496,9 @@ onMounted(() => {
                             <div class="menu-section-title">System Administration</div>
                             <button class="menu-action-button" @click="exportSystemBackup(); showDataMenu = false">
                                 Create System Backup
+                            </button>
+                            <button class="menu-action-button" @click="importSystemBackup(); showDataMenu = false">
+                                Import System Backup
                             </button>
                         </div>
 
