@@ -171,10 +171,12 @@ From `src/assets/css/01-variables.css`:
 ```css
 --card-width: 21rem;    /* 336px */
 --card-height: 14rem;   /* 224px */
---tile-width: 10.5rem;  /* 168px */
---tile-height: 7rem;    /* 112px */
---avatar: 5.25rem;      /* 84px */
+--tile-width: 8rem;     /* 128px */
+--tile-height: 4rem;    /* 64px */
+--avatar: 4rem;         /* 64px */
 ```
+
+**Note**: These dimensions were updated after initial implementation to align with production design standards.
 
 ## API Endpoints Expected
 
