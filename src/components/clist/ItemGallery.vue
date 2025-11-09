@@ -4,7 +4,8 @@
         <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
         <div v-else class="item-gallery" :class="itemTypeClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
-                :cimg="item.cimg" :size="size" v-bind="item.props || {}">
+                :cimg="item.cimg" :size="size" v-bind="item.props || {}"
+                @click="(e: MouseEvent) => emit('item-click', item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -24,7 +25,8 @@
                     <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
                     <div v-else class="item-gallery" :class="itemTypeClass">
                         <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
-                            :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}">
+                            :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}"
+                            @click="(e: MouseEvent) => emit('item-click', item, e)">
                             <template v-if="item.slot" #default>
                                 <component :is="item.slot" />
                             </template>
@@ -47,7 +49,8 @@
                 <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
                 <div v-else class="item-gallery" :class="itemTypeClass">
                     <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
-                        :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}">
+                        :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}"
+                        @click="(e: MouseEvent) => emit('item-click', item, e)">
                         <template v-if="item.slot" #default>
                             <component :is="item.slot" />
                         </template>
@@ -103,6 +106,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     'update:modelValue': [value: boolean]
     close: []
+    'item-click': [item: any, event: MouseEvent]
 }>()
 
 const isOpen = computed({

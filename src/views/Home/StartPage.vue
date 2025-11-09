@@ -191,7 +191,12 @@
             </Section>
 
             <!-- Upcoming Events Section -->
-            <UpcomingEventsSection :events="events" />
+            <Section background="muted">
+                <Container>
+                    <pList type="events" :project-domaincode="project.domaincode" item-type="card" size="medium"
+                        header="Upcoming Events" is-footer />
+                </Container>
+            </Section>
 
             <!-- Footer -->
             <template #footer>
@@ -210,7 +215,7 @@ import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import StartPageHero from './HomeComponents/StartPageHero.vue'
-import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
+import pList from '@/components/page/pList.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
@@ -281,7 +286,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
-const events = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 
@@ -485,19 +489,6 @@ async function fetchProject(domaincode: string) {
         }
     } catch (error) {
         console.error('Failed to fetch project:', error)
-    }
-}
-
-// Fetch events
-async function fetchEvents() {
-    try {
-        const response = await fetch('/api/events')
-        if (response.ok) {
-            const data = await response.json()
-            events.value = data.slice(0, 6)
-        }
-    } catch (error) {
-        console.error('Failed to fetch events:', error)
     }
 }
 
@@ -714,7 +705,6 @@ onMounted(async () => {
 
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
-    await fetchEvents()
     await fetchUserEmails()
 })
 </script>

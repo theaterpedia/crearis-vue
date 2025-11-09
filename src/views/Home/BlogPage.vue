@@ -36,7 +36,12 @@
             </template>
 
             <!-- Blog Posts Section -->
-            <BlogPostsSection :posts="posts" :show-posts="3" />
+            <Section background="accent">
+                <Container>
+                    <pGallery type="posts" :project-domaincode="project.domaincode" item-type="card" size="medium"
+                        variant="wide" header="Blog Posts" is-footer />
+                </Container>
+            </Section>
 
             <!-- Social Media Section -->
             <SocialMediaSection size="small" :is-vertical="false" />
@@ -58,7 +63,9 @@ import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import BlogPageHero from './HomeComponents/BlogPageHero.vue'
-import BlogPostsSection from './HomeComponents/BlogPostsSection.vue'
+import pGallery from '@/components/page/pGallery.vue'
+import Section from '@/components/Section.vue'
+import Container from '@/components/Container.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
@@ -122,7 +129,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
-const posts = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 
@@ -245,19 +251,6 @@ async function fetchProject(domaincode: string) {
     }
 }
 
-// Fetch posts
-async function fetchPosts() {
-    try {
-        const response = await fetch('/api/posts')
-        if (response.ok) {
-            const data = await response.json()
-            posts.value = data
-        }
-    } catch (error) {
-        console.error('Failed to fetch posts:', error)
-    }
-}
-
 // Initialize
 onMounted(async () => {
     // Set SEO meta tags
@@ -265,7 +258,6 @@ onMounted(async () => {
 
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
-    await fetchPosts()
 })
 </script>
 

@@ -56,8 +56,12 @@
             </Section>
 
             <!-- Upcoming Events Section -->
-            <UpcomingEventsSection :events="events" />
-            <UpcomingEventsSectionOld :events="events" />
+            <Section background="muted">
+                <Container>
+                    <pList type="events" :project-domaincode="project.domaincode" item-type="card" size="medium"
+                        header="Upcoming Events" is-footer />
+                </Container>
+            </Section>
 
             <!-- Page Content -->
             <PageContent page-type="landing" :project-domain-code="project.domaincode"
@@ -67,8 +71,12 @@
             <ProjectsShowcaseSection :projects="projects" />
 
             <!-- Blog Posts Section -->
-            <BlogPostsSection :posts="posts" />
-            <BlogPostsSectionOld :posts="posts" />
+            <Section background="accent">
+                <Container>
+                    <pGallery type="posts" :project-domaincode="project.domaincode" item-type="card" size="medium"
+                        variant="wide" header="Latest from Our Blog" is-footer />
+                </Container>
+            </Section>
 
             <!-- Community Members Section -->
             <CommunityMembersSection :users="users" />
@@ -97,9 +105,9 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import PageContent from '@/components/PageContent.vue'
 import HeroSection from './HomeComponents/HeroSection.vue'
-import UpcomingEventsSection from './HomeComponents/UpcomingEventsSection.vue'
+import pList from '@/components/page/pList.vue'
+import pGallery from '@/components/page/pGallery.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
-import BlogPostsSection from './HomeComponents/BlogPostsSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
 import InvertedToggle from '@/components/InvertedToggle.vue'
@@ -165,8 +173,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
-const posts = ref<any[]>([])
-const events = ref<any[]>([])
 const projects = ref<any[]>([])
 const users = ref<any[]>([])
 const isEditPanelOpen = ref(false)
@@ -301,32 +307,6 @@ async function fetchProject(domaincode: string) {
         }
     } catch (error) {
         console.error('Failed to fetch project:', error)
-    }
-}
-
-// Fetch posts
-async function fetchPosts() {
-    try {
-        const response = await fetch('/api/posts')
-        if (response.ok) {
-            const data = await response.json()
-            posts.value = data.slice(0, 6)
-        }
-    } catch (error) {
-        console.error('Failed to fetch posts:', error)
-    }
-}
-
-// Fetch events
-async function fetchEvents() {
-    try {
-        const response = await fetch('/api/events')
-        if (response.ok) {
-            const data = await response.json()
-            events.value = data.slice(0, 6)
-        }
-    } catch (error) {
-        console.error('Failed to fetch events:', error)
     }
 }
 
@@ -510,8 +490,6 @@ onMounted(async () => {
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await Promise.all([
-        fetchPosts(),
-        fetchEvents(),
         fetchProjects(),
         fetchUsers()
     ])
