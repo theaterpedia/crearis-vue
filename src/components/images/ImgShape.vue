@@ -57,6 +57,15 @@ const previewState = ref({
 
 const { cardWidth, cardHeight, tileWidth, tileHeight, avatarWidth } = useTheme()
 
+// Log theme dimensions
+console.log('[ImgShape] Theme dimensions from composable:', {
+    cardWidth: cardWidth.value,
+    cardHeight: cardHeight.value,
+    tileWidth: tileWidth.value,
+    tileHeight: tileHeight.value,
+    avatarWidth: avatarWidth.value
+})
+
 /**
  * Detect the image service adapter from URL
  */
@@ -105,9 +114,9 @@ const dimensions = computed<[number, number] | null>(() => {
 
     // Tile dimensions
     if (shape === 'tile') {
-        const w = tileWidth.value
-        const h = tileHeight.value
-        if (!w || !h) return null
+        // Use theme values or fallback to standard dimensions (8rem × 7rem = 128px × 112px)
+        const w = tileWidth.value || 128
+        const h = tileHeight.value || 112
 
         // tile-height-square: 8rem = 128px (same as tile-width)
         if (variant === 'square') return [w, w]
@@ -132,6 +141,14 @@ const dimensions = computed<[number, number] | null>(() => {
     }
 
     return null
+})
+
+// Log computed dimensions
+console.log('[ImgShape] Computed dimensions:', {
+    shape: props.shape,
+    variant: props.variant,
+    dimensions: dimensions.value,
+    dimensionsInRem: dimensions.value ? [dimensions.value[0] / 16, dimensions.value[1] / 16] : null
 })
 
 /**

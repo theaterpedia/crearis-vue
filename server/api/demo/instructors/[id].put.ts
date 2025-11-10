@@ -21,7 +21,11 @@ export default defineEventHandler(async (event) => {
         phone = ?,
         email = ?,
         city = ?,
-        cimg = ?
+        cimg = ?,
+        md = ?,
+        project_id = ?,
+        img_id = ?,
+        status_id = ?
       WHERE id = ?`,
             [
                 body.name,
@@ -30,6 +34,10 @@ export default defineEventHandler(async (event) => {
                 body.email,
                 body.city,
                 body.cimg,
+                body.content || body.md,
+                body.project_id,
+                body.img_id,
+                body.status_id,
                 id
             ]
         )

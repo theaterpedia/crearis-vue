@@ -52,6 +52,19 @@ const headingLevel = computed(() => {
     if (props.size === 'large') return 'h3'
     return 'h4'
 })
+
+// Log props for debugging
+console.log('[ItemTile] Props:', {
+    heading: props.heading,
+    size: props.size,
+    shape: props.shape,
+    variant: props.variant,
+    dataMode: dataMode.value,
+    hasData: !!props.data
+})
+if (props.data) {
+    console.log('[ItemTile] Image data:', props.data)
+}
 </script>
 
 <style scoped>

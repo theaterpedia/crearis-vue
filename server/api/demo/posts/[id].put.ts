@@ -18,12 +18,20 @@ export default defineEventHandler(async (event) => {
             `UPDATE posts SET 
         name = ?,
         teaser = ?,
-        cimg = ?
+        cimg = ?,
+        md = ?,
+        project_id = ?,
+        img_id = ?,
+        status_id = ?
       WHERE id = ?`,
             [
                 body.name,
                 body.teaser,
                 body.cimg,
+                body.content || body.md,
+                body.project_id,
+                body.img_id,
+                body.status_id,
                 id
             ]
         )

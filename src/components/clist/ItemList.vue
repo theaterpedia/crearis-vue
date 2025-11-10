@@ -135,6 +135,19 @@ const shape = computed<'card' | 'tile' | 'avatar'>(() => {
 })
 
 /**
+ * Compute variant based on size and entity
+ * For images entity: size=medium uses img_square, so we need variant=square
+ */
+const computedVariant = computed(() => {
+    // For images entity with medium size, force square variant to match img_square field
+    if (props.entity === 'images' && props.size === 'medium') {
+        return 'square'
+    }
+    // Otherwise use the provided variant
+    return props.variant
+})
+
+/**
  * Fetch entity data from API
  */
 const fetchEntityData = async () => {
@@ -190,27 +203,23 @@ const fetchEntityData = async () => {
 }
 
 /**
- * Parse img_thumb or img_square JSON from entity
+ * Parse img_thumb or img_square JSONB from PostgreSQL entity
+ * PostgreSQL JSONB fields are returned as objects by the database driver
  */
-const parseImageData = (jsonString: string | undefined): ImgShapeData | null => {
-    if (!jsonString) return null
+const parseImageData = (jsonbData: any): ImgShapeData | null => {
+    if (!jsonbData || typeof jsonbData !== 'object') return null
 
-    try {
-        const parsed = JSON.parse(jsonString)
-        return {
-            type: 'url',
-            url: parsed.url || '',
-            x: parsed.x ?? null,
-            y: parsed.y ?? null,
-            z: parsed.z ?? null,
-            options: parsed.options ?? null,
-            blur: parsed.blur ?? undefined,
-            turl: parsed.turl ?? undefined,
-            tpar: parsed.tpar ?? undefined,
-            alt_text: parsed.alt_text ?? undefined
-        }
-    } catch {
-        return null
+    return {
+        type: 'url',
+        url: jsonbData.url || '',
+        x: jsonbData.x ?? null,
+        y: jsonbData.y ?? null,
+        z: jsonbData.z ?? null,
+        options: jsonbData.options ?? null,
+        blur: jsonbData.blur ?? undefined,
+        turl: jsonbData.turl ?? undefined,
+        tpar: jsonbData.tpar ?? undefined,
+        alt_text: jsonbData.alt_text ?? undefined
     }
 }
 
@@ -221,19 +230,38 @@ const entities = computed(() => {
     if (dataMode.value) {
         // Apply filterIds if provided
         let filteredData = entityData.value
-        if (props.filterIds && props.filterIds.length > 0) {
+        console.log('[ItemList] Total entities:', entityData.value.length, 'filterIds:', props.filterIds?.length ?? 'undefined')
+        if (props.filterIds !== undefined) {
+            // filterIds is explicitly provided - apply filtering even if empty array
             filteredData = entityData.value.filter((entity: any) =>
                 props.filterIds!.includes(entity.id)
             )
+            console.log('[ItemList] After filtering:', filteredData.length)
         }
 
         // Transform entity data to ListItem format
         return filteredData.map((entity: any) => {
-            const imageField = props.variant === 'square' ? entity.img_square : entity.img_thumb
-            const imageData = parseImageData(imageField)
+            let imageData = null
+            let hasDeprecatedCimg = false
 
-            // Check if entity uses deprecated cimg field
-            const hasDeprecatedCimg = entity.cimg && !imageData
+            // Handle images entity - use computed fields based on size
+            if (props.entity === 'images') {
+                // Strict mapping: small=img_thumb, medium=img_square
+                // No fallbacks - will error if field is missing
+                const fieldName = props.size === 'small' ? 'img_thumb' : 'img_square'
+                const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
+                console.log(`[ItemList] Image ${entity.id}: size="${props.size}" → field="${fieldName}"`, imageField)
+                if (!imageField) {
+                    throw new Error(`Missing ${fieldName} for image entity ${entity.id}`)
+                }
+                imageData = parseImageData(imageField)
+                console.log(`[ItemList] Image ${entity.id}: parsed imageData`, imageData)
+            } else {
+                // Other entities: small=img_thumb, medium=img_square
+                const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
+                imageData = parseImageData(imageField)
+                hasDeprecatedCimg = entity.cimg && !imageData
+            }
 
             // Determine heading based on entity type
             let heading = ''
@@ -257,7 +285,7 @@ const entities = computed(() => {
                 props: {
                     data: imageData,
                     shape: shape.value,
-                    variant: props.variant,
+                    variant: computedVariant.value,
                     deprecated: hasDeprecatedCimg // Flag for warning overlay
                 }
             }

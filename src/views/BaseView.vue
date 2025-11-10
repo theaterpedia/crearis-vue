@@ -46,12 +46,24 @@
                                     </button>
                                     <button :class="['toggle-btn', { active: viewMode === 'new' }]"
                                         @click="viewMode = 'new'">
-                                        New
+                                        W-I-P
                                     </button>
                                     <button :class="['toggle-btn', { active: viewMode === 'project' }]"
                                         @click="viewMode = 'project'">
                                         Project
                                     </button>
+                                </div>
+                                <!-- Mode Description -->
+                                <div class="mode-description">
+                                    <p v-if="viewMode === 'demo'" class="mode-desc-text">
+                                        Zeigt Events mit xmlid '_demo*'
+                                    </p>
+                                    <p v-if="viewMode === 'new'" class="mode-desc-text">
+                                        Work In Progress: Status 8, 25 oder 26
+                                    </p>
+                                    <p v-if="viewMode === 'project'" class="mode-desc-text">
+                                        Events mit gewähltem Projekt-Domaincode
+                                    </p>
                                 </div>
                             </div>
 
@@ -95,7 +107,7 @@
                 <!-- Project Selector (only visible when viewMode === 'project') -->
                 <div v-if="viewMode === 'project'" class="navbar-item">
                     <DropdownList entity="projects" title="Projekt wählen" size="small"
-                        @select="(project: any) => selectedProjectId = project.id">
+                        @select="(project: any) => { selectedProjectId = project.id; selectedProject = project }">
                         <template #trigger="{ open, isOpen }">
                             <button class="navbar-button project-selector-btn" @click="open">
                                 <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
@@ -118,7 +130,7 @@
 
                 <!-- Events Selector -->
                 <div class="navbar-item">
-                    <DropdownList entity="events" title="Event wählen" size="small"
+                    <DropdownList entity="events" title="Event wählen" size="small" :filterIds="availableEventIds"
                         @select="(event: any) => switchEvent(event.id)">
                         <template #trigger="{ open, isOpen }">
                             <button class="navbar-button events-toggle-btn" @click="open">
@@ -169,7 +181,8 @@
             <!-- Left Column: Demo Content (65%) -->
             <div class="left-column" :class="{ 'full-width': !hasActiveEdits }">
                 <!-- Project Section -->
-                <ProjectHeader v-if="viewMode === 'project' && selectedProjectId" :project-id="selectedProjectId" />
+                <ProjectHeader v-if="viewMode === 'project' && selectedProject"
+                    :project-id="selectedProject.domaincode" />
 
                 <!-- Hero Section (same as /demo) -->
                 <div v-if="currentEvent" class="demo-hero" style="position: relative;">
@@ -564,7 +577,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Bild</label>
-                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                    <DropdownList entity="images" title="Bild wählen" size="medium"
                                         @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
@@ -656,7 +669,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Bild</label>
-                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                    <DropdownList entity="images" title="Bild wählen" size="medium"
                                         @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
@@ -738,7 +751,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Bild</label>
-                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                    <DropdownList entity="images" title="Bild wählen" size="medium"
                                         @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
@@ -840,7 +853,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Bild</label>
-                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                    <DropdownList entity="images" title="Bild wählen" size="medium"
                                         @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
@@ -926,6 +939,7 @@ const logout = () => {
 // View mode: 'demo' | 'new' | 'project'
 const viewMode = ref<'demo' | 'new' | 'project'>('demo')
 const selectedProjectId = ref<string | null>(null)
+const selectedProject = ref<any>(null) // Store full project object for domaincode
 
 // Settings dropdown
 const isSettingsOpen = ref(false)
@@ -1001,12 +1015,16 @@ const filteredEvents = computed(() => {
         // Filter events with xmlid starting with '_demo'
         return events.value.filter((e: any) => e.xmlid && e.xmlid.startsWith('_demo'))
     } else if (viewMode.value === 'new') {
-        // Filter events with status_id = 25 (new)
-        return events.value.filter((e: any) => e.status_id === 25)
+        // Filter events with status_id = 8, 25, or 26 (work in progress)
+        return events.value.filter((e: any) =>
+            e.status_id === 8 || e.status_id === 25 || e.status_id === 26
+        )
     } else if (viewMode.value === 'project') {
-        // Filter by selected project
-        if (selectedProjectId.value) {
-            return events.value.filter((e: any) => e.project_id === selectedProjectId.value)
+        // Filter events by domaincode prefix (xmlid starts with domaincode)
+        if (selectedProject.value && selectedProject.value.domaincode) {
+            return events.value.filter((e: any) =>
+                e.xmlid && e.xmlid.startsWith(selectedProject.value.domaincode)
+            )
         }
         return []
     }
@@ -1039,10 +1057,22 @@ const availableProjectIds = computed(() => {
     return availableProjects.value.map((p: any) => p.id)
 })
 
+// Filtered event IDs for dropdown (based on current view mode)
+const availableEventIds = computed(() => {
+    // Always apply filtering based on view mode
+    const ids = filteredEvents.value.map((e: any) => e.id)
+    console.log('[BaseView] availableEventIds:', ids.length, 'events', 'viewMode:', viewMode.value)
+    if (viewMode.value === 'project' && selectedProject.value) {
+        console.log('[BaseView] Project mode - domaincode:', selectedProject.value.domaincode)
+    }
+    return ids
+})
+
 // Watch viewMode and clear projectId when leaving project mode
 watch(viewMode, (newMode: string) => {
     if (newMode !== 'project') {
         selectedProjectId.value = null
+        selectedProject.value = null
     }
 })
 
@@ -1812,6 +1842,20 @@ onUnmounted(() => {
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     border-color: var(--color-primary-bg);
+}
+
+/* Mode Description */
+.mode-description {
+    margin-top: 0.5rem;
+}
+
+.mode-desc-text {
+    font-size: 0.7rem;
+    color: var(--color-dimmed);
+    font-style: italic;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.3;
 }
 
 /* Events Selector */
