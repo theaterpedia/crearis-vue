@@ -1,10 +1,20 @@
+<!--
+  ItemList.vue - Primary container for list-based layouts
+  
+  DESIGN SPECIFICATION: /docs/CLIST_DESIGN_SPEC.md
+  Component README: /src/components/clist/README.md
+  
+  This component's design, dimensions, and behavior are controlled by the
+  official CList Design Specification. Consult the spec before making changes.
+-->
 <template>
     <div v-if="interaction === 'static'" class="item-list-container">
         <div v-if="loading" class="item-list-loading">Loading...</div>
         <div v-else-if="error" class="item-list-error">{{ error }}</div>
-        <div v-else class="item-list" :class="itemTypeClass">
+        <div v-else class="item-list" :class="itemContainerClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
-                :size="size" v-bind="item.props || {}" @click="(e: MouseEvent) => emit('item-click', item, e)">
+                :size="size" :style-compact="styleCompact" :heading-level="headingLevel" v-bind="item.props || {}"
+                @click="(e: MouseEvent) => emit('item-click', item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -22,7 +32,7 @@
                 <div class="popup-content">
                     <div v-if="loading" class="item-list-loading">Loading...</div>
                     <div v-else-if="error" class="item-list-error">{{ error }}</div>
-                    <div v-else class="item-list" :class="itemTypeClass">
+                    <div v-else class="item-list" :class="itemContainerClass">
                         <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
                             :heading="item.heading" :size="size" v-bind="item.props || {}"
                             @click="(e: MouseEvent) => emit('item-click', item, e)">
@@ -46,7 +56,7 @@
             <div class="zoom-container">
                 <div v-if="loading" class="item-list-loading">Loading...</div>
                 <div v-else-if="error" class="item-list-error">{{ error }}</div>
-                <div v-else class="item-list" :class="itemTypeClass">
+                <div v-else class="item-list" :class="itemContainerClass">
                     <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
                         :heading="item.heading" :size="size" v-bind="item.props || {}"
                         @click="(e: MouseEvent) => emit('item-click', item, e)">
@@ -62,8 +72,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import ItemTile from './ItemTile.vue'
-import ItemCard from './ItemCard.vue'
 import ItemRow from './ItemRow.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
@@ -88,8 +98,11 @@ interface Props {
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
     filterIds?: number[] // Filter fetched entities by these IDs
-    itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium'
+    width?: 'inherit' | 'small' | 'medium' | 'large' // Item width control
+    columns?: 'off' | 'on' // Enable multi-column wrapping
+    avatarShape?: 'round' | 'square' // Only for size="small" - forces avatar shape
+    headingLevel?: 'h3' | 'h4' // Heading level for medium items
     variant?: 'default' | 'square' | 'wide' | 'vertical'
     interaction?: 'static' | 'popup' | 'zoom'
     title?: string
@@ -97,8 +110,10 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    itemType: 'row',
     size: 'medium',
+    width: 'inherit',
+    columns: 'off',
+    headingLevel: 'h3',
     variant: 'default',
     interaction: 'static'
 })
@@ -127,24 +142,98 @@ const dataMode = computed(() => {
 })
 
 /**
- * Compute shape based on size
+ * Compute shape for image display based on size
+ * NOTE: This is the IMAGE shape (actual display size), not the container shape
+ * 
+ * SAFETY: Following production-safe patterns:
+ * - size="small" (60-80px) → 'avatar' shape (64px, safe for all variants)
+ * - size="medium"+ → 'tile' shape with variant="square" ONLY
+ * 
+ * Tile variants default/wide/vertical are UNSAFE (not production-ready)
+ * Always paired with variant="square" for safe production use
  */
 const shape = computed<'card' | 'tile' | 'avatar'>(() => {
-    if (props.size === 'small') return 'tile'
-    return 'card' // medium defaults to card
+    // Small size uses avatar shape (64px) - production safe
+    if (props.size === 'small') {
+        return 'avatar'
+    }
+    // Medium+ sizes use tile shape (128px) - must use variant="square"
+    return 'tile'
 })
 
 /**
  * Compute variant based on size and entity
- * For images entity: size=medium uses img_square, so we need variant=square
+ * 
+ * SAFETY RULE: Tile shape MUST use variant="square" (other tile variants unsafe)
+ * For images entity: size=medium uses img_square field, so variant must be square
+ * For avatarShape prop: overrides variant for small size
  */
 const computedVariant = computed(() => {
+    // For size="small" with avatarShape prop, use that shape
+    if (props.size === 'small' && props.avatarShape) {
+        return props.avatarShape
+    }
+
+    // SAFETY: Always use square variant with tile shape (other variants unsafe)
     // For images entity with medium size, force square variant to match img_square field
     if (props.entity === 'images' && props.size === 'medium') {
         return 'square'
     }
-    // Otherwise use the provided variant
-    return props.variant
+    // Default to square for tile safety (even if variant prop provided)
+    return props.variant || 'square'
+})
+
+/**
+ * Compute item width in pixels
+ * - small: card-width / 2
+ * - medium: card-width (current implementation, styleCompact)
+ * - large: card-width
+ * - inherit: controlled by parent
+ */
+const itemWidth = computed(() => {
+    const { cardWidth } = useTheme()
+    const cardWidthPx = cardWidth.value || 336
+
+    if (props.width === 'small') return Math.round(cardWidthPx / 2)
+    if (props.width === 'medium') return cardWidthPx
+    if (props.width === 'large') return cardWidthPx
+    return null // inherit from parent
+})
+
+/**
+ * Determine if styleCompact should be used
+ * - Always true when width is below card-width
+ * - For width="medium" (current implementation): true
+ */
+const styleCompact = computed(() => {
+    const { cardWidth } = useTheme()
+    const cardWidthPx = cardWidth.value || 336
+
+    if (itemWidth.value && itemWidth.value < cardWidthPx) return true
+    if (props.width === 'medium') return true // Current implementation
+    return false
+})
+
+/**
+ * Compute number of columns for flex wrapping
+ * - If width="small": always 1 column
+ * - If columns="off": 1 column
+ * - If columns="on": calculate based on available space
+ */
+const columnCount = computed(() => {
+    if (props.width === 'small') return 1
+    if (props.columns === 'off') return 1
+    return 2 // Default to 2 columns when enabled
+})
+
+/**
+ * Auto-select component based on size
+ * - size="small" → ItemRow (with avatar shape)
+ * - size="medium" → ItemTile (with tile shape)
+ */
+const itemComponent = computed(() => {
+    if (props.size === 'small') return ItemRow
+    return ItemTile
 })
 
 /**
@@ -295,19 +384,21 @@ const entities = computed(() => {
     return props.items || []
 })
 
-const itemComponent = computed(() => {
-    switch (props.itemType) {
-        case 'card':
-            return ItemCard
-        case 'row':
-            return ItemRow
-        case 'tile':
-        default:
-            return ItemTile
-    }
-})
+const itemContainerClass = computed(() => {
+    const classes: string[] = []
 
-const itemTypeClass = computed(() => `item-type-${props.itemType}`)
+    // Width class
+    if (props.width !== 'inherit') {
+        classes.push(`width-${props.width}`)
+    }
+
+    // Columns class
+    if (props.columns === 'on' && props.width !== 'small') {
+        classes.push('columns-on')
+    }
+
+    return classes.join(' ')
+})
 
 const closePopup = () => {
     emit('update:modelValue', false)
@@ -339,8 +430,31 @@ defineExpose({
 }
 
 .item-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
+}
+
+/* Width variations */
+.item-list.width-small {
+    width: calc(var(--card-width) * 0.5);
+    /* 168px (0.5 × card-width) */
+}
+
+.item-list.width-medium {
+    width: var(--card-width);
+    /* 336px (card-width) */
+}
+
+.item-list.width-large {
+    width: var(--card-width);
+    /* 336px (card-width) */
+}
+
+/* Columns enabled: flex wrap */
+.item-list.columns-on {
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 .item-list-loading,
@@ -355,19 +469,6 @@ defineExpose({
     color: var(--color-negative-contrast);
     background: var(--color-negative-bg);
     border-radius: 0.5rem;
-}
-
-/* Grid layouts based on item type */
-.item-type-tile {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-}
-
-.item-type-card {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-}
-
-.item-type-row {
-    grid-template-columns: 1fr;
 }
 
 /* Popup styles */

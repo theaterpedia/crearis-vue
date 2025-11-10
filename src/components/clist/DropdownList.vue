@@ -1,3 +1,12 @@
+<!--
+  DropdownList.vue - Dropdown wrapper around ItemList
+  
+  DESIGN SPECIFICATION: /docs/CLIST_DESIGN_SPEC.md
+  Component README: /src/components/clist/README.md
+  
+  This component's design, dimensions, and behavior are controlled by the
+  official CList Design Specification. Consult the spec before making changes.
+-->
 <template>
     <VDropdown v-model:shown="isOpen" theme="dropdown-list" :triggers="[]" :auto-hide="true" :distance="8"
         placement="bottom-start">

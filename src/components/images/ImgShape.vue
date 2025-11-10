@@ -100,6 +100,12 @@ const avatarShape = computed(() => {
 /**
  * Get dimensions based on shape and variant
  * Returns [width, height] in pixels
+ * 
+ * ⚠️ PRODUCTION SAFETY (November 10, 2025):
+ * - Tile + square: ✅ SAFE
+ * - Tile + default/wide/vertical: ⚠️ UNSAFE (focal point handling incomplete)
+ * - Card + any variant: ✅ SAFE
+ * - Avatar + any variant: ✅ SAFE
  */
 const dimensions = computed<[number, number] | null>(() => {
     const shape = props.shape
@@ -113,18 +119,21 @@ const dimensions = computed<[number, number] | null>(() => {
     }
 
     // Tile dimensions
+    // ⚠️ WARNING: Only variant="square" is production-safe for tiles
     if (shape === 'tile') {
         // Use theme values or fallback to standard dimensions (8rem × 7rem = 128px × 112px)
         const w = tileWidth.value || 128
         const h = tileHeight.value || 112
 
         // tile-height-square: 8rem = 128px (same as tile-width)
-        if (variant === 'square') return [w, w]
-        if (variant === 'wide') return [w * 2, h]
-        return [w, h] // default
+        if (variant === 'square') return [w, w] // ✅ SAFE
+
+        // ⚠️ UNSAFE: These variants need focal point handling work
+        if (variant === 'wide') return [w * 2, h] // ⚠️ NOT PRODUCTION READY
+        return [w, h] // default - ⚠️ NOT PRODUCTION READY
     }
 
-    // Card dimensions
+    // Card dimensions - all variants are production-safe
     if (shape === 'card') {
         const w = cardWidth.value
         const h = cardHeight.value

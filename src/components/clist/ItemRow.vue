@@ -1,5 +1,16 @@
+<!--
+  ItemRow.vue - Horizontal row layout with 64×64px avatars
+  
+  DESIGN SPECIFICATION: /docs/CLIST_DESIGN_SPEC.md
+  Component README: /src/components/clist/README.md
+  
+  This component's design, dimensions, and behavior are controlled by the
+  official CList Design Specification. Consult the spec before making changes.
+  
+  Usage: Automatically used when ItemList has size="small"
+-->
 <template>
-    <div class="item-row" :class="sizeClass" @click="$emit('click', $event)">
+    <div class="item-row" @click="$emit('click', $event)">
         <div class="row-col-image">
             <!-- Warning icon overlay for deprecated cimg usage -->
             <div v-if="deprecated" class="deprecated-warning" title="Using deprecated cimg field">
@@ -29,11 +40,12 @@
 import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
+import { useTheme } from '@/composables/useTheme'
 
 interface Props {
     heading: string
     cimg?: string
-    size?: 'small' | 'medium' | 'large'
+    size?: 'small' // Only small size supported
     cols?: 1 | 2 | 3
     data?: ImgShapeData
     shape?: 'card' | 'tile' | 'avatar'
@@ -42,7 +54,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    size: 'medium',
+    size: 'small',
     cols: 2
 })
 
@@ -52,13 +64,11 @@ const emit = defineEmits<{
 
 const dataMode = computed(() => props.data !== undefined)
 
-const sizeClass = computed(() => `size-${props.size}`)
+const headingLevel = computed(() => 'h5') // Always h5 for small size
 
-const headingLevel = computed(() => {
-    if (props.size === 'small') return 'h5'
-    if (props.size === 'large') return 'h4'
-    return 'h4'
-})
+// Query useTheme for avatar dimensions
+const { avatarWidth } = useTheme()
+const imageDimension = computed(() => avatarWidth.value || 64)
 </script>
 
 <style scoped>
@@ -66,11 +76,14 @@ const headingLevel = computed(() => {
     display: grid;
     gap: 1rem;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0;
+    /* No padding as per spec */
     background-color: var(--color-card-bg);
-    border-radius: 0.5rem;
+    border-radius: var(--radius);
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    height: v-bind('imageDimension + "px"');
+    /* Follow imgShape height from useTheme */
 }
 
 .item-row:hover {
@@ -88,9 +101,9 @@ const headingLevel = computed(() => {
     grid-template-columns: auto 1fr auto;
 }
 
-/* Column widths */
+/* Column widths - query from useTheme */
 .row-col-image {
-    width: 80px;
+    width: v-bind('imageDimension + "px"');
     position: relative;
 }
 
@@ -123,42 +136,17 @@ const headingLevel = computed(() => {
     height: 12px;
 }
 
-/* Image box */
+/* Image box - dimensions from useTheme */
 .image-box {
-    width: 80px;
-    height: 80px;
-    border-radius: 0.375rem;
+    width: v-bind('imageDimension + "px"');
+    height: v-bind('imageDimension + "px"');
+    border-radius: var(--radius);
     overflow: hidden;
     object-fit: cover;
 }
 
 .image-placeholder {
     background-color: var(--color-neutral-bg);
-}
-
-/* Size variants */
-.size-small .row-col-image,
-.size-small .image-box {
-    width: 60px;
-    height: 60px;
-}
-
-.size-small {
-    max-height: 60px;
-}
-
-.size-medium {
-    max-height: 80px;
-}
-
-.size-large .row-col-image,
-.size-large .image-box {
-    width: 100px;
-    height: 100px;
-}
-
-.size-large {
-    max-height: 100px;
 }
 
 .row-col-content {

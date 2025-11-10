@@ -125,6 +125,31 @@
             <!-- Main Content -->
             <Section background="default">
                 <Container>
+                    <!-- Test Image Dropdowns with Width/Columns Variations -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Compact (width=small, styleCompact=true)</h3>
+                        <DropdownList entity="images" size="medium" width="small" columns="off"
+                            title="Small Width - Compact Style" :show-preview="true" :show-toolbar="false" />
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Non-Compact (width=large, styleCompact=false)</h3>
+                        <DropdownList entity="images" size="medium" width="large" columns="off"
+                            title="Large Width - Non-Compact Style" :show-preview="true" :show-toolbar="false" />
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Multi-Column (width=inherit, columns=on)</h3>
+                        <DropdownList entity="images" size="medium" width="inherit" columns="on"
+                            title="Multi-Column Layout" :show-preview="true" :show-toolbar="false" />
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Small Size (ItemRow - should ignore width/columns)</h3>
+                        <DropdownList entity="images" size="small" title="Small Images (img_thumb)" :show-preview="true"
+                            :show-toolbar="false" />
+                    </div>
+
                     <Columns gap="medium" align="top">
 
                         <Column width="2/3">
@@ -229,6 +254,8 @@ import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { isValidEmail } from '@/utils/fieldListUtility'
 import { pageSettings } from '@/settings'
+import DropdownList from '@/components/clist/DropdownList.vue'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
@@ -700,6 +727,10 @@ function handleFormError(error: string) {
 
 // Initialize
 onMounted(async () => {
+    // Initialize theme dimensions
+    const theme = useTheme()
+    theme.init()
+
     // Set SEO meta tags
     setStartPageSeoMeta()
 

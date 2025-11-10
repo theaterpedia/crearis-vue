@@ -80,7 +80,7 @@
   --headings: var(--font);
 
   /* Border radius */
-  --radius-: var(--radius-none);
+  --radius: var(--radius-none);
   --radius-button: var(--radius-small);
 
   /* Border widths */
