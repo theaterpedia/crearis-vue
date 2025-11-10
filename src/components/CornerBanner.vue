@@ -41,7 +41,7 @@ const sizeClass = computed(() => `size-${props.size}`)
 
 /* Normal size - for fullwidth components like hero, columns */
 .corner-banner.size-normal {
-    width: 12rem;
+    width: 24rem;
     height: 2.5rem;
     top: 1.5rem;
     right: -3rem;
@@ -56,7 +56,7 @@ const sizeClass = computed(() => `size-${props.size}`)
 
 /* Small size - for components inside aside-left */
 .corner-banner.size-small {
-    width: 8rem;
+    width: 16rem;
     height: 1.75rem;
     top: 1rem;
     right: -2rem;

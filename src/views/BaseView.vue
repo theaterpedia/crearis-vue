@@ -3,20 +3,78 @@
         <!-- Navbar -->
         <Navbar :user="user" :full-width="false" logo-text="📦 Basis-Daten" @logout="logout">
             <template #menus>
-                <!-- View Mode Toggle -->
-                <div class="navbar-item view-mode-toggle">
-                    <button :class="['view-mode-btn', { active: viewMode === 'demo' }]" @click="viewMode = 'demo'"
-                        title="Demo-Daten">
-                        Demo
-                    </button>
-                    <button :class="['view-mode-btn', { active: viewMode === 'new' }]" @click="viewMode = 'new'"
-                        title="Neue Events">
-                        New
-                    </button>
-                    <button :class="['view-mode-btn', { active: viewMode === 'project' }]" @click="viewMode = 'project'"
-                        title="Projekt-Events">
-                        Project
-                    </button>
+                <!-- Settings Dropdown -->
+                <div class="navbar-item settings-dropdown">
+                    <div class="dropdown-container" ref="settingsDropdownRef">
+                        <button class="navbar-button settings-btn" @click="isSettingsOpen = !isSettingsOpen">
+                            <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8.06,8.06,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8.06,8.06,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z">
+                                </path>
+                            </svg>
+                            <span>Settings</span>
+                            <svg class="chevron" :class="{ 'rotate-180': isSettingsOpen }" width="16" height="16"
+                                viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </button>
+
+                        <!-- Settings Dropdown Panel -->
+                        <div v-if="isSettingsOpen" class="settings-panel">
+                            <!-- View Mode Section -->
+                            <div class="settings-section">
+                                <label class="settings-label">Ansicht/Bearbeiten</label>
+                                <div class="toggle-group">
+                                    <button :class="['toggle-btn', { active: !isEditModeActive }]" @click="setViewMode">
+                                        Ansicht
+                                    </button>
+                                    <button :class="['toggle-btn', { active: isEditModeActive }]" @click="setEditMode">
+                                        Bearbeiten
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Data Filter Section -->
+                            <div class="settings-section">
+                                <label class="settings-label">Daten-Filter</label>
+                                <div class="toggle-group">
+                                    <button :class="['toggle-btn', { active: viewMode === 'demo' }]"
+                                        @click="viewMode = 'demo'">
+                                        Demo
+                                    </button>
+                                    <button :class="['toggle-btn', { active: viewMode === 'new' }]"
+                                        @click="viewMode = 'new'">
+                                        New
+                                    </button>
+                                    <button :class="['toggle-btn', { active: viewMode === 'project' }]"
+                                        @click="viewMode = 'project'">
+                                        Project
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tasks Toggle Section -->
+                            <div class="settings-section">
+                                <label class="settings-label">
+                                    Tasks
+                                    <span v-if="tasksEnabled" class="info-icon"
+                                        title="tasks-automation dysfunctional -> see documentation 16.10">ⓘ</span>
+                                </label>
+                                <div class="toggle-group">
+                                    <button :class="['toggle-btn', { active: !tasksEnabled }]"
+                                        @click="tasksEnabled = false">
+                                        Off
+                                    </button>
+                                    <button :class="['toggle-btn', { active: tasksEnabled }]"
+                                        @click="tasksEnabled = true">
+                                        On
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Project Selector (only visible when viewMode === 'project') -->
@@ -67,18 +125,6 @@
                     </DropdownList>
                 </div>
 
-                <!-- View/Edit Mode Toggle -->
-                <div class="navbar-item mode-toggle">
-                    <button :class="['mode-btn', { active: !hasActiveEdits }]" @click="setViewMode"
-                        title="Ansichtsmodus">
-                        Ansicht
-                    </button>
-                    <button :class="['mode-btn', { active: hasActiveEdits }]" @click="setEditMode"
-                        title="Bearbeitungsmodus">
-                        Bearbeiten
-                    </button>
-                </div>
-
                 <!-- Save/Cancel Buttons (only visible when hasActiveEdits) -->
                 <div v-if="hasActiveEdits" class="navbar-item action-buttons">
                     <button class="action-btn cancel-btn" @click="handleCancel" title="Änderungen verwerfen">
@@ -116,7 +162,7 @@
                     <CornerBanner v-if="viewMode === 'demo'" text="demo" />
 
                     <!-- Edit button (only visible in edit mode) -->
-                    <button v-if="hasActiveEdits" class="hero-edit-btn"
+                    <button v-if="isEditModeActive" class="hero-edit-btn"
                         @click.stop="activateEntity('event', currentEvent)" title="Event bearbeiten"
                         :class="{ 'is-active': activeEntityType === 'event' && activeEntityId === currentEvent.id }">
                         <svg viewBox="0 0 20 20" fill="currentColor">
@@ -156,9 +202,15 @@
                     <h3 class="section-title">Aktuelle Beiträge</h3>
                     <div class="entity-grid">
                         <div v-for="post in currentEventPosts" :key="post.id" class="entity-card"
-                            :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
+                            :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }"
+                            style="position: relative;">
+
+                            <!-- Corner Banner for Demo Posts -->
+                            <CornerBanner v-if="post.xmlid && post.xmlid.startsWith('_demo')" text="demo"
+                                size="small" />
+
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="hasActiveEdits" class="entity-edit-btn"
+                            <button v-if="isEditModeActive" class="entity-edit-btn"
                                 @click.stop="activateEntity('post', post)" title="Beitrag bearbeiten"
                                 :class="{ 'is-active': activeEntityId === post.id && activeEntityType === 'post' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -167,7 +219,20 @@
                                 </svg>
                             </button>
 
-                            <img v-if="post.cimg" :src="post.cimg" :alt="post.name" class="entity-image" />
+                            <!-- Image with precedence: cimg (deprecated) over img_id -->
+                            <div v-if="post.cimg || getEntityImage(post)" class="entity-image-container">
+                                <img :src="post.cimg || getEntityImage(post).url" :alt="post.name"
+                                    class="entity-image" />
+
+                                <!-- Warning icon for deprecated cimg -->
+                                <div v-if="post.cimg" class="entity-warning-icon" title="Using deprecated cimg field">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                        <path d="M12 7v6m0 4h.01" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                            </div>
 
                             <div class="entity-content">
                                 <HeadingParser :content="post.name" as="h4" />
@@ -177,7 +242,7 @@
                     </div>
 
                     <!-- Tasks for Posts (only additional tasks, not main) -->
-                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="isEditModeActive && !showOnlyMainTasks && tasksEnabled" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('post')" title="Aufgabe hinzufügen">
@@ -193,7 +258,7 @@
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -210,9 +275,15 @@
                     <h3 class="section-title">Veranstaltungsorte</h3>
                     <div class="entity-grid">
                         <div v-for="location in currentEventLocations" :key="location.id" class="entity-card"
-                            :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
+                            :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }"
+                            style="position: relative;">
+
+                            <!-- Corner Banner for Demo Locations -->
+                            <CornerBanner v-if="location.xmlid && location.xmlid.startsWith('_demo')" text="demo"
+                                size="small" />
+
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="hasActiveEdits" class="entity-edit-btn"
+                            <button v-if="isEditModeActive" class="entity-edit-btn"
                                 @click.stop="activateEntity('location', location)" title="Ort bearbeiten"
                                 :class="{ 'is-active': activeEntityId === location.id && activeEntityType === 'location' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -221,7 +292,21 @@
                                 </svg>
                             </button>
 
-                            <img v-if="location.cimg" :src="location.cimg" :alt="location.name" class="entity-image" />
+                            <!-- Image with precedence: cimg (deprecated) over img_id -->
+                            <div v-if="location.cimg || getEntityImage(location)" class="entity-image-container">
+                                <img :src="location.cimg || getEntityImage(location).url" :alt="location.name"
+                                    class="entity-image" />
+
+                                <!-- Warning icon for deprecated cimg -->
+                                <div v-if="location.cimg" class="entity-warning-icon"
+                                    title="Using deprecated cimg field">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                        <path d="M12 7v6m0 4h.01" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                            </div>
 
                             <div class="entity-content">
                                 <HeadingParser :content="location.name" as="h4" />
@@ -233,7 +318,7 @@
                     </div>
 
                     <!-- Tasks for Locations -->
-                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="isEditModeActive && !showOnlyMainTasks && tasksEnabled" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('location')" title="Aufgabe hinzufügen">
@@ -249,7 +334,7 @@
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -266,9 +351,15 @@
                     <h3 class="section-title">Kursleiter</h3>
                     <div class="entity-grid">
                         <div v-for="instructor in currentEventInstructors" :key="instructor.id" class="entity-card"
-                            :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
+                            :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }"
+                            style="position: relative;">
+
+                            <!-- Corner Banner for Demo Instructors -->
+                            <CornerBanner v-if="instructor.xmlid && instructor.xmlid.startsWith('_demo')" text="demo"
+                                size="small" />
+
                             <!-- Edit button (only visible in edit mode) -->
-                            <button v-if="hasActiveEdits" class="entity-edit-btn"
+                            <button v-if="isEditModeActive" class="entity-edit-btn"
                                 @click.stop="activateEntity('instructor', instructor)" title="Kursleiter bearbeiten"
                                 :class="{ 'is-active': activeEntityId === instructor.id && activeEntityType === 'instructor' }">
                                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -277,8 +368,21 @@
                                 </svg>
                             </button>
 
-                            <img v-if="instructor.cimg" :src="instructor.cimg" :alt="instructor.name"
-                                class="entity-image" />
+                            <!-- Image with precedence: cimg (deprecated) over img_id -->
+                            <div v-if="instructor.cimg || getEntityImage(instructor)" class="entity-image-container">
+                                <img :src="instructor.cimg || getEntityImage(instructor).url" :alt="instructor.name"
+                                    class="entity-image" />
+
+                                <!-- Warning icon for deprecated cimg -->
+                                <div v-if="instructor.cimg" class="entity-warning-icon"
+                                    title="Using deprecated cimg field">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                        <path d="M12 7v6m0 4h.01" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                            </div>
 
                             <div class="entity-content">
                                 <HeadingParser :content="instructor.name" as="h4" />
@@ -288,7 +392,7 @@
                     </div>
 
                     <!-- Tasks for Instructors -->
-                    <div v-if="hasActiveEdits && !showOnlyMainTasks" class="entity-tasks">
+                    <div v-if="isEditModeActive && !showOnlyMainTasks && tasksEnabled" class="entity-tasks">
                         <div class="tasks-header">
                             <h4>Zusätzliche Aufgaben</h4>
                             <button class="add-task-btn" @click="openTaskModal('instructor')"
@@ -305,7 +409,7 @@
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -318,10 +422,10 @@
                 </div>
             </div>
 
-            <!-- Right Column: Editing Forms (35%, hidden in view mode) -->
-            <div v-if="hasActiveEdits" class="right-column">
-                <!-- Main Task Form -->
-                <div class="form-section main-task-section">
+            <!-- Right Column: Editing Forms (35%, visible when edit mode active and form visible) -->
+            <div v-if="isEditModeActive && isEditFormVisible" class="right-column">
+                <!-- Main Task Form (only show if tasks enabled) -->
+                <div v-if="tasksEnabled" class="form-section main-task-section">
                     <div class="form-header">
                         <div class="form-title">
                             <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
@@ -411,8 +515,107 @@
                     <div class="form-body">
                         <!-- Event Form -->
                         <div v-if="activeEntityType === 'event'" class="entity-fields">
+                            <!-- Status Dropdown - Top Right -->
+                            <div class="form-section-header">
+                                <h4 class="form-section-title">Event-Daten</h4>
+                                <StatusDropdown v-model="entityForm.status_id" table="events" lang="de"
+                                    @update:modelValue="markAsEdited" />
+                            </div>
+
                             <div class="form-group">
                                 <label>Name</label>
+                                <input type="text" v-model="entityForm.name" @input="markAsEdited" />
+                            </div>
+
+                            <!-- Project and Image Selection Row -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Projekt</label>
+                                    <DropdownList entity="projects" title="Projekt wählen" size="small"
+                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
+                                                }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bild</label>
+                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                        @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getImageName(entityForm.img_id) || 'Bild wählen' }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Teaser</label>
+                                <textarea v-model="entityForm.teaser" rows="3" @input="markAsEdited"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Beginn</label>
+                                    <input type="date" v-model="entityForm.date_begin" @input="markAsEdited" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Ende</label>
+                                    <input type="date" v-model="entityForm.date_end" @input="markAsEdited" />
+                                </div>
+                            </div>
+
+                            <!-- Markdown Field -->
+                            <div class="form-group">
+                                <label>Inhalt (Markdown)</label>
+                                <textarea v-model="entityForm.content" rows="8" @input="markAsEdited"
+                                    placeholder="Markdown-formatierter Inhalt..."></textarea>
+                            </div>
+
+                            <!-- cimg Field with Erase Button -->
+                            <div v-if="entityForm.cimg" class="form-group">
+                                <label>Bild URL (deprecated)</label>
+                                <div class="input-with-erase">
+                                    <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                    <button type="button" class="erase-btn"
+                                        @click="entityForm.cimg = ''; markAsEdited()" title="Bild URL löschen">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Post Form -->
+                        <div v-if="activeEntityType === 'post'" class="entity-fields">
+                            <!-- Status Dropdown - Top Right -->
+                            <div class="form-section-header">
+                                <h4 class="form-section-title">Beitrag-Daten</h4>
+                                <StatusDropdown v-model="entityForm.status_id" table="posts" lang="de"
+                                    @update:modelValue="markAsEdited" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Titel</label>
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
                             </div>
 
@@ -459,44 +662,84 @@
                                 <label>Teaser</label>
                                 <textarea v-model="entityForm.teaser" rows="3" @input="markAsEdited"></textarea>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Beginn</label>
-                                    <input type="date" v-model="entityForm.date_begin" @input="markAsEdited" />
-                                </div>
-                                <div class="form-group">
-                                    <label>Ende</label>
-                                    <input type="date" v-model="entityForm.date_end" @input="markAsEdited" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Bild URL (deprecated)</label>
-                                <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
-                            </div>
-                        </div>
 
-                        <!-- Post Form -->
-                        <div v-if="activeEntityType === 'post'" class="entity-fields">
+                            <!-- Markdown Field -->
                             <div class="form-group">
-                                <label>Titel</label>
-                                <input type="text" v-model="entityForm.name" @input="markAsEdited" />
+                                <label>Inhalt (Markdown)</label>
+                                <textarea v-model="entityForm.content" rows="8" @input="markAsEdited"
+                                    placeholder="Markdown-formatierter Inhalt..."></textarea>
                             </div>
-                            <div class="form-group">
-                                <label>Teaser</label>
-                                <textarea v-model="entityForm.teaser" rows="3" @input="markAsEdited"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Bild URL</label>
-                                <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+
+                            <!-- cimg Field with Erase Button -->
+                            <div v-if="entityForm.cimg" class="form-group">
+                                <label>Bild URL (deprecated)</label>
+                                <div class="input-with-erase">
+                                    <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                    <button type="button" class="erase-btn"
+                                        @click="entityForm.cimg = ''; markAsEdited()" title="Bild URL löschen">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Location Form -->
                         <div v-if="activeEntityType === 'location'" class="entity-fields">
+                            <!-- Status Dropdown - Top Right -->
+                            <div class="form-section-header">
+                                <h4 class="form-section-title">Ort-Daten</h4>
+                                <StatusDropdown v-model="entityForm.status_id" table="locations" lang="de"
+                                    @update:modelValue="markAsEdited" />
+                            </div>
+
                             <div class="form-group">
                                 <label>Name</label>
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
                             </div>
+
+                            <!-- Project and Image Selection Row -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Projekt</label>
+                                    <DropdownList entity="projects" title="Projekt wählen" size="small"
+                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
+                                                    }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bild</label>
+                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                        @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getImageName(entityForm.img_id) || 'Bild wählen' }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Straße</label>
                                 <input type="text" v-model="entityForm.street" @input="markAsEdited" />
@@ -521,18 +764,84 @@
                                     <input type="email" v-model="entityForm.email" @input="markAsEdited" />
                                 </div>
                             </div>
+
+                            <!-- Markdown Field -->
                             <div class="form-group">
-                                <label>Bild URL</label>
-                                <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                <label>Beschreibung (Markdown)</label>
+                                <textarea v-model="entityForm.content" rows="8" @input="markAsEdited"
+                                    placeholder="Markdown-formatierter Inhalt..."></textarea>
+                            </div>
+
+                            <!-- cimg Field with Erase Button -->
+                            <div v-if="entityForm.cimg" class="form-group">
+                                <label>Bild URL (deprecated)</label>
+                                <div class="input-with-erase">
+                                    <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                    <button type="button" class="erase-btn"
+                                        @click="entityForm.cimg = ''; markAsEdited()" title="Bild URL löschen">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Instructor Form -->
                         <div v-if="activeEntityType === 'instructor'" class="entity-fields">
+                            <!-- Status Dropdown - Top Right -->
+                            <div class="form-section-header">
+                                <h4 class="form-section-title">Kursleiter-Daten</h4>
+                                <StatusDropdown v-model="entityForm.status_id" table="instructors" lang="de"
+                                    @update:modelValue="markAsEdited" />
+                            </div>
+
                             <div class="form-group">
                                 <label>Name</label>
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
                             </div>
+
+                            <!-- Project and Image Selection Row -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Projekt</label>
+                                    <DropdownList entity="projects" title="Projekt wählen" size="small"
+                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
+                                                    }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bild</label>
+                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                        @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getImageName(entityForm.img_id) || 'Bild wählen' }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Beschreibung</label>
                                 <textarea v-model="entityForm.description" rows="3" @input="markAsEdited"></textarea>
@@ -551,9 +860,28 @@
                                 <label>Stadt</label>
                                 <input type="text" v-model="entityForm.city" @input="markAsEdited" />
                             </div>
+
+                            <!-- Markdown Field -->
                             <div class="form-group">
-                                <label>Bild URL</label>
-                                <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                <label>Weitere Infos (Markdown)</label>
+                                <textarea v-model="entityForm.content" rows="8" @input="markAsEdited"
+                                    placeholder="Markdown-formatierter Inhalt..."></textarea>
+                            </div>
+
+                            <!-- cimg Field with Erase Button -->
+                            <div v-if="entityForm.cimg" class="form-group">
+                                <label>Bild URL (deprecated)</label>
+                                <div class="input-with-erase">
+                                    <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
+                                    <button type="button" class="erase-btn"
+                                        @click="entityForm.cimg = ''; markAsEdited()" title="Bild URL löschen">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -570,6 +898,7 @@ import Navbar from '@/components/Navbar.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import ProjectHeader from '@/components/ProjectHeader.vue'
 import CornerBanner from '@/components/CornerBanner.vue'
+import StatusDropdown from '@/components/StatusDropdown.vue'
 import { ItemList, DropdownList } from '@/components/clist'
 
 const { user, requireAuth, logout: authLogout } = useAuth()
@@ -582,6 +911,13 @@ const logout = () => {
 // View mode: 'demo' | 'new' | 'project'
 const viewMode = ref<'demo' | 'new' | 'project'>('demo')
 const selectedProjectId = ref<string | null>(null)
+
+// Settings dropdown
+const isSettingsOpen = ref(false)
+const settingsDropdownRef = ref<HTMLElement>()
+
+// Tasks toggle (default: on, with dysfunctional warning)
+const tasksEnabled = ref(true)
 
 // Base data state
 const events = ref<any[]>([])
@@ -601,10 +937,45 @@ const currentProject = computed(() => {
     return projects.value.find((p: any) => p.id === selectedProjectId.value) || null
 })
 
-// Current event data
-const currentEventPosts = computed(() => posts.value.filter((p: any) => p.event_id === currentEventId.value))
-const currentEventLocations = computed(() => locations.value.filter((l: any) => l.event_id === currentEventId.value))
-const currentEventInstructors = computed(() => instructors.value.filter((i: any) => i.event_id === currentEventId.value))
+// Current event data - filtered by xmlid for demo/new modes
+const currentEventPosts = computed(() => {
+    if (!currentEvent.value) return []
+
+    // For demo/new mode: match by event_xmlid
+    if (viewMode.value === 'demo' || viewMode.value === 'new') {
+        return posts.value.filter((p: any) => p.event_xmlid === currentEvent.value.xmlid)
+    }
+
+    // For project mode: match by event_id (or show alert)
+    return posts.value.filter((p: any) => p.event_id === currentEventId.value)
+})
+
+const currentEventLocations = computed(() => {
+    if (!currentEvent.value) return []
+
+    // For demo/new mode: match by address_id from event
+    if (viewMode.value === 'demo' || viewMode.value === 'new') {
+        if (currentEvent.value.address_id) {
+            return locations.value.filter((l: any) => l.id === currentEvent.value.address_id)
+        }
+        return []
+    }
+
+    // For project mode: match by event_id (or show alert)
+    return locations.value.filter((l: any) => l.event_id === currentEventId.value)
+})
+
+const currentEventInstructors = computed(() => {
+    if (!currentEvent.value) return []
+
+    // For demo/new mode: match by event_xmlid
+    if (viewMode.value === 'demo' || viewMode.value === 'new') {
+        return instructors.value.filter((i: any) => i.event_xmlid === currentEvent.value.xmlid)
+    }
+
+    // For project mode: match by event_id (or show alert)
+    return instructors.value.filter((i: any) => i.event_id === currentEventId.value)
+})
 
 // Filtered events based on view mode
 const filteredEvents = computed(() => {
@@ -654,6 +1025,45 @@ const getHeroImage = (event: any): { url: string; isDeprecated: boolean } => {
 
     // No image available
     return { url: '', isDeprecated: false }
+}
+
+// Entity Image Helper Function (for posts, locations, instructors)
+const getEntityImage = (entity: any): { url: string } => {
+    // If no img_id, return empty
+    if (!entity.img_id) {
+        return { url: '' }
+    }
+
+    // Find the image by img_id
+    const image = images.value.find((img: any) => img.id === entity.img_id)
+    if (!image) {
+        return { url: '' }
+    }
+
+    // Try to get img_square or img_thumb
+    if (image.img_square) {
+        try {
+            const imgData = typeof image.img_square === 'string'
+                ? JSON.parse(image.img_square)
+                : image.img_square
+            return { url: generateImageUrl(imgData, 300, 300) }
+        } catch (e) {
+            console.error('Failed to parse img_square:', e)
+        }
+    }
+
+    if (image.img_thumb) {
+        try {
+            const imgData = typeof image.img_thumb === 'string'
+                ? JSON.parse(image.img_thumb)
+                : image.img_thumb
+            return { url: generateImageUrl(imgData, 200, 200) }
+        } catch (e) {
+            console.error('Failed to parse img_thumb:', e)
+        }
+    }
+
+    return { url: '' }
 }
 
 const generateImageUrl = (imgData: any, width: number, height: number): string => {
@@ -765,6 +1175,8 @@ const activeEntityId = ref<string | null>(null)
 
 // Edit state
 const hasActiveEdits = ref(false)
+const isEditModeActive = ref(false) // Tracks if we're in edit mode (only toggled via settings)
+const isEditFormVisible = ref(false) // Tracks if edit form is shown
 
 // Forms
 const mainTaskForm = ref({
@@ -816,53 +1228,96 @@ const toggleEventsDropdown = () => {
     isEventsOpen.value = !isEventsOpen.value
 }
 
-const handleEventSelect = (event: any) => {
+const handleEventSelect = async (event: any) => {
+    // Auto-save before switching events if in edit mode with changes
+    if (hasActiveEdits.value && isEditFormVisible.value) {
+        await handleSave()
+    }
+
     switchEvent(event.id)
     isEventsOpen.value = false
-    // Reset active entity when switching events
-    if (currentEvent.value) {
-        activateEntity('event', currentEvent.value)
+
+    // Activate the new event if in edit mode
+    if (isEditModeActive.value && currentEvent.value) {
+        await activateEntity('event', currentEvent.value)
     }
 }
 
-const selectEvent = (eventId: string) => {
+const selectEvent = async (eventId: string) => {
+    // Auto-save before switching events if in edit mode with changes
+    if (hasActiveEdits.value && isEditFormVisible.value) {
+        await handleSave()
+    }
+
     switchEvent(eventId)
     isEventsOpen.value = false
-    // Reset active entity when switching events
-    if (currentEvent.value) {
-        activateEntity('event', currentEvent.value)
+
+    // Activate the new event if in edit mode
+    if (isEditModeActive.value && currentEvent.value) {
+        await activateEntity('event', currentEvent.value)
     }
 }
 
 const setViewMode = () => {
-    // View mode - just clear active entity
+    // View mode - clear edit mode flag and hide form
+    isEditModeActive.value = false
+    isEditFormVisible.value = false
     activeEntityType.value = null
     activeEntityId.value = null
     hasActiveEdits.value = false
+    isSettingsOpen.value = false
 }
 
 const setEditMode = async () => {
+    // Check for project mode
+    if (viewMode.value === 'project') {
+        alert('Project-Mode not yet activated')
+        return
+    }
+
     // Edit mode - refresh data and activate event
     await refreshSqlData()
-    await loadAllTasks()
+
+    // Only load tasks if enabled
+    if (tasksEnabled.value) {
+        await loadAllTasks()
+    }
+
     if (currentEvent.value) {
         await activateEntity('event', currentEvent.value)
     }
-    // Set edit mode AFTER activateEntity (which resets it to false)
-    hasActiveEdits.value = true
+
+    // Set edit mode flags
+    isEditModeActive.value = true
+    isEditFormVisible.value = true
+    hasActiveEdits.value = false // Start with no edits
+    isSettingsOpen.value = false
 }
 
 const activateEntity = async (type: 'event' | 'post' | 'location' | 'instructor', entity: any) => {
+    // Auto-save if there are unsaved changes and form is visible
+    if (hasActiveEdits.value && isEditFormVisible.value && activeEntityType.value && activeEntityId.value) {
+        console.log('💾 Auto-saving before switching entity...')
+        await handleSave()
+    }
+
     activeEntityType.value = type
     activeEntityId.value = entity.id
 
     // Load entity data into form
     entityForm.value = { ...entity }
 
-    // Load main task for this entity
-    await loadMainTask(type, entity.id)
+    // Load main task for this entity (only if tasks enabled)
+    if (tasksEnabled.value) {
+        await loadMainTask(type, entity.id)
+    }
 
-    // Reset edit state when changing entity
+    // Show the edit form if we're in edit mode
+    if (isEditModeActive.value) {
+        isEditFormVisible.value = true
+    }
+
+    // Reset dirty flag (no unsaved changes after loading)
     hasActiveEdits.value = false
 }
 
@@ -932,7 +1387,8 @@ const handleSave = async () => {
             activeEntityType: activeEntityType.value,
             activeEntityId: activeEntityId.value,
             entityForm: entityForm.value,
-            mainTaskForm: mainTaskForm.value
+            mainTaskForm: mainTaskForm.value,
+            tasksEnabled: tasksEnabled.value
         })
 
         // Save entity data
@@ -942,17 +1398,22 @@ const handleSave = async () => {
             console.log('✅ Entity saved')
         }
 
-        // Save main task
-        console.log('💾 Saving main task...')
-        await saveMainTask()
-        console.log('✅ Main task saved')
+        // Save main task (only if tasks enabled)
+        if (tasksEnabled.value) {
+            console.log('💾 Saving main task...')
+            await saveMainTask()
+            console.log('✅ Main task saved')
+        } else {
+            console.log('⏭️ Skipping main task save (tasks disabled)')
+        }
 
         // Refresh data from database (this updates the left column display)
         console.log('🔄 Refreshing data from database...')
         await refreshSqlData()
         console.log('✅ Data refreshed')
 
-        // Reset edit state - the forms keep their current values which are the saved values
+        // Reset dirty flag (no unsaved changes after save)
+        // Keep form visible and stay in edit mode
         hasActiveEdits.value = false
 
         console.log('✅ Save complete!')
@@ -961,28 +1422,26 @@ const handleSave = async () => {
         alert('Fehler beim Speichern!')
     }
 }
-
 const handleCancel = async () => {
-    if (hasActiveEdits.value) {
-        const confirmed = window.confirm('Änderungen verwerfen?')
-        if (!confirmed) return
-    }
+    // Discard changes without confirmation
+    console.log('🚫 Cancelling edits, discarding changes...')
 
     // Reload original data
     if (activeEntityType.value && activeEntityId.value) {
         const originalEntity = getOriginalEntity()
         if (originalEntity) {
             entityForm.value = { ...originalEntity }
-            await loadMainTask(activeEntityType.value, activeEntityId.value)
+            if (tasksEnabled.value) {
+                await loadMainTask(activeEntityType.value, activeEntityId.value)
+            }
         }
     }
 
+    // Reset dirty flag and hide form (but stay in edit mode)
     hasActiveEdits.value = false
+    isEditFormVisible.value = false
 
-    // If in subEntity mode, return to event
-    if (activeEntityType.value !== 'event' && currentEvent.value) {
-        await activateEntity('event', currentEvent.value)
-    }
+    console.log('✅ Changes discarded, form hidden')
 }
 
 const getOriginalEntity = () => {
@@ -1149,10 +1608,13 @@ const getImageName = (imageId: number | null | undefined) => {
     return image ? (image.about || `Image ${imageId}`) : `Image ${imageId}`
 }
 
-// Click outside to close dropdown
+// Click outside to close dropdowns
 const handleClickOutside = (event: Event) => {
     if (eventsSelectorRef.value && !eventsSelectorRef.value.contains(event.target as Node)) {
         isEventsOpen.value = false
+    }
+    if (settingsDropdownRef.value && !settingsDropdownRef.value.contains(event.target as Node)) {
+        isSettingsOpen.value = false
     }
 }
 
@@ -1179,6 +1641,110 @@ onUnmounted(() => {
 }
 
 /* ===== NAVBAR SLOT COMPONENTS ===== */
+
+/* Settings Dropdown */
+.settings-dropdown {
+    position: relative;
+}
+
+.dropdown-container {
+    position: relative;
+}
+
+.settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-card-bg);
+    border: var(--border) solid var(--color-border);
+    border-radius: var(--radius-button);
+    color: var(--color-contrast);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-btn:hover {
+    background: var(--color-muted-bg);
+}
+
+.settings-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 280px;
+    background: var(--color-card-bg);
+    border: var(--border) solid var(--color-border);
+    border-radius: var(--radius-button);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.settings-section {
+    padding: 0.75rem 0;
+}
+
+.settings-section:not(:last-child) {
+    border-bottom: var(--border) solid var(--color-border);
+}
+
+.settings-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-dimmed);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--color-warning-contrast);
+    background: var(--color-warning-bg);
+    border-radius: 50%;
+    cursor: help;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: var(--border) solid var(--color-border);
+    border-radius: var(--radius-button);
+    background: transparent;
+    color: var(--color-dimmed);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
+}
+
+.toggle-btn.active {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-bg);
+}
 
 /* Events Selector */
 .events-selector {
@@ -1486,10 +2052,39 @@ onUnmounted(() => {
     height: 1rem;
 }
 
+.entity-image-container {
+    position: relative;
+    width: 100%;
+    height: 10rem;
+    overflow: hidden;
+}
+
 .entity-image {
     width: 100%;
     height: 10rem;
     object-fit: cover;
+}
+
+.entity-warning-icon {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    background: var(--color-warning-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    cursor: help;
+}
+
+.entity-warning-icon svg {
+    width: 20px;
+    height: 20px;
 }
 
 .entity-content {
@@ -1751,6 +2346,63 @@ onUnmounted(() => {
 
 .form-dropdown-trigger .chevron.rotate-180 {
     transform: rotate(180deg);
+}
+
+/* Form Section Header with Status */
+.form-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.form-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-dimmed);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+/* Input with Erase Button */
+.input-with-erase {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.input-with-erase input {
+    flex: 1;
+}
+
+.erase-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-negative-bg);
+    color: white;
+    border: none;
+    border-radius: var(--radius-button);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.erase-btn:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.erase-btn:active {
+    transform: scale(0.95);
+}
+
+.erase-btn svg {
+    display: block;
 }
 
 .advanced-fields {
