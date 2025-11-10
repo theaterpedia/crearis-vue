@@ -60,6 +60,16 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
             exportValue: true,
         },
         {
+            column: 'instructor_id',
+            reason: 'Late-seeded via instructor_xmlid lookup (circular dependency resolution)',
+            exportValue: false,
+        },
+        {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
             column: 'cimg',
             reason: 'Deprecated image field',
             exportValue: false,
@@ -102,6 +112,56 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
             exportValue: true,
         },
         {
+            column: 'regio',
+            reason: 'Late-seeded via regio_domaincode lookup (circular dependency resolution)',
+            exportValue: false,
+        },
+        {
+            column: 'is_regio',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'is_topic',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'is_onepage',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'is_service',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'is_sidebar',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'page_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'aside_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'header_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'footer_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
             column: 'cimg',
             reason: 'Deprecated image field',
             exportValue: false,
@@ -136,6 +196,11 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
         {
             column: 'id',
             reason: 'Auto-generated serial, will be reassigned on import',
+            exportValue: false,
+        },
+        {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
             exportValue: false,
         },
         {
@@ -176,6 +241,11 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
             exportValue: false,
         },
         {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
             column: 'cimg',
             reason: 'Deprecated image field',
             exportValue: false,
@@ -210,6 +280,11 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
         {
             column: 'id',
             reason: 'Auto-generated serial, will be reassigned on import',
+            exportValue: false,
+        },
+        {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
             exportValue: false,
         },
         {
@@ -250,6 +325,11 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
             exportValue: false,
         },
         {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
             column: 'cimg',
             reason: 'Deprecated image field',
             exportValue: false,
@@ -284,6 +364,11 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
         {
             column: 'id',
             reason: 'Auto-generated serial, will be reassigned on import',
+            exportValue: false,
+        },
+        {
+            column: 'status_display',
+            reason: 'Computed column (GENERATED ALWAYS)',
             exportValue: false,
         },
         {
@@ -354,6 +439,26 @@ export const LATE_SEED_CONFIG: Record<string, LateSeedColumn[]> = {
         {
             column: 'id',
             reason: 'Auto-generated serial, will be reassigned on import',
+            exportValue: false,
+        },
+        {
+            column: 'page_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'aside_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'header_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
+            exportValue: false,
+        },
+        {
+            column: 'footer_has_content',
+            reason: 'Computed column (GENERATED ALWAYS)',
             exportValue: false,
         },
     ],

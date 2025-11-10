@@ -52,18 +52,30 @@ export async function exportEntityTable(
     );
 
     // Build SELECT query with filtered columns
-    const columnList = exportColumns.join(', ');
+    // Quote column names to handle reserved keywords (e.g., "table" in status table)
+    const quotedColumns = exportColumns.map(col => `"${tableName}"."${col}"`);
+    let columnList = quotedColumns.join(', ');
+
+    // Special handling for users table: add instructor_xmlid for late-seeding
+    let fromClause = `FROM "${tableName}"`;
+    if (tableName === 'users') {
+        columnList += ', instructors.xmlid AS instructor_xmlid';
+        fromClause += ' LEFT JOIN instructors ON "users".instructor_id = instructors.id';
+    } else if (tableName === 'projects') {
+        columnList += ', regio_project.domaincode AS regio_domaincode';
+        fromClause += ' LEFT JOIN projects AS regio_project ON "projects".regio = regio_project.id';
+    }
 
     // Determine ordering: prefer id, fallback to created_at, or no ordering
     let orderBy = '';
     if (exportColumns.includes('id')) {
-        orderBy = 'ORDER BY id';
+        orderBy = 'ORDER BY "' + tableName + '"."id"';
     } else if (exportColumns.includes('created_at')) {
-        orderBy = 'ORDER BY created_at';
+        orderBy = 'ORDER BY "' + tableName + '"."created_at"';
     }
 
     const rowsResult = await db.all(
-        `SELECT ${columnList} FROM ${tableName} ${orderBy}`
+        `SELECT ${columnList} ${fromClause} ${orderBy}`
     );
 
     const rows = rowsResult as Record<string, any>[];
@@ -118,20 +130,22 @@ export async function exportDetailTable(
     );
 
     // Build SELECT query with ordering
-    const columnList = exportColumns.join(', ');
+    // Quote column names to handle reserved keywords
+    const quotedColumns = exportColumns.map(col => `"${col}"`);
+    const columnList = quotedColumns.join(', ');
     let orderBy = '';
 
     if (orderColumn) {
-        orderBy = `ORDER BY ${orderColumn}`;
+        orderBy = `ORDER BY "${orderColumn}"`;
     } else if (exportColumns.includes('id')) {
-        orderBy = 'ORDER BY id';
+        orderBy = 'ORDER BY "id"';
     } else if (exportColumns.includes('created_at')) {
-        orderBy = 'ORDER BY created_at';
+        orderBy = 'ORDER BY "created_at"';
     }
     // else: no ORDER BY (junction tables, etc.)
 
     const rowsResult = await db.all(
-        `SELECT ${columnList} FROM ${tableName} ${orderBy}`
+        `SELECT ${columnList} FROM "${tableName}" ${orderBy}`
     );
 
     const rows = rowsResult as Record<string, any>[];
