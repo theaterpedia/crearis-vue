@@ -23,8 +23,8 @@
 
                 <!-- CL2: Use ItemList with entity fetching -->
                 <div class="dropdown-list-wrapper">
-                    <ItemList :entity="entity" :project="project" item-type="row" :size="size" interaction="static"
-                        @item-click="(item) => handleSelect(item, hide)" />
+                    <ItemList :entity="entity" :project="project" :filterIds="filterIds" item-type="row" :size="size"
+                        interaction="static" @item-click="(item) => handleSelect(item, hide)" />
                 </div>
             </div>
         </template>
@@ -41,6 +41,7 @@ interface Props {
     project?: string
     title?: string
     size?: 'small' | 'medium'
+    filterIds?: number[] // Optional array of IDs to filter by
 }
 
 const props = withDefaults(defineProps<Props>(), {

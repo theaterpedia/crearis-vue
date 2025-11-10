@@ -73,6 +73,21 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Project-Automation Toggle Section -->
+                            <div class="settings-section">
+                                <label class="settings-label">Project-Automation</label>
+                                <div class="toggle-group">
+                                    <button :class="['toggle-btn', { active: !projectAutomationEnabled }]"
+                                        @click="projectAutomationEnabled = false">
+                                        Off
+                                    </button>
+                                    <button :class="['toggle-btn', { active: projectAutomationEnabled }]"
+                                        @click="projectAutomationEnabled = true">
+                                        On
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,7 +273,7 @@
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -334,7 +349,7 @@
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -409,7 +424,7 @@
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                }}</span>
+                                    }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -532,11 +547,11 @@
                                 <div class="form-group">
                                     <label>Projekt</label>
                                     <DropdownList entity="projects" title="Projekt wählen" size="small"
-                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        :filterIds="availableProjectIds" @select="handleProjectSelection">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                }}</span>
+                                                    }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -624,11 +639,11 @@
                                 <div class="form-group">
                                     <label>Projekt</label>
                                     <DropdownList entity="projects" title="Projekt wählen" size="small"
-                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        :filterIds="availableProjectIds" @select="handleProjectSelection">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                    }}</span>
+                                                }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -706,11 +721,11 @@
                                 <div class="form-group">
                                     <label>Projekt</label>
                                     <DropdownList entity="projects" title="Projekt wählen" size="small"
-                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        :filterIds="availableProjectIds" @select="handleProjectSelection">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                    }}</span>
+                                                }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -808,11 +823,11 @@
                                 <div class="form-group">
                                     <label>Projekt</label>
                                     <DropdownList entity="projects" title="Projekt wählen" size="small"
-                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        :filterIds="availableProjectIds" @select="handleProjectSelection">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                    }}</span>
+                                                }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -916,8 +931,11 @@ const selectedProjectId = ref<string | null>(null)
 const isSettingsOpen = ref(false)
 const settingsDropdownRef = ref<HTMLElement>()
 
-// Tasks toggle (default: on, with dysfunctional warning)
-const tasksEnabled = ref(true)
+// Tasks toggle (default: OFF)
+const tasksEnabled = ref(false)
+
+// Project-Automation toggle (default: ON)
+const projectAutomationEnabled = ref(true)
 
 // Base data state
 const events = ref<any[]>([])
@@ -993,6 +1011,32 @@ const filteredEvents = computed(() => {
         return []
     }
     return events.value
+})
+
+// RULE 1: Filtered projects for automation
+// When project automation is enabled, only show projects that have events
+const availableProjects = computed(() => {
+    if (!projectAutomationEnabled.value) {
+        return projects.value
+    }
+
+    // Get unique project_ids from events that have a project_id set
+    const projectIdsWithEvents = new Set(
+        events.value
+            .filter((e: any) => e.project_id)
+            .map((e: any) => e.project_id)
+    )
+
+    // Filter projects to only those with events
+    return projects.value.filter((p: any) => projectIdsWithEvents.has(p.id))
+})
+
+// Project IDs array for dropdown filtering
+const availableProjectIds = computed(() => {
+    if (!projectAutomationEnabled.value) {
+        return undefined // undefined means no filtering
+    }
+    return availableProjects.value.map((p: any) => p.id)
 })
 
 // Watch viewMode and clear projectId when leaving project mode
@@ -1173,9 +1217,9 @@ const eventsSelectorRef = ref<HTMLElement>()
 const activeEntityType = ref<'event' | 'post' | 'location' | 'instructor' | null>(null)
 const activeEntityId = ref<string | null>(null)
 
-// Edit state
+// Edit state (default: Edit mode ON)
 const hasActiveEdits = ref(false)
-const isEditModeActive = ref(false) // Tracks if we're in edit mode (only toggled via settings)
+const isEditModeActive = ref(true) // Tracks if we're in edit mode (only toggled via settings)
 const isEditFormVisible = ref(false) // Tracks if edit form is shown
 
 // Forms
@@ -1379,6 +1423,30 @@ const resetMainTaskForm = () => {
 
 const markAsEdited = () => {
     hasActiveEdits.value = true
+}
+
+// RULE 2: Handle project selection with xmlid replacement
+const handleProjectSelection = (project: any) => {
+    // Set the project_id
+    entityForm.value.project_id = project.id
+    markAsEdited()
+
+    // If project automation is enabled, handle xmlid replacement
+    if (projectAutomationEnabled.value && entityForm.value.xmlid) {
+        const currentXmlid = entityForm.value.xmlid
+
+        // Check if xmlid starts with '_demo'
+        if (currentXmlid.startsWith('_demo')) {
+            // Replace '_demo' with the project's domaincode
+            const newXmlid = currentXmlid.replace('_demo', project.domaincode)
+            entityForm.value.xmlid = newXmlid
+            console.log(`✅ XML ID updated: ${currentXmlid} → ${newXmlid}`)
+        } else {
+            // Show alert if xmlid doesn't start with '_demo'
+            alert('change xml_id manually!!!')
+            console.warn('⚠️ XML ID does not start with _demo:', currentXmlid)
+        }
+    }
 }
 
 const handleSave = async () => {

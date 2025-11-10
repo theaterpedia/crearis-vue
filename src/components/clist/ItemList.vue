@@ -87,6 +87,7 @@ interface Props {
     entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
+    filterIds?: number[] // Filter fetched entities by these IDs
     itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
@@ -218,8 +219,16 @@ const parseImageData = (jsonString: string | undefined): ImgShapeData | null => 
  */
 const entities = computed(() => {
     if (dataMode.value) {
+        // Apply filterIds if provided
+        let filteredData = entityData.value
+        if (props.filterIds && props.filterIds.length > 0) {
+            filteredData = entityData.value.filter((entity: any) =>
+                props.filterIds!.includes(entity.id)
+            )
+        }
+
         // Transform entity data to ListItem format
-        return entityData.value.map((entity: any) => {
+        return filteredData.map((entity: any) => {
             const imageField = props.variant === 'square' ? entity.img_square : entity.img_thumb
             const imageData = parseImageData(imageField)
 
