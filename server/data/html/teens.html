@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jugendliche (13-17 Jahre) - Demo Data</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .navbar {
+            background: #2c3e50;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .navbar li { margin: 0; }
+        
+        .navbar a {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .navbar a:hover {
+            background: #34495e;
+            border-bottom-color: #3498db;
+        }
+        
+        .navbar a.active {
+            background: #34495e;
+            border-bottom-color: #3498db;
+        }
+        
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .person-card {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 20px;
+        }
+
+        .person-card img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .person-info {
+            flex: 1;
+        }
+
+        .person-info h2 {
+            margin: 0 0 10px 0;
+            color: #34495e;
+        }
+
+        .person-info .age {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .person-info .address {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .person-info .teaser {
+            line-height: 1.6;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .unsplash-box {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .unsplash-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Übersicht</a></li>
+            <li><a href="instructors.html">Theaterpädagog:innen (20)</a></li>
+            <li><a href="children.html">Kinder 6-12 (15)</a></li>
+            <li><a href="teens.html" class="active">Jugendliche 13-17 (15)</a></li>
+            <li><a href="adults.html">Erwachsene 18+ (15)</a></li>
+        </ul>
+    </nav>
+
+    <div class="content">
+        <h1>Jugendliche (13-17 Jahre) - 15 Personen</h1>
+        <p style="text-align: center; color: #7f8c8d;">Vielfältige Jugendliche aus Bayern und Tschechien</p>
+
+    <!-- Teen 1 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Layla Al-Sayed</h2>
+            <div class="age">16 Jahre</div>
+            <div class="address">Hasenbergl, München</div>
+            <div class="teaser">Syrischer Hintergrund. Interessiert an politischem Theater und sozialen Themen. Plant
+                eine Karriere in Sozialarbeit und nutzt Theater als Werkzeug.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1531384441138-2736e62e0919<br>
+                Collection: Teen Portraits<br>
+                Author: Mahdi Bafande
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 2 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Felix Bachmann</h2>
+            <div class="age">15 Jahre</div>
+            <div class="address">Lehel, München</div>
+            <div class="teaser">Bayerischer Gymnasiast mit Leidenschaft fürs Schreiben. Entwickelt eigene Theaterstücke
+                und Skripte. Organisiert schulinterne Theatergruppen.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1539571696357-5a69c17a67c6<br>
+                Collection: Young Adults<br>
+                Author: Brooke Cagle
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 3 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Mariam Okeke</h2>
+            <div class="age">17 Jahre</div>
+            <div class="address">Neuperlach, München</div>
+            <div class="teaser">Nigerianischer Hintergrund. Spricht über Rassismus-Erfahrungen durch autobiografisches
+                Theater. Sehr selbstbewusst und engagiert in antirassistischer Arbeit.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1524504388940-b1c1722653e1<br>
+                Collection: Youth Diversity<br>
+                Author: Nsey Benajah
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 4 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Leon Weber</h2>
+            <div class="age">14 Jahre</div>
+            <div class="address">Lechhausen, Augsburg</div>
+            <div class="teaser">Schwäbischer Teenager mit Interesse an Improvisationstheater. Sehr spontan und kreativ,
+                liebt es ohne Skript zu arbeiten.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1507003211169-0a1dd7228f2d<br>
+                Collection: Teenage Years<br>
+                Author: Ben Parker
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 5 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Elif Yıldız</h2>
+            <div class="age">16 Jahre</div>
+            <div class="address">Giesing, München</div>
+            <div class="teaser">Türkischer Hintergrund. Nutzt Theater um über Identitätsfragen und Zugehörigkeit zu
+                reflektieren. Mehrsprachige Theaterarbeit (Deutsch/Türkisch).</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1531746020798-e6953c6e8e04<br>
+                Collection: Young Women<br>
+                Author: Amir Seilsepour
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 6 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Anna Fuchs</h2>
+            <div class="age">15 Jahre</div>
+            <div class="address">Maxvorstadt, München</div>
+            <div class="teaser">Deutsche Schülerin mit Fokus auf Umwelt-Theater. Entwickelt Performances zu Klimawandel
+                und Nachhaltigkeit mit ihrer Gruppe.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1488426862026-3ee34a7d66df<br>
+                Collection: Teen Expression<br>
+                Author: Aiony Haust
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 7 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Tariq Rahman</h2>
+            <div class="age">17 Jahre</div>
+            <div class="address">Obersendling, München</div>
+            <div class="teaser">Irakischer Hintergrund. Nutzt Theater der Unterdrückten Methoden um über
+                Diskriminierungserfahrungen zu sprechen. Möchte Sozialarbeiter werden.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1507003211169-0a1dd7228f2d<br>
+                Collection: Youth Activism<br>
+                Author: Vince Fleming
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 8 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1504834636679-cd3acd047c06?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Sarah Keller</h2>
+            <div class="age">14 Jahre</div>
+            <div class="address">Südstadt, Nürnberg</div>
+            <div class="teaser">Fränkisches Mädchen mit Leidenschaft für historisches Theater. Interessiert an
+                regionaler Geschichte und deren theatraler Aufarbeitung.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1504834636679-cd3acd047c06<br>
+                Collection: Teen Talents<br>
+                Author: Ali Yahya
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 9 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1522556189639-b150ed9c4330?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Kateryna Bondar</h2>
+            <div class="age">16 Jahre</div>
+            <div class="address">Pasing, München</div>
+            <div class="teaser">Ukrainischer Hintergrund, seit 2022 in Deutschland. Verarbeitet Kriegserfahrungen durch
+                dokumentarisches Theater. Sehr stark und resilient.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1522556189639-b150ed9c4330<br>
+                Collection: Young Resilience<br>
+                Author: Eliott Reyna
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 10 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1545912452-8aea7e25a3d3?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Tobias Schuster</h2>
+            <div class="age">15 Jahre</div>
+            <div class="address">Laim, München</div>
+            <div class="teaser">Bayerischer Schüler mit technischem Interesse. Mag Bühnentechnik, Licht und Sound.
+                Kombiniert Theater mit digitalen Medien.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1545912452-8aea7e25a3d3<br>
+                Collection: Tech Youth<br>
+                Author: Matheus Ferrero
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 11 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1516914943479-89db7d9ae7f2?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Zainab Mahmoud</h2>
+            <div class="age">17 Jahre</div>
+            <div class="address">Ramersdorf, München</div>
+            <div class="teaser">Syrischer Hintergrund. Feministisch engagiert, entwickelt Theaterstücke über
+                Frauenrechte und Selbstbestimmung. Plant Studium in Gender Studies.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1516914943479-89db7d9ae7f2<br>
+                Collection: Empowered Youth<br>
+                Author: Omar Lopez
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 12 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1542838309-d3dfe2e30c08?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Nina Reiter</h2>
+            <div class="age">14 Jahre</div>
+            <div class="address">Haunstetten, Augsburg</div>
+            <div class="teaser">Schwäbisches Mädchen mit künstlerischem Talent. Kombiniert Bildende Kunst mit
+                Performance. Entwickelt visuelle Theaterkonzepte.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1542838309-d3dfe2e30c08<br>
+                Collection: Creative Teens<br>
+                Author: Raychan
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 13 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1543269664-647b2dd5e0c4?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Emre Arslan</h2>
+            <div class="age">16 Jahre</div>
+            <div class="address">Westend, München</div>
+            <div class="teaser">Türkischer Hintergrund. Hip-Hop und Urban Dance im Theater. Verbindet Straßenkultur mit
+                angewandtem Theater. Sehr charismatisch.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1543269664-647b2dd5e0c4<br>
+                Collection: Urban Youth<br>
+                Author: Michael Dam
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 14 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Clara Hoffmann</h2>
+            <div class="age">15 Jahre</div>
+            <div class="address">Altstadt, Nürnberg</div>
+            <div class="teaser">Fränkische Gymnasiastin mit sozialem Engagement. Nutzt Applied Theatre für
+                Friedenspädagogik und Konfliktlösung in ihrer Schule.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1506277886164-e25aa3f4ef7f<br>
+                Collection: Teen Leaders<br>
+                Author: Kinga Cichewicz
+            </div>
+        </div>
+    </div>
+
+    <!-- Teen 15 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Idris Yeboah</h2>
+            <div class="age">17 Jahre</div>
+            <div class="address">Neuhausen, München</div>
+            <div class="teaser">Ghanaischer Hintergrund. Spoken Word Künstler der Theater und Poetry verbindet. Sehr
+                politisch engagiert in antirassistischer Jugendarbeit.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1552058544-f2b08422138a<br>
+                Collection: Youth Voices<br>
+                Author: Matheus Ferrero
+            </div>
+        </div>
+    </div>
+
+    </div><!-- .content -->
+
+</body>
+
+</html>
