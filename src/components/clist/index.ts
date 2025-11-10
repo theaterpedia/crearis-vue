@@ -6,3 +6,4 @@ export { default as ItemCard } from './ItemCard.vue'
 // Container components
 export { default as ItemList } from './ItemList.vue'
 export { default as ItemGallery } from './ItemGallery.vue'
+export { default as DropdownList } from './DropdownList.vue'

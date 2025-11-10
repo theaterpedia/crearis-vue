@@ -37,7 +37,7 @@ import { Dropdown as VDropdown } from 'floating-vue'
 import ItemList from './ItemList.vue'
 
 interface Props {
-    entity: 'posts' | 'events' | 'instructors'
+    entity: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
     project?: string
     title?: string
     size?: 'small' | 'medium'

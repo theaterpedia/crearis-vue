@@ -16,11 +16,8 @@ export default defineEventHandler(async (event) => {
             ORDER BY created_at DESC
         `)
 
-        // Return raw projects with all fields (no mapping needed)
-        return {
-            projects: rawProjects,
-            count: rawProjects.length
-        }
+        // Return projects array directly (consistent with events/posts/instructors)
+        return rawProjects
     } catch (error) {
         console.error('Error fetching projects:', error)
         throw createError({

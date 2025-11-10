@@ -1,6 +1,13 @@
 <template>
     <div class="item-row" :class="sizeClass" @click="$emit('click', $event)">
         <div class="row-col-image">
+            <!-- Warning icon overlay for deprecated cimg usage -->
+            <div v-if="deprecated" class="deprecated-warning" title="Using deprecated cimg field">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1l6.928 12H1.072L8 1z" stroke="currentColor" stroke-width="1" fill="none" />
+                    <path d="M8 6v3M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+            </div>
             <!-- Image with data mode -->
             <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'tile'" :variant="variant || 'default'"
                 class="image-box" />
@@ -31,6 +38,7 @@ interface Props {
     data?: ImgShapeData
     shape?: 'card' | 'tile' | 'avatar'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
+    deprecated?: boolean // Flag for deprecated cimg usage
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -83,10 +91,36 @@ const headingLevel = computed(() => {
 /* Column widths */
 .row-col-image {
     width: 80px;
+    position: relative;
 }
 
 .row-col-slot {
     min-width: 120px;
+}
+
+/* Deprecated warning icon overlay */
+.deprecated-warning {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(245, 158, 11, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: help;
+}
+
+.deprecated-warning svg {
+    width: 12px;
+    height: 12px;
 }
 
 /* Image box */

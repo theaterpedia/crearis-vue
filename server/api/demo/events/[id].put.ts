@@ -20,6 +20,8 @@ export default defineEventHandler(async (event) => {
         teaser = ?,
         date_begin = ?,
         date_end = ?,
+        project_id = ?,
+        img_id = ?,
         cimg = ?
       WHERE id = ?`,
             [
@@ -27,6 +29,8 @@ export default defineEventHandler(async (event) => {
                 body.teaser,
                 body.date_begin,
                 body.date_end,
+                body.project_id,
+                body.img_id,
                 body.cimg,
                 id
             ]

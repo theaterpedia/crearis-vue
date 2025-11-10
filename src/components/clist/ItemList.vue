@@ -4,8 +4,7 @@
         <div v-else-if="error" class="item-list-error">{{ error }}</div>
         <div v-else class="item-list" :class="itemTypeClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
-                :cimg="item.cimg" :size="size" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => emit('item-click', item, e)">
+                :size="size" v-bind="item.props || {}" @click="(e: MouseEvent) => emit('item-click', item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -25,7 +24,7 @@
                     <div v-else-if="error" class="item-list-error">{{ error }}</div>
                     <div v-else class="item-list" :class="itemTypeClass">
                         <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
-                            :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}"
+                            :heading="item.heading" :size="size" v-bind="item.props || {}"
                             @click="(e: MouseEvent) => emit('item-click', item, e)">
                             <template v-if="item.slot" #default>
                                 <component :is="item.slot" />
@@ -49,7 +48,7 @@
                 <div v-else-if="error" class="item-list-error">{{ error }}</div>
                 <div v-else class="item-list" :class="itemTypeClass">
                     <component :is="itemComponent" v-for="(item, index) in entities" :key="index"
-                        :heading="item.heading" :cimg="item.cimg" :size="size" v-bind="item.props || {}"
+                        :heading="item.heading" :size="size" v-bind="item.props || {}"
                         @click="(e: MouseEvent) => emit('item-click', item, e)">
                         <template v-if="item.slot" #default>
                             <component :is="item.slot" />
@@ -85,7 +84,7 @@ interface EntityItem {
 
 interface Props {
     items?: ListItem[] // Now optional
-    entity?: 'posts' | 'events' | 'instructors' | 'all'
+    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
     itemType?: 'tile' | 'card' | 'row'
@@ -160,6 +159,10 @@ const fetchEntityData = async () => {
             url = '/api/events'
         } else if (props.entity === 'instructors') {
             url = '/api/instructors'
+        } else if (props.entity === 'projects') {
+            url = '/api/projects'
+        } else if (props.entity === 'images') {
+            url = '/api/images'
         } else if (props.entity === 'all') {
             // Fetch all entities (would need combined endpoint)
             console.warn('Combined entity fetching not yet implemented')
@@ -216,17 +219,37 @@ const parseImageData = (jsonString: string | undefined): ImgShapeData | null => 
 const entities = computed(() => {
     if (dataMode.value) {
         // Transform entity data to ListItem format
-        return entityData.value.map(entity => {
+        return entityData.value.map((entity: any) => {
             const imageField = props.variant === 'square' ? entity.img_square : entity.img_thumb
             const imageData = parseImageData(imageField)
 
+            // Check if entity uses deprecated cimg field
+            const hasDeprecatedCimg = entity.cimg && !imageData
+
+            // Determine heading based on entity type
+            let heading = ''
+            if (props.entity === 'projects') {
+                // Projects use 'heading' field
+                heading = entity.heading || entity.name || `Project ${entity.id}`
+            } else if (props.entity === 'images') {
+                // Images: Use special format '** **{about}' - no headline, show about as subline
+                heading = `** **${entity.about || 'Image ' + entity.id}`
+            } else {
+                // Standard entities: title, name, or entityname
+                heading = entity.title || entity.name || entity.entityname || `Item ${entity.id}`
+            }
+
             return {
-                heading: entity.title || entity.entityname || `Item ${entity.id}`,
-                cimg: undefined, // Don't use legacy cimg
+                // Preserve original entity data for @item-click emission
+                ...entity,
+                // Override specific fields for display
+                heading: heading,
+                cimg: undefined, // Don't use legacy cimg - force undefined after spread
                 props: {
                     data: imageData,
                     shape: shape.value,
-                    variant: props.variant
+                    variant: props.variant,
+                    deprecated: hasDeprecatedCimg // Flag for warning overlay
                 }
             }
         })

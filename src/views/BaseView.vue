@@ -3,21 +3,68 @@
         <!-- Navbar -->
         <Navbar :user="user" :full-width="false" logo-text="📦 Basis-Daten" @logout="logout">
             <template #menus>
-                <!-- Events Selector -->
-                <div class="navbar-item events-selector" ref="eventsSelectorRef">
-                    <button class="navbar-button events-toggle-btn" @click="toggleEventsDropdown"
-                        :aria-expanded="isEventsOpen">
-                        <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z">
-                            </path>
-                        </svg>
-                        <span v-if="currentEvent">{{ currentEvent.name }}</span>
+                <!-- View Mode Toggle -->
+                <div class="navbar-item view-mode-toggle">
+                    <button :class="['view-mode-btn', { active: viewMode === 'demo' }]" @click="viewMode = 'demo'"
+                        title="Demo-Daten">
+                        Demo
                     </button>
+                    <button :class="['view-mode-btn', { active: viewMode === 'new' }]" @click="viewMode = 'new'"
+                        title="Neue Events">
+                        New
+                    </button>
+                    <button :class="['view-mode-btn', { active: viewMode === 'project' }]" @click="viewMode = 'project'"
+                        title="Projekt-Events">
+                        Project
+                    </button>
+                </div>
 
-                    <ItemList v-model="isEventsOpen" :items="eventsListItems" item-type="row" size="medium"
-                        interaction="popup" title="Veranstaltung wählen" @close="isEventsOpen = false" />
+                <!-- Project Selector (only visible when viewMode === 'project') -->
+                <div v-if="viewMode === 'project'" class="navbar-item">
+                    <DropdownList entity="projects" title="Projekt wählen" size="small"
+                        @select="(project: any) => selectedProjectId = project.id">
+                        <template #trigger="{ open, isOpen }">
+                            <button class="navbar-button project-selector-btn" @click="open">
+                                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z">
+                                    </path>
+                                </svg>
+                                <span v-if="currentProject">{{ currentProject.heading || currentProject.name }}</span>
+                                <span v-else>Select Project</span>
+                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16"
+                                    viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </template>
+                    </DropdownList>
+                </div>
+
+                <!-- Events Selector -->
+                <div class="navbar-item">
+                    <DropdownList entity="events" title="Event wählen" size="small"
+                        @select="(event: any) => switchEvent(event.id)">
+                        <template #trigger="{ open, isOpen }">
+                            <button class="navbar-button events-toggle-btn" @click="open">
+                                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z">
+                                    </path>
+                                </svg>
+                                <span v-if="currentEvent">{{ currentEvent.name }}</span>
+                                <span v-else>Select Event</span>
+                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16"
+                                    viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </template>
+                    </DropdownList>
                 </div>
 
                 <!-- View/Edit Mode Toggle -->
@@ -60,8 +107,14 @@
         <div class="main-content">
             <!-- Left Column: Demo Content (65%) -->
             <div class="left-column" :class="{ 'full-width': !hasActiveEdits }">
+                <!-- Project Section -->
+                <ProjectHeader v-if="viewMode === 'project' && selectedProjectId" :project-id="selectedProjectId" />
+
                 <!-- Hero Section (same as /demo) -->
-                <div v-if="currentEvent" class="demo-hero">
+                <div v-if="currentEvent" class="demo-hero" style="position: relative;">
+                    <!-- Corner Banner for Demo Mode -->
+                    <CornerBanner v-if="viewMode === 'demo'" text="demo" />
+
                     <!-- Edit button (only visible in edit mode) -->
                     <button v-if="hasActiveEdits" class="hero-edit-btn"
                         @click.stop="activateEntity('event', currentEvent)" title="Event bearbeiten"
@@ -72,8 +125,19 @@
                         </svg>
                     </button>
 
-                    <div class="hero-image" v-if="currentEvent.cimg">
-                        <img :src="currentEvent.cimg" :alt="currentEvent.name" />
+                    <!-- Hero Image with Warning for Deprecated cimg -->
+                    <div v-if="getHeroImage(currentEvent).url" class="hero-image-container">
+                        <img :src="getHeroImage(currentEvent).url" :alt="currentEvent.name" />
+
+                        <!-- Big Warning Icon for Deprecated cimg -->
+                        <div v-if="getHeroImage(currentEvent).isDeprecated" class="hero-warning-icon"
+                            title="Using deprecated cimg field">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                <path d="M12 7v6m0 4h.01" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </div>
                     </div>
 
                     <div class="hero-content">
@@ -351,6 +415,46 @@
                                 <label>Name</label>
                                 <input type="text" v-model="entityForm.name" @input="markAsEdited" />
                             </div>
+
+                            <!-- Project and Image Selection Row -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Projekt</label>
+                                    <DropdownList entity="projects" title="Projekt wählen" size="small"
+                                        @select="(project: any) => { entityForm.project_id = project.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
+                                                    }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bild</label>
+                                    <DropdownList entity="images" title="Bild wählen" size="small"
+                                        @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
+                                        <template #trigger="{ open, isOpen }">
+                                            <button type="button" class="form-dropdown-trigger" @click="open">
+                                                <span>{{ getImageName(entityForm.img_id) || 'Bild wählen' }}</span>
+                                                <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
+                                                    height="16" viewBox="0 0 16 16" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </DropdownList>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Teaser</label>
                                 <textarea v-model="entityForm.teaser" rows="3" @input="markAsEdited"></textarea>
@@ -366,7 +470,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Bild URL</label>
+                                <label>Bild URL (deprecated)</label>
                                 <input type="text" v-model="entityForm.cimg" @input="markAsEdited" />
                             </div>
                         </div>
@@ -464,7 +568,9 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import Navbar from '@/components/Navbar.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import { ItemList } from '@/components/clist'
+import ProjectHeader from '@/components/ProjectHeader.vue'
+import CornerBanner from '@/components/CornerBanner.vue'
+import { ItemList, DropdownList } from '@/components/clist'
 
 const { user, requireAuth, logout: authLogout } = useAuth()
 
@@ -473,23 +579,100 @@ const logout = () => {
     authLogout()
 }
 
-// Data source mode
-const dataSource = ref<'csv' | 'sql'>('sql')
+// View mode: 'demo' | 'new' | 'project'
+const viewMode = ref<'demo' | 'new' | 'project'>('demo')
+const selectedProjectId = ref<string | null>(null)
 
 // Base data state
 const events = ref<any[]>([])
 const posts = ref<any[]>([])
 const locations = ref<any[]>([])
 const instructors = ref<any[]>([])
+const projects = ref<any[]>([])
+const images = ref<any[]>([])
 
 // Current event
 const currentEventId = ref<string | null>(null)
-const currentEvent = computed(() => events.value.find(e => e.id === currentEventId.value) || null)
+const currentEvent = computed(() => events.value.find((e: any) => e.id === currentEventId.value) || null)
+
+// Current project (for navbar display)
+const currentProject = computed(() => {
+    if (!selectedProjectId.value) return null
+    return projects.value.find((p: any) => p.id === selectedProjectId.value) || null
+})
 
 // Current event data
-const currentEventPosts = computed(() => posts.value.filter(p => p.event_id === currentEventId.value))
-const currentEventLocations = computed(() => locations.value.filter(l => l.event_id === currentEventId.value))
-const currentEventInstructors = computed(() => instructors.value.filter(i => i.event_id === currentEventId.value))
+const currentEventPosts = computed(() => posts.value.filter((p: any) => p.event_id === currentEventId.value))
+const currentEventLocations = computed(() => locations.value.filter((l: any) => l.event_id === currentEventId.value))
+const currentEventInstructors = computed(() => instructors.value.filter((i: any) => i.event_id === currentEventId.value))
+
+// Filtered events based on view mode
+const filteredEvents = computed(() => {
+    if (viewMode.value === 'demo') {
+        // Filter events with xmlid starting with '_demo'
+        return events.value.filter((e: any) => e.xmlid && e.xmlid.startsWith('_demo'))
+    } else if (viewMode.value === 'new') {
+        // Filter events with status_id = 25 (new)
+        return events.value.filter((e: any) => e.status_id === 25)
+    } else if (viewMode.value === 'project') {
+        // Filter by selected project
+        if (selectedProjectId.value) {
+            return events.value.filter((e: any) => e.project_id === selectedProjectId.value)
+        }
+        return []
+    }
+    return events.value
+})
+
+// Watch viewMode and clear projectId when leaving project mode
+watch(viewMode, (newMode: string) => {
+    if (newMode !== 'project') {
+        selectedProjectId.value = null
+    }
+})
+
+// Hero Image Helper Functions
+const getHeroImage = (event: any): { url: string; isDeprecated: boolean } => {
+    // Priority 1: Check for deprecated cimg field
+    if (event.cimg) {
+        return { url: event.cimg, isDeprecated: true }
+    }
+
+    // Priority 2: Use img_wide JSONB field
+    if (event.img_wide) {
+        try {
+            const imgData = typeof event.img_wide === 'string'
+                ? JSON.parse(event.img_wide)
+                : event.img_wide
+            const url = generateImageUrl(imgData, 900, 450)
+            return { url, isDeprecated: false }
+        } catch (e) {
+            console.error('Failed to parse img_wide:', e)
+            return { url: '', isDeprecated: false }
+        }
+    }
+
+    // No image available
+    return { url: '', isDeprecated: false }
+}
+
+const generateImageUrl = (imgData: any, width: number, height: number): string => {
+    const { type, url, id, x, y } = imgData
+
+    // Unsplash URL generation
+    if (type === 'unsplash' && id) {
+        return `https://images.unsplash.com/photo-${id}?w=${width}&h=${height}`
+    }
+
+    // Cloudinary URL generation
+    if (type === 'cloudinary' && id) {
+        const cloud = imgData.cloud || 'default-cloud'
+        return `https://res.cloudinary.com/${cloud}/image/upload/w_${width},h_${height}/${id}`
+    }
+
+    // Fallback to direct URL
+    return url || ''
+}
 
 // Fetch data from API
 const fetchEvents = async () => {
@@ -537,12 +720,34 @@ const fetchInstructors = async () => {
     }
 }
 
+const fetchProjects = async () => {
+    try {
+        const response = await fetch('/api/projects')
+        if (!response.ok) throw new Error('Failed to fetch projects')
+        projects.value = await response.json()
+    } catch (error) {
+        console.error('Error fetching projects:', error)
+    }
+}
+
+const fetchImages = async () => {
+    try {
+        const response = await fetch('/api/images')
+        if (!response.ok) throw new Error('Failed to fetch images')
+        images.value = await response.json()
+    } catch (error) {
+        console.error('Error fetching images:', error)
+    }
+}
+
 const refreshSqlData = async () => {
     await Promise.all([
         fetchEvents(),
         fetchPosts(),
         fetchLocations(),
-        fetchInstructors()
+        fetchInstructors(),
+        fetchProjects(),
+        fetchImages()
     ])
 }
 
@@ -594,7 +799,7 @@ const activeEntityLabel = computed(() => {
 
 // Transform events for ItemList component
 const eventsListItems = computed(() => {
-    return events.value.map(event => ({
+    return events.value.map((event: any) => ({
         content: event.name,
         cimg: event.cimg,
         props: {
@@ -615,7 +820,7 @@ const handleEventSelect = (event: any) => {
     switchEvent(event.id)
     isEventsOpen.value = false
     // Reset active entity when switching events
-    if (dataSource.value === 'sql' && currentEvent.value) {
+    if (currentEvent.value) {
         activateEntity('event', currentEvent.value)
     }
 }
@@ -624,7 +829,7 @@ const selectEvent = (eventId: string) => {
     switchEvent(eventId)
     isEventsOpen.value = false
     // Reset active entity when switching events
-    if (dataSource.value === 'sql' && currentEvent.value) {
+    if (currentEvent.value) {
         activateEntity('event', currentEvent.value)
     }
 }
@@ -931,6 +1136,19 @@ const openTaskModal = (recordType: string, task?: any) => {
     alert(`Task modal für ${recordType} wird noch implementiert`)
 }
 
+// Helper functions for dropdowns
+const getProjectName = (projectId: number | null | undefined) => {
+    if (!projectId) return null
+    const project = projects.value.find((p: any) => p.id === projectId)
+    return project ? (project.heading || project.name || `Project ${projectId}`) : `Project ${projectId}`
+}
+
+const getImageName = (imageId: number | null | undefined) => {
+    if (!imageId) return null
+    const image = images.value.find((img: any) => img.id === imageId)
+    return image ? (image.about || `Image ${imageId}`) : `Image ${imageId}`
+}
+
 // Click outside to close dropdown
 const handleClickOutside = (event: Event) => {
     if (eventsSelectorRef.value && !eventsSelectorRef.value.contains(event.target as Node)) {
@@ -945,7 +1163,6 @@ onMounted(async () => {
 
     // Fetch base data from API
     await refreshSqlData()
-    dataSource.value = 'sql'
 })
 
 onUnmounted(() => {
@@ -1135,6 +1352,41 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.hero-image-container {
+    position: relative;
+    width: 100%;
+    height: 16rem;
+    overflow: hidden;
+}
+
+.hero-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-warning-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 64px;
+    height: 64px;
+    background: var(--color-warning-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    cursor: help;
+}
+
+.hero-warning-icon svg {
+    width: 40px;
+    height: 40px;
 }
 
 .hero-content {
@@ -1471,6 +1723,36 @@ onUnmounted(() => {
     flex: 1;
 }
 
+.form-dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: var(--color-bg);
+    border: var(--border) solid var(--color-border);
+    border-radius: 0.25rem;
+    color: var(--color-contrast);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.form-dropdown-trigger:hover {
+    border-color: var(--color-primary-bg);
+}
+
+.form-dropdown-trigger .chevron {
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.form-dropdown-trigger .chevron.rotate-180 {
+    transform: rotate(180deg);
+}
+
 .advanced-fields {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -1489,6 +1771,58 @@ onUnmounted(() => {
         border-left: none;
         padding-left: 0;
     }
+}
+
+/* View Mode Toggle Styles */
+.view-mode-toggle {
+    display: flex;
+    background: var(--color-card-bg);
+    border: var(--border) solid var(--color-border);
+    border-radius: var(--radius-button);
+    overflow: hidden;
+    margin-right: 0.5rem;
+}
+
+.view-mode-toggle .view-mode-btn {
+    padding: 0.5rem 0.875rem;
+    border: none;
+    background: transparent;
+    color: var(--color-dimmed);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-right: 1px solid var(--color-border);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.view-mode-toggle .view-mode-btn:last-child {
+    border-right: none;
+}
+
+.view-mode-toggle .view-mode-btn:hover {
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
+}
+
+.view-mode-toggle .view-mode-btn.active {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.project-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.project-selector-btn .chevron {
+    transition: transform 0.2s ease;
+}
+
+.project-selector-btn .chevron.rotate-180 {
+    transform: rotate(180deg);
 }
 
 @media (max-width: 768px) {
