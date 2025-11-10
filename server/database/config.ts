@@ -3,11 +3,18 @@
  * 
  * Centralized configuration for database connections.
  * Supports both SQLite (default) and PostgreSQL.
+ * 
+ * TEMPORARY: Using dotenv for test database setup (next few days)
+ * - Removed Nov 10: Fixed "require is not defined" ESM error in Nitro
+ * - Reverted Nov 10: Need dotenv for test DB creation (user lacks CREATE DATABASE permission)
+ * - See docs/DOTENV_NITRO_ESM_ISSUE.md for long-term solution
+ * 
+ * TODO: Remove dotenv once test databases are pre-created or superuser access obtained
  */
 
 import { config as loadEnv } from 'dotenv'
 
-// Load environment variables
+// Load environment variables (temporary - causes ESM issues in Nitro bundles)
 loadEnv()
 
 export type DatabaseType = 'sqlite' | 'postgresql'

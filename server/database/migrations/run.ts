@@ -2,13 +2,16 @@
  * Standalone Migration Runner Script
  * Run with: pnpm db:migrate
  * Or check status: pnpm db:migrate:status (or pnpm db:migrate --status)
+ * 
+ * Note: For standalone scripts, dotenv is needed. But config.ts should not import it
+ * since Nitro handles env loading automatically during dev/build.
  */
 
 import { config as loadEnv } from 'dotenv'
 import { db } from '../db-new'
 import { runMigrations, getMigrationStatus } from './index'
 
-// Load environment variables
+// Load environment variables for standalone script execution
 loadEnv()
 
 async function main() {
