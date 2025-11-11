@@ -3,7 +3,9 @@
         <Heading v-if="showHeader && header" :headline="header" :as="headingLevel" />
         <!-- CL2: Use entity fetching built into ItemList -->
         <ItemList :entity="entityType" :project="projectDomaincode" :item-type="itemType" :size="size"
-            :interaction="interaction" />
+            :interaction="interaction" :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds"
+            @update:selectedIds="$emit('update:selectedIds', $event)" @selectedXml="$emit('selectedXml', $event)"
+            @selected="$emit('selected', $event)" @item-click="$emit('item-click', $event)" />
     </div>
 </template>
 
@@ -19,9 +21,13 @@ interface Props {
     header?: string
     itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
-    interaction?: 'static' | 'zoom'
+    interaction?: 'static' | 'zoom' | 'previewmodal'
     limit?: number // Note: limit not yet supported by ItemList, will show all
     projectDomaincode?: string
+    // Selection props (defaults to false for pList - primarily for display)
+    dataMode?: boolean
+    multiSelect?: boolean
+    selectedIds?: number | number[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,8 +36,17 @@ const props = withDefaults(defineProps<Props>(), {
     itemType: 'row',
     size: 'medium',
     interaction: 'static',
-    limit: 6
+    limit: 6,
+    dataMode: false, // pList defaults to false (display-focused)
+    multiSelect: false
 })
+
+const emit = defineEmits<{
+    'update:selectedIds': [value: number | number[] | null]
+    'selectedXml': [value: string | string[]]
+    'selected': [value: any | any[]]
+    'item-click': [item: any, event: MouseEvent]
+}>()
 
 const showHeader = computed(() => props.isAside || props.isFooter)
 

@@ -28,6 +28,31 @@
         </div>
     </div>
 
+    <div v-else-if="interaction === 'previewmodal'" class="item-list-container">
+        <!-- Validation Error Banner -->
+        <div v-if="validationError" class="item-list-validation-error">
+            ⚠️ {{ validationError }}
+        </div>
+
+        <div v-if="loading" class="item-list-loading">Loading...</div>
+        <div v-else-if="error" class="item-list-error">{{ error }}</div>
+        <div v-else class="item-list" :class="itemContainerClass">
+            <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
+                :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
+                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
+                @click="() => openPreviewModal(item)">
+                <template v-if="item.slot" #default>
+                    <component :is="item.slot" />
+                </template>
+            </component>
+        </div>
+
+        <!-- Preview Modal -->
+        <ItemModalCard :is-open="previewModalOpen" :heading="previewItem?.heading || ''" :teaser="previewItem?.teaser"
+            :data="previewItem?.props?.data" :cimg="previewItem?.cimg" :shape="previewItem?.props?.shape"
+            :variant="previewItem?.props?.variant" @close="closePreviewModal" />
+    </div>
+
     <Teleport v-else-if="interaction === 'popup'" to="body">
         <div v-if="isOpen" class="popup-overlay" @click.self="closePopup">
             <div class="popup-container">
@@ -81,6 +106,7 @@ import { computed, ref, onMounted, watch } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import ItemTile from './ItemTile.vue'
 import ItemRow from './ItemRow.vue'
+import ItemModalCard from './ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 
@@ -112,7 +138,7 @@ interface Props {
     avatarShape?: 'round' | 'square' // Only for size="small" - forces avatar shape
     headingLevel?: 'h3' | 'h4' // Heading level for medium items
     variant?: 'default' | 'square' | 'wide' | 'vertical'
-    interaction?: 'static' | 'popup' | 'zoom'
+    interaction?: 'static' | 'popup' | 'zoom' | 'previewmodal'
     title?: string
     modelValue?: boolean
     // Selection props
@@ -151,6 +177,10 @@ const entityData = ref<EntityItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedIdsInternal = ref<Set<number>>(new Set())
+
+// Preview modal state
+const previewModalOpen = ref(false)
+const previewItem = ref<any>(null)
 
 // Error detection for invalid prop combinations
 const validationError = computed(() => {
@@ -451,6 +481,24 @@ const closePopup = () => {
 
 const toggleZoom = () => {
     isZoomed.value = !isZoomed.value
+}
+
+/**
+ * Open preview modal with item data
+ */
+const openPreviewModal = (item: any) => {
+    previewItem.value = item
+    previewModalOpen.value = true
+}
+
+/**
+ * Close preview modal
+ */
+const closePreviewModal = () => {
+    previewModalOpen.value = false
+    setTimeout(() => {
+        previewItem.value = null
+    }, 300) // Wait for animation
 }
 
 /**

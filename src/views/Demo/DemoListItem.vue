@@ -303,10 +303,78 @@
                                 style="margin-top: 1rem; padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
                                 <strong>XML IDs:</strong> {{ Array.isArray(selectedInstructorXml) ?
                                     selectedInstructorXml.join(', ')
-                                : selectedInstructorXml }}
+                                    : selectedInstructorXml }}
                             </div>
                         </div>
                     </Prose>
+                </Container>
+            </Section>
+
+            <!-- pList Demos Section -->
+            <Section background="accent">
+                <Container>
+                    <Heading level="2">pList Demos</Heading>
+                    <Prose>
+                        <p>The pList component demonstrates different use cases:</p>
+                        <ul>
+                            <li><strong>Basic Display:</strong> Static list without selection (default dataMode=false)
+                            </li>
+                            <li><strong>Preview Modal:</strong> Click items to view details in modal with teaser</li>
+                            <li><strong>Multi-Select:</strong> Data mode enabled for batch selection</li>
+                        </ul>
+
+                        <div
+                            style="display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem; margin-bottom: 1rem;">
+                            <label style="font-weight: 500;">Display Size:</label>
+                            <button :class="['btn-toggle', { 'active': instructorSize === 'small' }]"
+                                @click="instructorSize = 'small'">
+                                Small (Row)
+                            </button>
+                            <button :class="['btn-toggle', { 'active': instructorSize === 'medium' }]"
+                                @click="instructorSize = 'medium'">
+                                Medium (Tile)
+                            </button>
+                        </div>
+                    </Prose>
+
+                    <!-- Demo 1: Basic Display (Static) -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">1. Basic Display (Static Interaction)</h3>
+                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                            interaction="static" :dataMode="false" />
+                    </div>
+
+                    <!-- Demo 2: Preview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">2. Preview Modal (Click to View Details)</h3>
+                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                            interaction="previewmodal" :dataMode="false" />
+                    </div>
+
+                    <!-- Demo 3: Multi-Select with Data Mode -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">3. Multi-Select Mode (Data Mode Enabled)</h3>
+                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                            interaction="static" :dataMode="true" :multiSelect="true"
+                            v-model:selectedIds="selectedPlistInstructorIds" @selectedXml="handlePlistInstructorXml"
+                            @selected="handlePlistInstructorSelected" />
+
+                        <div v-if="selectedPlistInstructors && selectedPlistInstructors.length > 0"
+                            style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 0.5rem;">
+                            <strong>Selected Instructors (pList):</strong>
+                            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                <li v-for="instructor in selectedPlistInstructors" :key="instructor.id">
+                                    {{ instructor.entityname || instructor.name }} (ID: {{ instructor.id }})
+                                </li>
+                            </ul>
+                            <div v-if="selectedPlistInstructorXml"
+                                style="margin-top: 1rem; padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
+                                <strong>XML IDs:</strong> {{ Array.isArray(selectedPlistInstructorXml) ?
+                                    selectedPlistInstructorXml.join(', ')
+                                    : selectedPlistInstructorXml }}
+                            </div>
+                        </div>
+                    </div>
                 </Container>
             </Section>
 
@@ -444,6 +512,11 @@ const instructorSize = ref<'small' | 'medium'>('small')
 const selectedInstructorIds = ref<number[]>([])
 const selectedInstructorXml = ref<string | string[]>([])
 const selectedInstructors = ref<any[]>([])
+
+// pList multi-select demo state
+const selectedPlistInstructorIds = ref<number[]>([])
+const selectedPlistInstructorXml = ref<string | string[]>([])
+const selectedPlistInstructors = ref<any[]>([])
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -849,6 +922,17 @@ function handleInstructorXml(xmlIds: string | string[]) {
 function handleInstructorSelected(instructors: any | any[]) {
     selectedInstructors.value = Array.isArray(instructors) ? instructors : [instructors]
     console.log('Selected instructors:', selectedInstructors.value)
+}
+
+// pList multi-select handlers
+function handlePlistInstructorXml(xmlIds: string | string[]) {
+    selectedPlistInstructorXml.value = xmlIds
+    console.log('pList Selected XML IDs:', xmlIds)
+}
+
+function handlePlistInstructorSelected(instructors: any | any[]) {
+    selectedPlistInstructors.value = Array.isArray(instructors) ? instructors : [instructors]
+    console.log('pList Selected instructors:', selectedPlistInstructors.value)
 }
 
 // Initialize
