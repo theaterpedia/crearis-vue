@@ -36,6 +36,7 @@ const router = createRouter({
     { path: '/demo/float-hard', component: () => import('../views/Demo/DemoFloatHard.vue') },
     { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
+    { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },
 
     // Other routes
     { path: '/home', component: () => import('../views/index.vue') },
