@@ -752,7 +752,8 @@ const favoriteIds = ref([1, 5, 12, 23, 45])
    - ✅ `CLIST_SELECTION_SYSTEM_GUIDE.md` - Documentation updated
    - ✅ `DemoListItem.vue` - Demo section added
 
-3. **Helper Functions Exported:**
+3. **Helper Functions Available:**
+   Located in `@/components/clist/xmlHelpers.ts`:
    ```typescript
    export function getXmlIdPrefix(xmlId: string, count: number = 2): string
    export function getXmlIdFragment(xmlId: string, index: number): string | undefined

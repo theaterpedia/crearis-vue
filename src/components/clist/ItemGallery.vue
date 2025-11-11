@@ -1,11 +1,17 @@
 <template>
     <div v-if="interaction === 'static'" class="item-gallery-container">
+        <!-- Validation Error Banner -->
+        <div v-if="validationError" class="item-gallery-validation-error">
+            ⚠️ {{ validationError }}
+        </div>
+
         <div v-if="loading" class="item-gallery-loading">Loading...</div>
         <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
         <div v-else class="item-gallery" :class="itemTypeClass">
-            <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
-                :cimg="item.cimg" :size="size" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => emit('item-click', item, e)">
+            <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
+                :heading="item.heading" :size="size" :heading-level="headingLevel" :options="getItemOptions(item)"
+                :models="getItemModels(item)" v-bind="item.props || {}"
+                @click="(e: MouseEvent) => handleItemClick(item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -62,49 +68,69 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import ItemTile from './ItemTile.vue'
 import ItemCard from './ItemCard.vue'
 import ItemRow from './ItemRow.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
+import type { ItemOptions, ItemModels } from './types'
+import { getXmlIdPrefix, getXmlIdFragment, matchesXmlIdPrefix } from './xmlHelpers'
 
 interface GalleryItem {
     heading: string
     cimg?: string
     props?: Record<string, any>
     slot?: any
+    id?: number
 }
 
 interface EntityItem {
     id: number
     title?: string
     entityname?: string
+    xmlID?: string
     img_thumb?: string
     img_square?: string
 }
 
 interface Props {
     items?: GalleryItem[]
-    entity?: 'posts' | 'events' | 'instructors' | 'all'
+    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
     project?: string
     images?: number[]
+    filterIds?: number[] // Filter fetched entities by these IDs
+    // XML ID filtering props
+    filterXmlPrefix?: string
+    filterXmlPrefixes?: string[]
+    filterXmlPattern?: RegExp
     itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium'
+    headingLevel?: 'h3' | 'h4'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
-    interaction?: 'static' | 'popup' | 'zoom'
+    interaction?: 'static' | 'popup' | 'zoom' | 'previewmodal'
     title?: string
     modelValue?: boolean
+    // Selection props
+    dataMode?: boolean
+    multiSelect?: boolean
+    selectedIds?: number | number[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
     itemType: 'card',
     size: 'medium',
+    headingLevel: 'h3',
     variant: 'default',
-    interaction: 'static'
+    interaction: 'static',
+    dataMode: true,
+    multiSelect: false
 })
 
 const emit = defineEmits<{
     'update:modelValue': [value: boolean]
+    'update:selectedIds': [value: number | number[] | null]
+    'selectedXml': [value: string | string[]]
+    'selected': [value: EntityItem | EntityItem[]]
     close: []
     'item-click': [item: any, event: MouseEvent]
 }>()
@@ -118,9 +144,36 @@ const isZoomed = ref(false)
 const entityData = ref<EntityItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const selectedIdsInternal = ref<Set<number>>(new Set())
 
-const dataMode = computed(() => {
-    return props.entity !== undefined || props.images !== undefined
+// Error detection for invalid prop combinations
+const validationError = computed(() => {
+    // Error 1: Setting selectedIds requires dataMode=true
+    if (!props.dataMode && props.selectedIds !== undefined) {
+        return 'Setting Items requires DataMode'
+    }
+
+    // Error 2: Multiple IDs provided but multiSelect=false
+    if (!props.multiSelect && Array.isArray(props.selectedIds) && props.selectedIds.length > 1) {
+        return 'Only one Item can be selected'
+    }
+
+    return null
+})
+
+// Sync internal selection state with prop
+watch(() => props.selectedIds, (newVal: any) => {
+    if (newVal === undefined || newVal === null) {
+        selectedIdsInternal.value.clear()
+    } else if (typeof newVal === 'number') {
+        selectedIdsInternal.value = new Set([newVal])
+    } else {
+        selectedIdsInternal.value = new Set(newVal)
+    }
+}, { immediate: true })
+
+const dataModeActive = computed(() => {
+    return props.dataMode && (props.entity !== undefined || props.images !== undefined)
 })
 
 const shape = computed<'card' | 'tile' | 'avatar'>(() => {
@@ -129,7 +182,7 @@ const shape = computed<'card' | 'tile' | 'avatar'>(() => {
 })
 
 const fetchEntityData = async () => {
-    if (!dataMode.value) return
+    if (!dataModeActive.value) return
 
     loading.value = true
     error.value = null
@@ -194,12 +247,52 @@ const parseImageData = (jsonString: string | undefined): ImgShapeData | null => 
 }
 
 const entities = computed(() => {
-    if (dataMode.value) {
-        return entityData.value.map((entity: EntityItem) => {
-            const imageField = props.variant === 'square' ? entity.img_square : entity.img_thumb
+    if (dataModeActive.value) {
+        // Apply all filters in a single pass
+        const filteredData = entityData.value.filter((entity: EntityItem) => {
+            // Filter 1: Numeric ID filtering
+            if (props.filterIds !== undefined) {
+                if (!props.filterIds.includes(entity.id)) return false
+            }
+
+            // Filter 2: XML ID prefix filtering (single)
+            if (props.filterXmlPrefix) {
+                if (!entity.xmlID?.startsWith(props.filterXmlPrefix)) return false
+            }
+
+            // Filter 3: XML ID prefixes filtering (multiple with OR logic)
+            if (props.filterXmlPrefixes && props.filterXmlPrefixes.length > 0) {
+                if (!props.filterXmlPrefixes.some((prefix: string) => entity.xmlID?.startsWith(prefix))) {
+                    return false
+                }
+            }
+
+            // Filter 4: XML ID pattern filtering
+            if (props.filterXmlPattern) {
+                if (!entity.xmlID || !props.filterXmlPattern.test(entity.xmlID)) return false
+            }
+
+            return true
+        })
+
+        console.log('[ItemGallery] Filter results:', {
+            total: entityData.value.length,
+            filterIds: props.filterIds?.length,
+            filterXmlPrefix: props.filterXmlPrefix,
+            filterXmlPrefixes: props.filterXmlPrefixes?.length,
+            filterXmlPattern: props.filterXmlPattern?.source,
+            filtered: filteredData.length
+        })
+
+        // Transform to gallery items with proper image sizing
+        return filteredData.map((entity: EntityItem) => {
+            // For galleries, prefer larger images: use img_square for most cases
+            const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
             const imageData = parseImageData(imageField)
 
             return {
+                id: entity.id,
+                xmlID: entity.xmlID,
                 heading: entity.title || entity.entityname || `Item ${entity.id}`,
                 cimg: undefined,
                 props: {
@@ -228,6 +321,82 @@ const itemComponent = computed(() => {
 
 const itemTypeClass = computed(() => `item-type-${props.itemType}`)
 
+/**
+ * Get ItemOptions for an item based on dataMode
+ */
+function getItemOptions(item: any): ItemOptions {
+    return {
+        entityIcon: false, // Can be enabled in future
+        badge: false, // Can be enabled in future
+        counter: false, // Can be enabled in future
+        selectable: dataModeActive.value, // Show checkbox when in data mode
+        marker: false // Can be enabled in future
+    }
+}
+
+/**
+ * Get ItemModels for an item (selection state, etc.)
+ */
+function getItemModels(item: any): ItemModels {
+    return {
+        selected: item.id ? selectedIdsInternal.value.has(item.id) : false,
+        count: undefined,
+        marked: undefined,
+        entityType: undefined,
+        badgeColor: undefined
+    }
+}
+
+/**
+ * Handle item click - toggles selection in data mode
+ */
+function handleItemClick(item: any, event: MouseEvent) {
+    emit('item-click', item, event)
+
+    // Only handle selection in data mode
+    if (!dataModeActive.value || !item.id) return
+
+    const itemId = item.id
+
+    if (props.multiSelect) {
+        // Multi-select: toggle selection
+        const newSelection = new Set(selectedIdsInternal.value)
+        if (newSelection.has(itemId)) {
+            newSelection.delete(itemId)
+        } else {
+            newSelection.add(itemId)
+        }
+        selectedIdsInternal.value = newSelection
+        const selectedArray = Array.from(newSelection)
+        emit('update:selectedIds', selectedArray.length > 0 ? selectedArray : null)
+        emitSelectedData(selectedArray)
+    } else {
+        // Single-select: replace selection
+        const isCurrentlySelected = selectedIdsInternal.value.has(itemId)
+        selectedIdsInternal.value = isCurrentlySelected ? new Set() : new Set([itemId])
+        emit('update:selectedIds', isCurrentlySelected ? null : itemId)
+        emitSelectedData(isCurrentlySelected ? [] : [itemId])
+    }
+}
+
+/**
+ * Emit selection data with full entity objects and XML IDs
+ */
+function emitSelectedData(selectedIds: number[]) {
+    const selectedItems = entityData.value.filter((item: EntityItem) => selectedIds.includes(item.id))
+
+    // Extract xmlIDs
+    const xmlIds = selectedItems.map((item: EntityItem) => item.xmlID).filter(Boolean) as string[]
+
+    if (props.multiSelect) {
+        emit('selectedXml', xmlIds)
+    } else {
+        emit('selectedXml', xmlIds[0] || '')
+    }
+
+    emit('selected', props.multiSelect ? selectedItems : selectedItems[0])
+}
+
 const closePopup = () => {
     emit('update:modelValue', false)
     emit('close')
@@ -238,7 +407,7 @@ const toggleZoom = () => {
 }
 
 onMounted(() => {
-    if (dataMode.value) {
+    if (dataModeActive.value) {
         fetchEntityData()
     }
 })
@@ -263,14 +432,16 @@ defineExpose({
 }
 
 .item-gallery-loading,
-.item-gallery-error {
+.item-gallery-error,
+.item-gallery-validation-error {
     padding: 2rem;
     text-align: center;
     color: var(--color-dimmed);
     font-family: var(--headings);
 }
 
-.item-gallery-error {
+.item-gallery-error,
+.item-gallery-validation-error {
     color: var(--color-negative-contrast);
     background: var(--color-negative-bg);
     border-radius: 0.5rem;

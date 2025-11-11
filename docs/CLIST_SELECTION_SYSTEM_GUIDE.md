@@ -602,10 +602,10 @@ Combine multiple filter types with AND logic:
 
 ### Helper Functions
 
-ItemList exports utility functions for XML ID manipulation:
+XML ID utility functions are available in `xmlHelpers.ts`:
 
 ```typescript
-import { getXmlIdPrefix, getXmlIdFragment, matchesXmlIdPrefix } from '@/components/clist/ItemList.vue'
+import { getXmlIdPrefix, getXmlIdFragment, matchesXmlIdPrefix } from '@/components/clist/xmlHelpers'
 
 // Extract prefix
 const prefix = getXmlIdPrefix("tp.event.ws2025", 2)  // "tp.event"
