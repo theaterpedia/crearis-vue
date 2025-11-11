@@ -31,6 +31,27 @@ const blurImagesPreview = ref(false) // Toggle for blur preview mode
 // Shape editor state
 const activeShape = ref<{ shape: string; variant: string; adapter: string } | null>(null)
 
+// Get active shape's data object
+const activeShapeData = computed(() => {
+    if (!activeShape.value || !selectedImage.value) return null
+
+    const shape = activeShape.value.shape
+
+    // Map shape to the correct shape data property
+    // Only four core shapes: square, wide, thumb, vertical
+    if (shape === 'wide') {
+        return selectedImage.value.shape_wide
+    }
+    if (shape === 'square' || shape === 'thumb') {
+        return selectedImage.value.shape_thumb
+    }
+    if (shape === 'vertical') {
+        return selectedImage.value.shape_vertical
+    }
+
+    return null
+})
+
 // Hero preview toggle state (Plan E Task 1.1)
 const heroPreviewShape = ref<'wide' | 'square' | 'vertical'>('wide')
 
@@ -64,6 +85,9 @@ const verticalShapeRef = ref<any | null>(null)
 const cardWideX = ref<number | null>(null)
 const cardWideY = ref<number | null>(null)
 const cardWideZ = ref<number | null>(null)
+const verticalX = ref<number | null>(null)
+const verticalY = ref<number | null>(null)
+const verticalZ = ref<number | null>(null)
 const tileSquareX = ref<number | null>(null)
 const tileSquareY = ref<number | null>(null)
 const tileSquareZ = ref<number | null>(null)
@@ -168,8 +192,11 @@ const activeShapeXYZ = computed(() => {
     if (!activeShape.value) return { x: null, y: null, z: null }
 
     const shape = activeShape.value.shape
+    // Each shape has its own XYZ refs
     if (shape === 'wide' || shape === 'card') {
         return { x: cardWideX.value, y: cardWideY.value, z: cardWideZ.value }
+    } else if (shape === 'vertical') {
+        return { x: verticalX.value, y: verticalY.value, z: verticalZ.value }
     } else if (shape === 'square' || shape === 'tile' || shape === 'thumb' || shape === 'avatar') {
         return { x: tileSquareX.value, y: tileSquareY.value, z: tileSquareZ.value }
     }
@@ -421,8 +448,7 @@ function selectImage(image: any) {
     // Set authorAdapter from image data
     authorAdapter.value = selectedImage.value.author?.adapter || 'unsplash'
 
-    // Load X, Y, Z values from shape objects (FIX: was resetting to null)
-    // Card/Wide and Vertical shapes share same XYZ
+    // Load X, Y, Z values from shape objects (each shape has its own XYZ)
     if (selectedImage.value.shape_wide) {
         cardWideX.value = selectedImage.value.shape_wide.x ?? null
         cardWideY.value = selectedImage.value.shape_wide.y ?? null
@@ -432,6 +458,17 @@ function selectImage(image: any) {
         cardWideX.value = null
         cardWideY.value = null
         cardWideZ.value = null
+    }
+
+    if (selectedImage.value.shape_vertical) {
+        verticalX.value = selectedImage.value.shape_vertical.x ?? null
+        verticalY.value = selectedImage.value.shape_vertical.y ?? null
+        verticalZ.value = selectedImage.value.shape_vertical.z ?? null
+        console.log('[ImagesCoreAdmin] Loaded vertical XYZ:', { x: verticalX.value, y: verticalY.value, z: verticalZ.value })
+    } else {
+        verticalX.value = null
+        verticalY.value = null
+        verticalZ.value = null
     }
 
     // Tile/Square/Thumb/Avatar shapes share same XYZ
@@ -458,7 +495,7 @@ function selectImage(image: any) {
         PreviewWide.value = (selectedImage.value.shape_wide?.url || '') + (CorrectionWide.value || '')
     } else if (adapter === 'cloudinary') {
         PreviewWide.value = selectedImage.value.shape_wide?.url || ''
-        // TODO: Add Positioning to c_crop,g_face,h_150,w_150
+        // Note: Cloudinary uses w_X,h_X for auto mode, adds c_crop,g_xy_center,x_X,y_Y when focal points exist
     }
 
     // Reset CorrectionWide
@@ -504,6 +541,9 @@ function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | n
             url.searchParams.set('fit', 'crop')
         } else if (isCloudinary) {
             // For Cloudinary: update transformation parameters
+            // IMPORTANT: Always use c_fill OR c_crop (never omit)
+            // c_crop: when x/y exist (focal point mode)
+            // c_fill: when x/y = null (auto mode)
             const match = baseUrl.match(/^(https?:\/\/[^\/]+\/[^\/]+\/image\/upload\/)([^\/]*)\/(.+)$/)
             if (match) {
                 const [, prefix, transformations, suffix] = match
@@ -518,17 +558,24 @@ function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | n
                 }
 
                 if (x !== null && y !== null) {
-                    // XYZ mode: set gravity to custom coordinates
-                    params.set('c', 'fill')
-                    params.set('g', `xy_center`)
-                    params.set('x', Math.round((x - 0.5) * (params.get('w') ? parseInt(params.get('w')!) : 400)).toString())
-                    params.set('y', Math.round((y - 0.5) * (params.get('h') ? parseInt(params.get('h')!) : 400)).toString())
+                    // Focal point mode: use c_crop with explicit positioning
+                    params.set('c', 'crop')
+                    params.set('g', 'xy_center')
+                    // Calculate offsets from center (can be negative)
+                    const offsetX = Math.round((x - 50) * (params.get('w') ? parseInt(params.get('w')!) / 100 : 3.36))
+                    const offsetY = Math.round((y - 50) * (params.get('h') ? parseInt(params.get('h')!) / 100 : 1.68))
+                    params.set('x', offsetX.toString())
+                    params.set('y', offsetY.toString())
+                    if (z !== null) {
+                        params.set('z', z.toString())
+                    }
                 } else {
-                    // Auto mode: use auto gravity
+                    // Auto mode: use c_fill with auto gravity
                     params.set('c', 'fill')
                     params.set('g', 'auto')
                     params.delete('x')
                     params.delete('y')
+                    params.delete('z')
                 }
 
                 // Rebuild transformation string
@@ -753,120 +800,55 @@ const saveChanges = async () => {
     if (!selectedImage.value || !isDirty.value) return
 
     try {
-        // Update shape objects with current XYZ values before saving
-        // Card/Wide shape
+        // Update shape objects with current XYZ values and URLs before saving
+        // Wide shape
         if (selectedImage.value.shape_wide) {
-            const cardPreview = cardShapeRef.value?.getPreviewData?.()
-            if (cardPreview) {
-                selectedImage.value.shape_wide = {
-                    ...selectedImage.value.shape_wide,
-                    url: cardPreview.url || selectedImage.value.shape_wide.url,
-                    x: cardPreview.params?.x ?? cardWideX.value,
-                    y: cardPreview.params?.y ?? cardWideY.value,
-                    z: cardPreview.params?.z ?? cardWideZ.value
-                }
-            } else {
-                // Rebuild URL with XYZ parameters
-                const newUrl = rebuildShapeUrlWithXYZ(
-                    selectedImage.value.shape_wide.url,
-                    cardWideX.value,
-                    cardWideY.value,
-                    cardWideZ.value
-                )
-                selectedImage.value.shape_wide = {
-                    ...selectedImage.value.shape_wide,
-                    url: newUrl,
-                    x: cardWideX.value,
-                    y: cardWideY.value,
-                    z: cardWideZ.value
-                }
+            const newUrl = rebuildShapeUrlWithXYZ(
+                selectedImage.value.shape_wide.url,
+                cardWideX.value,
+                cardWideY.value,
+                cardWideZ.value
+            )
+            selectedImage.value.shape_wide = {
+                ...selectedImage.value.shape_wide,
+                url: newUrl,
+                x: cardWideX.value,
+                y: cardWideY.value,
+                z: cardWideZ.value
             }
         }
 
         // Vertical shape
         if (selectedImage.value.shape_vertical) {
-            const verticalPreview = verticalShapeRef.value?.getPreviewData?.()
-            if (verticalPreview) {
-                selectedImage.value.shape_vertical = {
-                    ...selectedImage.value.shape_vertical,
-                    url: verticalPreview.url || selectedImage.value.shape_vertical.url,
-                    x: verticalPreview.params?.x ?? cardWideX.value,
-                    y: verticalPreview.params?.y ?? cardWideY.value,
-                    z: verticalPreview.params?.z ?? cardWideZ.value
-                }
-            } else {
-                // Rebuild URL with XYZ parameters
-                const newUrl = rebuildShapeUrlWithXYZ(
-                    selectedImage.value.shape_vertical.url,
-                    cardWideX.value,
-                    cardWideY.value,
-                    cardWideZ.value
-                )
-                selectedImage.value.shape_vertical = {
-                    ...selectedImage.value.shape_vertical,
-                    url: newUrl,
-                    x: cardWideX.value,
-                    y: cardWideY.value,
-                    z: cardWideZ.value
-                }
+            const newUrl = rebuildShapeUrlWithXYZ(
+                selectedImage.value.shape_vertical.url,
+                verticalX.value,
+                verticalY.value,
+                verticalZ.value
+            )
+            selectedImage.value.shape_vertical = {
+                ...selectedImage.value.shape_vertical,
+                url: newUrl,
+                x: verticalX.value,
+                y: verticalY.value,
+                z: verticalZ.value
             }
         }
 
-        // Tile/Square shape (uses shape_thumb)
+        // Thumb shape (used for both square and thumb)
         if (selectedImage.value.shape_thumb) {
-            const tilePreview = tileShapeRef.value?.getPreviewData?.()
-            if (tilePreview) {
-                selectedImage.value.shape_thumb = {
-                    ...selectedImage.value.shape_thumb,
-                    url: tilePreview.url || selectedImage.value.shape_thumb.url,
-                    x: tilePreview.params?.x ?? tileSquareX.value,
-                    y: tilePreview.params?.y ?? tileSquareY.value,
-                    z: tilePreview.params?.z ?? tileSquareZ.value
-                }
-            } else {
-                // Rebuild URL with XYZ parameters
-                const newUrl = rebuildShapeUrlWithXYZ(
-                    selectedImage.value.shape_thumb.url,
-                    tileSquareX.value,
-                    tileSquareY.value,
-                    tileSquareZ.value
-                )
-                selectedImage.value.shape_thumb = {
-                    ...selectedImage.value.shape_thumb,
-                    url: newUrl,
-                    x: tileSquareX.value,
-                    y: tileSquareY.value,
-                    z: tileSquareZ.value
-                }
-            }
-        }
-
-        // Avatar uses same XYZ as tile/square
-        if (selectedImage.value.shape_square) {
-            const avatarPreview = avatarShapeRef.value?.getPreviewData?.()
-            if (avatarPreview) {
-                selectedImage.value.shape_square = {
-                    ...selectedImage.value.shape_square,
-                    url: avatarPreview.url || selectedImage.value.shape_square.url,
-                    x: avatarPreview.params?.x ?? tileSquareX.value,
-                    y: avatarPreview.params?.y ?? tileSquareY.value,
-                    z: avatarPreview.params?.z ?? tileSquareZ.value
-                }
-            } else {
-                // Rebuild URL with XYZ parameters
-                const newUrl = rebuildShapeUrlWithXYZ(
-                    selectedImage.value.shape_square.url,
-                    tileSquareX.value,
-                    tileSquareY.value,
-                    tileSquareZ.value
-                )
-                selectedImage.value.shape_square = {
-                    ...selectedImage.value.shape_square,
-                    url: newUrl,
-                    x: tileSquareX.value,
-                    y: tileSquareY.value,
-                    z: tileSquareZ.value
-                }
+            const newUrl = rebuildShapeUrlWithXYZ(
+                selectedImage.value.shape_thumb.url,
+                tileSquareX.value,
+                tileSquareY.value,
+                tileSquareZ.value
+            )
+            selectedImage.value.shape_thumb = {
+                ...selectedImage.value.shape_thumb,
+                url: newUrl,
+                x: tileSquareX.value,
+                y: tileSquareY.value,
+                z: tileSquareZ.value
             }
         }
 
@@ -1210,9 +1192,35 @@ const previewCardWide = () => {
             }
         }
     } else if (adapter === 'cloudinary') {
-        // TODO: Add Positioning to c_crop,g_face,h_150,w_150
-        PreviewWide.value = selectedImage.value.shape_wide.url
-        CorrectionWide.value = ''
+        // Cloudinary focal point preview
+        const x = cardWideX.value
+        const y = cardWideY.value
+        const z = cardWideZ.value
+
+        if (x !== null) {
+            try {
+                const baseUrl = selectedImage.value.shape_wide.url
+
+                // Use rebuildShapeUrlWithXYZ to apply focal point transformations
+                const newPreviewUrl = rebuildShapeUrlWithXYZ(baseUrl, x, y, z)
+
+                PreviewWide.value = ''
+                CorrectionWide.value = ''
+
+                setTimeout(() => {
+                    PreviewWide.value = newPreviewUrl
+                    CorrectionWide.value = newPreviewUrl.substring(baseUrl.length)
+                }, 0)
+            } catch (error) {
+                console.error('Error creating Cloudinary preview URL:', error)
+                PreviewWide.value = selectedImage.value.shape_wide.url
+                CorrectionWide.value = ''
+            }
+        } else {
+            // No focal point, show original
+            PreviewWide.value = selectedImage.value.shape_wide.url
+            CorrectionWide.value = ''
+        }
     }
 }
 
@@ -1293,70 +1301,76 @@ const getActiveShapeRef = () => {
     if (!activeShape.value) return null
 
     const shape = activeShape.value.shape
-    if (shape === 'wide' || shape === 'card') return cardShapeRef.value
-    if (shape === 'square' || shape === 'tile' || shape === 'thumb') return tileShapeRef.value
+    // Only four core shapes: square, wide, thumb, vertical
+    if (shape === 'wide') return cardShapeRef.value
+    if (shape === 'square' || shape === 'thumb') return tileShapeRef.value
     if (shape === 'vertical') return verticalShapeRef.value
-    if (shape === 'avatar') return avatarShapeRef.value
 
     return null
 }
 
-// Handle ImgShape activation (click-to-edit)
-const handleShapeActivate = (data: { shape: string; variant: string; adapter: string }) => {
-    activeShape.value = data
-    console.log('[ShapeEditor] Activated:', data)
-}
-
 // Handle shape editor updates (XYZ changes)
 const handleShapeUpdate = (data: Partial<{ x: number | null; y: number | null; z: number | null; url: string; tpar: string | null }>) => {
-    if (!selectedImage.value || !activeShape.value) return
+    if (!selectedImage.value || !activeShape.value || !activeShapeData.value) return
 
     const shape = activeShape.value.shape
 
-    // Update local XYZ state
-    if (shape === 'wide' || shape === 'card') {
+    // Update local XYZ state based on core shape types (each shape has its own XYZ)
+    if (shape === 'wide') {
         if (data.x !== undefined) cardWideX.value = data.x
         if (data.y !== undefined) cardWideY.value = data.y
         if (data.z !== undefined) cardWideZ.value = data.z
-    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
+    } else if (shape === 'vertical') {
+        if (data.x !== undefined) verticalX.value = data.x
+        if (data.y !== undefined) verticalY.value = data.y
+        if (data.z !== undefined) verticalZ.value = data.z
+    } else if (shape === 'square' || shape === 'thumb') {
         if (data.x !== undefined) tileSquareX.value = data.x
         if (data.y !== undefined) tileSquareY.value = data.y
         if (data.z !== undefined) tileSquareZ.value = data.z
     }
 
-    // Update ImgShape preview in real-time
-    const shapeRef = getActiveShapeRef()
-    if (shapeRef && shapeRef.updatePreview) {
-        shapeRef.updatePreview(
-            data.url || selectedImage.value.url,
-            { x: data.x, y: data.y, z: data.z },
-            'preview'
-        )
+    // Update shape-specific URL and tpar in the shape data object
+    if (data.url !== undefined) {
+        activeShapeData.value.url = data.url
+    }
+    if (data.tpar !== undefined) {
+        activeShapeData.value.tpar = data.tpar
     }
 
-    console.log('[ShapeEditor] Updated:', data, 'ShapeRef:', !!shapeRef)
+    console.log('[ShapeEditor] Updated:', data)
     checkDirty()
 }
 
 // Handle shape editor preview button
 const handleShapePreview = () => {
-    if (!activeShape.value) return
+    if (!activeShape.value || !activeShapeData.value) return
 
     const shape = activeShape.value.shape
 
-    // Call appropriate preview/save function based on shape
-    if (shape === 'wide' || shape === 'card') {
-        previewCardWide()
-    } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
-        // For tile/square, just ensure preview is showing in ImgShape
-        const shapeRef = getActiveShapeRef()
-        if (shapeRef && shapeRef.getPreviewData) {
-            const preview = shapeRef.getPreviewData()
-            console.log('[ShapeEditor] Current tile preview:', preview)
-        }
+    // Get current XYZ values for this shape
+    const xyz = activeShapeXYZ.value
+
+    // Only proceed if we have XYZ values (XYZ mode)
+    if (xyz.x === null || xyz.y === null || xyz.z === null) {
+        console.log('[ShapeEditor] Preview: No XYZ values, skipping')
+        return
     }
 
-    console.log('[ShapeEditor] Preview triggered for:', shape)
+    try {
+        const baseUrl = activeShapeData.value.url
+
+        // Rebuild URL with XYZ parameters
+        const newUrl = rebuildShapeUrlWithXYZ(baseUrl, xyz.x, xyz.y, xyz.z)
+
+        // Update the shape data URL (this will show in Direct mode)
+        activeShapeData.value.url = newUrl
+
+        console.log('[ShapeEditor] Preview applied:', { shape, xyz, newUrl: newUrl.substring(0, 100) })
+        checkDirty()
+    } catch (error) {
+        console.error('[ShapeEditor] Preview error:', error)
+    }
 }
 
 // Handle shape editor reset
@@ -1365,24 +1379,22 @@ const handleShapeReset = () => {
 
     const shape = activeShape.value.shape
 
-    // Reset local XYZ state to NULL
+    // Reset local XYZ state to NULL (each shape has its own XYZ)
     if (shape === 'wide' || shape === 'card') {
         cardWideX.value = null
         cardWideY.value = null
         cardWideZ.value = null
+    } else if (shape === 'vertical') {
+        verticalX.value = null
+        verticalY.value = null
+        verticalZ.value = null
     } else if (shape === 'square' || shape === 'tile' || shape === 'thumb') {
         tileSquareX.value = null
         tileSquareY.value = null
         tileSquareZ.value = null
     }
 
-    // Reset ImgShape preview
-    const shapeRef = getActiveShapeRef()
-    if (shapeRef && shapeRef.resetPreview) {
-        shapeRef.resetPreview()
-    }
-
-    // Mark as dirty since XYZ values changed (ERR2 fix)
+    // Mark as dirty since XYZ values changed
     checkDirty()
 
     console.log('[ShapeEditor] Reset:', shape, '- marked as dirty')
@@ -1538,9 +1550,9 @@ onMounted(() => {
                 <div v-else class="image-list">
                     <div v-for="image in filteredImages" :key="image.id" class="image-row"
                         :class="{ 'selected': selectedImage?.id === image.id }" @click="selectImage(image)">
-                        <!-- Avatar using ImgShape tile/square variant -->
+                        <!-- Avatar using ImgShape thumb shape -->
                         <div class="image-avatar">
-                            <ImgShape v-if="image.shape_thumb" :data="image.shape_thumb" shape="tile" variant="square"
+                            <ImgShape v-if="image.shape_thumb" :data="image.shape_thumb" shape="thumb"
                                 class="image-list-thumb" :forceBlur="false" />
                             <img v-else :src="(image.url || '/dummy.svg') + (image.url ? '?w=72&h=72&fit=crop' : '')"
                                 :alt="image.name" />
@@ -1589,43 +1601,38 @@ onMounted(() => {
                         <Column :width="verticalColumnWidth" class="vertical-column">
                             <div class="shape-row shape-row-vertical">
                                 <ImgShape ref="verticalShapeRef" v-if="selectedImage.shape_vertical"
-                                    :data="selectedImage.shape_vertical" shape="card" variant="vertical"
-                                    class="VerticalShape" :forceBlur="blurImagesPreview" :editable="true"
-                                    :active="activeShape?.shape === 'card' && activeShape?.variant === 'vertical'"
-                                    @shapeUrl="(url: string) => verticalShapeUrl = url"
-                                    @activate="handleShapeActivate" />
+                                    :data="selectedImage.shape_vertical" shape="vertical" class="VerticalShape"
+                                    :forceBlur="blurImagesPreview" :editable="true"
+                                    :active="activeShape?.shape === 'vertical'"
+                                    @shapeUrl="(url: string) => verticalShapeUrl = url" />
                             </div>
                         </Column>
 
                         <!-- Column 3: Shape previews (2/5 width) -->
                         <Column width="1/5">
-                            <!-- Row 1: Card/Wide shape -->
+                            <!-- Row 1: Wide shape -->
                             <div class="shape-row">
                                 <ImgShape ref="cardShapeRef" v-if="cardWidePreviewData" :data="cardWidePreviewData"
-                                    shape="card" variant="wide" class="CardShape" :forceBlur="blurImagesPreview"
-                                    :editable="true"
-                                    :active="activeShape?.shape === 'card' && activeShape?.variant === 'wide'"
-                                    @shapeUrl="(url: string) => cardWideShapeUrl = url"
-                                    @activate="handleShapeActivate" />
+                                    shape="wide" class="WideShape" :forceBlur="blurImagesPreview" :editable="true"
+                                    :active="activeShape?.shape === 'wide'"
+                                    @shapeUrl="(url: string) => cardWideShapeUrl = url" />
                             </div>
 
                             <!-- Row 2: Two smaller shapes side by side -->
                             <div class="shape-row shape-row-split">
                                 <div class="shape-col">
                                     <ImgShape ref="tileShapeRef" v-if="selectedImage.shape_thumb"
-                                        :data="selectedImage.shape_thumb" shape="tile" variant="square"
-                                        class="TileShape" :forceBlur="blurImagesPreview" :editable="true"
-                                        :active="activeShape?.shape === 'tile' && activeShape?.variant === 'square'"
-                                        @shapeUrl="(url: string) => tileWideShapeUrl = url"
-                                        @activate="handleShapeActivate" />
+                                        :data="selectedImage.shape_thumb" shape="square" class="SquareShape"
+                                        :forceBlur="blurImagesPreview" :editable="true"
+                                        :active="activeShape?.shape === 'square'"
+                                        @shapeUrl="(url: string) => tileWideShapeUrl = url" />
                                 </div>
                                 <div class="shape-col">
                                     <ImgShape ref="avatarShapeRef" v-if="selectedImage.shape_thumb"
-                                        :data="selectedImage.shape_thumb" shape="avatar" class="AvatarShape"
+                                        :data="selectedImage.shape_thumb" shape="thumb" class="ThumbShape"
                                         :forceBlur="blurImagesPreview" :editable="true"
-                                        :active="activeShape?.shape === 'avatar'"
-                                        @shapeUrl="(url: string) => avatarThumbShapeUrl = url"
-                                        @activate="handleShapeActivate" />
+                                        :active="activeShape?.shape === 'thumb'"
+                                        @shapeUrl="(url: string) => avatarThumbShapeUrl = url" />
                                 </div>
                             </div>
                         </Column>
@@ -1633,14 +1640,14 @@ onMounted(() => {
                         <!-- Column 4: Controls (1/5 width) - Simplified (Plan E Task 1.3) -->
                         <Column width="auto">
                             <!-- Shape Editor (Plan D Task 2.4 + Plan G Enhancement) -->
-                            <div v-if="activeShape" class="shape-editor-section">
-                                <ShapeEditor :shape="activeShape.shape as any" :variant="activeShape.variant"
-                                    :adapter="activeShape.adapter as any" :data="{
+                            <div v-if="activeShape && activeShapeData" class="shape-editor-section">
+                                <ShapeEditor :shape="activeShape.shape as any" :adapter="activeShape.adapter as any"
+                                    :data="{
                                         x: activeShapeXYZ.x,
                                         y: activeShapeXYZ.y,
                                         z: activeShapeXYZ.z,
-                                        url: selectedImage.url,
-                                        tpar: selectedImage.tpar || null
+                                        url: activeShapeData.url || '',
+                                        tpar: activeShapeData.tpar || null
                                     }" @update="handleShapeUpdate" @preview="handleShapePreview"
                                     @reset="handleShapeReset" />
                             </div>
@@ -1896,9 +1903,9 @@ onMounted(() => {
     padding: 0.5rem;
 }
 
-.CardShape,
-.TileShape,
-.AvatarShape {
+.WideShape,
+.SquareShape,
+.ThumbShape {
     max-width: 100%;
     height: auto;
 }

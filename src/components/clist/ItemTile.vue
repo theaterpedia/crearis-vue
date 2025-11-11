@@ -46,8 +46,7 @@
         <!-- Compact Mode: Image full-width with heading overlay -->
         <template v-if="styleCompact">
             <!-- Background Image with data mode -->
-            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'tile'" :variant="variant || 'default'"
-                class="tile-background" />
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" class="tile-background" />
 
             <!-- Legacy Background Image -->
             <img v-else-if="cimg" :src="cimg" :alt="heading" class="tile-background" loading="lazy" />
@@ -64,8 +63,7 @@
         <!-- Non-Compact Mode: Image beside heading with padding -->
         <template v-else>
             <div class="tile-image">
-                <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'tile'"
-                    :variant="variant || 'default'" />
+                <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" />
                 <img v-else-if="cimg" :src="cimg" :alt="heading" loading="lazy" />
             </div>
             <div class="tile-heading">
@@ -86,8 +84,7 @@ interface Props {
     cimg?: string
     size?: 'medium' // Only medium size supported
     data?: ImgShapeData
-    shape?: 'card' | 'tile' | 'avatar'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
+    shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     styleCompact?: boolean // Controls layout: true = overlay, false = beside
     headingLevel?: 'h3' | 'h4' // Configurable heading level

@@ -13,14 +13,13 @@ export interface ImgShapeData {
     blur?: string
     turl?: string
     tpar?: string
-    xmlid?: string  // For avatar shape detection
+    xmlid?: string  // For shape detection
     alt_text?: string  // Alt text for accessibility
 }
 
 interface Props {
     data: ImgShapeData
-    shape: 'card' | 'tile' | 'avatar'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
+    shape: 'square' | 'wide' | 'thumb' | 'vertical'
     adapter?: 'detect' | 'unsplash' | 'cloudinary' | 'vimeo' | 'none'
     forceBlur?: boolean
     editable?: boolean
@@ -28,7 +27,6 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    variant: 'default',
     adapter: 'detect',
     forceBlur: false,
     editable: false,
@@ -37,7 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     shapeUrl: [url: string]
-    activate: [data: { shape: string, variant: string, adapter: string }]
+    activate: [data: { shape: string, adapter: string }]
 }>()
 
 // Error state
@@ -83,12 +81,12 @@ const detectedAdapter = computed(() => {
 })
 
 /**
- * Detect avatar shape (round vs square) based on xmlid
- * Square avatars used for: projects, events, locations, posts
- * Round avatars used for: users, instructors, people (default)
+ * Thumb shape detection based on xmlid
+ * Square thumbs used for: projects, events, locations, posts
+ * Round thumbs used for: users, instructors, people (default)
  */
-const avatarShape = computed(() => {
-    if (props.shape !== 'avatar') return null
+const thumbShape = computed(() => {
+    if (props.shape !== 'thumb') return null
 
     const xmlid = props.data.xmlid || ''
     const squarePatterns = ['project', 'event', 'location', 'post']
@@ -98,55 +96,39 @@ const avatarShape = computed(() => {
 })
 
 /**
- * Get dimensions based on shape and variant
+ * Calculate image dimensions based on shape type
  * Returns [width, height] in pixels
- * 
- * ⚠️ PRODUCTION SAFETY (November 10, 2025):
- * - Tile + square: ✅ SAFE
- * - Tile + default/wide/vertical: ⚠️ UNSAFE (focal point handling incomplete)
- * - Card + any variant: ✅ SAFE
- * - Avatar + any variant: ✅ SAFE
+ * Only four core shapes: square, wide, thumb, vertical
  */
 const dimensions = computed<[number, number] | null>(() => {
     const shape = props.shape
-    const variant = props.variant
 
-    // Avatar is always square (4rem = 64px)
-    // Note: Avatar/Thumb are synonymous but separate from square due to different zoom/focal points
-    if (shape === 'avatar') {
+    // Thumb: Always square (4rem = 64px)
+    if (shape === 'thumb') {
         const w = avatarWidth.value
         return w ? [w, w] : null
     }
 
-    // Tile dimensions
-    // ⚠️ WARNING: Only variant="square" is production-safe for tiles
-    if (shape === 'tile') {
-        // Use theme values or fallback to standard dimensions (8rem × 7rem = 128px × 112px)
+    // Square: Use tile dimensions (8rem × 8rem = 128px × 128px)
+    if (shape === 'square') {
         const w = tileWidth.value || 128
-        const h = tileHeight.value || 112
-
-        // tile-height-square: 8rem = 128px (same as tile-width)
-        if (variant === 'square') return [w, w] // ✅ SAFE
-
-        // ⚠️ UNSAFE: These variants need focal point handling work
-        if (variant === 'wide') return [w * 2, h] // ⚠️ NOT PRODUCTION READY
-        return [w, h] // default - ⚠️ NOT PRODUCTION READY
+        return [w, w]
     }
 
-    // Card dimensions - all variants are production-safe
-    if (shape === 'card') {
+    // Wide: Use card dimensions (21rem × 10.5rem = 336px × 168px)
+    if (shape === 'wide') {
         const w = cardWidth.value
         const h = cardHeight.value
         if (!w || !h) return null
-
-        // For card square, use tile-height-square (8rem = 128px), not card-width
-        if (variant === 'square') return [128, 128]
-        // Card wide: card-width × card-height-min (21rem × 10.5rem = 336px × 168px)
         // Using cardHeight * 0.75 to get 168px from 224px
-        if (variant === 'wide') return [w, Math.round(h * 0.75)]
-        // Card vertical: 9:16 aspect ratio × card-height (7.875rem × 14rem = 126px × 224px)
-        if (variant === 'vertical') return [Math.round(h * 9 / 16), h]
-        return [w, Math.round(h * 0.75)] // default = wide
+        return [w, Math.round(h * 0.75)]
+    }
+
+    // Vertical: 9:16 aspect ratio (7.875rem × 14rem = 126px × 224px)
+    if (shape === 'vertical') {
+        const h = cardHeight.value
+        if (!h) return null
+        return [Math.round(h * 9 / 16), h]
     }
 
     return null
@@ -155,7 +137,6 @@ const dimensions = computed<[number, number] | null>(() => {
 // Log computed dimensions
 console.log('[ImgShape] Computed dimensions:', {
     shape: props.shape,
-    variant: props.variant,
     dimensions: dimensions.value,
     dimensionsInRem: dimensions.value ? [dimensions.value[0] / 16, dimensions.value[1] / 16] : null
 })
@@ -231,20 +212,46 @@ const unsplashUrl = computed(() => {
 /**
  * Manipulate Cloudinary URL to insert crop parameters
  * Format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/v{version}/{path}
- * Example: https://res.cloudinary.com/little-papillon/image/upload/c_crop,h_224,w_336/v1234567890/folder/image.jpg
+ * 
+ * Transformation Logic (ALWAYS use c_fill OR c_crop):
+ * - With focal points (x/y/z exist): c_crop,g_xy_center,x_X,y_Y,w_W,h_H → Explicit positioning
+ * - Without focal points (x/y/z = null): c_fill,g_auto,w_W,h_H → Auto-fill
+ * 
+ * Examples:
+ * - Auto: .../upload/c_fill,g_auto,w_336,h_168/v123/image.jpg
+ * - Focal: .../upload/c_crop,g_xy_center,x_50,y_30,w_336,h_168/v123/image.jpg
+ * 
+ * Note: Does NOT handle chained transformations (those are managed in ShapeEditor)
  */
 const cloudinaryUrl = computed(() => {
     const url = props.data.url || ''
     if (!url || !dimensions.value) return url
 
     const [width, height] = dimensions.value
-    const cloudId = import.meta.env.VITE_CLOUDINARY_ID || 'little-papillon'
+
+    // Check if focal point positioning is active
+    const hasFocalPoint = props.data.x !== null || props.data.y !== null || props.data.z !== null
 
     try {
         // Extract parts from URL
         // Pattern: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations?}/v{version}/{path}
         const pattern = /^(https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(.*?)(\/v\d+\/.+)$/
         const match = url.match(pattern)
+
+        // Build transformations based on focal point presence
+        let transformations: string
+        if (hasFocalPoint) {
+            // Focal point mode: use c_crop with explicit x/y positioning
+            // g_xy_center: position relative to image center
+            // x/y: offset from center in pixels (can be negative)
+            // z: zoom level (optional, not yet implemented)
+            const x = Math.round(props.data.x || 0)
+            const y = Math.round(props.data.y || 0)
+            transformations = `c_crop,g_xy_center,x_${x},y_${y},w_${Math.round(width)},h_${Math.round(height)}`
+        } else {
+            // Auto mode: use c_fill with auto gravity
+            transformations = `c_fill,g_auto,w_${Math.round(width)},h_${Math.round(height)}`
+        }
 
         if (!match) {
             // Try pattern without existing transformations
@@ -254,7 +261,6 @@ const cloudinaryUrl = computed(() => {
             if (simpleMatch) {
                 // Insert transformations before /vXXXXXXXXXX/
                 const [, base, rest] = simpleMatch
-                const transformations = `c_crop,h_${Math.round(height)},w_${Math.round(width)}`
                 return `${base}/${transformations}${rest}`
             }
 
@@ -263,7 +269,6 @@ const cloudinaryUrl = computed(() => {
 
         // URL has existing transformations, replace them
         const [, base, , rest] = match
-        const transformations = `c_crop,h_${Math.round(height)},w_${Math.round(width)}`
         return `${base}${transformations}${rest}`
     } catch {
         return url
@@ -301,18 +306,17 @@ const altText = computed(() => {
 })
 
 /**
- * CSS classes based on shape
+ * CSS classes for shape styling
  */
 const cssClasses = computed(() => {
     const classes = [
         'img-shape',
-        `img-shape--${props.shape}`,
-        `img-shape--${props.variant}`
+        `img-shape--${props.shape}`
     ]
 
-    // Add avatar shape class
-    if (props.shape === 'avatar' && avatarShape.value) {
-        classes.push(`img-shape--avatar-${avatarShape.value}`)
+    // Add thumb shape class (square or round)
+    if (props.shape === 'thumb' && thumbShape.value) {
+        classes.push(`img-shape--thumb-${thumbShape.value}`)
     }
 
     return classes
@@ -331,7 +335,7 @@ const defaultPlaceholderUrl = 'data:image/svg+xml;base64,' + btoa(`
 const showPlaceholder = computed(() => {
     // Debug: Log blur hash presence
     if (props.data.blur && import.meta.env.DEV) {
-        console.log(`[ImgShape] blur hash present for ${props.shape}-${props.variant}:`, props.data.blur.substring(0, 20) + '...')
+        console.log(`[ImgShape] blur hash present for ${props.shape}:`, props.data.blur.substring(0, 20) + '...')
         console.log(`[ImgShape] showPlaceholder check: imageLoaded=${imageLoaded.value}, forceBlur=${props.forceBlur}, isDecoded=${isDecoded.value}`)
     }
     // If forceBlur is true, always show placeholder (if blur exists)
@@ -339,14 +343,14 @@ const showPlaceholder = computed(() => {
     // Otherwise, show placeholder only while image is loading
     const result = !imageLoaded.value && !!props.data.blur
     if (result && import.meta.env.DEV) {
-        console.log(`[ImgShape] ✅ Showing placeholder for ${props.shape}-${props.variant}`)
+        console.log(`[ImgShape] ✅ Showing placeholder for ${props.shape}`)
     }
     return result
 })
 
 // Reset imageLoaded when URL changes
-watch(() => props.data.url, (newUrl) => {
-    console.log(`[ImgShape] URL changed for ${props.shape}-${props.variant}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 50))
+watch(() => props.data.url, (newUrl: string | undefined) => {
+    console.log(`[ImgShape] URL changed for ${props.shape}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 50))
     imageLoaded.value = false
 }, { immediate: true })
 const { canvasRef, isDecoded } = useBlurHash({
@@ -356,7 +360,7 @@ const { canvasRef, isDecoded } = useBlurHash({
 })
 
 const onImageLoad = () => {
-    console.log(`[ImgShape] Image loaded for ${props.shape}-${props.variant}`)
+    console.log(`[ImgShape] Image loaded for ${props.shape}`)
     imageLoaded.value = true
 }
 
@@ -384,7 +388,6 @@ function getPreviewData() {
         originalUrl: props.data?.url || null,
         adapter: props.data?.adapter || null,
         shape: props.shape || null,
-        variant: props.variant || null,
         params: { ...previewState.value.params },
         mode: previewState.value.mode
     }
@@ -425,7 +428,6 @@ const handleClick = () => {
     if (props.editable && !hasError.value) {
         emit('activate', {
             shape: props.shape,
-            variant: props.variant || 'default',
             adapter: detectedAdapter.value
         })
     }

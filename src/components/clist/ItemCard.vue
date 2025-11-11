@@ -34,8 +34,7 @@
         </div>
 
         <!-- Background Image with data mode -->
-        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'card'" :variant="variant || 'default'"
-            class="card-background-image" />
+        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" class="card-background-image" />
 
         <!-- Legacy Background Image -->
         <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
@@ -69,8 +68,7 @@ interface Props {
     cimg?: string
     size?: 'small' | 'medium' | 'large'
     data?: ImgShapeData
-    shape?: 'card' | 'tile' | 'avatar'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
+    shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models

@@ -42,8 +42,7 @@
             </div>
 
             <!-- Image with data mode -->
-            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'avatar'" :variant="variant || 'default'"
-                class="image-box" />
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'thumb'" class="image-box" />
             <!-- Legacy image -->
             <img v-else-if="cimg" :src="cimg" :alt="heading" class="image-box" loading="lazy" />
             <!-- Placeholder -->
@@ -71,8 +70,7 @@ interface Props {
     size?: 'small' // Only small size supported
     cols?: 1 | 2 | 3
     data?: ImgShapeData
-    shape?: 'card' | 'tile' | 'avatar'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
+    shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models

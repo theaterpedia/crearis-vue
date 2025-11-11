@@ -99,13 +99,21 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
 
     /**
      * Build shape URL with Cloudinary transformation parameters
-     * Inserts c_crop,w_X,h_X into the URL path
+     * 
+     * ⚠️ CLOUDINARY TRANSFORMATION RULES:
+     * 1. Always use c_fill OR c_crop (never omit crop mode)
+     * 2. Use c_crop for: thumb shape (focal point automation)
+     * 3. Use c_fill for: all other shapes (square, wide, vertical)
+     * 4. Import MAY chain transformations: If source URL has c_crop, append new transformation with '/'
+     * 
+     * Chaining example: .../upload/c_crop,g_face,h_200,w_200/w_128,h_128/v123/image.jpg
+     * First transform: original crop, Second transform: resize to shape dimensions
      * 
      * Format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/v{version}/{path}
      * 
-     * @param baseUrl Cloudinary URL
+     * @param baseUrl Cloudinary URL (may contain existing transformations)
      * @param shape Shape variant (square, thumb, wide, vertical)
-     * @returns URL with crop transformations applied
+     * @returns URL with transformation applied (chained if c_crop detected in source)
      */
     private buildShapeUrl(baseUrl: string, shape: 'square' | 'thumb' | 'wide' | 'vertical'): string {
         let width: number, height: number
@@ -133,11 +141,30 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
             const pattern = /^(https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(.*?)(\/v\d+\/.+)$/
             const match = baseUrl.match(pattern)
 
+            // Determine crop mode based on shape
+            // c_crop: thumb (focal point automation)
+            // c_fill: square, wide, vertical (standard fills)
+            const cropMode = shape === 'thumb' ? 'c_crop' : 'c_fill'
+
+            // Determine gravity based on shape
+            const gravity = shape === 'thumb' ? 'g_auto' : 'g_auto'
+
             if (match) {
-                // Has existing transformations - replace them
-                const [, base, , rest] = match
-                const transformations = `c_crop,w_${width},h_${height}`
-                return `${base}${transformations}${rest}`
+                const [, base, existingTransforms, rest] = match
+
+                // Check if existing transformations contain c_crop
+                const hasCrop = existingTransforms.includes('c_crop')
+
+                if (hasCrop) {
+                    // RULE A: Chain transformations
+                    // Keep original crop, add new transformation for resize
+                    const newTransform = `${cropMode},${gravity},w_${width},h_${height}`
+                    return `${base}${existingTransforms}/${newTransform}${rest}`
+                } else {
+                    // Replace existing transformations
+                    const transformations = `${cropMode},${gravity},w_${width},h_${height}`
+                    return `${base}${transformations}${rest}`
+                }
             }
 
             // Try pattern without existing transformations
@@ -147,7 +174,7 @@ export class CloudinaryAdapter extends BaseMediaAdapter {
             if (simpleMatch) {
                 // Insert transformations before /vXXXXXXXXXX/
                 const [, base, rest] = simpleMatch
-                const transformations = `c_crop,w_${width},h_${height}`
+                const transformations = `${cropMode},${gravity},w_${width},h_${height}`
                 return `${base}/${transformations}${rest}`
             }
 

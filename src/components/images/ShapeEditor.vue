@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 interface Props {
-    shape: 'square' | 'wide' | 'vertical' | 'thumb' | 'avatar'
-    variant?: string
+    shape: 'square' | 'wide' | 'vertical' | 'thumb'
     adapter: 'unsplash' | 'cloudinary' | 'vimeo' | 'external'
     data: {
         x?: number | null
@@ -22,14 +21,100 @@ const emit = defineEmits<{
 }>()
 
 /**
- * Detect mode based on XYZ values (ERROR 2 & 3)
- * If X is not NULL, use XYZ mode (user has set explicit focal point)
- * If X is NULL, use Auto mode (adapter's default cropping)
+ * Detect if Cloudinary URL has chained transformations
+ * Pattern: .../upload/TRANSFORM_1/TRANSFORM_2/v123/...
+ * Example: .../upload/c_crop,g_face,h_200,w_200/c_fill,g_auto,w_128,h_128/v123/...
+ */
+const hasChainedTransformations = computed(() => {
+    if (props.adapter !== 'cloudinary') return false
+
+    try {
+        // Match pattern: /upload/STUFF/STUFF/vXXX/
+        // If there are 2+ transformation blocks, it's chained
+        const match = props.data.url.match(/\/image\/upload\/(.+?)\/v\d+\//)
+        if (match) {
+            const transformPath = match[1]
+            // Count slashes - if more than 0, it's chained
+            const slashCount = (transformPath.match(/\//g) || []).length
+            return slashCount > 0
+        }
+    } catch (e) {
+        // Invalid URL
+    }
+    return false
+})
+
+/**
+ * Reset chained transformations to simple default transformation
+ * Switches mode back to 'automation' after reset
+ */
+const handleChainedReset = () => {
+    if (confirm('CHAINED TRANSFORMATION\n\nReset to simple transformation with default settings?\n\nThis will remove the transformation chain and switch to Auto mode.')) {
+        // Extract base URL and rebuild with default settings
+        try {
+            const baseUrlMatch = props.data.url.match(/^(https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(.+?)(\/v\d+\/.+)$/)
+            if (baseUrlMatch) {
+                const [, prefix, , suffix] = baseUrlMatch
+                // Apply default transformation based on shape
+                // thumb uses c_crop, others use c_fill
+                const dimensions = getDefaultDimensions(props.shape)
+                const cropMode = props.shape === 'thumb' ? 'c_crop' : 'c_fill'
+                const defaultTransform = `${cropMode},g_auto,w_${dimensions.width},h_${dimensions.height}`
+                const newUrl = `${prefix}${defaultTransform}${suffix}`
+
+                emit('update', {
+                    url: newUrl,
+                    x: null,
+                    y: null,
+                    z: null
+                })
+
+                // Switch back to automation mode
+                editMode.value = 'automation'
+                userManualSwitch.value = false
+            }
+        } catch (e) {
+            console.error('Failed to reset chained transformations:', e)
+        }
+    }
+}
+
+/**
+ * Get default dimensions for shape
+ */
+const getDefaultDimensions = (shape: string): { width: number; height: number } => {
+    switch (shape) {
+        case 'square': return { width: 128, height: 128 }
+        case 'thumb': return { width: 64, height: 64 }
+        case 'avatar': return { width: 64, height: 64 }
+        case 'wide': return { width: 336, height: 168 }
+        case 'vertical': return { width: 126, height: 224 }
+        default: return { width: 128, height: 128 }
+    }
+}
+
+/**
+ * Detect mode based on XYZ values and chained transformations
+ * If chained transformations exist, force direct mode
+ * If X, Y, or Z is not NULL, use XYZ mode (user has set explicit focal point)
+ * If all XYZ are NULL, use Auto mode (adapter's default cropping)
  */
 const detectMode = (): 'automation' | 'xyz' | 'direct' => {
+    // RULE B: Force direct mode if chained transformations detected
+    if (hasChainedTransformations.value) {
+        console.log('[ShapeEditor] Chained transformations detected, forcing direct mode')
+        return 'direct'
+    }
+
     console.log('[ShapeEditor] Detecting mode for shape:', props.shape, 'XYZ:', { x: props.data.x, y: props.data.y, z: props.data.z })
-    if (props.data.x !== null && props.data.x !== undefined) {
-        console.log('[ShapeEditor] Mode detected: XYZ')
+
+    // Check if ANY of X, Y, or Z have values
+    const hasX = props.data.x !== null && props.data.x !== undefined
+    const hasY = props.data.y !== null && props.data.y !== undefined
+    const hasZ = props.data.z !== null && props.data.z !== undefined
+
+    if (hasX || hasY || hasZ) {
+        console.log('[ShapeEditor] Mode detected: XYZ (has values)')
         return 'xyz'
     }
     console.log('[ShapeEditor] Mode detected: Auto')
@@ -38,15 +123,15 @@ const detectMode = (): 'automation' | 'xyz' | 'direct' => {
 
 const editMode = ref<'automation' | 'xyz' | 'direct'>(detectMode())
 
-// Track if user manually switched mode
-let userManualSwitch = false
+// Track if user manually switched mode (use ref for reactivity)
+const userManualSwitch = ref(false)
 
 // Computed property that watches props and auto-updates mode
 const currentMode = computed(() => {
     const detectedMode = detectMode()
 
     // If user hasn't manually switched, use detected mode
-    if (!userManualSwitch) {
+    if (!userManualSwitch.value) {
         // Update editMode to match detected mode
         if (editMode.value !== detectedMode) {
             editMode.value = detectedMode
@@ -59,19 +144,24 @@ const currentMode = computed(() => {
 
 // Override mode switching to track user changes
 const switchMode = (mode: 'automation' | 'xyz' | 'direct') => {
-    userManualSwitch = true
+    userManualSwitch.value = true
     editMode.value = mode
     console.log('[ShapeEditor] User switched to:', mode)
-
-    // Reset flag after a short delay to allow auto-detection on next shape change
-    setTimeout(() => {
-        userManualSwitch = false
-        console.log('[ShapeEditor] Reset manual switch flag')
-    }, 100)
 }
+
+// Reset manual switch flag when shape or image changes
+watch(() => [props.shape, props.data.url], () => {
+    userManualSwitch.value = false
+    console.log('[ShapeEditor] Shape/image changed, resetting manual switch flag')
+})
 
 
 // Automation presets per shape + adapter
+// CLOUDINARY RULES:
+// - Always use c_fill OR c_crop (never omit crop mode)
+// - c_crop: thumb shape (focal point automation)
+// - c_fill: square, wide, vertical shapes (standard fills)
+// - ImgShape.vue adds c_crop when user sets x/y/z manually
 const automationPresets: Record<string, Record<string, Record<string, string>>> = {
     unsplash: {
         square: { crop: 'entropy', fit: 'crop' },
@@ -81,11 +171,12 @@ const automationPresets: Record<string, Record<string, Record<string, string>>> 
         avatar: { crop: 'faces', fit: 'crop', auto: 'format' }
     },
     cloudinary: {
-        square: { gravity: 'auto', crop: 'fill' },
-        wide: { gravity: 'face', crop: 'fill' },
-        vertical: { gravity: 'faces', crop: 'fill' },
-        thumb: { gravity: 'auto', crop: 'thumb' },
-        avatar: { gravity: 'faces', crop: 'thumb' }
+        // c_crop for thumb (focal point automation), c_fill for others
+        square: { c: 'fill', g: 'auto' },
+        wide: { c: 'fill', g: 'auto' },
+        vertical: { c: 'fill', g: 'auto' },
+        thumb: { c: 'crop', g: 'auto' },
+        avatar: { c: 'fill', g: 'faces' }
     }
 }
 
@@ -161,14 +252,32 @@ const updateTpar = (event: Event) => {
     const value = (event.target as HTMLTextAreaElement).value
     emit('update', { tpar: value || null })
 }
+
+const updateUrl = (event: Event) => {
+    const value = (event.target as HTMLTextAreaElement).value
+    emit('update', { url: value || '' })
+}
 </script>
 
 <template>
     <div class="shape-editor">
+        <!-- Chained Transformations Warning (RULE B) -->
+        <div v-if="hasChainedTransformations" class="chained-warning">
+            <div class="warning-header">
+                ⚠️ CHAINED TRANSFORMATION
+            </div>
+            <p class="warning-text">
+                Directly edit URL in Direct mode OR Reset (creates simple transformation)
+            </p>
+            <button @click="handleChainedReset" class="btn-reset-chain">
+                Reset to Simple Transformation
+            </button>
+        </div>
+
         <!-- Header: Shape + Adapter Info -->
         <div class="editor-header">
             <div class="shape-info">
-                <span class="shape-name">{{ shape }}<span v-if="variant" class="variant">:{{ variant }}</span></span>
+                <span class="shape-name">{{ shape }}</span>
                 <span class="adapter-badge">{{ adapter }}</span>
             </div>
 
@@ -177,7 +286,8 @@ const updateTpar = (event: Event) => {
                 <button :class="{ active: currentMode === 'automation' }" @click="switchMode('automation')">
                     Auto
                 </button>
-                <button :class="{ active: currentMode === 'xyz' }" @click="switchMode('xyz')">
+                <button :class="{ active: currentMode === 'xyz' }" @click="switchMode('xyz')"
+                    :disabled="hasChainedTransformations">
                     XYZ
                 </button>
                 <button :class="{ active: currentMode === 'direct' }" @click="switchMode('direct')">
@@ -249,11 +359,17 @@ const updateTpar = (event: Event) => {
         <!-- Mode 3: Direct URL Edit -->
         <div v-else class="editor-content">
             <h5>Direct Edit</h5>
-            <p class="hint">Edit transformation string and URL template</p>
+            <p class="hint">Edit transformation string, URL template, and full URL</p>
+
+            <!-- Full URL (always displayed for all adapters) -->
+            <div class="url-editor">
+                <label>Full URL</label>
+                <textarea :value="data.url" @input="updateUrl" rows="3" placeholder="https://..." class="url-input" />
+            </div>
 
             <!-- Transformation String -->
             <div class="url-editor">
-                <label>Transformation String</label>
+                <label>Transformation String (turl)</label>
                 <div class="url-parts">
                     <span class="url-prefix dimmed">
                         {{ adapter === 'unsplash' ? '...?' : '.../upload/' }}
@@ -301,6 +417,48 @@ const updateTpar = (event: Event) => {
     background: var(--color-card-bg);
     border-radius: var(--radius-medium);
     padding: 1rem;
+}
+
+/* Chained Transformations Warning */
+.chained-warning {
+    background: var(--color-warning-bg, #fff3cd);
+    border: 2px solid var(--color-warning-base, #ffc107);
+    border-radius: var(--radius-medium);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.warning-header {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-warning-contrast, #856404);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.warning-text {
+    font-size: 0.8125rem;
+    color: var(--color-warning-contrast, #856404);
+    margin: 0 0 0.75rem 0;
+}
+
+.btn-reset-chain {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background: var(--color-warning-base, #ffc107);
+    color: var(--color-warning-contrast, #212529);
+    border: none;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+.btn-reset-chain:hover {
+    background: var(--color-warning-hover, #e0a800);
 }
 
 .editor-header {
@@ -361,6 +519,12 @@ const updateTpar = (event: Event) => {
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     font-weight: 600;
+}
+
+.mode-switcher button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: transparent;
 }
 
 .editor-content {
@@ -500,7 +664,8 @@ const updateTpar = (event: Event) => {
     font-size: 0.8125rem;
 }
 
-.tpar-input {
+.tpar-input,
+.url-input {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid var(--color-border);
