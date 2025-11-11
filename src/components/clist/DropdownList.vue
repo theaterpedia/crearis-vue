@@ -33,7 +33,9 @@
                 <!-- CL2: Use ItemList with entity fetching -->
                 <div class="dropdown-list-wrapper">
                     <ItemList :entity="entity" :project="project" :filterIds="filterIds" item-type="row" :size="size"
-                        interaction="static" @item-click="(item) => handleSelect(item, hide)" />
+                        :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
+                        @item-click="(item) => handleSelect(item, hide)" @update:selectedIds="handleSelectedIdsUpdate"
+                        @selectedXml="handleSelectedXml" @selected="handleSelected" />
                 </div>
             </div>
         </template>
@@ -51,14 +53,25 @@ interface Props {
     title?: string
     size?: 'small' | 'medium'
     filterIds?: number[] // Optional array of IDs to filter by
+    // Selection props
+    dataMode?: boolean // True = uses entity data and emits selections
+    multiSelect?: boolean // Allow multiple selections
+    selectedIds?: number | number[] // v-model for selected item IDs
+    displayXml?: boolean // Show xmlID in trigger
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    size: 'small'
+    size: 'small',
+    dataMode: true,
+    multiSelect: false,
+    displayXml: false
 })
 
 const emit = defineEmits<{
     select: [item: any]
+    'update:selectedIds': [value: number | number[] | null]
+    'selectedXml': [value: string | string[]]
+    'selected': [value: any | any[]]
 }>()
 
 const isOpen = ref(false)
@@ -80,6 +93,19 @@ function openDropdown() {
 function handleSelect(item: any, hide: () => void) {
     emit('select', item)
     hide()
+}
+
+// Forward selection events from ItemList
+function handleSelectedIdsUpdate(value: number | number[] | null) {
+    emit('update:selectedIds', value)
+}
+
+function handleSelectedXml(value: string | string[]) {
+    emit('selectedXml', value)
+}
+
+function handleSelected(value: any | any[]) {
+    emit('selected', value)
 }
 </script>
 

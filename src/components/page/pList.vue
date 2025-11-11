@@ -19,7 +19,7 @@ interface Props {
     header?: string
     itemType?: 'tile' | 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
-    interaction?: 'static' | 'popup' | 'zoom'
+    interaction?: 'static' | 'zoom'
     limit?: number // Note: limit not yet supported by ItemList, will show all
     projectDomaincode?: string
 }

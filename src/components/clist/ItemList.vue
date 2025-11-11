@@ -9,12 +9,18 @@
 -->
 <template>
     <div v-if="interaction === 'static'" class="item-list-container">
+        <!-- Validation Error Banner -->
+        <div v-if="validationError" class="item-list-validation-error">
+            ⚠️ {{ validationError }}
+        </div>
+
         <div v-if="loading" class="item-list-loading">Loading...</div>
         <div v-else-if="error" class="item-list-error">{{ error }}</div>
         <div v-else class="item-list" :class="itemContainerClass">
-            <component :is="itemComponent" v-for="(item, index) in entities" :key="index" :heading="item.heading"
-                :size="size" :style-compact="styleCompact" :heading-level="headingLevel" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => emit('item-click', item, e)">
+            <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
+                :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
+                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
+                @click="(e: MouseEvent) => handleItemClick(item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -71,11 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import ItemTile from './ItemTile.vue'
 import ItemRow from './ItemRow.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
+import type { ItemOptions, ItemModels } from './types'
 
 interface ListItem {
     heading: string
@@ -88,6 +95,7 @@ interface EntityItem {
     id: number
     title?: string
     entityname?: string
+    xmlID?: string // Unique identifier for the entity
     img_thumb?: string // JSON string from API
     img_square?: string // JSON string from API
 }
@@ -107,6 +115,10 @@ interface Props {
     interaction?: 'static' | 'popup' | 'zoom'
     title?: string
     modelValue?: boolean
+    // Selection props
+    dataMode?: boolean // True = uses entity data and emits selections, False = static display only
+    multiSelect?: boolean // Allow multiple selections
+    selectedIds?: number | number[] // v-model for selected item IDs
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -115,11 +127,16 @@ const props = withDefaults(defineProps<Props>(), {
     columns: 'off',
     headingLevel: 'h3',
     variant: 'default',
-    interaction: 'static'
+    interaction: 'static',
+    dataMode: true, // Default to true per requirements
+    multiSelect: false
 })
 
 const emit = defineEmits<{
     'update:modelValue': [value: boolean]
+    'update:selectedIds': [value: number | number[] | null]
+    'selectedXml': [value: string | string[]]
+    'selected': [value: EntityItem | EntityItem[]]
     close: []
     'item-click': [item: any, event: MouseEvent]
 }>()
@@ -133,12 +150,39 @@ const isZoomed = ref(false)
 const entityData = ref<EntityItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const selectedIdsInternal = ref<Set<number>>(new Set())
+
+// Error detection for invalid prop combinations
+const validationError = computed(() => {
+    // Error 1: Setting selectedIds requires dataMode=true
+    if (!props.dataMode && props.selectedIds !== undefined) {
+        return 'Setting Items requires DataMode'
+    }
+
+    // Error 2: Multiple IDs provided but multiSelect=false
+    if (!props.multiSelect && Array.isArray(props.selectedIds) && props.selectedIds.length > 1) {
+        return 'Only one Item can be selected'
+    }
+
+    return null
+})
+
+// Sync internal selection state with prop
+watch(() => props.selectedIds, (newVal) => {
+    if (newVal === undefined || newVal === null) {
+        selectedIdsInternal.value.clear()
+    } else if (typeof newVal === 'number') {
+        selectedIdsInternal.value = new Set([newVal])
+    } else {
+        selectedIdsInternal.value = new Set(newVal)
+    }
+}, { immediate: true })
 
 /**
  * Determine if we're in data mode (fetching from API)
  */
-const dataMode = computed(() => {
-    return props.entity !== undefined || props.images !== undefined
+const dataModeActive = computed(() => {
+    return props.dataMode && (props.entity !== undefined || props.images !== undefined)
 })
 
 /**
@@ -240,7 +284,7 @@ const itemComponent = computed(() => {
  * Fetch entity data from API
  */
 const fetchEntityData = async () => {
-    if (!dataMode.value) return
+    if (!dataModeActive.value) return
 
     loading.value = true
     error.value = null
@@ -316,7 +360,7 @@ const parseImageData = (jsonbData: any): ImgShapeData | null => {
  * Get final entities list (either from items prop or fetched data)
  */
 const entities = computed(() => {
-    if (dataMode.value) {
+    if (dataModeActive.value) {
         // Apply filterIds if provided
         let filteredData = entityData.value
         console.log('[ItemList] Total entities:', entityData.value.length, 'filterIds:', props.filterIds?.length ?? 'undefined')
@@ -409,8 +453,111 @@ const toggleZoom = () => {
     isZoomed.value = !isZoomed.value
 }
 
+/**
+ * Get ItemOptions for an item based on dataMode
+ */
+const getItemOptions = (item: any): ItemOptions => {
+    if (!props.dataMode) return {}
+
+    return {
+        selectable: true, // Always show checkbox in dataMode
+        entityIcon: false,
+        badge: false,
+        counter: false,
+        marker: false
+    }
+}
+
+/**
+ * Get ItemModels for an item
+ */
+const getItemModels = (item: any): ItemModels => {
+    if (!props.dataMode) return {}
+
+    return {
+        selected: selectedIdsInternal.value.has(item.id),
+        count: 0,
+        marked: undefined,
+        entityType: undefined,
+        badgeColor: undefined
+    }
+}
+
+/**
+ * Handle item click - manage selection state
+ */
+const handleItemClick = (item: any, event: MouseEvent) => {
+    // Always emit the original click event
+    emit('item-click', item, event)
+
+    // In dataMode, handle selection
+    if (props.dataMode && item.id !== undefined) {
+        const itemId = item.id
+
+        if (props.multiSelect) {
+            // Toggle selection in multi-select mode
+            const newSelection = new Set(selectedIdsInternal.value)
+            if (newSelection.has(itemId)) {
+                newSelection.delete(itemId)
+            } else {
+                newSelection.add(itemId)
+            }
+            selectedIdsInternal.value = newSelection
+
+            // Emit as array
+            const selectedArray = Array.from(newSelection)
+            emit('update:selectedIds', selectedArray.length > 0 ? selectedArray : null)
+
+            // Emit selectedXml and selected items
+            emitSelectedData(selectedArray)
+        } else {
+            // Single select mode - replace selection
+            const isCurrentlySelected = selectedIdsInternal.value.has(itemId)
+
+            if (isCurrentlySelected) {
+                // Deselect
+                selectedIdsInternal.value.clear()
+                emit('update:selectedIds', null)
+                emit('selectedXml', '')
+                emit('selected', null as any)
+            } else {
+                // Select this item only
+                selectedIdsInternal.value = new Set([itemId])
+                emit('update:selectedIds', itemId)
+
+                // Emit selectedXml and selected item
+                emitSelectedData([itemId])
+            }
+        }
+    }
+}
+
+/**
+ * Emit selected XML IDs and items based on current selection
+ */
+const emitSelectedData = (selectedIds: number[]) => {
+    const selectedItems = entityData.value.filter(item => selectedIds.includes(item.id))
+
+    if (selectedItems.length === 0) {
+        emit('selectedXml', props.multiSelect ? [] : '')
+        emit('selected', props.multiSelect ? [] : (null as any))
+        return
+    }
+
+    // Extract xmlIDs
+    const xmlIds = selectedItems.map(item => item.xmlID).filter(Boolean) as string[]
+
+    if (props.multiSelect) {
+        emit('selectedXml', xmlIds)
+        emit('selected', selectedItems)
+    } else {
+        emit('selectedXml', xmlIds[0] || '')
+        emit('selected', selectedItems[0])
+    }
+}
+
 onMounted(() => {
-    if (dataMode.value) {
+    if (dataModeActive.value) {
         fetchEntityData()
     }
 })
@@ -427,6 +574,17 @@ defineExpose({
 /* Static container */
 .item-list-container {
     width: 100%;
+}
+
+/* Validation Error Banner */
+.item-list-validation-error {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-contrast);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--color-warning);
+    font-weight: 500;
 }
 
 .item-list {
