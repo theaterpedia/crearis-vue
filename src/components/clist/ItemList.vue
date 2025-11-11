@@ -110,6 +110,43 @@ import ItemModalCard from './ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 
+/**
+ * XML ID Helper Functions
+ * These functions help parse and manipulate XML IDs
+ */
+
+/**
+ * Extract prefix fragments from XML ID
+ * @param xmlId - Full XML ID (e.g., "tp.event.ws2025")
+ * @param count - Number of fragments to extract (default: 2)
+ * @returns Prefix string (e.g., "tp.event")
+ */
+export function getXmlIdPrefix(xmlId: string, count: number = 2): string {
+    const parts = xmlId.split('.')
+    return parts.slice(0, count).join('.')
+}
+
+/**
+ * Extract specific fragment from XML ID
+ * @param xmlId - Full XML ID (e.g., "tp.event.ws2025")
+ * @param index - Fragment index (0=project, 1=entity, 2+=unique)
+ * @returns Fragment string or undefined
+ */
+export function getXmlIdFragment(xmlId: string, index: number): string | undefined {
+    const parts = xmlId.split('.')
+    return parts[index]
+}
+
+/**
+ * Check if XML ID matches any of the given prefixes
+ * @param xmlId - Full XML ID
+ * @param prefixes - Array of prefix strings
+ * @returns True if matches any prefix
+ */
+export function matchesXmlIdPrefix(xmlId: string, prefixes: string[]): boolean {
+    return prefixes.some(prefix => xmlId.startsWith(prefix))
+}
+
 interface ListItem {
     heading: string
     cimg?: string
@@ -132,6 +169,10 @@ interface Props {
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
     filterIds?: number[] // Filter fetched entities by these IDs
+    // XML ID filtering props
+    filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
+    filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
+    filterXmlPattern?: RegExp // Filter by XML ID regex pattern
     size?: 'small' | 'medium'
     width?: 'inherit' | 'small' | 'medium' | 'large' // Item width control
     columns?: 'off' | 'on' // Enable multi-column wrapping
@@ -391,16 +432,41 @@ const parseImageData = (jsonbData: any): ImgShapeData | null => {
  */
 const entities = computed(() => {
     if (dataModeActive.value) {
-        // Apply filterIds if provided
-        let filteredData = entityData.value
-        console.log('[ItemList] Total entities:', entityData.value.length, 'filterIds:', props.filterIds?.length ?? 'undefined')
-        if (props.filterIds !== undefined) {
-            // filterIds is explicitly provided - apply filtering even if empty array
-            filteredData = entityData.value.filter((entity: any) =>
-                props.filterIds!.includes(entity.id)
-            )
-            console.log('[ItemList] After filtering:', filteredData.length)
-        }
+        // Apply all filters in a single pass for performance
+        const filteredData = entityData.value.filter((entity: any) => {
+            // Filter 1: Numeric ID filtering
+            if (props.filterIds !== undefined) {
+                if (!props.filterIds.includes(entity.id)) return false
+            }
+
+            // Filter 2: XML ID prefix filtering (single)
+            if (props.filterXmlPrefix) {
+                if (!entity.xmlID?.startsWith(props.filterXmlPrefix)) return false
+            }
+
+            // Filter 3: XML ID prefixes filtering (multiple with OR logic)
+            if (props.filterXmlPrefixes && props.filterXmlPrefixes.length > 0) {
+                if (!props.filterXmlPrefixes.some(prefix => entity.xmlID?.startsWith(prefix))) {
+                    return false
+                }
+            }
+
+            // Filter 4: XML ID pattern filtering
+            if (props.filterXmlPattern) {
+                if (!entity.xmlID || !props.filterXmlPattern.test(entity.xmlID)) return false
+            }
+
+            return true
+        })
+
+        console.log('[ItemList] Filter results:', {
+            total: entityData.value.length,
+            filterIds: props.filterIds?.length,
+            filterXmlPrefix: props.filterXmlPrefix,
+            filterXmlPrefixes: props.filterXmlPrefixes?.length,
+            filterXmlPattern: props.filterXmlPattern?.source,
+            filtered: filteredData.length
+        })
 
         // Transform entity data to ListItem format
         return filteredData.map((entity: any) => {

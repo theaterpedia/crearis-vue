@@ -378,6 +378,96 @@
                 </Container>
             </Section>
 
+            <!-- XML Filtering Demo Section -->
+            <Section background="muted">
+                <Container>
+                    <Heading level="2">XML ID Filtering Demo ✨ NEW</Heading>
+                    <Prose>
+                        <p>Demonstrates XML ID filtering capabilities for advanced entity filtering without requiring
+                            database IDs.</p>
+
+                        <!-- Demo 1: Filter by Prefix -->
+                        <div style="margin-top: 2rem;">
+                            <h3>Filter by XML Prefix</h3>
+                            <p>Shows only entities with XML IDs starting with "tp.instructor"</p>
+                            <pList type="instructors" :project-domaincode="FIXED_PROJECT_ID" size="small"
+                                filterXmlPrefix="tp.instructor" header="TP Instructors Only" />
+                        </div>
+
+                        <!-- Demo 2: Filter by Multiple Prefixes -->
+                        <div style="margin-top: 2rem;">
+                            <h3>Filter by Multiple Prefixes (OR Logic)</h3>
+                            <p>Shows events OR instructors from Theaterpedia project</p>
+                            <p><em>Note: Requires entity="all" support (coming soon)</em></p>
+                            <code
+                                style="display: block; padding: 0.5rem; background: #f3f4f6; border-radius: 0.25rem; margin-top: 0.5rem;">
+                    :filterXmlPrefixes="['tp.event', 'tp.instructor']"
+                </code>
+                        </div>
+
+                        <!-- Demo 3: Combined Filtering -->
+                        <div style="margin-top: 2rem;">
+                            <h3>Combined Filtering</h3>
+                            <p>Combines multiple filter types with AND logic:</p>
+                            <ul>
+                                <li>filterIds: [1, 2, 3] (numeric ID filter)</li>
+                                <li>filterXmlPrefix: "tp" (project filter)</li>
+                                <li>Pattern: exclude archived items</li>
+                            </ul>
+                        </div>
+                    </Prose>
+                </Container>
+            </Section>
+
+            <!-- pGallery Demos Section -->
+            <Section background="default">
+                <Container>
+                    <Heading level="2">pGallery Demos</Heading>
+                    <Prose>
+                        <p>The pGallery component is aligned with pList but optimized for gallery-style grid layouts.
+                            Uses ItemList with multi-column display for responsive image galleries.</p>
+                        <ul>
+                            <li><strong>Full-Width Gallery:</strong> Responsive grid layout with tiles</li>
+                            <li><strong>Multi-Column:</strong> Automatic wrapping based on container width</li>
+                            <li><strong>XML Filtering:</strong> Same filtering capabilities as pList</li>
+                            <li><strong>Selection Support:</strong> Optional dataMode for batch operations</li>
+                        </ul>
+                    </Prose>
+
+                    <!-- Demo 1: Basic Gallery -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">1. Basic Gallery (Static, Multi-Column)</h3>
+                        <pGallery type="events" :project-domaincode="FIXED_PROJECT_ID" size="medium"
+                            header="Event Gallery" interaction="static" />
+                    </div>
+
+                    <!-- Demo 2: Gallery with Preview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">2. Gallery with Preview Modal</h3>
+                        <pGallery type="instructors" :project-domaincode="FIXED_PROJECT_ID" size="medium"
+                            header="Instructor Gallery" interaction="previewmodal" />
+                    </div>
+
+                    <!-- Demo 3: Gallery with Selection -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">3. Gallery with Multi-Select (Data Mode)</h3>
+                        <pGallery type="events" :project-domaincode="FIXED_PROJECT_ID" size="medium"
+                            header="Select Events from Gallery" :dataMode="true" :multiSelect="true"
+                            v-model:selectedIds="selectedGalleryEventIds" @selected="handleGalleryEventsSelected" />
+
+                        <div v-if="selectedGalleryEvents && selectedGalleryEvents.length > 0"
+                            style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 0.5rem;">
+                            <strong>Selected Events (Gallery):</strong>
+                            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                <li v-for="event in selectedGalleryEvents" :key="event.id">
+                                    {{ event.heading || event.title }} (ID: {{ event.id }})
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </Container>
+            </Section>
+
             <!-- Modal Component -->
             <ModalSelector :is-open="isModalOpen" :entity="modalEntity" :project="FIXED_PROJECT_ID"
                 :title="`Select ${modalEntity}`" size="medium" variant="square" default-display="gallery"
@@ -399,8 +489,9 @@ import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
-import StartPageHero from './HomeComponents/StartPageHero.vue'
+import StartPageHero from '../Home/HomeComponents/StartPageHero.vue'
 import pList from '@/components/page/pList.vue'
+import pGallery from '@/components/page/pGallery.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'

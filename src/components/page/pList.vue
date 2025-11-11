@@ -2,10 +2,12 @@
     <div class="p-list" :class="{ 'is-aside': isAside, 'is-footer': isFooter }">
         <Heading v-if="showHeader && header" :headline="header" :as="headingLevel" />
         <!-- CL2: Use entity fetching built into ItemList -->
-        <ItemList :entity="entityType" :project="projectDomaincode" :item-type="itemType" :size="size"
-            :interaction="interaction" :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds"
-            @update:selectedIds="$emit('update:selectedIds', $event)" @selectedXml="$emit('selectedXml', $event)"
-            @selected="$emit('selected', $event)" @item-click="$emit('item-click', $event)" />
+        <ItemList :entity="entityType" :project="projectDomaincode" :filterXmlPrefix="filterXmlPrefix"
+            :filterXmlPrefixes="filterXmlPrefixes" :filterXmlPattern="filterXmlPattern" :item-type="itemType"
+            :size="size" :interaction="interaction" :dataMode="dataMode" :multiSelect="multiSelect"
+            :selectedIds="selectedIds" @update:selectedIds="$emit('update:selectedIds', $event)"
+            @selectedXml="$emit('selectedXml', $event)" @selected="$emit('selected', $event)"
+            @item-click="$emit('item-click', $event)" />
     </div>
 </template>
 
@@ -24,6 +26,10 @@ interface Props {
     interaction?: 'static' | 'zoom' | 'previewmodal'
     limit?: number // Note: limit not yet supported by ItemList, will show all
     projectDomaincode?: string
+    // XML ID filtering props
+    filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
+    filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
+    filterXmlPattern?: RegExp // Filter by XML ID regex pattern
     // Selection props (defaults to false for pList - primarily for display)
     dataMode?: boolean
     multiSelect?: boolean

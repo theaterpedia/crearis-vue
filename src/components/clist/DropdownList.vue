@@ -35,7 +35,7 @@
                             <div v-else class="avatar-placeholder"></div>
                         </div>
                         <span v-if="selectedItems.length > 8" class="avatar-count">+{{ selectedItems.length - 8
-                            }}</span>
+                        }}</span>
                     </div>
                 </div>
 
@@ -63,10 +63,11 @@
                 <!-- CL2: Use ItemList with entity fetching -->
                 <div class="dropdown-list-wrapper">
                     <ItemList ref="itemListRef" :entity="entity" :project="project" :filterIds="filterIds"
-                        item-type="row" :size="size" :dataMode="dataMode" :multiSelect="multiSelect"
-                        :selectedIds="selectedIds" interaction="static" @item-click="(item) => handleSelect(item, hide)"
-                        @update:selectedIds="handleSelectedIdsUpdate" @selectedXml="handleSelectedXml"
-                        @selected="handleSelected" />
+                        :filterXmlPrefix="filterXmlPrefix" :filterXmlPrefixes="filterXmlPrefixes"
+                        :filterXmlPattern="filterXmlPattern" item-type="row" :size="size" :dataMode="dataMode"
+                        :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
+                        @item-click="(item) => handleSelect(item, hide)" @update:selectedIds="handleSelectedIdsUpdate"
+                        @selectedXml="handleSelectedXml" @selected="handleSelected" />
                 </div>
             </div>
         </template>
@@ -87,6 +88,10 @@ interface Props {
     title?: string
     size?: 'small' | 'medium'
     filterIds?: number[] // Optional array of IDs to filter by
+    // XML ID filtering props
+    filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
+    filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
+    filterXmlPattern?: RegExp // Filter by XML ID regex pattern
     // Selection props
     dataMode?: boolean // True = uses entity data and emits selections
     multiSelect?: boolean // Allow multiple selections
