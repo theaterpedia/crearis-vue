@@ -250,6 +250,66 @@
                 </Container>
             </Section>
 
+            <!-- DropdownList Multi-Select Demo Section -->
+            <Section background="muted">
+                <Container>
+                    <Heading level="2">DropdownList Multi-Select Demo</Heading>
+                    <Prose>
+                        <p>This demonstrates the DropdownList component with dataMode and multiSelect enabled for
+                            instructors.
+                            Toggle between small (ItemRow) and medium (ItemTile) display sizes.</p>
+
+                        <div
+                            style="display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem; margin-bottom: 1rem;">
+                            <label style="font-weight: 500;">Display Size:</label>
+                            <button :class="['btn-toggle', { 'active': instructorSize === 'small' }]"
+                                @click="instructorSize = 'small'">
+                                Small (Row)
+                            </button>
+                            <button :class="['btn-toggle', { 'active': instructorSize === 'medium' }]"
+                                @click="instructorSize = 'medium'">
+                                Medium (Tile)
+                            </button>
+                        </div>
+
+                        <DropdownList entity="instructors" :project="FIXED_PROJECT_ID" title="Select Instructors"
+                            :size="instructorSize" :dataMode="true" :multiSelect="true"
+                            v-model:selectedIds="selectedInstructorIds" @selectedXml="handleInstructorXml"
+                            @selected="handleInstructorSelected">
+                            <template #trigger="{ open, isOpen }">
+                                <button class="form-dropdown-trigger" @click="open" style="min-width: 300px;">
+                                    <span v-if="selectedInstructorIds && selectedInstructorIds.length > 0">
+                                        {{ selectedInstructorIds.length }} instructor(s) selected
+                                    </span>
+                                    <span v-else>Select instructors</span>
+                                    <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16"
+                                        viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </DropdownList>
+
+                        <div v-if="selectedInstructors && selectedInstructors.length > 0"
+                            style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 0.5rem;">
+                            <strong>Selected Instructors:</strong>
+                            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                <li v-for="instructor in selectedInstructors" :key="instructor.id">
+                                    {{ instructor.entityname || instructor.name }} (ID: {{ instructor.id }})
+                                </li>
+                            </ul>
+                            <div v-if="selectedInstructorXml"
+                                style="margin-top: 1rem; padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
+                                <strong>XML IDs:</strong> {{ Array.isArray(selectedInstructorXml) ?
+                                    selectedInstructorXml.join(', ')
+                                : selectedInstructorXml }}
+                            </div>
+                        </div>
+                    </Prose>
+                </Container>
+            </Section>
+
             <!-- Modal Component -->
             <ModalSelector :is-open="isModalOpen" :entity="modalEntity" :project="FIXED_PROJECT_ID"
                 :title="`Select ${modalEntity}`" size="medium" variant="square" default-display="gallery"
@@ -378,6 +438,12 @@ const interactionStatusValue = ref<number | null>(null)
 const isModalOpen = ref(false)
 const modalEntity = ref<'posts' | 'events' | 'instructors'>('events')
 const selectedItem = ref<any>(null)
+
+// DropdownList multi-select demo state
+const instructorSize = ref<'small' | 'medium'>('small')
+const selectedInstructorIds = ref<number[]>([])
+const selectedInstructorXml = ref<string | string[]>([])
+const selectedInstructors = ref<any[]>([])
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -774,6 +840,17 @@ function handleModalSelect(item: any) {
     console.log('Selected item:', item)
 }
 
+// DropdownList multi-select handlers
+function handleInstructorXml(xmlIds: string | string[]) {
+    selectedInstructorXml.value = xmlIds
+    console.log('Selected XML IDs:', xmlIds)
+}
+
+function handleInstructorSelected(instructors: any | any[]) {
+    selectedInstructors.value = Array.isArray(instructors) ? instructors : [instructors]
+    console.log('Selected instructors:', selectedInstructors.value)
+}
+
 // Initialize
 onMounted(async () => {
     // Initialize theme dimensions
@@ -1065,6 +1142,57 @@ onMounted(async () => {
 .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.btn-toggle {
+    padding: 0.5rem 1rem;
+    background: white;
+    color: var(--color-text, #1f2937);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-toggle:hover {
+    background: var(--color-muted-bg, #f3f4f6);
+    border-color: var(--color-primary, #3b82f6);
+}
+
+.btn-toggle.active {
+    background: var(--color-primary, #3b82f6);
+    color: white;
+    border-color: var(--color-primary, #3b82f6);
+}
+
+.form-dropdown-trigger {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s;
+}
+
+.form-dropdown-trigger:hover {
+    border-color: var(--color-primary, #3b82f6);
+}
+
+.form-dropdown-trigger .chevron {
+    transition: transform 0.2s;
+}
+
+.form-dropdown-trigger .chevron.rotate-180 {
+    transform: rotate(180deg);
 }
 
 .form-container {

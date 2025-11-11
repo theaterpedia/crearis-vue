@@ -12,8 +12,38 @@
         placement="bottom-start">
         <!-- Trigger slot -->
         <slot name="trigger" :open="openDropdown" :is-open="isOpen">
-            <button class="dropdown-trigger" @click="openDropdown">
-                <slot name="trigger-content">Select {{ entity }}</slot>
+            <button class="dropdown-trigger"
+                :class="{ 'has-selection': dataMode && selectedItems.length > 0, 'with-xml': displayXml }"
+                @click="openDropdown">
+                <!-- Default trigger content when no dataMode or no selection -->
+                <div v-if="!dataMode || selectedItems.length === 0" class="trigger-placeholder">
+                    <slot name="trigger-content">Select {{ entity }}</slot>
+                </div>
+
+                <!-- Single selection: Show ItemRow -->
+                <div v-else-if="!multiSelect && selectedItems.length === 1" class="trigger-single-selection">
+                    <ItemRow v-bind="formatSelectedItem(selectedItems[0])" :size="size" />
+                </div>
+
+                <!-- Multi-selection: Show stacked avatars -->
+                <div v-else-if="multiSelect && selectedItems.length > 0" class="trigger-multi-selection">
+                    <div class="stacked-avatars">
+                        <div v-for="(item, index) in displayedItems" :key="item.id" class="stacked-avatar"
+                            :style="{ zIndex: displayedItems.length - index, marginLeft: index > 0 ? '-20px' : '0' }">
+                            <img v-if="item.img_thumb" :src="parseImageData(item.img_thumb)?.url || ''"
+                                :alt="item.title || item.name" class="avatar-image" />
+                            <div v-else class="avatar-placeholder"></div>
+                        </div>
+                        <span v-if="selectedItems.length > 8" class="avatar-count">+{{ selectedItems.length - 8
+                            }}</span>
+                    </div>
+                </div>
+
+                <!-- Optional xmlID display row -->
+                <div v-if="displayXml && simplifiedXmlDisplay" class="trigger-xml-row">
+                    {{ simplifiedXmlDisplay }}
+                </div>
+
                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16" viewBox="0 0 16 16"
                     fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -32,10 +62,11 @@
 
                 <!-- CL2: Use ItemList with entity fetching -->
                 <div class="dropdown-list-wrapper">
-                    <ItemList :entity="entity" :project="project" :filterIds="filterIds" item-type="row" :size="size"
-                        :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
-                        @item-click="(item) => handleSelect(item, hide)" @update:selectedIds="handleSelectedIdsUpdate"
-                        @selectedXml="handleSelectedXml" @selected="handleSelected" />
+                    <ItemList ref="itemListRef" :entity="entity" :project="project" :filterIds="filterIds"
+                        item-type="row" :size="size" :dataMode="dataMode" :multiSelect="multiSelect"
+                        :selectedIds="selectedIds" interaction="static" @item-click="(item) => handleSelect(item, hide)"
+                        @update:selectedIds="handleSelectedIdsUpdate" @selectedXml="handleSelectedXml"
+                        @selected="handleSelected" />
                 </div>
             </div>
         </template>
@@ -46,6 +77,9 @@
 import { ref, computed } from 'vue'
 import { Dropdown as VDropdown } from 'floating-vue'
 import ItemList from './ItemList.vue'
+import ItemRow from './ItemRow.vue'
+import { useTheme } from '@/composables/useTheme'
+import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
     entity: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
@@ -75,6 +109,8 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
+const itemListRef = ref<InstanceType<typeof ItemList> | null>(null)
+const { avatarWidth } = useTheme()
 
 // System theme for dropdown (per FLOATING_VUE_AND_PANELS_GUIDE.md)
 const systemTheme = computed(() => ({
@@ -85,6 +121,78 @@ const systemTheme = computed(() => ({
     '--color-dimmed': 'var(--system-dimmed, #6b7280)',
     '--color-inverted': '0'
 }))
+
+// Compute selected IDs as array
+const selectedIdsArray = computed(() => {
+    if (!props.selectedIds) return []
+    if (typeof props.selectedIds === 'number') return [props.selectedIds]
+    return props.selectedIds
+})
+
+// Get selected items from ItemList's entityData instead of fetching separately
+const selectedItems = computed(() => {
+    if (!props.dataMode || selectedIdsArray.value.length === 0) return []
+    if (!itemListRef.value?.entityData) return []
+
+    const allItems = itemListRef.value.entityData
+    return allItems.filter((item: any) => selectedIdsArray.value.includes(item.id))
+})
+
+// Parse image data for display
+const parseImageData = (jsonbData: any): ImgShapeData | null => {
+    if (!jsonbData || typeof jsonbData !== 'object') return null
+    return {
+        type: 'url',
+        url: jsonbData.url || '',
+        x: jsonbData.x ?? null,
+        y: jsonbData.y ?? null,
+        z: jsonbData.z ?? null,
+        options: jsonbData.options ?? null,
+        blur: jsonbData.blur ?? undefined,
+        turl: jsonbData.turl ?? undefined,
+        tpar: jsonbData.tpar ?? undefined,
+        alt_text: jsonbData.alt_text ?? undefined
+    }
+}
+
+// Format selected item for ItemRow display
+const formatSelectedItem = (item: any) => {
+    const imageData = parseImageData(item.img_thumb)
+    return {
+        heading: item.title || item.name || item.entityname || item.heading || `Item ${item.id}`,
+        data: imageData,
+        shape: 'avatar' as const,
+        variant: 'default' as const
+    }
+}
+
+// Get first 8 selected items for stacked avatars
+const displayedItems = computed(() => {
+    return selectedItems.value.slice(0, 8)
+})
+
+// Simplified xmlID display: "prefix.type: id1, id2, id3"
+const simplifiedXmlDisplay = computed(() => {
+    if (!props.displayXml || selectedItems.value.length === 0) return ''
+
+    const xmlIds = selectedItems.value
+        .map(item => item.xmlID)
+        .filter(Boolean)
+
+    if (xmlIds.length === 0) return ''
+
+    // Split first xmlID by '.' and take first two parts
+    const parts = xmlIds[0].split('.')
+    const prefix = parts.slice(0, 2).join('.')
+
+    // Extract remaining parts from all xmlIDs
+    const suffixes = xmlIds.map((id: string) => {
+        const idParts = id.split('.')
+        return idParts.slice(2).join('.')
+    })
+
+    return `${prefix}: ${suffixes.join(', ')}`
+})
 
 function openDropdown() {
     isOpen.value = true

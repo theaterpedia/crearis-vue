@@ -566,7 +566,11 @@ defineExpose({
     open: () => { isOpen.value = true },
     close: closePopup,
     toggleZoom,
-    refresh: fetchEntityData
+    refresh: fetchEntityData,
+    // Expose data for parent components (like DropdownList)
+    entityData: computed(() => entityData.value),
+    entities: entities,
+    selectedIdsInternal: computed(() => Array.from(selectedIdsInternal.value))
 })
 </script>
 

@@ -131,6 +131,8 @@
                 <!-- Events Selector -->
                 <div class="navbar-item">
                     <DropdownList entity="events" title="Event wählen" size="small" :filterIds="availableEventIds"
+                        :dataMode="true" :multiSelect="false" :selectedIds="currentEventId"
+                        @update:selectedIds="(id) => { if (id) switchEvent(id as number) }"
                         @select="(event: any) => switchEvent(event.id)">
                         <template #trigger="{ open, isOpen }">
                             <button class="navbar-button events-toggle-btn" @click="open">
@@ -286,7 +288,7 @@
                             <div v-for="task in getAdditionalTasks('post')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('post', task)"
                                     title="Aufgabe bearbeiten">
@@ -362,7 +364,7 @@
                             <div v-for="task in getAdditionalTasks('location')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('location', task)"
                                     title="Aufgabe bearbeiten">
@@ -437,7 +439,7 @@
                             <div v-for="task in getAdditionalTasks('instructor')" :key="task.id" class="task-item">
                                 <span class="task-status-badge" :class="`status-${task.status_name}`">{{
                                     task.status_name
-                                    }}</span>
+                                }}</span>
                                 <span class="task-title">{{ task.name }}</span>
                                 <button class="task-edit-btn" @click="openTaskModal('instructor', task)"
                                     title="Aufgabe bearbeiten">
@@ -564,7 +566,7 @@
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                    }}</span>
+                                                }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -577,8 +579,9 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Bild</label>
-                                    <DropdownList entity="images" title="Bild wählen" size="medium"
-                                        @select="(image: any) => { entityForm.img_id = image.id; markAsEdited() }">
+                                    <DropdownList entity="images" title="Bild wählen" size="medium" :dataMode="true"
+                                        :multiSelect="false" :selectedIds="entityForm.img_id || undefined"
+                                        @update:selectedIds="(id) => { entityForm.img_id = id; markAsEdited() }">
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getImageName(entityForm.img_id) || 'Bild wählen' }}</span>
@@ -656,7 +659,7 @@
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                }}</span>
+                                                    }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -738,7 +741,7 @@
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                }}</span>
+                                                    }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
@@ -840,7 +843,7 @@
                                         <template #trigger="{ open, isOpen }">
                                             <button type="button" class="form-dropdown-trigger" @click="open">
                                                 <span>{{ getProjectName(entityForm.project_id) || 'Projekt wählen'
-                                                }}</span>
+                                                    }}</span>
                                                 <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16"
                                                     height="16" viewBox="0 0 16 16" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
