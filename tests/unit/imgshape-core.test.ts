@@ -130,15 +130,14 @@ describe('ImgShape Component', () => {
     // ===================================================================
 
     describe('Avatar Shape Detection', () => {
-        it('should detect square avatar from "project" in xmlid', async () => {
+        it('should detect thumb from "project" in xmlid', async () => {
             const wrapper = mount(ImgShape, {
                 props: {
                     data: {
                         url: 'https://example.com/image.jpg',
                         xmlid: 'img-project-001'
                     } as ImgShapeData,
-                    shape: 'avatar',
-                    variant: 'default'
+                    shape: 'thumb'
                 }
             })
 
@@ -147,72 +146,69 @@ describe('ImgShape Component', () => {
 
             await wrapper.vm.$nextTick()
 
-            // Check for square avatar class
-            expect(wrapper.html()).toContain('img-shape--avatar-square')
+            // Check for thumb class
+            expect(wrapper.html()).toContain('img-shape--thumb')
         })
 
-        it('should detect square avatar from "event" in xmlid', async () => {
+        it('should detect thumb from "event" in xmlid', async () => {
             const wrapper = mount(ImgShape, {
                 props: {
                     data: {
                         url: 'https://example.com/image.jpg',
                         xmlid: 'img-event-002'
                     } as ImgShapeData,
-                    shape: 'avatar',
-                    variant: 'default'
+                    shape: 'thumb'
                 }
             })
 
             setWrapperDimensions(wrapper, STANDARD_DIMENSIONS)
             await wrapper.vm.$nextTick()
 
-            expect(wrapper.html()).toContain('img-shape--avatar-square')
+            expect(wrapper.html()).toContain('img-shape--thumb')
         })
 
-        it('should detect square avatar from "location" in xmlid', async () => {
+        it('should detect thumb from "location" in xmlid', async () => {
             const wrapper = mount(ImgShape, {
                 props: {
                     data: {
                         url: 'https://example.com/image.jpg',
                         xmlid: 'img-location-003'
                     } as ImgShapeData,
-                    shape: 'avatar',
-                    variant: 'default'
+                    shape: 'thumb'
                 }
             })
 
             setWrapperDimensions(wrapper, STANDARD_DIMENSIONS)
             await wrapper.vm.$nextTick()
 
-            expect(wrapper.html()).toContain('img-shape--avatar-square')
+            expect(wrapper.html()).toContain('img-shape--thumb')
         })
 
-        it('should detect square avatar from "post" in xmlid', async () => {
+        it('should detect thumb from "post" in xmlid', async () => {
             const wrapper = mount(ImgShape, {
                 props: {
                     data: {
                         url: 'https://example.com/image.jpg',
                         xmlid: 'img-post-004'
                     } as ImgShapeData,
-                    shape: 'avatar',
-                    variant: 'default'
+                    shape: 'thumb'
                 }
             })
 
             setWrapperDimensions(wrapper, STANDARD_DIMENSIONS)
             await wrapper.vm.$nextTick()
 
-            expect(wrapper.html()).toContain('img-shape--avatar-square')
+            expect(wrapper.html()).toContain('img-shape--thumb')
         })
 
-        it('should detect round avatar from "user" in xmlid', async () => {
+        it('should detect round thumb from "user" in xmlid', async () => {
             const wrapper = mount(ImgShape, {
                 props: {
                     data: {
                         url: 'https://example.com/image.jpg',
                         xmlid: 'img-user-005'
                     } as ImgShapeData,
-                    shape: 'avatar',
+                    shape: 'thumb',
                     variant: 'default'
                 }
             })

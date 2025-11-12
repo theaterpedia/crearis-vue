@@ -340,35 +340,8 @@ describe('ShapeEditor Component', () => {
             expect(wrapper.emitted('preview')![0]).toEqual([])
         })
 
-        it('should emit reset event when reset button clicked', async () => {
-            const wrapper = mount(ShapeEditor, {
-                props: {
-                    shape: 'wide',
-                    adapter: 'unsplash',
-                    data: {
-                        x: 50,
-                        y: 50,
-                        z: 1,
-                        url: 'https://images.unsplash.com/photo-123',
-                        tpar: null
-                    }
-                }
-            })
 
-            // Switch to XYZ mode
-            const buttons = wrapper.findAll('.mode-switcher button')
-            await buttons[1].trigger('click')
-
-            // Click reset button
-            const resetButton = wrapper.find('button.btn-reset')
-            await resetButton.trigger('click')
-
-            // Check emitted event
-            expect(wrapper.emitted('reset')).toBeTruthy()
-            expect(wrapper.emitted('reset')![0]).toEqual([])
-        })
-
-        it('should have both preview and reset buttons in XYZ mode', async () => {
+        it('should have preview, but no reset button in XYZ mode', async () => {
             const wrapper = mount(ShapeEditor, {
                 props: {
                     shape: 'wide',
@@ -455,8 +428,8 @@ describe('ShapeEditor Component', () => {
         })
 
         it('should handle different shape types', () => {
-            const shapes: Array<'square' | 'wide' | 'vertical' | 'thumb' | 'avatar'> =
-                ['square', 'wide', 'vertical', 'thumb', 'avatar']
+            const shapes: Array<'square' | 'wide' | 'vertical' | 'thumb'> =
+                ['square', 'wide', 'vertical', 'thumb']
 
             shapes.forEach(shape => {
                 const wrapper = mount(ShapeEditor, {
