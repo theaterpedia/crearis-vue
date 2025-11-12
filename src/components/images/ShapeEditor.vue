@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 
+// Phase 6 Task 6.1: Enhanced Props with all 8 database fields
 interface Props {
     shape: 'square' | 'wide' | 'vertical' | 'thumb'
     adapter: 'unsplash' | 'cloudinary' | 'vimeo' | 'external'
@@ -10,6 +11,9 @@ interface Props {
         z?: number | null
         url: string
         tpar?: string | null
+        json?: Record<string, any> | null  // JSONB field
+        blur?: string | null               // VARCHAR(50) field
+        turl?: string | null              // TEXT field (transformation URL)
     }
 }
 
@@ -257,6 +261,66 @@ const updateUrl = (event: Event) => {
     const value = (event.target as HTMLTextAreaElement).value
     emit('update', { url: value || '' })
 }
+
+// Phase 6 Task 6.1: New field update handlers
+const updateTurl = (event: Event) => {
+    const value = (event.target as HTMLInputElement).value
+    emit('update', { turl: value || null })
+}
+
+const updateBlur = (event: Event) => {
+    const value = (event.target as HTMLInputElement).value
+    emit('update', { blur: value || null })
+}
+
+const updateJson = (jsonData: Record<string, any> | null) => {
+    emit('update', { json: jsonData })
+}
+
+// JSON Editor modal state
+const showJsonEditor = ref(false)
+const jsonEditorValue = ref<string>('')
+
+const openJsonEditor = () => {
+    jsonEditorValue.value = props.data.json ? JSON.stringify(props.data.json, null, 2) : '{}'
+    showJsonEditor.value = true
+}
+
+const saveJsonEdit = () => {
+    try {
+        const parsed = JSON.parse(jsonEditorValue.value)
+        updateJson(parsed)
+        showJsonEditor.value = false
+    } catch (e) {
+        alert('Invalid JSON format')
+    }
+}
+
+const cancelJsonEdit = () => {
+    showJsonEditor.value = false
+}
+
+/**
+ * Expose method to parent for querying current shape data
+ * Returns all 8 database fields from props.data
+ */
+const getCurrentData = () => {
+    return {
+        x: props.data.x,
+        y: props.data.y,
+        z: props.data.z,
+        url: props.data.url,
+        tpar: props.data.tpar,
+        turl: props.data.turl,
+        blur: props.data.blur,
+        json: props.data.json
+    }
+}
+
+defineExpose({
+    getCurrentData
+})
+
 </script>
 
 <template>
@@ -358,44 +422,63 @@ const updateUrl = (event: Event) => {
 
         <!-- Mode 3: Direct URL Edit -->
         <div v-else class="editor-content">
-            <h5>Direct Edit</h5>
-            <p class="hint">Edit transformation string, URL template, and full URL</p>
+            <h5>Direct Edit (All Fields)</h5>
+            <p class="hint">Edit all 8 database fields directly</p>
 
-            <!-- Full URL (always displayed for all adapters) -->
-            <div class="url-editor">
-                <label>Full URL</label>
-                <textarea :value="data.url" @input="updateUrl" rows="3" placeholder="https://..." class="url-input" />
-            </div>
+            <!-- X, Y, Z Fields -->
+            <div class="param-inputs">
+                <div class="param-field">
+                    <label>X (horizontal %)</label>
+                    <input type="number" :value="data.x ?? ''" @input="updateX" min="0" max="100" placeholder="null" />
+                </div>
 
-            <!-- Transformation String -->
-            <div class="url-editor">
-                <label>Transformation String (turl)</label>
-                <div class="url-parts">
-                    <span class="url-prefix dimmed">
-                        {{ adapter === 'unsplash' ? '...?' : '.../upload/' }}
-                    </span>
-                    <input type="text" :value="transformationString"
-                        @input="updateTransformation(($event.target as HTMLInputElement).value)"
-                        placeholder="w=336&h=168&fit=crop" class="transform-input" />
-                    <span class="url-suffix dimmed">
-                        {{ adapter === 'unsplash' ? '' : '/v123/...' }}
-                    </span>
+                <div class="param-field">
+                    <label>Y (vertical %)</label>
+                    <input type="number" :value="data.y ?? ''" @input="updateY" min="0" max="100" placeholder="null" />
+                </div>
+
+                <div class="param-field">
+                    <label>Z (zoom %)</label>
+                    <input type="number" :value="data.z ?? ''" @input="updateZ" min="0" max="100" placeholder="null" />
                 </div>
             </div>
 
-            <!-- tpar (URL Template) -->
+            <!-- URL Field -->
             <div class="url-editor">
-                <label>tpar (URL Template)</label>
-                <textarea :value="data.tpar ?? ''" @input="updateTpar" rows="3" placeholder="https://.../{turl}/..."
+                <label>URL (text, required)</label>
+                <textarea :value="data.url" @input="updateUrl" rows="2" placeholder="https://..." class="url-input" />
+            </div>
+
+            <!-- turl Field -->
+            <div class="url-editor">
+                <label>turl (transformation URL)</label>
+                <input type="text" :value="data.turl ?? ''" @input="updateTurl"
+                    placeholder="w=336&h=168&fit=crop or c_fill,g_auto,w_336,h_168" class="transform-input" />
+            </div>
+
+            <!-- tpar Field -->
+            <div class="url-editor">
+                <label>tpar (URL template)</label>
+                <textarea :value="data.tpar ?? ''" @input="updateTpar" rows="2" placeholder="https://.../{turl}/..."
                     class="tpar-input" />
             </div>
 
-            <!-- Available Params Reference -->
-            <div v-if="availableParams.length > 0" class="params-reference">
-                <strong>Available Params:</strong>
-                <div class="param-chips">
-                    <span v-for="param in availableParams" :key="param" class="param-chip">
-                        {{ param }}
+            <!-- blur Field -->
+            <div class="url-editor">
+                <label>blur (varchar 50)</label>
+                <input type="text" :value="data.blur ?? ''" @input="updateBlur" maxlength="50"
+                    placeholder="CSS filter value (e.g., blur(10px))" />
+            </div>
+
+            <!-- JSON Field -->
+            <div class="url-editor">
+                <label>json (JSONB)</label>
+                <div class="json-field">
+                    <button @click="openJsonEditor" class="btn-edit-json">
+                        {{ data.json ? 'Edit JSON' : 'Add JSON' }}
+                    </button>
+                    <span v-if="data.json" class="json-preview">
+                        {{ Object.keys(data.json).length }} keys
                     </span>
                 </div>
             </div>
@@ -407,6 +490,24 @@ const updateUrl = (event: Event) => {
                 <button @click="$emit('reset')" class="btn-reset">
                     Reset
                 </button>
+            </div>
+        </div>
+
+        <!-- JSON Editor Modal -->
+        <div v-if="showJsonEditor" class="json-modal-overlay" @click.self="cancelJsonEdit">
+            <div class="json-modal">
+                <div class="modal-header">
+                    <h3>Edit JSON Field</h3>
+                    <button @click="cancelJsonEdit" class="btn-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <textarea v-model="jsonEditorValue" rows="15" class="json-textarea"
+                        placeholder="{ }"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button @click="cancelJsonEdit" class="btn-cancel">Cancel</button>
+                    <button @click="saveJsonEdit" class="btn-save">Save JSON</button>
+                </div>
             </div>
         </div>
     </div>
@@ -739,5 +840,147 @@ const updateUrl = (event: Event) => {
 
 .btn-reset:hover {
     background: var(--color-border);
+}
+
+/* Phase 6 Task 6.1: JSON Editor Styles */
+.json-field {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-edit-json {
+    padding: 0.5rem 1rem;
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border: none;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-edit-json:hover {
+    background: var(--color-primary-hover);
+}
+
+.json-preview {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+/* JSON Modal */
+.json-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.json-modal {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-large);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    color: var(--color-text-base);
+}
+
+.modal-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.json-textarea {
+    width: 100%;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    font-size: 0.875rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    background: var(--color-bg);
+    color: var(--color-text-base);
+    resize: vertical;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-cancel,
+.btn-save {
+    padding: 0.625rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel {
+    background: var(--color-muted-bg);
+    color: var(--color-text-base);
+}
+
+.btn-cancel:hover {
+    background: var(--color-border);
+}
+
+.btn-save {
+    background: var(--color-success-base);
+    color: white;
+}
+
+.btn-save:hover {
+    background: var(--color-success-hover);
 }
 </style>

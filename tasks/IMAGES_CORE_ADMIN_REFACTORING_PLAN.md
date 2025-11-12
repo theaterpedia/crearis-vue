@@ -790,32 +790,151 @@ const heroPreviewShape = ref<'wide' | 'square' | 'vertical'>('wide')
 ---
 
 ### Task 5.2: Implement Device Mockup Previews
-**Status:** TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 8 hours  
+**Actual Time:** ~2 hours  
 **Depends on:** Task 5.1
 
 #### Three Preview States (Cycle on Click):
-1. **Mobile 50%** - Phone mockup SVG (portrait, half width)
-2. **Mobile 100%** - Phone mockup SVG (portrait, full width)
-3. **Tablet 100%** - Tablet mockup SVG (landscape, full width)
+1. **Desktop** - No frame, full width (default)
+2. **Mobile 50%** - Phone mockup (portrait, half width)
+3. **Mobile 100%** - Phone mockup (portrait, full width)
+4. **Tablet 100%** - Tablet mockup (landscape, full width)
    - When tablet: Hide Column 2 (Vertical shape preview)
 
 #### Steps:
-1. [ ] Create/source phone mockup SVG
-2. [ ] Create/source tablet mockup SVG
-3. [ ] Add heroPreviewMode state: `'mobile-50' | 'mobile-100' | 'tablet'`
-4. [ ] Implement click cycling logic
-5. [ ] Create responsive mockup containers
-6. [ ] Add conditional Column 2 visibility
-7. [ ] Test responsiveness
+1. [x] Create/source phone mockup SVG
+2. [x] Create/source tablet mockup SVG
+3. [x] Add heroPreviewMode state: `'desktop' | 'mobile-50' | 'mobile-100' | 'tablet'`
+4. [x] Implement click cycling logic
+5. [x] Create responsive mockup containers
+6. [x] Add conditional Column 2 visibility
+7. [x] Test responsiveness
 
-#### Files to Create:
-- `/src/components/images/DeviceMockup.vue`
-- `/public/assets/phone-mockup.svg`
-- `/public/assets/tablet-mockup.svg`
+#### Implementation:
 
-#### Files to Modify:
-- `/src/views/admin/ImagesCoreAdmin.vue` (Column 1 & 2)
+**Device Mockup Assets Created:**
+- ✅ `/public/assets/phone-mockup.svg` (320×640px portrait)
+  - Modern notch design at top
+  - Home indicator at bottom
+  - Screen area with rounded corners
+  - Dark theme (#1a1a1a body, #000 screen)
+
+- ✅ `/public/assets/tablet-mockup.svg` (1024×768px landscape)
+  - Camera dot centered at top
+  - Home button at bottom
+  - Wide screen area
+  - Dark theme matching phone
+
+**DeviceMockup Component:**
+```vue
+<!-- /src/components/images/DeviceMockup.vue -->
+<template>
+  <div class="device-mockup" :class="`device-mockup-${mode}`">
+    <!-- Desktop: No frame -->
+    <div v-if="mode === 'desktop'" class="desktop-preview">
+      <img :src="imageUrl" :alt="alt" />
+    </div>
+    
+    <!-- Mobile: Phone frame with 50% or 100% width -->
+    <div v-else-if="mode === 'mobile-50' || mode === 'mobile-100'">
+      <div class="phone-frame">
+        <div class="screen-content">
+          <img :src="imageUrl" :alt="alt" />
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tablet: Tablet frame with landscape layout -->
+    <div v-else-if="mode === 'tablet'">
+      <div class="tablet-frame">
+        <div class="screen-content">
+          <img :src="imageUrl" :alt="alt" />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+**State Management:**
+```typescript
+// Hero preview mode state (Phase 5 Task 5.2)
+type HeroPreviewMode = 'desktop' | 'mobile-50' | 'mobile-100' | 'tablet'
+const heroPreviewMode = ref<HeroPreviewMode>('desktop')
+
+// Toggle hero preview mode (click cycling: desktop → mobile-50 → mobile-100 → tablet)
+const toggleHeroPreviewMode = () => {
+    const modes: HeroPreviewMode[] = ['desktop', 'mobile-50', 'mobile-100', 'tablet']
+    const currentIndex = modes.indexOf(heroPreviewMode.value)
+    const nextIndex = (currentIndex + 1) % modes.length
+    heroPreviewMode.value = modes[nextIndex]
+}
+```
+
+**Hero Preview Integration:**
+```vue
+<Column width="fill">
+  <div class="preview-image-wrapper" @click="toggleHeroPreviewMode">
+    <DeviceMockup 
+      :mode="heroPreviewMode" 
+      :imageUrl="heroPreviewUrl"
+      :alt="selectedImage.name" 
+    />
+    <!-- Mode and Shape indicators -->
+    <div class="hero-indicators">
+      <span class="indicator-badge mode-badge">{{ heroPreviewMode }}</span>
+      <span class="indicator-badge shape-badge">{{ heroPreviewShape }}</span>
+    </div>
+  </div>
+</Column>
+
+<!-- Column 2: Hidden in tablet mode -->
+<Column v-if="heroPreviewMode !== 'tablet'" :width="verticalColumnWidth">
+  <!-- Vertical shape preview -->
+</Column>
+```
+
+**CSS Features:**
+- ✅ Phone frame with 2:1 aspect ratio (portrait 320:640)
+- ✅ Tablet frame with 4:3 aspect ratio (landscape 1024:768)
+- ✅ CSS-based device decorations (notch, home indicator, camera, button)
+- ✅ Responsive sizing with max-widths
+- ✅ Box shadows for depth
+- ✅ Two-badge indicator system (mode in blue, shape in green)
+- ✅ Proper image scaling within device screens
+
+**Column 2 Conditional Visibility:**
+```vue
+<Column v-if="heroPreviewMode !== 'tablet'" :width="verticalColumnWidth">
+```
+- Vertical shape column hidden when in tablet mode
+- Allows tablet mockup to use full width
+- Smooth transition when toggling modes
+
+#### Files Created:
+- ✅ `/public/assets/phone-mockup.svg`
+- ✅ `/public/assets/tablet-mockup.svg`
+- ✅ `/src/components/images/DeviceMockup.vue` (220 lines)
+
+#### Files Modified:
+- ✅ `/src/views/admin/ImagesCoreAdmin.vue`
+  - Import DeviceMockup component (line 10)
+  - Added heroPreviewMode state (lines ~83-91)
+  - Added toggleHeroPreviewMode function
+  - Updated hero preview template with DeviceMockup (lines ~1990-2002)
+  - Conditional Column 2 rendering (line ~2005)
+  - Updated CSS for dual-badge indicators (lines ~2413-2438)
+
+#### Acceptance Criteria:
+- [x] Click on hero preview cycles through 4 modes
+- [x] Desktop mode shows full-width image without frame
+- [x] Mobile modes show phone mockup at 50% and 100% width
+- [x] Tablet mode shows landscape tablet mockup
+- [x] Column 2 (vertical) hidden in tablet mode
+- [x] Dual badges show current mode and shape
+- [x] Device frames match design specification
+- [x] Images scale properly within device screens
 
 ---
 

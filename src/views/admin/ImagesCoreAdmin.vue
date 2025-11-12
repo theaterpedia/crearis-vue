@@ -7,6 +7,7 @@ import Column from '@/components/Column.vue'
 import ImgShape from '@/components/images/ImgShape.vue'
 import ShapeEditor from '@/components/images/ShapeEditor.vue'
 import ImageInformation from '@/components/images/ImageInformation.vue'
+import DeviceMockup from '@/components/images/DeviceMockup.vue'
 import tagsMultiToggle from '@/components/images/tagsMultiToggle.vue'
 import cimgImport from '@/components/images/cimgImport.vue'
 import { useTheme } from '@/composables/useTheme'
@@ -31,6 +32,40 @@ const blurImagesPreview = ref(false) // Toggle for blur preview mode
 
 // Shape editor state
 const activeShape = ref<{ shape: string; variant: string; adapter: string } | null>(null)
+
+// Shape dirty detection (Phase 7 Task 7.2)
+const originalShapeData = ref<any | null>(null)
+const shapeIsDirty = computed(() => {
+    if (!activeShape.value || !activeShapeData.value || !originalShapeData.value) {
+        return false
+    }
+
+    // Compare all 8 fields (x, y, z, url, tpar, turl, json, blur)
+    const xyz = activeShapeXYZ.value
+    const current = {
+        x: xyz.x,
+        y: xyz.y,
+        z: xyz.z,
+        url: activeShapeData.value.url || '',
+        tpar: activeShapeData.value.tpar || null,
+        turl: activeShapeData.value.turl || null,
+        json: activeShapeData.value.json || null,
+        blur: activeShapeData.value.blur || null
+    }
+
+    const original = {
+        x: originalShapeData.value.x,
+        y: originalShapeData.value.y,
+        z: originalShapeData.value.z,
+        url: originalShapeData.value.url || '',
+        tpar: originalShapeData.value.tpar || null,
+        turl: originalShapeData.value.turl || null,
+        json: originalShapeData.value.json || null,
+        blur: originalShapeData.value.blur || null
+    }
+
+    return JSON.stringify(current) !== JSON.stringify(original)
+})
 
 // ViewMode state (Phase 2 Task 2.1)
 type ViewMode = 'browse' | 'core' | 'shape'
@@ -80,6 +115,19 @@ const activeShapeData = computed(() => {
 // Controlled by ImgShape @activate events (see handleShapeActivate)
 // Only supports: wide, square, vertical (thumb excluded from hero preview)
 const heroPreviewShape = ref<'wide' | 'square' | 'vertical'>('wide')
+
+// Hero preview mode state (Phase 5 Task 5.2)
+// Controls device mockup display: desktop → mobile-50 → mobile-100 → tablet → repeat
+type HeroPreviewMode = 'desktop' | 'mobile-50' | 'mobile-100' | 'tablet'
+const heroPreviewMode = ref<HeroPreviewMode>('desktop')
+
+// Toggle hero preview mode (click cycling)
+const toggleHeroPreviewMode = () => {
+    const modes: HeroPreviewMode[] = ['desktop', 'mobile-50', 'mobile-100', 'tablet']
+    const currentIndex = modes.indexOf(heroPreviewMode.value)
+    const nextIndex = (currentIndex + 1) % modes.length
+    heroPreviewMode.value = modes[nextIndex]
+}
 
 // Vertical column dimensions (Plan E Task 1.2)
 const VERTICAL_SHAPE_WIDTH = 126 // px
@@ -663,6 +711,23 @@ function enterShapeMode(shape: string, adapter?: string) {
         adapter: detectedAdapter
     }
 
+    // Store original shape data for dirty detection (Phase 7 Task 7.2)
+    // This captures the initial state before any edits
+    const shapeData = activeShapeData.value
+    const xyz = activeShapeXYZ.value
+    if (shapeData) {
+        originalShapeData.value = {
+            x: xyz.x,
+            y: xyz.y,
+            z: xyz.z,
+            url: shapeData.url || '',
+            tpar: shapeData.tpar || null,
+            turl: shapeData.turl || null,
+            json: shapeData.json ? JSON.parse(JSON.stringify(shapeData.json)) : null,
+            blur: shapeData.blur || null
+        }
+    }
+
     viewMode.value = 'shape'
 }
 
@@ -678,6 +743,7 @@ async function exitShapeMode() {
     }
 
     activeShape.value = null
+    originalShapeData.value = null // Clear original shape data (Phase 7 Task 7.2)
     viewMode.value = 'core'
 }
 
@@ -708,9 +774,25 @@ async function handleCoreExit() {
 /**
  * Handle shape mode exit with edit behavior check
  */
+/**
+ * Handle shape mode exit with edit behavior check (Phase 7 Task 7.2)
+ */
 async function handleShapeExit() {
-    // TODO: Implement shape-specific dirty detection in Phase 6
-    // For now, no prompt needed as shape changes are applied via preview
+    if (!shapeIsDirty.value) return
+
+    if (editBehavior.value === 'autosave') {
+        await saveShapeChanges()
+    } else if (editBehavior.value === 'autocancel') {
+        cancelShapeEdits()
+    } else {
+        // Prompt
+        const shouldSave = confirm('You have unsaved shape changes. Save before exiting?')
+        if (shouldSave) {
+            await saveShapeChanges()
+        } else {
+            cancelShapeEdits()
+        }
+    }
 }
 
 /**
@@ -1723,6 +1805,83 @@ const handleShapeReset = () => {
     console.log('[ShapeEditor] Reset:', shape, '- marked as dirty')
 }
 
+/**
+ * Save shape changes (Phase 7 Task 7.2)
+ * Saves the current shape data to the database and stays in shape mode
+ */
+const saveShapeChanges = async () => {
+    if (!selectedImage.value || !activeShape.value || !shapeIsDirty.value) return
+
+    try {
+        // Save changes (this triggers checkDirty which includes shape data)
+        await saveChanges()
+        
+        // Update original shape data to match current state
+        const shapeData = activeShapeData.value
+        const xyz = activeShapeXYZ.value
+        if (shapeData) {
+            originalShapeData.value = {
+                x: xyz.x,
+                y: xyz.y,
+                z: xyz.z,
+                url: shapeData.url || '',
+                tpar: shapeData.tpar || null,
+                turl: shapeData.turl || null,
+                json: shapeData.json ? JSON.parse(JSON.stringify(shapeData.json)) : null,
+                blur: shapeData.blur || null
+            }
+        }
+        
+        console.log('[ShapeEditor] Shape changes saved, staying in shape mode')
+    } catch (error) {
+        console.error('[ShapeEditor] Failed to save shape changes:', error)
+    }
+}
+
+/**
+ * Cancel shape edits (Phase 7 Task 7.2)
+ * Restores original shape data and stays in shape mode
+ */
+const cancelShapeEdits = () => {
+    if (!activeShape.value || !originalShapeData.value || !activeShapeData.value) return
+
+    const shape = activeShape.value.shape
+
+    // Restore XYZ values from original
+    if (shape === 'wide') {
+        wideX.value = originalShapeData.value.x
+        wideY.value = originalShapeData.value.y
+        wideZ.value = originalShapeData.value.z
+    } else if (shape === 'vertical') {
+        verticalX.value = originalShapeData.value.x
+        verticalY.value = originalShapeData.value.y
+        verticalZ.value = originalShapeData.value.z
+    } else if (shape === 'square') {
+        squareX.value = originalShapeData.value.x
+        squareY.value = originalShapeData.value.y
+        squareZ.value = originalShapeData.value.z
+    } else if (shape === 'thumb') {
+        thumbX.value = originalShapeData.value.x
+        thumbY.value = originalShapeData.value.y
+        thumbZ.value = originalShapeData.value.z
+    }
+
+    // Restore other fields from original
+    activeShapeData.value.url = originalShapeData.value.url
+    activeShapeData.value.tpar = originalShapeData.value.tpar
+    activeShapeData.value.turl = originalShapeData.value.turl
+    activeShapeData.value.json = originalShapeData.value.json ? JSON.parse(JSON.stringify(originalShapeData.value.json)) : null
+    activeShapeData.value.blur = originalShapeData.value.blur
+
+    // Reset preview in ImgShape
+    const shapeRef = getActiveShapeRef()
+    if (shapeRef) {
+        shapeRef.resetPreview()
+    }
+
+    console.log('[ShapeEditor] Shape edits cancelled, restored original values')
+}
+
 // Clear active shape when loading new record or after save
 const clearShapeEditor = () => {
     activeShape.value = null
@@ -1918,8 +2077,16 @@ onMounted(() => {
                         </span>
                     </div>
                     <div class="topnav-actions-right">
-                        <!-- Note: Shape dirty detection to be implemented in Phase 6 -->
-                        <span class="shape-info">Use Preview button to test changes</span>
+                        <!-- Shape dirty detection (Phase 7 Task 7.2) -->
+                        <template v-if="shapeIsDirty">
+                            <button class="btn-cancel" @click="cancelShapeEdits">
+                                Cancel
+                            </button>
+                            <button class="btn-save" @click="saveShapeChanges">
+                                Save Changes
+                            </button>
+                        </template>
+                        <span v-else class="no-changes-indicator">No changes</span>
                     </div>
                 </div>
             </template>
@@ -1970,20 +2137,22 @@ onMounted(() => {
             <template #header>
                 <div v-if="selectedImage" class="header-preview">
                     <Columns gap="medium">
-                        <!-- Column 1: Hero preview - shape determined by active ImgShape click -->
+                        <!-- Column 1: Hero preview with device mockups (Phase 5 Task 5.2) -->
                         <Column width="fill">
-                            <div class="preview-image-wrapper">
-                                <img :src="heroPreviewUrl" :alt="selectedImage.name"
-                                    class="preview-image hero-preview" />
-                                <!-- Shape indicator badge -->
-                                <div class="hero-shape-indicator">
-                                    <span class="indicator-badge">{{ heroPreviewShape }}</span>
+                            <div class="preview-image-wrapper" @click="toggleHeroPreviewMode">
+                                <DeviceMockup :mode="heroPreviewMode" :imageUrl="heroPreviewUrl"
+                                    :alt="selectedImage.name" />
+                                <!-- Mode and Shape indicators -->
+                                <div class="hero-indicators">
+                                    <span class="indicator-badge mode-badge">{{ heroPreviewMode }}</span>
+                                    <span class="indicator-badge shape-badge">{{ heroPreviewShape }}</span>
                                 </div>
                             </div>
                         </Column>
 
-                        <!-- Column 2: Vertical shape preview (exact width: 142px = 8.875rem) -->
-                        <Column :width="verticalColumnWidth" class="vertical-column">
+                        <!-- Column 2: Vertical shape preview (hidden in tablet mode) -->
+                        <Column v-if="heroPreviewMode !== 'tablet'" :width="verticalColumnWidth"
+                            class="vertical-column">
                             <div class="shape-row shape-row-vertical">
                                 <ImgShape ref="verticalShapeRef" v-if="selectedImage.img_vert"
                                     :data="parseImageData(selectedImage.img_vert)" shape="vertical"
@@ -2171,6 +2340,9 @@ onMounted(() => {
                             </template>
 
                             <!-- Shape Mode: ShapeEditor -->
+                            <!-- ShapeEditor exposes getCurrentData() via ref for dirty detection:
+                                 const shapeData = shapeEditorRef.value?.getCurrentData()
+                                 Returns: { x, y, z, url, tpar, turl, json, blur } -->
                             <template v-else-if="viewMode === 'shape'">
                                 <div v-if="activeShape && activeShapeData" class="shape-editor-section">
                                     <ShapeEditor :shape="activeShape.shape as any" :adapter="activeShape.adapter as any"
@@ -2179,7 +2351,10 @@ onMounted(() => {
                                             y: activeShapeXYZ.y,
                                             z: activeShapeXYZ.z,
                                             url: activeShapeData.url || '',
-                                            tpar: activeShapeData.tpar || null
+                                            tpar: activeShapeData.tpar || null,
+                                            turl: activeShapeData.turl || null,
+                                            json: activeShapeData.json || null,
+                                            blur: activeShapeData.blur || null
                                         }" @update="handleShapeUpdate" @preview="handleShapePreview"
                                         @reset="handleShapeReset" />
                                 </div>
@@ -2391,11 +2566,16 @@ onMounted(() => {
     cursor: pointer;
 }
 
-.hero-shape-indicator {
+/* Hero preview indicators (Phase 5 Task 5.2) */
+.hero-indicators {
     position: absolute;
     top: 1rem;
     right: 1rem;
     z-index: 10;
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .indicator-badge {
@@ -2407,6 +2587,16 @@ onMounted(() => {
     font-weight: 600;
     text-transform: capitalize;
     backdrop-filter: blur(10px);
+}
+
+.mode-badge {
+    background: oklch(0.5 0.15 250 / 0.8);
+    /* Blue tint for mode */
+}
+
+.shape-badge {
+    background: oklch(0.5 0.15 150 / 0.8);
+    /* Green tint for shape */
 }
 
 /* Shape preview rows */

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 768" fill="none">
+    <!-- Tablet Device Frame -->
+    <defs>
+        <clipPath id="screen">
+            <rect x="40" y="60" width="944" height="648" rx="20"/>
+        </clipPath>
+    </defs>
+
+    <!-- Device Body -->
+    <rect width="1024" height="768" rx="30" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+
+    <!-- Screen Area (for clipping) -->
+    <rect x="40" y="60" width="944" height="648" rx="20" fill="#000"/>
+
+    <!-- Camera Dot -->
+    <circle cx="512" cy="30" r="8" fill="#0a0a0a"/>
+
+    <!-- Home Button -->
+    <circle cx="512" cy="738" r="20" fill="#0a0a0a" stroke="#333" stroke-width="1"/>
+</svg>
