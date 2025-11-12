@@ -1,4 +1,39 @@
 <script setup lang="ts">
+/**
+ * ImgShape Component - Display Component for Image Shapes
+ * 
+ * ARCHITECTURAL PRINCIPLE: Single Source of Truth
+ * ==================================================
+ * ImgShape ALWAYS displays from props.data.url (shape_*.url from database).
+ * It NEVER recalculates XYZ transformations - those are pre-computed by ShapeEditor.
+ * 
+ * Data Flow:
+ * 1. ShapeEditor calculates XYZ → transformation URL
+ * 2. Transformation URL stored in database (shape_*.url)
+ * 3. ImgShape reads shape_*.url and displays it as-is
+ * 
+ * Rationale:
+ * - Separation of concerns: ShapeEditor = transformation logic, ImgShape = display logic
+ * - Performance: No redundant calculations on every render
+ * - Future compatibility: Enables "speed mode" using entity.img_* facade fields
+ * 
+ * Future Plans:
+ * -------------
+ * 1. SPEED MODE: ImgShape will work with entity.img_thumb etc (facade fields)
+ *    - No access to image.x, image.y (original dimensions)
+ *    - Just displays pre-computed URLs from facade fields
+ *    - Simpler API, faster queries (no JOIN to images table)
+ * 
+ * 2. HERO MODE: Hero.vue component will have image.x access
+ *    - Can recalculate transformations for larger dimensions (416px, 832px)
+ *    - Uses ShapeEditor's rebuildShapeUrlWithXYZ() logic
+ *    - Needed because hero needs custom sizes beyond standard shapes
+ * 
+ * 3. CODE AUTOMATION: Future LLM/AI tools should understand:
+ *    - ImgShape = passive display component (no transformation logic)
+ *    - ShapeEditor = active editing component (handles all XYZ calculations)
+ *    - Hero = special case with custom sizes (can recalculate if needed)
+ */
 import { computed, watch, ref } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useBlurHash } from '@/composables/useBlurHash'
@@ -348,19 +383,32 @@ const showPlaceholder = computed(() => {
     return result
 })
 
-// Reset imageLoaded when URL changes
-watch(() => props.data.url, (newUrl: string | undefined) => {
-    console.log(`[ImgShape] URL changed for ${props.shape}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 50))
+// Reset imageLoaded when displayUrl changes (not just props.data.url)
+watch(displayUrl, (newUrl: string) => {
+    console.log(`[ImgShape] displayUrl changed for ${props.shape}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 100))
     imageLoaded.value = false
 }, { immediate: true })
+
 const { canvasRef, isDecoded } = useBlurHash({
     hash: computed(() => props.data.blur || ''),
     width: 32,
     height: 32
 })
 
-const onImageLoad = () => {
-    console.log(`[ImgShape] Image loaded for ${props.shape}`)
+const onImageLoad = (event: Event) => {
+    console.log(`[ImgShape] ✅ Image loaded successfully for ${props.shape}`, {
+        url: (event.target as HTMLImageElement)?.src?.substring(0, 100),
+        naturalWidth: (event.target as HTMLImageElement)?.naturalWidth,
+        naturalHeight: (event.target as HTMLImageElement)?.naturalHeight
+    })
+    imageLoaded.value = true
+}
+
+const onImageError = (event: Event) => {
+    console.error(`[ImgShape] ❌ Image failed to load for ${props.shape}`, {
+        url: (event.target as HTMLImageElement)?.src?.substring(0, 100)
+    })
+    // Set imageLoaded to true anyway so we don't stay stuck on blur
     imageLoaded.value = true
 }
 
@@ -454,7 +502,7 @@ const handleClick = () => {
         <template v-else>
             <canvas v-if="showPlaceholder" ref="canvasRef" class="img-shape-placeholder" />
             <img v-if="displayUrl && !forceBlur" :src="displayUrl" :alt="altText" :class="cssClasses"
-                :style="{ opacity: imageLoaded ? 1 : 0 }" @load="onImageLoad" />
+                :style="{ opacity: imageLoaded ? 1 : 0 }" @load="onImageLoad" @error="onImageError" />
         </template>
     </div>
 </template>

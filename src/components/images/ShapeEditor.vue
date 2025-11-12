@@ -5,6 +5,7 @@ import { ref, computed, watch } from 'vue'
 interface Props {
     shape: 'square' | 'wide' | 'vertical' | 'thumb'
     adapter: 'unsplash' | 'cloudinary' | 'vimeo' | 'external'
+    xDefaultShrink?: number | null  // NEW: Ratio of wide shape width to original image width (336 / image.x)
     data: {
         x?: number | null
         y?: number | null
@@ -130,17 +131,22 @@ const editMode = ref<'automation' | 'xyz' | 'direct'>(detectMode())
 // Track if user manually switched mode (use ref for reactivity)
 const userManualSwitch = ref(false)
 
+// Track if user is actively editing a field (prevents mode auto-switch)
+const isEditingField = ref(false)
+
 // Computed property that watches props and auto-updates mode
 const currentMode = computed(() => {
     const detectedMode = detectMode()
 
+    // NEVER auto-switch if user manually switched OR is actively editing a field
+    if (userManualSwitch.value || isEditingField.value) {
+        return editMode.value
+    }
+
     // If user hasn't manually switched, use detected mode
-    if (!userManualSwitch.value) {
-        // Update editMode to match detected mode
-        if (editMode.value !== detectedMode) {
-            editMode.value = detectedMode
-            console.log('[ShapeEditor] Mode auto-updated to:', detectedMode)
-        }
+    if (editMode.value !== detectedMode) {
+        editMode.value = detectedMode
+        console.log('[ShapeEditor] Mode auto-updated to:', detectedMode)
     }
 
     return editMode.value
@@ -153,10 +159,12 @@ const switchMode = (mode: 'automation' | 'xyz' | 'direct') => {
     console.log('[ShapeEditor] User switched to:', mode)
 }
 
-// Reset manual switch flag when shape or image changes
-watch(() => [props.shape, props.data.url], () => {
+// Reset manual switch flag ONLY when shape changes (not on URL/data changes)
+// URL changes are normal during editing and should NOT reset the mode
+watch(() => props.shape, () => {
     userManualSwitch.value = false
-    console.log('[ShapeEditor] Shape/image changed, resetting manual switch flag')
+    isEditingField.value = false
+    console.log('[ShapeEditor] Shape changed, resetting manual switch flag')
 })
 
 
@@ -235,6 +243,25 @@ const updateTransformation = (newTransform: string) => {
 const currentPreset = computed(() => {
     return automationPresets[props.adapter]?.[props.shape] || {}
 })
+
+// Shape-specific Z-value defaults
+// These represent shrink multipliers relative to wide shape
+// wide=100 (baseline), square/vertical=50 (show 2x more), thumb=25 (show 4x more)
+const getDefaultZPlaceholder = (): string => {
+    switch (props.shape) {
+        case 'wide': return '100'  // Baseline, no shrink adjustment
+        case 'square':
+        case 'vertical': return '50'  // Show 2x more context than wide
+        case 'thumb': return '25'  // Show 4x more context than wide
+        default: return '100'
+    }
+}
+
+// Get context-aware hint for Z field
+const getZFieldHint = (): string => {
+    const defaultZ = getDefaultZPlaceholder()
+    return `10-500 range | ${defaultZ}=default for ${props.shape} | <${defaultZ}=more context, >${defaultZ}=zoom in`
+}
 
 // XYZ input handlers
 const updateX = (event: Event) => {
@@ -396,17 +423,23 @@ defineExpose({
             <div class="param-inputs">
                 <div class="param-field">
                     <label>X (horizontal %)</label>
-                    <input type="number" :value="data.x ?? ''" @input="updateX" min="0" max="100" placeholder="50" />
+                    <input type="number" :value="data.x ?? ''" @input="updateX" @focus="isEditingField = true"
+                        @blur="isEditingField = false" min="0" max="100" placeholder="50" class="param-x" />
+                    <span class="field-hint">0 = left edge, 50 = center, 100 = right edge</span>
                 </div>
 
                 <div class="param-field">
                     <label>Y (vertical %)</label>
-                    <input type="number" :value="data.y ?? ''" @input="updateY" min="0" max="100" placeholder="50" />
+                    <input type="number" :value="data.y ?? ''" @input="updateY" @focus="isEditingField = true"
+                        @blur="isEditingField = false" min="0" max="100" placeholder="50" class="param-y" />
+                    <span class="field-hint">0 = top edge, 50 = center, 100 = bottom edge</span>
                 </div>
 
                 <div class="param-field">
                     <label>Z (zoom %)</label>
-                    <input type="number" :value="data.z ?? ''" @input="updateZ" min="0" max="100" placeholder="0" />
+                    <input type="number" :value="data.z ?? ''" @input="updateZ" @focus="isEditingField = true"
+                        @blur="isEditingField = false" min="10" max="500" :placeholder="getDefaultZPlaceholder()" class="param-z" />
+                    <span class="field-hint">{{ getZFieldHint() }}</span>
                 </div>
             </div>
 
@@ -446,28 +479,30 @@ defineExpose({
             <!-- URL Field -->
             <div class="url-editor">
                 <label>URL (text, required)</label>
-                <textarea :value="data.url" @input="updateUrl" rows="2" placeholder="https://..." class="url-input" />
+                <textarea :value="data.url" @input="updateUrl" @focus="isEditingField = true"
+                    @blur="isEditingField = false" rows="2" placeholder="https://..." class="url-input" />
             </div>
 
             <!-- turl Field -->
             <div class="url-editor">
                 <label>turl (transformation URL)</label>
-                <input type="text" :value="data.turl ?? ''" @input="updateTurl"
-                    placeholder="w=336&h=168&fit=crop or c_fill,g_auto,w_336,h_168" class="transform-input" />
+                <input type="text" :value="data.turl ?? ''" @input="updateTurl" @focus="isEditingField = true"
+                    @blur="isEditingField = false" placeholder="w=336&h=168&fit=crop or c_fill,g_auto,w_336,h_168"
+                    class="transform-input" />
             </div>
 
             <!-- tpar Field -->
             <div class="url-editor">
                 <label>tpar (URL template)</label>
-                <textarea :value="data.tpar ?? ''" @input="updateTpar" rows="2" placeholder="https://.../{turl}/..."
-                    class="tpar-input" />
+                <textarea :value="data.tpar ?? ''" @input="updateTpar" @focus="isEditingField = true"
+                    @blur="isEditingField = false" rows="2" placeholder="https://.../{turl}/..." class="tpar-input" />
             </div>
 
             <!-- blur Field -->
             <div class="url-editor">
                 <label>blur (varchar 50)</label>
-                <input type="text" :value="data.blur ?? ''" @input="updateBlur" maxlength="50"
-                    placeholder="CSS filter value (e.g., blur(10px))" />
+                <input type="text" :value="data.blur ?? ''" @input="updateBlur" @focus="isEditingField = true"
+                    @blur="isEditingField = false" maxlength="50" placeholder="CSS filter value (e.g., blur(10px))" />
             </div>
 
             <!-- JSON Field -->
@@ -501,8 +536,7 @@ defineExpose({
                     <button @click="cancelJsonEdit" class="btn-close">×</button>
                 </div>
                 <div class="modal-body">
-                    <textarea v-model="jsonEditorValue" rows="15" class="json-textarea"
-                        placeholder="{ }"></textarea>
+                    <textarea v-model="jsonEditorValue" rows="15" class="json-textarea" placeholder="{ }"></textarea>
                 </div>
                 <div class="modal-footer">
                     <button @click="cancelJsonEdit" class="btn-cancel">Cancel</button>
@@ -710,6 +744,13 @@ defineExpose({
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--color-text-dimmed);
+}
+
+.param-field .field-hint {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin-top: -0.125rem;
 }
 
 .param-field input {

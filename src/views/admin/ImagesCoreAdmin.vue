@@ -37,6 +37,11 @@ const activeShape = ref<{ shape: string; variant: string; adapter: string } | nu
 const originalShapeData = ref<any | null>(null)
 const shapeIsDirty = computed(() => {
     if (!activeShape.value || !activeShapeData.value || !originalShapeData.value) {
+        console.log('[shapeIsDirty] Missing data:', {
+            hasActiveShape: !!activeShape.value,
+            hasActiveShapeData: !!activeShapeData.value,
+            hasOriginalShapeData: !!originalShapeData.value
+        })
         return false
     }
 
@@ -64,7 +69,32 @@ const shapeIsDirty = computed(() => {
         blur: originalShapeData.value.blur || null
     }
 
-    return JSON.stringify(current) !== JSON.stringify(original)
+    const isDirty = JSON.stringify(current) !== JSON.stringify(original)
+
+    if (isDirty) {
+        console.log('[shapeIsDirty] ✅ DIRTY DETECTED:', {
+            current,
+            original,
+            diffs: Object.keys(current).filter(k => {
+                const key = k as keyof typeof current
+                return JSON.stringify(current[key]) !== JSON.stringify(original[key])
+            })
+        })
+    }
+
+    return isDirty
+})
+
+// Calculate default shrink ratio for Z-value calculation
+// Uses image.x (original width) to determine how much the wide shape shrinks the image
+// Formula: xDefaultShrink = wideShapeWidth / originalImageWidth
+// Example: 336 / 4000 = 0.084 (wide shape shows 8.4% of original width)
+const xDefaultShrink = computed(() => {
+    if (!selectedImage.value?.x) {
+        // Fallback: assume 3000px width for typical images
+        return 336 / 3000  // ≈ 0.112
+    }
+    return 336 / selectedImage.value.x
 })
 
 // ViewMode state (Phase 2 Task 2.1)
@@ -854,13 +884,29 @@ function cancelEdits() {
 
 /**
  * Rebuild shape URL with XYZ focal point parameters
+ * 
+ * Z-Value Shrink Strategy:
+ * - Z represents a shrink multiplier relative to the wide shape's default crop
+ * - Shape-specific defaults: wide=100, square/vertical=50, thumb=25
+ * - Formula: actualShrink = xDefaultShrink × (z / 100)
+ * - Example: z=50 on square means "show 2x more context than wide shape default"
+ * 
  * @param baseUrl - Original shape URL
- * @param x - Focal point X (0-1, null for auto)
- * @param y - Focal point Y (0-1, null for auto)
- * @param z - Focal point Z (zoom level, null for auto)
+ * @param x - Focal point X (0-100 scale, 50=center)
+ * @param y - Focal point Y (0-100 scale, 50=center)
+ * @param z - Shrink multiplier (10-500 range, 100=wide default)
+ * @param shape - Which shape is being edited (affects Z interpretation)
+ * @param xDefaultShrink - Ratio of wide shape width to original image width (336 / image.x)
  * @returns Updated URL with focal point parameters
  */
-function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | null, z: number | null): string {
+function rebuildShapeUrlWithXYZ(
+    baseUrl: string, 
+    x: number | null, 
+    y: number | null, 
+    z: number | null,
+    shape: 'square' | 'wide' | 'vertical' | 'thumb',
+    xDefaultShrink: number
+): string {
     if (!baseUrl) return baseUrl
 
     try {
@@ -871,14 +917,27 @@ function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | n
         const isCloudinary = url.hostname.includes('cloudinary.com')
 
         if (isUnsplash) {
-            // For Unsplash: only update fp-x, fp-y, fp-z parameters
-            // NOTE: crop=focalpoint should NOT be added in manual XYZ editing
-            // It's only used in automation (previewWide function)
+            // For Unsplash: update fp-x, fp-y, fp-z parameters
             if (x !== null && y !== null && z !== null) {
                 // XYZ mode: set focal point parameters
-                url.searchParams.set('fp-x', x.toString())
-                url.searchParams.set('fp-y', y.toString())
-                url.searchParams.set('fp-z', z.toString())
+                
+                // X and Y: Convert 0-100 scale to 0.0-1.0 scale
+                url.searchParams.set('fp-x', (x / 100).toFixed(2))
+                url.searchParams.set('fp-y', (y / 100).toFixed(2))
+                
+                // Z: Use shrink multiplier strategy
+                // z=100 (wide default) → multiplier=1.0 → no adjustment
+                // z=50 (square/vertical default) → multiplier=0.5 → show 2x more context
+                // z=25 (thumb default) → multiplier=0.25 → show 4x more context
+                const shrinkMultiplier = z / 100
+                
+                // Unsplash fp-z: higher value = zoom out (show more context)
+                // We want: multiplier=0.5 → fp-z=2.0 (show 2x more)
+                //          multiplier=1.0 → fp-z=1.0 (normal)
+                //          multiplier=2.0 → fp-z=0.5 (zoom in 2x)
+                const fpZ = 1.0 / shrinkMultiplier
+                url.searchParams.set('fp-z', fpZ.toFixed(2))
+                
                 // Keep existing crop mode (entropy or focalpoint from automation)
             } else {
                 // Auto mode: use entropy crop
@@ -916,8 +975,21 @@ function rebuildShapeUrlWithXYZ(baseUrl: string, x: number | null, y: number | n
                     const offsetY = Math.round((y - 50) * (params.get('h') ? parseInt(params.get('h')!) / 100 : 1.68))
                     params.set('x', offsetX.toString())
                     params.set('y', offsetY.toString())
+                    
+                    // Z: Cloudinary implementation using zoom parameter
                     if (z !== null) {
-                        params.set('z', z.toString())
+                        // Use shrink multiplier strategy (same as Unsplash)
+                        // z=100 → multiplier=1.0 → zoom=1.0 (no adjustment)
+                        // z=50 → multiplier=0.5 → zoom=0.5 (show 2x more context)
+                        // z=200 → multiplier=2.0 → zoom=2.0 (zoom in 2x)
+                        const shrinkMultiplier = z / 100
+                        
+                        // Cloudinary zoom: higher = zoom out (opposite of fp-z)
+                        // We want: multiplier=0.5 → z=2.0 (show 2x more)
+                        //          multiplier=1.0 → z=1.0 (normal)
+                        //          multiplier=2.0 → z=0.5 (zoom in 2x)
+                        const cloudinaryZoom = 1.0 / shrinkMultiplier
+                        params.set('z', cloudinaryZoom.toFixed(2))
                     }
                 } else {
                     // Auto mode: use c_fill with auto gravity
@@ -1157,7 +1229,9 @@ const saveChanges = async () => {
                 selectedImage.value.shape_wide.url,
                 wideX.value,
                 wideY.value,
-                wideZ.value
+                wideZ.value,
+                'wide',
+                xDefaultShrink.value
             )
             selectedImage.value.shape_wide = {
                 ...selectedImage.value.shape_wide,
@@ -1174,7 +1248,9 @@ const saveChanges = async () => {
                 selectedImage.value.shape_vertical.url,
                 verticalX.value,
                 verticalY.value,
-                verticalZ.value
+                verticalZ.value,
+                'vertical',
+                xDefaultShrink.value
             )
             selectedImage.value.shape_vertical = {
                 ...selectedImage.value.shape_vertical,
@@ -1191,7 +1267,9 @@ const saveChanges = async () => {
                 selectedImage.value.shape_square.url,
                 squareX.value,
                 squareY.value,
-                squareZ.value
+                squareZ.value,
+                'square',
+                xDefaultShrink.value
             )
             selectedImage.value.shape_square = {
                 ...selectedImage.value.shape_square,
@@ -1208,7 +1286,9 @@ const saveChanges = async () => {
                 selectedImage.value.shape_thumb.url,
                 thumbX.value,
                 thumbY.value,
-                thumbZ.value
+                thumbZ.value,
+                'thumb',
+                xDefaultShrink.value
             )
             selectedImage.value.shape_thumb = {
                 ...selectedImage.value.shape_thumb,
@@ -1502,6 +1582,11 @@ watch(editBehavior, (newValue) => {
     localStorage.setItem('imagesCoreAdmin.editBehavior', newValue)
 })
 
+// DEBUG: Watch shapeIsDirty changes
+watch(shapeIsDirty, (newValue: boolean) => {
+    console.log('[Watch] shapeIsDirty changed to:', newValue)
+})
+
 // Handle Enter key on X input: Set to 50 (middle) if NULL or empty
 const handleWideXEnter = () => {
     if (wideX.value === null || wideX.value === undefined || isNaN(wideX.value)) {
@@ -1577,7 +1662,7 @@ const previewWide = () => {
                 const baseUrl = selectedImage.value.shape_wide.url
 
                 // Use rebuildShapeUrlWithXYZ to apply focal point transformations
-                const newPreviewUrl = rebuildShapeUrlWithXYZ(baseUrl, x, y, z)
+                const newPreviewUrl = rebuildShapeUrlWithXYZ(baseUrl, x, y, z, 'wide', xDefaultShrink.value)
 
                 PreviewWide.value = ''
                 CorrectionWide.value = ''
@@ -1742,39 +1827,45 @@ const handleShapePreview = () => {
     if (!activeShape.value || !activeShapeData.value) return
 
     const shape = activeShape.value.shape
+    const adapter = activeShape.value.adapter
 
     // Get current XYZ values for this shape
     const xyz = activeShapeXYZ.value
 
-    // Only proceed if we have XYZ values (XYZ mode)
-    if (xyz.x === null || xyz.y === null || xyz.z === null) {
-        console.log('[ShapeEditor] Preview: No XYZ values, skipping')
-        return
-    }
+    // Default NULL values to 50 (center) for X/Y and 50 (normal zoom) for Z
+    // This matches ImgShape's behavior where NULL = center position
+    const x = xyz.x ?? 50
+    const y = xyz.y ?? 50
+    const z = xyz.z ?? 50
 
     try {
         const baseUrl = activeShapeData.value.url
 
-        // Rebuild URL with XYZ parameters
-        const newUrl = rebuildShapeUrlWithXYZ(baseUrl, xyz.x, xyz.y, xyz.z)
+        // Rebuild URL with XYZ parameters based on adapter
+        const newUrl = rebuildShapeUrlWithXYZ(baseUrl, x, y, z, shape, xDefaultShrink.value)
 
-        // Update the correct preview target based on shape
+        // IMPORTANT: Update the shape's URL field with the computed URL
+        // This is critical for turl/tpar system implementation
+        // ImgShape.vue will use this URL as base and apply XYZ transformations on top
+        activeShapeData.value.url = newUrl
+
+        // Also update preview target for wide shape
         if (shape === 'wide') {
-            // For wide shape, update PreviewWide (used by widePreviewData computed)
             PreviewWide.value = newUrl
-        } else {
-            // For other shapes, update the shape data URL directly
-            activeShapeData.value.url = newUrl
         }
 
-        console.log('[ShapeEditor] Preview applied:', { shape, xyz, newUrl: newUrl.substring(0, 100) })
+        console.log('[ShapeEditor] Preview applied - URL updated:', {
+            shape,
+            xyz: { x, y, z },
+            oldUrl: baseUrl.substring(0, 80) + '...',
+            newUrl: newUrl.substring(0, 80) + '...'
+        })
+
         checkDirty()
     } catch (error) {
         console.error('[ShapeEditor] Preview error:', error)
     }
-}
-
-// Handle shape editor reset
+}// Handle shape editor reset
 const handleShapeReset = () => {
     if (!activeShape.value) return
 
@@ -1815,7 +1906,7 @@ const saveShapeChanges = async () => {
     try {
         // Save changes (this triggers checkDirty which includes shape data)
         await saveChanges()
-        
+
         // Update original shape data to match current state
         const shapeData = activeShapeData.value
         const xyz = activeShapeXYZ.value
@@ -1831,7 +1922,7 @@ const saveShapeChanges = async () => {
                 blur: shapeData.blur || null
             }
         }
-        
+
         console.log('[ShapeEditor] Shape changes saved, staying in shape mode')
     } catch (error) {
         console.error('[ShapeEditor] Failed to save shape changes:', error)
@@ -2078,15 +2169,17 @@ onMounted(() => {
                     </div>
                     <div class="topnav-actions-right">
                         <!-- Shape dirty detection (Phase 7 Task 7.2) -->
-                        <template v-if="shapeIsDirty">
+                        <div v-if="shapeIsDirty" class="shape-save-actions">
                             <button class="btn-cancel" @click="cancelShapeEdits">
                                 Cancel
                             </button>
                             <button class="btn-save" @click="saveShapeChanges">
                                 Save Changes
                             </button>
-                        </template>
-                        <span v-else class="no-changes-indicator">No changes</span>
+                        </div>
+                        <div v-else class="no-changes-indicator">
+                            No changes
+                        </div>
                     </div>
                 </div>
             </template>
@@ -2346,6 +2439,7 @@ onMounted(() => {
                             <template v-else-if="viewMode === 'shape'">
                                 <div v-if="activeShape && activeShapeData" class="shape-editor-section">
                                     <ShapeEditor :shape="activeShape.shape as any" :adapter="activeShape.adapter as any"
+                                        :x-default-shrink="xDefaultShrink"
                                         :data="{
                                             x: activeShapeXYZ.x,
                                             y: activeShapeXYZ.y,
@@ -2446,7 +2540,7 @@ onMounted(() => {
 
 .btn-save {
     padding: 0.5rem 1.5rem;
-    background: var(--color-success-base);
+    background: var(--color-primary-bg);
     color: white;
     border: none;
     border-radius: var(--radius-small);
@@ -2456,7 +2550,7 @@ onMounted(() => {
 }
 
 .btn-save:hover {
-    background: var(--color-success-hover);
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
 }
 
