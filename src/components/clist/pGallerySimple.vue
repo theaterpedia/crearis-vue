@@ -16,6 +16,7 @@
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
             :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
+            :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_id: selectedItem?.status_id, table: entity }"
             @close="closeRouteModal">
             <template #footer>
                 <button @click="navigateToRoute" class="route-nav-button">

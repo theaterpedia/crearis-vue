@@ -6,6 +6,9 @@
                     <button class="modal-close-btn" @click="close" aria-label="Close">×</button>
 
                     <div class="item-card size-large">
+                        <!-- CornerBanner for demo entities -->
+                        <CornerBanner size="card" :entity="entity" />
+
                         <!-- Background Image with data mode -->
                         <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'"
                             class="card-background-image" />
@@ -39,6 +42,7 @@
 import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
+import CornerBanner from '@/components/CornerBanner.vue'
 
 interface Props {
     isOpen: boolean
@@ -47,6 +51,12 @@ interface Props {
     cimg?: string
     data?: ImgShapeData
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
+    entity?: {
+        xmlid?: string
+        status_id?: number
+        status_value?: number
+        table?: string
+    }
 }
 
 const props = withDefaults(defineProps<Props>(), {
