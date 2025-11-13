@@ -42,7 +42,8 @@
             </div>
 
             <!-- Image with data mode -->
-            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'thumb'" class="image-box" />
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'thumb'" :avatar="shouldUseAvatar"
+                class="image-box" />
             <!-- Legacy image -->
             <img v-else-if="cimg" :src="cimg" :alt="heading" class="image-box" loading="lazy" />
             <!-- Placeholder -->
@@ -122,6 +123,28 @@ const entityIcons = {
 const entityIcon = computed(() => {
     if (!entityType.value) return ''
     return entityIcons[entityType.value as keyof typeof entityIcons] || ''
+})
+
+// Avatar option decision logic
+const shouldUseAvatar = computed(() => {
+    if (!props.data?.xmlid) return false
+
+    // Parse xmlID: "tp.event.festival-2024" → entity type is second fragment
+    const parts = props.data.xmlid.split('.')
+    if (parts.length < 2) return false
+
+    const entityType = parts[1] // 'event', 'instructor', 'post', etc.
+
+    // Avatar entities: events, instructors, posts
+    const avatarEntities = ['event', 'instructor', 'post']
+    const isAvatarEntity = avatarEntities.includes(entityType)
+
+    // Avatar shapes: thumb, square only
+    const currentShape = props.shape || 'thumb'
+    const isAvatarShape = currentShape === 'thumb' || currentShape === 'square'
+
+    // Both conditions must be true
+    return isAvatarEntity && isAvatarShape
 })
 </script>
 

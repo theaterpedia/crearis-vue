@@ -59,13 +59,15 @@ interface Props {
     forceBlur?: boolean
     editable?: boolean
     active?: boolean
+    avatar?: boolean  // Enable circular borders for avatar entities
 }
 
 const props = withDefaults(defineProps<Props>(), {
     adapter: 'detect',
     forceBlur: false,
     editable: false,
-    active: false
+    active: false,
+    avatar: false
 })
 
 const emit = defineEmits<{
@@ -486,7 +488,8 @@ const handleClick = () => {
     <div class="img-shape-wrapper" :class="{
         'editable': editable,
         'active': active,
-        'has-error': hasError
+        'has-error': hasError,
+        'avatar-style': avatar
     }" @click="handleClick">
         <!-- Error State: BlurHash + Overlay -->
         <div v-if="hasError" class="error-state">
@@ -527,6 +530,16 @@ const handleClick = () => {
 .img-shape-wrapper.active {
     outline: 2px solid var(--color-primary-base);
     outline-offset: 2px;
+}
+
+.img-shape-wrapper.avatar-style {
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.img-shape-wrapper.avatar-style .img-shape,
+.img-shape-wrapper.avatar-style .img-shape-placeholder {
+    border-radius: 50%;
 }
 
 .error-state {

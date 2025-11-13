@@ -34,7 +34,9 @@
         </div>
 
         <!-- Background Image with data mode -->
-        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" class="card-background-image" />
+        <!-- NOTE: ItemCard NEVER uses avatar style - wide/vertical shapes are incompatible with circular borders -->
+        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" :avatar="false"
+            class="card-background-image" />
 
         <!-- Legacy Background Image -->
         <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
@@ -119,6 +121,18 @@ const entityIcon = computed(() => {
     if (!entityType.value) return ''
     return entityIcons[entityType.value as keyof typeof entityIcons] || ''
 })
+
+/**
+ * Avatar Style: NEVER applied to ItemCard
+ * 
+ * Design Principle:
+ * - ItemCard uses 'wide' or 'vertical' shapes by design (aspect ratios 2:1 or 9:16)
+ * - Avatar style requires 'thumb' or 'square' shapes (1:1 aspect ratio)
+ * - Circular borders on wide/vertical shapes would be visually incorrect
+ * 
+ * Therefore: ItemCard explicitly passes :avatar="false" to ImgShape
+ * This ensures no circular borders are ever applied, regardless of entity type
+ */
 </script>
 
 <style scoped>

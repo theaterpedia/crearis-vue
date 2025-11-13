@@ -46,7 +46,8 @@
         <!-- Compact Mode: Image full-width with heading overlay -->
         <template v-if="styleCompact">
             <!-- Background Image with data mode -->
-            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" class="tile-background" />
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" :avatar="shouldUseAvatar"
+                class="tile-background" />
 
             <!-- Legacy Background Image -->
             <img v-else-if="cimg" :src="cimg" :alt="heading" class="tile-background" loading="lazy" />
@@ -64,7 +65,7 @@
         <!-- Non-Compact Mode: Image beside heading with padding -->
         <template v-else>
             <div class="tile-image">
-                <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" />
+                <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" :avatar="shouldUseAvatar" />
                 <img v-else-if="cimg" :src="cimg" :alt="heading" loading="lazy" />
             </div>
             <div class="tile-heading">
@@ -130,6 +131,28 @@ const entityIcons = {
 const entityIcon = computed(() => {
     if (!entityType.value) return ''
     return entityIcons[entityType.value] || ''
+})
+
+// Avatar option decision logic
+const shouldUseAvatar = computed(() => {
+    if (!props.data?.xmlid) return false
+
+    // Parse xmlID: "tp.event.festival-2024" → entity type is second fragment
+    const parts = props.data.xmlid.split('.')
+    if (parts.length < 2) return false
+
+    const entityType = parts[1] // 'event', 'instructor', 'post', etc.
+
+    // Avatar entities: events, instructors, posts
+    const avatarEntities = ['event', 'instructor', 'post']
+    const isAvatarEntity = avatarEntities.includes(entityType)
+
+    // Avatar shapes: thumb, square only
+    const currentShape = props.shape || 'square'
+    const isAvatarShape = currentShape === 'thumb' || currentShape === 'square'
+
+    // Both conditions must be true
+    return isAvatarEntity && isAvatarShape
 })
 
 // Log props for debugging
