@@ -1,6 +1,6 @@
 <template>
     <Heading :is="as" :headline="parsedHeadline" :overline="parsedOverline" :subline="parsedSubline" :tags="tags"
-        :shortcode="shortcode" :is-mobile="isMobile" :compact="compact" :opacity="opacity" />
+        :shortcode="shortcode" :is-mobile="isMobile" :compact="compact" :opacity="opacity" :scope="scope" />
 </template>
 
 <script lang="ts" setup>
@@ -60,6 +60,15 @@ const props = defineProps({
     opacity: {
         type: Number,
         default: 1,
+    },
+    /**
+     * Scope of prose content to pass through to Heading component
+     * - 'page': Full page content (default)
+     * - 'element': Component-level content
+     */
+    scope: {
+        type: String as PropType<'page' | 'element'>,
+        default: 'page',
     },
 })
 

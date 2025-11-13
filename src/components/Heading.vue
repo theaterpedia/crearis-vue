@@ -1,7 +1,7 @@
 <template>
-  <Prose>
+  <Prose :scope="scope">
     <component :is="is" class="heading"
-      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '']"
+      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '', isEmptyHeadline ? 'empty-headline' : '']"
       :style="{ opacity: opacity }">
       <span v-if="fancyShortCode" class="shortcode-float">{{ shortcode }}</span>
       <template v-if="hasOverline">
@@ -98,6 +98,16 @@ const props = defineProps({
     type: Number,
     default: 1,
   },
+  /**
+   * Scope of prose content
+   * - 'page': Full page content with max-width and page-level heading sizes (default)
+   * - 'element': Component-level content with no width constraints and smaller heading sizes
+   * @default 'page'
+   */
+  scope: {
+    type: String as PropType<'page' | 'element'>,
+    default: 'page',
+  },
 })
 
 // TODO: detect mobile
@@ -108,6 +118,10 @@ const hasOverline = computed(() => props.overline || (!props.subline && props.ta
 const hasSubline = computed(() => !hasOverline.value && (props.subline || props.tags))
 const mainLineShortCode = computed(() => props.shortcode && !hasOverline.value && !hasSubline.value)
 const extLineShortCode = computed(() => props.shortcode && props.isMobile && !mainLineShortCode.value)
+
+// Special case: Empty headline (only whitespace)
+// Used for metadata display like image credits where we want overline/subline at edges
+const isEmptyHeadline = computed(() => !props.headline || props.headline.trim() === '')
 const fancyShortCode = computed(() => props.shortcode && !props.isMobile && (hasOverline.value || hasSubline.value))
 </script>
 
