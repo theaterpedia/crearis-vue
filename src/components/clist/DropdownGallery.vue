@@ -15,7 +15,7 @@
 
         <!-- Dropdown content -->
         <template #popper="{ hide }">
-            <div class="dropdown-content" :style="systemTheme">
+            <div class="dropdown-content" :style="{ ...systemTheme, maxWidth: contentMaxWidth }">
                 <div class="dropdown-header">
                     <h4>{{ title || `Select ${entity}` }}</h4>
                     <button class="close-btn" @click="hide" aria-label="Close">×</button>
@@ -62,8 +62,17 @@ const systemTheme = computed(() => ({
     '--color-border': 'var(--system-border, #e5e7eb)',
     '--color-contrast': 'var(--system-contrast, #1f2937)',
     '--color-dimmed': 'var(--system-dimmed, #6b7280)',
-    '--color-inverted': '0'
+    '--color-inverted': '0',
+    '--card-width': '21rem' // Required for width calculations in floating context
 }))
+
+// Compute max-width for dropdown-content based on size/variant
+// Gallery needs more space than list: 32-48rem range
+const contentMaxWidth = computed(() => {
+    // Gallery displays cards in grid, needs wider container
+    if (props.size === 'small') return '32rem'  // ~512px for small cards
+    return '48rem'  // ~768px for medium cards (default)
+})
 
 function openDropdown() {
     isOpen.value = true
@@ -109,7 +118,7 @@ function handleSelect(item: any, hide: () => void) {
     border-radius: var(--radius-card, 0.5rem);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     min-width: 32rem;
-    max-width: 48rem;
+    /* max-width now set dynamically via contentMaxWidth computed */
     max-height: 70vh;
     display: flex;
     flex-direction: column;
