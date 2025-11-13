@@ -80,7 +80,7 @@ const sizeClass = computed(() => `size-${props.size}`)
     width: 15px;
     height: 15px;
     top: 0;
-    right: -7.5px;
+    right: -8.5px;
     transform: rotate(45deg);
     transform-origin: top right;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
