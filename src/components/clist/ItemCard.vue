@@ -7,6 +7,9 @@
         },
         showMarker ? `marker-${markerColor}` : ''
     ]">
+        <!-- CornerBanner for demo entities -->
+        <CornerBanner size="card" :entity="models?.entity" />
+
         <!-- Warning icon overlay for deprecated cimg usage -->
         <div v-if="deprecated" class="deprecated-warning" title="Using deprecated cimg field">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -64,6 +67,7 @@ import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
+import CornerBanner from '@/components/CornerBanner.vue'
 
 interface Props {
     heading: string

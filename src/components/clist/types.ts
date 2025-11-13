@@ -66,4 +66,12 @@ export interface ItemModels {
 
     /** Badge color (defaults to 'primary' if badge option is enabled) */
     badgeColor?: ThemeColor
+
+    /** Entity data for demo detection (xmlid, status_value) */
+    entity?: {
+        xmlid?: string
+        status_id?: number
+        status_value?: number
+        table?: string // Entity table name (posts, events, instructors, etc.)
+    }
 }
