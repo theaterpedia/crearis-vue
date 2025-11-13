@@ -8,9 +8,10 @@
 <template>
     <div class="p-list-simple">
         <ItemList :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
-            :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :size="size" :width="width"
-            :columns="columns" :heading-level="headingLevel" :variant="variant" :interaction="interactionMode"
-            :data-mode="true" :multi-select="false" @item-click="handleItemClick" />
+            :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt"
+            :status-eq="statusEq" :status-gt="statusGt" :size="size" :width="width" :columns="columns"
+            :heading-level="headingLevel" :variant="variant" :interaction="interactionMode" :data-mode="true"
+            :multi-select="false" @item-click="handleItemClick" />
 
         <!-- Route Navigation Modal (if using route mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
@@ -44,6 +45,11 @@ interface Props {
     filterXmlPrefix?: string
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
+    
+    // Status value filtering (0-6)
+    statusLt?: number  // Less than
+    statusEq?: number  // Equal
+    statusGt?: number  // Greater than
 
     // Display options
     size?: 'small' | 'medium'

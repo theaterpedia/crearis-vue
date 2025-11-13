@@ -137,6 +137,10 @@ interface Props {
     filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
     filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
     filterXmlPattern?: RegExp // Filter by XML ID regex pattern
+    // Status value filtering (0-6)
+    statusLt?: number  // Less than
+    statusEq?: number  // Equal
+    statusGt?: number  // Greater than
     size?: 'small' | 'medium'
     width?: 'inherit' | 'small' | 'medium' | 'large' // Item width control
     columns?: 'off' | 'on' // Enable multi-column wrapping
@@ -353,6 +357,19 @@ const fetchEntityData = async () => {
         if (props.project) {
             url += `?project=${encodeURIComponent(props.project)}`
         }
+
+        // Add status filters if specified (0-6 values)
+        const urlObj = new URL(url, window.location.origin)
+        if (props.statusLt !== undefined && props.statusLt >= 0 && props.statusLt <= 6) {
+            urlObj.searchParams.append('status_lt', String(props.statusLt))
+        }
+        if (props.statusEq !== undefined && props.statusEq >= 0 && props.statusEq <= 6) {
+            urlObj.searchParams.append('status_eq', String(props.statusEq))
+        }
+        if (props.statusGt !== undefined && props.statusGt >= 0 && props.statusGt <= 6) {
+            urlObj.searchParams.append('status_gt', String(props.statusGt))
+        }
+        url = urlObj.pathname + urlObj.search
 
         const response = await fetch(url)
         if (!response.ok) {
