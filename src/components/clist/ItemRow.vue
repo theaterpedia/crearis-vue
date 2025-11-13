@@ -72,6 +72,7 @@ interface Props {
     data?: ImgShapeData
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
+    headingLevel?: 'h3' | 'h4' | 'h5' // Configurable heading level
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
 }
@@ -79,6 +80,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     size: 'small',
     cols: 2,
+    headingLevel: 'h5',
     options: () => ({}),
     models: () => ({})
 })
@@ -88,8 +90,6 @@ const emit = defineEmits<{
 }>()
 
 const dataMode = computed(() => props.data !== undefined)
-
-const headingLevel = computed(() => 'h5') // Always h5 for small size
 
 // Query useTheme for avatar dimensions
 const { avatarWidth } = useTheme()

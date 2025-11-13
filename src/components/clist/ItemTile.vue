@@ -87,7 +87,7 @@ interface Props {
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     styleCompact?: boolean // Controls layout: true = overlay, false = beside
-    headingLevel?: 'h3' | 'h4' // Configurable heading level
+    headingLevel?: 'h3' | 'h4' | 'h5' // Configurable heading level
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
 }
@@ -95,7 +95,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium',
     styleCompact: true,
-    headingLevel: 'h3',
+    headingLevel: 'h4',
     options: () => ({}),
     models: () => ({})
 })
