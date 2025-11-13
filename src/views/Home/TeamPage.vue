@@ -44,6 +44,17 @@
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
 
+            <!-- Aside -->
+            <template #aside>
+                <!-- Demo Team: List SimplePreview Modal -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
+                        Details)</h3>
+                    <pListSimple entity="instructors" :project="FIXED_PROJECT_ID" size="small"
+                        interaction="previewmodal" :dataMode="false" />
+                </div>
+            </template>
+
             <!-- Footer -->
             <template #footer>
                 <HomeSiteFooter />
@@ -62,6 +73,7 @@ import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import TeamPageHero from './HomeComponents/TeamPageHero.vue'
+import pListSimple from '@/components/clist/pListSimple.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
@@ -69,6 +81,7 @@ import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOp
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
@@ -279,6 +292,10 @@ async function fetchProjects() {
 
 // Initialize
 onMounted(async () => {
+    // Initialize theme dimensions
+    const theme = useTheme()
+    theme.init()
+
     // Set SEO meta tags
     setTeamPageSeoMeta()
 

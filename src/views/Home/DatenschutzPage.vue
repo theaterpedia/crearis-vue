@@ -307,6 +307,7 @@ import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOp
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
@@ -424,6 +425,10 @@ async function fetchProject(domaincode: string) {
 }
 
 onMounted(async () => {
+    // Initialize theme dimensions
+    const theme = useTheme()
+    theme.init()
+
     setDatenschutzSeoMeta()
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)

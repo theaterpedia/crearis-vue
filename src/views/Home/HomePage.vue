@@ -482,6 +482,10 @@ function watchPostItOpens() {
 
 // Initialize
 onMounted(async () => {
+    // Initialize theme dimensions
+    const theme = useTheme()
+    theme.init()
+
     // Set SEO meta tags
     setHomePageSeoMeta()
 
