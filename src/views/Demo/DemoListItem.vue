@@ -154,7 +154,7 @@
 
                         <Column width="2/3">
                             <Prose>
-                                <Heading overline="Join Us" headline="Theaterpedia Conference 2025" level="h1" />
+                                <Heading overline="Join Us" headline="Theaterpedia Conference 2025" is="h1" />
 
                                 <h2>Munich, Germany</h2>
                                 <p><strong>November 20-23, 2025</strong></p>
@@ -226,7 +226,7 @@
             <!-- ModalSelector Demo Section -->
             <Section background="accent">
                 <Container>
-                    <Heading level="2">ModalSelector Demo</Heading>
+                    <Heading headline="ModalSelector Demo" is="h2" />
                     <Prose>
                         <p>The ModalSelector component provides a full-screen modal for selecting entities (posts,
                             events, instructors). It supports both list and gallery views with interactive selection.
@@ -253,7 +253,7 @@
             <!-- DropdownList Multi-Select Demo Section -->
             <Section background="muted">
                 <Container>
-                    <Heading level="2">DropdownList Multi-Select Demo</Heading>
+                    <Heading headline="DropdownList Multi-Select Demo" is="h2" />
                     <Prose>
                         <p>This demonstrates the DropdownList component with dataMode and multiSelect enabled for
                             instructors.
@@ -313,7 +313,7 @@
             <!-- pList Demos Section -->
             <Section background="accent">
                 <Container>
-                    <Heading level="2">pList Demos</Heading>
+                    <Heading headline="pList Demos" is="h2" />
                     <Prose>
                         <p>The pList component demonstrates different use cases:</p>
                         <ul>
@@ -340,21 +340,21 @@
                     <!-- Demo 1: Basic Display (Static) -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">1. Basic Display (Static Interaction)</h3>
-                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                        <pList type="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
                             interaction="static" :dataMode="false" />
                     </div>
 
                     <!-- Demo 2: Preview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">2. Preview Modal (Click to View Details)</h3>
-                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                        <pList type="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
                             interaction="previewmodal" :dataMode="false" />
                     </div>
 
                     <!-- Demo 3: Multi-Select with Data Mode -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">3. Multi-Select Mode (Data Mode Enabled)</h3>
-                        <pList entity="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
+                        <pList type="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
                             interaction="static" :dataMode="true" :multiSelect="true"
                             v-model:selectedIds="selectedPlistInstructorIds" @selectedXml="handlePlistInstructorXml"
                             @selected="handlePlistInstructorSelected" />
@@ -381,7 +381,7 @@
             <!-- XML Filtering Demo Section -->
             <Section background="muted">
                 <Container>
-                    <Heading level="2">XML ID Filtering Demo ✨ NEW</Heading>
+                    <Heading headline="XML ID Filtering Demo ✨ NEW" is="h2" />
                     <Prose>
                         <p>Demonstrates XML ID filtering capabilities for advanced entity filtering without requiring
                             database IDs.</p>
@@ -422,7 +422,7 @@
             <!-- pGallery Demos Section -->
             <Section background="default">
                 <Container>
-                    <Heading level="2">pGallery Demos</Heading>
+                    <Heading headline="pGallery Demos" is="h2" />
                     <Prose>
                         <p>The pGallery component is aligned with pList but optimized for gallery-style grid layouts.
                             Uses ItemList with multi-column display for responsive image galleries.</p>
@@ -608,6 +608,10 @@ const selectedInstructors = ref<any[]>([])
 const selectedPlistInstructorIds = ref<number[]>([])
 const selectedPlistInstructorXml = ref<string | string[]>([])
 const selectedPlistInstructors = ref<any[]>([])
+
+// pGallery multi-select demo state
+const selectedGalleryEventIds = ref<number[]>([])
+const selectedGalleryEvents = ref<any[]>([])
 
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
@@ -1024,6 +1028,12 @@ function handlePlistInstructorXml(xmlIds: string | string[]) {
 function handlePlistInstructorSelected(instructors: any | any[]) {
     selectedPlistInstructors.value = Array.isArray(instructors) ? instructors : [instructors]
     console.log('pList Selected instructors:', selectedPlistInstructors.value)
+}
+
+// pGallery multi-select handler
+function handleGalleryEventsSelected(events: any | any[]) {
+    selectedGalleryEvents.value = Array.isArray(events) ? events : [events]
+    console.log('pGallery Selected events:', selectedGalleryEvents.value)
 }
 
 // Initialize
