@@ -39,19 +39,19 @@ onMounted(() => {
 // Auto-detect if this is a demo entity
 const isDemo = computed(() => {
     if (!props.entity) return true // Show if no entity provided (manual mode)
-    
+
     // Check xmlid starts with '_demo'
     if (props.entity.xmlid?.startsWith('_demo')) return true
-    
+
     // Check status.value = 1 (demo status) if we have status_id and table
     if (props.entity.status_id && props.entity.table && cacheInitialized.value) {
         const statusInfo = status4Lang(props.entity.status_id, props.entity.table)
         if (statusInfo?.value === 1) return true
     }
-    
+
     // Direct status_value check (if already provided)
     if (props.entity.status_value === 1) return true
-    
+
     return false
 })
 

@@ -30,8 +30,7 @@
         <div v-else class="item-gallery" :class="itemTypeClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :heading-level="headingLevel" :options="getItemOptions(item)"
-                :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="() => openPreviewModal(item)">
+                :models="getItemModels(item)" v-bind="item.props || {}" @click="() => openPreviewModal(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -228,7 +227,7 @@ const fetchEntityData = async () => {
         } else if (props.entity === 'events') {
             url = '/api/events'
         } else if (props.entity === 'instructors') {
-            url = '/api/instructors'
+            url = '/api/public-users'
         } else if (props.entity === 'all') {
             console.warn('Combined entity fetching not yet implemented')
             return

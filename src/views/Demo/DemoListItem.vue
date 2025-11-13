@@ -375,18 +375,40 @@
                         </div>
                     </Prose>
 
-                    <!-- Demo 0: Basic Display (Static) -->
+                    <!-- Demo A: Basic Display (Static) -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">0. Basic Display (Static Interaction)</h3>
                         <pList type="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
                             interaction="static" :dataMode="false" />
                     </div>
 
-                    <!-- Demo 1: List SimplePreview Modal -->
+                    <!-- Demo Start: List SimplePreview Modal -->
                     <div style="margin-top: 2rem;">
-                        <h3 style="margin-bottom: 1rem;">1. Simple List Preview Modal (Click to View Details)</h3>
+                        <h3 style="margin-bottom: 1rem;">Start: Events Medium (Click to View Details)</h3>
                         <pListSimple entity="events" :project="FIXED_PROJECT_ID" size="medium"
                             interaction="previewmodal" :dataMode="false" />
+                    </div>
+
+                    <!-- Demo Team: List SimplePreview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
+                            Details)</h3>
+                        <pListSimple entity="instructors" :project="FIXED_PROJECT_ID" size="small"
+                            interaction="previewmodal" :dataMode="false" />
+                    </div>
+
+                    <!-- Demo BLog: Start SimplePreview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Start: Events Medium</h3>
+                        <pListSimple entity="posts" :project="FIXED_PROJECT_ID" size="medium" interaction="previewmodal"
+                            :dataMode="false" />
+                    </div>
+
+                    <!-- Demo BLog: Dev SimplePreview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Dev: Posts Medium</h3>
+                        <pListSimple entity="posts" project="dev" size="medium" interaction="previewmodal"
+                            :dataMode="false" />
                     </div>
 
                     <!-- Demo 2: Preview Modal -->
@@ -616,8 +638,8 @@ const navItems = computed<TopnavParentItem[]>(() => {
     }))
 })
 
-// State - Fixed to project 'tp'
-const FIXED_PROJECT_ID = 'tp'
+// State - Fixed to project 'start'
+const FIXED_PROJECT_ID = 'start'
 const user = ref<any>(null)
 const project = ref<any>(null)
 const isEditPanelOpen = ref(false)

@@ -338,7 +338,7 @@ const fetchEntityData = async () => {
         } else if (props.entity === 'events') {
             url = '/api/events'
         } else if (props.entity === 'instructors') {
-            url = '/api/instructors'
+            url = '/api/public-users'
         } else if (props.entity === 'projects') {
             url = '/api/projects'
         } else if (props.entity === 'images') {
