@@ -79,12 +79,11 @@ const sizeClass = computed(() => `size-${props.size}`)
 .corner-banner.size-thumb {
     width: 15px;
     height: 15px;
-    top: 0;
-    right: -8.5px;
+    top: -7.5px;
+    right: -7.5px;
     transform: rotate(45deg);
-    transform-origin: top right;
+    transform-origin: center;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
 }
 
 /* Tile size - 60% of small for ItemTile */
