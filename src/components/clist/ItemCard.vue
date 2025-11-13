@@ -46,7 +46,7 @@
         <div class="card-content">
             <!-- Card Header -->
             <div class="card-header">
-                <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
+                <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element" v-bind="$attrs" />
             </div>
 
             <!-- Card Meta (slot for additional content) -->

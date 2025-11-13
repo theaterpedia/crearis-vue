@@ -55,7 +55,8 @@
             <div class="tile-content">
                 <!-- Header (no padding, no margin, no color marker) -->
                 <div class="tile-header">
-                    <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
+                    <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element"
+                        v-bind="$attrs" />
                 </div>
             </div>
         </template>
@@ -67,7 +68,7 @@
                 <img v-else-if="cimg" :src="cimg" :alt="heading" loading="lazy" />
             </div>
             <div class="tile-heading">
-                <HeadingParser :content="heading" :as="headingLevel" :compact="false" v-bind="$attrs" />
+                <HeadingParser :content="heading" :as="headingLevel" :compact="false" scope="element" v-bind="$attrs" />
             </div>
         </template>
     </div>
@@ -363,6 +364,10 @@ if (props.data) {
     display: grid;
     grid-template-columns: 128px 1fr;
     /* Image fixed at 128px, heading fills remaining */
+    width: 100%;
+    /* Respect parent container width */
+    max-width: 100%;
+    /* Prevent expansion beyond parent */
     background-color: var(--color-card-bg);
     border-radius: var(--radius);
     overflow: hidden;
@@ -393,6 +398,17 @@ if (props.data) {
     align-items: center;
     padding: 24px 12px 24px 12px;
     /* 24px vertical, 12px left of heading */
+    min-width: 0;
+    /* Critical: allows flex/grid item to shrink below content size */
+    overflow: hidden;
+    /* Prevent overflow */
+}
+
+.tile-heading :deep(.prose-element) {
+    min-width: 0;
+    /* Allow prose to shrink */
+    width: 100%;
+    /* Take full available width */
 }
 
 .tile-heading :deep(h3),
@@ -400,5 +416,9 @@ if (props.data) {
     margin: 0;
     padding: 0;
     color: var(--color-card-contrast);
+    min-width: 0;
+    /* Critical: ensure heading itself can shrink */
+    width: 100%;
+    /* Take full available width */
 }
 </style>

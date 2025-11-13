@@ -221,23 +221,21 @@ const dataModeActive = computed(() => {
 })
 
 /**
- * Compute shape for image display based on size
- * NOTE: This is the IMAGE shape (actual display size), not the container shape
+ * Compute shape for ImgShape component
  * 
- * SAFETY: Following production-safe patterns:
- * - size="small" (60-80px) → 'avatar' shape (64px, safe for all variants)
- * - size="medium"+ → 'tile' shape with variant="square" ONLY
+ * Returns ImgShape-compatible dimension types:
+ * - 'thumb': 64px (for size="small", uses img_thumb field)
+ * - 'square': 128px (for size="medium", uses img_square field)
  * 
- * Tile variants default/wide/vertical are UNSAFE (not production-ready)
- * Always paired with variant="square" for safe production use
+ * These match the dimensionMap keys in ImgShape component.
  */
-const shape = computed<'card' | 'tile' | 'avatar'>(() => {
-    // Small size uses avatar shape (64px) - production safe
+const shape = computed<'thumb' | 'square'>(() => {
+    // Small size uses thumb shape (64px) - for img_thumb database field
     if (props.size === 'small') {
-        return 'avatar'
+        return 'thumb'
     }
-    // Medium+ sizes use tile shape (128px) - must use variant="square"
-    return 'tile'
+    // Medium+ sizes use square shape (128px) - for img_square database field
+    return 'square'
 })
 
 /**
@@ -361,7 +359,22 @@ const fetchEntityData = async () => {
             throw new Error(`Failed to fetch ${props.entity}: ${response.statusText}`)
         }
 
-        entityData.value = await response.json()
+        // Handle both real responses and test mocks
+        if (typeof response.text === 'function') {
+            const text = await response.text()
+            if (!text || text.trim() === '') {
+                throw new Error(`Empty response from ${props.entity} API`)
+            }
+            try {
+                entityData.value = JSON.parse(text)
+            } catch (parseError) {
+                console.error('Failed to parse JSON:', text.substring(0, 100))
+                throw new Error(`Invalid JSON response from ${props.entity} API`)
+            }
+        } else {
+            // Fallback for test mocks that return data directly
+            entityData.value = await response.json()
+        }
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Unknown error'
         console.error('Error fetching entity data:', err)
@@ -667,6 +680,9 @@ defineExpose({
     border-radius: var(--radius);
     border-left: 4px solid var(--color-warning);
     font-weight: 500;
+    /* Ensure banner takes full available width */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .item-list {

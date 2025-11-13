@@ -35,7 +35,7 @@
                             <div v-else class="avatar-placeholder"></div>
                         </div>
                         <span v-if="selectedItems.length > 8" class="avatar-count">+{{ selectedItems.length - 8
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
 
@@ -54,18 +54,19 @@
 
         <!-- Dropdown content -->
         <template #popper="{ hide }">
-            <div class="dropdown-content" :style="systemTheme">
+            <div class="dropdown-content" :style="{ ...systemTheme, maxWidth: contentMaxWidth }">
                 <div class="dropdown-header">
                     <h4>{{ title || `Select ${entity}` }}</h4>
                     <button class="close-btn" @click="hide" aria-label="Close">×</button>
                 </div>
 
                 <!-- CL2: Use ItemList with entity fetching -->
-                <div class="dropdown-list-wrapper">
+                <!-- Option A: Wrapper controls layout, ItemList inherits -->
+                <div class="dropdown-list-wrapper" :class="wrapperClasses" :style="systemTheme">
                     <ItemList ref="itemListRef" :entity="entity" :project="project" :filterIds="filterIds"
                         :filterXmlPrefix="filterXmlPrefix" :filterXmlPrefixes="filterXmlPrefixes"
-                        :filterXmlPattern="filterXmlPattern" item-type="row" :size="size" :dataMode="dataMode"
-                        :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
+                        :filterXmlPattern="filterXmlPattern" item-type="row" :size="size" width="inherit" columns="off"
+                        :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
                         @item-click="(item) => handleSelect(item, hide)" @update:selectedIds="handleSelectedIdsUpdate"
                         @selectedXml="handleSelectedXml" @selected="handleSelected" />
                 </div>
@@ -92,6 +93,9 @@ interface Props {
     filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
     filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
     filterXmlPattern?: RegExp // Filter by XML ID regex pattern
+    // Layout control props (Option A: wrapper controls everything)
+    width?: 'small' | 'medium' | 'large' // Item width control
+    columns?: 'off' | 'on' // Enable multi-column wrapping
     // Selection props
     dataMode?: boolean // True = uses entity data and emits selections
     multiSelect?: boolean // Allow multiple selections
@@ -101,6 +105,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     size: 'small',
+    width: 'medium',
+    columns: 'off',
     dataMode: true,
     multiSelect: false,
     displayXml: false
@@ -124,8 +130,38 @@ const systemTheme = computed(() => ({
     '--color-border': 'var(--system-border, #e5e7eb)',
     '--color-contrast': 'var(--system-contrast, #1f2937)',
     '--color-dimmed': 'var(--system-dimmed, #6b7280)',
-    '--color-inverted': '0'
+    '--color-inverted': '0',
+    '--card-width': '21rem' // Required for width calculations in floating context
 }))
+
+// Compute max-width for dropdown-content based on width prop
+const contentMaxWidth = computed(() => {
+    const baseWidth = 21 // 21rem = 336px
+    const multipliers = {
+        small: 0.5,   // 10.5rem = 168px
+        medium: 1,     // 21rem = 336px
+        large: 1.5     // 31.5rem = 504px
+    }
+    const multiplier = multipliers[props.width] || 1
+    return `${baseWidth * multiplier + 2}rem` // +2rem for padding/border
+})
+
+// Wrapper classes for width/columns control (Option A: wrapper owns layout)
+const wrapperClasses = computed(() => {
+    const classes: string[] = []
+
+    // Width class
+    if (props.width) {
+        classes.push(`width-${props.width}`)
+    }
+
+    // Columns class
+    if (props.columns === 'on' && props.width !== 'small') {
+        classes.push('columns-on')
+    }
+
+    return classes.join(' ')
+})
 
 // Compute selected IDs as array
 const selectedIdsArray = computed(() => {
@@ -299,7 +335,32 @@ function handleSelected(value: any | any[]) {
 
 .dropdown-list-wrapper {
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 0.5rem;
+}
+
+/* Option A: Wrapper controls width (ItemList inherits) */
+.dropdown-list-wrapper.width-small {
+    width: calc(var(--card-width, 21rem) * 0.5);
+    /* 168px (fallback: 10.5rem) */
+}
+
+.dropdown-list-wrapper.width-medium {
+    width: var(--card-width, 21rem);
+    /* 336px (fallback: 21rem) */
+}
+
+.dropdown-list-wrapper.width-large {
+    width: calc(var(--card-width, 21rem) * 1.5);
+    /* 504px (fallback: 31.5rem) */
+}
+
+/* Columns enabled: ItemList will flex wrap */
+.dropdown-list-wrapper.columns-on :deep(.item-list) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 /* Make items clickable */

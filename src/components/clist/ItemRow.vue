@@ -49,7 +49,7 @@
             <div v-else class="image-box image-placeholder"></div>
         </div>
         <div class="row-col-content">
-            <HeadingParser :content="heading" :as="headingLevel" :compact="true" v-bind="$attrs" />
+            <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element" v-bind="$attrs" />
         </div>
         <div v-if="$slots.default" class="row-col-slot">
             <slot></slot>
