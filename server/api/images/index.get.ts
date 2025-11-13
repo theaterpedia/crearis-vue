@@ -47,6 +47,32 @@ export default defineEventHandler(async (event) => {
             params.push(query.is_public === 'true' || query.is_public === '1')
         }
 
+        // Filter by status value (0-6)
+        // status_lt: less than (e.g., status_lt=3 returns status.value < 3)
+        // status_eq: equal (e.g., status_eq=2 returns status.value = 2)
+        // status_gt: greater than (e.g., status_gt=4 returns status.value > 4)
+        if (query.status_lt !== undefined) {
+            const statusValue = Number(query.status_lt)
+            if (statusValue >= 0 && statusValue <= 6) {
+                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value < ?)`
+                params.push(statusValue)
+            }
+        }
+        if (query.status_eq !== undefined) {
+            const statusValue = Number(query.status_eq)
+            if (statusValue >= 0 && statusValue <= 6) {
+                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value = ?)`
+                params.push(statusValue)
+            }
+        }
+        if (query.status_gt !== undefined) {
+            const statusValue = Number(query.status_gt)
+            if (statusValue >= 0 && statusValue <= 6) {
+                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value > ?)`
+                params.push(statusValue)
+            }
+        }
+
         sql += ' ORDER BY i.created_at DESC'
 
         const images = await db.all(sql, params)
