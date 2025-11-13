@@ -6,8 +6,32 @@
 - `/tests/unit/clist/itemTile.test.ts`
 - `/tests/unit/clist/itemRow.test.ts`
 
-**Status:** 🟡 New Features to Implement  
-**Last Updated:** November 13, 2025
+**Status:** ✅ Layout Fixes Complete | 🟡 New Features to Implement  
+**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+
+---
+
+## 🎉 Recent Fixes (November 13, 2025)
+
+### ✅ ImgShape Shape Props - RESOLVED
+- **Problem**: ItemList passed wrong shape values to Entity-Components
+- **Fix**: ItemList now passes 'thumb' (small) or 'square' (medium) shapes
+- **Impact**: All Entity-Components receive correct shape props for ImgShape
+- **Tests**: ItemRow (45/45), ItemTile (36/36), ItemCard (44/44) all passing
+
+### ✅ Issue A4: ItemTile Width Constraint - RESOLVED
+- **Problem**: Non-compact ItemTile didn't respect parent width - text overflowing container
+- **Root Cause**: Multiple nested CSS issues:
+  1. Grid item couldn't shrink below content size
+  2. Prose component had `max-width: 54rem` (864px) far exceeding wrapper
+  3. No text truncation mechanism
+- **Fix**: Added multiple CSS constraints:
+  - `width: 100%` on `.item-tile:not(.style-compact)` - container respects parent
+  - `min-width: 0`, `overflow: hidden` on `.tile-heading` - allows grid shrinking
+  - **`max-width: 100%`, `min-width: 0`, `overflow: hidden` on `.tile-heading :deep(.prose)` - critical Prose override**
+  - `overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap` on heading text
+- **Impact**: Long text truncates with ellipsis, fully respects parent width constraints
+- **Tests**: All 36 ItemTile tests passing, all 229 component tests passing
 
 ---
 
@@ -269,6 +293,54 @@ it('should NOT show checkbox when selectable is undefined', () => {
 
   const checkbox = wrapper.find('.checkbox')
   expect(checkbox.exists()).toBe(false)
+})
+```
+
+#### TC-B1.3a: Pointer Cursor on Hover When No Checkbox (Desktop)
+```typescript
+it('should show pointer cursor on hover when checkbox not visible', () => {
+  const wrapper = mount(ItemRow, {
+    props: {
+      heading: 'Event Title',
+      data: {
+        url: 'https://example.com/event.jpg',
+        xmlID: 'tp.event.summer-2024'
+      },
+      options: {
+        selectable: false  // No checkbox
+      }
+    }
+  })
+
+  const row = wrapper.find('.item-row')
+  
+  // Should have pointer cursor style
+  const computedStyle = window.getComputedStyle(row.element)
+  expect(computedStyle.cursor).toBe('pointer')
+})
+```
+
+#### TC-B1.3b: Default Cursor When Checkbox Visible
+```typescript
+it('should use default cursor when checkbox is visible', () => {
+  const wrapper = mount(ItemRow, {
+    props: {
+      heading: 'Event Title',
+      data: {
+        url: 'https://example.com/event.jpg',
+        xmlID: 'tp.event.summer-2024'
+      },
+      options: {
+        selectable: true  // Checkbox visible
+      }
+    }
+  })
+
+  const row = wrapper.find('.item-row')
+  
+  // Should have default cursor (checkbox handles interaction)
+  const computedStyle = window.getComputedStyle(row.element)
+  expect(computedStyle.cursor).toBe('default')
 })
 ```
 

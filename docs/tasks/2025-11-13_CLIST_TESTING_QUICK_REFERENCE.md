@@ -21,11 +21,12 @@
 
 ## 🎯 Current Issues & Features
 
-### 🔴 Issue A1: ImgShape Unknown Dimension
+### ✅ Issue A1: ImgShape Shape Compatibility (RESOLVED)
 - **Problem:** ImgShape reports 'unknown dimension' in ItemList
-- **Root Cause:** Not reading useTheme() dimensions correctly
-- **Solution:** Fix reactive dimension watching in ImgShape.vue
-- **Test Cases:** TC-A1.1 to TC-A1.4 (4 tests)
+- **Root Cause:** ItemList passing incompatible shape values ('tile'/'card'/'avatar' instead of 'thumb'/'square')
+- **Solution:** Fixed ItemList shape computed to return ImgShape-compatible values
+- **Status:** ✅ RESOLVED (November 13, 2025)
+- **Tests:** All 229 component tests passing, including 28 ImgShape integration tests
 - **Spec:** [2025-11-13_TEST_SPEC_IMGSHAPE.md](./2025-11-13_TEST_SPEC_IMGSHAPE.md#issue-a1-unknown-dimension-detection)
 
 ### 🔴 Issue A2: Avatar Option Lost

@@ -5,8 +5,50 @@
 - `/tests/unit/clist/dropdownList.test.ts`
 - `/tests/unit/clist/dropdownGallery.test.ts`
 
-**Status:** 🟡 New Feature B2 to Implement  
-**Last Updated:** November 13, 2025
+**Status:** ✅ Layout Fixes Complete | 🟡 Feature B2 to Implement  
+**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+
+---
+
+## 🎉 Recent Fixes (November 13, 2025)
+
+## 🎉 Recent Fixes (November 13, 2025)
+
+### ✅ Issue A3: Horizontal Scrollbar Prevention (RESOLVED)
+- **Problem:** Content extending beyond wrapper width causing horizontal scrollbar in dropdown
+- **Fix:** Added `overflow-x: hidden` to `.dropdown-list-wrapper` CSS
+- **Impact:** Wrapper prevents content from extending horizontally
+- **Tests:** All 20 wrapper control validation tests passing
+
+### ✅ Issue A4: Width=Large Overflow Fix (RESOLVED)
+- **Problem:** ItemTile with width=large (504px) - text overflowing beyond container
+- **Root Cause:** Grid couldn't shrink, Prose had max-width:54rem (864px), no text truncation
+- **Fix:** Added CSS constraints: grid shrinking, **Prose scope="element" architecture**, text truncation
+- **Impact:** ItemTile fully respects parent width, long text truncates with ellipsis
+- **Tests:** All 36 ItemTile tests passing, all 229 component tests passing
+
+### ✅ Issue A6: Dropdown Width Too Narrow (RESOLVED)
+- **Problem:** DropdownList with width="large" displaying at ~336px instead of 504px
+- **Root Causes:**
+  1. CSS variable `--card-width` not propagating into floating-vue popper context
+  2. `.dropdown-content` hardcoded `max-width: 24rem` (384px) constraining dropdown
+- **Solution:**
+  1. Added `--card-width: '21rem'` to `systemTheme` computed (floating context propagation)
+  2. Created `contentMaxWidth` computed based on width prop (small: 12.5rem, medium: 23rem, large: 33.5rem)
+  3. Bound dynamic max-width to dropdown-content: `:style="{ ...systemTheme, maxWidth: contentMaxWidth }"`
+  4. Added CSS fallback values: `var(--card-width, 21rem)`
+- **Impact:** 
+  - Dropdown correctly expands to full width (504px for large)
+  - No "see through" gaps
+  - Proper width calculations in all contexts
+- **Tests:** All 240 component tests passing
+
+### ✅ Option A Architecture - IMPLEMENTED
+- Wrapper controls layout (width/columns props)
+- ItemList inherits settings (width="inherit" columns="off")
+- CSS uses wrapper classes for width constraints
+- Dynamic max-width prevents parent constraint issues
+- Protective tests prevent architectural violations
 
 ---
 

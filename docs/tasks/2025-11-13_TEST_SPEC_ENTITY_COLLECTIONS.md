@@ -5,8 +5,27 @@
 - `/tests/unit/clist/itemList.test.ts`
 - `/tests/unit/clist/itemGallery.test.ts`
 
-**Status:** 🟡 New Features to Implement  
-**Last Updated:** November 13, 2025
+**Status:** ✅ Shape Compatibility Fixed | 🟡 New Features to Implement  
+**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+
+---
+
+## 🎉 Recent Fixes (November 13, 2025)
+
+### ✅ ImgShape Shape Compatibility - RESOLVED
+- **Problem**: ItemList passed incompatible shape values ('tile', 'card', 'avatar') to ImgShape
+- **Fix**: Updated shape computed to return ImgShape-compatible values ('thumb', 'square')
+- **Impact**: ItemList now passes correct shape values to all Entity-Components (ItemRow, ItemTile, ItemCard)
+- **Tests**: 27/27 ItemList tests passing, 28/28 ImgShape integration tests passing
+
+**Implementation:**
+```typescript
+// ItemList.vue - shape computed (fixed)
+const shape = computed<'thumb' | 'square'>(() => {
+    if (props.size === 'small') return 'thumb'  // 64px for img_thumb
+    return 'square'  // 128px for img_square
+})
+```
 
 ---
 

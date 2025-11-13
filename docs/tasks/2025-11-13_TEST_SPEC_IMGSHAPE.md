@@ -2,8 +2,8 @@
 
 **Component:** `/src/components/images/ImgShape.vue`  
 **Test File:** `/tests/unit/clist/imgShape.test.ts`  
-**Status:** 🔴 Critical Issues Present  
-**Last Updated:** November 13, 2025
+**Status:** ✅ Issue A1 RESOLVED | 🟡 Issue A2 Pending  
+**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
 
 ---
 
@@ -20,9 +20,36 @@ ImgShape is the core image component used throughout the CList system. It handle
 
 ---
 
-## Issue A1: Unknown Dimension Detection
+## ✅ Issue A1: Shape Compatibility (RESOLVED)
 
 ### Problem Statement
+
+ImgShape reported 'unknown dimension' errors because ItemList was passing incompatible shape values. ItemList returned component type names ('tile', 'card', 'avatar') instead of ImgShape dimension types ('thumb', 'square', 'wide', 'vertical').
+
+### Resolution (Completed November 13, 2025)
+
+**Root Cause:** ItemList's shape computed property returned component-specific shape names that didn't match ImgShape's dimensionMap keys.
+
+**Fix Applied:**
+- Updated ItemList shape computed to return ImgShape-compatible values
+- size="small" → shape="thumb" (64px, for img_thumb field)
+- size="medium" → shape="square" (128px, for img_square field)
+- All 229 component tests passing
+- 28/28 ImgShape integration tests passing
+
+**Files Modified:**
+- `/src/components/clist/ItemList.vue` (shape computed property)
+
+**Verification:**
+```typescript
+// ItemList.vue - Fixed implementation
+const shape = computed<'thumb' | 'square'>(() => {
+    if (props.size === 'small') return 'thumb'  // ImgShape-compatible
+    return 'square'  // ImgShape-compatible
+})
+```
+
+### Original Problem Statement (For Reference)
 
 ImgShape reports 'unknown dimension' when rendered via ItemList (pList). The component should read dimensions from the `useTheme()` composable but fails to do so correctly.
 

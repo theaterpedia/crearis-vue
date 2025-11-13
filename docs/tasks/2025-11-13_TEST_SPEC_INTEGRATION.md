@@ -7,8 +7,38 @@
 - `/tests/integration/clist/dropdown-flow.test.ts`
 - `/tests/e2e/clist-workflows.spec.ts`
 
-**Status:** 🔵 Integration Testing  
-**Last Updated:** November 13, 2025
+**Status:** ✅ Issue A1 Fixed | 🔵 Integration Testing In Progress  
+**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+
+---
+
+## 🎉 Recent Fixes (November 13, 2025)
+
+### ✅ Issue A1: ImgShape Shape Compatibility (RESOLVED)
+- **Problem:** ItemList passing incompatible shape values ('tile'/'card'/'avatar') to ImgShape
+- **Fix:** Updated ItemList shape computed to return ImgShape-compatible values ('thumb'/'square')
+- **Impact:** Eliminated "Unknown dimensions" errors in all entity components
+- **Tests:** All 229 component tests passing, including 28 ImgShape integration tests
+
+### ✅ Issue A3: Horizontal Scrollbar in DropdownList (RESOLVED)
+- **Problem:** Content extending beyond wrapper width causing horizontal scrollbar
+- **Fix:** Added `overflow-x: hidden` to `.dropdown-list-wrapper` CSS in DropdownList.vue
+- **Impact:** Wrapper now prevents horizontal overflow
+- **Tests:** All 20 wrapper control validation tests passing
+
+### ✅ Issue A4: Width=Large Overflow in Non-Compact Mode (RESOLVED)
+- **Problem:** ItemTile grid layout not respecting parent width - text overflowing beyond container
+- **Root Cause:** Multiple nested CSS issues:
+  1. Grid item (`.tile-heading`) couldn't shrink below content size
+  2. Prose component had `max-width: 54rem` (864px) - exceeding wrapper's 504px
+  3. Text had no truncation mechanism
+- **Fix:** Added multiple CSS constraints to ItemTile.vue:
+  - `width: 100%` on `.item-tile:not(.style-compact)` - container respects parent
+  - `min-width: 0`, `overflow: hidden` on `.tile-heading` - allows grid item to shrink
+  - **`max-width: 100%`, `min-width: 0`, `overflow: hidden` on `.tile-heading :deep(.prose)` - override Prose component default**
+  - `overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap` on heading text
+- **Impact:** Long text truncates with ellipsis, fully respects parent width constraints
+- **Tests:** All 36 ItemTile tests passing, all 229 component tests passing
 
 ---
 
