@@ -545,13 +545,14 @@ const closePreviewModal = () => {
 }
 
 /**
- * Get ItemOptions for an item based on dataMode
+ * Get ItemOptions for an item based on dataMode and multiSelect
+ * Checkbox only visible when BOTH dataMode=true AND multiSelect=true
  */
 const getItemOptions = (item: any): ItemOptions => {
     if (!props.dataMode) return {}
 
     return {
-        selectable: true, // Always show checkbox in dataMode
+        selectable: props.multiSelect === true, // Show checkbox ONLY in multi-select mode
         entityIcon: false,
         badge: false,
         counter: false,

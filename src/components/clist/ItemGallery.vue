@@ -322,14 +322,15 @@ const itemComponent = computed(() => {
 const itemTypeClass = computed(() => `item-type-${props.itemType}`)
 
 /**
- * Get ItemOptions for an item based on dataMode
+ * Get ItemOptions for an item based on dataMode and multiSelect
+ * Checkbox only visible when BOTH dataMode=true AND multiSelect=true
  */
 function getItemOptions(item: any): ItemOptions {
     return {
         entityIcon: false, // Can be enabled in future
         badge: false, // Can be enabled in future
         counter: false, // Can be enabled in future
-        selectable: dataModeActive.value, // Show checkbox when in data mode
+        selectable: dataModeActive.value && props.multiSelect === true, // Show checkbox ONLY in multi-select mode
         marker: false // Can be enabled in future
     }
 }

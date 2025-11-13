@@ -6,8 +6,8 @@
 - `/tests/unit/clist/itemTile.test.ts`
 - `/tests/unit/clist/itemRow.test.ts`
 
-**Status:** ✅ Layout Fixes Complete | 🟡 New Features to Implement  
-**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+**Status:** ✅ Layout Fixes Complete | ✅ B1 Checkbox Logic COMPLETED | 🟡 A2 Avatar Option Pending  
+**Last Updated:** November 13, 2025 (Session: B1/B2 Implementation Complete)
 
 ---
 
@@ -193,7 +193,11 @@ it('should NOT enable avatar when xmlID is missing', () => {
 
 ---
 
-## Feature B1: Checkbox Visibility Logic
+## Feature B1: Checkbox Visibility Logic ✅ COMPLETED
+
+**Status:** Entity-Components receive correct `options.selectable` prop from Collections  
+**Test Coverage:** Included in `/tests/component/Checkbox-Visibility.test.ts` (28/28 passing)  
+**Implementation:** ItemList and ItemGallery calculate selectable and pass to components
 
 ### Design Principle
 

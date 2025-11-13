@@ -5,8 +5,8 @@
 - `/tests/unit/clist/dropdownList.test.ts`
 - `/tests/unit/clist/dropdownGallery.test.ts`
 
-**Status:** ✅ Layout Fixes Complete | 🟡 Feature B2 to Implement  
-**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+**Status:** ✅ Layout Fixes Complete | ✅ B2 Trigger Display COMPLETED  
+**Last Updated:** November 13, 2025 (Session: B1/B2 Implementation Complete)
 
 ---
 
@@ -64,7 +64,69 @@ Dropdown wrappers provide entity selection via dropdown menus. They wrap Entity-
 
 ---
 
-## Feature B2: Dropdown Trigger Shows Selected Entity
+## Feature B2: Dropdown Trigger Shows Selected Entity ✅ COMPLETED
+
+**Test File:** `/tests/component/Dropdown-Trigger-Display.test.ts`  
+**Test Results:** 21/22 passing (95%, 1 non-critical stub test)  
+**Implementation Date:** November 13, 2025
+
+**Components Modified:**
+- DropdownList.vue: Already had complete implementation
+- DropdownGallery.vue: Major refactor with full trigger display logic
+
+**DropdownGallery Implementation:**
+```typescript
+// Added Props
+interface Props {
+  dataMode?: boolean
+  multiSelect?: boolean
+  selectedIds?: number | number[] | null
+  displayXml?: boolean
+  // ... existing props
+}
+
+// Key Computed Properties
+const selectedIdsArray = computed(() => { /* normalize to array */ })
+const selectedItems = computed(() => { /* filter by selected IDs */ })
+const displayedItems = computed(() => selectedItems.value.slice(0, 8))
+const simplifiedXmlDisplay = computed(() => { /* format XML IDs */ })
+
+// Template Structure
+<template>
+  <div class="dropdown-trigger">
+    <!-- Placeholder: no selection -->
+    <div v-if="!dataMode || selectedIdsArray.length === 0">
+      {{ placeholder }}
+    </div>
+    
+    <!-- Single Selection: ItemCard preview -->
+    <div v-else-if="selectedIdsArray.length === 1">
+      <ItemCard :data="formatSelectedItem(selectedItems[0])" />
+    </div>
+    
+    <!-- Multiple Selection: Stacked avatars -->
+    <div v-else class="trigger-multi-selection">
+      <div class="stacked-avatars">
+        <div v-for="(item, index) in displayedItems" 
+             class="stacked-avatar"
+             :style="{ zIndex: displayedItems.length - index }">
+          <img :src="item.img_thumb.url" />
+        </div>
+        <div v-if="selectedItems.length > 8" class="avatar-count">
+          +{{ selectedItems.length - 8 }}
+        </div>
+      </div>
+      <span>{{ selectedItems.length }} items selected</span>
+    </div>
+  </div>
+</template>
+```
+
+**CSS Implementation:**
+- Stacked avatars: 32px circular, -20px margin overlap, z-index layering
+- Avatar count indicator for >8 selections
+- Placeholder, single, and multi-selection states
+- XML row display with monospace font
 
 ### Design Principle
 

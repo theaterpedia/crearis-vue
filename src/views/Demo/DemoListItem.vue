@@ -310,6 +310,44 @@
                 </Container>
             </Section>
 
+            <!-- DropdownGallery Demo Section -->
+            <Section background="default">
+                <Container>
+                    <Heading headline="DropdownGallery Demo" is="h2" />
+                    <Prose>
+                        <p>This demonstrates the DropdownGallery component displaying events in card format.
+                            Gallery view optimized for visual browsing with image-heavy content.</p>
+
+                        <div
+                            style="display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem; margin-bottom: 1rem;">
+                            <label style="font-weight: 500;">Card Size:</label>
+                            <button :class="['btn-toggle', { 'active': gallerySize === 'small' }]"
+                                @click="gallerySize = 'small'">
+                                Small
+                            </button>
+                            <button :class="['btn-toggle', { 'active': gallerySize === 'medium' }]"
+                                @click="gallerySize = 'medium'">
+                                Medium
+                            </button>
+                        </div>
+
+                        <DropdownGallery entity="events" :project="FIXED_PROJECT_ID" title="Select Event (Gallery)"
+                            :size="gallerySize" variant="square">
+                            <template #trigger="{ open, isOpen }">
+                                <button class="form-dropdown-trigger" @click="open" style="min-width: 300px;">
+                                    <span>Select from gallery</span>
+                                    <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16"
+                                        viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </DropdownGallery>
+                    </Prose>
+                </Container>
+            </Section>
+
             <!-- pList Demos Section -->
             <Section background="accent">
                 <Container>
@@ -506,6 +544,7 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { isValidEmail } from '@/utils/fieldListUtility'
 import { pageSettings } from '@/settings'
 import DropdownList from '@/components/clist/DropdownList.vue'
+import DropdownGallery from '@/components/clist/DropdownGallery.vue'
 import ModalSelector from '@/components/clist/ModalSelector.vue'
 import { useTheme } from '@/composables/useTheme'
 
@@ -603,6 +642,9 @@ const instructorSize = ref<'small' | 'medium'>('small')
 const selectedInstructorIds = ref<number[]>([])
 const selectedInstructorXml = ref<string | string[]>([])
 const selectedInstructors = ref<any[]>([])
+
+// DropdownGallery demo state
+const gallerySize = ref<'small' | 'medium'>('small')
 
 // pList multi-select demo state
 const selectedPlistInstructorIds = ref<number[]>([])

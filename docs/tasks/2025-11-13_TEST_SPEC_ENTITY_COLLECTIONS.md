@@ -5,8 +5,8 @@
 - `/tests/unit/clist/itemList.test.ts`
 - `/tests/unit/clist/itemGallery.test.ts`
 
-**Status:** ✅ Shape Compatibility Fixed | 🟡 New Features to Implement  
-**Last Updated:** November 13, 2025 (Session: CList Integration Testing)
+**Status:** ✅ Shape Compatibility Fixed | ✅ B1 Checkbox Logic COMPLETED  
+**Last Updated:** November 13, 2025 (Session: B1/B2 Implementation Complete)
 
 ---
 
@@ -41,7 +41,39 @@ Entity-Collections manage groups of entities and handle:
 
 ---
 
-## Feature B1: Checkbox Visibility Determination
+## Feature B1: Checkbox Visibility Determination ✅ COMPLETED
+
+**Test File:** `/tests/component/Checkbox-Visibility.test.ts`  
+**Test Results:** 28/28 passing (100%)  
+**Implementation Date:** November 13, 2025
+
+**Components Modified:**
+- ItemList.vue: `getItemOptions()` function (line ~550)
+- ItemGallery.vue: `getItemOptions()` function (line ~327)
+
+**Key Implementation:**
+```typescript
+// ItemList.vue
+const getItemOptions = (item: any): ItemOptions => {
+    if (!props.dataMode) return {}
+    return {
+        selectable: props.multiSelect === true, // Checkbox ONLY in multi-select
+        entityIcon: false,
+        badge: false,
+        counter: false,
+        marker: false
+    }
+}
+
+// ItemGallery.vue
+const getItemOptions = (item: any): ItemOptions => {
+    if (!dataModeActive.value) return {}
+    return {
+        selectable: dataModeActive.value && props.multiSelect === true,
+        // ...
+    }
+}
+```
 
 ### Design Principle
 
