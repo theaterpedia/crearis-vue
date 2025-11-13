@@ -75,15 +75,16 @@ const sizeClass = computed(() => `size-${props.size}`)
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Thumb size - 15x15px square rotated 45° for ItemRow thumbnails (no text) */
+/* Thumb size - 15x15px square rotated 45° creating triangle (no text) */
 .corner-banner.size-thumb {
     width: 15px;
     height: 15px;
     top: 0;
-    right: 0;
+    right: -7.5px;
     transform: rotate(45deg);
     transform-origin: top right;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
 }
 
 /* Tile size - 60% of small for ItemTile */
