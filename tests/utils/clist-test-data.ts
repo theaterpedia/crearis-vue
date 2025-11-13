@@ -19,6 +19,8 @@ export interface ImgShapeData {
   x: number | null
   y: number | null
   z: number | null
+  xmlid?: string  // For shape detection (square vs round thumbs)
+  alt_text?: string  // Alt text for accessibility
 }
 
 /**
