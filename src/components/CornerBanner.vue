@@ -75,18 +75,15 @@ const sizeClass = computed(() => `size-${props.size}`)
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Thumb size - 8x8px triangle for ItemRow thumbnails (no text) */
+/* Thumb size - 15x15px square rotated 45° for ItemRow thumbnails (no text) */
 .corner-banner.size-thumb {
-    width: 0;
-    height: 0;
+    width: 15px;
+    height: 15px;
     top: 0;
     right: 0;
-    border-style: solid;
-    border-width: 0 8px 8px 0;
-    border-color: transparent var(--color-warning-bg) transparent transparent;
-    transform: none;
-    background: none;
-    box-shadow: none;
+    transform: rotate(45deg);
+    transform-origin: top right;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Tile size - 60% of small for ItemTile */
