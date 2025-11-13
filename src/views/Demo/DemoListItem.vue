@@ -375,11 +375,18 @@
                         </div>
                     </Prose>
 
-                    <!-- Demo 1: Basic Display (Static) -->
+                    <!-- Demo 0: Basic Display (Static) -->
                     <div style="margin-top: 2rem;">
-                        <h3 style="margin-bottom: 1rem;">1. Basic Display (Static Interaction)</h3>
+                        <h3 style="margin-bottom: 1rem;">0. Basic Display (Static Interaction)</h3>
                         <pList type="instructors" :project="FIXED_PROJECT_ID" :size="instructorSize"
                             interaction="static" :dataMode="false" />
+                    </div>
+
+                    <!-- Demo 1: List SimplePreview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">1. Simple List Preview Modal (Click to View Details)</h3>
+                        <pListSimple entity="events" :project="FIXED_PROJECT_ID" size="medium"
+                            interaction="previewmodal" :dataMode="false" />
                     </div>
 
                     <!-- Demo 2: Preview Modal -->
@@ -472,11 +479,17 @@
                         </ul>
                     </Prose>
 
-                    <!-- Demo 1: Basic Gallery -->
+                    <!-- Demo 0: Basic Gallery -->
                     <div style="margin-top: 2rem;">
-                        <h3 style="margin-bottom: 1rem;">1. Basic Gallery (Static, Multi-Column)</h3>
-                        <pGallery type="events" :project-domaincode="FIXED_PROJECT_ID" size="medium"
-                            header="Event Gallery" interaction="static" />
+                        <h3 style="margin-bottom: 1rem;">0. Basic Gallery (Static, Multi-Column)</h3>
+                        <pGallery type="events" :project="FIXED_PROJECT_ID" size="medium" header="Event Gallery"
+                            interaction="static" />
+                    </div>
+
+                    <!-- Demo 1: Gallery Simple with Preview Modal -->
+                    <div style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">1. Simple Gallery with Preview Modal</h3>
+                        <pGallerySimple entity="events" :project="FIXED_PROJECT_ID" size="medium" onActivate="modal" />
                     </div>
 
                     <!-- Demo 2: Gallery with Preview Modal -->
@@ -486,7 +499,7 @@
                             header="Instructor Gallery" interaction="previewmodal" />
                     </div>
 
-                    <!-- Demo 3: Gallery with Selection -->
+                    <!-- Demo 4: Gallery with Selection -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">3. Gallery with Multi-Select (Data Mode)</h3>
                         <pGallery type="events" :project-domaincode="FIXED_PROJECT_ID" size="medium"
@@ -530,6 +543,8 @@ import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import StartPageHero from '../Home/HomeComponents/StartPageHero.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
+import pGallerySimple from '@/components/clist/pGallerySimple.vue'
+import pListSimple from '@/components/clist/pListSimple.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
@@ -547,6 +562,7 @@ import DropdownList from '@/components/clist/DropdownList.vue'
 import DropdownGallery from '@/components/clist/DropdownGallery.vue'
 import ModalSelector from '@/components/clist/ModalSelector.vue'
 import { useTheme } from '@/composables/useTheme'
+import { i } from 'node_modules/vite/dist/node/types.d-aGj9QkWt'
 
 const router = useRouter()
 const route = useRoute()

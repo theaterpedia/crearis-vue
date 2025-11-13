@@ -19,6 +19,31 @@
         </div>
     </div>
 
+    <div v-else-if="interaction === 'previewmodal'" class="item-gallery-container">
+        <!-- Validation Error Banner -->
+        <div v-if="validationError" class="item-gallery-validation-error">
+            ⚠️ {{ validationError }}
+        </div>
+
+        <div v-if="loading" class="item-gallery-loading">Loading...</div>
+        <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
+        <div v-else class="item-gallery" :class="itemTypeClass">
+            <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
+                :heading="item.heading" :size="size" :heading-level="headingLevel" :options="getItemOptions(item)"
+                :models="getItemModels(item)" v-bind="item.props || {}"
+                @click="() => openPreviewModal(item)">
+                <template v-if="item.slot" #default>
+                    <component :is="item.slot" />
+                </template>
+            </component>
+        </div>
+
+        <!-- Preview Modal -->
+        <ItemModalCard :is-open="previewModalOpen" :heading="previewItem?.heading || ''" :teaser="previewItem?.teaser"
+            :data="previewItem?.props?.data" :cimg="previewItem?.cimg" :shape="previewItem?.props?.shape"
+            :variant="previewItem?.props?.variant" @close="closePreviewModal" />
+    </div>
+
     <Teleport v-else-if="interaction === 'popup'" to="body">
         <div v-if="isOpen" class="popup-overlay" @click.self="closePopup">
             <div class="popup-container">
@@ -72,6 +97,7 @@ import { computed, ref, onMounted, watch } from 'vue'
 import ItemTile from './ItemTile.vue'
 import ItemCard from './ItemCard.vue'
 import ItemRow from './ItemRow.vue'
+import ItemModalCard from './ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 import { getXmlIdPrefix, getXmlIdFragment, matchesXmlIdPrefix } from './xmlHelpers'
@@ -145,6 +171,8 @@ const entityData = ref<EntityItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedIdsInternal = ref<Set<number>>(new Set())
+const previewModalOpen = ref(false)
+const previewItem = ref<any>(null)
 
 // Error detection for invalid prop combinations
 const validationError = computed(() => {
@@ -405,6 +433,20 @@ const closePopup = () => {
 
 const toggleZoom = () => {
     isZoomed.value = !isZoomed.value
+}
+
+const openPreviewModal = (item: any) => {
+    previewItem.value = item
+    previewModalOpen.value = true
+    console.log('[ItemGallery] Opening preview modal for:', item.heading)
+}
+
+const closePreviewModal = () => {
+    previewModalOpen.value = false
+    // Delay clearing previewItem to allow modal close animation
+    setTimeout(() => {
+        previewItem.value = null
+    }, 300)
 }
 
 onMounted(() => {

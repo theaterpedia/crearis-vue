@@ -7,34 +7,16 @@
 -->
 <template>
     <div class="p-list-simple">
-        <ItemList 
-            :entity="entity" 
-            :project="project"
-            :filter-ids="filterIds"
-            :filter-xml-prefix="filterXmlPrefix"
-            :filter-xml-prefixes="filterXmlPrefixes"
-            :filter-xml-pattern="filterXmlPattern"
-            :size="size" 
-            :width="width"
-            :columns="columns"
-            :heading-level="headingLevel"
-            :variant="variant"
-            :interaction="interactionMode"
-            :data-mode="true"
-            :multi-select="false"
-            @item-click="handleItemClick"
-        />
+        <ItemList :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
+            :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :size="size" :width="width"
+            :columns="columns" :heading-level="headingLevel" :variant="variant" :interaction="interactionMode"
+            :data-mode="true" :multi-select="false" @item-click="handleItemClick" />
 
         <!-- Route Navigation Modal (if using route mode) -->
-        <ItemModalCard 
-            v-if="showRouteModal"
-            :is-open="showRouteModal"
+        <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
-            :teaser="selectedItem?.teaser"
-            :data="parseImageData(selectedItem)"
-            :shape="variant"
-            @close="closeRouteModal"
-        >
+            :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
+            @close="closeRouteModal">
             <template #footer>
                 <button @click="navigateToRoute" class="route-nav-button">
                     {{ routeButtonText }}
@@ -55,20 +37,20 @@ interface Props {
     // Entity fetching
     entity: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
     project?: string
-    
+
     // Filter options (passed as props, no UI controls)
     filterIds?: number[]
     filterXmlPrefix?: string
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
-    
+
     // Display options
     size?: 'small' | 'medium'
     width?: 'inherit' | 'small' | 'medium' | 'large'
     columns?: 'off' | 'on'
     headingLevel?: 'h3' | 'h4'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
-    
+
     // Interaction mode
     onActivate?: 'modal' | 'route'
     routePath?: string // e.g., '/events/:id' where :id will be replaced
@@ -109,12 +91,12 @@ const handleItemClick = (item: any) => {
 // Parse image data for modal
 const parseImageData = (item: any): ImgShapeData | undefined => {
     if (!item) return undefined
-    
+
     const imgField = props.size === 'small' ? 'img_thumb' : 'img_square'
     const imgData = item[imgField]
-    
+
     if (!imgData) return undefined
-    
+
     try {
         const parsed = typeof imgData === 'string' ? JSON.parse(imgData) : imgData
         return {
@@ -139,7 +121,7 @@ const parseImageData = (item: any): ImgShapeData | undefined => {
 // Navigate to route
 const navigateToRoute = () => {
     if (!props.routePath || !selectedItem.value) return
-    
+
     // Replace :id with actual item id
     const path = props.routePath.replace(':id', String(selectedItem.value.id))
     router.push(path)
