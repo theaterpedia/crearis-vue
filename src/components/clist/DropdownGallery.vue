@@ -27,7 +27,7 @@
                             <div v-else class="avatar-placeholder"></div>
                         </div>
                         <span v-if="selectedItems.length > 8" class="avatar-count">+{{ selectedItems.length - 8
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
 

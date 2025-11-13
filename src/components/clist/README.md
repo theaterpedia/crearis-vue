@@ -46,6 +46,8 @@ Primary container for list-based layouts. Auto-selects child components based on
 - Multi-column flex wrapping support
 - API data fetching or manual data binding
 - Multiple interaction modes (static, popup, dropdown, zoom)
+- **Selection system**: Checkbox visibility controlled by `dataMode` and `multiSelect`
+- **Avatar option**: Circular borders for event/instructor/post entities with thumb/square shapes
 
 #### **DropdownList.vue**
 Wrapper around ItemList with dropdown/button trigger functionality.
@@ -55,6 +57,11 @@ Wrapper around ItemList with dropdown/button trigger functionality.
 - `title`: Button text
 - `showPreview`: Display selected item preview
 - `showToolbar`: Show edit/delete actions
+
+**Features**:
+- **Trigger display**: Shows selected entity preview with avatar/title
+- **Multiple selection**: Stacked avatars (max 8 visible) with count indicator
+- **XML ID display**: Formatted XML IDs when using xmlID mode
 
 ---
 
@@ -70,6 +77,8 @@ Horizontal row layout with avatar-sized images (64×64px).
 - Supports round or square avatars
 - Grid layout: `[image | content | optional slot]`
 - Zero padding (follows imgShape height exactly)
+- **Avatar option**: Circular borders for event/instructor/post entities with thumb shape
+- **Selection**: Checkbox visible only when `multiSelect=true`
 
 #### **ItemTile.vue**
 Tile layout with 128×128px images. Supports two display modes.
@@ -92,6 +101,19 @@ Tile layout with 128×128px images. Supports two display modes.
 - Configurable heading level (h3 or h4)
 - Hover effects (transform + shadow)
 - Border radius from `var(--radius)`
+- **Avatar option**: Circular borders for event/instructor/post entities with thumb/square shapes
+- **Selection**: Checkbox visible only when `multiSelect=true`
+
+#### **ItemCard.vue**
+Card layout with wide images (2:1 aspect ratio). Ideal for featured content.
+
+**Features**:
+- Background image with fade overlay
+- Heading overlay at bottom
+- Badge with optional counter (top-right)
+- Entity icon support (top-left)
+- **Avatar option**: NEVER applied (wide/vertical shapes incompatible with circular borders)
+- **Selection**: Checkbox visible only when `multiSelect=true`
 
 ---
 
@@ -176,6 +198,66 @@ import { useTheme } from '@/composables/useTheme'
 const { avatarWidth, tileWidth, cardWidth } = useTheme()
 // Returns: { value: 64 }, { value: 128 }, { value: 336 }
 ```
+
+---
+
+## 🎯 Selection System (B1 Feature)
+
+### Checkbox Visibility Rules
+Checkboxes are **only visible** when BOTH conditions are true:
+1. `dataMode=true` (using entity data, not static items)
+2. `multiSelect=true` (allowing multiple selections)
+
+### Single Selection Mode
+When `multiSelect=false` or undefined:
+- ✅ No checkbox displayed
+- ✅ Selected item gets secondary highlight (background color)
+- ✅ Pointer cursor on hover (desktop)
+
+### Multi Selection Mode
+When `multiSelect=true`:
+- ✅ Checkbox displayed
+- ✅ Selected items get primary highlight (border/shadow)
+- ✅ Default cursor (checkbox handles interaction)
+
+**Test Coverage**: 28/28 tests passing (`Checkbox-Visibility.test.ts`)
+
+---
+
+## 🎭 Avatar Option (A2 Feature)
+
+### Circular Border Logic
+Avatar-style circular borders are applied when **ALL** conditions are true:
+
+1. **Entity Type**: `event`, `instructor`, or `post` (detected from xmlID)
+2. **Shape Type**: `thumb` or `square` only (not wide/vertical)
+3. **xmlID Present**: Component can parse `tp.event.xyz` format
+
+### Component Authority
+- **ItemRow**: ✅ Implements avatar decision logic
+- **ItemTile**: ✅ Implements avatar decision logic  
+- **ItemCard**: ❌ **NEVER** uses avatar (wide/vertical shapes incompatible)
+
+### Implementation
+```typescript
+// ItemRow.vue, ItemTile.vue
+const shouldUseAvatar = computed(() => {
+    if (!props.data?.xmlid) return false
+    
+    const parts = props.data.xmlid.split('.')
+    const entityType = parts[1] // 'event', 'instructor', 'post'
+    
+    const avatarEntities = ['event', 'instructor', 'post']
+    const isAvatarEntity = avatarEntities.includes(entityType)
+    
+    const currentShape = props.shape || 'thumb'
+    const isAvatarShape = currentShape === 'thumb' || currentShape === 'square'
+    
+    return isAvatarEntity && isAvatarShape
+})
+```
+
+**Test Coverage**: 20/20 tests passing (`Avatar-Option.test.ts`)
 
 ---
 
