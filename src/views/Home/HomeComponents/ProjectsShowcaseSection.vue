@@ -1,8 +1,10 @@
 <template>
     <Section v-if="projects.length > 0" background="default">
+        <CornerBanner size="large" />
         <Container>
             <Prose>
-                <Heading overline="Pipeline" level="h2" headline="New **Projects** in the Pipeline">New **Projects** in
+                <Heading overline="Showcase für entstehende Projekte" level="h2"
+                    headline="Ca. 10 Websites in der Pipeline">New **Projects** in
                     the Pipeline</Heading>
             </Prose>
 
@@ -31,6 +33,7 @@ import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
+import CornerBanner from '@/components/CornerBanner.vue'
 
 const props = defineProps<{
     projects: any[]

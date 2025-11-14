@@ -207,7 +207,7 @@ describeOrSkip('useI18n - Translation Functions', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 3, name: 'name', variation: 'instructors', type: 'field', text: '{"de":"Vor- und Nachname","en":"Full name","cz":"Celé jméno"}', status: 'ok' }
+                    { id: 3, name: 'name', variation: 'instructors', type: 'field', text: { de: 'Vor- und Nachname', en: 'Full name', cz: 'Celé jméno' }, status: 'ok' }
                 ]
             })
         } as any)
@@ -224,7 +224,7 @@ describeOrSkip('useI18n - Translation Functions', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'save', variation: 'false', type: 'button', text: '{"de":"Speichern","en":"Save","cz":"Uložit"}', status: 'ok' }
+                    { id: 1, name: 'save', variation: 'false', type: 'button', text: { de: 'Speichern', en: 'Save', cz: 'Uložit' }, status: 'ok' }
                 ]
             })
         } as any)
@@ -251,7 +251,7 @@ describeOrSkip('useI18n - Fallback Chain', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'test', variation: 'false', type: 'button', text: '{"de":"Test"}', status: 'de' }
+                    { id: 1, name: 'test', variation: 'false', type: 'button', text: { de: 'Test' }, status: 'de' }
                 ]
             })
         } as any)
@@ -271,7 +271,7 @@ describeOrSkip('useI18n - Fallback Chain', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'test', variation: 'false', type: 'button', text: '{"en":"Test English"}', status: 'en' }
+                    { id: 1, name: 'test', variation: 'false', type: 'button', text: { en: 'Test English' }, status: 'en' }
                 ]
             })
         } as any)
@@ -318,7 +318,7 @@ describeOrSkip('useI18n - Caching', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'save', variation: 'false', type: 'button', text: '{"de":"Speichern"}', status: 'ok' }
+                    { id: 1, name: 'save', variation: 'false', type: 'button', text: { de: 'Speichern' }, status: 'ok' }
                 ]
             })
         } as any)
@@ -337,9 +337,9 @@ describeOrSkip('useI18n - Caching', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'save', variation: 'false', type: 'button', text: '{"de":"Speichern"}', status: 'ok' },
-                    { id: 2, name: 'cancel', variation: 'false', type: 'button', text: '{"de":"Abbrechen"}', status: 'ok' },
-                    { id: 3, name: 'name', variation: 'false', type: 'field', text: '{"de":"Titel"}', status: 'ok' }
+                    { id: 1, name: 'save', variation: 'false', type: 'button', text: { de: 'Speichern' }, status: 'ok' },
+                    { id: 2, name: 'cancel', variation: 'false', type: 'button', text: { de: 'Abbrechen' }, status: 'ok' },
+                    { id: 3, name: 'name', variation: 'false', type: 'field', text: { de: 'Titel' }, status: 'ok' }
                 ]
             })
         } as any)
@@ -357,7 +357,7 @@ describeOrSkip('useI18n - Caching', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'save', variation: 'false', type: 'button', text: '{"de":"Speichern"}', status: 'ok' }
+                    { id: 1, name: 'save', variation: 'false', type: 'button', text: { de: 'Speichern' }, status: 'ok' }
                 ]
             })
         } as any)
@@ -401,7 +401,7 @@ describeOrSkip('useI18n - Get or Create', () => {
                     name: 'newkey',
                     variation: 'false',
                     type: 'button',
-                    text: '{"de":"newkey","en":"newkey","cz":"newkey"}',
+                    text: { de: 'newkey', en: 'newkey', cz: 'newkey' },
                     status: 'de'
                 }
             })
@@ -463,7 +463,7 @@ describeOrSkip('useI18n - Error Handling', () => {
             json: async () => ({
                 success: true,
                 i18n_codes: [
-                    { id: 1, name: 'save', variation: 'false', type: 'button', text: '{"de":"Speichern"}', status: 'ok' }
+                    { id: 1, name: 'save', variation: 'false', type: 'button', text: { de: 'Speichern' }, status: 'ok' }
                 ]
             })
         } as any)

@@ -9,8 +9,8 @@
         <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
         <div v-else class="item-gallery" :class="itemTypeClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
-                :heading="item.heading" :size="size" :heading-level="headingLevel" :options="getItemOptions(item)"
-                :models="getItemModels(item)" v-bind="item.props || {}"
+                :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
+                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
                 @click="(e: MouseEvent) => handleItemClick(item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
@@ -29,8 +29,9 @@
         <div v-else-if="error" class="item-gallery-error">{{ error }}</div>
         <div v-else class="item-gallery" :class="itemTypeClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
-                :heading="item.heading" :size="size" :heading-level="headingLevel" :options="getItemOptions(item)"
-                :models="getItemModels(item)" v-bind="item.props || {}" @click="() => openPreviewModal(item)">
+                :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
+                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
+                @click="() => openPreviewModal(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -111,6 +112,7 @@ interface GalleryItem {
 
 interface EntityItem {
     id: number
+    name?: string
     title?: string
     entityname?: string
     xmlID?: string
@@ -119,26 +121,24 @@ interface EntityItem {
 }
 
 interface Props {
-    items?: GalleryItem[]
-    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
+    entity?: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
     project?: string
     images?: number[]
-    filterIds?: number[] // Filter fetched entities by these IDs
-    // XML ID filtering props
+    filterIds?: number[]
     filterXmlPrefix?: string
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
-    itemType?: 'tile' | 'card' | 'row'
-    size?: 'small' | 'medium'
-    headingLevel?: 'h3' | 'h4'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
+    itemType?: 'card' | 'row'
+    size?: 'small' | 'medium' | 'large'
+    variant?: 'square' | 'wide' | 'thumb' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     interaction?: 'static' | 'popup' | 'zoom' | 'previewmodal'
-    title?: string
-    modelValue?: boolean
-    // Selection props
+    headingLevel?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
     dataMode?: boolean
     multiSelect?: boolean
     selectedIds?: number | number[]
+    title?: string
+    modelValue?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -243,6 +243,15 @@ const fetchEntityData = async () => {
         }
 
         entityData.value = await response.json()
+
+        // Sort events by date_begin (ascending - earliest first)
+        if (props.entity === 'events' && Array.isArray(entityData.value)) {
+            entityData.value.sort((a: any, b: any) => {
+                if (!a.date_begin) return 1  // null dates to end
+                if (!b.date_begin) return -1
+                return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
+            })
+        }
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Unknown error'
         console.error('Error fetching entity data:', err)
@@ -251,11 +260,12 @@ const fetchEntityData = async () => {
     }
 }
 
-const parseImageData = (jsonString: string | undefined): ImgShapeData | null => {
-    if (!jsonString) return null
+const parseImageData = (field: string | object | undefined): ImgShapeData | null => {
+    if (!field) return null
 
     try {
-        const parsed = JSON.parse(jsonString)
+        // Handle both JSON strings and already-parsed objects
+        const parsed = typeof field === 'string' ? JSON.parse(field) : field
         return {
             type: 'url',
             url: parsed.url || '',
@@ -302,30 +312,41 @@ const entities = computed(() => {
             return true
         })
 
-        console.log('[ItemGallery] Filter results:', {
-            total: entityData.value.length,
-            filterIds: props.filterIds?.length,
-            filterXmlPrefix: props.filterXmlPrefix,
-            filterXmlPrefixes: props.filterXmlPrefixes?.length,
-            filterXmlPattern: props.filterXmlPattern?.source,
-            filtered: filteredData.length
-        })
-
         // Transform to gallery items with proper image sizing
         return filteredData.map((entity: EntityItem) => {
-            // For galleries, prefer larger images: use img_square for most cases
-            const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
-            const imageData = parseImageData(imageField)
+            let imageData = null
+            let hasDeprecatedCimg = false
+
+            // Determine which image field to use based on variant/anatomy
+            let imageField: string | undefined
+
+            if (props.variant === 'wide') {
+                // Wide variant uses img_wide field
+                imageField = (entity as any).img_wide
+            } else if (props.variant === 'vertical') {
+                // Vertical variant uses img_vertical field
+                imageField = (entity as any).img_vertical
+            } else {
+                // Square/thumb variants: small=img_thumb, medium/large=img_square
+                imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
+            }
+
+            imageData = parseImageData(imageField)
+            hasDeprecatedCimg = (entity as any).cimg && !imageData
 
             return {
+                // Preserve original entity data
+                ...(entity as any),
+                // Override specific fields for display
                 id: entity.id,
                 xmlID: entity.xmlID,
-                heading: entity.title || entity.entityname || `Item ${entity.id}`,
-                cimg: undefined,
+                heading: entity.name || entity.title || entity.entityname || `Item ${entity.id}`,
+                cimg: undefined, // Don't use legacy cimg
                 props: {
                     data: imageData,
-                    shape: shape.value,
-                    variant: props.variant
+                    shape: props.variant || shape.value,
+                    variant: props.variant,
+                    deprecated: hasDeprecatedCimg
                 }
             }
         })

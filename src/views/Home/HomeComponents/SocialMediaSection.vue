@@ -1,5 +1,6 @@
 <template>
-    <div v-if="isVertical" class="social-media-standalone">
+
+    <div v-if="isVertical" class="social-media-standalone" v-show="false">
         <!-- Small/Medium Layout - Single Row or Vertical (standalone, no Section wrapper) -->
         <div class="social-compact-row" :class="[`social-${size}`, { 'social-vertical': isVertical }]">
             <a href="https://signal.org" target="_blank" rel="noopener noreferrer" class="social-compact-btn">
@@ -59,7 +60,7 @@
         </div>
     </div>
 
-    <Section v-else :background="size === 'large' ? 'muted' : 'default'">
+    <Section v-else :background="size === 'large' ? 'muted' : 'default'" v-show="false">
         <Container>
             <Prose v-if="size === 'large'">
                 <Heading overline="Connect With Us" level="h2">Join Our **Community**</Heading>

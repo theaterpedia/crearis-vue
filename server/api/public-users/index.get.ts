@@ -15,21 +15,21 @@ export default defineEventHandler(async (event) => {
         if (query.status_lt !== undefined) {
             const statusValue = Number(query.status_lt)
             if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'instructors' AND value < ?)`
+                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'persons' AND value < ?)`
                 params.push(statusValue)
             }
         }
         if (query.status_eq !== undefined) {
             const statusValue = Number(query.status_eq)
             if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'instructors' AND value = ?)`
+                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'persons' AND value = ?)`
                 params.push(statusValue)
             }
         }
         if (query.status_gt !== undefined) {
             const statusValue = Number(query.status_gt)
             if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'instructors' AND value > ?)`
+                sql += ` AND status_id IN (SELECT id FROM status WHERE "table" = 'persons' AND value > ?)`
                 params.push(statusValue)
             }
         }

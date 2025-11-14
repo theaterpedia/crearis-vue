@@ -2,23 +2,18 @@
     <Hero height-tmp="prominent"
         img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
         img-tmp-align-x="cover" img-tmp-align-y="cover"
-        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
+        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.6))`" content-width="short"
         content-align-y="center">
-        <Banner transparent>
-            <Prose>
-                <h1><strong>Theater Community Platform</strong></h1>
-                <p>Connecting artists, projects, and audiences in the world of theater.</p>
-                <div class="cta-group">
-                    <Button size="medium" variant="primary" @click="handleRegister">
-                        Register for Conference
-                    </Button>
-                    <!-- Trigger 1: Secondary CTA for Demo -->
-                    <button class="cta-secondary cta-demo" @click="handleDemoClick">
-                        Demo erkunden
-                    </button>
-                </div>
-            </Prose>
-        </Banner>
+        <Logo />
+        <div class="cta-group">
+            <Button size="medium" variant="primary" @click="handleRegister">
+                hier anmelden
+            </Button>
+            <!-- Trigger 1: Secondary CTA for Demo -->
+            <button class="cta-secondary cta-demo" @click="handleDemoClick">
+                ausprobieren
+            </button>
+        </div>
     </Hero>
 </template>
 
@@ -28,6 +23,7 @@ import Hero from '@/components/Hero.vue'
 import Banner from '@/components/Banner.vue'
 import Prose from '@/components/Prose.vue'
 import Button from '@/components/Button.vue'
+import Logo from '@/components/Logo.vue'
 
 const props = defineProps<{
     user?: any

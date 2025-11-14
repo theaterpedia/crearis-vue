@@ -1,22 +1,12 @@
 <template>
-    <Hero height-tmp="prominent"
-        img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
-        img-tmp-align-x="cover" img-tmp-align-y="cover"
-        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
-        content-align-y="center">
-        <Banner transparent>
-            <Prose>
-                <h1><strong>Our Blog</strong></h1>
-                <p>Stories, insights, and updates from the theater community.</p>
-                <div class="cta-group">
-                    <Button size="medium" variant="primary" @click="handleRegister">
-                        Subscribe to Updates
-                    </Button>
-                    <a v-if="!user" href="/login" class="cta-secondary">Sign In</a>
-                    <a v-else href="/tasks" class="cta-secondary">Go to Dashboard</a>
-                </div>
-            </Prose>
-        </Banner>
+    <Hero height-tmp="medium"
+        img-tmp="https://res.cloudinary.com/little-papillon/image/upload/ar_16:7,c_crop/c_scale,w_1200/v1676756784/164_dasei2022_team_I8A7740_uzzmne.jpg"
+        img-tmp-align-x="cover" img-tmp-align-y="left"
+        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0), rgba(255,255,255,0.6))`" content-width="short"
+        content-align-y="bottom">
+        <Prose>
+            <h1><strong>Dev Blog</strong></h1>
+        </Prose>
     </Hero>
 </template>
 

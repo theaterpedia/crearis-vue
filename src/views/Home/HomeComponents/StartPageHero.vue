@@ -1,9 +1,7 @@
 <template>
-    <Hero height-tmp="medium"
-        img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
-        img-tmp-align-x="cover" img-tmp-align-y="cover"
-        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))`" content-width="short"
-        content-align-y="center">
+    <Hero height-tmp="prominent"
+        img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_north_east,h_1000,w_1800,x_0,y_230/c_scale,w_1200/v1665139609/lichtpunkte_ea_rh.jpg"
+        img-tmp-align-x="cover" img-tmp-align-y="top" content-width="short" content-align-y="bottom">
         <Banner transparent>
             <slot />
         </Banner>

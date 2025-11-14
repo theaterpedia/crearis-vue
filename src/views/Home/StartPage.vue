@@ -33,10 +33,10 @@
             <!-- Hero Section -->
             <template #header>
                 <StartPageHero :user="user">
+                    <!--
                     <div class="registration-header">
                         <h2>Konferenz-Anmeldung 2025</h2>
-                        <p>Bitte gib deine E-Mail-Adresse ein, um fortzufahren</p>
-                    </div>
+                    </div> -->
 
                     <!-- Double Entry Banner -->
                     <div v-if="hasExistingInteraction" class="double-entry-banner">
@@ -56,7 +56,7 @@
                     <!-- Email Input Row -->
                     <div class="email-input-row">
                         <div class="form-group">
-                            <label for="email" class="form-label">E-Mail-Adresse</label>
+                            <label for="email" class="form-label">ANMELDUNG (Freitag/Vollprogramm)</label>
                             <div class="email-input-wrapper">
                                 <input id="email" v-model="emailInput" type="email" class="form-input"
                                     placeholder="deine.email@example.com" @input="handleEmailInput"
@@ -72,7 +72,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" v-if="usermode && usermode !== 'no'">
                             <label class="form-label">Status</label>
                             <div class="status-display">
                                 <span v-if="!usermode || usermode === 'no'" class="status-badge status-none">
@@ -125,30 +125,7 @@
             <!-- Main Content -->
             <Section background="default">
                 <Container>
-                    <!-- Test Image Dropdowns with Width/Columns Variations -->
-                    <div style="margin-bottom: 2rem;">
-                        <h3>Compact (width=small, styleCompact=true)</h3>
-                        <DropdownList entity="images" size="medium" width="small" columns="off"
-                            title="Small Width - Compact Style" :show-preview="true" :show-toolbar="false" />
-                    </div>
 
-                    <div style="margin-bottom: 2rem;">
-                        <h3>Non-Compact (width=large, styleCompact=false)</h3>
-                        <DropdownList entity="images" size="medium" width="large" columns="off"
-                            title="Large Width - Non-Compact Style" :show-preview="true" :show-toolbar="false" />
-                    </div>
-
-                    <div style="margin-bottom: 2rem;">
-                        <h3>Multi-Column (width=inherit, columns=on)</h3>
-                        <DropdownList entity="images" size="medium" width="inherit" columns="on"
-                            title="Multi-Column Layout" :show-preview="true" :show-toolbar="false" />
-                    </div>
-
-                    <div style="margin-bottom: 2rem;">
-                        <h3>Small Size (ItemRow - should ignore width/columns)</h3>
-                        <DropdownList entity="images" size="small" title="Small Images (img_thumb)" :show-preview="true"
-                            :show-toolbar="false" />
-                    </div>
 
                     <Columns gap="medium" align="top">
 
@@ -215,13 +192,23 @@
                 </Container>
             </Section>
 
-            <!-- Upcoming Events Section -->
+            <!-- Aside Section -->
+            <template #aside>
+                <!-- Demo Team: List SimplePreview Modal -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Team: Events small Preview Modal (Click to View
+                        Details)</h3>
+                    <pListSimple entity="events" size="small" interaction="previewmodal" project="start" />
+                </div>
+            </template>
+
+            <!-- Upcoming Events Section
             <Section background="muted">
                 <Container>
                     <pList type="events" :project-domaincode="project.domaincode" item-type="card" size="medium"
                         header="Upcoming Events" is-footer />
                 </Container>
-            </Section>
+            </Section>   -->
 
             <!-- Footer -->
             <template #footer>
@@ -241,6 +228,7 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import StartPageHero from './HomeComponents/StartPageHero.vue'
 import pList from '@/components/page/pList.vue'
+import pListSimple from '@/components/clist/pListSimple.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
@@ -788,7 +776,6 @@ onMounted(async () => {
 
 .registration-header {
     margin-bottom: 2rem;
-    text-align: center;
 }
 
 .registration-header h2 {

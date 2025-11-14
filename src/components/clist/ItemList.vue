@@ -321,10 +321,25 @@ const itemComponent = computed(() => {
  * Fetch entity data from API
  */
 const fetchEntityData = async () => {
-    if (!dataModeActive.value) return
+    if (!dataModeActive.value) {
+        console.log('[ItemList] fetchEntityData skipped - dataModeActive=false', {
+            dataMode: props.dataMode,
+            entity: props.entity,
+            images: props.images
+        })
+        return
+    }
 
     loading.value = true
     error.value = null
+
+    console.log('[ItemList] fetchEntityData START', {
+        entity: props.entity,
+        project: props.project,
+        statusLt: props.statusLt,
+        statusEq: props.statusEq,
+        statusGt: props.statusGt
+    })
 
     try {
         let url = ''
@@ -371,6 +386,8 @@ const fetchEntityData = async () => {
         }
         url = urlObj.pathname + urlObj.search
 
+        console.log('[ItemList] Fetching URL:', url)
+
         const response = await fetch(url)
         if (!response.ok) {
             throw new Error(`Failed to fetch ${props.entity}: ${response.statusText}`)
@@ -384,6 +401,17 @@ const fetchEntityData = async () => {
             }
             try {
                 entityData.value = JSON.parse(text)
+                console.log('[ItemList] Fetch SUCCESS - received', entityData.value.length, 'items')
+
+                // Sort events by date_begin (ascending - earliest first)
+                if (props.entity === 'events' && Array.isArray(entityData.value)) {
+                    entityData.value.sort((a, b) => {
+                        if (!a.date_begin) return 1  // null dates to end
+                        if (!b.date_begin) return -1
+                        return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
+                    })
+                    console.log('[ItemList] Events sorted by date_begin')
+                }
             } catch (parseError) {
                 console.error('Failed to parse JSON:', text.substring(0, 100))
                 throw new Error(`Invalid JSON response from ${props.entity} API`)
@@ -391,10 +419,21 @@ const fetchEntityData = async () => {
         } else {
             // Fallback for test mocks that return data directly
             entityData.value = await response.json()
+            console.log('[ItemList] Fetch SUCCESS (mock) - received', entityData.value.length, 'items')
+
+            // Sort events by date_begin (ascending - earliest first)
+            if (props.entity === 'events' && Array.isArray(entityData.value)) {
+                entityData.value.sort((a, b) => {
+                    if (!a.date_begin) return 1  // null dates to end
+                    if (!b.date_begin) return -1
+                    return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
+                })
+                console.log('[ItemList] Events sorted by date_begin')
+            }
         }
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Unknown error'
-        console.error('Error fetching entity data:', err)
+        console.error('[ItemList] Error fetching entity data:', err)
     } finally {
         loading.value = false
     }

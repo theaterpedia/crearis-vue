@@ -53,7 +53,8 @@
             <div v-else class="image-box image-placeholder"></div>
         </div>
         <div class="row-col-content">
-            <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element" v-bind="$attrs" />
+            <HeadingParser :content="computedHeading" :as="headingLevel" :compact="true" scope="element"
+                v-bind="$attrs" />
         </div>
         <div v-if="$slots.default" class="row-col-slot">
             <slot></slot>
@@ -78,6 +79,8 @@ interface Props {
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     headingLevel?: 'h3' | 'h4' | 'h5' // Configurable heading level
+    headingPrefix?: string // Optional prefix for heading (e.g., event date)
+    dateBegin?: string // ISO date string for events
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
 }
@@ -149,6 +152,59 @@ const shouldUseAvatar = computed(() => {
 
     // Both conditions must be true
     return isAvatarEntity && isAvatarShape
+})
+
+/**
+ * Format date for heading prefix (German format: "FR 14.11 ")
+ */
+function formatDatePrefix(dateString: string): string {
+    const date = new Date(dateString)
+    const dayNames = ['SO', 'MO', 'DI', 'MI', 'DO', 'FR', 'SA']
+    const dayName = dayNames[date.getDay()]
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    return `${dayName} ${day}.${month} `
+}
+
+/**
+ * Computed heading with optional prefix injected at the correct position
+ */
+const computedHeading = computed(() => {
+    let prefix = props.headingPrefix
+
+    // If no explicit prefix but dateBegin is provided, format the date
+    if (!prefix && props.dateBegin) {
+        prefix = formatDatePrefix(props.dateBegin)
+    }
+
+    if (!prefix) return props.heading
+
+    const heading = props.heading
+
+    // Check if heading has ** markers (indicates structured format)
+    const firstStarPos = heading.indexOf('**')
+    const secondStarPos = heading.indexOf('**', firstStarPos + 2)
+
+    if (firstStarPos === -1) {
+        // No ** markers: just prepend
+        return prefix + heading
+    }
+
+    if (secondStarPos === -1) {
+        // Only one ** marker: prepend before it
+        return prefix + heading
+    }
+
+    // Two ** markers found
+    if (firstStarPos === 0) {
+        // Format: **Headline** subline
+        // Insert after second **
+        return heading.slice(0, secondStarPos + 2) + prefix + heading.slice(secondStarPos + 2)
+    } else {
+        // Format: overline **Headline**
+        // Insert at beginning
+        return prefix + heading
+    }
 })
 </script>
 

@@ -2,8 +2,9 @@
     <div class="item-card" :class="[
         sizeClass,
         {
-            'has-background': hasImage,
-            'is-selected': isSelected
+            'has-background': hasImage && isFullImage,
+            'is-selected': isSelected,
+            'layout-bottomimage': isBottomImage
         },
         showMarker ? `marker-${markerColor}` : ''
     ]">
@@ -36,16 +37,19 @@
             </svg>
         </div>
 
-        <!-- Background Image with data mode -->
-        <!-- NOTE: ItemCard NEVER uses avatar style - wide/vertical shapes are incompatible with circular borders -->
-        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" :avatar="false"
-            class="card-background-image" />
+        <!-- Full Background Image (fullimage/default anatomy) -->
+        <template v-if="isFullImage">
+            <!-- Background Image with data mode -->
+            <!-- NOTE: ItemCard NEVER uses avatar style - wide/vertical shapes are incompatible with circular borders -->
+            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" :avatar="false"
+                class="card-background-image" />
 
-        <!-- Legacy Background Image -->
-        <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
+            <!-- Legacy Background Image -->
+            <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
 
-        <!-- Background Fade Overlay -->
-        <div v-if="hasImage" class="card-background-fade"></div>
+            <!-- Background Fade Overlay -->
+            <div v-if="hasImage" class="card-background-fade"></div>
+        </template>
 
         <!-- Card Content -->
         <div class="card-content">
@@ -58,6 +62,14 @@
             <div v-if="$slots.default" class="card-meta">
                 <slot></slot>
             </div>
+        </div>
+
+        <!-- Bottom Image (bottomimage anatomy) -->
+        <div v-if="isBottomImage && hasImage" class="card-image-bottom">
+            <!-- Image with data mode -->
+            <ImgShape v-if="dataMode && data" :data="data" :shape="'wide'" :avatar="false" class="bottom-image" />
+            <!-- Legacy Image -->
+            <img v-else-if="cimg" :src="cimg" :alt="heading" class="bottom-image" loading="lazy" />
         </div>
     </div>
 </template>
@@ -75,6 +87,7 @@ interface Props {
     size?: 'small' | 'medium' | 'large'
     data?: ImgShapeData
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     deprecated?: boolean // Flag for deprecated cimg usage
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
@@ -82,12 +95,15 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium',
+    anatomy: false,
     options: () => ({}),
     models: () => ({})
 })
 
 const dataMode = computed(() => props.data !== undefined)
 const hasImage = computed(() => dataMode.value || props.cimg !== undefined)
+const isFullImage = computed(() => props.anatomy === 'fullimage' || props.anatomy === false)
+const isBottomImage = computed(() => props.anatomy === 'bottomimage')
 
 const sizeClass = computed(() => `size-${props.size}`)
 
@@ -347,6 +363,30 @@ const entityIcon = computed(() => {
     gap: 1rem;
 }
 
+/* Bottom Image Layout */
+.item-card.layout-bottomimage {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card.layout-bottomimage .card-content {
+    flex-shrink: 0;
+}
+
+.card-image-bottom {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.bottom-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
 /* Header */
 .card-header {
     background: oklch(from var(--color-card-bg) l c h / 0.6);
@@ -358,6 +398,12 @@ const entityIcon = computed(() => {
 .card-header :deep(h4),
 .card-header :deep(h5) {
     margin: 0;
+    color: var(--color-card-contrast);
+}
+
+.card-header :deep(h3 strong),
+.card-header :deep(h4 strong),
+.card-header :deep(h5 strong) {
     color: var(--color-card-contrast);
 }
 

@@ -29,7 +29,7 @@ export const pageSettings = {
   showAside: true,
   showBottom: true,
   alertBanner: {
-    message: 'Wichtiger Hinweis: Anmeldeschluss für die Theaterpedia-Konferenz ist der 7. November 2025!',
+    message: 'ACHTUNG: Diese Website befindet sich im Aufbau. Einige Inhalte sind noch nicht verfügbar.',
     alertType: 'warning' as const,
   },
 }// ============================================================================

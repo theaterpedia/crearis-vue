@@ -35,13 +35,24 @@
                 <BlogPageHero :user="user" />
             </template>
 
-            <!-- Blog Posts Section -->
+            <!-- Blog Posts Section 
             <Section background="accent">
                 <Container>
                     <pGallery type="posts" :project-domaincode="project.domaincode" item-type="card" size="medium"
                         variant="wide" header="Blog Posts" is-footer />
                 </Container>
-            </Section>
+            </Section> -->
+
+            <!-- Aside Section -->
+            <template #aside>
+                <!-- Demo Team: List SimplePreview Modal -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Posts small Preview Modal (Click to View
+                        Details)</h3>
+                    <pListSimple entity="posts" size="medium" interaction="previewmodal" :dataMode="true"
+                        project="dev" />
+                </div>
+            </template>
 
             <!-- Social Media Section -->
             <SocialMediaSection size="small" :is-vertical="false" />
@@ -64,6 +75,7 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import BlogPageHero from './HomeComponents/BlogPageHero.vue'
 import pGallery from '@/components/page/pGallery.vue'
+import pListSimple from '@/components/clist/pListSimple.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'

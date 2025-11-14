@@ -36,7 +36,7 @@
                 <HeroSection :user="user" @trigger-demo="handleHeroDemoClick" />
             </template>
 
-            <!-- Trigger 2: Demo Events Card -->
+            <!-- Trigger 2: Demo Events Card 
             <Section background="default">
                 <Container>
                     <div class="demo-card" ref="demoCardElement" @click="handleDemoCardClick">
@@ -53,13 +53,14 @@
                 </Container>
             </Section>
 
-            <!-- Upcoming Events Section -->
+            !-- Upcoming Events Section --
             <Section background="muted">
                 <Container>
                     <pList type="events" :project-domaincode="project.domaincode" item-type="card" size="medium"
                         header="Upcoming Events" is-footer />
                 </Container>
             </Section>
+            -->
 
             <!-- Page Content -->
             <PageContent page-type="landing" :project-domain-code="project.domaincode"
@@ -68,16 +69,17 @@
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
 
-            <!-- Blog Posts Section -->
+            <!-- Blog Posts Section  -->
             <Section background="accent">
                 <Container>
-                    <pGallery type="posts" :project-domaincode="project.domaincode" item-type="card" size="medium"
-                        variant="wide" header="Latest from Our Blog" is-footer />
+                    <pGallerySimple entity="posts" project="dev" item-type="card" size="medium" variant="wide"
+                        anatomy="bottomimage" header="Latest from Our Blog" is-footer />
                 </Container>
             </Section>
 
-            <!-- Community Members Section -->
+            <!-- Community Members Section
             <CommunityMembersSection :users="users" />
+             -->
 
             <!-- Footer -->
             <template #footer>
@@ -105,6 +107,7 @@ import PageContent from '@/components/PageContent.vue'
 import HeroSection from './HomeComponents/HeroSection.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
+import pGallerySimple from '@/components/clist/pGallerySimple.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
@@ -116,6 +119,7 @@ import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOp
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()

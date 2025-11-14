@@ -45,7 +45,7 @@ interface Props {
     filterXmlPrefix?: string
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
-    
+
     // Status value filtering (0-6)
     statusLt?: number  // Less than
     statusEq?: number  // Equal

@@ -9,8 +9,8 @@
     <div class="p-gallery-simple">
         <ItemGallery :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
             :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :item-type="itemType"
-            :size="size" :variant="variant" :interaction="interactionMode" :data-mode="true" :multi-select="false"
-            @item-click="handleItemClick" />
+            :size="size" :variant="variant" :anatomy="anatomy" :interaction="interactionMode" :data-mode="true"
+            :multi-select="false" @item-click="handleItemClick" />
 
         <!-- Route Navigation Modal (if using route mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
@@ -56,13 +56,30 @@ interface Props {
     routeButtonText?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    itemType: 'card',
-    size: 'medium',
-    variant: 'square',
-    onActivate: 'modal',
-    routeButtonText: 'View Details'
-})
+const props = defineProps<{
+    entity: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
+    project?: string
+
+    // Filter options (passed as props, no UI controls)
+    filterIds?: number[]
+    filterXmlPrefix?: string
+    filterXmlPrefixes?: string[]
+    filterXmlPattern?: RegExp
+
+    // Display options
+    itemType?: 'card' | 'row'
+    size?: 'small' | 'medium' | 'large'
+    variant?: 'square' | 'wide' | 'thumb' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
+
+    // Interaction mode
+    onActivate?: 'modal' | 'route'
+    routePath?: string
+    routeButtonText?: string
+
+    header?: string
+    isFooter?: boolean
+}>()
 
 const router = useRouter()
 const selectedItem = ref<any>(null)
