@@ -20,10 +20,12 @@
  */
 
 import { ref, computed, watch } from 'vue'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('useTheme')
 import type { Router } from 'vue-router'
 
 // Singleton state - shared across all composable instances
-const debug = false
 const initialThemeId = ref<number | null>(null)
 const contextThemeId = ref<number | null>(null)
 const contextScope = ref<'local' | 'timer' | 'site' | null>(null)

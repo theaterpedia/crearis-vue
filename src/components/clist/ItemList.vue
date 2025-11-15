@@ -104,6 +104,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('ItemList')
 import ItemTile from './ItemTile.vue'
 import ItemRow from './ItemRow.vue'
 import ItemModalCard from './ItemModalCard.vue'
@@ -157,7 +160,6 @@ interface Props {
     selectedIds?: number | number[] // v-model for selected item IDs
 }
 
-const debug = false
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium',
     width: 'inherit',
@@ -325,7 +327,7 @@ const itemComponent = computed(() => {
  */
 const fetchEntityData = async () => {
     if (!dataModeActive.value) {
-        if (debug) console.log('[ItemList] fetchEntityData skipped - dataModeActive=false', {
+        if (debug.isEnabled()) debug.log(' fetchEntityData skipped - dataModeActive=false', {
             dataMode: props.dataMode,
             entity: props.entity,
             images: props.images
@@ -336,7 +338,7 @@ const fetchEntityData = async () => {
     loading.value = true
     error.value = null
 
-    if (debug) console.log('[ItemList] fetchEntityData START', {
+    if (debug.isEnabled()) debug.log(' fetchEntityData START', {
         entity: props.entity,
         project: props.project,
         statusLt: props.statusLt,
@@ -389,7 +391,7 @@ const fetchEntityData = async () => {
         }
         url = urlObj.pathname + urlObj.search
 
-        if (debug) console.log('[ItemList] Fetching URL:', url)
+        if (debug.isEnabled()) debug.log(' Fetching URL:', url)
 
         const response = await fetch(url)
         if (!response.ok) {
@@ -404,7 +406,7 @@ const fetchEntityData = async () => {
             }
             try {
                 entityData.value = JSON.parse(text)
-                if (debug) console.log('[ItemList] Fetch SUCCESS - received', entityData.value.length, 'items')
+                if (debug.isEnabled()) debug.log(' Fetch SUCCESS - received', entityData.value.length, 'items')
 
                 // Sort events by date_begin (ascending - earliest first)
                 if (props.entity === 'events' && Array.isArray(entityData.value)) {
@@ -413,7 +415,7 @@ const fetchEntityData = async () => {
                         if (!b.date_begin) return -1
                         return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
                     })
-                    if (debug) console.log('[ItemList] Events sorted by date_begin')
+                    if (debug.isEnabled()) debug.log(' Events sorted by date_begin')
                 }
             } catch (parseError) {
                 console.error('Failed to parse JSON:', text.substring(0, 100))
@@ -422,7 +424,7 @@ const fetchEntityData = async () => {
         } else {
             // Fallback for test mocks that return data directly
             entityData.value = await response.json()
-            if (debug) console.log('[ItemList] Fetch SUCCESS (mock) - received', entityData.value.length, 'items')
+            if (debug.isEnabled()) debug.log(' Fetch SUCCESS (mock) - received', entityData.value.length, 'items')
 
             // Sort events by date_begin (ascending - earliest first)
             if (props.entity === 'events' && Array.isArray(entityData.value)) {
@@ -431,7 +433,7 @@ const fetchEntityData = async () => {
                     if (!b.date_begin) return -1
                     return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
                 })
-                if (debug) console.log('[ItemList] Events sorted by date_begin')
+                if (debug.isEnabled()) debug.log(' Events sorted by date_begin')
             }
         }
     } catch (err) {
@@ -495,7 +497,7 @@ const entities = computed(() => {
             return true
         })
 
-        if (debug) console.log('[ItemList] Filter results:', {
+        if (debug.isEnabled()) debug.log(' Filter results:', {
             total: entityData.value.length,
             filterIds: props.filterIds?.length,
             filterXmlPrefix: props.filterXmlPrefix,

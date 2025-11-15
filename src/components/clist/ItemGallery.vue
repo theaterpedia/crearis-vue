@@ -121,6 +121,7 @@ interface EntityItem {
 }
 
 interface Props {
+    items?: GalleryItem[]
     entity?: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
     project?: string
     images?: number[]

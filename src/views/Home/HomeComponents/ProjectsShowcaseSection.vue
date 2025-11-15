@@ -111,6 +111,9 @@ import Column from '@/components/Column.vue'
 import CornerBanner from '@/components/CornerBanner.vue'
 import ItemModalCard from '@/components/clist/ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('ProjectsShowcaseSection')
 
 const { getStatusIdByName } = useStatus()
 const projects = ref<any[]>([])
@@ -162,7 +165,7 @@ function closeRoadworks() {
 
 // Open modal for draft projects (status 67)
 async function openProjectModal(project: any) {
-    console.log('Opening modal for project:', project)
+    debug.log('Opening modal for project:', project)
     selectedProject.value = project
     showModal.value = true
 
@@ -203,11 +206,11 @@ async function fetchOwnerInfo(ownerId: number) {
 // Parse image data from img_id field (similar to pListSimple)
 function parseProjectImageData(project: any): ImgShapeData | undefined {
     if (!project) {
-        console.log('parseProjectImageData: No project')
+        debug.log('parseProjectImageData: No project')
         return undefined
     }
 
-    console.log('parseProjectImageData called with:', {
+    debug.log('parseProjectImageData called with:', {
         project,
         img_square: project.img_square,
         img_wide: project.img_wide,
@@ -217,13 +220,13 @@ function parseProjectImageData(project: any): ImgShapeData | undefined {
     // Try to get image data from img_square or img_wide fields
     const imgField = project.img_square || project.img_wide
     if (!imgField) {
-        console.log('parseProjectImageData: No img field found')
+        debug.log('parseProjectImageData: No img field found')
         return undefined
     }
 
     try {
         const parsed = typeof imgField === 'string' ? JSON.parse(imgField) : imgField
-        console.log('Parsed image data:', parsed)
+        debug.log('Parsed image data:', parsed)
 
         const result = {
             type: 'url' as const,
@@ -239,10 +242,10 @@ function parseProjectImageData(project: any): ImgShapeData | undefined {
             alt_text: parsed.alt_text
         }
 
-        console.log('Returning image data:', result)
+        debug.log('Returning image data:', result)
         return result
     } catch (e) {
-        console.error('Failed to parse image data:', e)
+        debug.error('Failed to parse image data:', e)
         return undefined
     }
 }

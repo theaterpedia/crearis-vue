@@ -37,6 +37,9 @@
 import { computed, watch, ref } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useBlurHash } from '@/composables/useBlurHash'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('ImgShape')
 
 export interface ImgShapeData {
     type?: 'url' | 'params' | 'json'
@@ -77,7 +80,6 @@ const emit = defineEmits<{
 
 // Error state
 const hasError = ref(false)
-const debug = false
 const errorMessage = ref('')
 
 // Preview state (internal to ImgShape - single source of truth)
@@ -94,7 +96,7 @@ const previewState = ref({
 const { cardWidth, cardHeight, tileWidth, tileHeight, avatarWidth } = useTheme()
 
 // Log theme dimensions
-if (debug) console.log('[ImgShape] Theme dimensions from composable:', {
+if (debug.isEnabled()) debug.log('Theme dimensions from composable:', {
     cardWidth: cardWidth.value,
     cardHeight: cardHeight.value,
     tileWidth: tileWidth.value,
@@ -173,7 +175,7 @@ const dimensions = computed<[number, number] | null>(() => {
 })
 
 // Log computed dimensions
-if (debug) console.log('[ImgShape] Computed dimensions:', {
+if (debug.isEnabled()) debug.log('Computed dimensions:', {
     shape: props.shape,
     dimensions: dimensions.value,
     dimensionsInRem: dimensions.value ? [dimensions.value[0] / 16, dimensions.value[1] / 16] : null
@@ -373,22 +375,22 @@ const defaultPlaceholderUrl = 'data:image/svg+xml;base64,' + btoa(`
 const showPlaceholder = computed(() => {
     // Debug: Log blur hash presence
     if (props.data.blur && import.meta.env.DEV) {
-        if (debug) console.log(`[ImgShape] blur hash present for ${props.shape}:`, props.data.blur.substring(0, 20) + '...')
-        if (debug) console.log(`[ImgShape] showPlaceholder check: imageLoaded=${imageLoaded.value}, forceBlur=${props.forceBlur}, isDecoded=${isDecoded.value}`)
+        if (debug.isEnabled()) debug.dev(`blur hash present for ${props.shape}:`, props.data.blur.substring(0, 20) + '...')
+        if (debug.isEnabled()) debug.dev(`showPlaceholder check: imageLoaded=${imageLoaded.value}, forceBlur=${props.forceBlur}, isDecoded=${isDecoded.value}`)
     }
     // If forceBlur is true, always show placeholder (if blur exists)
     if (props.forceBlur && props.data.blur) return true
     // Otherwise, show placeholder only while image is loading
     const result = !imageLoaded.value && !!props.data.blur
     if (result && import.meta.env.DEV) {
-        if (debug) console.log(`[ImgShape] ✅ Showing placeholder for ${props.shape}`)
+        if (debug.isEnabled()) debug.dev(`✅ Showing placeholder for ${props.shape}`)
     }
     return result
 })
 
 // Reset imageLoaded when displayUrl changes (not just props.data.url)
 watch(displayUrl, (newUrl: string) => {
-    if (debug) console.log(`[ImgShape] displayUrl changed for ${props.shape}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 100))
+    if (debug.isEnabled()) debug.log(`displayUrl changed for ${props.shape}, resetting imageLoaded. New URL:`, newUrl?.substring(0, 100))
     imageLoaded.value = false
 }, { immediate: true })
 
@@ -399,7 +401,7 @@ const { canvasRef, isDecoded } = useBlurHash({
 })
 
 const onImageLoad = (event: Event) => {
-    if (debug) console.log(`[ImgShape] ✅ Image loaded successfully for ${props.shape}`, {
+    if (debug.isEnabled()) debug.log(`✅ Image loaded successfully for ${props.shape}`, {
         url: (event.target as HTMLImageElement)?.src?.substring(0, 100),
         naturalWidth: (event.target as HTMLImageElement)?.naturalWidth,
         naturalHeight: (event.target as HTMLImageElement)?.naturalHeight
@@ -408,7 +410,7 @@ const onImageLoad = (event: Event) => {
 }
 
 const onImageError = (event: Event) => {
-    console.error(`[ImgShape] ❌ Image failed to load for ${props.shape}`, {
+    debug.error(`❌ Image failed to load for ${props.shape}`, {
         url: (event.target as HTMLImageElement)?.src?.substring(0, 100)
     })
     // Set imageLoaded to true anyway so we don't stay stuck on blur

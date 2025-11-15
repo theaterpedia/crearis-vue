@@ -584,7 +584,6 @@ import DropdownList from '@/components/clist/DropdownList.vue'
 import DropdownGallery from '@/components/clist/DropdownGallery.vue'
 import ModalSelector from '@/components/clist/ModalSelector.vue'
 import { useTheme } from '@/composables/useTheme'
-import { i } from 'node_modules/vite/dist/node/types.d-aGj9QkWt'
 
 const router = useRouter()
 const route = useRoute()

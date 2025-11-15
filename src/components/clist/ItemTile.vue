@@ -81,6 +81,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import HeadingParser from '../HeadingParser.vue'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('ItemTile')
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 import CornerBanner from '@/components/CornerBanner.vue'
@@ -106,7 +109,6 @@ const props = withDefaults(defineProps<Props>(), {
     models: () => ({})
 })
 
-const debug = false
 const dataMode = computed(() => props.data !== undefined)
 
 // Computed helpers for options
@@ -161,7 +163,7 @@ const shouldUseAvatar = computed(() => {
 })
 
 // Log props for debugging
-if (debug) console.log('[ItemTile] Props:', {
+if (debug.isEnabled()) debug.log('Props:', {
     heading: props.heading,
     size: props.size,
     shape: props.shape,
@@ -172,7 +174,7 @@ if (debug) console.log('[ItemTile] Props:', {
     headingLevel: props.headingLevel
 })
 if (props.data) {
-    if (debug) console.log('[ItemTile] Image data:', props.data)
+    if (debug.isEnabled()) debug.log('Image data:', props.data)
 }
 
 </script>

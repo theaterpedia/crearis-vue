@@ -6,6 +6,9 @@
  */
 
 import { ref, computed } from 'vue'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('useStatus')
 
 /**
  * Status information structure
@@ -30,8 +33,6 @@ interface StatusEntry {
     desc_i18n: Record<string, string> | null
 }
 
-const debug = false
-
 // Global cache for status data
 const statusCache = ref<StatusEntry[]>([])
 const cacheInitialized = ref(false)
@@ -54,7 +55,7 @@ async function initializeCache() {
         const data = await response.json()
         statusCache.value = data.statuses || []
         cacheInitialized.value = true
-        if (debug) console.log(`✅ Status cache initialized: ${statusCache.value.length} entries`)
+        if (debug.isEnabled()) debug.log(`✅ Status cache initialized: ${statusCache.value.length} entries`)
     } catch (error) {
         console.error('❌ Failed to initialize status cache:', error)
     } finally {
@@ -158,7 +159,7 @@ export function useStatus() {
         const otherTables = ['events', 'posts', 'users', 'projects']
         const matchingStatuses = statusCache.value
             .filter((s: StatusEntry) => s.value === value && otherTables.includes(s.table))
-            .map(s => ({
+            .map((s: StatusEntry) => ({
                 table: s.table,
                 text: s.name_i18n?.[lang] || s.name_i18n?.['de'] || s.name_i18n?.['en'] || s.name
             }))

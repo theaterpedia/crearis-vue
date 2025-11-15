@@ -1,4 +1,7 @@
 import { ref, computed, readonly } from 'vue'
+import { createDebugger } from '@/utils/debug'
+
+const debug = createDebugger('useI18n')
 
 /**
  * i18n Composable for Multi-language Support
@@ -29,7 +32,6 @@ interface I18nCache {
     [key: string]: I18nCode
 }
 
-const debug = false
 // Global reactive state
 const currentLanguage = ref<Language>('de')
 const isPreloaded = ref(false)
@@ -124,7 +126,7 @@ async function preload(): Promise<void> {
     isLoading.value = true
 
     try {
-        if (debug) console.log('🌍 Preloading i18n translations (button, nav)...')
+        if (debug.isEnabled()) debug.log('🌍 Preloading i18n translations (button, nav)...')
 
         const entries = await fetchI18nCodes({ preload: 'true' })
 
@@ -132,7 +134,7 @@ async function preload(): Promise<void> {
 
         isPreloaded.value = true
 
-        if (debug) console.log(`✅ Preloaded ${entries.length} i18n entries`)
+        if (debug.isEnabled()) debug.log(`✅ Preloaded ${entries.length} i18n entries`)
     } catch (error: any) {
         console.error('Failed to preload i18n translations:', error)
         errors.value.push(`Preload failed: ${error.message}`)
@@ -192,7 +194,7 @@ async function getOrCreate(
         cache.value[key] = entry
 
         if (data.created) {
-            if (debug) console.log(`📝 Created new i18n code: ${name} (${type})`)
+            if (debug.isEnabled()) debug.log(`📝 Created new i18n code: ${name} (${type})`)
         }
 
         return entry
@@ -263,7 +265,7 @@ async function desc(name: string, variation: string = 'false'): Promise<string> 
  */
 function setLanguage(lang: Language): void {
     if (lang !== currentLanguage.value) {
-        if (debug) console.log(`🌍 Language changed: ${currentLanguage.value} → ${lang}`)
+        if (debug.isEnabled()) debug.log(`🌍 Language changed: ${currentLanguage.value} → ${lang}`)
         currentLanguage.value = lang
 
         // Persist to localStorage
@@ -300,7 +302,7 @@ function initializeLanguage(): void {
 function clearCache(): void {
     cache.value = {}
     isPreloaded.value = false
-    if (debug) console.log('🗑️ i18n cache cleared')
+    if (debug.isEnabled()) debug.log('🗑️ i18n cache cleared')
 }
 
 /**
