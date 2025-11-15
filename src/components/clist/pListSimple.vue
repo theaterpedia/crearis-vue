@@ -10,13 +10,14 @@
         <ItemList :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
             :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt"
             :status-eq="statusEq" :status-gt="statusGt" :size="size" :width="width" :columns="columns"
-            :heading-level="headingLevel" :variant="variant" :interaction="interactionMode" :data-mode="true"
-            :multi-select="false" @item-click="handleItemClick" />
+            :heading-level="headingLevel" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
+            :data-mode="true" :multi-select="false" @item-click="handleItemClick" />
 
         <!-- Route Navigation Modal (if using route mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
             :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
+            :anatomy="modalOptions?.anatomy ?? 'heroimage'"
             :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_id: selectedItem?.status_id, table: entity }"
             @close="closeRouteModal">
             <template #footer>
@@ -57,11 +58,17 @@ interface Props {
     columns?: 'off' | 'on'
     headingLevel?: 'h3' | 'h4'
     variant?: 'default' | 'square' | 'wide' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
 
     // Interaction mode
     onActivate?: 'modal' | 'route'
     routePath?: string // e.g., '/events/:id' where :id will be replaced
     routeButtonText?: string
+
+    // Modal display options
+    modalOptions?: {
+        anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
+    }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -70,8 +77,10 @@ const props = withDefaults(defineProps<Props>(), {
     columns: 'off',
     headingLevel: 'h3',
     variant: 'default',
+    anatomy: 'bottomimage',
     onActivate: 'modal',
-    routeButtonText: 'View Details'
+    routeButtonText: 'View Details',
+    modalOptions: () => ({ anatomy: 'heroimage' })
 })
 
 const router = useRouter()

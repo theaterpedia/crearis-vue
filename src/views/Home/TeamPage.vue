@@ -50,8 +50,7 @@
                 <div style="margin-top: 2rem;">
                     <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
                         Details)</h3>
-                    <pListSimple entity="instructors" :statusGt="1" size="small" interaction="previewmodal"
-                        :dataMode="false" />
+                    <pListSimple entity="instructors" :statusGt="1" size="small" onActivate="modal" />
                 </div>
             </template>
 

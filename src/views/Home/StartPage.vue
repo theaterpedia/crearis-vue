@@ -194,12 +194,9 @@
 
             <!-- Aside Section -->
             <template #aside>
-                <!-- Demo Team: List SimplePreview Modal -->
-                <div style="margin-top: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">Team: Events small Preview Modal (Click to View
-                        Details)</h3>
-                    <pListSimple entity="events" size="small" interaction="previewmodal" project="start" />
-                </div>
+                <!-- Upcoming Events -->
+                <pListSimple entity="events" project="start" size="small" width="inherit" columns="off"
+                    headingLevel="h4" variant="square" onActivate="modal" />
             </template>
 
             <!-- Upcoming Events Section

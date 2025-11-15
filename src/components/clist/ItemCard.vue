@@ -4,7 +4,8 @@
         {
             'has-background': hasImage && isFullImage,
             'is-selected': isSelected,
-            'layout-bottomimage': isBottomImage
+            'layout-bottomimage': isBottomImage,
+            'layout-heroimage': isHeroImage
         },
         showMarker ? `marker-${markerColor}` : ''
     ]">
@@ -52,7 +53,7 @@
         </template>
 
         <!-- Card Content -->
-        <div class="card-content">
+        <div v-if="!isHeroImage" class="card-content">
             <!-- Card Header -->
             <div class="card-header">
                 <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element" v-bind="$attrs" />
@@ -71,6 +72,26 @@
             <!-- Legacy Image -->
             <img v-else-if="cimg" :src="cimg" :alt="heading" class="bottom-image" loading="lazy" />
         </div>
+
+        <!-- Hero Image (heroimage anatomy) -->
+        <template v-if="isHeroImage && hasImage">
+            <div class="hero-image-container">
+                <!-- Hero Image -->
+                <ImgShape v-if="dataMode && data" :data="data" :shape="'wide'" :avatar="false" class="hero-image" />
+                <img v-else-if="cimg" :src="cimg" :alt="heading" class="hero-image" loading="lazy" />
+
+                <!-- Hero Heading Overlay Banner -->
+                <div class="hero-heading-banner">
+                    <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element"
+                        v-bind="$attrs" />
+                </div>
+            </div>
+
+            <!-- Card Meta (below hero) -->
+            <div v-if="$slots.default" class="hero-card-meta">
+                <slot></slot>
+            </div>
+        </template>
     </div>
 </template>
 
@@ -95,7 +116,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium',
-    anatomy: false,
+    anatomy: 'bottomimage',
     options: () => ({}),
     models: () => ({})
 })
@@ -104,6 +125,7 @@ const dataMode = computed(() => props.data !== undefined)
 const hasImage = computed(() => dataMode.value || props.cimg !== undefined)
 const isFullImage = computed(() => props.anatomy === 'fullimage' || props.anatomy === false)
 const isBottomImage = computed(() => props.anatomy === 'bottomimage')
+const isHeroImage = computed(() => props.anatomy === 'heroimage')
 
 const sizeClass = computed(() => `size-${props.size}`)
 
@@ -436,5 +458,78 @@ const entityIcon = computed(() => {
 
 .size-large .card-content {
     padding: 1.5rem;
+}
+
+/* Hero Image Layout - +100px to min-heights */
+.item-card.layout-heroimage {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card.layout-heroimage.size-small {
+    min-height: 295px;
+    /* 195px + 100px */
+}
+
+.item-card.layout-heroimage.size-medium {
+    min-height: 360px;
+    /* 260px + 100px */
+}
+
+.item-card.layout-heroimage.size-large {
+    min-height: 425px;
+    /* 325px + 100px */
+}
+
+.hero-image-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+}
+
+.hero-heading-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: oklch(from var(--color-card-bg) l c h / 0.9);
+    padding: 0.75rem 1rem;
+    z-index: 2;
+}
+
+.hero-heading-banner :deep(h3),
+.hero-heading-banner :deep(h4),
+.hero-heading-banner :deep(h5) {
+    margin: 0;
+    color: var(--color-card-contrast);
+}
+
+.hero-heading-banner :deep(h3 strong),
+.hero-heading-banner :deep(h4 strong),
+.hero-heading-banner :deep(h5 strong) {
+    color: var(--color-card-contrast);
+}
+
+.hero-card-meta {
+    position: relative;
+    z-index: 1;
+    padding: 1rem;
+    background: var(--color-card-bg);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.item-card.layout-heroimage.size-large .hero-card-meta {
+    padding: 1.25rem;
 }
 </style>

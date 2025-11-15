@@ -5,25 +5,34 @@
                 <div class="modal-container">
                     <button class="modal-close-btn" @click="close" aria-label="Close">×</button>
 
-                    <div class="item-card size-large">
+                    <div class="item-card size-large" :class="{
+                        'has-background': hasImage && isFullImage,
+                        'layout-bottomimage': isBottomImage,
+                        'layout-heroimage': isHeroImage
+                    }">
                         <!-- CornerBanner for demo entities -->
                         <CornerBanner size="card" :entity="entity" />
 
-                        <!-- Background Image with data mode -->
-                        <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'"
-                            class="card-background-image" />
+                        <!-- Full Background Image (fullimage/default anatomy) -->
+                        <template v-if="isFullImage">
+                            <!-- Background Image with data mode -->
+                            <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'wide'" :avatar="false"
+                                class="card-background-image" />
 
-                        <!-- Legacy Background Image -->
-                        <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image" loading="lazy" />
+                            <!-- Legacy Background Image -->
+                            <img v-else-if="cimg" :src="cimg" :alt="heading" class="card-background-image"
+                                loading="lazy" />
 
-                        <!-- Background Fade Overlay -->
-                        <div v-if="hasImage" class="card-background-fade"></div>
+                            <!-- Background Fade Overlay -->
+                            <div v-if="hasImage" class="card-background-fade"></div>
+                        </template>
 
                         <!-- Card Content -->
-                        <div class="card-content">
+                        <div v-if="!isHeroImage" class="card-content">
                             <!-- Card Header -->
                             <div class="card-header">
-                                <HeadingParser :content="heading" as="h3" :compact="true" v-bind="$attrs" />
+                                <HeadingParser :content="heading" as="h3" :compact="true" scope="element"
+                                    v-bind="$attrs" />
                             </div>
 
                             <!-- Card Meta (teaser content) -->
@@ -31,6 +40,36 @@
                                 <p class="teaser-text">{{ teaser }}</p>
                             </div>
                         </div>
+
+                        <!-- Bottom Image (bottomimage anatomy) -->
+                        <div v-if="isBottomImage && hasImage" class="card-image-bottom">
+                            <!-- Image with data mode -->
+                            <ImgShape v-if="dataMode && data" :data="data" :shape="'wide'" :avatar="false"
+                                class="bottom-image" />
+                            <!-- Legacy Image -->
+                            <img v-else-if="cimg" :src="cimg" :alt="heading" class="bottom-image" loading="lazy" />
+                        </div>
+
+                        <!-- Hero Image (heroimage anatomy) -->
+                        <template v-if="isHeroImage && hasImage">
+                            <div class="hero-image-container">
+                                <!-- Hero Image -->
+                                <ImgShape v-if="dataMode && data" :data="data" shape="wide" :avatar="false"
+                                    class="hero-image" />
+                                <img v-else-if="cimg" :src="cimg" :alt="heading" class="hero-image" loading="lazy" />
+
+                                <!-- Hero Heading Overlay Banner -->
+                                <div class="hero-heading-banner">
+                                    <HeadingParser :content="heading" as="h3" :compact="true" scope="element"
+                                        v-bind="$attrs" />
+                                </div>
+                            </div>
+
+                            <!-- Card Meta (below hero) -->
+                            <div v-if="teaser" class="hero-card-meta">
+                                <p class="teaser-text">{{ teaser }}</p>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -51,6 +90,7 @@ interface Props {
     cimg?: string
     data?: ImgShapeData
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     entity?: {
         xmlid?: string
         status_id?: number
@@ -60,7 +100,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    isOpen: false
+    isOpen: false,
+    anatomy: 'heroimage'
 })
 
 const emit = defineEmits<{
@@ -69,6 +110,9 @@ const emit = defineEmits<{
 
 const dataMode = computed(() => props.data !== undefined)
 const hasImage = computed(() => dataMode.value || props.cimg !== undefined)
+const isFullImage = computed(() => props.anatomy === 'fullimage' || props.anatomy === false)
+const isBottomImage = computed(() => props.anatomy === 'bottomimage')
+const isHeroImage = computed(() => props.anatomy === 'heroimage')
 
 function close() {
     emit('close')
@@ -157,10 +201,34 @@ function close() {
 .card-content {
     position: relative;
     z-index: 1;
-    padding: 1.5rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+/* Bottom Image Layout */
+.item-card.layout-bottomimage {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card.layout-bottomimage .card-content {
+    flex-shrink: 0;
+}
+
+.card-image-bottom {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.bottom-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 /* Header */
@@ -205,6 +273,59 @@ function close() {
 }
 
 .size-large .teaser-text {
+    padding: 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* Hero Image Layout - +100px to min-height */
+.item-card.layout-heroimage {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card.layout-heroimage.size-large {
+    min-height: 500px;
+    /* 400px + 100px */
+}
+
+.hero-image-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+}
+
+.hero-heading-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: oklch(from var(--color-card-bg) l c h / 0.9);
+    padding: 1.5rem;
+    z-index: 2;
+}
+
+.hero-heading-banner :deep(h3) {
+    margin: 0;
+    color: var(--color-card-contrast);
+}
+
+.hero-card-meta {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+}
+
+.hero-card-meta .teaser-text {
     padding: 1.5rem;
     font-size: 1.125rem;
 }

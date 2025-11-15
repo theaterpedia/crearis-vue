@@ -19,8 +19,8 @@
         <div v-else class="item-list" :class="itemContainerClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
-                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => handleItemClick(item, e)">
+                :anatomy="props.anatomy" :options="getItemOptions(item)" :models="getItemModels(item)"
+                v-bind="item.props || {}" @click="(e: MouseEvent) => handleItemClick(item, e)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -39,8 +39,8 @@
         <div v-else class="item-list" :class="itemContainerClass">
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
-                :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="() => openPreviewModal(item)">
+                :anatomy="props.anatomy" :options="getItemOptions(item)" :models="getItemModels(item)"
+                v-bind="item.props || {}" @click="() => openPreviewModal(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -147,6 +147,7 @@ interface Props {
     avatarShape?: 'round' | 'square' // Only for size="small" - forces avatar shape
     headingLevel?: 'h3' | 'h4' // Heading level for medium items
     variant?: 'default' | 'square' | 'wide' | 'vertical'
+    anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     interaction?: 'static' | 'popup' | 'zoom' | 'previewmodal'
     title?: string
     modelValue?: boolean
@@ -162,6 +163,7 @@ const props = withDefaults(defineProps<Props>(), {
     columns: 'off',
     headingLevel: 'h3',
     variant: 'default',
+    anatomy: 'bottomimage',
     interaction: 'static',
     dataMode: true, // Default to true per requirements
     multiSelect: false
@@ -548,7 +550,8 @@ const entities = computed(() => {
                     data: imageData,
                     shape: shape.value,
                     variant: computedVariant.value,
-                    deprecated: hasDeprecatedCimg // Flag for warning overlay
+                    deprecated: hasDeprecatedCimg, // Flag for warning overlay
+                    dateBegin: entity.date_begin // Pass date_begin for ItemRow headingPrefix
                 }
             }
         })

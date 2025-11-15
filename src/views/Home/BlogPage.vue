@@ -49,8 +49,7 @@
                 <div style="margin-top: 2rem;">
                     <h3 style="margin-bottom: 1rem;">Posts small Preview Modal (Click to View
                         Details)</h3>
-                    <pListSimple entity="posts" size="medium" interaction="previewmodal" :dataMode="true"
-                        project="dev" />
+                    <pListSimple entity="posts" size="medium" project="dev" onActivate="modal" />
                 </div>
             </template>
 

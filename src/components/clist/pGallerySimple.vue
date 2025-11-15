@@ -16,6 +16,7 @@
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
             :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
+            :anatomy="modalOptionsWithDefaults.anatomy"
             :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_id: selectedItem?.status_id, table: entity }"
             @close="closeRouteModal">
             <template #footer>
@@ -56,7 +57,7 @@ interface Props {
     routeButtonText?: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     entity: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
     project?: string
 
@@ -77,13 +78,25 @@ const props = defineProps<{
     routePath?: string
     routeButtonText?: string
 
+    // Modal display options
+    modalOptions?: {
+        anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
+    }
+
     header?: string
     isFooter?: boolean
-}>()
+}>(), {
+    anatomy: 'bottomimage'
+})
 
 const router = useRouter()
 const selectedItem = ref<any>(null)
 const showRouteModal = ref(false)
+
+// Modal options with defaults
+const modalOptionsWithDefaults = computed(() => ({
+    anatomy: props.modalOptions?.anatomy ?? 'heroimage'
+}))
 
 // Determine interaction mode for ItemGallery
 const interactionMode = computed(() => {

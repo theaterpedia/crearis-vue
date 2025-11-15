@@ -73,7 +73,7 @@
             <Section background="accent">
                 <Container>
                     <pGallerySimple entity="posts" project="dev" item-type="card" size="medium" variant="wide"
-                        anatomy="bottomimage" header="Latest from Our Blog" is-footer />
+                        onActivate="modal" header="Latest from Our Blog" is-footer />
                 </Container>
             </Section>
 
