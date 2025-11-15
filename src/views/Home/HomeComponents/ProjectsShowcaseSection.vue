@@ -15,8 +15,11 @@
                             style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
                         <Prose>
                             <h4>{{ project.heading || project.id }}</h4>
-                            <p v-if="project.status_id"><strong>Status:</strong> {{
-                                getStatusDisplayName(project.status_id, 'projects', 'de') }}</p>
+                            <p v-if="project.status_id && project.status_id === 67"><strong>Status:</strong> Entwurf</p>
+                            <p v-else-if="project.status_id && project.status_id === 19"><strong>Status:</strong> Demo
+                            </p>
+                            <p v-else-if="project.status_id && project.status_id === 68"><strong>Status:</strong>
+                                veröffentlicht</p>
                         </Prose>
                     </a>
                 </Column>
@@ -35,6 +38,7 @@ import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import CornerBanner from '@/components/CornerBanner.vue'
 
+console.log('ProjectsShowcaseSection component loaded.')
 const props = defineProps<{
     projects: any[]
 }>()

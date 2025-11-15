@@ -33,7 +33,7 @@
 
             <!-- Hero Section -->
             <template #header>
-                <HeroSection :user="user" @trigger-demo="handleHeroDemoClick" />
+                <HomePageHero :user="user" />
             </template>
 
             <!-- Trigger 2: Demo Events Card 
@@ -87,8 +87,6 @@
             </template>
         </PageLayout>
 
-        <!-- Floating Post-It Renderer -->
-        <FpostitRenderer />
     </div>
 </template>
 
@@ -104,7 +102,7 @@ import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import HomeSiteFooter from '@/components/homeSiteFooter.vue'
 import PageContent from '@/components/PageContent.vue'
-import HeroSection from './HomeComponents/HeroSection.vue'
+import HomePageHero from './HomeComponents/HomePageHero.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import pGallerySimple from '@/components/clist/pGallerySimple.vue'
@@ -112,8 +110,6 @@ import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vu
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
 import InvertedToggle from '@/components/InvertedToggle.vue'
-import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
-import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
@@ -123,7 +119,7 @@ import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
-const { getStatusIdByName } = useStatus()
+const { getStatusIdByName, getStatusesForTable } = useStatus()
 
 // SEO: Set meta tags from settings
 function setHomePageSeoMeta() {
@@ -180,13 +176,6 @@ const users = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 
-// Floating Post-Its
-const controller = useFpostitController()
-const demoCardElement = ref<HTMLElement>()
-const currentHeaderType = ref<'bauchbinde' | 'cover'>('cover')
-const p1Interval = ref<number | null>(null)
-const p2Interval = ref<number | null>(null)
-
 // Parse options for PageLayout
 const asideOptions = computed<AsideOptions>(() => {
     if (!project.value) return {}
@@ -230,12 +219,6 @@ const isProjectOwner = computed(() => {
 const canEdit = computed(() => {
     if (!user.value) return false
     return user.value.activeRole === 'admin' || isProjectOwner.value
-})
-
-// Cleanup intervals on component unmount
-onUnmounted(() => {
-    if (p1Interval.value) clearInterval(p1Interval.value)
-    if (p2Interval.value) clearInterval(p2Interval.value)
 })
 
 // Open/close edit panel
@@ -320,14 +303,23 @@ async function fetchProjects() {
             const data = await response.json()
             const projectsArray = data.projects || data
 
-            // Get status IDs for 'draft' and 'demo'
+            // Get status IDs for projects (draft, publish, released)
             const draftStatusId = getStatusIdByName('draft', 'projects')
-            const demoStatusId = getStatusIdByName('demo', 'projects')
+            const publishStatusId = getStatusIdByName('publish', 'projects')
 
-            // Filter projects
-            const filteredProjects = projectsArray.filter((p: any) =>
-                p.status_id === draftStatusId || p.status_id === demoStatusId
-            )
+            // Filter projects: show draft and published projects (not released yet)
+            // Note: 'demo' status doesn't exist for projects, only for images
+            const filteredProjects = projectsArray.filter((p: any) => {
+                // Show if draft or publish status
+                if (p.status_id === draftStatusId || p.status_id === publishStatusId) {
+                    return true
+                }
+                // Also show if status_id is explicitly 2 or 3 (fallback if status names not found)
+                if (p.status_id === 2 || p.status_id === 3) {
+                    return true
+                }
+                return false
+            })
             projects.value = filteredProjects.slice(0, 8)
         }
     } catch (error) {
@@ -348,141 +340,6 @@ async function fetchUsers() {
     }
 }
 
-// Floating Post-Its Setup
-function setupFloatingPostits() {
-    // Post-It 1: Themes ausprobieren
-    controller.create({
-        key: 'p1',
-        title: 'Themes ausprobieren',
-        content: `
-            <p>Theaterpedia bietet verschiedene Themes für individuelle Gestaltung. Probiere es direkt aus!</p>
-            <p>Wechsle zwischen hellem und dunklem Modus mit diesem Toggle:</p>
-            <div id="fpostit-theme-toggle" style="margin: 1rem 0;"></div>
-        `,
-        color: 'accent',
-        hlogic: 'right',
-        hOffset: 0,
-        actions: [
-            {
-                label: 'Verstanden!',
-                handler: (close) => close()
-            }
-        ]
-    })
-
-    // Post-It 2: Der erste Eindruck zählt
-    controller.create({
-        key: 'p2',
-        title: 'Der erste Eindruck zählt',
-        content: `
-            <p>Die Hero-Komponente unterstützt zwei Modi:</p>
-            <ul>
-                <li><strong>Bauchbinde:</strong> Kompakte Darstellung mit Text im unteren Bereich</li>
-                <li><strong>Cover:</strong> Vollflächige Darstellung mit zentriertem Inhalt (aktuell aktiv)</li>
-            </ul>
-            <div style="margin: 1rem 0;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Header-Typ wählen:</label>
-                <select id="fpostit-header-type" style="width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.375rem; background: var(--color-bg); color: var(--color-contrast);">
-                    <option value="cover" selected>Cover (Vollbild)</option>
-                    <option value="bauchbinde">Bauchbinde (Kompakt)</option>
-                </select>
-            </div>
-            <p style="font-size: 0.875rem; color: var(--color-dimmed);">Hinweis: Diese Demo ändert nur die Ansicht, nicht die tatsächlichen Einstellungen.</p>
-        `,
-        color: 'primary',
-        hlogic: 'right',
-        hOffset: 25, // 400px = 25rem
-        actions: [
-            {
-                label: 'Alles klar!',
-                handler: (close) => close()
-            }
-        ]
-    })
-
-    // Post-It 3: Mit Demodaten einsteigen
-    controller.create({
-        key: 'p3',
-        title: 'Mit Demodaten einsteigen',
-        content: `
-            <p>Entdecke die Funktionen von Theaterpedia mit unseren Demo-Daten:</p>
-            <p><strong>Events:</strong> Sieh dir Beispiel-Veranstaltungen an und wie sie im Kalender dargestellt werden. Von Premieren über Workshops bis hin zu Festivals.</p>
-            <p><strong>Akteure:</strong> Erkunde Profile von Theaterschaffenden, Gruppen und Ensembles. Verstehe, wie Vernetzung in der Theaterwelt funktioniert.</p>
-            <p>Die Demo-Umgebung ist dein Spielplatz – probiere aus, teste Funktionen und lerne das System kennen, ohne echte Daten zu beeinflussen!</p>
-        `,
-        color: 'positive',
-        hlogic: 'element',
-        actions: [
-            {
-                label: 'Events ansehen',
-                handler: (close) => {
-                    router.push('/sites/tp/events')
-                    close()
-                }
-            },
-            {
-                label: 'Akteure entdecken',
-                handler: (close) => {
-                    router.push('/sites/tp/actors')
-                    close()
-                }
-            }
-        ]
-    })
-}
-
-// Handler for Hero Demo Click (Trigger 1)
-function handleHeroDemoClick(event: MouseEvent) {
-    const trigger = event.currentTarget as HTMLElement
-
-    // Open both post-its at once
-    controller.openPostit('p1', trigger)
-
-    // Small delay for stacking effect
-    setTimeout(() => {
-        controller.openPostit('p2', trigger)
-    }, 100)
-}
-
-// Handler for Demo Card Click (Trigger 2)
-function handleDemoCardClick(event: MouseEvent) {
-    if (demoCardElement.value) {
-        controller.openPostit('p3', demoCardElement.value)
-    }
-}
-
-// Watch for post-it opens and inject interactive components
-function watchPostItOpens() {
-    // Watch for p1 (Theme Toggle)
-    p1Interval.value = setInterval(() => {
-        const themeContainer = document.getElementById('fpostit-theme-toggle')
-        if (themeContainer && controller.isOpen('p1')) {
-            if (p1Interval.value) clearInterval(p1Interval.value)
-            // Create and mount InvertedToggle component
-            import('@/components/InvertedToggle.vue').then(module => {
-                const InvertedToggleComp = module.default
-                const app = createApp(InvertedToggleComp)
-                app.mount(themeContainer)
-            }).catch(err => console.error('Failed to load InvertedToggle:', err))
-        }
-    }, 100) as unknown as number
-
-    // Watch for p2 (Header Type Selector)
-    p2Interval.value = setInterval(() => {
-        const headerTypeSelect = document.getElementById('fpostit-header-type') as HTMLSelectElement
-        if (headerTypeSelect && controller.isOpen('p2')) {
-            if (p2Interval.value) clearInterval(p2Interval.value)
-            headerTypeSelect.value = currentHeaderType.value
-            headerTypeSelect.addEventListener('change', (e) => {
-                const newType = (e.target as HTMLSelectElement).value as 'bauchbinde' | 'cover'
-                currentHeaderType.value = newType
-                // Note: This is demo only - would need to actually update Hero component in real implementation
-                console.log('Header type changed to:', newType)
-                alert(`Header-Typ zu "${newType}" geändert! (Demo-Modus - keine echte Änderung)`)
-            })
-        }
-    }, 100) as unknown as number
-}
 
 // Initialize
 onMounted(async () => {
@@ -499,12 +356,6 @@ onMounted(async () => {
         fetchProjects(),
         fetchUsers()
     ])
-
-    // Setup floating post-its after data is loaded
-    setupFloatingPostits()
-
-    // Start watching for post-it opens
-    watchPostItOpens()
 })
 </script>
 

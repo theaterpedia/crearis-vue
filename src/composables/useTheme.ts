@@ -2,18 +2,32 @@
  * Theme Composable
  * 
  * Provides theme management functionality:
- * - setTheme(id): Set the current theme
+ * - setTheme(id, scope, param): Set theme with optional scope
  * - getThemeVars(id): Get CSS variables for a specific theme
  * - getThemes(): Get all available themes
  * - currentVars(): Get CSS variables for current theme
+ * - resetContext(): Clear temporary theme context
+ * - setupLocalScopeWatcher(): Auto-reset on route changes (call in components)
+ * 
+ * Supports two types of themes:
+ * - Initial theme: User's saved preference, persists across routes
+ * - Context theme: Temporary theme with scope-based auto-reset
+ *   - local: Auto-resets when route changes
+ *   - timer: Auto-resets after specified seconds
+ *   - site: Domain-based (not yet implemented)
  * 
  * Singleton pattern ensures consistent theme state across the app
  */
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import type { Router } from 'vue-router'
 
 // Singleton state - shared across all composable instances
-const currentThemeId = ref<number | null>(null)
+const initialThemeId = ref<number | null>(null)
+const contextThemeId = ref<number | null>(null)
+const contextScope = ref<'local' | 'timer' | 'site' | null>(null)
+const contextParam = ref<string | null>(null)
+const contextTimerId = ref<number | null>(null)
 const themesCache = ref<any[]>([])
 const themeVarsCache = ref<Map<number, Record<string, string>>>(new Map())
 const isInverted = ref<boolean>(false)
@@ -79,17 +93,71 @@ export function useTheme() {
     }
 
     /**
-     * Set the active theme
-     * @param id Theme ID (0-7) or null to remove theme (revert to site CSS)
+     * Reset context theme and restore initial theme
+     * Called automatically by timer or route watchers
+     * Can also be called manually
      */
-    const setTheme = async (id: number | null): Promise<void> => {
-        // If null, remove all theme vars
-        if (id === null) {
-            currentThemeId.value = null
+    const resetContext = (): void => {
+        // Clear context state
+        contextThemeId.value = null
+        contextScope.value = null
+        contextParam.value = null
+
+        // Clear timer if exists
+        if (contextTimerId.value) {
+            clearTimeout(contextTimerId.value)
+            contextTimerId.value = null
+        }
+
+        // Reapply initial theme or remove vars
+        if (initialThemeId.value !== null) {
+            const vars = themeVarsCache.value.get(initialThemeId.value)
+            if (vars) {
+                applyVarsToDocument(vars)
+            }
+        } else {
             removeVarsFromDocument()
+        }
+    }
+
+    /**
+     * Set the active theme
+     * @param id Theme ID (0-7) or null to use site CSS
+     * @param scope Scope of theme change (default: 'initial')
+     *   - 'initial': Sets user's base theme preference
+     *   - 'local': Temporary theme for current route (auto-resets on navigation)
+     *   - 'timer': Temporary theme with timeout (auto-resets after param seconds)
+     *   - 'site': Project-specific theme (not yet implemented)
+     * @param param Additional parameter based on scope:
+     *   - 'local': route path (auto-detected if not provided)
+     *   - 'timer': seconds until auto-reset (required)
+     *   - 'site': domaincode (not yet implemented)
+     */
+    const setTheme = async (
+        id: number | null,
+        scope: 'initial' | 'local' | 'timer' | 'site' = 'initial',
+        param?: string | number
+    ): Promise<void> => {
+        // Validate site scope is not yet implemented
+        if (scope === 'site') {
+            throw new Error('Site scope not yet implemented')
+        }
+
+        // Clear theme
+        if (id === null) {
+            if (scope === 'initial') {
+                initialThemeId.value = null
+                // If no context theme, remove vars
+                if (contextThemeId.value === null) {
+                    removeVarsFromDocument()
+                }
+            } else {
+                resetContext()
+            }
             return
         }
 
+        // Validate theme ID
         if (id < 0 || id > 7) {
             throw new Error('Theme ID must be between 0 and 7')
         }
@@ -99,12 +167,58 @@ export function useTheme() {
             await getThemeVars(id)
         }
 
-        currentThemeId.value = id
+        // Set theme based on scope
+        if (scope === 'initial') {
+            initialThemeId.value = id
+            // Apply vars if no context theme is active
+            if (contextThemeId.value === null) {
+                const vars = themeVarsCache.value.get(id)
+                if (vars) {
+                    applyVarsToDocument(vars)
+                }
+            }
+        } else if (scope === 'local') {
+            // Clear any existing timer
+            if (contextTimerId.value) {
+                clearTimeout(contextTimerId.value)
+                contextTimerId.value = null
+            }
 
-        // Apply theme to document root
-        const vars = themeVarsCache.value.get(id)
-        if (vars) {
-            applyVarsToDocument(vars)
+            contextThemeId.value = id
+            contextScope.value = 'local'
+            // param is route path (will be set by watcher in component)
+            contextParam.value = param as string || null
+
+            // Apply theme vars immediately
+            const vars = themeVarsCache.value.get(id)
+            if (vars) {
+                applyVarsToDocument(vars)
+            }
+        } else if (scope === 'timer') {
+            // Clear any existing timer
+            if (contextTimerId.value) {
+                clearTimeout(contextTimerId.value)
+                contextTimerId.value = null
+            }
+
+            if (!param || typeof param !== 'number') {
+                throw new Error('Timer scope requires param (seconds) as number')
+            }
+
+            contextThemeId.value = id
+            contextScope.value = 'timer'
+            contextParam.value = String(param)
+
+            // Apply theme vars immediately
+            const vars = themeVarsCache.value.get(id)
+            if (vars) {
+                applyVarsToDocument(vars)
+            }
+
+            // Set timeout to reset context
+            contextTimerId.value = window.setTimeout(() => {
+                resetContext()
+            }, param * 1000)
         }
     }
 
@@ -174,22 +288,28 @@ export function useTheme() {
 
     /**
      * Get CSS variables for the current active theme
+     * Context theme takes precedence over initial theme
      * @returns CSS variables object or null if no theme set
      */
     const currentVars = computed((): ThemeVars | null => {
-        return themeVarsCache.value.get(currentThemeId.value) || null
+        const activeThemeId = contextThemeId.value ?? initialThemeId.value
+        return themeVarsCache.value.get(activeThemeId) || null
     })
 
     /**
-     * Get current theme ID
+     * Get current active theme ID
+     * Context theme takes precedence over initial theme
      */
-    const currentTheme = computed(() => currentThemeId.value)
+    const currentTheme = computed(() => contextThemeId.value ?? initialThemeId.value)
 
     /**
      * Check if inverted mode is available
      * Only available when a custom theme is active (not default CSS)
      */
-    const isInvertedAvailable = computed(() => currentThemeId.value !== null)
+    const isInvertedAvailable = computed(() => {
+        const activeThemeId = contextThemeId.value ?? initialThemeId.value
+        return activeThemeId !== null
+    })
 
     /**
      * Helper: Get CSS variable string for style attribute
@@ -367,11 +487,36 @@ export function useTheme() {
         }
     }
 
+    /**
+     * Setup route watcher for local scope auto-reset
+     * Call this in components that use router (e.g., in App.vue or layout)
+     * @param router Vue Router instance
+     */
+    const setupLocalScopeWatcher = (router: Router): void => {
+        watch(
+            () => router.currentRoute.value.path,
+            (newPath: string, oldPath: string) => {
+                // Only reset if scope is local and route changed
+                if (contextScope.value === 'local' && newPath !== oldPath) {
+                    // Check if context was set for specific route
+                    if (contextParam.value && contextParam.value !== newPath) {
+                        resetContext()
+                    } else if (!contextParam.value) {
+                        // No specific route set, reset on any route change
+                        resetContext()
+                    }
+                }
+            }
+        )
+    }
+
     return {
         // Core functions
         setTheme,
         getThemeVars,
         getThemes,
+        resetContext,
+        setupLocalScopeWatcher,
 
         // Inverted mode
         setInverted,
@@ -383,6 +528,11 @@ export function useTheme() {
         // Computed state
         currentVars,
         currentTheme,
+
+        // Context state (for debugging/advanced use)
+        contextTheme: computed(() => contextThemeId.value),
+        contextScope: computed(() => contextScope.value),
+        initialTheme: computed(() => initialThemeId.value),
 
         // Image dimensions
         extractImageDimensions,
