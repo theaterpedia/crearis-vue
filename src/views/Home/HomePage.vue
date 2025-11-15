@@ -67,7 +67,7 @@
                 :project-id="String(project.id)" />
 
             <!-- Projects Showcase Section -->
-            <ProjectsShowcaseSection :projects="projects" />
+            <ProjectsShowcaseSection />
 
             <!-- Blog Posts Section  -->
             <Section background="accent">
@@ -171,7 +171,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
-const projects = ref<any[]>([])
 const users = ref<any[]>([])
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
@@ -295,38 +294,6 @@ async function fetchProject(domaincode: string) {
     }
 }
 
-// Fetch projects (filtered)
-async function fetchProjects() {
-    try {
-        const response = await fetch('/api/projects')
-        if (response.ok) {
-            const data = await response.json()
-            const projectsArray = data.projects || data
-
-            // Get status IDs for projects (draft, publish, released)
-            const draftStatusId = getStatusIdByName('draft', 'projects')
-            const publishStatusId = getStatusIdByName('publish', 'projects')
-
-            // Filter projects: show draft and published projects (not released yet)
-            // Note: 'demo' status doesn't exist for projects, only for images
-            const filteredProjects = projectsArray.filter((p: any) => {
-                // Show if draft or publish status
-                if (p.status_id === draftStatusId || p.status_id === publishStatusId) {
-                    return true
-                }
-                // Also show if status_id is explicitly 2 or 3 (fallback if status names not found)
-                if (p.status_id === 2 || p.status_id === 3) {
-                    return true
-                }
-                return false
-            })
-            projects.value = filteredProjects.slice(0, 8)
-        }
-    } catch (error) {
-        console.error('Failed to fetch projects:', error)
-    }
-}
-
 // Fetch users
 async function fetchUsers() {
     try {
@@ -352,10 +319,7 @@ onMounted(async () => {
 
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
-    await Promise.all([
-        fetchProjects(),
-        fetchUsers()
-    ])
+    await fetchUsers()
 })
 </script>
 

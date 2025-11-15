@@ -108,8 +108,6 @@ class FpostitEventBridge {
 
             // Add visual feedback class
             element.classList.add('fpostit-event-element')
-
-            console.log('[fpostit-events] Discovered event element:', eventName, element)
         })
     }
 
@@ -146,11 +144,8 @@ class FpostitEventBridge {
     async emit(eventName: string, payload: any, element: HTMLElement) {
         const handlers = this.handlers.get(eventName)
         if (!handlers || handlers.size === 0) {
-            console.warn(`[fpostit-events] No handlers registered for event: ${eventName}`)
             return
         }
-
-        console.log(`[fpostit-events] Emitting event: ${eventName}`, payload)
 
         // Call all handlers
         const promises = Array.from(handlers).map(handler => {

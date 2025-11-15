@@ -70,6 +70,9 @@
                                 <p class="teaser-text">{{ teaser }}</p>
                             </div>
                         </template>
+
+                        <!-- Slot for additional content -->
+                        <slot></slot>
                     </div>
                 </div>
             </div>
