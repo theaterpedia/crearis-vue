@@ -9,19 +9,44 @@
             <Button size="medium" variant="primary" @click="handleRegister">
                 hier anmelden
             </Button>
+            <!-- Post-It: Header Height Demo -->
+            <div data-fpostcontainer data-fpostkey="p4">
+                <button class="cta-secondary cta-demo" data-fpostlink data-hlogic="default">
+                    📐 Header Demo
+                </button>
+                <div style="display: none;" data-fpostcontent data-color="primary">
+                    <h3>📐 Header Height Demo</h3>
+                    <p>Try different header heights! Click to cycle through options.</p>
+
+                    <div class="theme-demo-info">
+                        <div class="current-theme-display">
+                            <strong class="theme-name" data-height-display="name">Click to try heights</strong>
+                            <p class="theme-desc" data-height-display="desc">Heights cycle: medium → full → prominent
+                            </p>
+                        </div>
+                        <button class="theme-action-btn btn-accent" data-fpost-event="height-cycle"
+                            data-fpost-payload='{"action":"next"}'>
+                            📐 Try Next Height
+                        </button>
+                    </div>
+                </div>
+            </div>
             <!-- Post-It: Theme Demo -->
             <div data-fpostcontainer data-fpostkey="p5">
                 <button class="cta-secondary cta-demo" data-fpostlink data-hlogic="default">
                     🎨 Theme Demo
                 </button>
-                <div style="display: none;" data-fpostcontent data-color="accent">
+                <div style="display: none;" data-fpostcontent data-color="primary">
+                    <h3>🎨 Theme Preview</h3>
+                    <p>Try different themes temporarily! Theme will auto-reset in 30 seconds or when you navigate.</p>
+
                     <div class="theme-demo-info">
                         <div class="current-theme-display">
                             <strong class="theme-name" data-theme-display="name">Click to try a theme</strong>
                             <p class="theme-desc" data-theme-display="desc">Themes rotate through: E-Motion, Pastell,
                                 Institut</p>
                         </div>
-                        <button class="theme-action-btn" data-fpost-event="theme-rotate"
+                        <button class="theme-action-btn btn-accent" data-fpost-event="theme-rotate"
                             data-fpost-payload='{"action":"next"}'>
                             🎨 Try Next Theme
                         </button>
@@ -31,11 +56,6 @@
                         <span class="status-indicator">🟢 Demo Active</span>
                         <span class="countdown" data-theme-display="countdown">Resets in 30s</span>
                     </div>
-
-                    <a href="#" data-fpostact1 data-fpost-event="theme-stop" data-fpost-payload='{"action":"stop"}'>
-                        Stop Demo
-                    </a>
-                    <a href="#" data-fpostact2>Close</a>
                 </div>
             </div>
 
@@ -65,6 +85,26 @@ const props = defineProps<{
 const height = ref('prominent')
 const ctaGroup = ref<HTMLElement>()
 
+// Header height demo state
+const heightOptions = [
+    { value: 'medium', name: 'Medium', desc: 'Compact header for quick navigation' },
+    { value: 'full', name: 'Full', desc: 'Balanced height with good visibility' },
+    { value: 'prominent', name: 'Prominent', desc: 'Maximum impact and presence' }
+]
+let currentHeightIndex = 2 // Start at 'prominent'
+
+// Update DOM elements with current height info
+function updateHeightDisplay() {
+    const heightOpt = heightOptions[currentHeightIndex]
+    if (!heightOpt) return
+
+    const nameEl = document.querySelector('[data-height-display="name"]')
+    const descEl = document.querySelector('[data-height-display="desc"]')
+
+    if (nameEl) nameEl.textContent = heightOpt.name
+    if (descEl) descEl.textContent = heightOpt.desc
+}
+
 // Theme demo state
 const demoThemes = [
     { id: 0, name: 'E-Motion', desc: 'Performance und Energie' },
@@ -85,7 +125,7 @@ function updateThemeDisplay() {
     const nameEl = document.querySelector('[data-theme-display="name"]')
     const descEl = document.querySelector('[data-theme-display="desc"]')
 
-    if (nameEl) nameEl.textContent = `Active: ${theme.name}`
+    if (nameEl) nameEl.textContent = theme.name
     if (descEl) descEl.textContent = theme.desc
 }
 
@@ -142,6 +182,30 @@ onMounted(async () => {
         console.log(`[HomePageHero] Discovered ${count} post-its`)
     }
 
+    // Register event handler for header height cycling
+    events.on('height-cycle', (payload) => {
+        console.log('[HomePageHero] Height cycle event received:', payload)
+
+        // Cycle to next height
+        currentHeightIndex = (currentHeightIndex + 1) % heightOptions.length
+        const heightOpt = heightOptions[currentHeightIndex]
+
+        if (!heightOpt) {
+            console.error('[HomePageHero] No height found at index', currentHeightIndex)
+            return
+        }
+
+        console.log('[HomePageHero] Applying height:', heightOpt.name, heightOpt.value)
+
+        // Update display
+        updateHeightDisplay()
+
+        // Apply height
+        height.value = heightOpt.value
+
+        console.log('[HomePageHero] Height applied successfully')
+    })
+
     // Register event handler for theme rotation
     events.on('theme-rotate', async (payload) => {
         console.log('[HomePageHero] Theme rotate event received:', payload)
@@ -171,23 +235,6 @@ onMounted(async () => {
         } catch (error) {
             console.error('[HomePageHero] Failed to apply theme:', error)
         }
-    })
-
-    // Register event handler for stopping demo
-    events.on('theme-stop', async (payload) => {
-        console.log('[HomePageHero] Theme stop event received:', payload)
-
-        // Reset to initial theme
-        resetContext()
-
-        // Stop countdown
-        stopCountdown()
-
-        // Reset display
-        currentThemeIndex = 0
-        updateThemeDisplay()
-
-        console.log('[HomePageHero] Theme demo stopped')
     })
 
     // Trigger event discovery after a short delay to catch Post-It content
@@ -278,6 +325,11 @@ function handleRegister() {
     background: var(--color-primary);
     color: var(--color-primary-contrast);
     transition: transform 0.2s, opacity 0.2s;
+}
+
+.theme-action-btn.btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
 }
 
 .theme-action-btn:hover {

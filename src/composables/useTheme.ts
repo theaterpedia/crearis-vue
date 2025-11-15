@@ -29,7 +29,7 @@ const contextScope = ref<'local' | 'timer' | 'site' | null>(null)
 const contextParam = ref<string | null>(null)
 const contextTimerId = ref<number | null>(null)
 const themesCache = ref<any[]>([])
-const themeVarsCache = ref<Map<number, Record<string, string>>>(new Map())
+const themeVarsCache = ref<Map<number, { vars: Record<string, string>, inverted: boolean }>>(new Map())
 const isInverted = ref<boolean>(false)
 
 // Image dimension state (extracted from CSS variables)
@@ -85,8 +85,8 @@ export function useTheme() {
 
         const root = document.documentElement
         // Get all theme vars from cache and remove them
-        themeVarsCache.value.forEach((vars: ThemeVars) => {
-            for (const key of Object.keys(vars)) {
+        themeVarsCache.value.forEach((cached: { vars: Record<string, string>, inverted: boolean }) => {
+            for (const key of Object.keys(cached.vars)) {
                 root.style.removeProperty(key)
             }
         })
@@ -111,12 +111,14 @@ export function useTheme() {
 
         // Reapply initial theme or remove vars
         if (initialThemeId.value !== null) {
-            const vars = themeVarsCache.value.get(initialThemeId.value)
-            if (vars) {
-                applyVarsToDocument(vars)
+            const cached = themeVarsCache.value.get(initialThemeId.value)
+            if (cached) {
+                applyVarsToDocument(cached.vars)
+                setInverted(cached.inverted)
             }
         } else {
             removeVarsFromDocument()
+            setInverted(false)
         }
     }
 
@@ -172,9 +174,10 @@ export function useTheme() {
             initialThemeId.value = id
             // Apply vars if no context theme is active
             if (contextThemeId.value === null) {
-                const vars = themeVarsCache.value.get(id)
-                if (vars) {
-                    applyVarsToDocument(vars)
+                const cached = themeVarsCache.value.get(id)
+                if (cached) {
+                    applyVarsToDocument(cached.vars)
+                    setInverted(cached.inverted)
                 }
             }
         } else if (scope === 'local') {
@@ -189,10 +192,11 @@ export function useTheme() {
             // param is route path (will be set by watcher in component)
             contextParam.value = param as string || null
 
-            // Apply theme vars immediately
-            const vars = themeVarsCache.value.get(id)
-            if (vars) {
-                applyVarsToDocument(vars)
+            // Apply theme vars and inverted state immediately
+            const cached = themeVarsCache.value.get(id)
+            if (cached) {
+                applyVarsToDocument(cached.vars)
+                setInverted(cached.inverted)
             }
         } else if (scope === 'timer') {
             // Clear any existing timer
@@ -209,10 +213,11 @@ export function useTheme() {
             contextScope.value = 'timer'
             contextParam.value = String(param)
 
-            // Apply theme vars immediately
-            const vars = themeVarsCache.value.get(id)
-            if (vars) {
-                applyVarsToDocument(vars)
+            // Apply theme vars and inverted state immediately
+            const cached = themeVarsCache.value.get(id)
+            if (cached) {
+                applyVarsToDocument(cached.vars)
+                setInverted(cached.inverted)
             }
 
             // Set timeout to reset context
@@ -241,15 +246,14 @@ export function useTheme() {
                 throw new Error(data.error || 'Failed to load theme')
             }
 
-            // Cache the vars
-            themeVarsCache.value.set(id, data.vars)
+            // Cache the vars and inverted flag together
+            themeVarsCache.value.set(id, {
+                vars: data.vars,
+                inverted: data.inverted || false
+            })
 
-            // If theme has inverted flag, set it
-            if (data.inverted === true) {
-                setInverted(true)
-            } else {
-                setInverted(false)
-            }
+            // Set inverted state for this theme
+            setInverted(data.inverted || false)
 
             return data.vars
         } catch (error) {
@@ -293,7 +297,8 @@ export function useTheme() {
      */
     const currentVars = computed((): ThemeVars | null => {
         const activeThemeId = contextThemeId.value ?? initialThemeId.value
-        return themeVarsCache.value.get(activeThemeId) || null
+        const cached = themeVarsCache.value.get(activeThemeId)
+        return cached?.vars || null
     })
 
     /**
