@@ -106,6 +106,7 @@ const props = withDefaults(defineProps<Props>(), {
     models: () => ({})
 })
 
+const debug = false
 const dataMode = computed(() => props.data !== undefined)
 
 // Computed helpers for options
@@ -160,7 +161,7 @@ const shouldUseAvatar = computed(() => {
 })
 
 // Log props for debugging
-console.log('[ItemTile] Props:', {
+if (debug) console.log('[ItemTile] Props:', {
     heading: props.heading,
     size: props.size,
     shape: props.shape,
@@ -171,7 +172,7 @@ console.log('[ItemTile] Props:', {
     headingLevel: props.headingLevel
 })
 if (props.data) {
-    console.log('[ItemTile] Image data:', props.data)
+    if (debug) console.log('[ItemTile] Image data:', props.data)
 }
 
 </script>

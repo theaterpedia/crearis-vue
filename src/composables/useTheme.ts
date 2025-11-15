@@ -23,6 +23,7 @@ import { ref, computed, watch } from 'vue'
 import type { Router } from 'vue-router'
 
 // Singleton state - shared across all composable instances
+const debug = false
 const initialThemeId = ref<number | null>(null)
 const contextThemeId = ref<number | null>(null)
 const contextScope = ref<'local' | 'timer' | 'site' | null>(null)
@@ -439,7 +440,7 @@ export function useTheme() {
         if (imageDimensions.value.isCorrupted) {
             console.error('🔴 CORRUPTED STYLESHEET: Always provide CSS vars for card, tile, avatar in rem only!')
         } else {
-            console.log('✅ Image dimensions extracted:', {
+            if (debug) console.log('✅ Image dimensions extracted:', {
                 cardWidth: `${cardWidth}px`,
                 cardHeight: `${cardHeight}px`,
                 tileWidth: `${tileWidth}px`,

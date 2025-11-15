@@ -157,6 +157,7 @@ interface Props {
     selectedIds?: number | number[] // v-model for selected item IDs
 }
 
+const debug = false
 const props = withDefaults(defineProps<Props>(), {
     size: 'medium',
     width: 'inherit',
@@ -324,7 +325,7 @@ const itemComponent = computed(() => {
  */
 const fetchEntityData = async () => {
     if (!dataModeActive.value) {
-        console.log('[ItemList] fetchEntityData skipped - dataModeActive=false', {
+        if (debug) console.log('[ItemList] fetchEntityData skipped - dataModeActive=false', {
             dataMode: props.dataMode,
             entity: props.entity,
             images: props.images
@@ -335,7 +336,7 @@ const fetchEntityData = async () => {
     loading.value = true
     error.value = null
 
-    console.log('[ItemList] fetchEntityData START', {
+    if (debug) console.log('[ItemList] fetchEntityData START', {
         entity: props.entity,
         project: props.project,
         statusLt: props.statusLt,
@@ -388,7 +389,7 @@ const fetchEntityData = async () => {
         }
         url = urlObj.pathname + urlObj.search
 
-        console.log('[ItemList] Fetching URL:', url)
+        if (debug) console.log('[ItemList] Fetching URL:', url)
 
         const response = await fetch(url)
         if (!response.ok) {
@@ -403,7 +404,7 @@ const fetchEntityData = async () => {
             }
             try {
                 entityData.value = JSON.parse(text)
-                console.log('[ItemList] Fetch SUCCESS - received', entityData.value.length, 'items')
+                if (debug) console.log('[ItemList] Fetch SUCCESS - received', entityData.value.length, 'items')
 
                 // Sort events by date_begin (ascending - earliest first)
                 if (props.entity === 'events' && Array.isArray(entityData.value)) {
@@ -412,7 +413,7 @@ const fetchEntityData = async () => {
                         if (!b.date_begin) return -1
                         return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
                     })
-                    console.log('[ItemList] Events sorted by date_begin')
+                    if (debug) console.log('[ItemList] Events sorted by date_begin')
                 }
             } catch (parseError) {
                 console.error('Failed to parse JSON:', text.substring(0, 100))
@@ -421,7 +422,7 @@ const fetchEntityData = async () => {
         } else {
             // Fallback for test mocks that return data directly
             entityData.value = await response.json()
-            console.log('[ItemList] Fetch SUCCESS (mock) - received', entityData.value.length, 'items')
+            if (debug) console.log('[ItemList] Fetch SUCCESS (mock) - received', entityData.value.length, 'items')
 
             // Sort events by date_begin (ascending - earliest first)
             if (props.entity === 'events' && Array.isArray(entityData.value)) {
@@ -430,7 +431,7 @@ const fetchEntityData = async () => {
                     if (!b.date_begin) return -1
                     return new Date(a.date_begin).getTime() - new Date(b.date_begin).getTime()
                 })
-                console.log('[ItemList] Events sorted by date_begin')
+                if (debug) console.log('[ItemList] Events sorted by date_begin')
             }
         }
     } catch (err) {
@@ -494,7 +495,7 @@ const entities = computed(() => {
             return true
         })
 
-        console.log('[ItemList] Filter results:', {
+        if (debug) console.log('[ItemList] Filter results:', {
             total: entityData.value.length,
             filterIds: props.filterIds?.length,
             filterXmlPrefix: props.filterXmlPrefix,
@@ -514,12 +515,12 @@ const entities = computed(() => {
                 // No fallbacks - will error if field is missing
                 const fieldName = props.size === 'small' ? 'img_thumb' : 'img_square'
                 const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square
-                console.log(`[ItemList] Image ${entity.id}: size="${props.size}" → field="${fieldName}"`, imageField)
+                if (debug) console.log(`[ItemList] Image ${entity.id}: size="${props.size}" → field="${fieldName}"`, imageField)
                 if (!imageField) {
                     throw new Error(`Missing ${fieldName} for image entity ${entity.id}`)
                 }
                 imageData = parseImageData(imageField)
-                console.log(`[ItemList] Image ${entity.id}: parsed imageData`, imageData)
+                if (debug) console.log(`[ItemList] Image ${entity.id}: parsed imageData`, imageData)
             } else {
                 // Other entities: small=img_thumb, medium=img_square
                 const imageField = props.size === 'small' ? entity.img_thumb : entity.img_square

@@ -30,6 +30,8 @@ interface StatusEntry {
     desc_i18n: Record<string, string> | null
 }
 
+const debug = false
+
 // Global cache for status data
 const statusCache = ref<StatusEntry[]>([])
 const cacheInitialized = ref(false)
@@ -52,7 +54,7 @@ async function initializeCache() {
         const data = await response.json()
         statusCache.value = data.statuses || []
         cacheInitialized.value = true
-        console.log(`✅ Status cache initialized: ${statusCache.value.length} entries`)
+        if (debug) console.log(`✅ Status cache initialized: ${statusCache.value.length} entries`)
     } catch (error) {
         console.error('❌ Failed to initialize status cache:', error)
     } finally {

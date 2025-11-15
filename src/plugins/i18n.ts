@@ -28,9 +28,9 @@ export default {
 
         // Preload translations unless explicitly skipped
         if (!options.skipPreload) {
-            console.log('🌍 Initializing i18n system...')
+            // console.log('🌍 Initializing i18n system...')
             i18n.preload().then(() => {
-                console.log('✅ i18n system ready')
+                // console.log('✅ i18n system ready')
             }).catch((error) => {
                 console.error('❌ Failed to initialize i18n:', error)
             })
