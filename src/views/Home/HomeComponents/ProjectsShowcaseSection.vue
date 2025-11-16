@@ -1,128 +1,105 @@
+<!--
+  ProjectsShowcaseSection.vue - Showcase section for project pipeline
+  
+  Displays projects using pSlider with modal interactions.
+  - All projects open in ItemModalCard
+  - Status 68 (published): Shows "Open Website" button linking to /sites/:id
+  - Status 19 (demo): Shows CornerBanner in modal
+-->
 <template>
-    <Section background="default">
-        <CornerBanner size="large" />
+    <Section background="accent">
         <Container>
-            <Prose>
-                <Heading overline="Showcase für entstehende Projekte" level="h2"
-                    headline="Ca. 10 Websites in der Pipeline">New **Projects** in
-                    the Pipeline</Heading>
-            </Prose>
-
-            <Columns gap="small" align="top" wrap>
-                <Column v-for="project in projects.slice(0, 4)" :key="project.id" width="1/4">
-                    <!-- Status 68: Link to site -->
-                    <a v-if="project.status_id === 68" :href="`/sites/${project.id}`"
-                        style="text-decoration: none; color: inherit; display: block; cursor: pointer;">
-                        <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
-                            style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
-                        <Prose>
-                            <h4>{{ project.heading || project.id }}</h4>
-                            <p><strong>Status:</strong> veröffentlicht</p>
-                        </Prose>
-                    </a>
-
-                    <!-- Status 19: Show roadworks alert -->
-                    <div v-else-if="project.status_id === 19" @click="showRoadworksAlert"
-                        style="text-decoration: none; color: inherit; display: block; cursor: pointer;">
-                        <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
-                            style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
-                        <Prose>
-                            <h4>{{ project.heading || project.id }}</h4>
-                            <p><strong>Status:</strong> Demo</p>
-                        </Prose>
-                    </div>
-
-                    <!-- Status 67: Open modal -->
-                    <div v-else-if="project.status_id === 67" @click="openProjectModal(project)"
-                        style="text-decoration: none; color: inherit; display: block; cursor: pointer;">
-                        <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
-                            style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
-                        <Prose>
-                            <h4>{{ project.heading || project.id }}</h4>
-                            <p><strong>Status:</strong> Entwurf</p>
-                        </Prose>
-                    </div>
-
-                    <!-- Fallback: Default link -->
-                    <a v-else :href="`/sites/${project.id}`"
-                        style="text-decoration: none; color: inherit; display: block; cursor: pointer;">
-                        <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.id"
-                            style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border-radius: 0.5rem;" />
-                        <Prose>
-                            <h4>{{ project.heading || project.id }}</h4>
-                            <p v-if="project.status_id"><strong>Status:</strong> {{ project.status_id }}</p>
-                        </Prose>
-                    </a>
+            <Columns>
+                <Column width="auto">
+                    <Prose>
+                        <Heading overline="Showcase für entstehende Projekte" is="h2"
+                            headline="Ca. 10 Websites in der Pipeline">New **Projects** in
+                            the Pipeline</Heading>
+                    </Prose>
+                </Column>
+                <Column width="1/2">
+                    <pSlider entity="projects" :filter-ids="filteredProjectIds" size="large" shape="wide"
+                        anatomy="heroimage" on-activate="modal" :modal-options="modalOptions"
+                        @item-click="handleProjectClick" />
                 </Column>
             </Columns>
         </Container>
-
-        <!-- Modal for draft projects (status 67) -->
-        <ItemModalCard v-if="showModal && selectedProject" :is-open="showModal"
-            :heading="selectedProject?.heading || ''" :teaser="selectedProject?.teaser"
-            :data="parseProjectImageData(selectedProject)" shape="wide" anatomy="heroimage"
-            :entity="{ xmlid: selectedProject?.xmlid, status_id: selectedProject?.status_id, table: 'projects' }"
-            @close="closeModal">
-            <div class="project-info-row">
-                <div class="info-item">
-                    <span class="info-label">Type:</span>
-                    <span class="info-value">{{ selectedProject?.type || 'Website' }}</span>
-                </div>
-                <div v-if="projectOwner" class="info-item">
-                    <span class="info-label">Owner:</span>
-                    <span class="info-value">{{ projectOwner }}</span>
-                </div>
-            </div>
-        </ItemModalCard>
-
-        <!-- Roadworks alert modal for demo projects (status 19) -->
-        <Teleport to="body">
-            <Transition name="modal">
-                <div v-if="showRoadworks" class="modal-overlay" @click.self="closeRoadworks">
-                    <div class="roadworks-modal">
-                        <button class="modal-close-btn" @click="closeRoadworks" aria-label="Close">×</button>
-                        <div class="roadworks-content">
-                            <img src="https://cdn-icons-png.flaticon.com/512/1047/1047711.png" alt="Roadworks"
-                                class="roadworks-image" />
-                            <h3>🚧 Demo-Phase</h3>
-                            <p>Dieses Projekt ist noch in der Demo-Phase und kann noch nicht öffentlich eingesehen
-                                werden.
-                            </p>
-                            <p>Wenn du Vorschläge oder Anfragen hast, dann melde dich bei <strong><a
-                                        href="mailto:info@theaterpedia.org"
-                                        style="color: var(--color-accent-bg);">info@theaterpedia.org</a></strong></p>
-                        </div>
-                    </div>
-                </div>
-            </Transition>
-        </Teleport>
     </Section>
+
+    <!-- Custom modal for projects with status-specific features -->
+    <ItemModalCard v-if="showModal && selectedProject" :is-open="showModal" :heading="selectedProject?.heading || ''"
+        :teaser="selectedProject?.teaser" :data="parseProjectImageData(selectedProject)" shape="wide"
+        anatomy="heroimage"
+        :entity="{ xmlid: selectedProject?.xmlid, status_id: selectedProject?.status_id, table: 'projects' }"
+        @close="closeModal">
+        <!-- Corner banner for demo projects (status 19) -->
+        <template #corner-banner>
+            <CornerBanner v-if="selectedProject?.status_id === 19" size="medium" />
+        </template>
+
+        <!-- Project info -->
+        <div class="project-info-row">
+            <div class="info-item">
+                <span class="info-label">Type:</span>
+                <span class="info-value">{{ selectedProject?.type || 'Website' }}</span>
+            </div>
+            <div v-if="projectOwner" class="info-item">
+                <span class="info-label">Owner:</span>
+                <span class="info-value">{{ projectOwner }}</span>
+            </div>
+            <div v-if="selectedProject?.status_id" class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value">{{ getStatusLabel(selectedProject.status_id) }}</span>
+            </div>
+        </div>
+
+        <!-- Footer with action button for published projects (status 68) -->
+        <template #footer>
+            <button v-if="selectedProject?.status_id === 68" @click="navigateToSite" class="website-button">
+                Open Website →
+            </button>
+        </template>
+    </ItemModalCard>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStatus } from '@/composables/useStatus'
+import Columns from '@/components/Columns.vue'
+import Column from '@/components/Column.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
-import Columns from '@/components/Columns.vue'
-import Column from '@/components/Column.vue'
 import CornerBanner from '@/components/CornerBanner.vue'
+import pSlider from '@/components/page/pSlider.vue'
 import ItemModalCard from '@/components/clist/ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 import { createDebugger } from '@/utils/debug'
 
 const debug = createDebugger('ProjectsShowcaseSection')
 
+const router = useRouter()
 const { getStatusIdByName } = useStatus()
+
 const projects = ref<any[]>([])
 const showModal = ref(false)
 const selectedProject = ref<any>(null)
-const showRoadworks = ref(false)
 const projectOwner = ref<string>('')
 
-// Fetch projects (filtered)
+// Modal options for pSlider
+const modalOptions = {
+    anatomy: 'heroimage'
+}
+
+// Computed filtered project IDs for pSlider
+const filteredProjectIds = computed(() => {
+    return projects.value.map(p => p.id)
+})
+
+// Fetch projects (filtered to show pipeline projects)
 async function fetchProjects() {
     try {
         const response = await fetch('/api/projects')
@@ -130,48 +107,40 @@ async function fetchProjects() {
             const data = await response.json()
             const projectsArray = data.projects || data
 
-            // Get status IDs for projects (draft, publish, released)
+            // Get status IDs for projects
             const draftStatusId = getStatusIdByName('draft', 'projects')
             const publishStatusId = getStatusIdByName('publish', 'projects')
 
-            // Filter projects: show draft and published projects (not released yet)
+            // Filter projects: show draft (67), demo (19), and published (68) projects
             const filteredProjects = projectsArray.filter((p: any) => {
-                // Show if draft or publish status
+                // Show if draft, demo, or publish status
                 if (p.status_id === draftStatusId || p.status_id === publishStatusId) {
                     return true
                 }
-                // Also show if status_id is explicitly 2 or 3 (fallback if status names not found)
-                if (p.status_id === 2 || p.status_id === 3) {
+                // Also show specific status_id values (fallback)
+                if (p.status_id === 67 || p.status_id === 19 || p.status_id === 68) {
                     return true
                 }
                 return false
             })
+
             projects.value = filteredProjects.slice(0, 8)
+            debug.log('Filtered projects:', projects.value.length)
         }
     } catch (error) {
         console.error('Failed to fetch projects:', error)
     }
 }
 
-// Show roadworks alert for demo projects (status 19)
-function showRoadworksAlert() {
-    showRoadworks.value = true
-}
-
-// Close roadworks modal
-function closeRoadworks() {
-    showRoadworks.value = false
-}
-
-// Open modal for draft projects (status 67)
-async function openProjectModal(project: any) {
-    debug.log('Opening modal for project:', project)
+// Handle project click from pSlider
+function handleProjectClick(project: any) {
+    debug.log('Project clicked:', project)
     selectedProject.value = project
     showModal.value = true
 
     // Fetch owner info
     if (project.owner_id) {
-        await fetchOwnerInfo(project.owner_id)
+        fetchOwnerInfo(project.owner_id)
     } else {
         projectOwner.value = ''
     }
@@ -182,6 +151,14 @@ function closeModal() {
     showModal.value = false
     selectedProject.value = null
     projectOwner.value = ''
+}
+
+// Navigate to site for published projects (status 68)
+function navigateToSite() {
+    if (selectedProject.value?.id) {
+        router.push(`/sites/${selectedProject.value.id}`)
+        closeModal()
+    }
 }
 
 // Fetch owner info from users endpoint
@@ -203,7 +180,17 @@ async function fetchOwnerInfo(ownerId: number) {
     }
 }
 
-// Parse image data from img_id field (similar to pListSimple)
+// Get status label for display
+function getStatusLabel(statusId: number): string {
+    const statusMap: Record<number, string> = {
+        67: 'Draft',
+        19: 'Demo',
+        68: 'Published'
+    }
+    return statusMap[statusId] || `Status ${statusId}`
+}
+
+// Parse image data from img_square/img_wide fields
 function parseProjectImageData(project: any): ImgShapeData | undefined {
     if (!project) {
         debug.log('parseProjectImageData: No project')
@@ -213,8 +200,7 @@ function parseProjectImageData(project: any): ImgShapeData | undefined {
     debug.log('parseProjectImageData called with:', {
         project,
         img_square: project.img_square,
-        img_wide: project.img_wide,
-        cimg: project.cimg
+        img_wide: project.img_wide
     })
 
     // Try to get image data from img_square or img_wide fields
@@ -256,105 +242,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Roadworks modal styling */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1200;
-    padding: 2rem;
-}
-
-.roadworks-modal {
-    position: relative;
-    max-width: 32rem;
-    width: 100%;
-    background: var(--color-card-bg);
-    border-radius: 0.75rem;
-    padding: 2rem;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-.modal-close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    background: rgba(0, 0, 0, 0.1);
-    color: var(--color-text);
-    border: none;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.modal-close-btn:hover {
-    background: rgba(0, 0, 0, 0.2);
-    transform: scale(1.1);
-}
-
-.roadworks-content {
-    text-align: center;
-}
-
-.roadworks-image {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 1.5rem;
-    opacity: 0.8;
-}
-
-.roadworks-content h3 {
-    font-size: 1.5rem;
-    margin: 0 0 1rem;
-    color: var(--color-text);
-}
-
-.roadworks-content p {
-    margin: 0.75rem 0;
-    line-height: 1.6;
-    color: var(--color-text);
-}
-
-.roadworks-content a {
-    text-decoration: none;
-}
-
-.roadworks-content a:hover {
-    text-decoration: underline;
-}
-
-/* Modal transitions */
-.modal-enter-active,
-.modal-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.modal-enter-active .roadworks-modal,
-.modal-leave-active .roadworks-modal {
-    transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-.modal-enter-from .roadworks-modal,
-.modal-leave-to .roadworks-modal {
-    transform: scale(0.9);
-    opacity: 0;
-}
-
 /* Project info row styling */
 .project-info-row {
     display: flex;
@@ -363,6 +250,7 @@ onMounted(async () => {
     background: var(--color-card-bg);
     border-top: 1px solid var(--color-border);
     font-size: 0.875rem;
+    flex-wrap: wrap;
 }
 
 .info-item {
@@ -378,5 +266,33 @@ onMounted(async () => {
 
 .info-value {
     color: var(--color-text);
+}
+
+/* Website button styling */
+.website-button {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-text);
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.website-button:hover {
+    background: var(--color-accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.website-button:active {
+    transform: translateY(0);
 }
 </style>

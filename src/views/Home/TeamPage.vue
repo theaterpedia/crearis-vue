@@ -50,7 +50,10 @@
                 <div style="margin-top: 2rem;">
                     <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
                         Details)</h3>
-                    <pListSimple entity="instructors" :statusGt="1" size="small" onActivate="modal" />
+                    <Prose>
+                        <Heading is="h2" headline="Our Team" />
+                        <pList entity="instructors" :statusGt="1" size="small" onActivate="modal" />
+                    </Prose>
                 </div>
             </template>
 
@@ -70,9 +73,9 @@ import PageContent from '@/components/PageContent.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import TeamPageHero from './HomeComponents/TeamPageHero.vue'
-import pListSimple from '@/components/clist/pListSimple.vue'
+import pList from '@/components/page/pList.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'

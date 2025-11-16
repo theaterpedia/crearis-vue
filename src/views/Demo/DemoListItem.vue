@@ -385,29 +385,29 @@
                     <!-- Demo Start: List SimplePreview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">Start: Events Medium (Click to View Details)</h3>
-                        <pListSimple entity="events" :project="FIXED_PROJECT_ID" size="medium"
-                            interaction="previewmodal" :dataMode="false" />
+                        <pList entity="events" :project="FIXED_PROJECT_ID" size="medium" interaction="previewmodal"
+                            :dataMode="false" />
                     </div>
 
                     <!-- Demo Team: List SimplePreview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
                             Details)</h3>
-                        <pListSimple entity="instructors" :project="FIXED_PROJECT_ID" size="small"
-                            interaction="previewmodal" :dataMode="false" />
+                        <pList entity="instructors" :project="FIXED_PROJECT_ID" size="small" interaction="previewmodal"
+                            :dataMode="false" />
                     </div>
 
                     <!-- Demo BLog: Start SimplePreview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">Start: Events Medium</h3>
-                        <pListSimple entity="posts" :project="FIXED_PROJECT_ID" size="medium" interaction="previewmodal"
+                        <pList entity="posts" :project="FIXED_PROJECT_ID" size="medium" interaction="previewmodal"
                             :dataMode="false" />
                     </div>
 
                     <!-- Demo BLog: Dev SimplePreview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">Dev: Posts Medium</h3>
-                        <pListSimple entity="posts" project="dev" size="medium" interaction="previewmodal"
+                        <pList entity="posts" project="dev" size="medium" interaction="previewmodal"
                             :dataMode="false" />
                     </div>
 
@@ -511,7 +511,7 @@
                     <!-- Demo 1: Gallery Simple with Preview Modal -->
                     <div style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem;">1. Simple Gallery with Preview Modal</h3>
-                        <pGallerySimple entity="events" :project="FIXED_PROJECT_ID" size="medium" onActivate="modal" />
+                        <pGallery entity="events" :project="FIXED_PROJECT_ID" size="medium" onActivate="modal" />
                     </div>
 
                     <!-- Demo 2: Gallery with Preview Modal -->
@@ -561,12 +561,10 @@ import PageLayout from '@/components/PageLayout.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import StartPageHero from '../Home/HomeComponents/StartPageHero.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
-import pGallerySimple from '@/components/clist/pGallerySimple.vue'
-import pListSimple from '@/components/clist/pListSimple.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'

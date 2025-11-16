@@ -6,8 +6,6 @@
                 <div class="footer-section footer-about">
                     <Prose>
                         <p><strong>Theaterpedia</strong> - {{ pageSettings.claim }}</p>
-                        <p>Connecting artists, projects, and audiences in the world of theater. Building the future of
-                            theater community platforms.</p>
                     </Prose>
                 </div>
 
@@ -56,8 +54,8 @@
 </template>
 
 <script lang="ts" setup>
-import Container from './Container.vue'
-import Prose from './Prose.vue'
+import Container from '@/components/Container.vue'
+import Prose from '@/components/Prose.vue'
 import SocialMediaSection from '@/views/Home/HomeComponents/SocialMediaSection.vue'
 import { pageSettings } from '@/settings'
 </script>

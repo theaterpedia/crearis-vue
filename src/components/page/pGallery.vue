@@ -31,8 +31,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import ItemGallery from './ItemGallery.vue'
-import ItemModalCard from './ItemModalCard.vue'
+import ItemGallery from '@/components/clist/ItemGallery.vue'
+import ItemModalCard from '@/components/clist/ItemModalCard.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {

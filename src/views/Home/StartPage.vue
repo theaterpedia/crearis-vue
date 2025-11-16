@@ -195,8 +195,8 @@
             <!-- Aside Section -->
             <template #aside>
                 <!-- Upcoming Events -->
-                <pListSimple entity="events" project="start" size="small" width="inherit" columns="off"
-                    headingLevel="h4" variant="square" onActivate="modal" />
+                <pList entity="events" project="start" size="small" width="inherit" columns="off" headingLevel="h4"
+                    variant="square" onActivate="modal" />
             </template>
 
             <!-- Upcoming Events Section
@@ -222,10 +222,9 @@ import PageLayout from '@/components/PageLayout.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import StartPageHero from './HomeComponents/StartPageHero.vue'
 import pList from '@/components/page/pList.vue'
-import pListSimple from '@/components/clist/pListSimple.vue'
 import CreateInteraction from '@/components/forms/CreateInteraction.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'

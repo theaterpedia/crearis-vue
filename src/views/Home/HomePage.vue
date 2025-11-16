@@ -62,6 +62,14 @@
             </Section>
             -->
 
+            <!-- Events Section  -->
+            <Section>
+                <Container>
+                    <h2 style="margin-bottom: 1rem;">nächste Veranstaltungen</h2>
+                    <pGallery entity="events" project="start" size="medium" onActivate="modal" />
+                </Container>
+            </Section>
+
             <!-- Page Content -->
             <PageContent page-type="landing" :project-domain-code="project.domaincode"
                 :project-id="String(project.id)" />
@@ -69,11 +77,13 @@
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection />
 
+
             <!-- Blog Posts Section  -->
-            <Section background="accent">
+            <Section background="muted">
                 <Container>
-                    <pGallerySimple entity="posts" project="dev" item-type="card" size="medium" variant="wide"
-                        onActivate="modal" header="Latest from Our Blog" is-footer />
+                    <h2 style="margin-bottom: 1rem;">Blog Beiträge</h2>
+                    <pGallery entity="posts" project="dev" item-type="tile" variant="wide" onActivate="modal"
+                        header="Latest from Our Blog" is-footer />
                 </Container>
             </Section>
 
@@ -100,12 +110,11 @@ import Container from '@/components/Container.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import PageContent from '@/components/PageContent.vue'
 import HomePageHero from './HomeComponents/HomePageHero.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
-import pGallerySimple from '@/components/clist/pGallerySimple.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'

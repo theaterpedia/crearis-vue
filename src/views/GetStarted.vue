@@ -179,7 +179,7 @@ import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
 import Footer from '@/components/Footer.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 
 const router = useRouter()
 

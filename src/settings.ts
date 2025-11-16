@@ -29,7 +29,7 @@ export const pageSettings = {
   showAside: true,
   showBottom: true,
   alertBanner: {
-    message: 'ACHTUNG: Diese Website befindet sich im Aufbau. Einige Inhalte sind noch nicht verfügbar.',
+    message: 'ACHTUNG! Theaterpedia befindet sich bis JAN 2026 in der Alpha-Phase: Fehler im Design sind erwartbar, bitte Geduld bei fehlendem Inhalt.',
     alertType: 'warning' as const,
   },
 }// ============================================================================

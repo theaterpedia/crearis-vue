@@ -128,8 +128,8 @@
             :content="footerOptions.postit.content" :color="footerOptions.postit.color" :isFooter="true" />
 
           <!-- pSlider -->
-          <pSlider v-if="footerOptions.slider?.type" :type="footerOptions.slider.type"
-            :header="footerOptions.slider.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
+          <pSlider v-if="footerOptions.slider?.type" :entity="footerOptions.slider.type"
+            :header="footerOptions.slider.header" :isFooter="true" :project="projectDomaincode" />
 
           <!-- pRepeat -->
           <pRepeat v-if="footerOptions.repeat?.enabled" :title="footerOptions.repeat.title"

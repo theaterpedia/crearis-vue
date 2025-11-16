@@ -125,7 +125,7 @@
                                     <h4>{{ userItem.username }}</h4>
                                     <p><strong>Role:</strong> {{ userItem.role }}</p>
                                     <p v-if="userItem.created_at"><em>Member since {{ formatDate(userItem.created_at)
-                                            }}</em>
+                                    }}</em>
                                     </p>
                                 </Prose>
                             </Slide>
@@ -166,7 +166,7 @@ import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import Footer from '@/components/Footer.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 
 const router = useRouter()
 const { getStatusIdByName, getStatusDisplayName, initializeCache } = useStatus()

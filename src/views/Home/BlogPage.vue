@@ -49,7 +49,10 @@
                 <div style="margin-top: 2rem;">
                     <h3 style="margin-bottom: 1rem;">Posts small Preview Modal (Click to View
                         Details)</h3>
-                    <pListSimple entity="posts" size="medium" project="dev" onActivate="modal" />
+                    <Prose>
+                        <Heading is="h2" headline="Latest Articles" />
+                        <pList entity="posts" size="medium" project="dev" onActivate="modal" />
+                    </Prose>
                 </div>
             </template>
 
@@ -71,10 +74,10 @@ import PageLayout from '@/components/PageLayout.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
-import HomeSiteFooter from '@/components/homeSiteFooter.vue'
+import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import BlogPageHero from './HomeComponents/BlogPageHero.vue'
 import pGallery from '@/components/page/pGallery.vue'
-import pListSimple from '@/components/clist/pListSimple.vue'
+import pList from '@/components/page/pList.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
