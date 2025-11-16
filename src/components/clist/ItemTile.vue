@@ -70,9 +70,19 @@
             <div class="tile-image">
                 <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'square'" :avatar="shouldUseAvatar" />
                 <img v-else-if="cimg" :src="cimg" :alt="heading" loading="lazy" />
+
+                <!-- Stats line for large size (below image) -->
+                <div v-if="size === 'large' && statsLine" class="tile-stats">
+                    {{ statsLine }}
+                </div>
             </div>
             <div class="tile-heading">
                 <HeadingParser :content="heading" :as="headingLevel" :compact="false" scope="element" v-bind="$attrs" />
+
+                <!-- Teaser text for large size (below heading) -->
+                <div v-if="size === 'large' && teaser" class="tile-teaser">
+                    {{ teaser }}
+                </div>
             </div>
         </template>
     </div>
@@ -87,16 +97,20 @@ const debug = createDebugger('ItemTile')
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 import CornerBanner from '@/components/CornerBanner.vue'
+import { formatDateTime } from '@/plugins/dateTimeFormat'
 
 interface Props {
     heading: string
     cimg?: string
-    size?: 'medium' // Only medium size supported
+    size?: 'medium' | 'large' // medium (default) or large with stats/teaser
     data?: ImgShapeData
     shape?: 'square' | 'wide' | 'thumb' | 'vertical'
     deprecated?: boolean // Flag for deprecated cimg usage
     styleCompact?: boolean // Controls layout: true = overlay, false = beside
     headingLevel?: 'h3' | 'h4' | 'h5' // Configurable heading level
+    teaser?: string // Teaser text for large size
+    dateBegin?: string // ISO date string for events (large size stats)
+    dateEnd?: string // ISO date string for events (large size stats)
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
 }
@@ -126,7 +140,7 @@ const entityType = computed(() => props.models?.entityType)
 const badgeColor = computed(() => props.models?.badgeColor || 'primary')
 
 // Icon mapping for entity types
-const entityIcons = {
+const entityIcons: Record<string, string> = {
     'instructor': '👤',
     'user': '👤',
     'event': '👥',
@@ -138,6 +152,25 @@ const entityIcons = {
 const entityIcon = computed(() => {
     if (!entityType.value) return ''
     return entityIcons[entityType.value] || ''
+})
+
+// Stats line for large size
+const statsLine = computed(() => {
+    if (props.size !== 'large') return ''
+
+    // For events, show date range without time
+    if (entityType.value === 'event' && (props.dateBegin || props.dateEnd)) {
+        return formatDateTime({
+            start: props.dateBegin,
+            end: props.dateEnd,
+            showTime: false,
+            format: 'standard',
+            rows: 'row'
+        })
+    }
+
+    // Could add other entity-specific stats here
+    return ''
 })
 
 // Avatar option decision logic
@@ -167,11 +200,13 @@ if (debug.isEnabled()) debug.log('Props:', {
     heading: props.heading,
     size: props.size,
     shape: props.shape,
-    variant: props.variant,
     dataMode: dataMode.value,
     hasData: !!props.data,
     styleCompact: props.styleCompact,
-    headingLevel: props.headingLevel
+    headingLevel: props.headingLevel,
+    teaser: props.teaser,
+    dateBegin: props.dateBegin,
+    dateEnd: props.dateEnd
 })
 if (props.data) {
     if (debug.isEnabled()) debug.log('Image data:', props.data)
@@ -423,9 +458,19 @@ if (props.data) {
     object-position: center;
 }
 
+/* Stats line styling (for large size) */
+.tile-stats {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-text-subtle);
+    padding: 0.5rem 0.25rem 0;
+    text-align: center;
+}
+
 .tile-heading {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
     padding: 24px 12px 24px 12px;
     /* 24px vertical, 12px left of heading */
     min-width: 0;
@@ -450,5 +495,14 @@ if (props.data) {
     /* Critical: ensure heading itself can shrink */
     width: 100%;
     /* Take full available width */
+}
+
+/* Teaser text styling (for large size) */
+.tile-teaser {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    margin-top: 0.5rem;
+    max-width: 100%;
 }
 </style>
