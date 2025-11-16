@@ -69,6 +69,7 @@ import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 import { useTheme } from '@/composables/useTheme'
 import type { ItemOptions, ItemModels } from './types'
 import CornerBanner from '@/components/CornerBanner.vue'
+import { formatDateTime } from '@/plugins/dateTimeFormat'
 
 interface Props {
     heading: string
@@ -80,7 +81,8 @@ interface Props {
     deprecated?: boolean // Flag for deprecated cimg usage
     headingLevel?: 'h3' | 'h4' | 'h5' // Configurable heading level
     headingPrefix?: string // Optional prefix for heading (e.g., event date)
-    dateBegin?: string // ISO date string for events
+    dateBegin?: string // ISO date string for events (date_begin)
+    dateEnd?: string // ISO date string for events (date_end)
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
 }
@@ -155,15 +157,18 @@ const shouldUseAvatar = computed(() => {
 })
 
 /**
- * Format date for heading prefix (German format: "FR 14.11 ")
+ * Format date prefix using the dateTimeFormat plugin
+ * Returns formatted date string for heading prefix (e.g., "FR 14.11 ")
  */
-function formatDatePrefix(dateString: string): string {
-    const date = new Date(dateString)
-    const dayNames = ['SO', 'MO', 'DI', 'MI', 'DO', 'FR', 'SA']
-    const dayName = dayNames[date.getDay()]
-    const day = date.getDate().toString().padStart(2, '0')
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    return `${dayName} ${day}.${month} `
+function formatDatePrefix(dateBegin: string, dateEnd?: string): string {
+    const formatted = formatDateTime({
+        start: dateBegin,
+        end: dateEnd || undefined,
+        format: 'standard',
+        showTime: false,
+        rows: 'row'
+    })
+    return formatted ? `${formatted} ` : ''
 }
 
 /**
@@ -174,7 +179,7 @@ const computedHeading = computed(() => {
 
     // If no explicit prefix but dateBegin is provided, format the date
     if (!prefix && props.dateBegin) {
-        prefix = formatDatePrefix(props.dateBegin)
+        prefix = formatDatePrefix(props.dateBegin, props.dateEnd)
     }
 
     if (!prefix) return props.heading
