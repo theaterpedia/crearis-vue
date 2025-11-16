@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # =============================================================================
-# Crearis Vue - Phase 2: Database Setup & Application Build
+# Crearis Vue - Phase 2a: Database Setup & Application Build
 # =============================================================================
 # Run as: pruvious (or your DEPLOY_USER)
 # Purpose: Set up PostgreSQL database, install dependencies, build application
+#          Stops BEFORE running migration 021 (system data seeding)
 #          PostgreSQL user 'crearis_admin' must be created before running
 # =============================================================================
 
@@ -258,7 +259,7 @@ setup_source_data_symlink() {
 
 # Run database migrations
 run_migrations() {
-    log "🔄 Running database migrations..."
+    log "🔄 Running database migrations (000-020)..."
     
     cd "$SOURCE_DIR"
     
@@ -275,35 +276,13 @@ run_migrations() {
         log "Running automatic migrations (000-020)..."
         pnpm run db:migrate
         
-        log "📦 Migration 021 is manual-only and must be run separately"
-        log "   Run: pnpm db:migrate:021"
+        log "📦 Migration 021 is manual-only and will be run in Phase 2b"
         log "   This seeds system data (tags, status, users, projects)"
     else
         warning "No migration script found, skipping migrations"
     fi
     
-    success "Automatic migrations completed ✓"
-}
-
-# Run manual migration 021
-run_migration_021() {
-    log "📦 Running migration 021 (System Data Seeding)..."
-    
-    cd "$SOURCE_DIR"
-    
-    # Check if migrations should be skipped
-    if [[ "$SKIP_MIGRATIONS" == "true" ]]; then
-        warning "Migration 021 skipped (SKIP_MIGRATIONS=true)"
-        log "   To run manually: pnpm db:migrate:021"
-        return
-    fi
-    
-    # Check if base migrations have been run
-    log "Checking if migration 021 already applied..."
-    
-    pnpm run db:migrate:021
-    
-    success "Migration 021 completed ✓"
+    success "Automatic migrations (000-020) completed ✓"
 }
 
 # Build application
@@ -532,52 +511,54 @@ EOF
 print_next_steps() {
     echo ""
     echo "========================================================================="
-    success "✅ Phase 2 Complete: Application Built & Database Ready"
+    success "✅ Phase 2a Complete: Application Built & Base Migrations Run"
     echo "========================================================================="
     echo ""
     echo "📋 Build Summary:"
     echo "  Frontend: Vite → server/public/ → .output/public/"
     echo "  Backend: Nitro → .output/server/"
     echo "  Symlink: $LIVE_DIR/server/data → $DATA_DIR"
+    echo "  Migrations: 000-020 completed"
+    echo "  Migration 021: NOT YET RUN (system data seeding)"
+    echo ""
+    echo "⚠️  IMPORTANT: Before proceeding to Phase 2b"
+    echo ""
+    echo "  Phase 2b will run migration 021 which seeds:"
+    echo "    - System tags (empty table)"
+    echo "    - Status values (~48 rows)"
+    echo "    - System users (6 users: admin, base, tp, regio1, user, spectator)"
+    echo "    - Demo projects (tp, regio1)"
+    echo "    - Domains, memberships, pages"
+    echo ""
+    echo "  Phase 2b includes pre-flight checks to verify:"
+    echo "    - Database connection is working"
+    echo "    - Migrations table exists and is accessible"
+    echo "    - Base migrations (000-020) completed successfully"
+    echo "    - Migration 021 has not already been applied"
     echo ""
     echo "📋 Next Steps:"
     echo ""
-    echo "1. Start/restart the application (as $DEPLOY_USER):"
+    echo "1. Run Phase 2b to seed system data (as $DEPLOY_USER):"
+    echo "   cd $SCRIPT_DIR"
+    echo "   bash server_deploy_phase2b_seed.sh"
+    echo ""
+    echo "2. After Phase 2b completes, start the application:"
     echo "   cd $LIVE_DIR"
-    echo "   pm2 delete crearis-vue 2>/dev/null || true  # Stop old process"
+    echo "   pm2 delete crearis-vue 2>/dev/null || true"
     echo "   pm2 start ecosystem.config.js"
     echo "   pm2 save"
-    echo "   pm2 startup  # Follow instructions to enable on boot"
+    echo "   pm2 startup  # Follow instructions"
     echo ""
-    echo "2. Check application status:"
-    echo "   pm2 status"
-    echo "   pm2 logs crearis-vue --lines 50"
-    echo ""
-    echo "3. Verify symlink is working:"
-    echo "   ls -la $LIVE_DIR/server/data"
-    echo "   ls -la $DATA_DIR/PASSWORDS.csv"
-    echo ""
-    echo "4. Distribute passwords to users (SECURITY):"
-    echo "   - Copy $DATA_DIR/PASSWORDS.csv securely"
-    echo "   - Distribute via encrypted channel"
-    echo "   - Delete or encrypt PASSWORDS.csv after distribution"
-    echo "   - See docs/PASSWORD_SYSTEM.md for details"
-    echo ""
-    echo "5. (Optional) Import additional users:"
-    echo "   - Create import-users.csv with user data"
-    echo "   - Upload to $DATA_DIR/import/"
-    echo "   - Run: bash scripts/import-users.sh"
-    echo "   - See docs/USER_IMPORT_SYSTEM.md for details"
-    echo ""
-    echo "6. Run Phase 3 as root to configure domains and SSL:"
-    echo "   sudo bash $SCRIPTS_DIR/server_deploy_phase3_domain.sh"
+    echo "3. Or manually run migration 021 if needed:"
+    echo "   cd $SOURCE_DIR"
+    echo "   pnpm db:migrate:021"
     echo ""
     echo "========================================================================="
 }
 
 # Main execution
 main() {
-    log "🚀 Starting Phase 2: Database & Build"
+    log "🚀 Starting Phase 2a: Database & Build (WITHOUT Migration 021)"
     
     check_user
     load_config
@@ -588,7 +569,6 @@ main() {
     install_dependencies
     setup_source_data_symlink
     run_migrations
-    run_migration_021
     build_application
     sync_to_live
     setup_output_structure
