@@ -59,6 +59,19 @@
                 <HeadingParser :content="heading" :as="headingLevel" :compact="true" scope="element" v-bind="$attrs" />
             </div>
 
+            <!-- Event Info Row (date + instructor/location) -->
+            <div v-if="isEvent && (hasEventDate || hasEventDetails)" class="event-info-row">
+                <div v-if="hasEventDate" class="event-date">
+                    <div v-for="(line, index) in formattedEventDate.split('\n')" :key="index" class="date-line">
+                        {{ line }}
+                    </div>
+                </div>
+                <div v-if="hasEventDetails" class="event-details">
+                    <div v-if="instructorName" class="event-instructor">{{ instructorName }}</div>
+                    <div v-if="locationName" class="event-location">{{ locationName }}</div>
+                </div>
+            </div>
+
             <!-- Card Meta (slot for additional content) -->
             <div v-if="$slots.default" class="card-meta">
                 <slot></slot>
@@ -101,6 +114,7 @@ import HeadingParser from '../HeadingParser.vue'
 import ImgShape, { type ImgShapeData } from '@/components/images/ImgShape.vue'
 import type { ItemOptions, ItemModels } from './types'
 import CornerBanner from '@/components/CornerBanner.vue'
+import { formatDateTime } from '@/plugins/dateTimeFormat'
 
 interface Props {
     heading: string
@@ -112,6 +126,11 @@ interface Props {
     deprecated?: boolean // Flag for deprecated cimg usage
     options?: ItemOptions // Visual indicators config
     models?: ItemModels // Item state models
+    // Event-specific fields
+    dateBegin?: string
+    dateEnd?: string
+    instructorName?: string
+    locationName?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -162,6 +181,22 @@ const entityIcons = {
 const entityIcon = computed(() => {
     if (!entityType.value) return ''
     return entityIcons[entityType.value as keyof typeof entityIcons] || ''
+})
+
+// Event detection and formatting
+const isEvent = computed(() => props.models?.entity?.table === 'events' || entityType.value === 'event')
+const hasEventDate = computed(() => isEvent.value && (props.dateBegin || props.dateEnd))
+const hasEventDetails = computed(() => props.instructorName || props.locationName)
+
+const formattedEventDate = computed(() => {
+    if (!hasEventDate.value) return ''
+    return formatDateTime({
+        start: props.dateBegin,
+        end: props.dateEnd,
+        format: 'standard',
+        rows: '1or2',
+        showTime: true
+    })
 })
 
 /**
@@ -427,6 +462,47 @@ const entityIcon = computed(() => {
 .card-header :deep(h4 strong),
 .card-header :deep(h5 strong) {
     color: var(--color-card-contrast);
+}
+
+/* Event Info Row */
+.event-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    background: oklch(from var(--color-card-bg) l c h / 0.6);
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.event-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.date-line {
+    color: var(--color-card-contrast);
+    white-space: nowrap;
+}
+
+.event-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.event-instructor,
+.event-location {
+    color: var(--color-card-contrast);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-instructor {
+    font-weight: 500;
 }
 
 /* Meta */

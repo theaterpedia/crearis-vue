@@ -65,8 +65,20 @@
             <!-- Events Section  -->
             <Section>
                 <Container>
-                    <h2 style="margin-bottom: 1rem;">nächste Veranstaltungen</h2>
-                    <pGallery entity="events" project="start" size="medium" onActivate="modal" />
+                    <Columns>
+                        <Column width="1/2">
+                            <h2 style="margin-bottom: 1rem;">nächste Veranstaltungen</h2>
+                            <pList entity="events" project="start" size="small" width="inherit" columns="off"
+                                headingLevel="h4" variant="square" onActivate="modal" />
+                        </Column>
+                        <Column width="auto">
+                            <Prose>
+                                <Heading overline="Showcase für entstehende Projekte" is="h2"
+                                    headline="Ca. 10 Websites in der Pipeline">New **Projects** in
+                                    the Pipeline</Heading>
+                            </Prose>
+                        </Column>
+                    </Columns>
                 </Container>
             </Section>
 
@@ -115,6 +127,10 @@ import PageContent from '@/components/PageContent.vue'
 import HomePageHero from './HomeComponents/HomePageHero.vue'
 import pList from '@/components/page/pList.vue'
 import pGallery from '@/components/page/pGallery.vue'
+import Columns from '@/components/Columns.vue'
+import Column from '@/components/Column.vue'
+import Prose from '@/components/Prose.vue'
+import Heading from '@/components/Heading.vue'
 import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vue'
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
