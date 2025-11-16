@@ -1,10 +1,8 @@
 <template>
-  <Prose>
-    <component
-      :is="is"
-      class="heading"
-      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '']"
-    >
+  <Prose :scope="scope">
+    <component :is="is" class="heading"
+      :class="[hasOverline || hasSubline ? 'twoliner' : 'oneliner', fancyShortCode ? 'twocolums' : '', compact ? 'compact' : '', isEmptyHeadline ? 'empty-headline' : '']"
+      :style="{ opacity: opacity }">
       <span v-if="fancyShortCode" class="shortcode-float">{{ shortcode }}</span>
       <template v-if="hasOverline">
         <span v-if="extLineShortCode" class="shortcode">{{ shortcode }}</span>
@@ -29,7 +27,7 @@
 
 <script lang="ts" setup>
 import Prose from './Prose.vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
 import type { PropType } from 'vue'
 
 const props = defineProps({
@@ -84,17 +82,47 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * Compact mode - scales down overline/subline by one step
+   * Useful for cards and smaller containers
+   */
+  compact: {
+    type: Boolean,
+    default: false,
+  },
+  /**
+   * Opacity of the heading content (0-1)
+   * @default 1
+   */
+  opacity: {
+    type: Number,
+    default: 1,
+  },
+  /**
+   * Scope of prose content
+   * - 'page': Full page content with max-width and page-level heading sizes (default)
+   * - 'element': Component-level content with no width constraints and smaller heading sizes
+   * @default 'page'
+   */
+  scope: {
+    type: String as PropType<'page' | 'element'>,
+    default: 'page',
+  },
 })
 
 // TODO: detect mobile
 // const isMobile = false
 
 // TODO:  maybe refactor towards crearis 1.0 once runnung to have less computations
-const hasOverline = ref(props.overline || (!props.subline && props.tags))
-const hasSubline = ref(!hasOverline.value && (props.subline || props.tags))
-const mainLineShortCode = ref(props.shortcode && !hasOverline.value && !hasSubline.value)
-const extLineShortCode = ref(props.shortcode && props.isMobile && !mainLineShortCode.value)
-const fancyShortCode = ref(props.shortcode && !props.isMobile && (hasOverline.value || hasSubline.value))
+const hasOverline = computed(() => props.overline || (!props.subline && props.tags))
+const hasSubline = computed(() => !hasOverline.value && (props.subline || props.tags))
+const mainLineShortCode = computed(() => props.shortcode && !hasOverline.value && !hasSubline.value)
+const extLineShortCode = computed(() => props.shortcode && props.isMobile && !mainLineShortCode.value)
+
+// Special case: Empty headline (only whitespace)
+// Used for metadata display like image credits where we want overline/subline at edges
+const isEmptyHeadline = computed(() => !props.headline || props.headline.trim() === '')
+const fancyShortCode = computed(() => props.shortcode && !props.isMobile && (hasOverline.value || hasSubline.value))
 </script>
 
 <style scoped>
@@ -119,31 +147,78 @@ const fancyShortCode = ref(props.shortcode && !props.isMobile && (hasOverline.va
   margin-right: 0.15em;
   line-height: 0.9;
 }
+
 :where(h1, h2, h3).heading.twoliner :where(strong) {
   line-height: 1.05;
 }
 
-:where(h1, .h1) > span.shortcode-float {
+:where(h1, .h1)>span.shortcode-float {
   font-size: 4.4em;
 }
 
-:where(h2, .h2) > span.shortcode-float {
+:where(h2, .h2)>span.shortcode-float {
   font-size: 3.8em;
 }
 
-:where(h3, .h3) > span.shortcode-float {
+:where(h3, .h3)>span.shortcode-float {
   font-size: 3em;
 }
 
-.overline {
+.overline,
+.subline {
+  display: block;
   font-weight: 300;
   text-decoration-line: none;
 }
 
-.twoliner {
+/* Size overline and subline relative to the heading level */
+:where(h1, .h1) .overline,
+:where(h1, .h1) .subline {
+  font-size: 0.875em;
+  line-height: 1.3;
 }
 
-.oneliner {
+:where(h2, .h2) .overline,
+:where(h2, .h2) .subline {
+  font-size: 0.75em;
+  line-height: 1.3;
+}
+
+:where(h3, .h3) .overline,
+:where(h3, .h3) .subline {
+  font-size: 0.7em;
+  line-height: 1.3;
+}
+
+/* Compact mode - scale down overline/subline slightly */
+:where(h1, .h1).compact .overline,
+:where(h1, .h1).compact .subline {
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+:where(h2, .h2).compact .overline,
+:where(h2, .h2).compact .subline {
+  font-size: 0.8em;
+  line-height: 1.3;
+}
+
+:where(h3, .h3).compact .overline,
+:where(h3, .h3).compact .subline {
+  font-size: 0.75em;
+  line-height: 1.3;
+}
+
+:where(h4, .h4).compact .overline,
+:where(h4, .h4).compact .subline {
+  font-size: 0.7em;
+  line-height: 1.3;
+}
+
+:where(h5, .h5).compact .overline,
+:where(h5, .h5).compact .subline {
+  font-size: 0.65em;
+  line-height: 1.3;
 }
 
 /* Add your styles here / deactivated

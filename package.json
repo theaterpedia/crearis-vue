@@ -1,55 +1,103 @@
 {
-  "name": "crearis-demo-data",
-  "version": "0.1.0",
-  "description": "Standalone server application providing Vue UI components and demo data API endpoints",
-  "author": "theaterpedia",
+  "name": "crearis-vue",
+  "version": "0.0.1",
+  "description": "Crearis Vue - A comprehensive Vue 3 application for managing theater projects, events, posts, and educational content with dynamic page layouts, admin dashboard, and real-time collaboration features",
+  "author": "Hans Dönitz <hans.doenitz@theaterpedia.org>",
+  "copyright": "(c) Hans Dönitz, hans.doenitz@theaterpedia.org 2025",
   "license": "MIT",
-  "homepage": "https://github.com/theaterpedia/demo-data#readme",
+  "homepage": "https://github.com/theaterpedia/crearis-vue#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/theaterpedia/demo-data.git"
+    "url": "git+https://github.com/theaterpedia/crearis-vue.git"
   },
   "bugs": {
-    "url": "https://github.com/theaterpedia/demo-data/issues"
+    "url": "https://github.com/theaterpedia/crearis-vue/issues"
   },
   "keywords": [
     "vue",
+    "vue3",
     "nitro",
     "server",
-    "demo-data",
+    "theater",
+    "project-management",
+    "cms",
     "sqlite",
+    "postgresql",
     "api",
     "theaterpedia",
-    "crearis"
+    "crearis",
+    "education",
+    "events"
   ],
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
   },
   "type": "module",
   "scripts": {
-    "dev": "nitro dev",
+    "dev": "concurrently \"pnpm:dev:backend\" \"pnpm:dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "dev:frontend": "vite",
+    "dev:backend": "nitro dev",
+    "prebuild": "vite build",
     "build": "nitro build",
-    "start": "node .output/server/index.mjs",
+    "start": "NODE_ENV=production node .output/server/index.mjs",
     "preview": "nitro preview",
-    "prepare": "nitro prepare"
+    "prepare": "nitro prepare",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:unit": "SKIP_MIGRATIONS=true vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:sqlite": "TEST_DATABASE_TYPE=sqlite vitest run",
+    "test:pg": "TEST_DATABASE_TYPE=postgresql vitest run",
+    "test:pgintegration": "tsx tests/scripts/run-pg-integration.ts",
+    "test:pgintegration:batch": "TEST_DATABASE_TYPE=postgresql vitest run --grep='@pgintegration'",
+    "test:watch": "vitest watch",
+    "db:migrate": "tsx server/database/migrations/run.ts",
+    "db:migrate:status": "tsx server/database/migrations/run.ts --status",
+    "db:rebuild": "tsx server/database/drop-and-rebuild-pg.ts",
+    "db:check-structure": "tsx server/database/check-structure.ts",
+    "db:check-structure:version": "tsx server/database/check-structure.ts",
+    "db:backup": "bash scripts/backup-production-db.sh",
+    "db:restore": "bash scripts/restore-from-production.sh",
+    "user:import": "tsx server/scripts/import-users.ts",
+    "version:check": "tsx server/database/check-structure.ts",
+    "version:bump": "tsx server/database/update-version.ts"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.0",
+    "bcryptjs": "^3.0.2",
     "better-sqlite3": "8.7.0",
+    "blurhash": "^2.0.5",
+    "floating-vue": "^5.2.2",
     "focus-trap": "^7",
+    "marked": "^16.4.1",
     "nanoid": "^5.0.7",
     "nitro": "^3.0.0",
+    "sharp": "^0.34.5",
     "swiper": "^11.1.8",
     "vue": "latest",
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.6",
+    "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.12",
+    "@types/pg": "^8.11.10",
+    "@types/sharp": "^0.32.0",
     "@vitejs/plugin-vue": "^5.1.0",
+    "@vitest/ui": "^2.1.8",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.2.3",
+    "happy-dom": "^20.0.10",
+    "pg": "^8.13.1",
+    "tsx": "^4.20.6",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
+    "vitest": "^2.1.8",
     "vue-tsc": "^2.1.10"
   }
 }

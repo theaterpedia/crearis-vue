@@ -1,244 +1,184 @@
 <template>
   <div class="demo-page">
-    <!-- Hero Section with Event Showcase -->
-    <Box layout="full-width">
-      <Main>
-        <Hero
-          v-if="currentEvent"
-          :imgTmp="currentEvent.cimg"
-          imgTmpAlignX="cover"
-          imgTmpAlignY="center"
-          contentType="banner"
-          heightTmp="prominent"
-        >
-          <Banner transparent>
-            <!-- Edit button (only visible when using SQL data source) -->
-            <button
-              v-if="dataSource === 'sql'"
-              class="hero-edit-btn"
-              @click="openEditModal"
-              aria-label="Hero bearbeiten"
-              title="Hero bearbeiten"
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+    <!-- Navbar -->
+    <Navbar :user="user" :full-width="false" logo-text="🎭 Demo" @logout="logout">
+      <template #menus>
+        <!-- Events Dropdown (center content) -->
+        <div class="navbar-item events-selector" ref="eventsSelectorRef">
+          <button class="navbar-button events-toggle-btn" @click="toggleEventsDropdown" :aria-expanded="isEventsOpen">
+            <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z">
+              </path>
+            </svg>
+            <span v-if="currentEvent">{{ currentEvent.name }}</span>
+          </button>
+
+          <div v-if="isEventsOpen" class="events-dropdown">
+            <div class="events-dropdown-header">
+              <span>Veranstaltung wählen</span>
+            </div>
+
+            <button v-for="event in events" :key="event.id" class="event-option"
+              :class="{ 'event-option-active': currentEventId === event.id }" @click="selectEvent(event.id)">
+              <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="event-option-image" />
+
+              <div class="event-option-label">
+                <HeadingParser :content="event.name" as="p" />
+              </div>
+
+              <svg v-if="currentEventId === event.id" fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                xmlns="http://www.w3.org/2000/svg" class="event-option-check">
+                <path
+                  d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z">
+                </path>
               </svg>
-            </button>
-
-            <Prose>
-              <h1>
-                {{ formatEventDate(currentEvent.date_begin) }} – {{ formatEventDate(currentEvent.date_end) }}
-                <strong>{{ currentEvent.name }}</strong>
-              </h1>
-              <p v-if="currentEvent.rectitle">
-                <strong>{{ currentEvent.rectitle }}</strong>
-              </p>
-              <p v-if="currentEvent.teaser">{{ currentEvent.teaser }}</p>
-            </Prose>
-          </Banner>
-        </Hero>
-
-        <!-- Events Dropdown and Data Source Toggle positioned absolutely -->
-        <div class="events-dropdown-container">
-          <!-- Data Source Toggle -->
-          <div class="data-source-toggle">
-            <button
-              :class="['source-btn', { active: dataSource === 'csv' }]"
-              @click="dataSource = 'csv'"
-              title="CSV Daten"
-            >
-              CSV
-            </button>
-            <button
-              :class="['source-btn', { active: dataSource === 'sql' }]"
-              @click="switchToSql"
-              title="SQL Daten"
-            >
-              SQL
             </button>
           </div>
+        </div>
 
-          <div class="events-toggle" ref="toggleRef">
-            <button 
-              class="events-toggle-button" 
-              @click="toggleEventsDropdown"
-              aria-label="Veranstaltung wählen"
-              :aria-expanded="isEventsOpen"
-            >
-              <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,112H96v88H40Zm176,88H112V112H216v88Z"></path>
-              </svg>
-            </button>
+        <!-- Data Source Toggle -->
+        <div class="navbar-item mode-toggle">
+          <button :class="['mode-btn', { active: dataSource === 'csv' }]" @click="dataSource = 'csv'"
+            title="CSV Daten (alte Daten)">
+            view/old
+          </button>
+          <button :class="['mode-btn', { active: dataSource === 'sql' }]" @click="switchToSql" title="SQL Daten">
+            edit/create
+          </button>
+        </div>
+      </template>
+    </Navbar>
 
-            <div v-if="isEventsOpen" class="events-toggle-dropdown">
-              <div class="events-toggle-header">
-                <span>Veranstaltungen</span>
-              </div>
-              
-              <button
-                v-for="event in events"
-                :key="event.id"
-                class="events-toggle-option"
-                :class="{ 'events-toggle-option-active': currentEventId === event.id }"
-                @click="selectEvent(event.id)"
-              >
-                <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="events-option-image" />
-                
-                <div class="events-toggle-label">
-                  <strong>{{ event.name }}</strong>
-                  <span v-if="event.rectitle" class="events-toggle-description">{{ event.rectitle }}</span>
-                </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Hero Section -->
+      <div v-if="currentEvent" class="demo-hero">
+        <div class="hero-image" v-if="currentEvent.cimg">
+          <img :src="currentEvent.cimg" :alt="currentEvent.name" />
+        </div>
 
-                <svg 
-                  v-if="currentEventId === event.id"
-                  fill="currentColor" 
-                  height="16" 
-                  viewBox="0 0 256 256" 
-                  width="16" 
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="events-toggle-check"
-                >
-                  <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
-                </svg>
-              </button>
+        <div class="hero-content">
+          <HeadingParser :content="currentEvent.name" as="h2" />
+          <p v-if="currentEvent.teaser" class="hero-teaser">{{ currentEvent.teaser }}</p>
+          <div class="hero-dates">
+            {{ formatEventDate(currentEvent.date_begin) }} – {{ formatEventDate(currentEvent.date_end) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Posts Section -->
+      <div v-if="currentEventPosts.length > 0" class="content-section">
+        <h3 class="section-title">Aktuelle Beiträge</h3>
+        <div class="entity-grid">
+          <div v-for="post in currentEventPosts" :key="post.id" class="entity-card">
+            <img v-if="post.cimg" :src="post.cimg" :alt="post.name" class="entity-image" />
+
+            <div class="entity-content">
+              <HeadingParser :content="post.name" as="h4" />
+              <p v-if="post.teaser" class="entity-teaser">{{ post.teaser }}</p>
             </div>
           </div>
         </div>
-      </Main>
-    </Box>
+      </div>
 
-    <!-- Content Sections -->
-    <Box layout="centered">
-      <Main>
-        <!-- Posts Section -->
-        <Section v-if="currentEventPosts.length > 0" background="default">
-          <Container>
-            <Heading headline="Aktuelle Beiträge" is="h2" />
-            <Columns :align="'top'">
-              <Column 
-                v-for="post in currentEventPosts.slice(0, 4)" 
-                :key="post.id"
-                width="1/2"
-              >
-                <BlogPreview :post="post" />
-              </Column>
-            </Columns>
-          </Container>
-        </Section>
+      <!-- Locations Section -->
+      <div v-if="currentEventLocations.length > 0" class="content-section">
+        <h3 class="section-title">Veranstaltungsorte</h3>
+        <div class="entity-grid">
+          <div v-for="location in currentEventLocations" :key="location.id" class="entity-card">
+            <img v-if="location.cimg" :src="location.cimg" :alt="location.name" class="entity-image" />
 
-        <!-- Locations Section -->
-        <Section v-if="currentEventLocations.length > 0" background="muted">
-          <Container>
-            <Heading headline="Veranstaltungsorte" is="h2" />
-            <Columns :align="'top'">
-              <Column 
-                v-for="location in currentEventLocations.slice(0, 3)" 
-                :key="location.id"
-                :width="locationColumnWidth"
-              >
-                <LocationCard :location="location" />
-              </Column>
-            </Columns>
-          </Container>
-        </Section>
-
-        <!-- Instructors Section -->
-        <Section v-if="currentEventInstructors.length > 0" background="accent">
-          <Container>
-            <Heading headline="Kursleiter" is="h2" />
-            <Columns :align="'top'">
-              <Column 
-                v-for="instructor in currentEventInstructors.slice(0, 3)" 
-                :key="instructor.id"
-                :width="instructorColumnWidth"
-              >
-                <InstructorCard :instructor="instructor" />
-              </Column>
-            </Columns>
-          </Container>
-        </Section>
-
-        <!-- Participants Section -->
-        <Section v-if="hasParticipants" background="default">
-          <Container>
-            <Heading headline="Teilnehmer" is="h2" />
-            
-            <div v-if="currentEventChildren.length > 0" class="participant-group">
-              <Heading headline="Kinder" is="h3" />
-              <Columns :align="'top'">
-                <Column 
-                  v-for="participant in currentEventChildren.slice(0, 4)" 
-                  :key="participant.id"
-                  width="1/4"
-                >
-                  <ParticipantCard :participant="participant" />
-                </Column>
-              </Columns>
+            <div class="entity-content">
+              <HeadingParser :content="location.name" as="h4" />
+              <p v-if="location.street" class="entity-info">{{ location.street }}</p>
+              <p v-if="location.zip || location.city" class="entity-info">{{ location.zip }} {{ location.city }}</p>
             </div>
-            
-            <div v-if="currentEventTeens.length > 0" class="participant-group">
-              <Heading headline="Jugendliche" is="h3" />
-              <Columns :align="'top'">
-                <Column 
-                  v-for="participant in currentEventTeens.slice(0, 4)" 
-                  :key="participant.id"
-                  width="1/4"
-                >
-                  <ParticipantCard :participant="participant" />
-                </Column>
-              </Columns>
-            </div>
-            
-            <div v-if="currentEventAdults.length > 0" class="participant-group">
-              <Heading headline="Erwachsene" is="h3" />
-              <Columns :align="'top'">
-                <Column 
-                  v-for="participant in currentEventAdults.slice(0, 4)" 
-                  :key="participant.id"
-                  width="1/4"
-                >
-                  <ParticipantCard :participant="participant" />
-                </Column>
-              </Columns>
-            </div>
-          </Container>
-        </Section>
-      </Main>
-    </Box>
+          </div>
+        </div>
+      </div>
 
-    <!-- Hero Edit Modal -->
-    <HeroEditModal
-      :is-open="isEditModalOpen"
-      :hero-data="editingHero"
-      :available-events="events"
-      @close="closeEditModal"
-      @save="saveHeroEdit"
-    />
+      <!-- Instructors Section -->
+      <div v-if="currentEventInstructors.length > 0" class="content-section">
+        <h3 class="section-title">Kursleiter</h3>
+        <div class="entity-grid">
+          <div v-for="instructor in currentEventInstructors" :key="instructor.id" class="entity-card">
+            <img v-if="instructor.cimg" :src="instructor.cimg" :alt="instructor.name" class="entity-image" />
+
+            <div class="entity-content">
+              <HeadingParser :content="instructor.name" as="h4" />
+              <p v-if="instructor.description" class="entity-info">{{ instructor.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Participants Section -->
+      <div v-if="hasParticipants" class="content-section">
+        <h3 class="section-title">Teilnehmer</h3>
+
+        <div v-if="currentEventChildren.length > 0" class="participant-subsection">
+          <h4 class="subsection-title">Kinder</h4>
+          <div class="entity-grid participants-grid">
+            <div v-for="participant in currentEventChildren.slice(0, 4)" :key="participant.id" class="entity-card">
+              <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
+              <div class="entity-content">
+                <HeadingParser :content="participant.name" as="h5" />
+                <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="currentEventTeens.length > 0" class="participant-subsection">
+          <h4 class="subsection-title">Jugendliche</h4>
+          <div class="entity-grid participants-grid">
+            <div v-for="participant in currentEventTeens.slice(0, 4)" :key="participant.id" class="entity-card">
+              <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
+              <div class="entity-content">
+                <HeadingParser :content="participant.name" as="h5" />
+                <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="currentEventAdults.length > 0" class="participant-subsection">
+          <h4 class="subsection-title">Erwachsene</h4>
+          <div class="entity-grid participants-grid">
+            <div v-for="participant in currentEventAdults.slice(0, 4)" :key="participant.id" class="entity-card">
+              <img v-if="participant.cimg" :src="participant.cimg" :alt="participant.name" class="entity-image" />
+              <div class="entity-content">
+                <HeadingParser :content="participant.name" as="h5" />
+                <p v-if="participant.city" class="entity-info">{{ participant.city }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <DemoToggle />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useDemoData } from '../composables/useDemoData'
-import {
-  Box,
-  Main,
-  Hero,
-  Banner,
-  Prose,
-  Section,
-  Container,
-  Columns,
-  Column,
-  Heading
-} from '@/index'
-import BlogPreview from "./demo/BlogPreview.vue";
-import LocationCard from "./demo/LocationCard.vue";
-import InstructorCard from "./demo/InstructorCard.vue";
-import ParticipantCard from "./demo/ParticipantCard.vue";
-import HeroEditModal from './demo/HeroEditModal.vue'
+import DemoToggle from '@/components/DemoToggle.vue'
+import { useAuth } from '@/composables/useAuth'
+import Navbar from '@/components/Navbar.vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 
-const { 
+// Auth
+const { user, logout: authLogout } = useAuth()
+
+// Logout handler
+const logout = () => {
+  authLogout()
+}
+
+// Demo data
+const {
   events,
   currentEvent,
   currentEventId,
@@ -255,11 +195,7 @@ const {
 
 // Events dropdown state
 const isEventsOpen = ref(false)
-const toggleRef = ref<HTMLElement>()
-
-// Edit modal state
-const isEditModalOpen = ref(false)
-const editingHero = ref<any>(null)
+const eventsSelectorRef = ref<HTMLElement>()
 
 const toggleEventsDropdown = () => {
   isEventsOpen.value = !isEventsOpen.value
@@ -272,7 +208,7 @@ const selectEvent = (eventId: string) => {
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
-  if (toggleRef.value && !toggleRef.value.contains(event.target as Node)) {
+  if (eventsSelectorRef.value && !eventsSelectorRef.value.contains(event.target as Node)) {
     isEventsOpen.value = false
   }
 }
@@ -299,21 +235,11 @@ const formatEventDate = (dateString: string) => {
   }
 }
 
-// Column widths based on number of items
-const locationColumnWidth = computed(() => {
-  const count = Math.min(currentEventLocations.value.length, 3)
-  return count === 1 ? 'auto' : count === 2 ? '1/2' : '1/3'
-})
-
-const instructorColumnWidth = computed(() => {
-  const count = Math.min(currentEventInstructors.value.length, 3)
-  return count === 1 ? 'auto' : count === 2 ? '1/2' : '1/3'
-})
-
+// Computed properties
 const hasParticipants = computed(() => {
-  return currentEventChildren.value.length > 0 || 
-         currentEventTeens.value.length > 0 || 
-         currentEventAdults.value.length > 0
+  return currentEventChildren.value.length > 0 ||
+    currentEventTeens.value.length > 0 ||
+    currentEventAdults.value.length > 0
 })
 
 // Switch to SQL data source
@@ -321,189 +247,48 @@ const switchToSql = async () => {
   dataSource.value = 'sql'
   await refreshSqlData()
 }
-
-// Edit modal functions
-const openEditModal = () => {
-  if (currentEvent.value) {
-    editingHero.value = {
-      id: currentEvent.value.id,
-      cimg: currentEvent.value.cimg,
-      heading: currentEvent.value.name,
-      description: currentEvent.value.teaser || '',
-      eventIds: []
-    }
-    isEditModalOpen.value = true
-  }
-}
-
-const closeEditModal = () => {
-  isEditModalOpen.value = false
-  editingHero.value = null
-}
-
-const saveHeroEdit = async (data: any) => {
-  try {
-    const response = await fetch('/api/demo/hero', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        id: data.id,
-        cimg: data.cimg,
-        heading: data.heading,
-        description: data.description,
-        event_ids: data.eventIds?.join(',') || ''
-      })
-    })
-
-    if (response.ok) {
-      // Refresh data from SQL
-      await refreshSqlData()
-      closeEditModal()
-      
-      // Show success message (you can add a toast notification here)
-      console.log('Hero updated successfully!')
-    } else {
-      throw new Error('Failed to save hero')
-    }
-  } catch (error) {
-    console.error('Error saving hero:', error)
-    // Show error message (you can add a toast notification here)
-    alert('Fehler beim Speichern!')
-  }
-}
 </script>
 
 <style scoped>
 .demo-page {
   min-height: 100vh;
-  background-color: var(--color-bg);
-  color: var(--color-contrast);
-}
-
-/* Edit button in hero */
-.hero-edit-btn {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  background: var(--color-bg);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-card-bg);
-  border: var(--border-button) solid var(--color-border);
-  border-radius: var(--radius-button);
-  color: var(--color-contrast);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px -1px oklch(0% 0 0 / 0.1), 0 2px 4px -1px oklch(0% 0 0 / 0.06);
-  z-index: 10;
+  flex-direction: column;
 }
 
-.hero-edit-btn:hover {
-  background: var(--color-primary-bg);
-  color: var(--color-primary-contrast);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px oklch(0% 0 0 / 0.1), 0 4px 6px -2px oklch(0% 0 0 / 0.05);
-}
+/* ===== NAVBAR SLOT COMPONENTS ===== */
 
-.hero-edit-btn svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-/* Events Dropdown and Data Source Toggle positioned absolutely on hero */
-.events-dropdown-container {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Data Source Toggle */
-.data-source-toggle {
-  display: flex;
-  background: var(--color-card-bg);
-  border: var(--border-button) solid var(--color-border);
-  border-radius: var(--radius-button);
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px oklch(0% 0 0 / 0.1), 0 2px 4px -1px oklch(0% 0 0 / 0.06);
-}
-
-.source-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  background: transparent;
-  color: var(--color-dimmed);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.source-btn:hover {
-  background: var(--color-muted-bg);
-  color: var(--color-contrast);
-}
-
-.source-btn.active {
-  background: var(--color-primary-bg);
-  color: var(--color-primary-contrast);
-}
-
-/* Events Toggle Menu (matching ToggleMenu styles) */
-.events-toggle {
+/* Events Selector */
+.events-selector {
   position: relative;
-  display: inline-block;
 }
 
-.events-toggle-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: var(--border-button) solid var(--color-border);
-  border-radius: var(--radius-button);
-  background-color: var(--color-card-bg);
-  color: var(--color-card-contrast);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.events-toggle-button:hover {
-  background-color: var(--color-muted-bg);
-}
-
-.events-toggle-dropdown {
+.events-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   min-width: 20rem;
   max-width: 24rem;
-  background-color: var(--color-popover-bg);
+  background: var(--color-popover-bg);
   border: var(--border) solid var(--color-border);
   border-radius: var(--radius-button);
-  box-shadow: 0 10px 25px -3px oklch(0% 0 0 / 0.1), 0 4px 6px -2px oklch(0% 0 0 / 0.05);
-  z-index: 50;
+  box-shadow: 0 10px 25px -3px oklch(0% 0 0 / 0.1);
   max-height: 70vh;
   overflow-y: auto;
+  z-index: 200;
 }
 
-.events-toggle-header {
+.events-dropdown-header {
   padding: 0.75rem 1rem;
   border-bottom: var(--border) solid var(--color-border);
   font-weight: 500;
-  color: var(--color-contrast);
   font-size: 0.875rem;
+  color: var(--color-contrast);
 }
 
-.events-toggle-option {
+.event-option {
   display: flex;
   align-items: center;
   width: 100%;
@@ -516,16 +301,16 @@ const saveHeroEdit = async (data: any) => {
   gap: 0.75rem;
 }
 
-.events-toggle-option:hover {
-  background-color: var(--color-muted-bg);
+.event-option:hover {
+  background: var(--color-muted-bg);
 }
 
-.events-toggle-option-active {
-  background-color: var(--color-primary-bg);
+.event-option-active {
+  background: var(--color-primary-bg);
   color: var(--color-primary-contrast);
 }
 
-.events-option-image {
+.event-option-image {
   width: 3rem;
   height: 3rem;
   object-fit: cover;
@@ -533,69 +318,222 @@ const saveHeroEdit = async (data: any) => {
   flex-shrink: 0;
 }
 
-.events-toggle-label {
+.event-option-label {
   flex: 1;
   min-width: 0;
 }
 
-.events-toggle-label strong {
+.event-option-label strong {
   display: block;
   font-weight: 600;
   font-size: 0.875rem;
-  line-height: 1.25;
-  color: inherit;
 }
 
-.events-toggle-description {
+.event-option-desc {
   display: block;
   font-size: 0.75rem;
-  line-height: 1.2;
-  color: var(--color-dimmed);
+  opacity: 0.7;
   margin-top: 0.125rem;
 }
 
-.events-toggle-option-active .events-toggle-description {
-  color: var(--color-primary-contrast);
-  opacity: 0.8;
-}
-
-.events-toggle-check {
+.event-option-check {
   flex-shrink: 0;
-  margin-left: 0.5rem;
 }
 
-/* Participant Groups */
-.participant-group {
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  background: var(--color-card-bg);
+  border: var(--border) solid var(--color-border);
+  border-radius: var(--radius-button);
+  overflow: hidden;
+}
+
+.mode-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--color-dimmed);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  background: var(--color-muted-bg);
+  color: var(--color-contrast);
+}
+
+.mode-btn.active {
+  background: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 100%;
+}
+
+/* ===== HERO SECTION ===== */
+.demo-hero {
+  background: var(--color-card-bg);
+  border: var(--border) solid var(--color-border);
+  border-radius: var(--radius-button);
+  overflow: hidden;
   margin-bottom: 2rem;
 }
 
-.participant-group:last-child {
+.hero-image {
+  width: 100%;
+  height: 16rem;
+  overflow: hidden;
+}
+
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-content {
+  padding: 1.5rem;
+}
+
+.hero-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: var(--color-contrast);
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-bg);
+  margin: 0 0 0.5rem 0;
+}
+
+.hero-teaser {
+  font-size: 0.875rem;
+  color: var(--color-dimmed);
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.hero-dates {
+  font-size: 0.875rem;
+  color: var(--color-dimmed);
+  font-weight: 500;
+}
+
+/* ===== CONTENT SECTIONS ===== */
+.content-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: var(--color-contrast);
+}
+
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.entity-card {
+  background: var(--color-card-bg);
+  border: var(--border) solid var(--color-border);
+  border-radius: var(--radius-button);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.entity-card:hover {
+  box-shadow: 0 4px 12px oklch(0% 0 0 / 0.1);
+}
+
+.entity-image {
+  width: 100%;
+  height: 10rem;
+  object-fit: cover;
+}
+
+.entity-content {
+  padding: 1rem;
+}
+
+.entity-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--color-contrast);
+}
+
+.entity-content h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--color-contrast);
+}
+
+.entity-subtitle,
+.entity-teaser,
+.entity-info {
+  font-size: 0.875rem;
+  color: var(--color-dimmed);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+/* Participants */
+.participant-subsection {
+  margin-bottom: 1.5rem;
+}
+
+.participant-subsection:last-child {
   margin-bottom: 0;
 }
 
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .events-dropdown-container {
-    top: 1rem;
-    right: 1rem;
-  }
-
-  .events-toggle-dropdown {
-    min-width: 18rem;
-    max-width: calc(100vw - 2rem);
-  }
+.subsection-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: var(--color-contrast);
 }
 
-@media (max-width: 480px) {
-  .events-dropdown-container {
-    top: 0.5rem;
-    right: 0.5rem;
+.participants-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 
-  .events-toggle-dropdown {
-    min-width: 16rem;
+  .topbar-center {
+    justify-content: flex-start;
+  }
+
+  .topbar-right {
+    flex-wrap: wrap;
+  }
+
+  .entity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    padding: 1rem;
   }
 }
 </style>

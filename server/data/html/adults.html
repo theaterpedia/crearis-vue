@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erwachsene - Demo Data</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .navbar {
+            background: #2c3e50;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .navbar li { margin: 0; }
+        
+        .navbar a {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .navbar a:hover {
+            background: #34495e;
+            border-bottom-color: #3498db;
+        }
+        
+        .navbar a.active {
+            background: #34495e;
+            border-bottom-color: #3498db;
+        }
+        
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .person-card {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 20px;
+        }
+
+        .person-card img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .person-info {
+            flex: 1;
+        }
+
+        .person-info h2 {
+            margin: 0 0 10px 0;
+            color: #34495e;
+        }
+
+        .person-info .age {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .person-info .address {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .person-info .teaser {
+            line-height: 1.6;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .unsplash-box {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .unsplash-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Übersicht</a></li>
+            <li><a href="instructors.html">Theaterpädagog:innen (20)</a></li>
+            <li><a href="children.html">Kinder 6-12 (15)</a></li>
+            <li><a href="teens.html">Jugendliche 13-17 (15)</a></li>
+            <li><a href="adults.html" class="active">Erwachsene 18+ (15)</a></li>
+        </ul>
+    </nav>
+
+    <div class="content">
+        <h1>Erwachsene (18+ Jahre) - 15 Personen</h1>
+        <p style="text-align: center; color: #7f8c8d;">Teilnehmer:innen an Applied Theatre Projekten</p>
+
+    <!-- Adult 1 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Georg Maier</h2>
+            <div class="age">52 Jahre</div>
+            <div class="address">Schwabing, München</div>
+            <div class="teaser">Bayerischer Sozialarbeiter in Rente. Nimmt an Seniorentheaterprojekten teil und
+                engagiert sich in generationsübergreifenden Theaterformaten.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1507003211169-0a1dd7228f2d<br>
+                Collection: Mature Portraits<br>
+                Author: Nik MacMillan
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 2 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Sabine Krüger</h2>
+            <div class="age">45 Jahre</div>
+            <div class="address">Maxvorstadt, München</div>
+            <div class="teaser">Deutsche Lehrerin mit Interesse an drama-in-education. Nutzt theaterpädagogische
+                Methoden in ihrem Unterricht und nimmt an Weiterbildungen teil.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1544005313-94ddf0286df2<br>
+                Collection: Professional Women<br>
+                Author: Joel Mott
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 3 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Mehmet Demir</h2>
+            <div class="age">38 Jahre</div>
+            <div class="address">Giesing, München</div>
+            <div class="teaser">Türkischer Hintergrund, zweite Generation. Beteiligt sich an community-basierten
+                Theaterprojekten über Migration und Identität.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1519345182560-3f2917c472ef<br>
+                Collection: Men at Work<br>
+                Author: Azamat E
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 4 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Christina Wagner</h2>
+            <div class="age">41 Jahre</div>
+            <div class="address">Altstadt, Augsburg</div>
+            <div class="teaser">Schwäbische Bankkauffrau, die Theater als Hobby entdeckt hat. Spielt in einem
+                Laientheaterensemble und nimmt an Workshops teil.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1494790108377-be9c29b29330<br>
+                Collection: Business Portraits<br>
+                Author: Dmitry Ratushny
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 5 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Robert Müller</h2>
+            <div class="age">49 Jahre</div>
+            <div class="address">Haidhausen, München</div>
+            <div class="teaser">Bayerischer Handwerksmeister mit Leidenschaft für Improvisationstheater. Nutzt Theater
+                als Ausgleich zum beruflichen Alltag.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1500648767791-00dcc994a43e<br>
+                Collection: Everyday People<br>
+                Author: Florian Wehde
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 6 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Natalia Ivanova</h2>
+            <div class="age">35 Jahre</div>
+            <div class="address">Neuhausen, München</div>
+            <div class="teaser">Russischer Hintergrund. IT-Spezialistin die an interkulturellen Theaterprojekten
+                teilnimmt. Interessiert an digitalen Theaterformaten.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1573496359142-b8d87734a5a2<br>
+                Collection: Modern Professionals<br>
+                Author: Christopher Campbell
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 7 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Andreas Becker</h2>
+            <div class="age">56 Jahre</div>
+            <div class="address">Südstadt, Nürnberg</div>
+            <div class="teaser">Fränkischer Beamter in Vorbereitung auf Rente. Entdeckt Theater als neue Leidenschaft
+                und nimmt an Seniorenprojekten teil.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1506794778202-cad84cf45f1d<br>
+                Collection: Senior Activity<br>
+                Author: Itay Verchik
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 8 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Monika Huber</h2>
+            <div class="age">43 Jahre</div>
+            <div class="address">Laim, München</div>
+            <div class="teaser">Bayerische Krankenschwester. Nutzt theatertherapeutische Ansätze in ihrer Arbeit und
+                bildet sich in Applied Theatre weiter.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1438761681033-6461ffad8d80<br>
+                Collection: Healthcare Workers<br>
+                Author: Stephanie Harvey
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 9 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Thomas Fischer</h2>
+            <div class="age">47 Jahre</div>
+            <div class="address">Bogenhausen, München</div>
+            <div class="teaser">Deutscher Architekt mit Interesse an räumlichen Theaterkonzepten. Beteiligt sich an
+                site-specific theatre Projekten.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1472099645785-5658abf4ff4e<br>
+                Collection: Creative Professionals<br>
+                Author: Ben White
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 10 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Petra Schneider</h2>
+            <div class="age">39 Jahre</div>
+            <div class="address">Pfersee, Augsburg</div>
+            <div class="teaser">Schwäbische Journalistin. Dokumentiert lokale Theaterprojekte und nimmt gelegentlich
+                selbst an community theatre teil.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1534528741775-53994a69daeb<br>
+                Collection: Media Professionals<br>
+                Author: Thought Catalog
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 11 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1463453091185-61582044d556?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Markus Weber</h2>
+            <div class="age">51 Jahre</div>
+            <div class="address">Altstadt, Nürnberg</div>
+            <div class="teaser">Fränkischer Geschäftsmann. Unterstützt lokale Theaterinitiativen und nimmt an corporate
+                theatre Workshops für Teambuilding teil.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1463453091185-61582044d556<br>
+                Collection: Business Leaders<br>
+                Author: Michael Dam
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 12 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Elif Korkmaz</h2>
+            <div class="age">33 Jahre</div>
+            <div class="address">Sendling, München</div>
+            <div class="teaser">Türkischer Hintergrund. Sozialpädagogin die theaterpädagogische Methoden in der
+                Jugendarbeit einsetzt. Fortbildungen in Forum-Theater.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1487412720507-e7ab37603c6f<br>
+                Collection: Social Workers<br>
+                Author: Kareya Saleh
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 13 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Klaus Hoffmann</h2>
+            <div class="age">58 Jahre</div>
+            <div class="address">Ramersdorf, München</div>
+            <div class="teaser">Bayerischer Rentner und ehemaliger Lehrer. Aktiv in Seniorentheater und oral history
+                Projekten über München nach dem Krieg.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1552058544-f2b08422138a<br>
+                Collection: Active Seniors<br>
+                Author: Ravi Patel
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 14 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Irina Volkova</h2>
+            <div class="age">36 Jahre</div>
+            <div class="address">Westend, München</div>
+            <div class="teaser">Russischer Hintergrund. Übersetzerin die bei deutsch-russischen Theaterprojekten
+                dolmetscht und selbst teilnimmt.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1531123897727-8f129e1688ce<br>
+                Collection: International Professionals<br>
+                Author: Aiony Haust
+            </div>
+        </div>
+    </div>
+
+    <!-- Adult 15 -->
+    <div class="person-card">
+        <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400" alt="Portrait">
+        <div class="person-info">
+            <h2>Stefan Bauer</h2>
+            <div class="age">44 Jahre</div>
+            <div class="address">Johannis, Nürnberg</div>
+            <div class="teaser">Fränkischer Polizist. Interessiert an deeskalierendem Theater und conflict resolution
+                Workshops für Berufsgruppen.</div>
+            <div class="unsplash-box">
+                <strong>Unsplash Reference:</strong>
+                Key: 1492562080023-ab3db95bfbce<br>
+                Collection: Public Service<br>
+                Author: Ayo Ogunseinde
+            </div>
+        </div>
+    </div>
+
+    </div><!-- .content -->
+
+</body>
+
+</html>

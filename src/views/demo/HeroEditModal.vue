@@ -6,7 +6,9 @@
           <h2 class="modal-title">Hero bearbeiten</h2>
           <button class="modal-close" @click="close" aria-label="Schließen">
             <svg viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <path fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd" />
             </svg>
           </button>
         </div>
@@ -14,55 +16,65 @@
         <form @submit.prevent="handleSubmit" class="modal-form">
           <div class="form-group">
             <label for="cimg">Bild URL</label>
-            <input
-              id="cimg"
-              v-model="formData.cimg"
-              type="url"
-              class="form-input"
-              placeholder="https://..."
-              required
-            />
+            <input id="cimg" v-model="formData.cimg" type="url" class="form-input" placeholder="https://..." required />
           </div>
 
           <div class="form-group">
             <label for="heading">Überschrift</label>
-            <input
-              id="heading"
-              v-model="formData.heading"
-              type="text"
-              class="form-input"
-              placeholder="Titel eingeben..."
-              required
-            />
+            <input id="heading" v-model="formData.heading" type="text" class="form-input"
+              placeholder="Titel eingeben..." required />
           </div>
 
           <div class="form-group">
             <label for="description">Beschreibung</label>
-            <textarea
-              id="description"
-              v-model="formData.description"
-              class="form-textarea"
-              placeholder="Beschreibung eingeben..."
-              rows="4"
-              required
-            ></textarea>
+            <textarea id="description" v-model="formData.description" class="form-textarea"
+              placeholder="Beschreibung eingeben..." rows="4" required></textarea>
+          </div>
+
+          <!-- Task Management Section -->
+          <div class="form-group">
+            <div class="tasks-header">
+              <label>Zugehörige Aufgaben</label>
+              <button type="button" class="btn-add-task" @click="openTaskModal" title="Neue Aufgabe erstellen">
+                + Aufgabe
+              </button>
+            </div>
+
+            <div v-if="loadingTasks" class="tasks-loading">
+              Lade Aufgaben...
+            </div>
+
+            <div v-else-if="associatedTasks.length === 0" class="tasks-empty">
+              Keine Aufgaben vorhanden. Erstelle eine neue Aufgabe, um loszulegen.
+            </div>
+
+            <div v-else class="tasks-list">
+              <div v-for="task in associatedTasks" :key="task.id" class="task-item"
+                :class="{ 'task-done': task.status === 'done' }">
+                <input type="checkbox" :checked="task.status === 'done'" @change="toggleTaskStatus(task)"
+                  class="task-checkbox" />
+                <div class="task-content">
+                  <span class="task-title">{{ task.title }}</span>
+                  <span v-if="task.description" class="task-description">
+                    {{ task.description }}
+                  </span>
+                </div>
+                <span class="task-priority" :class="`priority-${task.priority}`" :title="`Priorität: ${task.priority}`">
+                  {{ getPriorityEmoji(task.priority) }}
+                </span>
+                <button type="button" class="task-edit-btn" @click="editTask(task)" title="Aufgabe bearbeiten">
+                  ✏️
+                </button>
+              </div>
+            </div>
           </div>
 
           <div v-if="!isEvent" class="form-group">
             <label>Verknüpfte Events</label>
             <div class="event-select">
-              <div
-                v-for="event in availableEvents"
-                :key="event.id"
-                class="event-option"
-                :class="{ selected: selectedEvents.includes(event.id) }"
-                @click="toggleEvent(event.id)"
-              >
-                <input
-                  type="checkbox"
-                  :checked="selectedEvents.includes(event.id)"
-                  @change="toggleEvent(event.id)"
-                />
+              <div v-for="event in availableEvents" :key="event.id" class="event-option"
+                :class="{ selected: selectedEvents.includes(event.id) }" @click="toggleEvent(event.id)">
+                <input type="checkbox" :checked="selectedEvents.includes(event.id)" @change="toggleEvent(event.id)" />
                 <img v-if="event.cimg" :src="event.cimg" :alt="event.name" class="event-thumb" />
                 <span>{{ event.name }}</span>
               </div>
@@ -100,6 +112,19 @@ interface Event {
   cimg: string
 }
 
+interface Task {
+  id: string
+  title: string
+  description?: string
+  status: 'todo' | 'in-progress' | 'done' | 'archived'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  record_type?: string
+  record_id?: string
+  due_date?: string
+  created_at?: string
+  updated_at?: string
+}
+
 const props = defineProps<{
   isOpen: boolean
   heroData: HeroData | null
@@ -119,12 +144,15 @@ const formData = ref({
 
 const selectedEvents = ref<string[]>([])
 const saving = ref(false)
+const associatedTasks = ref<Task[]>([])
+const loadingTasks = ref(false)
+const editingTask = ref<Task | null>(null)
 
 const isEvent = computed(() => {
   return props.heroData?.id?.startsWith('_demo.event_') || false
 })
 
-watch(() => props.heroData, (data) => {
+watch(() => props.heroData, async (data) => {
   if (data) {
     formData.value = {
       cimg: data.cimg || '',
@@ -132,8 +160,124 @@ watch(() => props.heroData, (data) => {
       description: data.description || ''
     }
     selectedEvents.value = data.eventIds || []
+
+    // Load associated tasks
+    await loadTasks(data.id)
   }
 }, { immediate: true })
+
+// Task Management Functions
+async function loadTasks(recordId: string) {
+  loadingTasks.value = true
+  try {
+    const response = await fetch(`/api/tasks?record_type=event&record_id=${recordId}`)
+    const data = await response.json()
+    associatedTasks.value = data.tasks || []
+  } catch (error) {
+    console.error('Failed to load tasks:', error)
+    associatedTasks.value = []
+  } finally {
+    loadingTasks.value = false
+  }
+}
+
+async function toggleTaskStatus(task: Task) {
+  const newStatus = task.status === 'done' ? 'todo' : 'done'
+
+  try {
+    const response = await fetch(`/api/tasks/${task.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    })
+
+    if (response.ok) {
+      // Update local task
+      const index = associatedTasks.value.findIndex(t => t.id === task.id)
+      if (index > -1) {
+        associatedTasks.value[index].status = newStatus
+      }
+    }
+  } catch (error) {
+    console.error('Failed to update task status:', error)
+  }
+}
+
+function getPriorityEmoji(priority: string): string {
+  const emojis: Record<string, string> = {
+    urgent: '🔴',
+    high: '🟠',
+    medium: '🟡',
+    low: '🟢'
+  }
+  return emojis[priority] || '⚪'
+}
+
+function openTaskModal() {
+  editingTask.value = null
+  // This will be handled by the TaskEditModal integration
+  // For now, we'll use a simple approach
+  const title = prompt('Aufgabentitel:')
+  if (!title) return
+
+  const description = prompt('Beschreibung (optional):')
+  const priority = prompt('Priorität (low/medium/high/urgent):', 'medium') as Task['priority']
+
+  createTask({
+    title,
+    description: description || undefined,
+    priority: priority || 'medium',
+    record_type: 'event',
+    record_id: props.heroData?.id
+  })
+}
+
+function editTask(task: Task) {
+  editingTask.value = task
+  const title = prompt('Aufgabentitel:', task.title)
+  if (!title) return
+
+  const description = prompt('Beschreibung:', task.description || '')
+  const priority = prompt('Priorität (low/medium/high/urgent):', task.priority) as Task['priority']
+
+  updateTask(task.id, {
+    title,
+    description: description || undefined,
+    priority: priority || task.priority
+  })
+}
+
+async function createTask(taskData: Partial<Task>) {
+  try {
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taskData)
+    })
+
+    if (response.ok && props.heroData) {
+      await loadTasks(props.heroData.id)
+    }
+  } catch (error) {
+    console.error('Failed to create task:', error)
+  }
+}
+
+async function updateTask(taskId: string, updates: Partial<Task>) {
+  try {
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    })
+
+    if (response.ok && props.heroData) {
+      await loadTasks(props.heroData.id)
+    }
+  } catch (error) {
+    console.error('Failed to update task:', error)
+  }
+}
 
 const toggleEvent = (eventId: string) => {
   const index = selectedEvents.value.indexOf(eventId)
@@ -314,6 +458,160 @@ const close = () => {
   height: 2rem;
   object-fit: cover;
   border-radius: 0.25rem;
+}
+
+/* Task Management Styles */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.tasks-header label {
+  margin-bottom: 0;
+}
+
+.btn-add-task {
+  padding: 0.5rem 1rem;
+  border: var(--border) solid var(--color-border);
+  background: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius-button);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-task:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tasks-loading,
+.tasks-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--color-dimmed);
+  font-size: 0.875rem;
+  border: var(--border) dashed var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-bg);
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: var(--border) solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-bg);
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: var(--border) solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-card-bg);
+  transition: all 0.2s ease;
+}
+
+.task-item:hover {
+  border-color: var(--color-primary-base);
+  box-shadow: 0 2px 8px oklch(0% 0 0 / 0.1);
+}
+
+.task-item.task-done {
+  opacity: 0.6;
+}
+
+.task-item.task-done .task-title {
+  text-decoration: line-through;
+  color: var(--color-dimmed);
+}
+
+.task-checkbox {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: var(--color-primary-base);
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-contrast);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-description {
+  font-size: 0.75rem;
+  color: var(--color-dimmed);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-priority {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.priority-urgent {
+  filter: drop-shadow(0 0 4px oklch(60% 0.25 25 / 0.3));
+}
+
+.priority-high {
+  filter: drop-shadow(0 0 4px oklch(70% 0.2 60 / 0.3));
+}
+
+.priority-medium {
+  filter: drop-shadow(0 0 4px oklch(80% 0.15 90 / 0.3));
+}
+
+.priority-low {
+  filter: drop-shadow(0 0 4px oklch(70% 0.2 140 / 0.3));
+}
+
+.task-edit-btn {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border) solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.task-edit-btn:hover {
+  opacity: 1;
+  background: var(--color-muted-bg);
+  border-color: var(--color-primary-base);
 }
 
 .modal-actions {

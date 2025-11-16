@@ -1,0 +1,53 @@
+[{
+  "id": 0,
+  "name": "E-Motion",
+  "description": "A light theme with soft colors",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceKrypton', mono",
+  "inverted": true
+}, 
+  {
+  "id": 1,
+  "name": "Regio",
+  "description": "A light theme with soft colors",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceNeon', mono"
+}, {
+  "id": 2,
+  "name": "Pastell",
+  "description": "A dark theme with high contrast",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceRadon', mono"
+}, {
+  "id": 3,
+  "name": "Institut",
+  "description": "A colorful theme with vibrant hues",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'Roboto', sans-serif"
+}, {
+  "id": 4,
+  "name": "Neon",
+  "description": "A minimalistic theme with muted tones",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceNeon', mono"
+}, {
+  "id": 5,
+  "name": "Lempel",
+  "description": "A playful theme with bright colors",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceNeon', mono"
+}, {
+  "id": 6,  
+  "name": "Rayleigh",
+  "description": "A sophisticated theme with elegant shades",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceNeon', mono"
+}, {
+  "id": 7,
+  "name": "Theaterpedia",
+  "description": "A bold theme with striking contrasts",
+  "cimg": "https://res.cloudinary.com/little-papillon/image/upload/t_event-banner-smart/v1722972081/dasei/thematische_warmups_wfwtzh.jpg",
+  "font": "'MonaspaceNeon', mono",
+  "headings": "'MonaspaceArgon', mono",
+  "inverted": true
+}]

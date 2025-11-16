@@ -1,0 +1,58 @@
+[
+    {
+        "id": 1,
+        "xmlid": "img-project-001",
+        "url": "https://images.unsplash.com/photo-123?w=672&h=336&fit=crop",
+        "adapter": "unsplash",
+        "shape_wide": {
+            "url": "https://images.unsplash.com/photo-123?w=672&h=336&fit=crop",
+            "w": 672,
+            "h": 336,
+            "x": 50,
+            "y": 50,
+            "z": 100,
+            "blur": "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+            "turl": "w=672&h=336&fit=crop",
+            "tpar": "https://images.unsplash.com/photo-123?{turl}"
+        },
+        "shape_vertical": {
+            "url": "https://images.unsplash.com/photo-123?w=416&h=739&fit=crop",
+            "w": 416,
+            "h": 739,
+            "x": 50,
+            "y": 50,
+            "z": 100,
+            "blur": "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+            "turl": "w=416&h=739&fit=crop",
+            "tpar": "https://images.unsplash.com/photo-123?{turl}"
+        },
+        "owner_id": 1,
+        "status_id": 4
+    },
+    {
+        "id": 2,
+        "xmlid": "img-event-002",
+        "url": "https://res.cloudinary.com/demo/image/upload/c_fill,w_672,h=336/v123/photo.jpg",
+        "adapter": "cloudinary",
+        "shape_square": {
+            "url": "https://res.cloudinary.com/demo/image/upload/c_fill,w_284,h_284/v123/photo.jpg",
+            "w": 284,
+            "h": 284,
+            "x": 50,
+            "y": 50,
+            "z": 100,
+            "blur": "LNHV6nWB2yk8pyo0adR*.7kCMdnj"
+        },
+        "owner_id": 1,
+        "status_id": 4
+    },
+    {
+        "id": 3,
+        "xmlid": "img-user-003",
+        "url": "https://images.unsplash.com/photo-456?ixid=abc123",
+        "adapter": "unsplash",
+        "shape_square": null,
+        "owner_id": 2,
+        "status_id": 2
+    }
+]

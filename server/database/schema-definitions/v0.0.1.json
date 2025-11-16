@@ -1,0 +1,1989 @@
+{
+  "version": "0.0.1",
+  "schemaVersion": 1,
+  "generatedAt": "2025-11-05T21:24:34.801Z",
+  "description": "Database schema for crearis-demo-data system v0.0.1",
+  "tables": {
+    "crearis_config": {
+      "description": "Crearis_config table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('crearis_config_id_seq'::regclass)"
+        },
+        "config": {
+          "type": "JSONB",
+          "nullable": false
+        }
+      }
+    },
+    "domains": {
+      "description": "Domains table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('domains_id_seq'::regclass)"
+        },
+        "sysdomain_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "tld": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "textdomain": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "admin_user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "domainname": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "event_instructors": {
+      "description": "Event_instructors table",
+      "columns": {
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "instructor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "added_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "events": {
+      "description": "Events table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('events_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "date_begin": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "date_end": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "address_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "seats_max": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "rectitle": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "teaser": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "isbase": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "template": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "public_user": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "location": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "event_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "html": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'de'::text"
+        },
+        "tags_ids": {
+          "type": "ARRAY",
+          "nullable": true,
+          "default": "'{}'::integer[]"
+        },
+        "tags_display": {
+          "type": "ARRAY",
+          "nullable": true,
+          "default": "'{}'::text[]"
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "regio_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "events_tags": {
+      "description": "Events_tags table",
+      "columns": {
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "tag_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "form_input": {
+      "description": "Form_input table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "(gen_random_uuid())::text"
+        },
+        "project": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "email": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "user": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "input": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "hero_overrides": {
+      "description": "Hero_overrides table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "heading": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_ids": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "i18n_codes": {
+      "description": "I18n_codes table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('i18n_codes_id_seq'::regclass)"
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "variation": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'false'::text"
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "text": {
+          "type": "JSONB",
+          "nullable": false
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "images": {
+      "description": "Images table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('images_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "url": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "project_domaincode": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "owner_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "alt_text": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "title": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "date": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "geo": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "x": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "y": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "shape_wide": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_square": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_vertical": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "shape_thumb": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "fileformat": {
+          "type": "USER-DEFINED",
+          "nullable": true,
+          "default": "'none'::image_file_type"
+        },
+        "embedformat": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "license": {
+          "type": "USER-DEFINED",
+          "nullable": true,
+          "default": "'BY'::media_licence"
+        },
+        "length": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "about": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "author": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "producer": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "publisher": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "variations": {
+          "type": "USER-DEFINED",
+          "nullable": true
+        },
+        "root_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "use_player": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "ctags": {
+          "type": "BYTEA",
+          "nullable": true,
+          "default": "'\\x00'::bytea"
+        },
+        "is_public": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_private": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_internal": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_deprecated": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "has_issues": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "rtags": {
+          "type": "BYTEA",
+          "nullable": true,
+          "default": "'\\x00'::bytea"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        }
+      }
+    },
+    "instructors": {
+      "description": "Instructors table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('instructors_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "email": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "phone": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "multiproject": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'yes'::text"
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "html": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "isbase": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_user": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "header_size": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "regio_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "interactions": {
+      "description": "Interactions table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('interactions_id_seq'::regclass)"
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "timestamp": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actions": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "to_mail": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "from_mail": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "subject": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "fields": {
+          "type": "JSONB",
+          "nullable": true
+        }
+      }
+    },
+    "locations": {
+      "description": "Locations table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('locations_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "phone": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "email": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "zip": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "street": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_company": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "category_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_size": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_location_provider": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "isbase": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "page_sections": {
+      "description": "Page_sections table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "(gen_random_uuid())::text"
+        },
+        "page": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "scope": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "heading": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "pages": {
+      "description": "Pages table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "(gen_random_uuid())::text"
+        },
+        "project": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'simple'::text"
+        },
+        "page_type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "page_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_options": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "aside_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "header_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "footer_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        }
+      }
+    },
+    "participants": {
+      "description": "Participants table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('participants_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "age": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "city": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "country_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_user": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "posts": {
+      "description": "Posts table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('posts_id_seq'::regclass)"
+        },
+        "xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "subtitle": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "teaser": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "author_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "blog_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "tag_ids": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "website_published": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_published": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "post_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cover_properties": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "event_xmlid": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "isbase": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "template": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "public_user": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "html": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'de'::text"
+        },
+        "tags_ids": {
+          "type": "ARRAY",
+          "nullable": true,
+          "default": "'{}'::integer[]"
+        },
+        "tags_display": {
+          "type": "ARRAY",
+          "nullable": true,
+          "default": "'{}'::text[]"
+        },
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "regio_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "posts_tags": {
+      "description": "Posts_tags table",
+      "columns": {
+        "post_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "tag_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "project_members": {
+      "description": "Project_members table",
+      "columns": {
+        "project_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "role": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'member'::text"
+        },
+        "added_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "projects": {
+      "description": "Projects table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('projects_id_seq'::regclass)"
+        },
+        "domaincode": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_old": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'new'::text"
+        },
+        "owner_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "header_size": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "md": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "html": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "type": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'project'::text"
+        },
+        "is_regio": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "is_topic": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "is_onepage": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "is_service": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "is_sidebar": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "regio": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "partner_projects": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "heading": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "theme": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "teaser": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "team_page": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'yes'::text"
+        },
+        "cta_title": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cta_form": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cta_entity": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cta_link": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_company": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "is_location_provider": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "config": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "domain_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "member_ids": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "page_background": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "page_cssvars": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_navigation": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_toc": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_list": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "aside_context": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "aside_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_alert": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "header_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_gallery": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_postit": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_slider": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_repeat": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "footer_sitemap": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "''::text"
+        },
+        "footer_options_ext": {
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'{}'::jsonb"
+        },
+        "page_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "aside_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "header_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "footer_has_content": {
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "18"
+        }
+      }
+    },
+    "record_versions": {
+      "description": "Record_versions table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "record_type": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "record_id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "data": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "releases": {
+      "description": "Releases table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "version": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "version_major": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version_minor": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "state": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'idea'::text"
+        },
+        "release_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "status": {
+      "description": "Status table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('status_id_seq'::regclass)"
+        },
+        "value": {
+          "type": "SMALLINT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "table": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name_i18n": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "desc_i18n": {
+          "type": "JSONB",
+          "nullable": true
+        }
+      }
+    },
+    "sysdomains": {
+      "description": "Sysdomains table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('sysdomains_id_seq'::regclass)"
+        },
+        "tld": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "domain": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "subdomain": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "options": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "domainstring": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "system_config": {
+      "description": "System_config table",
+      "columns": {
+        "key": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "value": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      }
+    },
+    "tags": {
+      "description": "Tags table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('tags_id_seq'::regclass)"
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "name_i18n": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "desc_i18n": {
+          "type": "JSONB",
+          "nullable": true
+        }
+      }
+    },
+    "tasks": {
+      "description": "Tasks table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "category": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'project'::text"
+        },
+        "priority": {
+          "type": "TEXT",
+          "nullable": true,
+          "default": "'medium'::text"
+        },
+        "record_type": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "record_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "assigned_to": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "due_date": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "version_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "release_id": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "cimg": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "prompt": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "logic": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "filter": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "entity_name": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "2"
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "tlds": {
+      "description": "Tlds table",
+      "columns": {
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "relevance": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      }
+    },
+    "users": {
+      "description": "Users table",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "nextval('users_id_seq'::regclass)"
+        },
+        "sysmail": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "extmail": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "username": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "password": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "role": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "status_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "instructor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "participant_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "lang": {
+          "type": "TEXT",
+          "nullable": false,
+          "default": "'de'::text"
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "img_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "img_show": {
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false"
+        },
+        "img_thumb": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_square": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_wide": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "img_vert": {
+          "type": "JSONB",
+          "nullable": true
+        },
+        "status_display": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    },
+    "versions": {
+      "description": "Versions table",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "version_number": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "name": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "description": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_by": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "snapshot_data": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "csv_exported": {
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        "notes": {
+          "type": "TEXT",
+          "nullable": true
+        }
+      }
+    }
+  },
+  "databaseDifferences": {
+    "postgresql": {},
+    "sqlite": {}
+  }
+}

@@ -6,17 +6,33 @@ node_modules/
 dist/
 .output/
 .nitro/
+server/public/
 
 # Environment files
 .env
 .env.local
 .env.*.local
 
+# Deployment configuration
+scripts/.env.deploy
+
 # Database files
 *.db
 *.db-shm
 *.db-wal
+# SQLite database
+crearis-vue.db
+crearis-vue.db-*
 demo-data.db
+demo-data.db-*
+projectnames_and_users.csv
+
+# Backup files
+temp_backup/
+backup/
+
+# Sensitive data
+server/data/
 
 # Logs
 logs/
@@ -55,6 +71,7 @@ node_modules/.tmp/
 # Test coverage
 coverage/
 .nyc_output/
+test-results/
 
 # Build artifacts
 *.node
@@ -63,3 +80,5 @@ build/Release/
 # Production
 .vercel
 .netlify
+docs/NITRO_3_NEW_BUILD.md
+server/data/import/users.csv

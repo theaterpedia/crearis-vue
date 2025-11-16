@@ -53,17 +53,9 @@
                     <li>
                       <strong>Kurs M16E - Sonntags + Online</strong>
                       <a href="#">
-                        <svg
-                          fill="none"
-                          height="1em"
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          viewBox="0 0 24 24"
-                          width="1em"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
+                        <svg fill="none" height="1em" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"
+                          xmlns="http://www.w3.org/2000/svg">
                           <path d="M0 0h24v24H0z" fill="none" stroke="none" />
                           <path d="M14 3v4a1 1 0 0 0 1 1h4" />
                           <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
@@ -77,17 +69,9 @@
                     <li>
                       <strong>Kurs M16B - Blockprogramm</strong>
                       <a href="#">
-                        <svg
-                          fill="none"
-                          height="1em"
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          viewBox="0 0 24 24"
-                          width="1em"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
+                        <svg fill="none" height="1em" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"
+                          xmlns="http://www.w3.org/2000/svg">
                           <path d="M0 0h24v24H0z" fill="none" stroke="none" />
                           <path d="M14 3v4a1 1 0 0 0 1 1h4" />
                           <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
@@ -112,17 +96,9 @@
                     <li>
                       <strong>Kurs N16E - Sonntags + Online</strong>
                       <a href="#">
-                        <svg
-                          fill="none"
-                          height="1em"
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          viewBox="0 0 24 24"
-                          width="1em"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
+                        <svg fill="none" height="1em" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"
+                          xmlns="http://www.w3.org/2000/svg">
                           <path d="M0 0h24v24H0z" fill="none" stroke="none" />
                           <path d="M14 3v4a1 1 0 0 0 1 1h4" />
                           <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
@@ -136,17 +112,9 @@
                     <li>
                       <strong>Kurs N16B - Blockprogramm</strong>
                       <a href="#">
-                        <svg
-                          fill="none"
-                          height="1em"
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          viewBox="0 0 24 24"
-                          width="1em"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
+                        <svg fill="none" height="1em" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"
+                          xmlns="http://www.w3.org/2000/svg">
                           <path d="M0 0h24v24H0z" fill="none" stroke="none" />
                           <path d="M14 3v4a1 1 0 0 0 1 1h4" />
                           <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
@@ -166,8 +134,17 @@
       </Section>
     </Main>
   </Box>
+  <DemoToggle />
 </template>
 
 <script lang="ts" setup>
-import { Box, Catalog, Column, Columns, Container, Main, Prose, Section } from '@/index'
+import Box from '@/components/Box.vue'
+import Catalog from '@/components/Catalog.vue'
+import Column from '@/components/Column.vue'
+import Columns from '@/components/Columns.vue'
+import Container from '@/components/Container.vue'
+import Main from '@/components/Main.vue'
+import Prose from '@/components/Prose.vue'
+import Section from '@/components/Section.vue'
+import DemoToggle from '@/components/DemoToggle.vue'
 </script>

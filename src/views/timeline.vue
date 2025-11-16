@@ -52,5 +52,10 @@
 </template>
 
 <script lang="ts" setup>
-import { Box, Container, Main, Prose, Section, Timeline } from '@/index'
+import Box from '@/components/Box.vue'
+import Container from '@/components/Container.vue'
+import Main from '@/components/Main.vue'
+import Prose from '@/components/Prose.vue'
+import Section from '@/components/Section.vue'
+import Timeline from '@/components/Timeline.vue'
 </script>

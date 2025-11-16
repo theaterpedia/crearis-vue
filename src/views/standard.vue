@@ -10,19 +10,14 @@
     <!-- Top Navigation -->
     <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }">
       <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav">
-                <template #actions>
+        <template #actions>
           <!-- 
             ToggleMenu Bindings:
             - v-model: Two-way binding for selected layout (toggleOptions)
             - @update:arrayOption: Event handler for toggle switches (arrayOptions)
           -->
-          <ToggleMenu 
-            v-model="siteLayout" 
-            :toggleOptions="layoutToggleOptions"
-            :arrayOptions="layoutArrayOptions"
-            header="Layout Options"
-            @update:arrayOption="handleArrayOptionUpdate"
-          />
+          <ToggleMenu v-model="siteLayout" :toggleOptions="layoutToggleOptions" :arrayOptions="layoutArrayOptions"
+            header="Layout Options" @update:arrayOption="handleArrayOptionUpdate" />
         </template>
       </TopNav>
     </div>
@@ -30,22 +25,22 @@
     <!-- Header/Hero Section -->
     <div class="header-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideHeader }">
       <header class="page-header" :class="{ 'page-header-boxed': !wideHeader }">
-      <Hero contentType="banner" imgTmpAlignX="cover" imgTmp="https://pruvious.com/uploads/dasei/banner.jpg">
-        <Banner transparent>
-          <Prose>
-            <h1>
-              Juni – Dezember 2023 // München, Nürnberg
-              <strong>Einstiege ins Theaterspiel</strong>
-            </h1>
-            <p>
-              <strong>Fortbildung in 6 Wochenenden:</strong>
-              <br />
-              <strong>Elementare und Szenische Animation</strong>
-            </p>
-            <Button size="small" variant="plain">Jetzt anmelden</Button>
-          </Prose>
-        </Banner>
-      </Hero>
+        <Hero contentType="banner" imgTmpAlignX="cover" imgTmp="https://pruvious.com/uploads/dasei/banner.jpg">
+          <Banner transparent>
+            <Prose>
+              <h1>
+                Juni – Dezember 2023 // München, Nürnberg
+                <strong>Einstiege ins Theaterspiel</strong>
+              </h1>
+              <p>
+                <strong>Fortbildung in 6 Wochenenden:</strong>
+                <br />
+                <strong>Elementare und Szenische Animation</strong>
+              </p>
+              <Button size="small" variant="plain">Jetzt anmelden</Button>
+            </Prose>
+          </Banner>
+        </Hero>
       </header>
     </div>
 
@@ -99,8 +94,7 @@
               <Column width="1/4">
                 <img
                   src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-                  alt="Demo image"
-                />
+                  alt="Demo image" />
               </Column>
             </Columns>
           </Container>
@@ -161,10 +155,8 @@
       <SideContent v-if="showRightSidebar" placement="right">
         <!-- CardHero Section -->
         <Section>
-          <CardHero
-            heightTmp="medium"
-            imgTmp="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-          >
+          <CardHero heightTmp="medium"
+            imgTmp="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg">
             <Prose>
               <h3><strong>Aktuelles</strong></h3>
               <p>Entdecke unsere neuesten Programme und Workshops.</p>
@@ -209,198 +201,191 @@
     </Box>
 
     <!-- Bottom Content (conditionally displayed) -->
-    <div v-show="showBottom" class="bottom-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && bottomWide }">
+    <div v-show="showBottom" class="bottom-wrapper"
+      :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && bottomWide }">
       <div class="bottom-content" :class="{ 'bottom-content-boxed': !bottomWide }">
-      <!-- Slider Section -->
-      <Section background="accent">
-        <Container>
-          <Prose>
-            <h2><strong>Unsere Kurseinheiten</strong></h2>
-            <p>Entdecke die verschiedenen Module unserer Fortbildung:</p>
-          </Prose>
+        <!-- Slider Section -->
+        <Section background="accent">
+          <Container>
+            <Prose>
+              <h2><strong>Unsere Kurseinheiten</strong></h2>
+              <p>Entdecke die verschiedenen Module unserer Fortbildung:</p>
+            </Prose>
 
-          <Slider>
-            <Slide>
-              <Columns gap="small">
-                <Column width="1/5">
-                  <img
-                    src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-                    alt="Basistag"
-                  />
-                </Column>
-                <Column>
-                  <Prose>
-                    <h3>
-                      <small>Praxis, Theorie & Ausbildung bei DAS Ei</small>
-                      <strong>Basistag Theaterpädagogik</strong>
-                    </h3>
-                    <p>
-                      Am Basistag erlebst Du die grundsätzlichen Zusammenhänge der Theaterpädagogik von DAS Ei
-                      konzentriert und ganz praktisch am eigenen Leib.
-                    </p>
-                  </Prose>
-                </Column>
-              </Columns>
-            </Slide>
+            <Slider>
+              <Slide>
+                <Columns gap="small">
+                  <Column width="1/5">
+                    <img
+                      src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
+                      alt="Basistag" />
+                  </Column>
+                  <Column>
+                    <Prose>
+                      <h3>
+                        <small>Praxis, Theorie & Ausbildung bei DAS Ei</small>
+                        <strong>Basistag Theaterpädagogik</strong>
+                      </h3>
+                      <p>
+                        Am Basistag erlebst Du die grundsätzlichen Zusammenhänge der Theaterpädagogik von DAS Ei
+                        konzentriert und ganz praktisch am eigenen Leib.
+                      </p>
+                    </Prose>
+                  </Column>
+                </Columns>
+              </Slide>
 
-            <Slide>
-              <Columns gap="small">
-                <Column width="1/5">
-                  <img
-                    src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-                    alt="Modul A"
-                  />
-                </Column>
-                <Column>
-                  <Prose>
-                    <h3>
-                      <small>Modul A</small>
-                      <strong>Einstiege ins Theaterspiel</strong>
-                    </h3>
-                    <p>
-                      Lerne die grundlegenden Methoden kennen, um Menschen spielerisch in theatrale Prozesse
-                      einzuführen.
-                    </p>
-                    <ul>
-                      <li>Elementare Animation</li>
-                      <li>Szenische Animation</li>
-                      <li>Reflexion und Anleitung</li>
-                    </ul>
-                  </Prose>
-                </Column>
-              </Columns>
-            </Slide>
+              <Slide>
+                <Columns gap="small">
+                  <Column width="1/5">
+                    <img
+                      src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
+                      alt="Modul A" />
+                  </Column>
+                  <Column>
+                    <Prose>
+                      <h3>
+                        <small>Modul A</small>
+                        <strong>Einstiege ins Theaterspiel</strong>
+                      </h3>
+                      <p>
+                        Lerne die grundlegenden Methoden kennen, um Menschen spielerisch in theatrale Prozesse
+                        einzuführen.
+                      </p>
+                      <ul>
+                        <li>Elementare Animation</li>
+                        <li>Szenische Animation</li>
+                        <li>Reflexion und Anleitung</li>
+                      </ul>
+                    </Prose>
+                  </Column>
+                </Columns>
+              </Slide>
 
-            <Slide>
-              <Columns gap="small">
-                <Column width="1/5">
-                  <img
-                    src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
-                    alt="Modul B"
-                  />
-                </Column>
-                <Column>
-                  <Prose>
-                    <h3>
-                      <small>Modul B</small>
-                      <strong>Szenische Themenarbeit</strong>
-                    </h3>
-                    <p>
-                      Vertiefe Deine Kenntnisse in der thematischen Arbeit und lerne, wie Du Inhalte szenisch
-                      erarbeitest.
-                    </p>
-                  </Prose>
-                </Column>
-              </Columns>
-            </Slide>
-          </Slider>
-        </Container>
-      </Section>
+              <Slide>
+                <Columns gap="small">
+                  <Column width="1/5">
+                    <img
+                      src="https://24ai.tech/en/wp-content/uploads/sites/3/2023/10/01_product_1_sdelat-kvadratnym-5-scaled.jpg"
+                      alt="Modul B" />
+                  </Column>
+                  <Column>
+                    <Prose>
+                      <h3>
+                        <small>Modul B</small>
+                        <strong>Szenische Themenarbeit</strong>
+                      </h3>
+                      <p>
+                        Vertiefe Deine Kenntnisse in der thematischen Arbeit und lerne, wie Du Inhalte szenisch
+                        erarbeitest.
+                      </p>
+                    </Prose>
+                  </Column>
+                </Columns>
+              </Slide>
+            </Slider>
+          </Container>
+        </Section>
 
-      <!-- Two Columns Section -->
-      <Section background="muted">
-        <Container>
-          <Prose>
-            <h2><strong>Unsere Standorte</strong></h2>
-          </Prose>
+        <!-- Two Columns Section -->
+        <Section background="muted">
+          <Container>
+            <Prose>
+              <h2><strong>Unsere Standorte</strong></h2>
+            </Prose>
 
-          <Columns>
-            <Column>
-              <Prose>
-                <h3><strong>München</strong></h3>
-                <p>
-                  Unser Standort in München bietet ideale Bedingungen für theaterpädagogische Arbeit mit großen
-                  Räumlichkeiten und moderner Ausstattung.
-                </p>
-                <ul>
-                  <li>Zentrale Lage</li>
-                  <li>Moderne Ausstattung</li>
-                  <li>Flexible Kurszeiten</li>
-                </ul>
-                <Button size="small">Mehr über München</Button>
-              </Prose>
-            </Column>
-            <Column>
-              <Prose>
-                <h3><strong>Nürnberg</strong></h3>
-                <p>
-                  In Nürnberg findest Du unseren zweiten Standort mit familiärer Atmosphäre und exzellenter
-                  Verkehrsanbindung.
-                </p>
-                <ul>
-                  <li>Gute Erreichbarkeit</li>
-                  <li>Persönliche Betreuung</li>
-                  <li>Wochenendkurse</li>
-                </ul>
-                <Button size="small">Mehr über Nürnberg</Button>
-              </Prose>
-            </Column>
-          </Columns>
-        </Container>
-      </Section>
+            <Columns>
+              <Column>
+                <Prose>
+                  <h3><strong>München</strong></h3>
+                  <p>
+                    Unser Standort in München bietet ideale Bedingungen für theaterpädagogische Arbeit mit großen
+                    Räumlichkeiten und moderner Ausstattung.
+                  </p>
+                  <ul>
+                    <li>Zentrale Lage</li>
+                    <li>Moderne Ausstattung</li>
+                    <li>Flexible Kurszeiten</li>
+                  </ul>
+                  <Button size="small">Mehr über München</Button>
+                </Prose>
+              </Column>
+              <Column>
+                <Prose>
+                  <h3><strong>Nürnberg</strong></h3>
+                  <p>
+                    In Nürnberg findest Du unseren zweiten Standort mit familiärer Atmosphäre und exzellenter
+                    Verkehrsanbindung.
+                  </p>
+                  <ul>
+                    <li>Gute Erreichbarkeit</li>
+                    <li>Persönliche Betreuung</li>
+                    <li>Wochenendkurse</li>
+                  </ul>
+                  <Button size="small">Mehr über Nürnberg</Button>
+                </Prose>
+              </Column>
+            </Columns>
+          </Container>
+        </Section>
       </div>
     </div>
 
     <!-- Footer -->
     <div class="footer-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && footerWide }">
       <footer class="page-footer" :class="{ 'page-footer-boxed': !footerWide }">
-      <Footer>
-        <p>© 2023 DAS Ei - Theaterpädagogik Bayern</p>
+        <Footer>
+          <p>© 2023 DAS Ei - Theaterpädagogik Bayern</p>
 
-      <ul>
-        <li><a href="#">Datenschutzerklärung</a></li>
-        <li><a href="#">Impressum</a></li>
-        <li><a href="#">Kontakt</a></li>
-      </ul>
+          <ul>
+            <li><a href="#">Datenschutzerklärung</a></li>
+            <li><a href="#">Impressum</a></li>
+            <li><a href="#">Kontakt</a></li>
+          </ul>
 
-      <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">Ausbildung</a></li>
-        <li><a href="#">Institut</a></li>
-        <li><a href="#">AGB</a></li>
-      </ul>
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Ausbildung</a></li>
+            <li><a href="#">Institut</a></li>
+            <li><a href="#">AGB</a></li>
+          </ul>
 
-      <Prose>
-        <p class="h3 primary"><strong>30 Jahre Theaterpädagogik in Bayern.</strong></p>
-      </Prose>
-      </Footer>
+          <Prose>
+            <p class="h3 primary"><strong>30 Jahre Theaterpädagogik in Bayern.</strong></p>
+          </Prose>
+        </Footer>
       </footer>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {
-  AlertBanner,
-  Banner,
-  Box,
-  Button,
-  CardHero,
-  Column,
-  Columns,
-  Container,
-  Footer,
-  Hero,
-  ToggleMenu,
-  Prose,
-  Section,
-  SideContent,
-  Slide,
-  Slider,
-  Timeline,
-  TopNav,
-  type TopnavParentItem,
-  type ToggleOption,
-  type ArrayOption,
-} from '@/index'
+import AlertBanner from '@/components/AlertBanner.vue'
+import Banner from '@/components/Banner.vue'
+import Box from '@/components/Box.vue'
+import Button from '@/components/Button.vue'
+import CardHero from '@/components/CardHero.vue'
+import Column from '@/components/Column.vue'
+import Columns from '@/components/Columns.vue'
+import Container from '@/components/Container.vue'
+import Footer from '@/components/Footer.vue'
+import Hero from '@/components/Hero.vue'
+import ToggleMenu, { type ToggleOption, type ArrayOption } from '@/components/ToggleMenu.vue'
+import Prose from '@/components/Prose.vue'
+import Section from '@/components/Section.vue'
+import SideContent from '@/components/SideContent.vue'
+import Slide from '@/components/Slide.vue'
+import Slider from '@/components/Slider.vue'
+import Timeline from '@/components/Timeline.vue'
+import TopNav, { type TopnavParentItem } from '@/components/TopNav.vue'
 import { ref, computed, watch, type Ref } from 'vue'
-import { 
-  pageSettings, 
-  layoutSettings, 
-  navbarSettings, 
+import {
+  pageSettings,
+  layoutSettings,
+  navbarSettings,
   mainMenuItems as mainMenuItemsConfig,
   layoutToggleOptions as layoutToggleOptionsConfig,
-  type SiteLayout 
+  type SiteLayout
 } from '../settings'
 
 // Page Props - imported from settings
@@ -427,10 +412,10 @@ const navbarReappear = ref(navbarSettings.navbarReappear)
 
 // Computed: Is fullwidth mode active?
 const fullwidthMode = computed(() => {
-  return siteLayout.value === 'fullTwo' || 
-         siteLayout.value === 'fullThree' || 
-         siteLayout.value === 'sidebar' || 
-         siteLayout.value === 'fullSidebar'
+  return siteLayout.value === 'fullTwo' ||
+    siteLayout.value === 'fullThree' ||
+    siteLayout.value === 'sidebar' ||
+    siteLayout.value === 'fullSidebar'
 })
 
 // Computed Layout Props based on siteLayout
@@ -629,7 +614,8 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
 }
 
 .page-header-boxed {
-  max-width: 90rem; /* 1440px - matches Box centered */
+  max-width: 90rem;
+  /* 1440px - matches Box centered */
   margin: 0 auto;
 }
 
@@ -637,7 +623,8 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
 .main-content {
   flex: 1;
   width: 100%;
-  order: 1; /* Main content always in the middle */
+  order: 1;
+  /* Main content always in the middle */
 }
 
 /**
@@ -665,7 +652,8 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
 }
 
 .bottom-content-boxed {
-  max-width: 90rem; /* 1440px - matches Box centered */
+  max-width: 90rem;
+  /* 1440px - matches Box centered */
   margin: 0 auto;
 }
 
@@ -674,8 +662,9 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
   width: 100%;
 }
 
-  .page-footer-boxed {
-  max-width: 90rem; /* 1440px - matches Box centered */
+.page-footer-boxed {
+  max-width: 90rem;
+  /* 1440px - matches Box centered */
   margin: 0 auto;
 }
 </style>

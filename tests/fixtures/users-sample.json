@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "sysmail": "admin@theaterpedia.org",
+        "username": "Admin User",
+        "role": "admin"
+    },
+    {
+        "id": 2,
+        "sysmail": "user@theaterpedia.org",
+        "username": "Regular User",
+        "role": "user"
+    }
+]

@@ -2,38 +2,38 @@ import { defineEventHandler, createError } from 'h3'
 import { readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import db, { initDatabase } from '../../database/db'
+import { db } from '../../database/init'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // CSV file paths - resolve from project root  
-const csvDir = join(process.cwd(), 'src/assets/csv')
+const csvDir = join(process.cwd(), 'server/data/base')
 
 function parseCSV(csvText: string): any[] {
   const lines = csvText.trim().split('\n')
   const headers = lines[0].split(',').map(h => h.replace(/"/g, ''))
-  
+
   return lines.slice(1).map(line => {
     const values: string[] = []
     let current = ''
     let inQuotes = false
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i]
-      if (char === '"' && (i === 0 || line[i-1] === ',')) {
+      if (char === '"' && (i === 0 || line[i - 1] === ',')) {
         inQuotes = true
-      } else if (char === '"' && (i === line.length - 1 || line[i+1] === ',')) {
+      } else if (char === '"' && (i === line.length - 1 || line[i + 1] === ',')) {
         inQuotes = false
       } else if (char === ',' && !inQuotes) {
         values.push(current)
         current = ''
-      } else if (!(char === '"' && (i === 0 || line[i-1] === ',' || i === line.length - 1 || line[i+1] === ','))) {
+      } else if (!(char === '"' && (i === 0 || line[i - 1] === ',' || i === line.length - 1 || line[i + 1] === ','))) {
         current += char
       }
     }
     values.push(current)
-    
+
     const obj: any = {}
     headers.forEach((header, index) => {
       obj[header] = values[index] || ''
@@ -44,8 +44,8 @@ function parseCSV(csvText: string): any[] {
 
 export default defineEventHandler(async () => {
   try {
-    // Reinitialize database (clears existing data)
-    initDatabase()
+    // Note: Database is initialized by migration system on startup
+    // This endpoint imports CSV data into existing tables
 
     // Read and parse CSV data
     const eventsCSV = await readFile(join(csvDir, 'events.csv'), 'utf-8')
@@ -64,14 +64,24 @@ export default defineEventHandler(async () => {
     const teens = parseCSV(teensCSV)
     const adults = parseCSV(adultsCSV)
 
-    // Insert events
-    const eventStmt = db.prepare(`
-      INSERT OR REPLACE INTO events 
-      (id, name, date_begin, date_end, address_id, user_id, seats_max, cimg, header_type, rectitle, teaser)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
+    // Insert events using UPSERT (compatible with both SQLite and PostgreSQL)
     for (const event of events) {
-      eventStmt.run(
+      await db.run(`
+        INSERT INTO events 
+        (id, name, date_begin, date_end, address_id, user_id, seats_max, cimg, header_type, rectitle, teaser)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          date_begin = excluded.date_begin,
+          date_end = excluded.date_end,
+          address_id = excluded.address_id,
+          user_id = excluded.user_id,
+          seats_max = excluded.seats_max,
+          cimg = excluded.cimg,
+          header_type = excluded.header_type,
+          rectitle = excluded.rectitle,
+          teaser = excluded.teaser
+      `, [
         event.id,
         event.name,
         event.date_begin,
@@ -83,17 +93,29 @@ export default defineEventHandler(async () => {
         event.header_type,
         event.rectitle,
         event.teaser
-      )
+      ])
     }
 
     // Insert posts
-    const postStmt = db.prepare(`
-      INSERT OR REPLACE INTO posts 
-      (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
     for (const post of posts) {
-      postStmt.run(
+      await db.run(`
+        INSERT INTO posts 
+        (id, name, subtitle, teaser, author_id, blog_id, tag_ids, website_published, is_published, post_date, cover_properties, event_id, cimg)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          subtitle = excluded.subtitle,
+          teaser = excluded.teaser,
+          author_id = excluded.author_id,
+          blog_id = excluded.blog_id,
+          tag_ids = excluded.tag_ids,
+          website_published = excluded.website_published,
+          is_published = excluded.is_published,
+          post_date = excluded.post_date,
+          cover_properties = excluded.cover_properties,
+          event_id = excluded.event_id,
+          cimg = excluded.cimg
+      `, [
         post.id,
         post.name,
         post.subtitle,
@@ -107,17 +129,32 @@ export default defineEventHandler(async () => {
         post.cover_properties,
         post['event_id/id'] || post.event_id,
         post.cimg
-      )
+      ])
     }
 
     // Insert locations
-    const locationStmt = db.prepare(`
-      INSERT OR REPLACE INTO locations 
-      (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
     for (const location of locations) {
-      locationStmt.run(
+      await db.run(`
+        INSERT INTO locations 
+        (id, name, phone, email, city, zip, street, country_id, is_company, category_id, cimg, header_type, header_size, md, is_location_provider, event_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          phone = excluded.phone,
+          email = excluded.email,
+          city = excluded.city,
+          zip = excluded.zip,
+          street = excluded.street,
+          country_id = excluded.country_id,
+          is_company = excluded.is_company,
+          category_id = excluded.category_id,
+          cimg = excluded.cimg,
+          header_type = excluded.header_type,
+          header_size = excluded.header_size,
+          md = excluded.md,
+          is_location_provider = excluded.is_location_provider,
+          event_id = excluded.event_id
+      `, [
         location.id,
         location.name,
         location.phone,
@@ -134,17 +171,25 @@ export default defineEventHandler(async () => {
         location.md,
         location.is_location_provider,
         location.event_id
-      )
+      ])
     }
 
     // Insert instructors
-    const instructorStmt = db.prepare(`
-      INSERT OR REPLACE INTO instructors 
-      (id, name, email, phone, city, country_id, cimg, description, event_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
     for (const instructor of instructors) {
-      instructorStmt.run(
+      await db.run(`
+        INSERT INTO instructors 
+        (id, name, email, phone, city, country_id, cimg, description, event_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          email = excluded.email,
+          phone = excluded.phone,
+          city = excluded.city,
+          country_id = excluded.country_id,
+          cimg = excluded.cimg,
+          description = excluded.description,
+          event_id = excluded.event_id
+      `, [
         instructor.id,
         instructor.name,
         instructor.email,
@@ -154,18 +199,25 @@ export default defineEventHandler(async () => {
         instructor.cimg,
         instructor.description,
         instructor['event_id/id'] || instructor.event_id
-      )
+      ])
     }
 
-    // Insert participants
-    const participantStmt = db.prepare(`
-      INSERT OR REPLACE INTO participants 
-      (id, name, age, city, country_id, cimg, description, event_id, type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-    
+    // Insert participants (children, teens, adults)
     for (const child of children) {
-      participantStmt.run(
+      await db.run(`
+        INSERT INTO participants 
+        (id, name, age, city, country_id, cimg, description, event_id, type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          age = excluded.age,
+          city = excluded.city,
+          country_id = excluded.country_id,
+          cimg = excluded.cimg,
+          description = excluded.description,
+          event_id = excluded.event_id,
+          type = excluded.type
+      `, [
         child.id,
         child.name,
         parseInt(child.age) || 0,
@@ -175,11 +227,24 @@ export default defineEventHandler(async () => {
         child.description,
         child['event_id/id'] || child.event_id,
         'child'
-      )
+      ])
     }
-    
+
     for (const teen of teens) {
-      participantStmt.run(
+      await db.run(`
+        INSERT INTO participants 
+        (id, name, age, city, country_id, cimg, description, event_id, type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          age = excluded.age,
+          city = excluded.city,
+          country_id = excluded.country_id,
+          cimg = excluded.cimg,
+          description = excluded.description,
+          event_id = excluded.event_id,
+          type = excluded.type
+      `, [
         teen.id,
         teen.name,
         parseInt(teen.age) || 0,
@@ -189,11 +254,24 @@ export default defineEventHandler(async () => {
         teen.description,
         teen['event_id/id'] || teen.event_id,
         'teen'
-      )
+      ])
     }
-    
+
     for (const adult of adults) {
-      participantStmt.run(
+      await db.run(`
+        INSERT INTO participants 
+        (id, name, age, city, country_id, cimg, description, event_id, type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          age = excluded.age,
+          city = excluded.city,
+          country_id = excluded.country_id,
+          cimg = excluded.cimg,
+          description = excluded.description,
+          event_id = excluded.event_id,
+          type = excluded.type
+      `, [
         adult.id,
         adult.name,
         parseInt(adult.age) || 0,
@@ -203,10 +281,10 @@ export default defineEventHandler(async () => {
         adult.description,
         adult['event_id/id'] || adult.event_id,
         'adult'
-      )
+      ])
     }
 
-    return { 
+    return {
       success: true,
       message: 'Database synchronized from CSV files',
       counts: {

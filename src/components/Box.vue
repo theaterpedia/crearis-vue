@@ -1,5 +1,5 @@
 <template>
-  <div class="box" :class="{ 
+  <div class="box" :class="{
     'box-centered': layout === 'centered',
     'box-fullwidth-padding': layout === 'full-width' && fullwidthPadding
   }">
@@ -38,13 +38,16 @@ defineProps({
   position: relative;
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
+  /* Allow wrapping */
   width: 100%;
   min-height: 100vh;
   background-color: var(--color-bg);
 }
 
 .box-centered {
-  max-width: 90rem; /* 1440px */
+  max-width: 90rem;
+  /* 1440px */
   margin: 0 auto;
 }
 
@@ -59,6 +62,7 @@ defineProps({
   }
 }
 
+/* Below tablet: Stack everything vertically */
 @media (max-width: 1023px) {
   .box-centered {
     flex-direction: column;
