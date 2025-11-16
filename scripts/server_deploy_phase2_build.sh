@@ -268,16 +268,35 @@ run_migrations() {
         return
     fi
     
-    # Run migrations (adjust command based on your setup)
+    # Run migrations up to 020 (excludes manual-only migration 021)
     if [[ -f "scripts/migrate.sh" ]]; then
         bash scripts/migrate.sh
     elif [[ -n "$(pnpm run | grep migrate)" ]]; then
+        log "Running automatic migrations (000-020)..."
         pnpm run db:migrate
+        
+        log "📦 Migration 021 is manual-only and must be run separately"
+        log "   Run: pnpm db:migrate:021"
+        log "   This seeds system data (tags, status, users, projects)"
     else
         warning "No migration script found, skipping migrations"
     fi
     
-    success "Migrations completed ✓"
+    success "Automatic migrations completed ✓"
+}
+
+# Run manual migration 021
+run_migration_021() {
+    log "📦 Running migration 021 (System Data Seeding)..."
+    
+    cd "$SOURCE_DIR"
+    
+    # Check if already run
+    log "Checking if migration 021 already applied..."
+    
+    pnpm run db:migrate:021
+    
+    success "Migration 021 completed ✓"
 }
 
 # Build application
@@ -562,6 +581,7 @@ main() {
     install_dependencies
     setup_source_data_symlink
     run_migrations
+    run_migration_021
     build_application
     sync_to_live
     setup_output_structure
