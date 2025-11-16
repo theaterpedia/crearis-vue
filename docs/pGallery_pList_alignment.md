@@ -1,6 +1,6 @@
-Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pList.vue)
+Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pListEdit.vue)
 
-Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGallery.vue#1-1), lines 1 to 80
+Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGalleryEdit.vue#1-1), lines 1 to 80
 
 Read [](file:///home/persona/crearis/crearis-vue/src/components/clist/ItemList.vue#1-1), lines 1 to 80
 
@@ -8,7 +8,7 @@ Read [](file:///home/persona/crearis/crearis-vue/src/components/clist/ItemGaller
 
 Now let me check the styling and remaining props differences: 
 
-Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGallery.vue#75-75), lines 75 to 93
+Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGalleryEdit.vue#75-75), lines 75 to 93
 
 Searched text for `filterIds|filterXmlPrefix` (`**/src/components/clist/ItemGallery.vue`), 20 results
 
@@ -64,9 +64,9 @@ Using "Replace String in File"
 ```
 Now let me verify the final state and create a comprehensive alignment report: 
 
-Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGallery.vue)
+Read [](file:///home/persona/crearis/crearis-vue/src/components/page/pGalleryEdit.vue)
 
-Checked [](file:///home/persona/crearis/crearis-vue/src/components/page/pGallery.vue), no problems found
+Checked [](file:///home/persona/crearis/crearis-vue/src/components/page/pGalleryEdit.vue), no problems found
 
 Perfect! Now let me create the alignment report as a console output:
 
@@ -74,7 +74,7 @@ Perfect! Now let me create the alignment report as a console output:
 
 ### ✅ **Perfect Alignment Achieved**
 
-Both `pGallery` and `pList` now follow the exact same architectural pattern as fullwidth page components.
+Both `pGalleryEdit` and `pListEdit` now follow the exact same architectural pattern as fullwidth page components.
 
 ---
 
@@ -97,24 +97,24 @@ Both `pGallery` and `pList` now follow the exact same architectural pattern as f
 These differences are **intentional and correct** for their respective use cases:
 
 #### 1. **Display Components**
-- **pList** → Uses `ItemList` (rows/compact tiles)
-- **pGallery** → Uses `ItemGallery` (cards/rich tiles)
+- **pListEdit** → Uses `ItemList` (rows/compact tiles)
+- **pGalleryEdit** → Uses `ItemGallery` (cards/rich tiles)
 
 #### 2. **Item Type Props**
-- **pList**: `itemType?: 'tile' | 'card' | 'row'` (default: 'row')
-- **pGallery**: `variant?: 'default' | 'square' | 'wide' | 'vertical'` (default: 'default')
+- **pListEdit**: `itemType?: 'tile' | 'card' | 'row'` (default: 'row')
+- **pGalleryEdit**: `variant?: 'default' | 'square' | 'wide' | 'vertical'` (default: 'default')
   
   **Rationale**: Lists support multiple item components; galleries focus on card/tile variants
 
 #### 3. **Interaction Modes**
-- **pList**: `'static' | 'zoom' | 'previewmodal'`
-- **pGallery**: `'static' | 'zoom' | 'previewmodal'`
+- **pListEdit**: `'static' | 'zoom' | 'previewmodal'`
+- **pGalleryEdit**: `'static' | 'zoom' | 'previewmodal'`
   
   **Status**: ✅ Identical (good!)
 
 #### 4. **Size Handling**
-- **pList**: `'small' | 'medium' | 'large'`
-- **pGallery**: `'small' | 'medium' | 'large'`
+- **pListEdit**: `'small' | 'medium' | 'large'`
+- **pGalleryEdit**: `'small' | 'medium' | 'large'`
   
   **Status**: ✅ Identical
 

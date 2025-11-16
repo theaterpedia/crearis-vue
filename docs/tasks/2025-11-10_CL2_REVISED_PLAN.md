@@ -19,7 +19,7 @@ Replace all draft-quality components (pList, pGallery, pSlider, UpcomingEventsSe
 
 ## Critical Findings from Code Analysis
 
-### pList.vue, pGallery.vue, pSlider.vue
+### pListEdit.vue, pGalleryEdit.vue, pSliderDeprecated.vue
 **Issues**:
 - ❌ Custom fetch logic duplicated across 3 components
 - ❌ Poor image handling (direct `cimg` URLs, no optimization)
@@ -551,9 +551,9 @@ CList Component Family
 │  └─ ModalSelector.vue     (Teleport + ItemList/Gallery)
 │
 └─ Page Components (enhanced)
-   ├─ pList.vue             (already uses ItemList entity fetching)
-   ├─ pGallery.vue          (already uses ItemGallery entity fetching)
-   └─ pSlider.vue           (will use ItemCard with entity fetching)
+   ├─ pListEdit.vue             (already uses ItemList entity fetching)
+   ├─ pGalleryEdit.vue          (already uses ItemGallery entity fetching)
+   └─ pSliderDeprecated.vue           (will use ItemCard with entity fetching)
 ```
 
 ---
@@ -658,8 +658,8 @@ function handleSelect(item: any, hide: () => void) {
 2. `src/views/Home/HomeComponents/BlogPostsSection.vue` - Replaced by pGallery
 
 ### Files Already Enhanced (2)
-1. `src/components/page/pList.vue` - Already uses ItemList entity fetching ✅
-2. `src/components/page/pGallery.vue` - Already uses ItemGallery entity fetching ✅
+1. `src/components/page/pListEdit.vue` - Already uses ItemList entity fetching ✅
+2. `src/components/page/pGalleryEdit.vue` - Already uses ItemGallery entity fetching ✅
 
 ---
 

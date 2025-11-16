@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-CL2 successfully enhanced 2 production components (pList.vue, pGallery.vue) to use ItemList/ItemGallery built-in entity fetching, eliminating 74 lines of duplicate fetch logic while improving consistency and functionality. BaseView.vue was verified to already have ItemList integrated.
+CL2 successfully enhanced 2 production components (pListEdit.vue, pGalleryEdit.vue) to use ItemList/ItemGallery built-in entity fetching, eliminating 74 lines of duplicate fetch logic while improving consistency and functionality. BaseView.vue was verified to already have ItemList integrated.
 
 **Key Achievement**: Unified data fetching across all clist component usage, ensuring consistent behavior, error handling, and image optimization.
 
@@ -17,8 +17,8 @@ CL2 successfully enhanced 2 production components (pList.vue, pGallery.vue) to u
 
 ## Implementations Completed
 
-### 1. pList.vue - ItemList Entity Fetching ✅
-**Location**: `src/components/page/pList.vue`  
+### 1. pListEdit.vue - ItemList Entity Fetching ✅
+**Location**: `src/components/page/pListEdit.vue`  
 **Change**: Replaced custom API fetching with ItemList entity prop  
 **Impact**: -37 lines (31% reduction: 117 → 80 lines)
 
@@ -73,14 +73,14 @@ const entityType = computed(() => {
 
 ---
 
-### 2. pGallery.vue - ItemGallery Entity Fetching ✅
-**Location**: `src/components/page/pGallery.vue`  
+### 2. pGalleryEdit.vue - ItemGallery Entity Fetching ✅
+**Location**: `src/components/page/pGalleryEdit.vue`  
 **Change**: Replaced custom API fetching with ItemGallery entity prop  
 **Impact**: -37 lines (31% reduction: 117 → 80 lines)
 
-**Changes**: Identical pattern to pList.vue, uses ItemGallery instead of ItemList
+**Changes**: Identical pattern to pListEdit.vue, uses ItemGallery instead of ItemList
 
-**Benefits**: Same as pList.vue plus gallery-specific grid layout optimization
+**Benefits**: Same as pListEdit.vue plus gallery-specific grid layout optimization
 
 ---
 
@@ -117,8 +117,8 @@ Could be enhanced to use `entity="events"` instead of `items` array, but current
 5. ❌ AdminActionUsersPanel.vue - User admin form, not image selector
 
 ### Actual Implementations:
-1. ✅ pList.vue - Page component wrapper, perfect candidate
-2. ✅ pGallery.vue - Page component wrapper, perfect candidate
+1. ✅ pListEdit.vue - Page component wrapper, perfect candidate
+2. ✅ pGalleryEdit.vue - Page component wrapper, perfect candidate
 3. ✅ BaseView.vue - Verified existing integration
 
 **Conclusion**: The clist refactor plan was based on anticipated components. In reality, clist integration had already progressed further than documented, with key wrapper components (pList/pGallery) being the ideal targets for enhancement.
@@ -130,8 +130,8 @@ Could be enhanced to use `entity="events"` instead of `items` array, but current
 ### Lines of Code Reduced
 | Component | Before | After | Reduction | % Reduced |
 |-----------|--------|-------|-----------|-----------|
-| pList.vue | 117 | 80 | 37 | 31% |
-| pGallery.vue | 117 | 80 | 37 | 31% |
+| pListEdit.vue | 117 | 80 | 37 | 31% |
+| pGalleryEdit.vue | 117 | 80 | 37 | 31% |
 | **Total** | **234** | **160** | **74** | **31%** |
 
 ### Functionality Improvements
@@ -167,8 +167,8 @@ After CL2, here's the complete usage map:
 
 ### Production Components Using CList
 1. **BaseView.vue** - ItemList with popup interaction (event selector)
-2. **pList.vue** - ItemList with entity fetching (page component)
-3. **pGallery.vue** - ItemGallery with entity fetching (page component)
+2. **pListEdit.vue** - ItemList with entity fetching (page component)
+3. **pGalleryEdit.vue** - ItemGallery with entity fetching (page component)
 4. **CListDemo.vue** - All clist components (demo/testing)
 
 ### CList Components Available

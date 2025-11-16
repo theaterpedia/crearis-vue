@@ -20,7 +20,7 @@
 The CList selection system provides flexible list display and data selection capabilities through two primary wrapper components:
 
 - **DropdownList**: Collapsible dropdown with trigger (typically for data selection)
-- **pList**: Always-visible page list (primarily for content display)
+- **pListEdit**: Always-visible page list (primarily for content display)
 
 Both components wrap `ItemList` and support two operational modes:
 
@@ -69,7 +69,7 @@ Both components wrap `ItemList` and support two operational modes:
 
 **Key Design Principles:**
 - **DropdownList** defaults `dataMode=true` (selection-focused)
-- **pList** defaults `dataMode=false` (display-focused)
+- **pListEdit** defaults `dataMode=false` (display-focused)
 - Both can override defaults for specific use cases
 
 ---
@@ -263,7 +263,7 @@ function handleEventClick(item: any, event: MouseEvent) {
 </template>
 
 <script setup lang="ts">
-import pList from '@/components/page/pList.vue'
+import pList from '@/components/page/pListEdit.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 
@@ -301,7 +301,7 @@ const projectId = 'tp'
 </template>
 
 <script setup lang="ts">
-import pList from '@/components/page/pList.vue'
+import pList from '@/components/page/pListEdit.vue'
 
 const projectId = 'tp'
 </script>
@@ -363,7 +363,7 @@ const projectId = 'tp'
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import pList from '@/components/page/pList.vue'
+import pList from '@/components/page/pListEdit.vue'
 
 const projectId = 'tp'
 const selectedIds = ref<number[]>([])

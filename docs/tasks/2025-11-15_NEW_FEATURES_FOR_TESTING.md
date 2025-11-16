@@ -83,30 +83,30 @@ anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
 - `/src/components/clist/ItemModalCard.vue` - Modal implementation (default: heroimage)
 - `/src/components/clist/ItemList.vue` - List wrapper with anatomy support
 - `/src/components/clist/ItemGallery.vue` - Gallery wrapper with anatomy support
-- `/src/components/clist/pListSimple.vue` - Page-level list wrapper (card default: bottomimage, modal default: heroimage)
-- `/src/components/clist/pGallerySimple.vue` - Page-level gallery wrapper (card default: bottomimage, modal default: heroimage)
+- `/src/components/page/pList.vue` - Page-level list wrapper (card default: bottomimage, modal default: heroimage)
+- `/src/components/page/pGallery.vue` - Page-level gallery wrapper (card default: bottomimage, modal default: heroimage)
 - `/src/views/Demo/DemoHeroImage.vue` - Demo component
 - `/src/components/CardHero.vue` - Reference component
 
 ---
 
-## 3. Anatomy Prop Support for ItemList & pListSimple
+## 3. Anatomy Prop Support for ItemList & pList
 
 **Date Added:** November 15, 2025  
 **Status:** ✅ Implemented, ⏳ Pending Testing  
 **Components:**
 - `ItemList.vue`
-- `pListSimple.vue`
+- `pList.vue`
 
 ### Feature Description
 
-Added `anatomy` prop support to `ItemList` and `pListSimple` to allow customization of card layout for list items, with `'bottomimage'` as the default.
+Added `anatomy` prop support to `ItemList` and `pList` to allow customization of card layout for list items, with `'bottomimage'` as the default.
 
 ### Implementation Details
 
 **Props Added:**
 - `ItemList`: Added `anatomy` prop with `'bottomimage'` default
-- `pListSimple`: Added `anatomy` prop with `'bottomimage'` default
+- `pList`: Added `anatomy` prop with `'bottomimage'` default
 - Both components now pass anatomy prop through to `ItemCard`/`ItemRow` components
 
 **Default Behavior:**
@@ -114,8 +114,8 @@ Added `anatomy` prop support to `ItemList` and `pListSimple` to allow customizat
 - Modal previews display with **heroimage** anatomy (image top, heading banner overlay)
 
 **Prop Flow:**
-1. Page component → pListSimple/pGallerySimple
-2. pListSimple/pGallerySimple → ItemList/ItemGallery
+1. Page component → pList/pGallery
+2. pList/pGallery → ItemList/ItemGallery
 3. ItemList/ItemGallery → ItemCard components
 4. ItemList/ItemGallery → ItemModalCard (uses heroimage default)
 
@@ -123,7 +123,7 @@ Added `anatomy` prop support to `ItemList` and `pListSimple` to allow customizat
 
 **Default (bottomimage for cards):**
 ```vue
-<pListSimple 
+<pList 
     entity="events"
     project="tp"
     onActivate="modal"
@@ -132,7 +132,7 @@ Added `anatomy` prop support to `ItemList` and `pListSimple` to allow customizat
 
 **Custom anatomy for cards:**
 ```vue
-<pListSimple 
+<pList 
     entity="events"
     project="tp"
     anatomy="fullimage"
@@ -151,10 +151,10 @@ Added `anatomy` prop support to `ItemList` and `pListSimple` to allow customizat
 ### Related Files
 
 - `/src/components/clist/ItemList.vue` - List component with anatomy support
-- `/src/components/clist/pListSimple.vue` - Page wrapper with anatomy support
-- `/src/views/Home/StartPage.vue` - Uses pListSimple for events
-- `/src/views/Home/BlogPage.vue` - Uses pListSimple for posts
-- `/src/views/Home/TeamPage.vue` - Uses pListSimple for instructors
+- `/src/components/page/pList.vue` - Page wrapper with anatomy support
+- `/src/views/Home/StartPage.vue` - Uses pList for events
+- `/src/views/Home/BlogPage.vue` - Uses pList for posts
+- `/src/views/Home/TeamPage.vue` - Uses pList for instructors
 
 ---
 
@@ -175,20 +175,20 @@ Updated all public-facing pages to use `onActivate="modal"` with proper anatomy 
 ### Implementation Details
 
 **HomePage:**
-- `pGallerySimple` for posts with `onActivate="modal"`
+- `pGallery` for posts with `onActivate="modal"`
 - Cards use bottomimage (default), modals use heroimage (default)
 
 **StartPage:**
-- `pListSimple` for events with `project="tp"` and `onActivate="modal"`
+- `pList` for events with `project="tp"` and `onActivate="modal"`
 - Removed conditional `v-if` wrapper that was hiding events
 - Cards use bottomimage (default), modals use heroimage (default)
 
 **TeamPage:**
-- `pListSimple` for instructors with `onActivate="modal"`
+- `pList` for instructors with `onActivate="modal"`
 - Cards use bottomimage (default), modals use heroimage (default)
 
 **BlogPage:**
-- `pListSimple` for posts with `onActivate="modal"`
+- `pList` for posts with `onActivate="modal"`
 - Cards use bottomimage (default), modals use heroimage (default)
 
 ### Test Coverage Needed
@@ -209,13 +209,13 @@ Updated all public-facing pages to use `onActivate="modal"` with proper anatomy 
 
 ---
 
-## 2. Modal Options for pListSimple & pGallerySimple
+## 2. Modal Options for pList & pGallery
 
 **Date Added:** November 15, 2025  
 **Status:** ✅ Implemented, ⏳ Pending Testing  
 **Components:**
-- `pListSimple.vue`
-- `pGallerySimple.vue`
+- `pList.vue`
+- `pGallery.vue`
 
 ### Feature Description
 
@@ -237,12 +237,12 @@ modalOptions?: {
 
 **Component Updates:**
 
-**pListSimple:**
+**pList:**
 - Added `modalOptions` to Props interface
 - Set default via `withDefaults()`: `modalOptions: () => ({ anatomy: 'heroimage' })`
 - Pass `anatomy` to route modal: `:anatomy="modalOptions?.anatomy ?? 'heroimage'"`
 
-**pGallerySimple:**
+**pGallery:**
 - Added `modalOptions` to Props interface
 - Created `modalOptionsWithDefaults` computed property
 - Pass `anatomy` to route modal: `:anatomy="modalOptionsWithDefaults.anatomy"`
@@ -251,7 +251,7 @@ modalOptions?: {
 
 **Default (heroimage):**
 ```vue
-<pListSimple 
+<pList 
     entity="events"
     onActivate="route"
     routePath="/events/:id"
@@ -260,7 +260,7 @@ modalOptions?: {
 
 **Custom anatomy:**
 ```vue
-<pListSimple 
+<pList 
     entity="events"
     onActivate="route"
     routePath="/events/:id"
@@ -270,7 +270,7 @@ modalOptions?: {
 
 **Disable anatomy:**
 ```vue
-<pGallerySimple 
+<pGallery 
     entity="images"
     onActivate="modal"
     :modal-options="{ anatomy: false }"
@@ -283,15 +283,15 @@ modalOptions?: {
 - [ ] **Custom anatomy** - Test all anatomy options (topimage, bottomimage, fullimage, heroimage, false)
 - [ ] **Route mode** - Verify anatomy applied to route navigation modal
 - [ ] **Modal mode** - Verify anatomy applied to preview modal (if applicable)
-- [ ] **pListSimple** - Test with various entity types (events, posts, instructors)
-- [ ] **pGallerySimple** - Test with various entity types and item types
+- [ ] **pList** - Test with various entity types (events, posts, instructors)
+- [ ] **pGallery** - Test with various entity types and item types
 - [ ] **Prop validation** - Verify TypeScript types work correctly
 - [ ] **Edge cases** - Test with undefined/null modalOptions
 
 ### Related Files
 
-- `/src/components/clist/pListSimple.vue` - List wrapper implementation
-- `/src/components/clist/pGallerySimple.vue` - Gallery wrapper implementation
+- `/src/components/page/pList.vue` - List wrapper implementation
+- `/src/components/page/pGallery.vue` - Gallery wrapper implementation
 - `/src/components/clist/ItemModalCard.vue` - Modal component receiving anatomy prop
 
 ---
@@ -323,20 +323,20 @@ modalOptions?: {
 ### Recommended Test Scenarios
 
 **Scenario 1: StartPage with Hero Events**
-- Use `pListSimple` with `entity="events"` and `project="tp"`
+- Use `pList` with `entity="events"` and `project="tp"`
 - Default anatomy: cards=bottomimage, modal=heroimage
 - Verify event cards display with bottomimage layout
 - Verify modal opens with heroimage layout
 - Check date prefixes display correctly
 
 **Scenario 2: HomePage Gallery with Posts**
-- Use `pGallerySimple` with `entity="posts"`
+- Use `pGallery` with `entity="posts"`
 - Default anatomy: cards=bottomimage, modal=heroimage
 - Verify post cards display with bottomimage layout
 - Verify modal opens with heroimage layout
 
 **Scenario 3: Gallery with Custom Anatomy**
-- Use `pGallerySimple` with `entity="images"`
+- Use `pGallery` with `entity="images"`
 - Set `anatomy="fullimage"` for cards
 - Set `modalOptions: { anatomy: 'bottomimage' }` for modal
 - Verify cards use fullimage layout
@@ -360,7 +360,7 @@ modalOptions?: {
 
 - [ ] Update `CLIST_DESIGN_SPEC.md` with heroimage anatomy section
 - [ ] Add heroimage examples to component documentation
-- [ ] Document modalOptions in pListSimple/pGallerySimple usage guides
+- [ ] Document modalOptions in pList/pGallery usage guides
 - [ ] Add CardHero pattern reference notes
 
 ---

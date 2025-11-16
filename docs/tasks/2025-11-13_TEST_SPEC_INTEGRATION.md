@@ -108,7 +108,7 @@ CSS renders border-radius: 50%
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import pList from '@/components/pList.vue'
+import pList from '@/components/pListEdit.vue'
 import ItemList from '@/components/ItemList.vue'
 import ItemRow from '@/components/ItemRow.vue'
 import ImgShape from '@/components/ImgShape.vue'
@@ -291,8 +291,8 @@ ItemRow applies secondary highlight
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import pList from '@/components/pList.vue'
-import pGallery from '@/components/pGallery.vue'
+import pList from '@/components/pListEdit.vue'
+import pGallery from '@/components/pGalleryEdit.vue'
 
 describe('Selection Flow Integration', () => {
   beforeEach(() => {

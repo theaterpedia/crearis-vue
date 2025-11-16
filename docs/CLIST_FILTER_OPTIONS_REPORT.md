@@ -748,7 +748,7 @@ const favoriteIds = ref([1, 5, 12, 23, 45])
 2. **Files Modified:**
    - ✅ `ItemList.vue` - Core filter logic with single-pass optimization
    - ✅ `DropdownList.vue` - Props forwarding
-   - ✅ `pList.vue` - Props forwarding
+   - ✅ `pListEdit.vue` - Props forwarding
    - ✅ `CLIST_SELECTION_SYSTEM_GUIDE.md` - Documentation updated
    - ✅ `DemoListItem.vue` - Demo section added
 
