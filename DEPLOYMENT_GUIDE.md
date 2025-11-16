@@ -359,7 +359,48 @@ sudo -u pruvious cp /opt/crearis/source/.env.database.example /opt/crearis/sourc
 sudo chmod +x /opt/crearis/source/scripts/*.sh
 ```
 
+**Configure Git for pruvious user (Optional but Recommended):**
+
+If you plan to pull updates or work with Git as the pruvious user:
+
+```bash
+# Option 1: Share your SSH key with pruvious (simplest)
+sudo mkdir -p /home/pruvious/.ssh
+sudo cp ~/.ssh/id_rsa /home/pruvious/.ssh/
+sudo cp ~/.ssh/id_rsa.pub /home/pruvious/.ssh/
+sudo chown -R pruvious:pruvious /home/pruvious/.ssh
+sudo chmod 700 /home/pruvious/.ssh
+sudo chmod 600 /home/pruvious/.ssh/id_rsa
+
+# Option 2: Set Git to use system credential helper
+sudo -u pruvious git config --global credential.helper store
+
+# Option 3: Use HTTPS with personal access token
+# Create token: GitHub → Settings → Developer settings → Personal access tokens
+sudo -u pruvious git config --global credential.helper 'cache --timeout=86400'
+# Then git pull will prompt once and cache for 24 hours
+
+# Set Git identity for pruvious
+sudo -u pruvious git config --global user.name "Deploy Bot"
+sudo -u pruvious git config --global user.email "deploy@yourserver.com"
+
+# Configure safe directory (if you get "dubious ownership" errors)
+sudo -u pruvious git config --global --add safe.directory /opt/crearis/source
+```
+
+**Why this matters:**
+- Phase 2 runs as `pruvious` and may need to check Git status
+- Without credentials, `git pull` and GitHub Copilot will fail
+- SSH key sharing is simplest for automated deployments
+- Credential helper is better for interactive use
+
 **After Phase 1:**
+- **Fix data directory ownership (CRITICAL):**
+  ```bash
+  # As root, set ownership recursively (including all subdirectories and files)
+  sudo chown -R pruvious:pruvious /opt/crearis/data
+  sudo chmod -R u+rwX /opt/crearis/data
+  ```
 - Edit `/opt/crearis/source/.env` with your PostgreSQL credentials
 - Set `DB_PASSWORD` and other required values
 - Configure `/opt/crearis/source/scripts/.env.deploy` for your domain
@@ -371,8 +412,38 @@ sudo chmod +x /opt/crearis/source/scripts/*.sh
 - PostgreSQL client tools installed
 - pnpm installed globally
 
-**Trouble-Shooting**
-If the for security-reasons the database-user is disallowed to create databases we create the db as root and then grant the privileges
+**IMPORTANT: First-Time Setup**
+
+Before running Phase 2 for the first time, you must set correct ownership on all directories:
+
+```bash
+# As root, set ownership of all crearis directories to pruvious user
+# This must include ALL subdirectories and files
+sudo chown -R pruvious:pruvious /opt/crearis/data
+sudo chown -R pruvious:pruvious /opt/crearis/source
+sudo chown -R pruvious:pruvious /opt/crearis/live
+sudo chown -R pruvious:pruvious /opt/crearis/logs
+sudo chown -R pruvious:pruvious /opt/crearis/backups
+
+# Set correct permissions
+sudo chmod 700 /opt/crearis/data
+sudo chmod -R u+rwX /opt/crearis/data  # Ensure write access to all files
+
+# Verify permissions (should show pruvious:pruvious)
+ls -la /opt/crearis/
+ls -laR /opt/crearis/data/ | head -20
+```
+
+**Why this is needed:**
+- Phase 1 (run as root) creates directories and clones repo owned by root
+- Phase 2 (run as pruvious) needs full read/write access to all files
+- `/opt/crearis/source/server/data` is a symlink to `/opt/crearis/data`
+- Without recursive ownership change, Phase 2 will fail with "Permission denied"
+- This includes all CSV files, HTML files, and subdirectories
+
+**Troubleshooting Database Creation**
+
+If the database user is not allowed to create databases (security policy), create it as postgres superuser:
 
 ```bash
 # Change Database-Name and User accordingly
@@ -380,6 +451,7 @@ sudo -u postgres createdb crearis_production
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE crearis_production TO crearis_admin;"
 ```
 
+**Running Phase 2**
 
 ```bash
 # Switch to pruvious user
@@ -555,12 +627,40 @@ pm2 startup
 
 ### Updating the Application (as pruvious)
 
+When you update the application via `git pull`, Git will replace the `/opt/crearis/source/server/data` symlink with the directory from the repository. You must recreate the symlink after every update.
+
+**Recommended: Use deployment scripts (handles symlink automatically):**
+
+```bash
+# Option 1: Use Phase 2a script (recommended - handles symlink + build)
+cd /opt/crearis/source
+git pull origin main
+bash scripts/server_deploy_phase2a_build.sh
+pm2 restart crearis-vue
+
+# Option 2: Use standard Phase 2 script
+cd /opt/crearis/source
+git pull origin main
+bash scripts/server_deploy_phase2_build.sh
+pm2 restart crearis-vue
+```
+
+**Manual update (if not using deployment scripts):**
+
 ```bash
 # Navigate to source directory
 cd /opt/crearis/source
 
 # Pull latest changes
 git pull origin main
+
+# ⚠️ CRITICAL: Recreate symlink (git pull removes it)
+rm -rf server/data  # Remove directory created by git pull
+ln -sfn /opt/crearis/data server/data  # Recreate symlink
+
+# Verify symlink is correct
+ls -la server/data
+# Should show: server/data -> /opt/crearis/data
 
 # Install dependencies (if package.json changed)
 pnpm install --frozen-lockfile
@@ -571,9 +671,22 @@ pnpm build
 # Sync to live directory
 rsync -av --delete .output/ /opt/crearis/live/
 
+# Recreate live symlink (if needed)
+rm -rf /opt/crearis/live/server/data
+ln -sfn /opt/crearis/data /opt/crearis/live/server/data
+
 # Restart PM2
 pm2 restart crearis-vue
 ```
+
+**Why this is necessary:**
+
+- The repository contains `server/data/` as a **directory with files**
+- The server needs `server/data/` as a **symlink to `/opt/crearis/data/`**
+- Running `git pull` removes the symlink and replaces it with the directory
+- `.gitignore` cannot prevent this (it only affects untracked files)
+- Git does **not** follow symlinks when updating; it replaces them
+- Without recreating the symlink, the application will use the repository's data files instead of persistent data
 
 ---
 
@@ -1030,6 +1143,49 @@ tar -czf crearis-vue-backup-$(date +%Y%m%d).tar.gz \
    # Increase PM2 memory limit
    pm2 restart crearis-vue --max-memory-restart 2G
    ```
+
+4. **Symlink loop error (ELOOP):**
+   
+   **Symptoms:**
+   - Migration 021 fails with "too many symbolic links encountered"
+   - Error code: ELOOP (errno -40)
+   - Cannot write files to `/opt/crearis/source/server/data/`
+   
+   **Cause:** The symlink `/opt/crearis/source/server/data` is misconfigured (circular reference)
+   
+   **Solution:**
+   ```bash
+   # As pruvious user
+   
+   # 1. Check current symlink state
+   ls -la /opt/crearis/source/server/data
+   # If it shows a loop or points to itself, it's broken
+   
+   # 2. Remove broken symlink
+   rm /opt/crearis/source/server/data
+   
+   # 3. Create correct symlink
+   ln -sfn /opt/crearis/data /opt/crearis/source/server/data
+   
+   # 4. Verify symlink is correct
+   ls -la /opt/crearis/source/server/data
+   # Should show: /opt/crearis/source/server/data -> /opt/crearis/data
+   
+   # 5. Ensure target directory exists and is writable
+   ls -la /opt/crearis/data
+   # If missing or wrong ownership:
+   sudo mkdir -p /opt/crearis/data
+   sudo chown -R pruvious:pruvious /opt/crearis/data
+   sudo chmod 700 /opt/crearis/data
+   
+   # 6. Re-run deployment (Phase 2b if using split procedure)
+   cd /opt/crearis/source/scripts
+   bash server_deploy_phase2b_seed.sh
+   # Or for standard procedure:
+   bash server_deploy_phase2_build.sh
+   ```
+   
+   **Note:** If migration 021 already partially completed (database seeding succeeded but file write failed), it's safe to re-run. The migration will skip already-seeded data or show duplicate key warnings (which can be ignored).
 
 ### Log Files
 ```bash

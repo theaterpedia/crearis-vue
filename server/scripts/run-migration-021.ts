@@ -33,22 +33,34 @@ async function main() {
     console.log(`\n🔌 Connected to database (${db.type})`)
 
     try {
-        // Check if already run
+        // Check if already run (uses new crearis_config tracking system)
         console.log('\n🔍 Checking migration status...')
-        const result = await db.get(
-            'SELECT id, applied_at FROM migrations WHERE id = ?',
-            ['021_seed_system_data']
+
+        const configResult = await db.get(
+            'SELECT config FROM crearis_config WHERE id = 1',
+            []
         )
 
-        if (result) {
-            console.log('\n⚠️  Migration 021 already applied!')
-            console.log(`   Applied at: ${result.applied_at}`)
-            console.log('\n💡 To re-run (DANGEROUS - will duplicate data):')
-            console.log('   1. Delete migration record: DELETE FROM migrations WHERE id = \'021_seed_system_data\';')
-            console.log('   2. Manually clean seeded data (status, tags, users, projects, etc.)')
-            console.log('   3. Run this script again')
-            console.log('\n⚠️  WARNING: Re-running without cleaning will cause duplicate key errors!')
-            process.exit(0)
+        if (configResult) {
+            const configJson = (configResult as any).config
+            const config = typeof configJson === 'string' ? JSON.parse(configJson) : configJson
+            const migrationsRun = config.migrations_run || []
+
+            if (migrationsRun.includes('021_seed_system_data')) {
+                console.log('\n⚠️  Migration 021 already applied!')
+                console.log(`   Found in migrations_run array`)
+                console.log('\n💡 To re-run (DANGEROUS - will duplicate data):')
+                console.log('   1. Remove from tracking: UPDATE crearis_config SET config = jsonb_set(config, \'{migrations_run}\', \'[]\') WHERE id = 1;')
+                console.log('   2. Manually clean seeded data (status, tags, users, projects, etc.)')
+                console.log('   3. Run this script again')
+                console.log('\n⚠️  WARNING: Re-running without cleaning will cause duplicate key errors!')
+                process.exit(0)
+            }
+        } else {
+            console.log('\n⚠️  Config table not found or empty!')
+            console.log('   This likely means base migrations (000-020) have not been run.')
+            console.log('   Run: pnpm db:migrate')
+            process.exit(1)
         }
 
         console.log('   ✅ Migration 021 not yet applied\n')
@@ -57,17 +69,28 @@ async function main() {
         console.log('📦 Running migration 021...\n')
         await migration.up(db)
 
-        // Mark as complete
+        // Mark as complete (add to migrations_run array in crearis_config)
         console.log('\n💾 Marking migration as complete...')
+
+        const currentConfig = await db.get('SELECT config FROM crearis_config WHERE id = 1', [])
+        const configJson = (currentConfig as any).config
+        const config = typeof configJson === 'string' ? JSON.parse(configJson) : configJson
+        const migrationsRun = config.migrations_run || []
+
+        if (!migrationsRun.includes('021_seed_system_data')) {
+            migrationsRun.push('021_seed_system_data')
+        }
+
         if (db.type === 'postgresql') {
             await db.run(
-                'INSERT INTO migrations (id, applied_at) VALUES ($1, CURRENT_TIMESTAMP)',
-                ['021_seed_system_data']
+                'UPDATE crearis_config SET config = jsonb_set(config, \'{migrations_run}\', $1::jsonb) WHERE id = 1',
+                [JSON.stringify(migrationsRun)]
             )
         } else {
+            config.migrations_run = migrationsRun
             await db.run(
-                'INSERT INTO migrations (id, applied_at) VALUES (?, datetime(\'now\'))',
-                ['021_seed_system_data']
+                'UPDATE crearis_config SET config = ? WHERE id = 1',
+                [JSON.stringify(config)]
             )
         }
 
