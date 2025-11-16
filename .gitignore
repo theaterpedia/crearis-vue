@@ -32,8 +32,7 @@ temp_backup/
 backup/
 
 # Sensitive data
-server/data/PASSWORDS.md
-server/data/PASSWORDS.csv
+server/data/
 
 # Logs
 logs/
