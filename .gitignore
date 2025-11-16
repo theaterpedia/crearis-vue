@@ -82,3 +82,4 @@ build/Release/
 .vercel
 .netlify
 docs/NITRO_3_NEW_BUILD.md
+server/data/import/users.csv

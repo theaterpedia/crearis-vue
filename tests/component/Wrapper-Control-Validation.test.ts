@@ -49,7 +49,7 @@ vi.mock('floating-vue', () => ({
 }))
 
 import DropdownList from '@/components/clist/DropdownList.vue'
-import pList from '@/components/page/pList.vue'
+import pList from '@/components/page/pListEdit.vue'
 import ItemList from '@/components/clist/ItemList.vue'
 import Heading from '@/components/Heading.vue'
 
