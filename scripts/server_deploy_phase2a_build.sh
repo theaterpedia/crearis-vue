@@ -477,7 +477,7 @@ module.exports = {
   apps: [{
     name: 'crearis-vue',
     cwd: '$LIVE_DIR',
-    script: './server/index.mjs',
+    script: './.output/server/index.mjs',
     instances: 1,
     exec_mode: 'cluster',
     watch: false,
@@ -503,7 +503,8 @@ EOF
     success "PM2 ecosystem.config.js created ✓"
     log "  Location: $LIVE_DIR/ecosystem.config.js"
     log "  NODE_ENV: production (REQUIRED for Nitro 3.0)"
-    log "  Port: 3000"
+    log "  Port: 3020"
+    log "  Script: ./.output/server/index.mjs"
     log "  Database: $DB_NAME@$DB_HOST:$DB_PORT"
 }
 
@@ -549,7 +550,20 @@ print_next_steps() {
     echo "   pm2 save"
     echo "   pm2 startup  # Follow instructions"
     echo ""
-    echo "3. Or manually run migration 021 if needed:"
+    echo "3. Configure Nginx (IMPORTANT - see Phase 3):"
+    echo "   The Nginx configuration must be set up separately"
+    echo "   See: scripts/server_deploy_phase3_domain.sh"
+    echo ""
+    echo "   Key Nginx requirements:"
+    echo "     - /assets/ location must point to: $LIVE_DIR/.output/public/assets/"
+    echo "     - Default mode: Stable Production (expires 1y, immutable)"
+    echo "     - For alpha/beta: Use Fast-Changing mode (no-cache)"
+    echo ""
+    echo "   To switch modes after Nginx is configured:"
+    echo "     - Stable: sudo bash scripts/switch-to-stable-production.sh"
+    echo "     - Fast-Changing: sudo bash scripts/switch-to-fast-changing.sh"
+    echo ""
+    echo "4. Or manually run migration 021 if needed:"
     echo "   cd $SOURCE_DIR"
     echo "   pnpm db:migrate:021"
     echo ""
