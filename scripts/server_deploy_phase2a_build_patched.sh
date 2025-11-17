@@ -477,7 +477,7 @@ module.exports = {
   apps: [{
     name: 'crearis-vue',
     cwd: '$LIVE_DIR',
-    script: './.output/server/index.mjs',
+    script: './server/index.mjs',
     instances: 1,
     exec_mode: 'cluster',
     watch: false,
@@ -503,8 +503,7 @@ EOF
     success "PM2 ecosystem.config.js created ✓"
     log "  Location: $LIVE_DIR/ecosystem.config.js"
     log "  NODE_ENV: production (REQUIRED for Nitro 3.0)"
-    log "  Port: 3020"
-    log "  Script: ./.output/server/index.mjs"
+    log "  Port: 3000"
     log "  Database: $DB_NAME@$DB_HOST:$DB_PORT"
 }
 
@@ -550,79 +549,11 @@ print_next_steps() {
     echo "   pm2 save"
     echo "   pm2 startup  # Follow instructions"
     echo ""
-    echo "3. Configure Nginx (IMPORTANT - see Phase 3):"
-    echo "   The Nginx configuration must be set up separately"
-    echo "   See: scripts/server_deploy_phase3_domain.sh"
-    echo ""
-    echo "   Key Nginx requirements:"
-    echo "     - /assets/ location must point to: $LIVE_DIR/.output/public/assets/"
-    echo "     - Default mode: Stable Production (expires 1y, immutable)"
-    echo "     - For alpha/beta: Use Fast-Changing mode (no-cache)"
-    echo ""
-    echo "   To switch modes after Nginx is configured:"
-    echo "     - Stable: sudo bash scripts/switch-to-stable-production.sh"
-    echo "     - Fast-Changing: sudo bash scripts/switch-to-fast-changing.sh"
-    echo ""
-    echo "4. Or manually run migration 021 if needed:"
+    echo "3. Or manually run migration 021 if needed:"
     echo "   cd $SOURCE_DIR"
     echo "   pnpm db:migrate:021"
     echo ""
     echo "========================================================================="
-}
-
-# Prompt for deployment mode
-prompt_deployment_mode() {
-    echo ""
-    echo "========================================================================="
-    echo "  Phase 2a: Deployment Mode Selection"
-    echo "========================================================================="
-    echo ""
-    echo "Please select deployment mode:"
-    echo ""
-    echo "  1) Fresh Install"
-    echo "     - Create database if needed"
-    echo "     - Run all migrations (000-020)"
-    echo "     - Setup PM2 configuration"
-    echo "     - Copy data files"
-    echo "     - Full initialization"
-    echo ""
-    echo "  2) Rebuild Only"
-    echo "     - Update dependencies"
-    echo "     - Rebuild application"
-    echo "     - Sync to live directory"
-    echo "     - Skip database operations"
-    echo "     - Skip PM2/data setup"
-    echo ""
-    echo -n "Enter choice [1-2]: "
-    read -r choice
-    echo ""
-    
-    case $choice in
-        1)
-            export DEPLOYMENT_MODE="fresh"
-            success "Selected: Fresh Install"
-            ;;
-        2)
-            export DEPLOYMENT_MODE="rebuild"
-            success "Selected: Rebuild Only"
-            warning "⚠️  MANUAL STEP REQUIRED BEFORE REBUILD:"
-            echo "  Remove the symlink: rm /opt/crearis/source/server/data"
-            echo "  Then re-run this script"
-            echo ""
-            echo -n "Have you removed the symlink? (yes/no): "
-            read -r confirm
-            if [[ "$confirm" != "yes" ]]; then
-                error "Please remove the symlink first, then re-run this script"
-                exit 1
-            fi
-            ;;
-        *)
-            error "Invalid choice: $choice"
-            exit 1
-            ;;
-    esac
-    
-    echo ""
 }
 
 # Main execution
@@ -631,31 +562,19 @@ main() {
     
     check_user
     load_config
-    prompt_deployment_mode
     check_prerequisites
     load_env_vars
     test_database_connection
-    
-    if [[ "$DEPLOYMENT_MODE" == "fresh" ]]; then
-        # Fresh install: Full setup
-        create_database
-        install_dependencies
-        setup_source_data_symlink
-        run_migrations
-        build_application
-        sync_to_live
-        setup_output_structure
-        copy_data_files
-        create_import_directory
-        setup_pm2
-    else
-        # Rebuild only: Skip database operations
-        install_dependencies
-        setup_source_data_symlink
-        build_application
-        sync_to_live
-    fi
-    
+    create_database
+    install_dependencies
+    # setup_source_data_symlink
+    run_migrations
+    build_application
+    sync_to_live
+    setup_output_structure
+    # copy_data_files
+    create_import_directory
+    setup_pm2
     print_next_steps
 }
 
