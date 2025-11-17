@@ -7,6 +7,7 @@
 # Purpose: Set up PostgreSQL database, install dependencies, build application
 #          PostgreSQL user 'crearis_admin' must be created before running
 # =============================================================================
+# manually fixed
 
 set -e  # Exit on any error
 
@@ -575,26 +576,93 @@ print_next_steps() {
     echo "========================================================================="
 }
 
+# Prompt for deployment mode
+prompt_deployment_mode() {
+    echo ""
+    echo "========================================================================="
+    echo "  Phase 2: Deployment Mode Selection"
+    echo "========================================================================="
+    echo ""
+    echo "Please select deployment mode:"
+    echo ""
+    echo "  1) Fresh Install"
+    echo "     - Create database if needed"
+    echo "     - Run all migrations (000-021)"
+    echo "     - Setup PM2 configuration"
+    echo "     - Copy data files"
+    echo "     - Full initialization"
+    echo ""
+    echo "  2) Rebuild Only"
+    echo "     - Update dependencies"
+    echo "     - Rebuild application"
+    echo "     - Sync to live directory"
+    echo "     - Skip database operations"
+    echo "     - Skip PM2/data setup"
+    echo ""
+    echo -n "Enter choice [1-2]: "
+    read -r choice
+    echo ""
+    
+    case $choice in
+        1)
+            export DEPLOYMENT_MODE="fresh"
+            success "Selected: Fresh Install"
+            ;;
+        2)
+            export DEPLOYMENT_MODE="rebuild"
+            success "Selected: Rebuild Only"
+            warning "⚠️  MANUAL STEP REQUIRED BEFORE REBUILD:"
+            echo "  Remove the symlink: rm /opt/crearis/source/server/data"
+            echo "  Then re-run this script"
+            echo ""
+            echo -n "Have you removed the symlink? (yes/no): "
+            read -r confirm
+            if [[ "$confirm" != "yes" ]]; then
+                error "Please remove the symlink first, then re-run this script"
+                exit 1
+            fi
+            ;;
+        *)
+            error "Invalid choice: $choice"
+            exit 1
+            ;;
+    esac
+    
+    echo ""
+}
+
 # Main execution
 main() {
     log "🚀 Starting Phase 2: Database & Build"
     
     check_user
     load_config
+    prompt_deployment_mode
     check_prerequisites
     load_env_vars
     test_database_connection
-    create_database
-    install_dependencies
-    setup_source_data_symlink
-    run_migrations
-    run_migration_021
-    build_application
-    sync_to_live
-    setup_output_structure
-    copy_data_files
-    create_import_directory
-    setup_pm2
+    
+    if [[ "$DEPLOYMENT_MODE" == "fresh" ]]; then
+        # Fresh install: Full setup
+        create_database
+        install_dependencies
+        setup_source_data_symlink
+        run_migrations
+        run_migration_021
+        build_application
+        sync_to_live
+        setup_output_structure
+        copy_data_files
+        create_import_directory
+        setup_pm2
+    else
+        # Rebuild only: Skip database operations
+        install_dependencies
+        setup_source_data_symlink
+        build_application
+        sync_to_live
+    fi
+    
     print_next_steps
 }
 
