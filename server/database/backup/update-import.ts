@@ -163,6 +163,8 @@ export async function updateImportDatabase(
             'events',      // Index: xmlid
         ];
 
+        // PASS 1: Upsert entities without FK references (set FKs to NULL/defaults)
+        console.log('Pass 1: Upserting entities (FK references deferred)...\n');
         for (const entityName of entityTablesWithIndexes) {
             if (!backupIndex.entities.includes(entityName)) continue;
 
@@ -171,8 +173,23 @@ export async function updateImportDatabase(
             const entityContent = await fs.readFile(entityPath, 'utf-8');
             const entityBackup: EntityBackup = JSON.parse(entityContent);
 
-            const result = await upsertEntityWithIndex(entityBackup, mappings);
+            const result = await upsertEntityWithIndex(entityBackup, mappings, true); // deferFKs = true
             stats[entityName] = result;
+        }
+
+        // PASS 2: Update FK references now that all entities exist
+        console.log('\n=== PHASE 1b: Resolve Foreign Key References ===\n');
+        console.log('Pass 2: Updating foreign key references...\n');
+        
+        for (const entityName of entityTablesWithIndexes) {
+            if (!backupIndex.entities.includes(entityName)) continue;
+
+            const entityFile = backupIndex.files[entityName];
+            const entityPath = path.join(tempDir, entityFile);
+            const entityContent = await fs.readFile(entityPath, 'utf-8');
+            const entityBackup: EntityBackup = JSON.parse(entityContent);
+
+            await updateForeignKeyReferences(entityBackup, mappings);
         }
 
         // PHASE 2: Upsert system tables with dependencies
@@ -329,10 +346,12 @@ export async function updateImportDatabase(
 /**
  * Upsert entity table with index column (users, projects, events, etc.)
  * INSERT if new, UPDATE if exists
+ * @param deferFKs - If true, skip FK columns (set to NULL/defaults) to avoid circular dependencies
  */
 async function upsertEntityWithIndex(
     entity: EntityBackup,
-    mappings: UpdateImportResult['mappings']
+    mappings: UpdateImportResult['mappings'],
+    deferFKs: boolean = false
 ): Promise<{ total: number; inserted: number; updated: number; skipped: number; failed: number }> {
     const { tableName, columns, rows } = entity;
 
@@ -369,11 +388,15 @@ async function upsertEntityWithIndex(
     let skipped = 0;
     let failed = 0;
 
-    // Build column lists (exclude 'id', index column, and computed columns)
+    // FK columns that may cause circular dependencies
+    const fkColumns = ['project_id', 'owner_id', 'img_id', 'instructor_id', 'regio'];
+    
+    // Build column lists (exclude 'id', index column, computed columns, and optionally FK columns)
     const dataColumns = columns.filter(col =>
         col !== 'id' &&
         col !== indexColumn &&
-        !shouldExcludeColumn(col)
+        !shouldExcludeColumn(col) &&
+        (!deferFKs || !fkColumns.includes(col)) // Skip FK columns in first pass
     );
 
     for (const row of rows) {
@@ -393,49 +416,10 @@ async function upsertEntityWithIndex(
 
             if (existing) {
                 // UPDATE existing record
-                const updateSetClauses = dataColumns.map((col, i) => {
-                    // Special handling for circular dependencies
-                    if (tableName === 'users' && col === 'instructor_id') {
-                        return null; // Skip, will be updated in late-seeding
-                    }
-                    if (tableName === 'projects' && col === 'regio') {
-                        return null; // Skip, will be updated in late-seeding
-                    }
-                    return `${col} = $${i + 1}`;
-                }).filter(Boolean);
+                const updateSetClauses = dataColumns.map((col, i) => `${col} = $${i + 1}`);
 
                 if (updateSetClauses.length > 0) {
-                    const updateValues = dataColumns.map(col => {
-                        if (tableName === 'users' && col === 'instructor_id') return null;
-                        if (tableName === 'projects' && col === 'regio') return null;
-
-                        // Remap foreign keys using mappings
-                        if (col === 'project_id' && row[col]) {
-                            const projectDomaincode = row.project_domaincode;
-                            if (projectDomaincode) {
-                                return mappings.projects.get(projectDomaincode) || row[col];
-                            }
-                        }
-                        if (col === 'owner_id' && row[col]) {
-                            const ownerSysmail = row.owner_sysmail;
-                            if (ownerSysmail) {
-                                return mappings.users.get(ownerSysmail) || row[col];
-                            }
-                        }
-                        if (col === 'img_id' && row[col]) {
-                            const imgXmlid = row.img_xmlid;
-                            if (imgXmlid) {
-                                return mappings.images.get(imgXmlid) || row[col];
-                            }
-                        }
-
-                        return row[col];
-                    }).filter((_, i) => {
-                        const col = dataColumns[i];
-                        if (tableName === 'users' && col === 'instructor_id') return false;
-                        if (tableName === 'projects' && col === 'regio') return false;
-                        return true;
-                    });
+                    const updateValues = dataColumns.map(col => row[col]);
 
                     const updateQuery = `UPDATE ${tableName} SET ${updateSetClauses.join(', ')} WHERE ${indexColumn} = $${updateSetClauses.length + 1}`;
                     await db.run(updateQuery, [...updateValues, indexValue]);
@@ -452,36 +436,13 @@ async function upsertEntityWithIndex(
 
                 const values = insertColumns.map(col => {
                     if (col === indexColumn) return indexValue;
-
-                    // Special handling for circular dependencies
-                    if (tableName === 'users' && col === 'instructor_id') {
+                    
+                    // Special handling for circular dependencies (only when NOT deferring)
+                    if (!deferFKs && tableName === 'users' && col === 'instructor_id') {
                         const setupId = mappings.instructors.get('setup');
                         return setupId || null;
                     }
-                    if (tableName === 'projects' && col === 'regio') {
-                        return null;
-                    }
-
-                    // Remap foreign keys using mappings
-                    if (col === 'project_id' && row[col]) {
-                        const projectDomaincode = row.project_domaincode;
-                        if (projectDomaincode) {
-                            return mappings.projects.get(projectDomaincode) || null;
-                        }
-                    }
-                    if (col === 'owner_id' && row[col]) {
-                        const ownerSysmail = row.owner_sysmail;
-                        if (ownerSysmail) {
-                            return mappings.users.get(ownerSysmail) || null;
-                        }
-                    }
-                    if (col === 'img_id' && row[col]) {
-                        const imgXmlid = row.img_xmlid;
-                        if (imgXmlid) {
-                            return mappings.images.get(imgXmlid) || null;
-                        }
-                    }
-
+                    
                     return row[col];
                 });
 
@@ -501,6 +462,86 @@ async function upsertEntityWithIndex(
     console.log(`  → ${mappingTable.size} entries in mapping table`);
 
     return { total: rows.length, inserted, updated, skipped, failed };
+}
+
+/**
+ * Update foreign key references after all entities have been upserted
+ * This resolves circular dependencies (e.g., projects→images, images→projects)
+ */
+async function updateForeignKeyReferences(
+    entity: EntityBackup,
+    mappings: UpdateImportResult['mappings']
+): Promise<void> {
+    const { tableName, rows } = entity;
+
+    console.log(`Updating FK references for ${tableName}...`);
+
+    // Determine index column
+    let indexColumn: string;
+    if (tableName === 'users') indexColumn = 'sysmail';
+    else if (tableName === 'projects') indexColumn = 'domaincode';
+    else indexColumn = 'xmlid';
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+        try {
+            const indexValue = row[indexColumn];
+            if (!indexValue) continue;
+
+            const updates: string[] = [];
+            const values: any[] = [];
+            let paramIndex = 1;
+
+            // Handle project_id FK
+            if (row.project_id !== undefined) {
+                const projectId = row.project_id;
+                if (projectId) {
+                    updates.push(`project_id = $${paramIndex++}`);
+                    values.push(projectId);
+                }
+            }
+
+            // Handle owner_id FK
+            if (row.owner_id !== undefined) {
+                const ownerId = row.owner_id;
+                if (ownerId) {
+                    updates.push(`owner_id = $${paramIndex++}`);
+                    values.push(ownerId);
+                }
+            }
+
+            // Handle img_id FK
+            if (row.img_id !== undefined) {
+                const imgId = row.img_id;
+                if (imgId) {
+                    updates.push(`img_id = $${paramIndex++}`);
+                    values.push(imgId);
+                }
+            }
+
+            // Handle instructor_id FK (skip, handled in late-seeding)
+            // Handle regio FK (skip, handled in late-seeding)
+
+            if (updates.length > 0) {
+                values.push(indexValue);
+                const query = `UPDATE ${tableName} SET ${updates.join(', ')} WHERE ${indexColumn} = $${paramIndex}`;
+                await db.run(query, values);
+                updated++;
+            } else {
+                skipped++;
+            }
+        } catch (error: any) {
+            console.error(`  ✗ Failed to update FK for ${indexColumn}=${row[indexColumn]}:`, error.message);
+        }
+    }
+
+    if (updated > 0) {
+        console.log(`  ✓ Updated ${updated} FK references, skipped ${skipped}`);
+    } else {
+        console.log(`  (no FK updates needed)`);
+    }
 }
 
 /**

@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
             throw new Error('Theme ID is required')
         }
 
-        const themesDir = join(process.cwd(), 'server/themes')
+        // Use server/data symlink which points to persistent data directory
+        const themesDir = join(process.cwd(), 'server/data/themes')
         const themeFilePath = join(themesDir, `theme-${id}.json`)
         const indexPath = join(themesDir, 'index.json')
 
