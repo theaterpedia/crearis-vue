@@ -5,8 +5,9 @@
  */
 
 import { defineEventHandler, getRouterParam } from 'h3'
-import { readFile } from 'fs/promises'
+import { readFile, access } from 'fs/promises'
 import { join } from 'path'
+import { constants } from 'fs'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -16,8 +17,17 @@ export default defineEventHandler(async (event) => {
             throw new Error('Theme ID is required')
         }
 
-        // Use server/data symlink which points to persistent data directory
-        const themesDir = join(process.cwd(), 'server/data/themes')
+        // Try production path first (server/data/themes), then dev path (server/themes)
+        const productionPath = join(process.cwd(), 'server/data/themes')
+        const devPath = join(process.cwd(), 'server/themes')
+
+        let themesDir = productionPath
+        try {
+            await access(productionPath, constants.R_OK)
+        } catch {
+            themesDir = devPath
+        }
+
         const themeFilePath = join(themesDir, `theme-${id}.json`)
         const indexPath = join(themesDir, 'index.json')
 

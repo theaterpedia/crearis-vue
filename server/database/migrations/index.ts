@@ -29,6 +29,7 @@ import { migration as migration021 } from './021_seed_system_data'
 
 interface Migration {
     run: (db: DatabaseAdapter) => Promise<void>
+    down?: (db: DatabaseAdapter) => Promise<void>  // Optional rollback function
     metadata: {
         id: string
         description: string
@@ -36,6 +37,7 @@ interface Migration {
         date: string
     }
     manualOnly?: boolean  // If true, skip in auto-run (requires env flag)
+    reversible?: boolean  // If true, has safe down() implementation
 }
 
 // Registry of all available migrations
@@ -55,12 +57,13 @@ const migrations: Migration[] = [
     { run: migration014.up, metadata: { id: migration014.id, description: migration014.description, version: '0.0.7', date: '2025-10-17' } },
     { run: migration015.up, metadata: { id: migration015.id, description: migration015.description, version: '0.0.8', date: '2025-10-21' } },
     { run: migration016.up, metadata: { id: migration016.id, description: migration016.description, version: '0.0.9', date: '2025-10-21' } },
-    { run: migration017.up, metadata: { id: migration017.id, description: migration017.name, version: '0.0.10', date: '2025-10-21' } },
+    { run: migration017.up, down: migration017.down, metadata: { id: migration017.id, description: migration017.name, version: '0.0.10', date: '2025-10-21' }, reversible: true },
     { run: migration018.up, metadata: { id: migration018.id, description: migration018.description, version: '0.0.11', date: '2025-10-22' } },
     { run: migration019.up, metadata: { id: migration019.id, description: migration019.description, version: '0.0.12', date: '2025-10-22' } },
     { run: migration020.up, metadata: { id: migration020.id, description: migration020.description, version: '0.0.13', date: '2025-10-22' } },
-    { run: migration021.up, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' }, manualOnly: true },
-    // Migrations 022-024 archived (will be replaced by data packages datA-datG)
+    { run: migration021.up, down: migration021.down, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' }, manualOnly: true, reversible: true },
+    // Package C (022-029) starts here - reversible migrations for alpha features
+    // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
 /**
@@ -216,3 +219,142 @@ export async function getMigrationStatus(db: DatabaseAdapter) {
         pendingMigrations: pending.map(m => m.metadata),
     }
 }
+
+/**
+ * Mark a migration as not run (for rollback)
+ */
+async function unmarkMigrationRun(db: DatabaseAdapter, migrationId: string) {
+    try {
+        const isPostgres = db.type === 'postgresql'
+        const migrationsRun = await getMigrationsRun(db)
+
+        const index = migrationsRun.indexOf(migrationId)
+        if (index > -1) {
+            migrationsRun.splice(index, 1)
+        }
+
+        if (isPostgres) {
+            await db.run(
+                `UPDATE crearis_config 
+                 SET config = jsonb_set(config, '{migrations_run}', $1::jsonb)
+                 WHERE id = 1`,
+                [JSON.stringify(migrationsRun)]
+            )
+        } else {
+            const result = await db.get('SELECT config FROM crearis_config WHERE id = 1', [])
+            const config = JSON.parse((result as any).config)
+            config.migrations_run = migrationsRun
+
+            await db.run(
+                'UPDATE crearis_config SET config = ? WHERE id = 1',
+                [JSON.stringify(config)]
+            )
+        }
+    } catch (error: any) {
+        console.error(`Failed to unmark migration ${migrationId}:`, error)
+        throw error
+    }
+}
+
+/**
+ * Rollback the last N migrations
+ * 
+ * @param db Database adapter
+ * @param count Number of migrations to rollback (default: 1)
+ * @param verbose Show detailed output
+ */
+export async function rollbackMigrations(db: DatabaseAdapter, count = 1, verbose = true) {
+    if (verbose) {
+        console.log(`\n🔙 Starting migration rollback (${count} migration(s))...\n`)
+    }
+
+    const migrationsRun = await getMigrationsRun(db)
+
+    if (migrationsRun.length === 0) {
+        console.log('ℹ️  No migrations to rollback')
+        return { rolledBack: 0, skipped: 0 }
+    }
+
+    // Get the last N migrations that were run, in reverse order
+    const toRollback = migrationsRun.slice(-count).reverse()
+    let rolledBackCount = 0
+    let skippedCount = 0
+
+    for (const migrationId of toRollback) {
+        // Find migration in registry
+        const migration = migrations.find(m => m.metadata.id === migrationId)
+
+        if (!migration) {
+            console.log(`⚠️  Migration not found in registry: ${migrationId} (skipping)`)
+            skippedCount++
+            continue
+        }
+
+        if (!migration.down) {
+            console.log(`⚠️  Migration has no down() function: ${migrationId} (skipping)`)
+            console.log(`   This migration is not reversible`)
+            skippedCount++
+            continue
+        }
+
+        if (verbose) {
+            console.log(`\n🔄 Rolling back: ${migration.metadata.id}`)
+            console.log(`   Description: ${migration.metadata.description}`)
+        }
+
+        try {
+            await migration.down(db)
+            await unmarkMigrationRun(db, migrationId)
+            rolledBackCount++
+
+            if (verbose) {
+                console.log(`✅ Rolled back: ${migration.metadata.id}`)
+            }
+        } catch (error) {
+            console.error(`\n❌ Rollback failed: ${migration.metadata.id}`)
+            console.error(error)
+            console.error(`\n⚠️  Database may be in inconsistent state!`)
+            console.error(`   Manual intervention may be required`)
+            throw error
+        }
+    }
+
+    if (verbose) {
+        console.log(`\n✅ Rollback complete: ${rolledBackCount} migration(s) rolled back, ${skippedCount} skipped`)
+        console.log(`📊 Migrations remaining: ${migrationsRun.length - rolledBackCount}\n`)
+    }
+
+    return { rolledBack: rolledBackCount, skipped: skippedCount }
+}
+
+/**
+ * Rollback to a specific migration (rolls back all migrations after it)
+ * 
+ * @param db Database adapter
+ * @param targetMigrationId Migration ID to rollback to (this migration stays, all after it are rolled back)
+ * @param verbose Show detailed output
+ */
+export async function rollbackToMigration(db: DatabaseAdapter, targetMigrationId: string, verbose = true) {
+    if (verbose) {
+        console.log(`\n🔙 Rolling back to migration: ${targetMigrationId}\n`)
+    }
+
+    const migrationsRun = await getMigrationsRun(db)
+    const targetIndex = migrationsRun.indexOf(targetMigrationId)
+
+    if (targetIndex === -1) {
+        throw new Error(`Migration ${targetMigrationId} has not been run yet`)
+    }
+
+    // Calculate how many migrations to rollback
+    const count = migrationsRun.length - targetIndex - 1
+
+    if (count === 0) {
+        console.log(`ℹ️  Already at migration ${targetMigrationId}`)
+        return { rolledBack: 0, skipped: 0 }
+    }
+
+    console.log(`   Will rollback ${count} migration(s)\n`)
+    return await rollbackMigrations(db, count, verbose)
+}
+
