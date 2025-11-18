@@ -1,5 +1,23 @@
 # Migration Rollback System Guide
 
+## ⚠️ IMPORTANT: Use pnpm, NOT npm!
+
+**This project uses pnpm for package management.**
+
+```bash
+✅ CORRECT:   pnpm db:migrate
+✅ CORRECT:   pnpm db:rollback --force
+❌ WRONG:     npm run db:migrate
+❌ WRONG:     npm run db:rollback
+```
+
+**For code automation tools:**
+- Always use `pnpm` commands
+- Never use `npm run` commands
+- Check package manager: `cat package.json | grep packageManager`
+
+---
+
 ## Overview
 
 The migration system now supports **reversible migrations** with rollback functionality. This allows safe experimentation during development while maintaining data integrity in production.

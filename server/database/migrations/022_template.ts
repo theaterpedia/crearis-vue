@@ -1,6 +1,10 @@
 /**
  * Migration Template for Package C (022-029)
  * 
+ * IMPORTANT: Use pnpm, NOT npm!
+ * This project uses pnpm for package management.
+ * Code automation tools should use pnpm commands only.
+ * 
  * Package C: Alpha features with reversible migrations
  * - Use this template for migrations 022-029
  * - Always implement both up() and down() functions
@@ -116,14 +120,18 @@ export const migration = {
 /**
  * TESTING YOUR MIGRATION
  * 
+ * ⚠️  IMPORTANT: Always use pnpm, NOT npm!
+ * 
  * 1. Test forward migration:
- *    pnpm db:migrate
+ *    pnpm db:migrate          ✅ CORRECT
+ *    npm run db:migrate       ❌ WRONG
  * 
  * 2. Verify changes in database:
  *    psql -d your_database -c "\d projects"
  * 
  * 3. Test rollback:
- *    pnpm db:rollback --force
+ *    pnpm db:rollback --force ✅ CORRECT
+ *    npm run db:rollback      ❌ WRONG
  * 
  * 4. Verify rollback worked:
  *    psql -d your_database -c "\d projects"

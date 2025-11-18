@@ -1,6 +1,16 @@
 /**
  * Migration Runner
  * Orchestrates database migrations and tracks which have been run
+ * 
+ * IMPORTANT: Use pnpm, NOT npm!
+ * This project uses pnpm for package management.
+ * Code automation tools should use pnpm commands only.
+ * 
+ * Run migrations: pnpm db:migrate
+ * Check status: pnpm db:migrate:status
+ * Rollback: pnpm db:rollback --force
+ * 
+ * ⚠️  DO NOT USE: npm run db:migrate (use pnpm instead)
  */
 
 import type { DatabaseAdapter } from '../adapter'

@@ -4,10 +4,16 @@
  * 
  * Rolls back database migrations to previous state.
  * 
+ * IMPORTANT: Use pnpm, NOT npm!
+ * This project uses pnpm for package management.
+ * Code automation tools should use pnpm commands only.
+ * 
  * Usage:
  *   pnpm db:rollback          # Rollback last migration
  *   pnpm db:rollback 3        # Rollback last 3 migrations
  *   pnpm db:rollback --to=020 # Rollback to migration 020
+ * 
+ * ⚠️  DO NOT USE: npm run db:rollback (use pnpm instead)
  * 
  * Safety:
  *   - Only works with reversible migrations (have down() function)
