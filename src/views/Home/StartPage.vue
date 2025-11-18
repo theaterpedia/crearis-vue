@@ -198,7 +198,7 @@
                             <li><strong>Features & Fragen</strong> in der Roadmap verankern</li>
                             <li><strong>Themen entscheiden</strong>  und Diskurse vorbereiten</li>
                             <li><strong>die Agenda denken</strong> -> Veranstaltungen und Termine planen</li>
-                            <li><strong>Theaterpedia-Konferenz München 22.-24.11.2026</strong> -> das Kooperationsmodell entwickeln</li>
+                            <li><strong>Theaterpedia-Konferenz München 19.-22.11.2026</strong> -> das Kooperationsmodell entwickeln</li>
                             <li><strong>Theaterpedia definieren</strong> -> Vorschläge zu Organen und Abläufen des Theaterpedia e.V.</li>
                         </ul>
                         
