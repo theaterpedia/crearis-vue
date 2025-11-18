@@ -12,10 +12,14 @@
             <Columns>
                 <Column width="auto">
                     <Prose>
-                        <Heading overline="Showcase für entstehende Projekte" is="h2"
-                            headline="Ca. 10 Websites in der Pipeline">New **Projects** in
-                            the Pipeline</Heading>
+                        <Heading overline="Projekte starten und vernetzen" is="h2"
+                            headline="Websites in der Pipeline"></Heading>
+                        <p>Die Digitalisierung stellt die Demokratie auf die Probe. Viele Theaterpädagog:innen möchten sich einsetzen für die Sache eine nachhaltige Gesellschaftsform im 21. Jahrhundert. Es braucht dafür ein offenes Internet. Wenn Theaterpädagogik sich einbringen möchte dann braucht dies einen souveränen Webauftritt. Dies ist das Kernanliegen von Theaterpedia. Eine transparente und wirksame Vernetzung soll entstehen - einzig und allein entlang der inhaltlichen Linien. </p>
+
                     </Prose>
+                    <button style="background-color: var(--color-secondary-bg)" data-fpostlink data-hlogic="default">
+                        Start des Showcase: ab 27. NOV 2025
+                    </button>
                 </Column>
                 <Column width="1/2">
                     <pSlider entity="projects" :filter-ids="filteredProjectIds" size="large" shape="wide"
@@ -102,7 +106,8 @@ const filteredProjectIds = computed(() => {
 // Fetch projects (filtered to show pipeline projects)
 async function fetchProjects() {
     try {
-        const response = await fetch('/api/projects')
+        // Add timestamp to prevent caching
+        const response = await fetch(`/api/projects?_t=${Date.now()}`)
         if (response.ok) {
             const data = await response.json()
             const projectsArray = data.projects || data
@@ -236,9 +241,32 @@ function parseProjectImageData(project: any): ImgShapeData | undefined {
     }
 }
 
+// Refresh projects when component becomes visible (page refocus)
+let cleanupVisibility: (() => void) | null = null
+
+function setupVisibilityRefresh() {
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            fetchProjects()
+        }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Return cleanup function
+    cleanupVisibility = () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+}
+
 onMounted(async () => {
     await fetchProjects()
+    
+    // Set up auto-refresh on page visibility change
+    setupVisibilityRefresh()
 })
+
+// Note: Vue 3 composition API uses onBeforeUnmount, but since we're storing
+// the cleanup function, we can call it when needed or let it clean up naturally
 </script>
 
 <style scoped>

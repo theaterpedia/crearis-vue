@@ -73,9 +73,10 @@
                         </Column>
                         <Column width="auto">
                             <Prose>
-                                <Heading overline="Showcase für entstehende Projekte" is="h2"
-                                    headline="Ca. 10 Websites in der Pipeline">New **Projects** in
-                                    the Pipeline</Heading>
+                                <Heading overline="direkt anmelden und losmachen" is="h2"
+                                    headline="Agenda Theaterpädagogik"></Heading>
+                                <p>Theaterpädagogik sind 'Veranstaltungen'. Konkrete Treffen von Menschen, die in irgendeiner Form 'bewegt' sind oder etwas bewegen wollen. Mit Theater, im Spiel und auf den Bühnen des Alltags. Theaterpedia möchte dafür sorgen, dass dies zugänglich wird, so einfach wie möglich.</p>
+
                             </Prose>
                         </Column>
                     </Columns>
@@ -91,11 +92,31 @@
 
 
             <!-- Blog Posts Section  -->
-            <Section background="muted">
+            <Section background="muted" ref="postsSection">
                 <Container>
+                    <Columns>
+                        <Column width="1/2">
                     <h2 style="margin-bottom: 1rem;">Blog Beiträge</h2>
                     <pGallery entity="posts" project="dev" item-type="tile" variant="wide" onActivate="modal"
                         header="Latest from Our Blog" is-footer />
+                        </Column>
+                        <Column width="auto">
+                            <Prose>
+                                <Heading overline="Arbeitsfelder und Ansätze sichtbar machen" is="h2"
+                                    headline="Episoden & Formate"></Heading>
+                                <p>Seit der Gründung des Bundesverbands Theaterpädagogik (BuT) sind 45 Jahre vergangen. Zwischen Theaterwissenschaften und Philosophie, Didaktik und Gesellschaftstheorie, zwischen aktivistischen Bewegungen und künstlerischen Kollektiven hat sich im deutschsprachigen Raum ein Fachdiskurs entwickelt. Theaterpedia sieht Websites als wichtige Erweiterung der Möglichkeiten, diesen Diskurs zu führen.</p>
+                            </Prose>
+                            <div data-fpostcontainer data-fpostkey="p6">
+                                <button class="cta-secondary cta-demo" data-fpostlink data-hlogic="default">
+                                    Start des Blogs: ab 27. NOV 2025
+                                </button>
+                                <div style="display: none;" data-fpostcontent data-color="primary">
+                                    <p>Blogs und Episoden sind eine Grundfunktion von Theaterpedia. Sie starten am 27. NOV 2025.</p>
+                                </div>
+                            </div>                            
+                        </Column>
+                    </Columns>
+
                 </Container>
             </Section>
 
@@ -135,6 +156,7 @@ import ProjectsShowcaseSection from './HomeComponents/ProjectsShowcaseSection.vu
 import CommunityMembersSection from './HomeComponents/CommunityMembersSection.vue'
 import SocialMediaSection from './HomeComponents/SocialMediaSection.vue'
 import InvertedToggle from '@/components/InvertedToggle.vue'
+import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
@@ -142,6 +164,7 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
 
+const controller = useFpostitController()
 const router = useRouter()
 const route = useRoute()
 const { getStatusIdByName, getStatusesForTable } = useStatus()
@@ -332,6 +355,7 @@ async function fetchUsers() {
     }
 }
 
+const postsSection = ref<HTMLElement>()
 
 // Initialize
 onMounted(async () => {
@@ -345,6 +369,13 @@ onMounted(async () => {
     await checkAuth()
     await fetchProject(FIXED_PROJECT_ID)
     await fetchUsers()
+    
+    if (postsSection.value) {
+        controller.discoverFromDOM({
+            root: postsSection.value,
+            attachHandlers: false
+        })    
+    }
 })
 </script>
 

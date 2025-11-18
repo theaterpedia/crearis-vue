@@ -6,8 +6,8 @@
         content-align-y="bottom">
         <Banner transparent>
             <Prose>
-                <h1><strong>Meet Our Team</strong></h1>
-                <p>Passionate theater professionals building community and connections.</p>
+                <p>Designer:innen, Digitalist:innen & Aktivist:innen</p>
+                <h1><strong>Eine lange Reise kurz erzählt</strong></h1>
             </Prose>
         </Banner>
     </Hero>
