@@ -9,7 +9,8 @@ import { join } from 'path'
 
 export default defineEventHandler(async () => {
     try {
-        const themesDir = join(process.cwd(), 'server/themes')
+        // Use server/data symlink which points to persistent data directory
+        const themesDir = join(process.cwd(), 'server/data/themes')
         const indexPath = join(themesDir, 'index.json')
 
         const indexContent = await readFile(indexPath, 'utf-8')

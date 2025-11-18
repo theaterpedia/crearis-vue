@@ -35,11 +35,48 @@
                 <TeamPageHero :user="user" />
             </template>
 
-            <!-- Page Content -->
-            <PageContent page-type="team" :project-domain-code="project.domaincode" :project-id="String(project.id)" />
+            <Section>
+                <Container>
+                    <Prose>
+                        <h2><strong>Wer ist Theaterpedia?</strong></h2>
+                        <p>Theaterpedia ist ein Verein in Gründung und hat eine offene Grundidee. Wenn nach einem 'Team' gesucht wird, nach den Umsetzerinnen der letzten Jahre - dann <strong>waren</strong> auf alle Fälle 3 Personen unverzichtbar:</p>
+                        <ul>
+                            <li><strong>Hans Dönitz </strong>Lead-Entwicklung</li>
+                            <li><strong>Karel Hajek </strong>Design & Projektmanagement</li>
+                            <li><strong>Kathrin Jung </strong>Regio-Konzept & Networking</li>
+                        </ul>
+                        <p>Theaterpedia ist regelmäßig in der Institutsleitung DAS Ei beraten worden.</p>
 
-            <!-- Community Members Section -->
+                        <p><strong>Dies greift aber zu kurz!! Theaterpedia hat viele Held:innen einer langen Heldenreise</strong></p>
+                    </Prose>
+                </Container>
+            </Section>
+
+            <Section background="muted">
+                <Container>
+                    <Prose>
+                        <h2><strong>Wer hat Theaterpedia erfunden und mitentwickelt?</strong></h2>
+                        <p><strong>2006</strong> erstmalige Phantasie einer 'Theaterpedia' durch: S. Hascher</p>
+                        <p><strong>2011-2014</strong> gefördert mit Hilfe E. Allerdings (Cojc gGmbH)</p>
+                        <p><strong>2018</strong> Idee wiederbelebt durch: F. Lohr</p>
+                        <p><strong>2021</strong> 
+                            Förderantrag gestellt bei Fonds Soziokultur und Programm Kulturgemeinschaften durch DAS Ei (H. Dönitz), Landesverband Theaterpädagogik Hessen (B. Porps), Chapeau Claque Bamberg und JTA Augsburg / K. Jung
+                        </p>
+                        <p><strong>2022</strong> 3-tägige Gründungskonferenz mit 18 Teilnehmer:innen</p>
+                        <p><strong>2023</strong> die Mühen der Ebene</p>
+                        <p><strong>2024</strong> 3-tägige Programmkonferenz mit 16 Teilnehmer:innen</p>
+                        <p><strong>2025</strong> Programmierung erreicht Alpha-Status (H. Dönitz)</p>
+                    </Prose>
+                </Container>
+            </Section>
+
+            <!-- Page Content
+            <PageContent page-type="team" :project-domain-code="project.domaincode" :project-id="String(project.id)" />
+             -->
+
+            <!-- Community Members Section
             <CommunityMembersSection :users="users" />
+             -->
 
             <!-- Projects Showcase Section -->
             <ProjectsShowcaseSection :projects="projects" />
@@ -48,10 +85,9 @@
             <template #aside>
                 <!-- Demo Team: List SimplePreview Modal -->
                 <div style="margin-top: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">Team: Instructors small Preview Modal (Click to View
-                        Details)</h3>
+                    <h3 style="margin-bottom: 1rem;">bis Ende 2025 entsteht ein Überblick über die Akteure der Gründungsphase</h3>
                     <Prose>
-                        <Heading is="h2" headline="Our Team" />
+                        <Heading is="h2" headline="Mitwirkende" />
                         <pList entity="instructors" :statusGt="1" size="small" onActivate="modal" />
                     </Prose>
                 </div>
@@ -70,6 +106,10 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import PageContent from '@/components/PageContent.vue'
+import Section from '@/components/Section.vue'
+import Container from '@/components/Container.vue'
+import Prose from '@/components/Prose.vue'
+import Heading from '@/components/Heading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'

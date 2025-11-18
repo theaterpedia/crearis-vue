@@ -468,11 +468,11 @@ setup_pm2() {
     fi
     
     # Create ecosystem file directly in live directory (always create/update)
-    log "Creating PM2 ecosystem.config.js in $LIVE_DIR..."
+    log "Creating PM2 ecosystem.config.cjs in $LIVE_DIR..."
     
-    # Note: Database credentials are loaded from .env file through PM2
-    # The .env file is copied to LIVE_DIR and PM2 loads it automatically
-    cat > "$LIVE_DIR/ecosystem.config.js" << EOF
+    # Note: Using .cjs extension because package.json has "type": "module"
+    # PM2 requires CommonJS format, so we must use .cjs extension
+    cat > "$LIVE_DIR/ecosystem.config.cjs" << EOF
 module.exports = {
   apps: [{
     name: 'crearis-vue',
@@ -500,8 +500,9 @@ module.exports = {
 };
 EOF
     
-    success "PM2 ecosystem.config.js created ✓"
-    log "  Location: $LIVE_DIR/ecosystem.config.js"
+    success "PM2 ecosystem.config.cjs created ✓"
+    log "  Location: $LIVE_DIR/ecosystem.config.cjs"
+    log "  Format: CommonJS (.cjs required due to package.json type:module)"
     log "  NODE_ENV: production (REQUIRED for Nitro 3.0)"
     log "  Port: 3020"
     log "  Script: ./.output/server/index.mjs"
@@ -546,7 +547,7 @@ print_next_steps() {
     echo "2. After Phase 2b completes, start the application:"
     echo "   cd $LIVE_DIR"
     echo "   pm2 delete crearis-vue 2>/dev/null || true"
-    echo "   pm2 start ecosystem.config.js"
+    echo "   pm2 start ecosystem.config.cjs"
     echo "   pm2 save"
     echo "   pm2 startup  # Follow instructions"
     echo ""

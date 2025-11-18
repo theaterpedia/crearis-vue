@@ -33,9 +33,21 @@ export interface FormDefinition {
 const formRegistry: Record<string, FormDefinition> = {
     'registration': {
         name: 'registration',
-        title: 'Konferenz-Anmeldung',
-        description: 'Melde dich für die Konferenz vom 20.-23. November an',
+        title: 'Anmeldung',
+        description: 'Melde dich an für: Richtfest | Fachtag | Gesamtpaket',
         fields: [
+            {
+                name: 'participation_days',
+                type: 'select',
+                label: 'Teilnahmetage',
+                description: 'An welchen Tagen nimmst du teil?',
+                required: true,
+                choices: [
+                    { value: 'all', name: 'Alle Tage (21.-23. Nov) - 50 EUR TN-Gebühr' },
+                    { value: '21', name: 'Richtfest 21. Nov 18:00-22:00' },
+                    { value: '22', name: 'Nur Fachtag 22. Nov 09:00-19:00 - 50 EUR TN-Gebühr' }
+                ]
+            },            
             {
                 name: 'name',
                 type: 'text',
@@ -63,85 +75,73 @@ const formRegistry: Record<string, FormDefinition> = {
                 placeholder: '+49 123 456789'
             },
             {
-                name: 'start_date',
-                type: 'date',
-                subtype: 'conference_start',
-                label: 'Anreisedatum',
-                description: 'Wann reist du an?',
-                defaultValue: '2025-11-20',
-                required: true
-            },
-            {
-                name: 'end_date',
-                type: 'date',
-                subtype: 'conference_end',
-                label: 'Abreisedatum',
-                description: 'Wann reist du ab?',
-                defaultValue: '2025-11-23',
-                required: true
-            },
-            {
-                name: 'participation_days',
-                type: 'select',
-                label: 'Teilnahmetage',
-                description: 'An welchen Tagen nimmst du teil?',
-                required: true,
-                choices: [
-                    { value: 'all', name: 'Alle Tage (20.-23. Nov)' },
-                    { value: '20-21', name: 'Nur 20.-21. Nov' },
-                    { value: '22-23', name: 'Nur 22.-23. Nov' },
-                    { value: 'custom', name: 'Einzelne Tage' }
-                ]
-            },
-            {
                 name: 'workshop_preference',
                 type: 'select',
-                label: 'Workshop-Präferenz',
+                label: 'Programm-Präferenz',
                 choices: [
-                    { value: 'theater', name: 'Theaterpädagogik' },
-                    { value: 'digital', name: 'Digitale Methoden' },
-                    { value: 'inclusive', name: 'Inklusive Theaterarbeit' },
+                    { value: 'digital', name: 'Theaterpedia als Digitaltool Theaterpädagogik' },
+                    { value: 'praxis', name: 'Praxis des Theatralen Lernens' },
+                    { value: 'diskurs', name: 'Diskurs und Theorie' },
+                    { value: 'regio', name: 'Vernetzung und Kooperation' },
                     { value: 'none', name: 'Keine Präferenz' }
                 ]
             },
             {
-                name: 'dietary_requirements',
-                type: 'textarea',
-                label: 'Ernährungshinweise',
-                description: 'Allergien oder besondere Ernährungswünsche',
-                placeholder: 'z.B. vegetarisch, vegan, glutenfrei...'
-            },
+                name: 'hotel_options',
+                type: 'select',
+                label: 'Übernachtung',
+                description: 'Möchtest du im CVJM Hotel übernachten?',
+                required: false,
+                choices: [
+                    { value: 'nein', name: 'Nein, keine Übernachtung' },
+                    { value: 'ez', name: 'Übernachtung im Einzelzimmer (EUR 70,00/Nacht)' },
+                    { value: 'dz', name: 'Übernachtung im Doppelzimmer (EUR 60,00/Nacht)' },
+                    { value: '4z', name: 'Übernachtung im 4er-Zimmer (EUR 40,00/Nacht)' }
+                ]
+            },              
             {
                 name: 'comments',
                 type: 'textarea',
                 label: 'Bemerkungen',
                 placeholder: 'Weitere Informationen oder Fragen...'
             }
+
+
         ]
     },
     'verification': {
         name: 'verification',
-        title: 'Anmeldung bestätigen',
-        description: 'Bitte bestätige deine Anmeldung und wähle zusätzliche Optionen',
+        title: 'bereits verifiziert',
+        description: 'bitte treffe deine Auswahl und bestätige die Anmeldung',
         fields: [
             {
-                name: 'name',
-                type: 'text',
-                label: 'Vor- und Nachname',
+                name: 'participation_days',
+                type: 'select',
+                label: 'Teilnahmetage',
+                description: 'An welchen Tagen nimmst du teil?',
                 required: true,
-                placeholder: 'Max Mustermann'
+                choices: [
+                    { value: 'all', name: 'Alle Tage (21.-23. Nov) - 50 EUR TN-Gebühr' },
+                    { value: '21', name: 'Richtfest 21. Nov 18:00-22:00' },
+                    { value: '22', name: 'Nur Fachtag 22. Nov 09:00-19:00 - 50 EUR TN-Gebühr' }
+                ]
             },
             {
-                name: 'email',
-                type: 'email',
-                label: 'E-Mail',
-                required: true,
-                placeholder: 'name@example.com'
-            },
+                name: 'workshop_preference',
+                type: 'select',
+                label: 'Programm-Präferenz',
+                choices: [
+                    { value: 'digital', name: 'Theaterpedia als Digitaltool Theaterpädagogik' },
+                    { value: 'praxis', name: 'Praxis des Theatralen Lernens' },
+                    { value: 'diskurs', name: 'Diskurs und Theorie' },
+                    { value: 'regio', name: 'Vernetzung und Kooperation' },
+                    { value: 'none', name: 'Keine Präferenz' }
+                ]
+            },                  
             {
                 name: 'organization',
                 type: 'text',
-                label: 'Organisation',
+                label: '(Organisation)',
                 placeholder: 'Deine Organisation'
             },
             {
@@ -151,74 +151,18 @@ const formRegistry: Record<string, FormDefinition> = {
                 placeholder: '+49 123 456789'
             },
             {
-                name: 'start_date',
-                type: 'date',
-                subtype: 'conference_start',
-                label: 'Anreisedatum',
-                description: 'Wann reist du an?',
-                defaultValue: '2025-11-20',
-                required: true
-            },
-            {
-                name: 'end_date',
-                type: 'date',
-                subtype: 'conference_end',
-                label: 'Abreisedatum',
-                description: 'Wann reist du ab?',
-                defaultValue: '2025-11-23',
-                required: true
-            },
-            {
-                name: 'participation_days',
+                name: 'hotel_options',
                 type: 'select',
-                label: 'Teilnahmetage',
-                description: 'An welchen Tagen nimmst du teil?',
-                required: true,
+                label: 'Übernachtung',
+                description: 'Möchtest du im CVJM Hotel übernachten?',
+                required: false,
                 choices: [
-                    { value: 'all', name: 'Alle Tage (20.-23. Nov)' },
-                    { value: '20-21', name: 'Nur 20.-21. Nov' },
-                    { value: '22-23', name: 'Nur 22.-23. Nov' },
-                    { value: 'custom', name: 'Einzelne Tage' }
+                    { value: 'nein', name: 'Nein, keine Übernachtung' },
+                    { value: 'ez', name: 'Übernachtung im Einzelzimmer (EUR 70,00/Nacht)' },
+                    { value: 'dz', name: 'Übernachtung im Doppelzimmer (EUR 60,00/Nacht)' },
+                    { value: '4z', name: 'Übernachtung im 4er-Zimmer (EUR 40,00/Nacht)' }
                 ]
-            },
-            {
-                name: 'workshop_preference',
-                type: 'select',
-                label: 'Workshop-Präferenz',
-                choices: [
-                    { value: 'theater', name: 'Theaterpädagogik' },
-                    { value: 'digital', name: 'Digitale Methoden' },
-                    { value: 'inclusive', name: 'Inklusive Theaterarbeit' },
-                    { value: 'none', name: 'Keine Präferenz' }
-                ]
-            },
-            {
-                name: 'accommodation_needed',
-                type: 'select',
-                label: 'Unterkunft benötigt?',
-                required: true,
-                choices: [
-                    { value: 'yes', name: 'Ja, ich benötige eine Unterkunft' },
-                    { value: 'no', name: 'Nein, ich habe bereits eine Unterkunft' }
-                ]
-            },
-            {
-                name: 'certificate_needed',
-                type: 'select',
-                label: 'Teilnahmebescheinigung gewünscht?',
-                required: true,
-                choices: [
-                    { value: 'yes', name: 'Ja, bitte' },
-                    { value: 'no', name: 'Nicht erforderlich' }
-                ]
-            },
-            {
-                name: 'dietary_requirements',
-                type: 'textarea',
-                label: 'Ernährungshinweise',
-                description: 'Allergien oder besondere Ernährungswünsche',
-                placeholder: 'z.B. vegetarisch, vegan, glutenfrei...'
-            },
+            },              
             {
                 name: 'comments',
                 type: 'textarea',

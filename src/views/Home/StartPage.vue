@@ -38,6 +38,8 @@
                         <h2>Konferenz-Anmeldung 2025</h2>
                     </div> -->
 
+                    <Heading overline="München, 21.-23.11: Richtfest | Fachtag | Jahresplan 2026" headline="Theaterpedia starten" level="h1" />                
+
                     <!-- Double Entry Banner -->
                     <div v-if="hasExistingInteraction" class="double-entry-banner">
                         <div class="banner-content">
@@ -54,9 +56,12 @@
                     </div>
 
                     <!-- Email Input Row -->
+
+
                     <div class="email-input-row">
-                        <div class="form-group">
-                            <label for="email" class="form-label">ANMELDUNG (Freitag/Vollprogramm)</label>
+
+                        <div class="form-group" style="margin-top: 0.8rem;">
+                            <label for="email" class="form-label"><strong>HIER ANMELDEN</strong></label>
                             <div class="email-input-wrapper">
                                 <input id="email" v-model="emailInput" type="email" class="form-input"
                                     placeholder="deine.email@example.com" @input="handleEmailInput"
@@ -125,70 +130,84 @@
             <!-- Main Content -->
             <Section background="default">
                 <Container>
+                    <Prose>
+                        <Heading overline="Theaterpedia.org: Agenda, Kooperationsplattform und Fachportal" headline="Richtfest" level="h3" />
+                        <p><strong>FR 21.11 18:00-22:00 Uhr</strong> Teilnahme kostenfrei</p>
+                        <p>Die Website steht, die Form wird erkennbar, Fragen finden Antworten - nach 4 unglaublichen Jahren feiern wir auf theaterpädagogische Art:</p>
+                        
+                        <ul>
+                            <li><strong>Empfang</strong></li>
+                            <li><strong>Erstbegehung in kleinen Gruppen</strong></li>
+                            <li><strong>wichtige Geschichten erzählen, gute Fragen stellen, Notizen machen</strong></li>
+                            <li><strong>Plenum mit Eröffnungsvortrag Hans Dönitz</strong></li>
+                            <li><strong>Feier</strong> </li>
+                        </ul>
 
+                        <p>wo: <strong>80336 München, CVJM-Hotel, Landwehrstraße 13</strong></p>
+                        <p>Moderation: <strong>Hans Dönitz</strong></p>                        
 
-                    <Columns gap="medium" align="top">
+                    </Prose>
+                </Container>
+            </Section>
 
-                        <Column width="2/3">
-                            <Prose>
-                                <Heading overline="Join Us" headline="Theaterpedia Conference 2025" level="h1" />
+            <Section background="muted">
+                <Container>
+                    <Prose>
+                        <Heading overline="Fachtag: zielgruppenorientierte Theaterpädagogik" headline="Theatrales Lernen" level="h3" />
 
-                                <h2>Munich, Germany</h2>
-                                <p><strong>November 20-23, 2025</strong></p>
+                        <p><strong>SA 22.11 09:00-19:00 Uhr</strong> Teilnahmegebühr: 50,00 EUR</p>
+                        <br/>
+                        <p>Info: <strong>der Diskurs 'Theatrales Lernen' basiert auf der gleichlautenden Publikation von Wiese et al.</strong>
+                        -> Auf dem Fachtag wollen wir eine grundsätzliche Diskussion führen basierend auf praktischen Inputs.</p>
+                        <br/>
 
-                                <h3>About the Conference</h3>
-                                <p>
-                                    Join theater professionals, educators, and enthusiasts from around the world
-                                    for four days of workshops, performances, and networking at the annual
-                                    Theaterpedia Conference.
-                                </p>
+                        <h4>09:00-13:00: Input, Workshops, Plenum</h4>
+                        <ul>
+                            <li><strong>Input Sabine Menne</strong> </li>
+                            <li><strong>Konzeptworkshops</strong> </li>
+                            <ul>
+                                <li><strong>Verena Neumaier</strong> </li>
+                                <li><strong>Annie Dürrwang</strong> </li>
+                            </ul>
+                            <li><strong>Plenum</strong> </li>
+                        </ul>
 
-                                <h3>What to Expect</h3>
-                                <ul>
-                                    <li><strong>Workshops & Masterclasses:</strong> Learn from industry leaders and
-                                        experienced practitioners</li>
-                                    <li><strong>Performances:</strong> Evening showcase of innovative theater
-                                        productions
-                                    </li>
-                                    <li><strong>Networking:</strong> Connect with theater professionals from across
-                                        Europe
-                                    </li>
-                                    <li><strong>Panel Discussions:</strong> Explore current trends and challenges in
-                                        theater
-                                        education</li>
-                                </ul>
+                        <h4>14:30-19:00: 3 Slots und Plenum</h4>
 
-                                <h3>Schedule Overview</h3>
-                                <ul>
-                                    <li><strong>November 20:</strong> Opening Ceremony & Keynote Speech</li>
-                                    <li><strong>November 21:</strong> Workshop Day 1 & Evening Performance</li>
-                                    <li><strong>November 22:</strong> Workshop Day 2 & Panel Discussions</li>
-                                    <li><strong>November 23:</strong> Final Presentations & Closing Event</li>
-                                </ul>
+                        <ul>
+                            <li><strong>Kleingruppen</strong> vertiefen einzelne Aspekte des Diskurses</li>
+                            <li><strong>Plenumsphasen</strong> beleuchten die Zusammenhänge, vernetzen Akteure und Ideen</li>
+                            <li><strong>Programmformate</strong> bündeln wichtige Erkenntnisse und rahmen die weitere Erkundung (Workshop | Kurs | Projekt)</li>
+                        </ul>
 
-                                <h3>Venue</h3>
-                                <p>
-                                    The conference will be held at the historic <strong>Münchner
-                                        Volkstheater</strong>,
-                                    located in the heart of Munich's cultural district.
-                                </p>
+                        <hr/>
+                        <p>wo: <strong>80336 München, CVJM-Hotel, Landwehrstraße 13</strong></p>
+                        <p>Moderation: <strong>Rosalin Hertrich, Cornelia Jung</strong></p>                        
+                        <p>Verpflegung: <strong>Getränke vor Ort, zum Mittagessen gibt es diverse Imbissmöglichkeiten in der direkten Umgebung</strong></p>
+                    </Prose>
+                </Container>
+            </Section>
 
-                                <h3>Registration</h3>
-                                <p>
-                                    Early bird registration is now open! Complete the registration form to secure
-                                    your spot. Space is limited to 150 participants.
-                                </p>
+            <Section background="default">
+                <Container>
+                    <Prose>
+                        <Heading overline="Jahresplanung 2026" headline="die Agenda entwickeln" level="h3" />
+                        <p><strong>SO 23.11 09:30-15:00 Uhr</strong> nur bei Teilnehmer:innen an Fachtag</p>
 
-                                <p><strong>Registration Fees:</strong></p>
-                                <ul>
-                                    <li>Early Bird (until Oct 31): €250</li>
-                                    <li>Standard (Nov 1-10): €350</li>
-                                    <li>Late Registration (after Nov 10): €450</li>
-                                    <li>Student Rate: €150 (with valid ID)</li>
-                                </ul>
-                            </Prose>
-                        </Column>
-                    </Columns>
+                        <ul>
+                            <li><strong>Features & Fragen</strong> in der Roadmap verankern</li>
+                            <li><strong>Themen entscheiden</strong>  und Diskurse vorbereiten</li>
+                            <li><strong>die Agenda denken</strong> -> Veranstaltungen und Termine planen</li>
+                            <li><strong>Theaterpedia-Konferenz München 19.-22.11.2026</strong> -> das Kooperationsmodell entwickeln</li>
+                            <li><strong>Theaterpedia definieren</strong> -> Vorschläge zu Organen und Abläufen des Theaterpedia e.V.</li>
+                        </ul>
+                        
+                        <br/>
+                        <p>wo: <strong>80336 München, CVJM-Hotel, Landwehrstraße 13</strong></p>
+                        <p>Moderation: <strong>Hans Dönitz</strong></p>
+                        <p>Verpflegung: <strong>Getränke und einfache Snacks vor Ort</strong></p>
+                        
+                    </Prose>
                 </Container>
             </Section>
 
@@ -240,6 +259,7 @@ import { isValidEmail } from '@/utils/fieldListUtility'
 import { pageSettings } from '@/settings'
 import DropdownList from '@/components/clist/DropdownList.vue'
 import { useTheme } from '@/composables/useTheme'
+import { h } from 'vue'
 
 const router = useRouter()
 const route = useRoute()

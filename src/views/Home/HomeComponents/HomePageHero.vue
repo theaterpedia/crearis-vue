@@ -2,7 +2,7 @@
     <Hero :height-tmp="height"
         img-tmp="https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg"
         img-tmp-align-x="cover" img-tmp-align-y="cover"
-        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.6))`" content-width="short"
+        :overlay="`linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.3))`" content-width="short"
         content-align-y="center">
         <Logo />
         <div ref="ctaGroup" class="cta-group">
@@ -35,19 +35,18 @@
                     🎨 Theme Demo
                 </button>
                 <div style="display: none;" data-fpostcontent data-color="primary">
-                    <h3>🎨 Theme Preview</h3>
-                    <p>Try different themes temporarily! Theme will auto-reset in 30 seconds or when you navigate.</p>
 
                     <div class="theme-demo-info">
                         <div class="current-theme-display">
-                            <strong class="theme-name" data-theme-display="name">Click to try a theme</strong>
-                            <p class="theme-desc" data-theme-display="desc">Themes rotate through: E-Motion, Pastell,
-                                Institut</p>
+                            <strong class="theme-name" data-theme-display="name">wir starten mit 7 Designs</strong>
+                            <p class="theme-desc" data-theme-display="desc">probier es aus: Pastell,
+                                Institut, E-Motion</p>
                         </div>
                         <button class="theme-action-btn btn-accent" data-fpost-event="theme-rotate"
                             data-fpost-payload='{"action":"next"}'>
-                            🎨 Try Next Theme
+                            🎨 Nächstes ausprobieren
                         </button>
+                        <p>(setzt nach 30 Sekunden automatisch zurück)</p>
                     </div>
 
                     <div class="demo-status" data-theme-display="status" style="display: none;">
