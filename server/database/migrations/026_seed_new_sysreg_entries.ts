@@ -51,18 +51,20 @@ export const migration = {
         let configCount = 0
         for (const entry of configEntries) {
             try {
+                // Convert JavaScript escaped string \\x01 to PostgreSQL bytea format \x01
+                const pgValue = entry.value.replace(/\\\\/g, '\\')
                 await db.exec(`
-                    INSERT INTO sysreg (value, name, description, tagfamily, taglogic, is_default)
-                    VALUES ('${entry.value}'::bytea, '${entry.name}', '${entry.description}', 'config', '${entry.taglogic}', ${entry.is_default})
-                    ON CONFLICT (value, tagfamily) DO NOTHING
+                    INSERT INTO sysreg_config (value, name, description, tagfamily, taglogic, is_default)
+                    VALUES ('${pgValue}'::bytea, '${entry.name}', '${entry.description}', 'config', '${entry.taglogic}', ${entry.is_default})
                 `)
                 configCount++
             } catch (error) {
                 console.warn(`    ⚠️  Skipped duplicate config: ${entry.name}`)
+                console.warn(`        Error: ${error}`)
             }
         }
 
-        console.log(`    ✓ Seeded ${configCount} config entries`)
+        console.log(`    ✓ Seeded ${configCount} config entries into sysreg_config`)
 
         // ===================================================================
         // CHAPTER 2: Seed Record Tags (rtags)
@@ -80,10 +82,10 @@ export const migration = {
         let rtagsCount = 0
         for (const entry of rtagsEntries) {
             try {
+                const pgValue = entry.value.replace(/\\\\/g, '\\')
                 await db.exec(`
-                    INSERT INTO sysreg (value, name, description, tagfamily, taglogic, is_default)
-                    VALUES ('${entry.value}'::bytea, '${entry.name}', '${entry.description}', 'rtags', '${entry.taglogic}', ${entry.is_default})
-                    ON CONFLICT (value, tagfamily) DO NOTHING
+                    INSERT INTO sysreg_rtags (value, name, description, tagfamily, taglogic, is_default)
+                    VALUES ('${pgValue}'::bytea, '${entry.name}', '${entry.description}', 'rtags', '${entry.taglogic}', ${entry.is_default})
                 `)
                 rtagsCount++
             } catch (error) {
@@ -91,7 +93,7 @@ export const migration = {
             }
         }
 
-        console.log(`    ✓ Seeded ${rtagsCount} rtags entries`)
+        console.log(`    ✓ Seeded ${rtagsCount} rtags entries into sysreg_rtags`)
 
         // ===================================================================
         // CHAPTER 3: Seed Topic Tags (ttags)
@@ -111,10 +113,10 @@ export const migration = {
         let ttagsCount = 0
         for (const entry of ttagsEntries) {
             try {
+                const pgValue = entry.value.replace(/\\\\/g, '\\')
                 await db.exec(`
-                    INSERT INTO sysreg (value, name, description, tagfamily, taglogic, is_default)
-                    VALUES ('${entry.value}'::bytea, '${entry.name}', '${entry.description}', 'ttags', '${entry.taglogic}', ${entry.is_default})
-                    ON CONFLICT (value, tagfamily) DO NOTHING
+                    INSERT INTO sysreg_ttags (value, name, description, tagfamily, taglogic, is_default)
+                    VALUES ('${pgValue}'::bytea, '${entry.name}', '${entry.description}', 'ttags', '${entry.taglogic}', ${entry.is_default})
                 `)
                 ttagsCount++
             } catch (error) {
@@ -122,7 +124,7 @@ export const migration = {
             }
         }
 
-        console.log(`    ✓ Seeded ${ttagsCount} ttags entries`)
+        console.log(`    ✓ Seeded ${ttagsCount} ttags entries into sysreg_ttags`)
 
         // ===================================================================
         // CHAPTER 4: Seed Domain Tags (dtags)
@@ -141,10 +143,10 @@ export const migration = {
         let dtagsCount = 0
         for (const entry of dtagsEntries) {
             try {
+                const pgValue = entry.value.replace(/\\\\/g, '\\')
                 await db.exec(`
-                    INSERT INTO sysreg (value, name, description, tagfamily, taglogic, is_default)
-                    VALUES ('${entry.value}'::bytea, '${entry.name}', '${entry.description}', 'dtags', '${entry.taglogic}', ${entry.is_default})
-                    ON CONFLICT (value, tagfamily) DO NOTHING
+                    INSERT INTO sysreg_dtags (value, name, description, tagfamily, taglogic, is_default)
+                    VALUES ('${pgValue}'::bytea, '${entry.name}', '${entry.description}', 'dtags', '${entry.taglogic}', ${entry.is_default})
                 `)
                 dtagsCount++
             } catch (error) {
@@ -152,7 +154,7 @@ export const migration = {
             }
         }
 
-        console.log(`    ✓ Seeded ${dtagsCount} dtags entries`)
+        console.log(`    ✓ Seeded ${dtagsCount} dtags entries into sysreg_dtags`)
 
         // ===================================================================
         // CHAPTER 5: Summary
