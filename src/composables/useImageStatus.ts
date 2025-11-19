@@ -21,7 +21,7 @@
  * - bit 5: high_res - High resolution available
  */
 
-import { computed, type Ref, unref } from 'vue'
+import { ref, computed, type Ref } from 'vue'
 import {
     parseByteaHex,
     byteaFromNumber,
@@ -30,147 +30,217 @@ import {
     clearBit,
     toggleBit
 } from './useSysregTags'
+import { useSysregOptions } from './useSysregOptions'
 
 export interface Image {
     id: number
     status_val: string | null  // BYTEA hex string
-    config_val: string | null  // BYTEA hex string
+    ctags_val: string | null  // BYTEA hex string (config bits)
     [key: string]: any
 }
 
-export interface StatusTransition {
-    from: number[]
-    to: number
-    label: string
-    confirmMessage?: string
-    configChanges?: { bit: number; set: boolean }[]
+type EmitFunction = (event: string, ...args: any[]) => void
+
+type ConfigBitName = 'public' | 'featured' | 'needs_review' | 'has_people' | 'ai_generated' | 'high_res'
+
+const CONFIG_BIT_MAP: Record<ConfigBitName, number> = {
+    public: 0,
+    featured: 1,
+    needs_review: 2,
+    has_people: 3,
+    ai_generated: 4,
+    high_res: 5
 }
 
-export function useImageStatus(image: Ref<Image | null>) {
-    // Parse current values
+export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
+    const { getOptionByValue } = useSysregOptions()
+
+    // Reactive state
+    const loading = ref(false)
+    const error = ref<string | null>(null)
+
+    // Parse current values - return BYTEA hex strings, not numbers
     const currentStatus = computed(() => {
-        if (!image.value?.status_val) return 0
-        return parseByteaHex(image.value.status_val)
+        return image.value?.status_val || '\\x00'
     })
 
     const currentConfig = computed(() => {
-        if (!image.value?.config_val) return 0
-        return parseByteaHex(image.value.config_val)
+        return image.value?.ctags_val || '\\x00'
     })
 
+    // Helper to get status byte value for comparisons
+    const statusByteValue = computed(() => {
+        const bytes = parseByteaHex(currentStatus.value)
+        return bytes[0] || 0
+    })
+
+    // Get bit arrays for computed properties
+    const statusBits = computed(() => parseByteaHex(currentStatus.value))
+    const configBits = computed(() => parseByteaHex(currentConfig.value))
+
     // Status checks
-    const isRaw = computed(() => currentStatus.value === 0x00)
-    const isProcessing = computed(() => currentStatus.value === 0x01)
-    const isApproved = computed(() => currentStatus.value === 0x02)
-    const isPublished = computed(() => currentStatus.value === 0x04)
-    const isDeprecated = computed(() => currentStatus.value === 0x08)
-    const isArchived = computed(() => currentStatus.value === 0x10)
+    const isRaw = computed(() => statusByteValue.value === 0x00)
+    const isProcessing = computed(() => statusByteValue.value === 0x01)
+    const isApproved = computed(() => statusByteValue.value === 0x02)
+    const isPublished = computed(() => statusByteValue.value === 0x04)
+    const isDeprecated = computed(() => statusByteValue.value === 0x08)
+    const isArchived = computed(() => statusByteValue.value === 0x10)
 
     // Config bit checks
-    const isPublic = computed(() => hasBit(image.value?.config_val || '\\x00', 0))
-    const isFeatured = computed(() => hasBit(image.value?.config_val || '\\x00', 1))
-    const needsReview = computed(() => hasBit(image.value?.config_val || '\\x00', 2))
-    const hasPeople = computed(() => hasBit(image.value?.config_val || '\\x00', 3))
-    const isAiGenerated = computed(() => hasBit(image.value?.config_val || '\\x00', 4))
-    const hasHighRes = computed(() => hasBit(image.value?.config_val || '\\x00', 5))
+    const isPublic = computed(() => hasBit(currentConfig.value, 0))
+    const isFeatured = computed(() => hasBit(currentConfig.value, 1))
+    const needsReview = computed(() => hasBit(currentConfig.value, 2))
+    const hasPeople = computed(() => hasBit(currentConfig.value, 3))
+    const isAiGenerated = computed(() => hasBit(currentConfig.value, 4))
+    const hasHighRes = computed(() => hasBit(currentConfig.value, 5))
+
+    // Status label from sysreg options with fallback
+    const statusLabel = computed(() => {
+        const opt = getOptionByValue('status', currentStatus.value)
+        if (opt?.label) return opt.label
+
+        // Fallback if sysreg options not loaded
+        const byte = statusByteValue.value
+        if (byte === 0x00) return 'Raw'
+        if (byte === 0x01) return 'Processing'
+        if (byte === 0x02) return 'Approved'
+        if (byte === 0x04) return 'Published'
+        if (byte === 0x08) return 'Deprecated'
+        if (byte === 0x10) return 'Archived'
+        return 'Unknown'
+    })
 
     // Status transition validations
     const canStartProcessing = computed(() => {
-        return currentStatus.value === 0x00 // Only from raw
+        return statusByteValue.value === 0x00 // Only from raw
     })
 
     const canApprove = computed(() => {
-        return currentStatus.value === 0x00 || currentStatus.value === 0x01 // From raw or processing
+        return statusByteValue.value === 0x00 || statusByteValue.value === 0x01 // From raw or processing
     })
 
     const canPublish = computed(() => {
-        return currentStatus.value === 0x02 // Only approved images
+        return statusByteValue.value === 0x02 // Only approved images
     })
 
     const canDeprecate = computed(() => {
-        return currentStatus.value !== 0x08 && currentStatus.value !== 0x10 // Not already deprecated/archived
+        return statusByteValue.value === 0x04 // Only published images
     })
 
     const canArchive = computed(() => {
-        return currentStatus.value === 0x08 // Only deprecated images
+        return true // Any status can be archived
     })
 
     const canUnarchive = computed(() => {
-        return currentStatus.value === 0x10 // Only archived images
+        return statusByteValue.value === 0x10 // Only archived images
     })
+
+    // Valid transitions based on current status
+    const validTransitions = computed(() => {
+        const transitions: string[] = []
+        const byte = statusByteValue.value
+
+        if (byte === 0x00) { // raw
+            transitions.push('processing', 'approved', 'archived')
+        } else if (byte === 0x01) { // processing
+            transitions.push('raw', 'approved', 'archived')
+        } else if (byte === 0x02) { // approved
+            transitions.push('published', 'archived')
+        } else if (byte === 0x04) { // published
+            transitions.push('deprecated', 'archived')
+        } else if (byte === 0x08) { // deprecated
+            transitions.push('archived')
+        } else if (byte === 0x10) { // archived
+            transitions.push('approved')
+        }
+
+        return transitions
+    })
+
+    // Workflow tracking
+    const workflowOrder = computed(() => {
+        return ['raw', 'processing', 'approved', 'published']
+    })
+
+    const currentWorkflowStep = computed(() => {
+        const byte = statusByteValue.value
+        if (byte === 0x00) return 0 // raw
+        if (byte === 0x01) return 1 // processing
+        if (byte === 0x02) return 2 // approved
+        if (byte === 0x04) return 3 // published
+        return -1 // deprecated/archived are outside workflow
+    })
+
+    // Config bits as object
+    const configBitsObj = computed(() => ({
+        public: isPublic.value,
+        featured: isFeatured.value,
+        needs_review: needsReview.value,
+        has_people: hasPeople.value,
+        ai_generated: isAiGenerated.value,
+        high_res: hasHighRes.value
+    }))
 
     // Status transition functions
     async function startProcessing() {
         if (!canStartProcessing.value) {
-            throw new Error('Cannot start processing: invalid current status')
+            error.value = 'Cannot start processing: invalid current status'
+            return null
         }
 
         return updateImageStatus({
             status_val: byteaFromNumber(0x01),
-            config_val: setBit(image.value!.config_val || '\\x00', 2) // Set needs_review
+            ctags_val: setBit(currentConfig.value, 2) // Set needs_review
         })
     }
 
     async function approveImage() {
         if (!canApprove.value) {
-            throw new Error('Cannot approve: invalid current status')
+            error.value = 'Cannot approve: invalid current status'
+            return null
         }
 
         return updateImageStatus({
             status_val: byteaFromNumber(0x02),
-            config_val: clearBit(image.value!.config_val || '\\x00', 2) // Clear needs_review
+            ctags_val: clearBit(currentConfig.value, 2) // Clear needs_review
         })
     }
 
     async function publishImage() {
         if (!canPublish.value) {
-            throw new Error('Cannot publish: image must be approved first')
+            error.value = 'Cannot publish: image must be approved first'
+            return null
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x04)
+            status_val: byteaFromNumber(0x04),
+            ctags_val: setBit(currentConfig.value, 0) // Auto-set public
         })
     }
 
-    async function deprecateImage(reason?: string) {
+    async function deprecateImage() {
         if (!canDeprecate.value) {
-            throw new Error('Cannot deprecate: invalid current status')
+            error.value = 'Cannot deprecate: invalid current status'
+            return null
         }
-
-        const confirmed = confirm(
-            reason
-                ? `Bild als veraltet markieren?\n\nGrund: ${reason}\n\nDas Bild wird nicht gelöscht, aber aus dem öffentlichen Bereich entfernt.`
-                : 'Bild als veraltet markieren? Es wird nicht gelöscht, aber aus dem öffentlichen Bereich entfernt.'
-        )
-
-        if (!confirmed) return null
 
         return updateImageStatus({
             status_val: byteaFromNumber(0x08),
-            config_val: clearBit(image.value!.config_val || '\\x00', 0) // Clear public
+            ctags_val: clearBit(currentConfig.value, 1) // Clear featured
         })
     }
 
     async function archiveImage() {
-        if (!canArchive.value) {
-            throw new Error('Cannot archive: image must be deprecated first')
-        }
-
-        const confirmed = confirm(
-            'Bild archivieren? Es wird aus allen aktiven Listen entfernt.'
-        )
-
-        if (!confirmed) return null
-
         return updateImageStatus({
             status_val: byteaFromNumber(0x10),
-            config_val: clearBit(clearBit(image.value!.config_val || '\\x00', 0), 1) // Clear public and featured
+            ctags_val: clearBit(clearBit(currentConfig.value, 0), 1) // Clear public and featured
         })
     }
 
     async function unarchiveImage() {
         if (!canUnarchive.value) {
-            throw new Error('Cannot unarchive: invalid current status')
+            error.value = 'Cannot unarchive: invalid current status'
+            return null
         }
 
         return updateImageStatus({
@@ -178,59 +248,46 @@ export function useImageStatus(image: Ref<Image | null>) {
         })
     }
 
+    async function resetToRaw() {
+        return updateImageStatus({
+            status_val: byteaFromNumber(0x00)
+        })
+    }
+
     // Config bit management
     function hasConfigBit(bit: number): boolean {
-        if (!image.value?.config_val) return false
-        return hasBit(image.value.config_val, bit)
+        if (!image.value?.ctags_val) return false
+        return hasBit(image.value.ctags_val, bit)
     }
 
     async function setConfigBit(bit: number, value: boolean) {
         if (!image.value) return null
 
         const newConfig = value
-            ? setBit(image.value.config_val || '\\x00', bit)
-            : clearBit(image.value.config_val || '\\x00', bit)
+            ? setBit(currentConfig.value, bit)
+            : clearBit(currentConfig.value, bit)
 
         return updateImageStatus({
-            config_val: newConfig
+            ctags_val: newConfig
         })
     }
 
-    async function toggleConfigBit(bit: number) {
+    async function toggleConfigBit(bitOrName: number | ConfigBitName) {
         if (!image.value) return null
 
+        const bit = typeof bitOrName === 'number' ? bitOrName : CONFIG_BIT_MAP[bitOrName]
+
         return updateImageStatus({
-            config_val: toggleBit(image.value.config_val || '\\x00', bit)
+            ctags_val: toggleBit(currentConfig.value, bit)
         })
-    }
-
-    async function togglePublic() {
-        return toggleConfigBit(0)
-    }
-
-    async function toggleFeatured() {
-        return toggleConfigBit(1)
-    }
-
-    async function toggleNeedsReview() {
-        return toggleConfigBit(2)
-    }
-
-    async function toggleHasPeople() {
-        return toggleConfigBit(3)
-    }
-
-    async function toggleAiGenerated() {
-        return toggleConfigBit(4)
-    }
-
-    async function toggleHighRes() {
-        return toggleConfigBit(5)
     }
 
     // Update helper
     async function updateImageStatus(updates: Partial<Image>) {
         if (!image.value) return null
+
+        loading.value = true
+        error.value = null
 
         try {
             const response = await fetch(`/api/images/${image.value.id}`, {
@@ -250,55 +307,32 @@ export function useImageStatus(image: Ref<Image | null>) {
                 Object.assign(image.value, updated)
             }
 
+            // Emit update event if provided
+            if (emit) {
+                emit('update:image', updated)
+            }
+
             return updated
-        } catch (error) {
-            console.error('Error updating image status:', error)
-            throw error
+        } catch (err: any) {
+            error.value = err.message
+            console.error('Error updating image status:', err)
+            return null
+        } finally {
+            loading.value = false
         }
     }
 
-    // Status label helpers
-    const statusLabel = computed(() => {
-        switch (currentStatus.value) {
-            case 0x00: return 'Raw'
-            case 0x01: return 'Processing'
-            case 0x02: return 'Approved'
-            case 0x04: return 'Published'
-            case 0x08: return 'Deprecated'
-            case 0x10: return 'Archived'
-            default: return 'Unknown'
-        }
-    })
-
-    const statusColor = computed(() => {
-        switch (currentStatus.value) {
-            case 0x00: return 'gray'
-            case 0x01: return 'blue'
-            case 0x02: return 'green'
-            case 0x04: return 'emerald'
-            case 0x08: return 'orange'
-            case 0x10: return 'red'
-            default: return 'gray'
-        }
-    })
-
-    // Config summary
-    const configFlags = computed(() => ({
-        public: isPublic.value,
-        featured: isFeatured.value,
-        needsReview: needsReview.value,
-        hasPeople: hasPeople.value,
-        aiGenerated: isAiGenerated.value,
-        highRes: hasHighRes.value
-    }))
-
     return {
+        // Reactive state
+        loading,
+        error,
+
         // Current state
         currentStatus,
         currentConfig,
         statusLabel,
-        statusColor,
-        configFlags,
+        statusBits,
+        configBits: configBitsObj,
 
         // Status checks
         isRaw,
@@ -324,6 +358,11 @@ export function useImageStatus(image: Ref<Image | null>) {
         canArchive,
         canUnarchive,
 
+        // Workflow tracking
+        validTransitions,
+        workflowOrder,
+        currentWorkflowStep,
+
         // Status transitions
         startProcessing,
         approveImage,
@@ -331,19 +370,11 @@ export function useImageStatus(image: Ref<Image | null>) {
         deprecateImage,
         archiveImage,
         unarchiveImage,
+        resetToRaw,
 
         // Config management
         hasConfigBit,
         setConfigBit,
-        toggleConfigBit,
-        togglePublic,
-        toggleFeatured,
-        toggleNeedsReview,
-        toggleHasPeople,
-        toggleAiGenerated,
-        toggleHighRes,
-
-        // Update helper
-        updateImageStatus
+        toggleConfigBit
     }
 }

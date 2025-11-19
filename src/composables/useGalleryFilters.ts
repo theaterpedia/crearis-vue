@@ -2,415 +2,407 @@
  * Composable: useGalleryFilters
  * 
  * Manages filter state for image galleries with sysreg support.
- * Provides active filter tracking, query building, and saved filter sets.
- * 
- * Features:
- * - Status filtering (single select)
- * - TTags filtering (multi-select topics)
- * - DTags filtering (multi-select domains)
- * - CTags bit group filtering (age_group, subject_type, etc.)
- * - Active filter chips with remove functionality
- * - Saved filter sets with localStorage persistence
- * - Query string generation for API calls
+ * Provides active filter tracking, query building, and client-side filtering.
  */
 
-import { ref, computed, watch, onMounted, type Ref } from 'vue'
-import {
-    parseByteaHex,
-    byteArrayToBits,
-    bitsToByteArray
-} from './useSysregTags'
-import { useSysregOptions } from './useSysregOptions'
+import { ref, computed, watch } from 'vue'
+import { hasBit } from './useSysregTags'
 
 export interface GalleryFilters {
-    status: string | null
-    ttags: number[]  // Topic tag bit positions
-    dtags: number[]  // Domain tag bit positions
-    ctags_age_group: number | null  // 0-3
-    ctags_subject_type: number | null  // 0-3
-    ctags_access_level: number | null  // 0-3
-    ctags_quality: number | null  // 0-3
+    status: string[]
+    ttags: string[]
+    dtags: string[]
+    rtags: string[]
+    searchText: string
 }
 
-export interface ActiveFilterChip {
-    type: 'status' | 'ttags' | 'dtags' | 'ctags_age_group' | 'ctags_subject_type' | 'ctags_access_level' | 'ctags_quality'
-    value: string | number
-    label: string
-    removable: boolean
+export interface Pagination {
+    page: number
+    perPage: number
+    total: number
+    hasMore: boolean
 }
 
-export function useGalleryFilters(options?: {
-    entity?: string
-    autoFetch?: boolean
-    onFilterChange?: (query: string) => void
-}) {
-    const entity = options?.entity || 'images'
-    const autoFetch = options?.autoFetch ?? true
+type ViewMode = 'grid' | 'list' | 'masonry'
+type SortField = 'date' | 'title' | 'status'
+type SortOrder = 'asc' | 'desc'
 
-    // Get sysreg options for labels
-    const {
-        getTagLabel,
-        getOptionByValue,
-        ctagsBitGroupOptions
-    } = useSysregOptions()
+const STORAGE_KEY = 'gallery_filters'
+const VIEW_MODE_KEY = 'gallery_view_mode'
 
+export function useGalleryFilters() {
     // Filter state
-    const activeFilters = ref<GalleryFilters>({
-        status: null,
+    const filters = ref<GalleryFilters>({
+        status: [],
         ttags: [],
         dtags: [],
-        ctags_age_group: null,
-        ctags_subject_type: null,
-        ctags_access_level: null,
-        ctags_quality: null
+        rtags: [],
+        searchText: ''
     })
 
-    // Saved filter sets
-    const savedFilters = ref<Record<string, GalleryFilters>>({})
+    // Images state
+    const images = ref<any[]>([])
+    const loading = ref(false)
+    const error = ref<string | null>(null)
 
-    // Check if any filters are active
+    // Pagination state
+    const pagination = ref<Pagination>({
+        page: 1,
+        perPage: 20,
+        total: 0,
+        hasMore: false
+    })
+
+    // View state
+    const viewMode = ref<ViewMode>('grid')
+    const sortField = ref<SortField>('date')
+    const sortOrder = ref<SortOrder>('desc')
+
+    // Load filters from localStorage
+    function loadFiltersFromStorage() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY)
+            if (saved) {
+                const parsed = JSON.parse(saved)
+                filters.value = { ...filters.value, ...parsed }
+            }
+        } catch (err) {
+            console.warn('Failed to load filters from localStorage:', err)
+        }
+    }
+
+    // Load view mode from localStorage
+    function loadViewModeFromStorage() {
+        try {
+            const saved = localStorage.getItem(VIEW_MODE_KEY)
+            if (saved && ['grid', 'list', 'masonry'].includes(saved)) {
+                viewMode.value = saved as ViewMode
+            }
+        } catch (err) {
+            console.warn('Failed to load view mode from localStorage:', err)
+        }
+    }
+
+    // Initialize from localStorage (but don't use onMounted - causes test warnings)
+    loadFiltersFromStorage()
+    loadViewModeFromStorage()
+
+    // Save filters to localStorage on change
+    watch(filters, (newFilters) => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(newFilters))
+        } catch (err) {
+            console.warn('Failed to save filters to localStorage:', err)
+        }
+    }, { deep: true, flush: 'sync' })
+
+    // Save view mode to localStorage
+    watch(viewMode, (newMode) => {
+        try {
+            localStorage.setItem(VIEW_MODE_KEY, newMode)
+        } catch (err) {
+            console.warn('Failed to save view mode to localStorage:', err)
+        }
+    }, { flush: 'sync' })
+
+    // Computed: Has active filters
     const hasActiveFilters = computed(() => {
         return (
-            activeFilters.value.status !== null ||
-            activeFilters.value.ttags.length > 0 ||
-            activeFilters.value.dtags.length > 0 ||
-            activeFilters.value.ctags_age_group !== null ||
-            activeFilters.value.ctags_subject_type !== null ||
-            activeFilters.value.ctags_access_level !== null ||
-            activeFilters.value.ctags_quality !== null
+            filters.value.status.length > 0 ||
+            filters.value.ttags.length > 0 ||
+            filters.value.dtags.length > 0 ||
+            filters.value.rtags.length > 0 ||
+            filters.value.searchText.length > 0
         )
     })
 
-    // Build active filter chips for UI display
-    const activeFilterChips = computed<ActiveFilterChip[]>(() => {
-        const chips: ActiveFilterChip[] = []
-
-        // Status filter
-        if (activeFilters.value.status) {
-            const option = getOptionByValue('status', activeFilters.value.status)
-            chips.push({
-                type: 'status',
-                value: activeFilters.value.status,
-                label: option?.label || 'Status',
-                removable: true
-            })
-        }
-
-        // TTags filters
-        activeFilters.value.ttags.forEach(bit => {
-            // Get the BYTEA value for this single bit
-            const bytea = bitsToByteArray([bit])
-            const label = getTagLabel('ttags', bytea)
-            chips.push({
-                type: 'ttags',
-                value: bit,
-                label: label || `Topic ${bit}`,
-                removable: true
-            })
-        })
-
-        // DTags filters
-        activeFilters.value.dtags.forEach(bit => {
-            const bytea = bitsToByteArray([bit])
-            const label = getTagLabel('dtags', bytea)
-            chips.push({
-                type: 'dtags',
-                value: bit,
-                label: label || `Domain ${bit}`,
-                removable: true
-            })
-        })
-
-        // CTags bit group filters
-        if (activeFilters.value.ctags_age_group !== null) {
-            const option = ctagsBitGroupOptions.age_group.find(
-                opt => opt.value === activeFilters.value.ctags_age_group
-            )
-            chips.push({
-                type: 'ctags_age_group',
-                value: activeFilters.value.ctags_age_group,
-                label: `Alter: ${option?.label || activeFilters.value.ctags_age_group}`,
-                removable: true
-            })
-        }
-
-        if (activeFilters.value.ctags_subject_type !== null) {
-            const option = ctagsBitGroupOptions.subject_type.find(
-                opt => opt.value === activeFilters.value.ctags_subject_type
-            )
-            chips.push({
-                type: 'ctags_subject_type',
-                value: activeFilters.value.ctags_subject_type,
-                label: `Motiv: ${option?.label || activeFilters.value.ctags_subject_type}`,
-                removable: true
-            })
-        }
-
-        if (activeFilters.value.ctags_access_level !== null) {
-            const option = ctagsBitGroupOptions.access_level.find(
-                opt => opt.value === activeFilters.value.ctags_access_level
-            )
-            chips.push({
-                type: 'ctags_access_level',
-                value: activeFilters.value.ctags_access_level,
-                label: `Zugriff: ${option?.label || activeFilters.value.ctags_access_level}`,
-                removable: true
-            })
-        }
-
-        if (activeFilters.value.ctags_quality !== null) {
-            const option = ctagsBitGroupOptions.quality.find(
-                opt => opt.value === activeFilters.value.ctags_quality
-            )
-            chips.push({
-                type: 'ctags_quality',
-                value: activeFilters.value.ctags_quality,
-                label: `Qualität: ${option?.label || activeFilters.value.ctags_quality}`,
-                removable: true
-            })
-        }
-
-        return chips
-    })
-
-    // Build query string for API
-    const queryString = computed(() => {
-        const params = new URLSearchParams()
-
-        // Status filter
-        if (activeFilters.value.status) {
-            params.set('status_eq', activeFilters.value.status)
-        }
-
-        // TTags filter (any of these bits set)
-        if (activeFilters.value.ttags.length > 0) {
-            const bytea = bitsToByteArray(activeFilters.value.ttags)
-            params.set('ttags_any', bytea)
-        }
-
-        // DTags filter (any of these bits set)
-        if (activeFilters.value.dtags.length > 0) {
-            const bytea = bitsToByteArray(activeFilters.value.dtags)
-            params.set('dtags_any', bytea)
-        }
-
-        // CTags bit group filters
-        if (activeFilters.value.ctags_age_group !== null) {
-            params.set('ctags_age_group', activeFilters.value.ctags_age_group.toString())
-        }
-
-        if (activeFilters.value.ctags_subject_type !== null) {
-            params.set('ctags_subject_type', activeFilters.value.ctags_subject_type.toString())
-        }
-
-        if (activeFilters.value.ctags_access_level !== null) {
-            params.set('ctags_access_level', activeFilters.value.ctags_access_level.toString())
-        }
-
-        if (activeFilters.value.ctags_quality !== null) {
-            params.set('ctags_quality', activeFilters.value.ctags_quality.toString())
-        }
-
-        return params.toString()
-    })
-
-    // Filter actions
-    function setStatusFilter(status: string | null) {
-        activeFilters.value.status = status
+    // Filter update functions
+    function setStatusFilter(values: string[]) {
+        filters.value.status = values
     }
 
-    function clearStatusFilter() {
-        activeFilters.value.status = null
+    function setTtagsFilter(values: string[]) {
+        filters.value.ttags = values
     }
 
-    function addTopicTag(bit: number) {
-        if (!activeFilters.value.ttags.includes(bit)) {
-            activeFilters.value.ttags.push(bit)
-        }
+    function setDtagsFilter(values: string[]) {
+        filters.value.dtags = values
     }
 
-    function removeTopicTag(bit: number) {
-        const index = activeFilters.value.ttags.indexOf(bit)
-        if (index > -1) {
-            activeFilters.value.ttags.splice(index, 1)
-        }
+    function setRtagsFilter(values: string[]) {
+        filters.value.rtags = values
     }
 
-    function setTopicTags(bits: number[]) {
-        activeFilters.value.ttags = [...bits]
+    function setSearchText(text: string) {
+        filters.value.searchText = text
     }
 
-    function clearTopicTags() {
-        activeFilters.value.ttags = []
-    }
-
-    function addDomainTag(bit: number) {
-        if (!activeFilters.value.dtags.includes(bit)) {
-            activeFilters.value.dtags.push(bit)
-        }
-    }
-
-    function removeDomainTag(bit: number) {
-        const index = activeFilters.value.dtags.indexOf(bit)
-        if (index > -1) {
-            activeFilters.value.dtags.splice(index, 1)
-        }
-    }
-
-    function setDomainTags(bits: number[]) {
-        activeFilters.value.dtags = [...bits]
-    }
-
-    function clearDomainTags() {
-        activeFilters.value.dtags = []
-    }
-
-    function setCtagsAgeGroup(value: number | null) {
-        activeFilters.value.ctags_age_group = value
-    }
-
-    function setCtagsSubjectType(value: number | null) {
-        activeFilters.value.ctags_subject_type = value
-    }
-
-    function setCtagsAccessLevel(value: number | null) {
-        activeFilters.value.ctags_access_level = value
-    }
-
-    function setCtagsQuality(value: number | null) {
-        activeFilters.value.ctags_quality = value
-    }
-
-    function removeFilter(chip: ActiveFilterChip) {
-        switch (chip.type) {
-            case 'status':
-                clearStatusFilter()
-                break
-            case 'ttags':
-                removeTopicTag(chip.value as number)
-                break
-            case 'dtags':
-                removeDomainTag(chip.value as number)
-                break
-            case 'ctags_age_group':
-                setCtagsAgeGroup(null)
-                break
-            case 'ctags_subject_type':
-                setCtagsSubjectType(null)
-                break
-            case 'ctags_access_level':
-                setCtagsAccessLevel(null)
-                break
-            case 'ctags_quality':
-                setCtagsQuality(null)
-                break
-        }
-    }
-
-    function clearAllFilters() {
-        activeFilters.value = {
-            status: null,
+    function clearFilters() {
+        filters.value = {
+            status: [],
             ttags: [],
             dtags: [],
-            ctags_age_group: null,
-            ctags_subject_type: null,
-            ctags_access_level: null,
-            ctags_quality: null
+            rtags: [],
+            searchText: ''
         }
     }
 
-    // Saved filter sets
-    function saveFilterSet(name: string) {
-        savedFilters.value[name] = { ...activeFilters.value }
-
-        // Persist to localStorage
-        localStorage.setItem(
-            `gallery-filters-${entity}`,
-            JSON.stringify(savedFilters.value)
-        )
+    // Set images for client-side filtering
+    function setImages(newImages: any[]) {
+        images.value = newImages
     }
 
-    function loadFilterSet(name: string) {
-        const saved = savedFilters.value[name]
-        if (saved) {
-            activeFilters.value = { ...saved }
+    // View mode management
+    function setViewMode(mode: ViewMode) {
+        viewMode.value = mode
+    }
+
+    // Sorting
+    function sortBy(field: SortField, order: SortOrder) {
+        sortField.value = field
+        sortOrder.value = order
+    }
+
+    // Build API query string
+    function buildQuery(): string {
+        const params: string[] = []
+
+        if (filters.value.status.length > 0) {
+            params.push(`status=${filters.value.status.join(',')}`)
         }
+
+        if (filters.value.ttags.length > 0) {
+            params.push(`ttags=${filters.value.ttags.join(',')}`)
+        }
+
+        if (filters.value.dtags.length > 0) {
+            params.push(`dtags=${filters.value.dtags.join(',')}`)
+        }
+
+        if (filters.value.rtags.length > 0) {
+            params.push(`rtags=${filters.value.rtags.join(',')}`)
+        }
+
+        if (filters.value.searchText) {
+            params.push(`search=${encodeURIComponent(filters.value.searchText)}`)
+        }
+
+        params.push(`page=${pagination.value.page}`)
+        params.push(`per_page=${pagination.value.perPage}`)
+
+        return params.join('&')
     }
 
-    function deleteFilterSet(name: string) {
-        delete savedFilters.value[name]
+    // Fetch images from API with filters
+    async function fetchFilteredImages() {
+        loading.value = true
+        error.value = null
 
-        // Persist to localStorage
-        localStorage.setItem(
-            `gallery-filters-${entity}`,
-            JSON.stringify(savedFilters.value)
-        )
-    }
+        try {
+            const query = buildQuery()
+            const response = await fetch(`/api/images?${query}`)
 
-    function getSavedFilterNames(): string[] {
-        return Object.keys(savedFilters.value)
-    }
-
-    // Load saved filters from localStorage on mount
-    onMounted(() => {
-        const saved = localStorage.getItem(`gallery-filters-${entity}`)
-        if (saved) {
-            try {
-                savedFilters.value = JSON.parse(saved)
-            } catch (error) {
-                console.error('Failed to parse saved filters:', error)
+            if (!response.ok) {
+                throw new Error(`Failed to fetch images: ${response.statusText}`)
             }
+
+            const data = await response.json()
+            images.value = data
+
+            // Update pagination
+            pagination.value.total = data.length
+            pagination.value.hasMore = data.length >= pagination.value.perPage
+
+            return data
+        } catch (err: any) {
+            error.value = err.message
+            console.error('Error fetching filtered images:', err)
+            return []
+        } finally {
+            loading.value = false
         }
+    }
+
+    // Load more (next page)
+    async function loadMore() {
+        pagination.value.page++
+
+        loading.value = true
+        error.value = null
+
+        try {
+            const query = buildQuery()
+            const response = await fetch(`/api/images?${query}`)
+
+            if (!response.ok) {
+                throw new Error(`Failed to load more images: ${response.statusText}`)
+            }
+
+            const data = await response.json()
+            images.value = [...images.value, ...data]
+
+            pagination.value.total = images.value.length
+            pagination.value.hasMore = data.length >= pagination.value.perPage
+
+            return data
+        } catch (err: any) {
+            error.value = err.message
+            console.error('Error loading more images:', err)
+            return []
+        } finally {
+            loading.value = false
+        }
+    }
+
+    // Client-side filtering functions
+    function filterByStatus(statusValues: string[]) {
+        filters.value.status = statusValues
+    }
+
+    function filterByTtags(ttagValues: string[]) {
+        filters.value.ttags = ttagValues
+    }
+
+    function filterBySearchText(text: string) {
+        filters.value.searchText = text
+    }
+
+    function applyFilters(filterValues: Partial<GalleryFilters>) {
+        if (filterValues.status !== undefined) filters.value.status = filterValues.status
+        if (filterValues.ttags !== undefined) filters.value.ttags = filterValues.ttags
+        if (filterValues.dtags !== undefined) filters.value.dtags = filterValues.dtags
+        if (filterValues.rtags !== undefined) filters.value.rtags = filterValues.rtags
+        if (filterValues.searchText !== undefined) filters.value.searchText = filterValues.searchText
+    }
+
+    // Filtered images (client-side)
+    const filteredImages = computed(() => {
+        let result = images.value
+
+        // Filter by status
+        if (filters.value.status.length > 0) {
+            result = result.filter(img =>
+                filters.value.status.includes(img.status_val)
+            )
+        }
+
+        // Filter by ttags (any match)
+        if (filters.value.ttags.length > 0) {
+            result = result.filter(img => {
+                if (!img.ttags_val) return false
+                // Check if any filter tag bits are set in image
+                return filters.value.ttags.some((filterTag: string) => {
+                    // Both are hex strings like '\\x01'
+                    // We need bitwise AND - if non-zero, there's overlap
+                    const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.ttags_val.replace(/^\\x/, ''), 16)
+                    return (filterByte & imageByte) !== 0
+                })
+            })
+        }
+
+        // Filter by dtags (any match)
+        if (filters.value.dtags.length > 0) {
+            result = result.filter((img: any) => {
+                if (!img.dtags_val) return false
+                return filters.value.dtags.some((filterTag: string) => {
+                    const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.dtags_val.replace(/^\\x/, ''), 16)
+                    return (filterByte & imageByte) !== 0
+                })
+            })
+        }
+
+        // Filter by rtags (any match)
+        if (filters.value.rtags.length > 0) {
+            result = result.filter((img: any) => {
+                if (!img.rtags_val) return false
+                return filters.value.rtags.some((filterTag: string) => {
+                    const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.rtags_val.replace(/^\\x/, ''), 16)
+                    return (filterByte & imageByte) !== 0
+                })
+            })
+        }
+
+        // Filter by search text (title)
+        if (filters.value.searchText) {
+            const searchLower = filters.value.searchText.toLowerCase()
+            result = result.filter((img: any) =>
+                img.title?.toLowerCase().includes(searchLower) ||
+                img.name?.toLowerCase().includes(searchLower)
+            )
+        }
+
+        return result
     })
 
-    // Watch for filter changes and notify
-    if (autoFetch && options?.onFilterChange) {
-        watch(
-            () => queryString.value,
-            (newQuery) => {
-                options.onFilterChange!(newQuery)
-            }
-        )
-    }
+    // Sorted images
+    const sortedImages = computed(() => {
+        const sorted = [...filteredImages.value]
+
+        if (sortField.value === 'date') {
+            sorted.sort((a, b) => {
+                const dateA = new Date(a.created_at).getTime()
+                const dateB = new Date(b.created_at).getTime()
+                return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA
+            })
+        } else if (sortField.value === 'title') {
+            sorted.sort((a, b) => {
+                const titleA = (a.title || a.name || '').toLowerCase()
+                const titleB = (b.title || b.name || '').toLowerCase()
+                const comparison = titleA.localeCompare(titleB)
+                return sortOrder.value === 'asc' ? comparison : -comparison
+            })
+        } else if (sortField.value === 'status') {
+            sorted.sort((a, b) => {
+                const statusA = a.status_val || '\\x00'
+                const statusB = b.status_val || '\\x00'
+                const comparison = statusA.localeCompare(statusB)
+                return sortOrder.value === 'asc' ? comparison : -comparison
+            })
+        }
+
+        return sorted
+    })
 
     return {
         // Filter state
-        activeFilters,
+        filters,
         hasActiveFilters,
-        activeFilterChips,
-        queryString,
 
-        // Status actions
+        // Filter updates
         setStatusFilter,
-        clearStatusFilter,
+        setTtagsFilter,
+        setDtagsFilter,
+        setRtagsFilter,
+        setSearchText,
+        clearFilters,
 
-        // Topic tag actions
-        addTopicTag,
-        removeTopicTag,
-        setTopicTags,
-        clearTopicTags,
+        // Images
+        images,
+        setImages,
+        filteredImages,
+        sortedImages,
 
-        // Domain tag actions
-        addDomainTag,
-        removeDomainTag,
-        setDomainTags,
-        clearDomainTags,
+        // API integration
+        fetchFilteredImages,
+        loadMore,
+        loading,
+        error,
 
-        // CTags bit group actions
-        setCtagsAgeGroup,
-        setCtagsSubjectType,
-        setCtagsAccessLevel,
-        setCtagsQuality,
+        // Pagination
+        pagination,
 
-        // General actions
-        removeFilter,
-        clearAllFilters,
+        // Client-side filtering
+        filterByStatus,
+        filterByTtags,
+        filterBySearchText,
+        applyFilters,
 
-        // Saved filter sets
-        savedFilters,
-        saveFilterSet,
-        loadFilterSet,
-        deleteFilterSet,
-        getSavedFilterNames
+        // View & sorting
+        viewMode,
+        setViewMode,
+        sortBy
     }
 }

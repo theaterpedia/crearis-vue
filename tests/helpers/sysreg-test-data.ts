@@ -159,9 +159,9 @@ export function createImageWithStatus(status: string): TestEntity {
  * Create test image with specific tags
  */
 export function createImageWithTags(
-    ttags: number[] = [],
-    dtags: number[] = [],
-    ctags: number[] = []
+    ttags: (number | string)[] = [],
+    dtags: (number | string)[] = [],
+    ctags: (number | string)[] = []
 ): TestEntity {
     return createTestImage({
         ttags_val: bitsToHex(ttags),
@@ -201,13 +201,18 @@ export function createVariedTestImages(): TestEntity[] {
 /**
  * Helper: Convert bit array to hex string
  */
-function bitsToHex(bits: number[]): string {
+function bitsToHex(bits: (number | string)[]): string {
     if (bits.length === 0) return '\\x00'
+
+    // If first element is a hex string, just return it
+    if (typeof bits[0] === 'string' && bits[0].startsWith('\\x')) {
+        return bits[0]
+    }
 
     // Calculate byte value from bit positions
     let byte = 0
     bits.forEach(bit => {
-        if (bit >= 0 && bit <= 7) {
+        if (typeof bit === 'number' && bit >= 0 && bit <= 7) {
             byte |= (1 << bit)
         }
     })
