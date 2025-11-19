@@ -87,11 +87,14 @@ async function fetchRegioEvents() {
                 allEvents.map(async (event: any) => {
                     if (!event.project_id) return null
 
-                    // Fetch the project to check its regio and status_id
+                    // Fetch the project to check its regio and status
                     const projectResponse = await fetch(`/api/projects/${encodeURIComponent(event.project_id)}`)
                     if (projectResponse.ok) {
                         const project = await projectResponse.json()
-                        if (project.regio === props.regio && (project.status_id === demoStatusId || project.status_id === draftStatusId)) {
+                        // Check if project is in demo or draft status
+                        const statusLower = (project.status_display || '').toLowerCase()
+                        const isDemoOrDraft = statusLower.includes('demo') || statusLower.includes('draft') || statusLower.includes('entwurf')
+                        if (project.regio === props.regio && isDemoOrDraft) {
                             return event
                         }
                     }
@@ -113,20 +116,19 @@ async function fetchRegioPosts() {
         if (response.ok) {
             const allPosts = await response.json()
 
-            // Get status IDs for 'demo' and 'draft' for projects table
-            const demoStatusId = getStatusIdByName('demo', 'projects')
-            const draftStatusId = getStatusIdByName('draft', 'projects')
-
             // Filter posts that belong to projects with matching regio and status demo/draft
             const filtered = await Promise.all(
                 allPosts.map(async (post: any) => {
                     if (!post.project_id) return null
 
-                    // Fetch the project to check its regio and status_id
+                    // Fetch the project to check its regio and status
                     const projectResponse = await fetch(`/api/projects/${encodeURIComponent(post.project_id)}`)
                     if (projectResponse.ok) {
                         const project = await projectResponse.json()
-                        if (project.regio === props.regio && (project.status_id === demoStatusId || project.status_id === draftStatusId)) {
+                        // Check if project is in demo or draft status
+                        const statusLower = (project.status_display || '').toLowerCase()
+                        const isDemoOrDraft = statusLower.includes('demo') || statusLower.includes('draft') || statusLower.includes('entwurf')
+                        if (project.regio === props.regio && isDemoOrDraft) {
                             return post
                         }
                     }

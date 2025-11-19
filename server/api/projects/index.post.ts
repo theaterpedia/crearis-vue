@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
-import { getStatusIdByName } from '../../utils/status-helpers'
+import { getStatusByName } from '../../utils/status-helpers'
 import type { ProjectsTableFields } from '../../types/database'
 
 // POST /api/projects - Create new project
@@ -56,27 +56,27 @@ export default defineEventHandler(async (event) => {
         const description = body.description || null
         const header_size = body.header_size || null
 
-        // Get status_id from status name (default: 'new')
-        let status_id: number
+        // Get status_val from status name (default: 'new')
+        let status_val: Buffer
         if (body.status) {
-            const foundId = getStatusIdByName(body.status, 'projects')
-            if (!foundId) {
+            const statusInfo = await getStatusByName(db, body.status, 'projects')
+            if (!statusInfo) {
                 throw createError({
                     statusCode: 400,
                     message: `Invalid status '${body.status}'. Must be a valid status name for projects.`
                 })
             }
-            status_id = foundId
+            status_val = statusInfo.value
         } else {
-            // Default to 'new' status (id: 18)
-            const foundId = getStatusIdByName('new', 'projects')
-            if (!foundId) {
+            // Default to 'new' status
+            const statusInfo = await getStatusByName(db, 'new', 'projects')
+            if (!statusInfo) {
                 throw createError({
                     statusCode: 500,
                     message: 'Default status (new) not found. Run migration 020.'
                 })
             }
-            status_id = foundId
+            status_val = statusInfo.value
         }
 
         // Convert owner_id to INTEGER if provided
@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
             name,
             heading,
             description,
-            status_id,
+            status_val,
             owner_id,
             header_size,
             img_id: body.img_id || null
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
 
         // Insert project
         const stmt = db.prepare(`
-            INSERT INTO projects (domaincode, name, heading, description, status_id, owner_id, header_size, img_id)
+            INSERT INTO projects (domaincode, name, heading, description, status_val, owner_id, header_size, img_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
             projectData.name,
             projectData.heading,
             projectData.description,
-            projectData.status_id,
+            projectData.status_val,
             projectData.owner_id,
             projectData.header_size,
             projectData.img_id

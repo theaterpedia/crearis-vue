@@ -83,7 +83,7 @@ export interface EventsTableFields {
     seats_max?: number | null
     status?: string | null
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     tags_display?: any | null // default: '{}'::text[], GENERATED COLUMN (read-only)
     tags_ids?: any | null // default: '{}'::integer[]
     teaser?: string | null
@@ -187,7 +187,7 @@ export interface ImagesTableFields {
     shape_thumb?: any | null
     shape_vertical?: any | null
     shape_wide?: any | null
-    status_id?: number | null // default: 0
+    status_val?: Buffer | null
     title?: string | null
     updated_at?: string | null // default: CURRENT_TIMESTAMP
     url: string
@@ -229,7 +229,7 @@ export interface InstructorsTableFields {
     phone?: string | null
     regio_id?: number | null
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     updated_at?: string | null
     version_id?: string | null
     xmlid?: string | null
@@ -284,7 +284,7 @@ export interface LocationsTableFields {
     phone?: string | null
     project_id?: number | null
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     street?: string | null
     updated_at?: string | null
     version_id?: string | null
@@ -344,7 +344,7 @@ export interface ParticipantsTableFields {
     lang: string // default: 'de'::text
     name: string
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     type?: string | null
     updated_at?: string | null
     version_id?: string | null
@@ -382,7 +382,7 @@ export interface PostsTableFields {
     regio_id?: number | null
     status?: string | null
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     subtitle?: string | null
     tag_ids?: string | null
     tags_display?: any | null // default: '{}'::text[], GENERATED COLUMN (read-only)
@@ -477,7 +477,7 @@ export interface ProjectsTableFields {
     page_options_ext?: Record<string, any> | null // default: '{}'::jsonb
     partner_projects?: string | null
     regio?: number | null
-    status_id: number // default: 18
+    status_val?: Buffer | null
     status_old?: string | null // default: 'new'::text
     team_page?: string | null // default: 'yes'::text
     teaser?: string | null
@@ -590,7 +590,7 @@ export interface TasksTableFields {
     record_type?: string | null
     release_id?: string | null
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id: number // default: 2
+    status_val?: Buffer | null
     updated_at?: string | null
     version_id?: string | null
 }
@@ -625,7 +625,7 @@ export interface UsersTableFields {
     password: string
     role: string
     status_display?: string | null // GENERATED COLUMN (read-only)
-    status_id?: number | null
+    status_val?: Buffer | null
     sysmail: string
     updated_at?: string | null // default: CURRENT_TIMESTAMP
     username: string
