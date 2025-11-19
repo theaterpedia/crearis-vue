@@ -45,11 +45,13 @@ import { useI18n } from '@/composables/useI18n'
 interface StepItem {
     label: string
     description: string
+    key: string // Unique key for each step type
 }
 
 interface Props {
     step: number
     projectId: string
+    type?: string // Project type: 'topic', 'regio', 'project', 'special'
 }
 
 interface Emits {
@@ -64,14 +66,35 @@ const { button, setLanguage } = useI18n()
 // Language detection (admin → en, project users → de)
 const userLang = ref('de')
 
-// Step labels and descriptions with i18n
-const steps = ref<StepItem[]>([
-    { label: 'Events', description: 'Loading...' },
-    { label: 'Posts', description: 'Loading...' },
-    { label: 'Users', description: 'Loading...' },
-    { label: 'Theme', description: 'Loading...' },
-    { label: 'Pages', description: 'Loading...' }
+// All possible steps with keys
+const allSteps = ref<StepItem[]>([
+    { key: 'events', label: 'Events', description: 'Loading...' },
+    { key: 'posts', label: 'Posts', description: 'Loading...' },
+    { key: 'users', label: 'Users', description: 'Loading...' },
+    { key: 'theme', label: 'Theme', description: 'Loading...' },
+    { key: 'pages', label: 'Pages', description: 'Loading...' }
 ])
+
+// Computed steps based on project type
+const steps = computed(() => {
+    const projectType = props.type || 'project'
+    
+    if (projectType === 'topic') {
+        // Topic: hide Events, start with Posts
+        return allSteps.value.filter(step => step.key !== 'events')
+    } else if (projectType === 'regio') {
+        // Regio: Users → Pages → Posts → Events (no Theme)
+        return [
+            allSteps.value.find(s => s.key === 'users')!,
+            allSteps.value.find(s => s.key === 'pages')!,
+            allSteps.value.find(s => s.key === 'posts')!,
+            allSteps.value.find(s => s.key === 'events')!
+        ].filter(Boolean)
+    } else {
+        // Default: Events → Posts → Users → Theme → Pages
+        return allSteps.value
+    }
+})
 
 // Header message computed
 const headerMessage = computed(() => {
@@ -105,8 +128,9 @@ onMounted(async () => {
             'Gestalten Sie Landing-Page, Heading und Pages'
         ]
 
-        steps.value = stepNames.map((name, i) => ({
-            label: name || steps.value[i].label,
+        allSteps.value = stepNames.map((name, i) => ({
+            key: allSteps.value[i].key,
+            label: name || allSteps.value[i].label,
             description: stepDescs[i]
         }))
     } catch (error) {

@@ -1,7 +1,7 @@
 <template>
     <div class="project-view">
         <!-- Navbar -->
-        <Navbar :user="user" :full-width="false" logo-text="🎯 Projekt-Editor" @logout="logout">
+        <Navbar :user="user" :full-width="false" :logo-text="navbarLogoText" :use-default-routes="false" @logout="logout">
             <template #menus>
                 <!-- Back button -->
                 <div class="navbar-item">
@@ -29,10 +29,10 @@
                     </RouterLink>
                 </div>
 
-                <!-- Config Dropdown -->
-                <div class="navbar-item config-dropdown-wrapper" ref="configDropdownRef">
-                    <button class="navbar-button config-toggle-btn" @click="toggleConfigDropdown"
-                        :aria-expanded="isConfigOpen">
+                <!-- Config Dropdown (Hidden/Muted) -->
+                <div class="navbar-item config-dropdown-wrapper" ref="configDropdownRef" style="display: none;">
+                    <button class="config-toggle-btn" @click="toggleConfigDropdown"
+                        :aria-expanded="isConfigOpen" disabled>
                         <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -157,7 +157,7 @@
             <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
             <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
-                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" />
+                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType" />
 
                 <!-- Navigation Mode: status >= 2 -->
                 <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
@@ -169,16 +169,16 @@
                 <div class="editor-content">
                     <!-- Stepper Mode Components -->
                     <template v-if="isStepper">
-                        <ProjectStepEvents v-if="currentStep === 0" :project-id="projectId" :is-locked="isLocked"
-                            @next="nextStep" />
-                        <ProjectStepPosts v-else-if="currentStep === 1" :project-id="projectId" :is-locked="isLocked"
-                            @next="nextStep" @prev="prevStep" />
-                        <ProjectStepUsers v-else-if="currentStep === 2" :project-id="projectId" :is-locked="isLocked"
-                            @next="nextStep" @prev="prevStep" />
-                        <ProjectStepTheme v-else-if="currentStep === 3" :project-id="projectId" :is-locked="isLocked"
-                            @next="nextStep" @prev="prevStep" />
-                        <ProjectStepPages v-else-if="currentStep === 4" :project-id="projectId" :is-locked="isLocked"
-                            @prev="prevStep" @complete="completeProject" />
+                        <ProjectStepEvents v-if="currentStepKey === 'events'" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                        <ProjectStepPosts v-else-if="currentStepKey === 'posts'" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                        <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                        <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                        <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId" :is-locked="isLocked"
+                            @prev="currentStep > 0 ? prevStep : undefined" @complete="completeProject" />
                     </template>
 
                     <!-- Navigation Mode Panels -->
@@ -245,6 +245,7 @@ const projectId = computed(() => {
 // Project state
 const projectData = ref<any>(null)
 const projectStatusId = ref<number | null>(null) // status_id from DB
+const projectType = computed(() => projectData.value?.type || 'project')
 
 // Current step (0-4) for stepper mode
 const currentStep = ref(0)
@@ -292,6 +293,30 @@ const projectName = computed(() => {
     const name = projectData.value.name?.trim()
     return heading || name || undefined
 })
+
+// Navbar logo text with type
+const navbarLogoText = computed(() => {
+    const type = projectType.value
+    return `🎯 Projekt-Editor (${type})`
+})
+
+// Computed step keys based on type (matching ProjectStepper logic)
+const stepKeys = computed(() => {
+    const type = projectType.value
+    
+    if (type === 'topic') {
+        // Topic: hide Events, start with Posts
+        return ['posts', 'users', 'theme', 'pages']
+    } else if (type === 'regio') {
+        // Regio: Users → Pages → Posts → Events (no Theme)
+        return ['users', 'pages', 'posts', 'events']
+    } else {
+        // Default: Events → Posts → Users → Theme → Pages
+        return ['events', 'posts', 'users', 'theme', 'pages']
+    }
+})
+
+const currentStepKey = computed(() => stepKeys.value[currentStep.value])
 
 // Config dropdown state
 const isConfigOpen = ref(false)
@@ -343,7 +368,8 @@ async function loadProjectData() {
 
 // Navigation functions
 function nextStep() {
-    if (currentStep.value < 4) {
+    const maxStep = stepKeys.value.length - 1
+    if (currentStep.value < maxStep) {
         currentStep.value++
     }
 }

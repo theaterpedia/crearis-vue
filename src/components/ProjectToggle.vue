@@ -206,6 +206,8 @@ function closeDropdown() {
 async function selectProject(projectId: string) {
     await setProjectId(projectId)
     closeDropdown()
+    // Force page reload to show correct stepper/dashboard based on project status
+    window.location.reload()
 }
 
 async function clearSelection() {
