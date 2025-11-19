@@ -1,9 +1,21 @@
 <template>
-    <span class="status-badge" :class="[`badge-${variant}`, sizeClass, { 'has-icon': showIcon }]" :style="badgeStyle">
-        <svg v-if="showIcon && icon" :fill="iconColor" height="16" viewBox="0 0 256 256" width="16"
+    <span 
+        class="status-badge" 
+        :class="[
+            `badge-${variant}`, 
+            sizeClass, 
+            statusClass,
+            { 'has-icon': showIcon, 'badge-clickable': clickable },
+            customClass
+        ]" 
+        :style="badgeStyle"
+        @click="handleClick"
+    >
+        <svg v-if="showIcon && !icon" :fill="iconColor" height="16" viewBox="0 0 256 256" width="16"
             xmlns="http://www.w3.org/2000/svg">
             <circle cx="128" cy="128" r="96" />
         </svg>
+        <span v-if="icon" class="badge-icon">{{ icon }}</span>
         <span class="badge-label">{{ displayLabel }}</span>
     </span>
 </template>
@@ -13,12 +25,16 @@ import { computed } from 'vue'
 import { parseByteaHex } from '@/composables/useSysregTags'
 
 interface Props {
-    value: string | null | undefined      // BYTEA hex string
-    label?: string                         // Pre-computed label (from status_label)
+    status?: string | null | undefined    // BYTEA hex string (legacy)
+    value?: string | null | undefined     // BYTEA hex string (preferred)
+    label?: string                        // Pre-computed label (from status_label)
     variant?: 'solid' | 'outline' | 'soft' // Visual style
-    size?: 'small' | 'medium' | 'large'   // Size variant
-    showIcon?: boolean                     // Show status indicator dot
-    color?: string                         // Custom color override
+    size?: 'small' | 'medium' | 'large' | 'sm' | 'md' | 'lg'   // Size variant
+    showIcon?: boolean                    // Show status indicator dot
+    color?: string                        // Custom color override
+    clickable?: boolean                   // Enable click interaction
+    customClass?: string                  // Additional CSS classes
+    icon?: string                         // Icon name/identifier
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -26,18 +42,60 @@ const props = withDefaults(defineProps<Props>(), {
     variant: 'soft',
     size: 'medium',
     showIcon: true,
-    color: undefined
+    color: undefined,
+    clickable: false,
+    customClass: '',
+    icon: undefined,
+    status: undefined,
+    value: undefined
 })
+
+const emit = defineEmits<{
+    click: [value: string]
+}>()
+
+// Support both 'status' and 'value' props for backward compatibility
+const statusValue = computed(() => props.value || props.status || '')
 
 // Size classes
 const sizeClass = computed(() => {
     switch (props.size) {
         case 'small':
-            return 'badge-small'
+        case 'sm':
+            return 'badge-sm badge-small'
         case 'large':
-            return 'badge-large'
+        case 'lg':
+            return 'badge-lg badge-large'
+        case 'medium':
+        case 'md':
         default:
-            return 'badge-medium'
+            return 'badge-md badge-medium'
+    }
+})
+
+// Status-based CSS classes for semantic styling
+const statusClass = computed(() => {
+    const val = statusValue.value
+    if (!val) return ''
+    
+    const bytes = parseByteaHex(val)
+    const num = bytes[0] || 0
+    
+    switch (num) {
+        case 0x00:
+            return 'status-raw'
+        case 0x01:
+            return 'status-processing'
+        case 0x02:
+            return 'status-approved'
+        case 0x04:
+            return 'status-published'
+        case 0x08:
+            return 'status-deprecated'
+        case 0x10:
+            return 'status-archived'
+        default:
+            return ''
     }
 })
 
@@ -46,9 +104,17 @@ const displayLabel = computed(() => {
     if (props.label) return props.label
 
     // Fallback if no label provided
-    const num = parseByteaHex(props.value)
+    const bytes = parseByteaHex(statusValue.value)
+    const num = bytes[0] || 0
     return `Status 0x${num.toString(16).padStart(2, '0')}`
 })
+
+// Click handler
+function handleClick(event: MouseEvent) {
+    if (props.clickable) {
+        emit('click', statusValue.value || '\\x00')
+    }
+}
 
 // Color mapping based on status value
 const statusColors = computed(() => {
@@ -56,7 +122,8 @@ const statusColors = computed(() => {
         return { bg: props.color, text: '#fff', border: props.color }
     }
 
-    const num = parseByteaHex(props.value)
+    const bytes = parseByteaHex(statusValue.value)
+    const num = bytes[0] || 0
 
     // Default color mapping (can be customized per project)
     switch (num) {
@@ -109,9 +176,6 @@ const iconColor = computed(() => {
     const colors = statusColors.value
     return props.variant === 'solid' ? colors.text : colors.border
 })
-
-// Show icon
-const icon = computed(() => props.showIcon)
 </script>
 
 <style scoped>
@@ -127,6 +191,21 @@ const icon = computed(() => props.showIcon)
     line-height: 1.25rem;
     white-space: nowrap;
     transition: all 0.2s ease;
+}
+
+/* Clickable styling */
+.badge-clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.badge-clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-clickable:active {
+    transform: translateY(0);
 }
 
 /* Size variants */

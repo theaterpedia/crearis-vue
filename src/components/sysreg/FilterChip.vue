@@ -1,7 +1,24 @@
 <template>
-    <div class="filter-chip" :class="[`variant-${variant}`, { removable }]">
+    <div 
+        class="filter-chip" 
+        :class="[
+            `variant-${variant}`, 
+            colorClass,
+            { 
+                'chip-selected': selected,
+                removable 
+            }
+        ]"
+        :role="'button'"
+        :aria-pressed="selected ? 'true' : 'false'"
+        :tabindex="0"
+        @click="handleToggle"
+        @keydown.enter="handleToggle"
+        @keydown.space.prevent="handleToggle"
+    >
         <span class="chip-label">{{ label }}</span>
-        <button v-if="removable" class="chip-remove" @click="handleRemove" aria-label="Remove filter">
+        <span v-if="count && count > 0" class="chip-count">{{ count }}</span>
+        <button v-if="removable && selected" class="chip-remove" @click.stop="handleRemove" aria-label="Remove filter">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                     stroke-linejoin="round" />
@@ -11,23 +28,43 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
     label: string
+    value?: string                      // BYTEA hex value
     variant?: 'default' | 'status' | 'topic' | 'domain' | 'ctags'
-    removable?: boolean
+    color?: 'primary' | 'secondary' | 'default'  // Color variants
+    selected?: boolean                  // Selection state
+    removable?: boolean                 // Show remove button
+    count?: number                      // Optional count badge
 }
 
 const props = withDefaults(defineProps<Props>(), {
     variant: 'default',
-    removable: true
+    color: 'default',
+    selected: false,
+    removable: false,
+    count: 0,
+    value: undefined
 })
 
 const emit = defineEmits<{
-    remove: []
+    toggle: [value: string]
+    remove: [value: string]
 }>()
 
+// Color class based on color prop
+const colorClass = computed(() => {
+    return `chip-${props.color}`
+})
+
+function handleToggle() {
+    emit('toggle', props.value || '')
+}
+
 function handleRemove() {
-    emit('remove')
+    emit('remove', props.value || '')
 }
 </script>
 
@@ -42,6 +79,48 @@ function handleRemove() {
     border-radius: 9999px;
     transition: all 0.2s ease;
     white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.filter-chip:focus {
+    outline: 2px solid var(--color-primary, #3b82f6);
+    outline-offset: 2px;
+}
+
+/* Color variants */
+.chip-default {
+    background: var(--color-background-soft, #f3f4f6);
+    color: var(--color-text, #374151);
+    border: 1px solid var(--color-border, #d1d5db);
+}
+
+.chip-primary {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.chip-secondary {
+    background: #f3e8ff;
+    color: #6b21a8;
+    border: 1px solid #d8b4fe;
+}
+
+.chip-selected {
+    background: #3b82f6;
+    color: white;
+    border-color: #2563eb;
+}
+
+.chip-selected.chip-primary {
+    background: #2563eb;
+    border-color: #1d4ed8;
+}
+
+.chip-selected.chip-secondary {
+    background: #7c3aed;
+    border-color: #6d28d9;
 }
 
 .filter-chip.variant-default {
@@ -76,6 +155,24 @@ function handleRemove() {
 
 .chip-label {
     line-height: 1;
+}
+
+.chip-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.25rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.chip-selected .chip-count {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .chip-remove {
