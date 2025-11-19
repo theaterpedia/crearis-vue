@@ -7,15 +7,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 // No longer need useStatus - using status_display from database
-text ?: string
-color ?: string
-size ?: 'thumb' | 'tile' | 'card' | 'small' | 'normal'
-// Entity data for auto-detection
-entity ?: {
-    xmlid?: string
+
+interface Props {
+    text?: string
+    color?: string
+    size?: 'thumb' | 'tile' | 'card' | 'small' | 'normal'
+    // Entity data for auto-detection
+    entity?: {
+        xmlid?: string
         status_display?: string  // Computed status display from database
         table?: string // Entity table name (posts, events, instructors, etc.)
-}
+    }
 }
 
 const props = withDefaults(defineProps<Props>(), {

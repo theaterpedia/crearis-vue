@@ -206,12 +206,8 @@ export default defineEventHandler(async (event) => {
         // Fetch updated task with status information
         // tasks.status_display and tasks.lang are included in tasks.*
         const task = await db.get(`
-            SELECT 
-                tasks.*,
-                status.value as status_value,
-                status.name as status_name
+            SELECT tasks.*
             FROM tasks
-            LEFT JOIN status ON tasks.status_id = status.id
             WHERE tasks.id = ?
         `, [id])
 
