@@ -14,7 +14,7 @@ import type { ToggleOption } from './components/ToggleMenu.vue'
 
 export const pageSettings = {
   // Organization Identity
-  claim: 'neuartige Vernetzung Theaterpädagogik',
+  claim: 'Diskurs & Kollaboration Theaterpädagogik',
 
   // SEO Meta Tags (aligned with PROJECT_SEO_CONFIGURATION.md naming)
   seo_title: 'Theaterpedia Netzwerk für Theaterpädagogik',
