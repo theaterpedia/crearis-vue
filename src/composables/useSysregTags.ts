@@ -404,6 +404,46 @@ export function updateCtagsBitGroup(
 }
 
 // ============================================================================
+// BYTEA Combination Operations
+// ============================================================================
+
+/**
+ * Combine multiple BYTEA values using OR operation
+ * @param values - Array of BYTEA hex strings
+ * @returns Combined BYTEA hex string
+ */
+export function orBytea(values: (string | null | undefined)[]): string {
+    if (values.length === 0) return '\\x00'
+
+    let result = 0
+    for (const val of values) {
+        const bytes = parseByteaHex(val)
+        result |= (bytes[0] || 0)
+    }
+
+    return byteaFromNumber(result)
+}
+
+/**
+ * Count number of set bits in BYTEA value
+ * @param bytea - BYTEA hex string
+ * @returns Number of bits set to 1
+ */
+export function countBits(bytea: string | null | undefined): number {
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
+
+    let count = 0
+    for (let i = 0; i < 8; i++) {
+        if ((num & (1 << i)) !== 0) {
+            count++
+        }
+    }
+
+    return count
+}
+
+// ============================================================================
 // Main Composable
 // ============================================================================
 
@@ -434,6 +474,10 @@ export function useSysregTags() {
         bitsToByteArray,
         byteArrayToBits,
         toggleTag,
+
+        // BYTEA combination
+        orBytea,
+        countBits,
 
         // CTags bit groups
         buildCtagsByte,

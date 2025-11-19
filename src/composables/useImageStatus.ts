@@ -282,6 +282,27 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         })
     }
 
+    // Field-specific bit helpers (for direct image field manipulation)
+    function hasBitInField(field: 'status_val' | 'ctags_val', bit: number): boolean {
+        if (!image.value?.[field]) return false
+        return hasBit(image.value[field], bit)
+    }
+
+    function setBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+        if (!image.value) return
+        image.value[field] = setBit(image.value[field], bit)
+    }
+
+    function clearBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+        if (!image.value) return
+        image.value[field] = clearBit(image.value[field], bit)
+    }
+
+    function toggleBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+        if (!image.value) return
+        image.value[field] = toggleBit(image.value[field], bit)
+    }
+
     // Update helper
     async function updateImageStatus(updates: Partial<Image>) {
         if (!image.value) return null
@@ -375,6 +396,12 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         // Config management
         hasConfigBit,
         setConfigBit,
-        toggleConfigBit
+        toggleConfigBit,
+
+        // Field-specific bit operations
+        hasBitInField,
+        setBitInField,
+        clearBitInField,
+        toggleBitInField
     }
 }
