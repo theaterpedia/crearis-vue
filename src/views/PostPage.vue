@@ -2,7 +2,7 @@
 <template>
     <div class="post-page">
         <!-- Edit Panel -->
-        <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.heading || post.name || 'Post'}`"
+        <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
             subtitle="Update post information" :data="editPanelData" @close="closeEditPanel" @save="handleSavePost" />
 
         <!-- Page Config Panel (for admins/owners) -->
@@ -14,9 +14,10 @@
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId">
+        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
+            :navItems="navigationItems">
             <template #header>
-                <PageHeading :heading="post.heading || post.name || post.id"
+                <PageHeading :heading="post.name || String(post.id)"
                     :teaserText="post.teaser || post.md || 'Read this post.'"
                     :imgTmp="post.cimg || 'https://picsum.photos/1440/900?random=post'"
                     :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
@@ -122,6 +123,26 @@ const canEdit = computed(() => {
     return false
 })
 
+// Navigation items
+const navigationItems = computed(() => {
+    const items = [
+        {
+            label: 'Project',
+            link: `/sites/${domaincode.value}`
+        }
+    ]
+    
+    // Add Back button for project role users
+    if (user?.value?.activeRole === 'project') {
+        items.unshift({
+            label: 'Back to Dashboard',
+            link: '/projects'
+        })
+    }
+    
+    return items
+})
+
 // Parse options for PageLayout from post data
 const asideOptions = computed<AsideOptions>(() => {
     if (!post.value) return {}
@@ -149,10 +170,10 @@ const editPanelData = computed((): EditPanelData[] => {
     if (!post.value) return []
     return [
         {
-            label: 'Heading',
-            key: 'heading',
+            label: 'Name',
+            key: 'name',
             type: 'text',
-            value: post.value.heading || post.value.name || '',
+            value: post.value.name || '',
             required: true
         },
         {
@@ -188,25 +209,31 @@ async function loadPost() {
     const postId = route.params.id
     domaincode.value = route.params.domaincode as string
 
+    console.log('[PostPage] Loading post:', { postId, domaincode: domaincode.value })
+
     try {
         // First, get project by domaincode to get project_id
+        console.log('[PostPage] Fetching project:', `/api/projects/${domaincode.value}`)
         const projectRes = await fetch(`/api/projects/${domaincode.value}`)
+        console.log('[PostPage] Project response:', { ok: projectRes.ok, status: projectRes.status })
+        
         if (!projectRes.ok) throw new Error('Project not found')
         const projectData = await projectRes.json()
-        projectId.value = projectData.project.id
+        console.log('[PostPage] Project data:', projectData)
+        projectId.value = projectData.id
 
         // Load post
+        console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)
         const response = await fetch(`/api/posts/${postId}`)
+        console.log('[PostPage] Post response:', { ok: response.ok, status: response.status })
+        
         if (!response.ok) throw new Error('Failed to load post')
         const data = await response.json()
+        console.log('[PostPage] Post data:', data)
         post.value = data.post
-
-        // Update heading if name exists
-        if (post.value.name && !post.value.heading) {
-            post.value.heading = post.value.name
-        }
+        console.log('[PostPage] Post loaded successfully!')
     } catch (error) {
-        console.error('Error loading post:', error)
+        console.error('[PostPage] Error loading post:', error)
     }
 }
 
