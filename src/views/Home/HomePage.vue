@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, createApp } from 'vue'
+import { ref, onMounted, onUnmounted, computed, createApp, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStatus } from '@/composables/useStatus'
 import PageLayout from '@/components/PageLayout.vue'
@@ -370,7 +370,10 @@ onMounted(async () => {
     await fetchProject(FIXED_PROJECT_ID)
     await fetchUsers()
     
-    if (postsSection.value) {
+    // Wait for next tick to ensure DOM is fully rendered
+    await nextTick()
+    
+    if (postsSection.value && postsSection.value instanceof HTMLElement) {
         controller.discoverFromDOM({
             root: postsSection.value,
             attachHandlers: false
