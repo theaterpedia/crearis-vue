@@ -18,7 +18,8 @@ import path from 'path'
 import { db } from './db-new'
 import { runMigrations } from './migrations/index'
 import { seedDatabase } from './seed'
-import { initializeStatusCache } from '../utils/status-helpers'
+// DEPRECATED: Status cache disabled - using sysreg system instead
+// import { initializeStatusCache } from '../utils/status-helpers'
 
 interface ConfigData {
     version: string
@@ -130,8 +131,10 @@ async function initializeDatabase() {
 // Run initialization
 await initializeDatabase()
 
-// Initialize status cache for fast lookups
-await initializeStatusCache(db)
+// ⚠️ DEPRECATED: Status cache initialization disabled - using sysreg system instead
+// The old status table was renamed to status_depr in migration 023
+// New code should use sysreg composables (useImageStatus, useProjectStatus, etc.)
+// await initializeStatusCache(db)
 
 // Export initialized database
 export { db }
