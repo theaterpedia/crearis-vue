@@ -78,20 +78,38 @@ alltables (metadata table):
 entities (entity registry):
   - inherits from alltables
   - is_entity = TRUE
+  - Full entities: projects, events, posts, persons, images
+    → All 6 tagfamilies: status, config, rtags, ctags, ttags, dtags
+  - Partial entities: users, tasks, interactions (limited sysreg support)
+    → Only 3 tagfamilies: status, rtags, config
 ```
 
 ### Target Entity Schema (Migration 025)
 ```
-Entity tables (projects, events, posts, etc.):
+Full entity tables (projects, events, posts, persons, images):
   - Remove: status_id, status_display, status (generated)
-  - Add: status_val (BYTEA)
+  - Add: status_val (BYTEA) -- NO FK constraint (value-based lookup)
   - Add: status_label (TEXT GENERATED from lang + status_val)
   - Add: status_desc (TEXT GENERATED from lang + status_val)
-  - Add: config_val (BYTEA)
-  - Add: rtags_val (BYTEA)
-  - Add: ctags_val (BYTEA)
-  - Add: ttags_val (BYTEA)
-  - Add: dtags_val (BYTEA)
+  - Add: config_val (BYTEA) -- NO FK constraint
+  - Add: rtags_val (BYTEA) -- NO FK constraint
+  - Add: ctags_val (BYTEA) -- NO FK constraint
+  - Add: ttags_val (BYTEA) -- NO FK constraint
+  - Add: dtags_val (BYTEA) -- NO FK constraint
+
+Partial entity tables (users, tasks, interactions):
+  - Remove: status_id, status_display, status (generated)
+  - Add: status_val (BYTEA) -- NO FK constraint (value-based lookup)
+  - Add: status_label (TEXT GENERATED from lang + status_val)
+  - Add: status_desc (TEXT GENERATED from lang + status_val)
+  - Add: config_val (BYTEA) -- NO FK constraint
+  - Add: rtags_val (BYTEA) -- NO FK constraint
+  - Note: NO ctags, ttags, or dtags fields
+
+FK Strategy: NO foreign key constraints on *_val fields
+  - Reason: Performance, flexibility for bit operations, immutable values
+  - Validation: Application-level only
+  - Lookups: Direct value comparison in generated columns/functions
 ```
 
 ---
