@@ -36,6 +36,7 @@ import { migration as migration019 } from './019_add_tags_status_ids'
 import { migration as migration020 } from './020_refactor_entities'
 import { migration as migration021 } from './021_seed_system_data'
 import { migration as migration022 } from './022_create_sysreg'
+import { migration as migration023 } from './023_deprecate_old_tables'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -75,6 +76,7 @@ const migrations: Migration[] = [
     { run: migration021.up, down: migration021.down, metadata: { id: migration021.id, description: migration021.description, version: '0.0.14', date: '2025-10-22' }, manualOnly: true, reversible: true },
     // Package C (022-029) starts here - reversible migrations for alpha features
     { run: migration022.up, down: migration022.down, metadata: { id: migration022.id, description: migration022.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
+    { run: migration023.up, down: migration023.down, metadata: { id: migration023.id, description: migration023.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
