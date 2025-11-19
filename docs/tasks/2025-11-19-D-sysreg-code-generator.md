@@ -1,0 +1,1 @@
+A code-generator extracts all keys to a set of typings and interface-descriptions that can be imported by vue-components and composables to allow for typesafe implementations based on the keys.
