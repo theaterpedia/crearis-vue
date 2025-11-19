@@ -38,6 +38,7 @@ import { migration as migration021 } from './021_seed_system_data'
 import { migration as migration022 } from './022_create_sysreg'
 import { migration as migration023 } from './023_deprecate_old_tables'
 import { migration as migration024 } from './024_create_inherited_tables'
+import { migration as migration025 } from './025_align_entity_tables'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -79,6 +80,7 @@ const migrations: Migration[] = [
     { run: migration022.up, down: migration022.down, metadata: { id: migration022.id, description: migration022.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     { run: migration023.up, down: migration023.down, metadata: { id: migration023.id, description: migration023.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     { run: migration024.up, down: migration024.down, metadata: { id: migration024.id, description: migration024.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
+    { run: migration025.up, down: migration025.down, metadata: { id: migration025.id, description: migration025.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
