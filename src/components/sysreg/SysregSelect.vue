@@ -41,7 +41,6 @@ interface Props {
     required?: boolean
     disabled?: boolean
     entity?: string        // Optional: filter by entity type
-    lang?: string          // Language code (default: 'de')
     defaultValue?: string  // Default BYTEA value to select
 }
 
@@ -52,7 +51,6 @@ const props = withDefaults(defineProps<Props>(), {
     required: false,
     disabled: false,
     entity: undefined,
-    lang: 'de',
     defaultValue: undefined
 })
 
@@ -62,7 +60,7 @@ const emit = defineEmits<{
 }>()
 
 // Get options for the tagfamily
-const { getOptions, cacheInitialized, initCache } = useSysregOptions(props.entity, props.lang)
+const { getOptions, cacheInitialized, initCache } = useSysregOptions(props.entity)
 
 const options = computed(() => {
     return getOptions(props.tagfamily).value

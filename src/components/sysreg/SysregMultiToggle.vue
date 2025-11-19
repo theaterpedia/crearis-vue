@@ -45,7 +45,6 @@ interface Props {
     showCheckmark?: boolean    // Show checkmark icon when selected
     columns?: 1 | 2 | 3 | 4    // Grid layout columns
     suggested?: string[]       // Suggested values (highlighted)
-    lang?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,8 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
     readonly: false,
     showCheckmark: true,
     columns: 2,
-    suggested: () => [],
-    lang: 'de'
+    suggested: () => []
 })
 
 const emit = defineEmits<{
@@ -67,7 +65,7 @@ const emit = defineEmits<{
 }>()
 
 // Get options for the tagfamily
-const { getOptions, cacheInitialized, initCache } = useSysregOptions(undefined, props.lang)
+const { getOptions, cacheInitialized, initCache } = useSysregOptions()
 
 const allOptions = computed(() => {
     return getOptions(props.tagfamily).value

@@ -30,14 +30,12 @@ interface Props {
     label?: string
     hint?: string
     disabled?: boolean
-    lang?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
     label: '',
     hint: '',
-    disabled: false,
-    lang: 'de'
+    disabled: false
 })
 
 const emit = defineEmits<{
@@ -46,7 +44,7 @@ const emit = defineEmits<{
 }>()
 
 // Get bit group options
-const { ctagsBitGroupOptions } = useSysregOptions(undefined, props.lang)
+const { ctagsBitGroupOptions } = useSysregOptions()
 
 const options = computed(() => {
     return ctagsBitGroupOptions[props.bitGroup].value

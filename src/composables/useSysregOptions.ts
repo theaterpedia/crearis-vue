@@ -13,6 +13,7 @@
 
 import { ref, computed, readonly, onMounted, type Ref, type ComputedRef } from 'vue'
 import { useSysregTags } from './useSysregTags'
+import { useI18n } from './useI18n'
 
 // ============================================================================
 // Types
@@ -42,8 +43,9 @@ export interface BitGroupOption {
 // Main Composable
 // ============================================================================
 
-export function useSysregOptions(entity?: Ref<string> | string, lang: Ref<string> | string = 'de') {
+export function useSysregOptions(entity?: Ref<string> | string) {
     const { sysregCache, cacheInitialized, initCache } = useSysregTags()
+    const { currentLanguage } = useI18n()
 
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -84,7 +86,7 @@ export function useSysregOptions(entity?: Ref<string> | string, lang: Ref<string
             return
         }
 
-        const langCode = typeof lang === 'string' ? lang : lang.value
+        const langCode = currentLanguage.value
         const allOptions: SysregOption[] = []
 
         // Aggregate all options from all tagfamilies
@@ -158,7 +160,7 @@ export function useSysregOptions(entity?: Ref<string> | string, lang: Ref<string
             const entries = sysregCache.value[tagfamily as keyof typeof sysregCache.value]
             if (!entries) return []
 
-            const langCode = typeof lang === 'string' ? lang : lang.value
+            const langCode = currentLanguage.value
 
             return entries.map((entry: any) => ({
                 value: entry.value,
@@ -243,7 +245,7 @@ export function useSysregOptions(entity?: Ref<string> | string, lang: Ref<string
         const entry = entries.find((e: any) => e.value === value)
         if (!entry) return ''
 
-        const langCode = typeof lang === 'string' ? lang : lang.value
+        const langCode = currentLanguage.value
         return getLabel(entry, langCode)
     }
 
@@ -278,7 +280,7 @@ export function useSysregOptions(entity?: Ref<string> | string, lang: Ref<string
         const entries = sysregCache.value[tagfamily as keyof typeof sysregCache.value]
         if (!entries || !Array.isArray(entries)) return []
 
-        const langCode = typeof lang === 'string' ? lang : lang.value
+        const langCode = currentLanguage.value
 
         // Only ttags, dtags, rtags use bit positions (power-of-2 values)
         // Status, config use direct byte values
