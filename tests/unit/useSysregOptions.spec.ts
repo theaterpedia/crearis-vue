@@ -154,7 +154,7 @@ describe('useSysregOptions - Option Management', () => {
 
             expect(ttags.length).toBe(8)
             expect(ttags.every(opt => opt.tagfamily === 'ttags')).toBe(true)
-            expect(ttags.some(opt => opt.value === 'democracy')).toBe(true)
+            expect(ttags.some(opt => opt.name === 'democracy')).toBe(true)
         })
 
         it('returns all status options', () => {
@@ -162,8 +162,8 @@ describe('useSysregOptions - Option Management', () => {
             const status = getOptionsByFamily('status')
 
             expect(status.length).toBe(6)
-            expect(status.some(opt => opt.value === 'raw')).toBe(true)
-            expect(status.some(opt => opt.value === 'published')).toBe(true)
+            expect(status.some(opt => opt.name === 'raw')).toBe(true)
+            expect(status.some(opt => opt.name === 'published')).toBe(true)
         })
 
         it('returns empty array for invalid family', () => {
@@ -179,7 +179,7 @@ describe('useSysregOptions - Option Management', () => {
 
             expect(dtags.length).toBe(8)
             expect(dtags.every(opt => opt.tagfamily === 'dtags')).toBe(true)
-            expect(dtags.some(opt => opt.value === 'media')).toBe(true)
+            expect(dtags.some(opt => opt.name === 'media')).toBe(true)
         })
     })
 
@@ -230,8 +230,9 @@ describe('useSysregOptions - Option Management', () => {
             const opt = getOptionByValue('status', '\\x02')
 
             expect(opt).toBeTruthy()
-            expect(opt?.value).toBe('approved')
-            expect(opt?.bit).toBe(2)
+            expect(opt?.name).toBe('approved')
+            expect(opt?.value).toBe('\\x02')
+            expect(opt?.bit).toBe(undefined) // Status uses direct values, not bits
         })
     })
 
@@ -253,7 +254,7 @@ describe('useSysregOptions - Option Management', () => {
             expect(ageGroups.length).toBe(4)
             expect(ageGroups[0].label).toBe('Children')
             expect(ageGroups[1].label).toBe('Youth')
-            expect(ageGroups.every(opt => opt.bit_group === 'age_group')).toBe(true)
+            expect(ageGroups.every((opt: any) => opt.bit_group === 'age_group')).toBe(true)
         })
 
         it('returns subject_type options', () => {
@@ -261,8 +262,8 @@ describe('useSysregOptions - Option Management', () => {
             const types = getCtagsBitGroup('subject_type')
 
             expect(types.length).toBe(4)
-            expect(types.some(t => t.label === 'Photo')).toBe(true)
-            expect(types.some(t => t.label === 'Illustration')).toBe(true)
+            expect(types.some((t: any) => t.label === 'Photo')).toBe(true)
+            expect(types.some((t: any) => t.label === 'Illustration')).toBe(true)
         })
 
         it('returns empty array for invalid bit group', () => {
@@ -277,8 +278,8 @@ describe('useSysregOptions - Option Management', () => {
             const access = getCtagsBitGroup('access_level')
 
             expect(access.length).toBe(2)
-            expect(access.some(a => a.label === 'Public')).toBe(true)
-            expect(access.some(a => a.label === 'Restricted')).toBe(true)
+            expect(access.some((a: any) => a.label === 'Public')).toBe(true)
+            expect(access.some((a: any) => a.label === 'Restricted')).toBe(true)
         })
 
         it('returns quality options', () => {
@@ -286,8 +287,8 @@ describe('useSysregOptions - Option Management', () => {
             const quality = getCtagsBitGroup('quality')
 
             expect(quality.length).toBe(2)
-            expect(quality.some(q => q.label === 'Featured')).toBe(true)
-            expect(quality.some(q => q.label === 'Needs Review')).toBe(true)
+            expect(quality.some((q: any) => q.label === 'Featured')).toBe(true)
+            expect(quality.some((q: any) => q.label === 'Needs Review')).toBe(true)
         })
     })
 
@@ -384,13 +385,13 @@ describe('useSysregOptions - Option Management', () => {
             const status = getOptionsByFamily('status')
 
             expect(status).toHaveLength(6)
-            const values = status.map(s => s.value)
-            expect(values).toContain('raw')
-            expect(values).toContain('processing')
-            expect(values).toContain('approved')
-            expect(values).toContain('published')
-            expect(values).toContain('deprecated')
-            expect(values).toContain('archived')
+            const names = status.map((s: any) => s.name)
+            expect(names).toContain('raw')
+            expect(names).toContain('processing')
+            expect(names).toContain('approved')
+            expect(names).toContain('published')
+            expect(names).toContain('deprecated')
+            expect(names).toContain('archived')
         })
 
         it('includes all 8 ttags', () => {
@@ -398,8 +399,8 @@ describe('useSysregOptions - Option Management', () => {
             const ttags = getOptionsByFamily('ttags')
 
             expect(ttags).toHaveLength(8)
-            expect(ttags.some(t => t.value === 'democracy')).toBe(true)
-            expect(ttags.some(t => t.value === 'environment')).toBe(true)
+            expect(ttags.some((t: any) => t.name === 'democracy')).toBe(true)
+            expect(ttags.some((t: any) => t.name === 'environment')).toBe(true)
         })
 
         it('includes all 8 dtags', () => {
@@ -407,8 +408,8 @@ describe('useSysregOptions - Option Management', () => {
             const dtags = getOptionsByFamily('dtags')
 
             expect(dtags).toHaveLength(8)
-            expect(dtags.some(d => d.value === 'education')).toBe(true)
-            expect(dtags.some(d => d.value === 'media')).toBe(true)
+            expect(dtags.some((d: any) => d.name === 'education')).toBe(true)
+            expect(dtags.some((d: any) => d.name === 'media')).toBe(true)
         })
 
         it('includes all 4 rtags', () => {
@@ -416,8 +417,8 @@ describe('useSysregOptions - Option Management', () => {
             const rtags = getOptionsByFamily('rtags')
 
             expect(rtags).toHaveLength(4)
-            expect(rtags.some(r => r.value === 'guide')).toBe(true)
-            expect(rtags.some(r => r.value === 'toolkit')).toBe(true)
+            expect(rtags.some((r: any) => r.name === 'guide')).toBe(true)
+            expect(rtags.some((r: any) => r.name === 'toolkit')).toBe(true)
         })
 
         it('includes all 12 ctags with bit groups', () => {
@@ -425,7 +426,7 @@ describe('useSysregOptions - Option Management', () => {
             const ctags = getOptionsByFamily('ctags')
 
             expect(ctags).toHaveLength(12)
-            expect(ctags.every(c => c.bit_group)).toBe(true)
+            expect(ctags.every((c: any) => c.bit_group)).toBe(true)
         })
     })
 })

@@ -66,6 +66,19 @@ async function initCache(): Promise<void> {
         }
 
         const data = await response.json()
+
+        // Validate response structure
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid sysreg data: expected object')
+        }
+
+        // Check for required tagfamilies
+        const requiredFamilies = ['status', 'ttags', 'dtags', 'rtags', 'ctags', 'config']
+        const missingFamilies = requiredFamilies.filter(family => !data[family])
+        if (missingFamilies.length > 0) {
+            throw new Error(`Invalid sysreg data: missing tagfamilies: ${missingFamilies.join(', ')}`)
+        }
+
         sysregCache.value = data
         cacheInitialized.value = true
         console.log('✅ Sysreg cache initialized')
@@ -77,21 +90,44 @@ async function initCache(): Promise<void> {
     }
 }
 
+/**
+ * Reset cache (for testing)
+ */
+function resetCache(): void {
+    sysregCache.value = null
+    cacheInitialized.value = false
+    cacheLoading.value = false
+}
+
 // ============================================================================
 // BYTEA Conversion Helpers
 // ============================================================================
 
 /**
- * Parse BYTEA hex string to number
- * @param hex - BYTEA hex string (e.g., "\\x01" or "0x01")
- * @returns Numeric value
+ * Parse BYTEA hex string to byte array
+ * @param hex - BYTEA hex string (e.g., "\\x01" or "\\x0102")
+ * @returns Array of byte values
  */
-export function parseByteaHex(hex: string | null | undefined): number {
-    if (!hex) return 0
+export function parseByteaHex(hex: string | null | undefined): number[] {
+    if (!hex) return [0]
 
     // Remove \x or 0x prefix
     const cleaned = hex.replace(/^\\x|^0x/, '')
-    return parseInt(cleaned, 16) || 0
+
+    // Validate hex string (only hex chars allowed)
+    if (!/^[0-9a-fA-F]*$/.test(cleaned)) {
+        return [0]
+    }
+
+    // Handle multi-byte hex strings
+    const bytes: number[] = []
+    for (let i = 0; i < cleaned.length; i += 2) {
+        const byteStr = cleaned.substring(i, i + 2)
+        const byte = parseInt(byteStr, 16)
+        bytes.push(isNaN(byte) ? 0 : byte)
+    }
+
+    return bytes.length > 0 ? bytes : [0]
 }
 
 /**
@@ -115,7 +151,7 @@ export function byteaFromNumber(num: number): string {
  */
 export function byteaFromUint8Array(bytes: Uint8Array): string {
     if (bytes.length === 0) return '\\x00'
-    return byteaFromNumber(bytes[0])
+    return byteaFromNumber(bytes[0] || 0)
 }
 
 /**
@@ -124,8 +160,8 @@ export function byteaFromUint8Array(bytes: Uint8Array): string {
  * @returns Uint8Array
  */
 export function uint8ArrayFromBytea(hex: string | null | undefined): Uint8Array {
-    const num = parseByteaHex(hex)
-    return new Uint8Array([num])
+    const bytes = parseByteaHex(hex)
+    return new Uint8Array(bytes)
 }
 
 // ============================================================================
@@ -143,7 +179,8 @@ export function hasBit(bytea: string | null | undefined, bit: number): boolean {
         throw new Error(`Invalid bit position: ${bit} (must be 0-7)`)
     }
 
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     return (num & (1 << bit)) !== 0
 }
 
@@ -158,7 +195,8 @@ export function setBit(bytea: string | null | undefined, bit: number): string {
         throw new Error(`Invalid bit position: ${bit} (must be 0-7)`)
     }
 
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     const updated = num | (1 << bit)
     return byteaFromNumber(updated)
 }
@@ -174,7 +212,8 @@ export function clearBit(bytea: string | null | undefined, bit: number): string 
         throw new Error(`Invalid bit position: ${bit} (must be 0-7)`)
     }
 
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     const updated = num & ~(1 << bit)
     return byteaFromNumber(updated)
 }
@@ -190,7 +229,8 @@ export function toggleBit(bytea: string | null | undefined, bit: number): string
         throw new Error(`Invalid bit position: ${bit} (must be 0-7)`)
     }
 
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     const updated = num ^ (1 << bit)
     return byteaFromNumber(updated)
 }
@@ -202,7 +242,8 @@ export function toggleBit(bytea: string | null | undefined, bit: number): string
  * @returns True if all bits are set
  */
 export function hasAllBits(bytea: string | null | undefined, bits: number[]): boolean {
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     const mask = bits.reduce((acc, bit) => acc | (1 << bit), 0)
     return (num & mask) === mask
 }
@@ -214,7 +255,8 @@ export function hasAllBits(bytea: string | null | undefined, bits: number[]): bo
  * @returns True if any bit is set
  */
 export function hasAnyBit(bytea: string | null | undefined, bits: number[]): boolean {
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     const mask = bits.reduce((acc, bit) => acc | (1 << bit), 0)
     return (num & mask) !== 0
 }
@@ -224,34 +266,43 @@ export function hasAnyBit(bytea: string | null | undefined, bits: number[]): boo
 // ============================================================================
 
 /**
- * Convert bit positions array to BYTEA
+ * Convert bit positions array to byte array
  * @param bits - Array of bit positions (e.g., [0, 2, 5])
- * @returns BYTEA hex string
+ * @returns Array of byte values
  */
-export function bitsToByteArray(bits: number[]): string {
+export function bitsToByteArray(bits: number[]): number[] {
+    if (bits.length === 0) return [0]
+
     let byte = 0
     bits.forEach(bit => {
         if (bit >= 0 && bit <= 7) {
             byte |= (1 << bit)
         }
     })
-    return byteaFromNumber(byte)
+    return [byte]
 }
 
 /**
- * Convert BYTEA to array of set bit positions
- * @param bytea - BYTEA hex string
+ * Convert byte array to array of set bit positions
+ * @param bytes - Array of byte values
  * @returns Array of bit positions that are set
  */
-export function byteArrayToBits(bytea: string | null | undefined): number[] {
-    const num = parseByteaHex(bytea)
+export function byteArrayToBits(bytes: number[]): number[] {
+    if (!bytes || bytes.length === 0) return []
+
     const bits: number[] = []
 
-    for (let i = 0; i < 8; i++) {
-        if (num & (1 << i)) {
-            bits.push(i)
+    // Process each byte
+    bytes.forEach((byte, byteIndex) => {
+        const num = byte || 0
+        const bitOffset = byteIndex * 8
+
+        for (let i = 0; i < 8; i++) {
+            if (num & (1 << i)) {
+                bits.push(bitOffset + i)
+            }
         }
-    }
+    })
 
     return bits
 }
@@ -300,7 +351,8 @@ export function extractCtagsBitGroup(
     bytea: string | null | undefined,
     group: keyof CtagsBitGroups
 ): number {
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
 
     switch (group) {
         case 'age_group':
@@ -362,6 +414,7 @@ export function useSysregTags() {
         cacheInitialized: readonly(cacheInitialized),
         cacheLoading: readonly(cacheLoading),
         initCache,
+        resetCache,
 
         // BYTEA conversion
         parseByteaHex,

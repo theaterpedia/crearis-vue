@@ -7,6 +7,7 @@
 
 import { vi } from 'vitest'
 import type { TestEntity } from './sysreg-test-data'
+import { useSysregTags } from '../../src/composables/useSysregTags'
 
 export interface SysregOption {
     bit: number
@@ -20,15 +21,15 @@ export interface SysregOption {
  * Complete mock sysreg options (all 38 entries)
  */
 export const mockSysregOptions: SysregOption[] = [
-    // Status (6 entries)
-    { bit: 0, tagfamily: 'status', value: 'raw', label: 'Raw' },
-    { bit: 1, tagfamily: 'status', value: 'processing', label: 'Processing' },
-    { bit: 2, tagfamily: 'status', value: 'approved', label: 'Approved' },
-    { bit: 3, tagfamily: 'status', value: 'published', label: 'Published' },
-    { bit: 4, tagfamily: 'status', value: 'deprecated', label: 'Deprecated' },
-    { bit: 5, tagfamily: 'status', value: 'archived', label: 'Archived' },
+    // Status (6 entries) - uses direct hex values, not bit positions
+    { bit: 0x00, tagfamily: 'status', value: 'raw', label: 'Raw' },
+    { bit: 0x01, tagfamily: 'status', value: 'processing', label: 'Processing' },
+    { bit: 0x02, tagfamily: 'status', value: 'approved', label: 'Approved' },
+    { bit: 0x04, tagfamily: 'status', value: 'published', label: 'Published' },
+    { bit: 0x08, tagfamily: 'status', value: 'deprecated', label: 'Deprecated' },
+    { bit: 0x10, tagfamily: 'status', value: 'archived', label: 'Archived' },
 
-    // TTags - Topic Tags (8 entries)
+    // TTags - Topic Tags (8 entries) - uses bit positions
     { bit: 0, tagfamily: 'ttags', value: 'democracy', label: 'Democracy' },
     { bit: 1, tagfamily: 'ttags', value: 'environment', label: 'Environment' },
     { bit: 2, tagfamily: 'ttags', value: 'education', label: 'Education' },
@@ -80,13 +81,52 @@ export const mockSysregOptions: SysregOption[] = [
  * Mock fetch function that returns sysreg options
  */
 export function mockFetchSysregOptions() {
+    // Convert flat mockSysregOptions to SysregCache format
+    const cache = {
+        status: mockSysregOptions.filter(opt => opt.tagfamily === 'status').map(toSysregEntry),
+        config: [],
+        rtags: mockSysregOptions.filter(opt => opt.tagfamily === 'rtags').map(toSysregEntry),
+        ctags: mockSysregOptions.filter(opt => opt.tagfamily === 'ctags').map(toSysregEntry),
+        ttags: mockSysregOptions.filter(opt => opt.tagfamily === 'ttags').map(toSysregEntry),
+        dtags: mockSysregOptions.filter(opt => opt.tagfamily === 'dtags').map(toSysregEntry)
+    }
+
     return vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({
-            sysreg: mockSysregOptions
-        })
+        json: async () => cache
     })
+}
+
+/**
+ * Convert SysregOption to SysregEntry format
+ */
+/**
+ * Convert SysregOption to SysregEntry format
+ */
+function toSysregEntry(opt: SysregOption): any {
+    let hexValue: string
+
+    // Status uses direct hex values, tags use bit positions
+    if (opt.tagfamily === 'status') {
+        // Use bit value directly as hex (already in correct format)
+        hexValue = `\\x${opt.bit.toString(16).padStart(2, '0')}`
+    } else {
+        // Convert bit position to byte value (bit 0 = 0x01, bit 1 = 0x02, etc.)
+        const byteValue = 1 << opt.bit
+        hexValue = `\\x${byteValue.toString(16).padStart(2, '0')}`
+    }
+
+    return {
+        value: hexValue,
+        name: opt.value,
+        tagfamily: opt.tagfamily,
+        taglogic: 'option',
+        is_default: false,
+        name_i18n: { en: opt.label },
+        desc_i18n: {},
+        ...(opt.bit_group ? { bit_group: opt.bit_group } : {})
+    }
 }
 
 /**
@@ -195,15 +235,25 @@ export function mockFetchDelete() {
 /**
  * Create a mock fetch that tracks calls
  */
-export function createMockFetch() {
-    const calls: Array<{ url: string; options?: RequestInit }> = []
+export function mockFetchWithTracking() {
+    const calls: any[] = []
+
+    // Build cache structure
+    const cache = {
+        status: mockSysregOptions.filter(opt => opt.tagfamily === 'status').map(toSysregEntry),
+        config: [],
+        rtags: mockSysregOptions.filter(opt => opt.tagfamily === 'rtags').map(toSysregEntry),
+        ctags: mockSysregOptions.filter(opt => opt.tagfamily === 'ctags').map(toSysregEntry),
+        ttags: mockSysregOptions.filter(opt => opt.tagfamily === 'ttags').map(toSysregEntry),
+        dtags: mockSysregOptions.filter(opt => opt.tagfamily === 'dtags').map(toSysregEntry)
+    }
 
     const mockFetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
         calls.push({ url, options })
         return Promise.resolve({
             ok: true,
             status: 200,
-            json: async () => ({ sysreg: mockSysregOptions })
+            json: async () => cache
         })
     })
 
@@ -224,12 +274,15 @@ export function setupGlobalFetchMock() {
 }
 
 /**
- * Reset global fetch mock
+ * Reset global fetch mock and clear sysreg cache
  */
 export function resetGlobalFetchMock() {
     if (global.fetch && vi.isMockFunction(global.fetch)) {
         (global.fetch as any).mockClear()
     }
+    // Reset the sysreg cache to ensure clean test state
+    const { resetCache } = useSysregTags()
+    resetCache()
 }
 
 /**

@@ -203,9 +203,16 @@ export function createVariedTestImages(): TestEntity[] {
  */
 function bitsToHex(bits: number[]): string {
     if (bits.length === 0) return '\\x00'
-    const byteArray = bitsToByteArray(bits)
-    const value = byteArray.reduce((acc, byte, index) => acc + (byte << (index * 8)), 0)
-    return `\\x${value.toString(16).padStart(2, '0')}`
+
+    // Calculate byte value from bit positions
+    let byte = 0
+    bits.forEach(bit => {
+        if (bit >= 0 && bit <= 7) {
+            byte |= (1 << bit)
+        }
+    })
+
+    return `\\x${byte.toString(16).padStart(2, '0')}`
 }
 
 /**
