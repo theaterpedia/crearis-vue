@@ -26,6 +26,7 @@ const router = createRouter({
     { path: '/admin/sysreg', component: () => import('../views/admin/SysregAdminView.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true, role: 'base' } },
     { path: '/admin/images_core', component: () => import('../views/admin/ImagesCoreAdmin.vue'), meta: { requiresAuth: true, role: 'admin' } },
+    { path: '/admin/images-browser', component: () => import('../views/ImageBrowser.vue'), meta: { requiresAuth: true, role: 'base' } },
 
     // User routes
     { path: '/users/:id/images', component: () => import('../views/images/cimgRegistry.vue'), meta: { requiresAuth: true } },
