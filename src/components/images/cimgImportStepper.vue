@@ -244,6 +244,16 @@ const emit = defineEmits<{
 
 const { user } = useAuth()
 
+// Validate XMLID format (no hyphens, only underscores allowed, exactly 2 dots)
+function validateXmlid(xmlid: string): boolean {
+    // Check for exactly 2 dots
+    const dotCount = (xmlid.match(/\./g) || []).length
+    if (dotCount !== 2) return false
+
+    const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
+    return pattern.test(xmlid) && !xmlid.includes('-')
+}
+
 // Owner selection - initialize from props or fallback to current user
 const selectedOwnerId = ref<number | null>(props.defaultOwnerId || user.value?.id || null)
 const eligibleUsers = ref<Array<{ id: number; name: string; description?: string }>>([])
@@ -336,10 +346,10 @@ const processFiles = (files: File[]) => {
         // Generate preview URL
         const previewUrl = URL.createObjectURL(file)
 
-        // Generate xmlid with timestamp
+        // Generate xmlid with timestamp (no hyphens, only underscores)
         const timestamp = Date.now()
-        const basename = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9-_]/g, '-')
-        const xmlid = `${props.projectId}.image.scene-${basename}_${timestamp}`
+        const basename = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9_]/g, '_')
+        const xmlid = `${props.projectId}.image_scene.${basename}_${timestamp}`
 
         // Create image item with defaults (hardcoded as per spec)
         images.value.push({
