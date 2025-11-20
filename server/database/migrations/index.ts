@@ -44,6 +44,7 @@ import { migration as migration027 } from './027_migrate_status_data'
 import { migration as migration028 } from './028_integrate_sysreg_i18n'
 import { migration as migration029 } from './029_move_sysreg_to_child_tables'
 import { migration as migration030 } from './030_drop_legacy_status_columns'
+import migration031 from './031_add_local_adapter'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -91,6 +92,7 @@ const migrations: Migration[] = [
     { run: migration028.up, down: migration028.down, metadata: { id: migration028.id, description: migration028.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     { run: migration029.up, down: migration029.down, metadata: { id: migration029.id, description: migration029.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     { run: migration030.up, down: migration030.down, metadata: { id: migration030.id, description: migration030.description, version: '0.1.0', date: '2025-11-19' }, reversible: false },
+    { run: async (db) => await db.run(migration031, []), metadata: { id: '031_add_local_adapter', description: 'Add local adapter to media_adapter_type enum', version: '0.1.1', date: '2025-11-20' }, reversible: false },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

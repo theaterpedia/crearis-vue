@@ -13,7 +13,7 @@
 set -e
 
 # Configuration
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:3001"
 TEST_IMAGE="${1:-./test-results/bg.png}"
 PROJECT_ID="theaterpedia"
 OWNER_ID=1
@@ -90,13 +90,11 @@ echo -e "${YELLOW}════════════════════�
 XMLID="${PROJECT_ID}.image.scene-${XMLID_BASE}_${TIMESTAMP}"
 echo -e "${BLUE}Test 1: Upload image via /api/images/upload${NC}"
 UPLOAD_RESPONSE=$(curl -s -X POST "$BASE_URL/api/images/upload" \
+    -H "Expect:" \
     -F "file=@$TEST_IMAGE" \
     -F "xmlid=$XMLID" \
-    -F "project=$PROJECT_ID" \
-    -F "owner=$OWNER_ID" \
-    -F "author_name=Test User" \
-    -F "author_uri=" \
-    -F "author_adapter=local" \
+    -F "project_id=$PROJECT_ID" \
+    -F "owner_id=$OWNER_ID" \
     -F "alt_text=Test image for local adapter" \
     -F "ctags=3")
 

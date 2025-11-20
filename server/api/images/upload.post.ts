@@ -67,7 +67,9 @@ function validateFile(file: { filename?: string; type?: string; data: Buffer }):
  */
 function validateXmlid(xmlid: string): void {
     const pattern = /^[a-z0-9_-]+\.image\.[a-z0-9_-]+-[a-z0-9_-]+$/i
+    console.log('[Upload] Validating xmlid:', JSON.stringify(xmlid), 'Length:', xmlid.length)
     if (!pattern.test(xmlid)) {
+        console.error('[Upload] XMLID validation failed for:', JSON.stringify(xmlid))
         throw createError({
             statusCode: 400,
             statusMessage: 'Invalid xmlid format. Expected: domaincode.image.subject-identifier'
@@ -128,27 +130,27 @@ export default defineEventHandler(async (event) => {
                 fileData = {
                     filename: part.filename,
                     type: part.type,
-                    data: value
+                    data: Buffer.from(value)
                 }
             } else if (name === 'xmlid') {
-                xmlid = value.toString('utf-8')
+                xmlid = Buffer.from(value).toString('utf-8')
             } else if (name === 'owner_id') {
-                owner_id = parseInt(value.toString('utf-8'), 10)
+                owner_id = parseInt(Buffer.from(value).toString('utf-8'), 10)
             } else if (name === 'project_id') {
-                const projectIdStr = value.toString('utf-8')
+                const projectIdStr = Buffer.from(value).toString('utf-8')
                 if (projectIdStr && projectIdStr !== 'null') {
                     project_id = parseInt(projectIdStr, 10)
                 }
             } else if (name === 'alt_text') {
-                alt_text = value.toString('utf-8')
+                alt_text = Buffer.from(value).toString('utf-8')
             } else if (name === 'xml_subject') {
-                xml_subject = value.toString('utf-8')
+                xml_subject = Buffer.from(value).toString('utf-8')
             } else if (name === 'license') {
-                license = value.toString('utf-8')
+                license = Buffer.from(value).toString('utf-8')
             } else if (name === 'ctags') {
-                ctagsStr = value.toString('utf-8')
+                ctagsStr = Buffer.from(value).toString('utf-8')
             } else if (name === 'rtags') {
-                rtagsStr = value.toString('utf-8')
+                rtagsStr = Buffer.from(value).toString('utf-8')
             }
         }
 

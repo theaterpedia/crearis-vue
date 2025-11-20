@@ -240,6 +240,28 @@ export class LocalAdapter extends BaseMediaAdapter {
         // Check if we have temp metadata from upload process
         if ((this as any)._tempMetadata) {
             const temp = (this as any)._tempMetadata
+
+            // Create shape objects with blur hashes
+            const shapeSquare: any = temp.shapeUrls ? {
+                url: temp.shapeUrls.square,
+                blur: temp.shapeBlurs?.square || null
+            } : undefined
+
+            const shapeThumb: any = temp.shapeUrls ? {
+                url: temp.shapeUrls.thumb,
+                blur: temp.shapeBlurs?.thumb || null
+            } : undefined
+
+            const shapeWide: any = temp.shapeUrls ? {
+                url: temp.shapeUrls.wide,
+                blur: temp.shapeBlurs?.wide || null
+            } : undefined
+
+            const shapeVertical: any = temp.shapeUrls ? {
+                url: temp.shapeUrls.vertical,
+                blur: temp.shapeBlurs?.vertical || null
+            } : undefined
+
             return {
                 url: temp.url,
                 name: temp.name,
@@ -260,10 +282,10 @@ export class LocalAdapter extends BaseMediaAdapter {
                     info: `Local upload: ${temp.name}`,
                     config: undefined
                 },
-                shape_square: temp.shapeUrls ? { url: temp.shapeUrls.square } : undefined,
-                shape_thumb: temp.shapeUrls ? { url: temp.shapeUrls.thumb } : undefined,
-                shape_wide: temp.shapeUrls ? { url: temp.shapeUrls.wide } : undefined,
-                shape_vertical: temp.shapeUrls ? { url: temp.shapeUrls.vertical } : undefined
+                shape_square: shapeSquare,
+                shape_thumb: shapeThumb,
+                shape_wide: shapeWide,
+                shape_vertical: shapeVertical
             }
         }
 
@@ -333,6 +355,38 @@ export class LocalAdapter extends BaseMediaAdapter {
         const generatedFilename = this.generateFilename(batchData.xmlid, originalFilename)
         const uploadUrl = '/api/images/local/source/' + generatedFilename
 
+        // Generate BlurHashes from local files (not URLs)
+        // Temporarily disabled for debugging
+        const shapeBlurs: Record<string, string | null> = {
+            square: null,
+            thumb: null,
+            wide: null,
+            vertical: null
+        }
+
+        /*
+        console.log('[LocalAdapter] Generating BlurHashes for shapes...')
+        const { generateBlurHash } = await import('../utils/blurhash')
+        for (const [shapeName, shapeUrl] of Object.entries(shapeUrls)) {
+            // Read shape file from disk
+            const shapeFilename = this.generateShapeFilename(batchData.xmlid, shapeName)
+            const shapeFilepath = path.join(this.shapesDir, shapeFilename)
+            try {
+                const shapeBuffer = await fs.readFile(shapeFilepath)
+                console.log(`[LocalAdapter] Generating blur for ${shapeName} (${shapeBuffer.length} bytes)`)
+                const blur = await generateBlurHash(shapeBuffer, {
+                    componentX: 4, componentY: 3, width: 32, height: 32
+                })
+                shapeBlurs[shapeName] = blur
+                console.log(`[LocalAdapter] ✓ Blur generated for ${shapeName}: ${blur?.substring(0, 20)}...`)
+            } catch (err) {
+                console.warn(`[LocalAdapter] Failed to generate blur for ${shapeName}:`, err)
+                shapeBlurs[shapeName] = null
+            }
+        }
+        console.log('[LocalAdapter] BlurHash generation complete')
+        */
+
         // Store metadata temporarily for fetchMetadata
         const tempMetadata = {
             url: sourceUrl,
@@ -340,7 +394,8 @@ export class LocalAdapter extends BaseMediaAdapter {
             width: metadata.width,
             height: metadata.height,
             format: metadata.format,
-            shapeUrls
+            shapeUrls,
+            shapeBlurs
         };
         (this as any)._tempMetadata = tempMetadata
 
