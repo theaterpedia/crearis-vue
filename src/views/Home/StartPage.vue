@@ -160,18 +160,49 @@
                         <p>Info: <strong>der Diskurs 'Theatrales Lernen' basiert auf der gleichlautenden Publikation von Wiese et al.</strong>
                         -> Auf dem Fachtag wollen wir eine grundsätzliche Diskussion führen basierend auf praktischen Inputs.</p>
                         <br/>
+                    </Prose>
+                    <Columns background="white">
+                        <Column width="1/1">
+                        <Prose>
+                            <h3><strong>09:00-13:00: Input, Workshops, Plenum</strong></h3>                 
+                        </Prose>
+                        </Column>
+                    </Columns>
+                    <Columns background="accent">
+                        <Column width="auto">
+                            <img style="margin-left:1rem;" src="https://res.cloudinary.com/little-papillon/image/upload/c_scale,w_200/v1763571369/team/sabine_menne_1.jpg" alt="Sabine Menne" />
 
-                        <h4>09:00-13:00: Input, Workshops, Plenum</h4>
-                        <ul>
-                            <li><strong>Input Sabine Menne</strong> </li>
-                            <li><strong>Konzeptworkshops</strong> </li>
-                            <ul>
-                                <li><strong>Verena Neumaier</strong> </li>
-                                <li><strong>Annie Dürrwang</strong> </li>
-                            </ul>
-                            <li><strong>Plenum</strong> </li>
-                        </ul>
+                        </Column>
+                        <Column width="4/5">
+                            <Prose>
+                                <h4><strong>„Theaterpädagogik, was ist denn das?"</strong></h4>
+                                <p>Welche Annahmen haben Menschen aus dem schulischen Kontext über Theaterpädagogik und was ist sie im schulischen Kontext? Welche Fähigkeiten fördert sie und welche Voraussetzungen sind nötig um theaterpädagogisch zu arbeiten.</p>
+                                <p>Interaktiver Kurzvortrag mit anschließenden Überlegungen zu mehr Sichtbarkeit im Theatralen Lernen und darüber hinaus.</p>
+                                <p>Sabine Menne</p>
+                            </Prose>
+                        </Column>
+                    </Columns>
+                    <Columns background="white">
+                        <Column width="1/5">
+                            <img src="https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_face:auto,w_800/c_scale,w_150/v1763572139/team/anne_duerrwang_c6wu6q.jpg" alt="Anne Dürrwang" />
+                        </Column>
+                        <Column width="auto">
+                            <Prose>
+                                <h4><strong>Wölkchen - Methode</strong>Theaterpädagogik mal anders</h4>
+                                <p>Praxis mit Annie Dürrwang</p>
+                            </Prose>
+                        </Column>                        
+                        <Column width="1/5">
+                            
+                        </Column>
+                        <Column width="auto">
+                            <Prose>
+                                <p>Praxis mit Verena Neumair</p>
+                            </Prose>
+                        </Column>  
+                    </Columns>
 
+                    <Prose>
                         <h4>14:30-19:00: 3 Slots und Plenum</h4>
 
                         <ul>
@@ -260,6 +291,7 @@ import { pageSettings } from '@/settings'
 import DropdownList from '@/components/clist/DropdownList.vue'
 import { useTheme } from '@/composables/useTheme'
 import { h } from 'vue'
+import ImgShape from '@/components/images/ImgShape.vue'
 
 const router = useRouter()
 const route = useRoute()

@@ -62,11 +62,11 @@ function validateFile(file: { filename?: string; type?: string; data: Buffer }):
 
 /**
  * Validate xmlid format
- * Expected format: domaincode.image.subject-identifier
- * Examples: tp.image.child-marie_2024, crearis.image.instructor-john_smith
+ * Expected format: domaincode.image.subject-identifier OR domaincode.image.subject_identifier
+ * Examples: tp.image.child-marie_2024, crearis.image.instructor-john_smith, start.image.scene_1763668214959
  */
 function validateXmlid(xmlid: string): void {
-    const pattern = /^[a-z0-9_-]+\.image\.[a-z0-9_-]+-[a-z0-9_-]+$/i
+    const pattern = /^[a-z0-9_-]+\.image\.[a-z0-9_.-]+$/i
     console.log('[Upload] Validating xmlid:', JSON.stringify(xmlid), 'Length:', xmlid.length)
     if (!pattern.test(xmlid)) {
         console.error('[Upload] XMLID validation failed for:', JSON.stringify(xmlid))
