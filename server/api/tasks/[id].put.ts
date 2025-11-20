@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
-import { getStatusIdByName } from '../../utils/status-helpers'
+import { getStatusByName } from '../../utils/status-helpers'
 import type { TasksTableFields } from '../../types/database'
 
 // After Migration 019 Chapter 6:
@@ -60,19 +60,19 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Validate status if provided and get status ID using helper
-        let statusId: number | undefined
+        // Validate status if provided and get status value (BYTEA)
+        let statusVal: Buffer | undefined
         if (body.status !== undefined) {
-            const foundId = getStatusIdByName(body.status, 'tasks')
+            const statusInfo = await getStatusByName(db, body.status, 'tasks')
 
-            if (!foundId) {
+            if (!statusInfo) {
                 throw createError({
                     statusCode: 400,
                     message: `Invalid status '${body.status}'. Must be a valid status name for tasks.`
                 })
             }
 
-            statusId = foundId
+            statusVal = statusInfo.value
         }
 
         // Validate priority if provided
@@ -123,10 +123,10 @@ export default defineEventHandler(async (event) => {
             values.push(updateData.category)
         }
 
-        if (statusId !== undefined) {
-            updateData.status_id = statusId
-            updates.push('status_id = ?')
-            values.push(updateData.status_id)
+        if (statusVal !== undefined) {
+            updateData.status_val = statusVal
+            updates.push('status_val = ?')
+            values.push(updateData.status_val)
 
             // Auto-set completed_at when marking as final
             if (body.status === 'final' && !body.completed_at) {
@@ -206,12 +206,8 @@ export default defineEventHandler(async (event) => {
         // Fetch updated task with status information
         // tasks.status_display and tasks.lang are included in tasks.*
         const task = await db.get(`
-            SELECT 
-                tasks.*,
-                status.value as status_value,
-                status.name as status_name
+            SELECT tasks.*
             FROM tasks
-            LEFT JOIN status ON tasks.status_id = status.id
             WHERE tasks.id = ?
         `, [id])
 

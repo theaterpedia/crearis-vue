@@ -96,8 +96,7 @@ interface Props {
     anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     entity?: {
         xmlid?: string
-        status_id?: number
-        status_value?: number
+        status_display?: string  // Computed status display from database
         table?: string
     }
 }

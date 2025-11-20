@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import type { InteractionsTableFields } from '../../types/database'
+import { getStatusByName } from '../../utils/status-helpers'
 
 /**
  * POST /api/interactions - Create new interaction (form submission)
@@ -11,7 +12,7 @@ import type { InteractionsTableFields } from '../../types/database'
  * - name: Form name (required)
  * - project: Project domaincode (optional, will be converted to project_id)
  * - user_id: User ID (optional)
- * - status_id: Status ID (required, must be for 'interactions' table)
+ * - status_name: Status name (optional, defaults to 'interactions > new')
  * - to_mail: Recipient email (optional)
  * - from_mail: Sender email (optional)
  * - subject: Email subject (optional)
@@ -31,13 +32,6 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        if (!body.status_id) {
-            throw createError({
-                statusCode: 400,
-                message: 'Missing required field: status_id'
-            })
-        }
-
         // Lookup project_id if project domaincode provided
         let projectId = null
         if (body.project) {
@@ -52,15 +46,13 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Verify status_id exists and belongs to interactions table
-        const status = await db.get(
-            'SELECT id FROM status WHERE id = ? AND "table" = ?',
-            [body.status_id, 'interactions']
-        )
-        if (!status) {
+        // Get status_val from status name (default to 'interactions > new')
+        const statusName = body.status_name || 'interactions > new'
+        const statusVal = await getStatusByName(statusName)
+        if (!statusVal) {
             throw createError({
                 statusCode: 400,
-                message: 'Invalid status_id: must reference a status entry for table "interactions"'
+                message: `Invalid status name: ${statusName}`
             })
         }
 
@@ -69,7 +61,7 @@ export default defineEventHandler(async (event) => {
             name: body.name,
             user_id: body.user_id || null,
             project_id: projectId,
-            status_id: body.status_id,
+            status_val: statusVal,
             to_mail: body.to_mail || null,
             from_mail: body.from_mail || null,
             subject: body.subject || null,
@@ -81,7 +73,7 @@ export default defineEventHandler(async (event) => {
         // Insert interaction
         const sql = `
             INSERT INTO interactions (
-                name, user_id, project_id, status_id,
+                name, user_id, project_id, status_val,
                 to_mail, from_mail, subject, md, fields, actions
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, timestamp
@@ -91,7 +83,7 @@ export default defineEventHandler(async (event) => {
             interactionData.name,
             interactionData.user_id,
             interactionData.project_id,
-            interactionData.status_id,
+            interactionData.status_val,
             interactionData.to_mail,
             interactionData.from_mail,
             interactionData.subject,

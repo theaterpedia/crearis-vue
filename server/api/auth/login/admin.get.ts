@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../../../database/init'
 import type { UsersTableFields, ProjectsTableFields } from '../../../types/database'
 import { sessions } from '../login.post'
+import { getStatusByName } from '../../../utils/status-helpers'
 
 /**
  * DEV-ONLY Auto-login endpoint
@@ -24,10 +25,10 @@ export default defineEventHandler(async (event) => {
 
     // Find admin user
     const user = await db.get(`
-        SELECT id, sysmail, extmail, username, password, role, instructor_id, status_id
+        SELECT id, sysmail, extmail, username, password, role, instructor_id, status_val
         FROM users
         WHERE sysmail = ? OR extmail = ?
-    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_id'> | undefined
+    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_val'> | undefined
 
     if (!user) {
         throw createError({
@@ -37,19 +38,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check and update status if needed
-    if (user.status_id === null || user.status_id === undefined) {
-        const newStatus = await db.get(`
-            SELECT id FROM status
-            WHERE "table" = 'users' AND value = 0
-        `) as { id: number } | undefined
-
-        if (newStatus) {
+    if (!user.status_val) {
+        const statusVal = await getStatusByName('users > new')
+        if (statusVal) {
             await db.run(`
                 UPDATE users
-                SET status_id = ?
+                SET status_val = ?
                 WHERE id = ?
-            `, [newStatus.id, user.id])
-            user.status_id = newStatus.id
+            `, [statusVal, user.id])
+            user.status_val = statusVal
         }
     }
 

@@ -75,6 +75,34 @@ echo -e "${BLUE}║         🔄 Restore Production Database to Dev             
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+
+# SAFETY CHECK: Prevent restoring TO production
+if [ "$NODE_ENV" = "production" ]; then
+    echo -e "${RED}❌ BLOCKED: Cannot restore database in production environment${NC}"
+    echo -e "${YELLOW}   This script is for restoring production backup TO development${NC}"
+    echo -e "${YELLOW}   It should NEVER be run on production server${NC}"
+    echo ""
+    echo -e "${YELLOW}   This script will DROP the target database!${NC}"
+    echo -e "${YELLOW}   Running on production would destroy your live database${NC}"
+    echo ""
+    exit 1
+fi
+
+if [[ "$DB_NAME" == *"prod"* ]] || [[ "$DB_NAME" == *"production"* ]]; then
+    echo -e "${RED}❌ BLOCKED: Production database name detected${NC}"
+    echo -e "${YELLOW}   DB_NAME=\"$DB_NAME\" contains 'prod' or 'production'${NC}"
+    echo -e "${YELLOW}   This script would DROP your production database!${NC}"
+    echo ""
+    echo -e "${YELLOW}   To protect production data:${NC}"
+    echo -e "${YELLOW}   - Development: crearis_admin_dev or crearis_dev${NC}"
+    echo -e "${YELLOW}   - Production: crearis_db or crearis_production${NC}"
+    echo ""
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Environment check passed (development mode)${NC}"
+echo ""
+
 echo -e "${BLUE}Backup File:${NC}      $(basename "$BACKUP_FILE")"
 echo -e "${BLUE}Backup Size:${NC}      $(du -h "$BACKUP_FILE" | cut -f1)"
 echo -e "${BLUE}Local Database:${NC}   $DB_NAME"

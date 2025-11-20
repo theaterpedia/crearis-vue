@@ -32,9 +32,8 @@
                     </td>
                     <td class="td-description">{{ project.description || '-' }}</td>
                     <td>
-                        <span v-if="project.status_id"
-                            :class="['status-badge', `status-${getStatusNameFromId(project.status_id)}`]">
-                            {{ getStatusDisplayName(project.status_id, 'projects', 'de') }}
+                        <span v-if="project.status_display" class="status-badge">
+                            {{ project.status_display }}
                         </span>
                         <span v-else class="status-badge status-unknown">-</span>
                     </td>
@@ -67,7 +66,7 @@ interface Project {
     name: string  // domaincode
     heading?: string
     description?: string
-    status_id?: number  // INTEGER FK to status table
+    status_display?: string  // Computed column from database
     created_at: string
 }
 
@@ -82,25 +81,13 @@ defineEmits<{
     delete: [project: Project]
 }>()
 
-const { getStatusDisplayName, getStatusIdByName, cacheInitialized } = useStatus()
+// No longer need status helpers - using status_display from database
+// const { getStatusDisplayName, getStatusIdByName, cacheInitialized } = useStatus()
 
-// Helper to map status_id to status name for CSS class
-function getStatusNameFromId(statusId: number): string {
-    // Common project status IDs from migration 019:
-    // draft: 53, publish: 54, released: 55
-    // Common statuses: new: 18, demo: 19, progress: 20, done: 21, trash: 22, archived: 23
-    const statusMap: Record<number, string> = {
-        18: 'new',
-        19: 'demo',
-        20: 'progress',
-        21: 'done',
-        22: 'trash',
-        23: 'archived',
-        53: 'draft',
-        54: 'publish',
-        55: 'released'
+// Removed status mapping - now using computed status_display column
+55: 'released'
     }
-    return statusMap[statusId] || 'unknown'
+return statusMap[statusId] || 'unknown'
 }
 
 function formatDate(dateString: string): string {

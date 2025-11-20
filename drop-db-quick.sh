@@ -5,6 +5,35 @@ if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
+# SAFETY CHECK: Prevent accidental production database drop
+if [ "$NODE_ENV" = "production" ]; then
+    echo "❌ BLOCKED: Cannot drop database in production environment"
+    echo "   NODE_ENV=production detected"
+    echo "   This script is ONLY for development databases"
+    echo ""
+    echo "   If you need to reset production:"
+    echo "   1. Create a backup first"
+    echo "   2. Use migration-based schema updates"
+    echo "   3. Never drop production data"
+    echo ""
+    exit 1
+fi
+
+if [[ "$DB_NAME" == *"prod"* ]] || [[ "$DB_NAME" == *"production"* ]]; then
+    echo "❌ BLOCKED: Production database name detected"
+    echo "   DB_NAME=\"$DB_NAME\" contains 'prod' or 'production'"
+    echo "   This script is ONLY for development databases"
+    echo ""
+    echo "   To protect production data:"
+    echo "   - Development: crearis_admin_dev or crearis_dev"
+    echo "   - Production: crearis_db or crearis_production"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Environment check passed (development mode)"
+echo ""
+
 export PGPASSWORD="$DB_PASSWORD"
 
 echo "🗑️  Dropping database..."

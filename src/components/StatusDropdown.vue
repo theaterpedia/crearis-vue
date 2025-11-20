@@ -1,8 +1,8 @@
 <template>
     <div class="status-dropdown" ref="dropdownRef">
-        <button type="button" class="status-dropdown-trigger" :class="`status-${getColorVariant(currentStatus.name)}`"
+        <button type="button" class="status-dropdown-trigger" :class="`status-${getColorVariant(props.modelValue)}`"
             @click="isOpen = !isOpen">
-            <span class="status-label">{{ currentStatus.displayName }}</span>
+            <span class="status-label">{{ getDisplayName(props.modelValue) }}</span>
             <svg class="chevron" :class="{ 'rotate-180': isOpen }" width="16" height="16" viewBox="0 0 16 16"
                 fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -11,11 +11,10 @@
         </button>
 
         <div v-if="isOpen" class="status-dropdown-menu">
-            <button v-for="status in availableStatuses" :key="status.value" type="button" class="status-option"
-                :class="[`status-${getColorVariant(status.name)}`, { active: props.modelValue === status.value }]"
-                @click="selectStatus(status.value)">
+            <button v-for="status in availableStatuses" :key="status.name" type="button" class="status-option"
+                :class="[`status-${getColorVariant(status.name)}`, { active: props.modelValue === status.name }]"
+                @click="selectStatus(status.name)">
                 <span class="status-name">{{ status.displayName }}</span>
-                <span v-if="status.displayDesc" class="status-desc">{{ status.displayDesc }}</span>
             </button>
         </div>
     </div>
@@ -23,12 +22,16 @@
 
 <script setup lang="ts">
 import { ref as vueRef, computed, onMounted, onUnmounted } from 'vue'
-import { useStatus } from '../composables/useStatus'
 
 type ColorVariant = 'muted' | 'primary' | 'warning' | 'positive' | 'secondary' | 'negative'
 
+interface StatusEntry {
+    name: string
+    displayName: string
+}
+
 const props = withDefaults(defineProps<{
-    modelValue: number  // status_id from database
+    modelValue: string  // status name (e.g., 'draft', 'published')
     table: string
     lang?: string
 }>(), {
@@ -36,27 +39,46 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-    'update:modelValue': [value: number]
+    'update:modelValue': [value: string]
 }>()
 
-const { getStatusesForTable, getStatusIdByName, status4Lang } = useStatus()
 const dropdownRef = vueRef<HTMLElement>()
 const isOpen = vueRef(false)
+const statuses = vueRef<StatusEntry[]>([])
 
-// Get available statuses for this table
-const availableStatuses = computed(() => {
-    const statuses = getStatusesForTable(props.table)
-    return statuses.map(s => {
-        const info = status4Lang(s.value, props.table, props.lang)
-        return {
-            id: s.id,
-            name: s.name,
-            value: s.value,
-            displayName: info?.displayName || s.name,
-            displayDesc: info?.displayDesc
+// Fetch available statuses for this table
+onMounted(async () => {
+    try {
+        // Fetch statuses from sysreg_status table filtered by family
+        const response = await fetch(`/api/sysreg/status?family=${props.table}`)
+        if (response.ok) {
+            const data = await response.json()
+            // Parse status entries - name format is "family > statusname"
+            statuses.value = (data.items || []).map((item: any) => {
+                const nameParts = item.name.split(' > ')
+                const shortName = nameParts[nameParts.length - 1] || item.name
+                return {
+                    name: shortName,
+                    displayName: getDisplayTranslation(shortName)
+                }
+            })
         }
-    })
+    } catch (error) {
+        console.error('Error fetching statuses:', error)
+        // Fallback to common statuses
+        statuses.value = getDefaultStatuses()
+    }
+
+    // Add listener after mount
+    document.addEventListener('click', handleClickOutside)
 })
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+
+// Available statuses computed from fetched data
+const availableStatuses = computed(() => statuses.value)
 
 // Status color mapping for visual styling
 const colorMap: Record<string, ColorVariant> = {
@@ -80,28 +102,46 @@ const colorMap: Record<string, ColorVariant> = {
     linked: 'secondary'
 }
 
-// Get current status info
-const currentStatus = computed(() => {
-    const info = status4Lang(props.modelValue, props.table, props.lang)
-    // Find the status entry to get the name for color mapping
-    const status = availableStatuses.value.find(s => s.value === props.modelValue)
-    return {
-        displayName: info?.displayName || `Status ${props.modelValue}`,
-        name: status?.name || 'new'
-    }
-})
+// Get display name for status
+function getDisplayName(statusName: string): string {
+    const status = availableStatuses.value.find(s => s.name === statusName)
+    return status?.displayName || getDisplayTranslation(statusName)
+}
 
-function getStatusLabel(statusValue: number): string {
-    const statusInfo = status4Lang(statusValue, props.table, props.lang)
-    return statusInfo?.displayName || `Status ${statusValue}`
+// Simple translation map (German)
+function getDisplayTranslation(name: string): string {
+    const translations: Record<string, string> = {
+        new: 'Neu',
+        draft: 'Entwurf',
+        publish: 'Veröffentlicht',
+        published: 'Veröffentlicht',
+        active: 'Aktiv',
+        done: 'Erledigt',
+        progress: 'In Arbeit',
+        trash: 'Papierkorb',
+        archived: 'Archiviert',
+        released: 'Freigegeben',
+        verified: 'Verifiziert',
+        deleted: 'Gelöscht'
+    }
+    return translations[name] || name.charAt(0).toUpperCase() + name.slice(1)
+}
+
+function getDefaultStatuses(): StatusEntry[] {
+    // Fallback statuses based on table
+    const commonStatuses = ['new', 'draft', 'published', 'archived']
+    return commonStatuses.map(name => ({
+        name,
+        displayName: getDisplayTranslation(name)
+    }))
 }
 
 function getColorVariant(statusName: string): ColorVariant {
     return colorMap[statusName] || 'muted'
 }
 
-function selectStatus(statusValue: number) {
-    emit('update:modelValue', statusValue)
+function selectStatus(statusName: string) {
+    emit('update:modelValue', statusName)
     isOpen.value = false
 }
 
@@ -111,14 +151,6 @@ function handleClickOutside(event: Event) {
         isOpen.value = false
     }
 }
-
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
-})
 </script>
 
 <style scoped>

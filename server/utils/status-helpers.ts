@@ -1,172 +1,187 @@
 /**
- * Status Helpers
+ * Status Value Helper Utilities
  * 
- * Provides fast lookup functions for status table data.
- * Initialized once on server start and cached in memory.
+ * Helper functions for working with BYTEA status values in the sysreg system.
+ * Replaces legacy status_id INTEGER lookups with BYTEA value operations.
  */
 
 import type { DatabaseAdapter } from '../database/adapter'
 
 /**
- * Return type for getStatus4Lang
+ * Return type for status lookups
  */
 export interface StatusInfo {
-    id: number
-    value: number
-    name: string
-    displayName: string
-    displayDesc: string | null
+    name: string          // e.g., "new", "draft", "published"
+    value: Buffer         // BYTEA value
+    fullName: string      // e.g., "events > new"
+    description: string
+    nameI18n: Record<string, string>
+    descI18n: Record<string, string>
 }
 
 /**
- * Cache structure
+ * Get status info by BYTEA value
  */
-interface StatusCache {
-    byValue: Map<string, number> // key: `${table}:${value}` -> status.id
-    byName: Map<string, number>   // key: `${table}:${name}` -> status.id
-    byId: Map<number, {
-        value: number
-        name: string
-        table: string
-        name_i18n: Record<string, string>
-        desc_i18n: Record<string, string> | null
-    }>
-}
+export async function getStatusByValue(
+    db: DatabaseAdapter,
+    value: Buffer
+): Promise<StatusInfo | null> {
+    const result = await db.get(
+        `SELECT 
+            name,
+            value,
+            description,
+            name_i18n as "nameI18n",
+            desc_i18n as "descI18n"
+        FROM sysreg_status
+        WHERE value = $1`,
+        [value]
+    )
 
-let cache: StatusCache | null = null
+    if (!result) return null
 
-/**
- * Initialize status cache from database
- * Should be called once on server startup
- */
-export async function initializeStatusCache(db: DatabaseAdapter): Promise<void> {
-    console.log('🔄 Initializing status cache...')
-
-    const statuses = await db.all('SELECT id, value, name, "table", name_i18n, desc_i18n FROM status', [])
-
-    cache = {
-        byValue: new Map(),
-        byName: new Map(),
-        byId: new Map()
-    }
-
-    for (const status of statuses as any[]) {
-        const key = `${status.table}:${status.value}`
-        const nameKey = `${status.table}:${status.name}`
-
-        cache.byValue.set(key, status.id)
-        cache.byName.set(nameKey, status.id)
-
-        // Parse i18n data
-        let nameI18n: Record<string, string> = {}
-        let descI18n: Record<string, string> | null = null
-
-        if (typeof status.name_i18n === 'string') {
-            try {
-                nameI18n = JSON.parse(status.name_i18n)
-            } catch (e) {
-                nameI18n = {}
-            }
-        } else if (status.name_i18n) {
-            nameI18n = status.name_i18n
-        }
-
-        if (status.desc_i18n) {
-            if (typeof status.desc_i18n === 'string') {
-                try {
-                    descI18n = JSON.parse(status.desc_i18n)
-                } catch (e) {
-                    descI18n = null
-                }
-            } else {
-                descI18n = status.desc_i18n
-            }
-        }
-
-        cache.byId.set(status.id, {
-            value: status.value,
-            name: status.name,
-            table: status.table,
-            name_i18n: nameI18n,
-            desc_i18n: descI18n
-        })
-    }
-
-    console.log(`✅ Status cache initialized: ${cache.byId.size} entries`)
-}
-
-/**
- * Get status ID by value
- * @param value - Status value (e.g., 1, 2, 4, 8, 16)
- * @param table - Table name (e.g., 'tasks', 'users', 'events')
- * @returns Status ID or null if not found
- */
-export function getStatusIdByVal(value: number, table: string): number | null {
-    if (!cache) {
-        throw new Error('Status cache not initialized. Call initializeStatusCache() first.')
-    }
-
-    const key = `${table}:${value}`
-    return cache.byValue.get(key) ?? null
-}
-
-/**
- * Get status ID by name
- * @param name - Status name in English (e.g., 'new', 'idea', 'draft')
- * @param table - Table name (e.g., 'tasks', 'users', 'events')
- * @returns Status ID or null if not found
- */
-export function getStatusIdByName(name: string, table: string): number | null {
-    if (!cache) {
-        throw new Error('Status cache not initialized. Call initializeStatusCache() first.')
-    }
-
-    const key = `${table}:${name}`
-    return cache.byName.get(key) ?? null
-}
-
-/**
- * Get full status information with translations
- * @param value - Status value (e.g., 1, 2, 4, 8, 16)
- * @param table - Table name (e.g., 'tasks', 'users', 'events')
- * @param lang - Language code ('de', 'en', 'cz')
- * @returns StatusInfo object or null if not found
- */
-export function getStatus4Lang(value: number, table: string, lang: string = 'de'): StatusInfo | null {
-    if (!cache) {
-        throw new Error('Status cache not initialized. Call initializeStatusCache() first.')
-    }
-
-    const statusId = getStatusIdByVal(value, table)
-    if (!statusId) return null
-
-    const status = cache.byId.get(statusId)
-    if (!status) return null
-
-    // Get translated name with fallback chain: lang -> de -> en -> base name
-    const displayName = status.name_i18n[lang]
-        || status.name_i18n['de']
-        || status.name_i18n['en']
-        || status.name
-
-    // Get translated description with same fallback
-    const displayDesc = status.desc_i18n?.[lang]
-        || status.desc_i18n?.['de']
-        || status.desc_i18n?.['en']
-        || null
-
+    const row = result as any
     return {
-        id: statusId,
-        value: status.value,
-        name: status.name,
-        displayName,
-        displayDesc
+        name: row.name.split(' > ')[1] || row.name,
+        value: row.value,
+        fullName: row.name,
+        description: row.description || '',
+        nameI18n: row.nameI18n || {},
+        descI18n: row.descI18n || {}
     }
 }
 
 /**
- * Get status cache for debugging
+ * Get status info by name (e.g., "draft", "published")
+ * Optionally specify family/table (e.g., "events", "posts")
  */
-export function getStatusCache() {
-    return cache
+export async function getStatusByName(
+    db: DatabaseAdapter,
+    statusName: string,
+    family?: string
+): Promise<StatusInfo | null> {
+    let query: string
+    let params: any[]
+
+    if (family) {
+        // Search for "family > name" pattern
+        query = `SELECT 
+            name,
+            value,
+            description,
+            name_i18n as "nameI18n",
+            desc_i18n as "descI18n"
+        FROM sysreg_status
+        WHERE name = $1 OR name LIKE $2
+        LIMIT 1`
+        params = [`${family} > ${statusName}`, `${family} > ${statusName}`]
+    } else {
+        // Search by name only (may match multiple families)
+        query = `SELECT 
+            name,
+            value,
+            description,
+            name_i18n as "nameI18n",
+            desc_i18n as "descI18n"
+        FROM sysreg_status
+        WHERE name LIKE $1
+        LIMIT 1`
+        params = [`% > ${statusName}`]
+    }
+
+    const result = await db.get(query, params)
+
+    if (!result) return null
+
+    const row = result as any
+    return {
+        name: row.name.split(' > ')[1] || row.name,
+        value: row.value,
+        fullName: row.name,
+        description: row.description || '',
+        nameI18n: row.nameI18n || {},
+        descI18n: row.descI18n || {}
+    }
+}
+
+/**
+ * Check if entity has a specific status
+ */
+export function hasStatus(
+    entity: { status_val?: Buffer | null },
+    statusValue: Buffer
+): boolean {
+    if (!entity.status_val) return false
+    return entity.status_val.equals(statusValue)
+}
+
+/**
+ * Check if entity has status by name (requires status info lookup first)
+ */
+export async function hasStatusByName(
+    db: DatabaseAdapter,
+    entity: { status_val?: Buffer | null },
+    statusName: string,
+    family?: string
+): Promise<boolean> {
+    if (!entity.status_val) return false
+
+    const statusInfo = await getStatusByName(db, statusName, family)
+    if (!statusInfo) return false
+
+    return entity.status_val.equals(statusInfo.value)
+}
+
+/**
+ * Get all statuses for a specific family (e.g., "events", "tasks")
+ */
+export async function getStatusesForFamily(
+    db: DatabaseAdapter,
+    family: string
+): Promise<StatusInfo[]> {
+    const results = await db.all(
+        `SELECT 
+            name,
+            value,
+            description,
+            name_i18n as "nameI18n",
+            desc_i18n as "descI18n"
+        FROM sysreg_status
+        WHERE name LIKE $1
+        ORDER BY name`,
+        [`${family} > %`]
+    )
+
+    return (results as any[]).map(row => ({
+        name: row.name.split(' > ')[1] || row.name,
+        value: row.value,
+        fullName: row.name,
+        description: row.description || '',
+        nameI18n: row.nameI18n || {},
+        descI18n: row.descI18n || {}
+    }))
+}
+
+/**
+ * Format status for display (uses i18n if available)
+ */
+export function formatStatus(
+    statusInfo: StatusInfo,
+    lang: string = 'de'
+): string {
+    return statusInfo.nameI18n[lang] || statusInfo.name
+}
+
+/**
+ * Create status value from hex string (e.g., "0001" -> Buffer)
+ */
+export function statusValueFromHex(hex: string): Buffer {
+    return Buffer.from(hex, 'hex')
+}
+
+/**
+ * Convert status value to hex string (e.g., Buffer -> "0001")
+ */
+export function statusValueToHex(value: Buffer): string {
+    return value.toString('hex')
 }

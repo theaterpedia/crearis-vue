@@ -27,20 +27,34 @@ Theme JSON files have been migrated from a source-only location to the persisten
 
 ### API Endpoints
 
-Both theme API endpoints have been updated to use the data directory:
+Both theme API endpoints have been updated with production-first fallback logic:
 
 **`server/api/themes/index.get.ts`**
 ```typescript
-// Old: join(process.cwd(), 'server/themes')
-// New: join(process.cwd(), 'server/data/themes')
-const themesDir = join(process.cwd(), 'server/data/themes')
+// Production-first with dev fallback
+const productionPath = join(process.cwd(), 'server/data/themes')
+const devPath = join(process.cwd(), 'server/themes')
+
+let themesDir = productionPath
+try {
+    await access(productionPath, constants.R_OK)
+} catch {
+    themesDir = devPath  // Fallback to git-tracked defaults
+}
 ```
 
 **`server/api/themes/[id].get.ts`**
 ```typescript
-// Old: join(process.cwd(), 'server/themes')
-// New: join(process.cwd(), 'server/data/themes')
-const themesDir = join(process.cwd(), 'server/data/themes')
+// Same fallback pattern
+const productionPath = join(process.cwd(), 'server/data/themes')
+const devPath = join(process.cwd(), 'server/themes')
+
+let themesDir = productionPath
+try {
+    await access(productionPath, constants.R_OK)
+} catch {
+    themesDir = devPath
+}
 ```
 
 ### Path Resolution
@@ -56,64 +70,71 @@ In production (`/opt/crearis/live`):
 - **Nitro Build Limitation**: Nitro only copies `public/` assets during build, not server-side data files
 - **Deployment Persistence**: Themes survive deployments and rebuilds
 - **Consistency**: Matches existing data patterns (bulk imports, user data, etc.)
-- **Single Source**: No duplication between source and live directories
+- **Production Flexibility**: Allows custom themes on production while maintaining defaults
+- **Dev Simplicity**: No symlink required in development (falls back to git-tracked themes)
+- **Safe Fallback**: Production always has repo defaults as backup
 
 ## Development Box Setup
 
-On a development machine **without PM2/live directory structure**, follow these steps:
+### Option 1: No Setup Required (Recommended for Dev)
 
-### 1. Create Local Data Directory
+The API endpoints now use fallback logic, so development works out of the box:
 
+```bash
+# Just run the dev server
+pnpm run dev
+
+# API automatically uses server/themes/ (git-tracked)
+# No symlink needed in development!
+```
+
+The API will:
+1. Try `server/data/themes/` first (doesn't exist in dev)
+2. Fallback to `server/themes/` (git-tracked defaults) ✓
+
+### Option 2: Custom Themes in Development (Optional)
+
+If you want to test custom themes locally:
+
+**1. Create Local Data Directory:**
 ```bash
 mkdir -p ~/crearis-data/themes
 ```
 
-### 2. Copy Themes to Data Directory
-
+**2. Copy Themes to Data Directory:**
 ```bash
 cp -r /path/to/crearis-vue/server/themes/* ~/crearis-data/themes/
 ```
 
-### 3. Create Symlink
-
+**3. Create Symlink:**
 ```bash
-# From your project root
 cd /path/to/crearis-vue
 ln -s ~/crearis-data server/data
 ```
 
-Verify the symlink:
+**4. Verify Setup:**
 ```bash
 ls -la server/data/themes/
 # Should show: index.json, theme-*.json files
 ```
 
-### 4. Development Workflow
+Now the API will use `server/data/themes/` (your custom themes) instead of the git-tracked defaults.
 
-Run the development server normally:
+### Editing Themes in Development
+
+**Default Setup (Option 1):**
 ```bash
-pnpm run dev
+# Edit git-tracked themes directly
+nano server/themes/theme-0.json
+# Changes immediately available via Vite HMR
 ```
 
-The API endpoints will automatically resolve:
-- `process.cwd()` = `/path/to/crearis-vue`
-- Path: `/path/to/crearis-vue/server/data/themes`
-- Symlink: `server/data` → `~/crearis-data`
-- Final: `~/crearis-data/themes/` ✓
-
-### 5. Editing Themes
-
-Edit themes in the **data directory**, not the source directory:
-
+**Custom Setup (Option 2):**
 ```bash
-# Edit themes here:
-nano ~/crearis-data/themes/theme-default.json
-
-# NOT here (no longer used):
-# nano /path/to/crearis-vue/server/themes/theme-*.json
+# Edit custom themes in data directory
+nano ~/crearis-data/themes/theme-0.json
+# Changes immediately available via Vite HMR
 ```
-
-Changes are immediately available (Vite HMR applies to API endpoints).
 
 ## Production Server (Already Configured)
 
@@ -156,23 +177,39 @@ Expected response:
 
 ## Troubleshooting
 
-### "ENOENT: no such file or directory, open '.../server/themes/index.json'"
+### "ENOENT: no such file or directory" in Development
 
-**Cause**: Symlink not created or themes not copied to data directory
+**Cause**: Both `server/data/themes/` and `server/themes/` are missing or inaccessible
 
 **Fix**:
 ```bash
-# Check symlink
+# Check if git-tracked themes exist
+ls -la server/themes/
+# Should show: index.json, theme-*.json
+
+# If missing, restore from git
+git checkout server/themes/
+
+# If using custom themes, check symlink
 ls -la server/data
+# Should point to data directory (if using Option 2)
+```
 
-# Should point to data directory
-# If broken, recreate:
-rm server/data
-ln -s ~/crearis-data server/data  # Dev
-ln -s /opt/crearis/data server/data  # Production
+### "ENOENT: no such file or directory" in Production
 
-# Verify themes exist
-ls -la server/data/themes/
+**Cause**: Production data directory missing themes
+
+**Fix**:
+```bash
+# Check production themes exist
+ls -la /opt/crearis/data/themes/
+
+# If missing, copy from source
+sudo -u pruvious cp -r /opt/crearis/source/server/themes/* /opt/crearis/data/themes/
+
+# Verify symlink
+ls -la /opt/crearis/live/server/data
+# Should point to /opt/crearis/data
 ```
 
 ### Themes Not Updating
@@ -198,8 +235,16 @@ sudo -u pruvious bash /opt/crearis/source/scripts/dev_rebuild_restart.sh
 - [PRODUCTION_MODES.md](./PRODUCTION_MODES.md) - Stable vs Fast-Changing modes
 - [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md) - Initial server setup
 
-## Migration Date
+## Migration History
 
-- **Implemented**: November 17, 2025
-- **Production**: Already deployed and tested
-- **Status**: ✅ Working
+### Phase 1: Data Directory Migration (November 17, 2025)
+- Moved theme files from source-only to persistent data directory
+- Added production path: `server/data/themes/`
+- Status: ✅ Working
+
+### Phase 2: Fallback Logic (November 18, 2025)
+- Added production-first, dev-fallback path resolution
+- Eliminated symlink requirement for development
+- Production: `server/data/themes/` (customizable)
+- Dev fallback: `server/themes/` (git-tracked defaults)
+- Status: ✅ Working

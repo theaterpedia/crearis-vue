@@ -146,6 +146,33 @@ async function dropAndRebuild(): Promise<void> {
     console.log('='.repeat(50))
     console.log()
 
+    // SAFETY CHECK: Prevent accidental production database drop
+    const nodeEnv = process.env.NODE_ENV
+    const dbName = process.env.DB_NAME
+
+    if (nodeEnv === 'production') {
+        console.error('\n❌ BLOCKED: Cannot drop database in production environment')
+        console.error('   NODE_ENV=production detected')
+        console.error('   This command is ONLY for development databases\n')
+        console.error('   If you need to reset production:')
+        console.error('   1. Create a backup first')
+        console.error('   2. Use migration-based schema updates')
+        console.error('   3. Never drop production data\n')
+        process.exit(1)
+    }
+
+    if (dbName && (dbName.includes('prod') || dbName.includes('production'))) {
+        console.error('\n❌ BLOCKED: Production database name detected')
+        console.error(`   DB_NAME="${dbName}" contains "prod" or "production"`)
+        console.error('   This command is ONLY for development databases\n')
+        console.error('   To protect production data:')
+        console.error('   - Development database: crearis_admin_dev or crearis_dev')
+        console.error('   - Production database: crearis_db or crearis_production\n')
+        process.exit(1)
+    }
+
+    console.log('✅ Environment check passed (development mode)\n')
+
     try {
         // Step 1: Drop all existing tables
         await dropAllTables({ cascade: true, verbose: true })

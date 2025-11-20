@@ -37,9 +37,9 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
             // Fetch metadata from external service (pass batchData for Cloudinary)
             const metadata = await this.fetchMetadata(url, batchData)
 
-            // Resolve project_id from domaincode if provided
-            let project_id: number | null = null
-            if (batchData?.domaincode) {
+            // Resolve project_id from domaincode if provided, or use direct project_id
+            let project_id: number | null = (batchData as any)?.project_id || null
+            if (!project_id && batchData?.domaincode) {
                 const project = await db.get(
                     'SELECT id FROM projects WHERE domaincode = ?',
                     [batchData.domaincode]
@@ -51,10 +51,9 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 }
             }
 
-            // Construct xmlid: {domaincode}.image.{xml_subject}-{image_identifier}
-            // Example: crearis.image.child-abc123 or crearis.image.instructor-sample_photo
-            let xmlid: string | null = null
-            if (batchData?.domaincode && (batchData as any).imageIdentifier) {
+            // Use provided xmlid or construct from parts
+            let xmlid: string | null = (batchData as any)?.xmlid || null
+            if (!xmlid && batchData?.domaincode && (batchData as any).imageIdentifier) {
                 const xmlSubject = batchData.xml_subject || 'mixed'
                 xmlid = `${batchData.domaincode}.image.${xmlSubject}-${(batchData as any).imageIdentifier}`
             }
@@ -119,37 +118,42 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
             const imageId = result.rows?.[0]?.id
 
             // Generate BlurHash for all shape URLs before saving shape fields
-            if (imageId && (metadata.shape_square || metadata.shape_thumb || metadata.shape_wide || metadata.shape_vertical)) {
+            // Skip for local adapter (already generated from file buffers)
+            const hasShapes = metadata.shape_square || metadata.shape_thumb || metadata.shape_wide || metadata.shape_vertical
+            const isLocalAdapter = this.type === 'local'
+            const needsBlurGeneration = hasShapes && !isLocalAdapter
+
+            if (imageId && needsBlurGeneration) {
                 try {
                     // Import BlurHash utility
                     const { generateBlurHash } = await import('../utils/blurhash')
 
                     console.log(`Generating BlurHash for image ${imageId}...`)
 
-                    // Generate BlurHash for each shape (if URL exists)
+                    // Generate BlurHash for each shape (if URL exists and no blur already present)
                     // Using type assertion to add blur property
-                    if (metadata.shape_square?.url) {
+                    if (metadata.shape_square?.url && !(metadata.shape_square as any).blur) {
                         const blur = await generateBlurHash(metadata.shape_square.url, {
                             componentX: 4, componentY: 3, width: 32, height: 32
                         });
                         (metadata.shape_square as any).blur = blur
                     }
 
-                    if (metadata.shape_thumb?.url) {
+                    if (metadata.shape_thumb?.url && !(metadata.shape_thumb as any).blur) {
                         const blur = await generateBlurHash(metadata.shape_thumb.url, {
                             componentX: 4, componentY: 3, width: 32, height: 32
                         });
                         (metadata.shape_thumb as any).blur = blur
                     }
 
-                    if (metadata.shape_wide?.url) {
+                    if (metadata.shape_wide?.url && !(metadata.shape_wide as any).blur) {
                         const blur = await generateBlurHash(metadata.shape_wide.url, {
                             componentX: 4, componentY: 3, width: 32, height: 32
                         });
                         (metadata.shape_wide as any).blur = blur
                     }
 
-                    if (metadata.shape_vertical?.url) {
+                    if (metadata.shape_vertical?.url && !(metadata.shape_vertical as any).blur) {
                         const blur = await generateBlurHash(metadata.shape_vertical.url, {
                             componentX: 4, componentY: 3, width: 32, height: 32
                         });
@@ -161,8 +165,10 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                     // Log warning but don't fail import if BlurHash generation fails
                     console.warn(`⚠ Failed to generate BlurHash for image ${imageId}:`, blurError)
                 }
+            }
 
-                // Now update shape fields with blur hashes included
+            // Update shape fields (always needed if shapes exist)
+            if (imageId && hasShapes) {
                 await this.updateShapeFields(imageId, metadata)
             }
 

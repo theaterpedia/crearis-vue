@@ -45,6 +45,7 @@ This system is centered around the **ODOO API** as the primary data source. The 
 - 🎭 **Vue 3 SPA** - Modern single-page application with Vue Router
 - 📦 **Project Management** - Comprehensive project, event, and post management system
 - 👥 **User Roles** - Multi-role authentication (admin, project owner, user)
+- 🏷️ **Sysreg Tag System** - Advanced tagging & status management with BYTEA bitmasks ([docs](./docs/SYSREG_SYSTEM.md))
 - ⚡ **Nitro Server** - Fast, modern server with hot module replacement
 - 💾 **PostgreSQL Database** - Production-ready database with JSONB support (SQLite deprecated)
 - 📊 **CSV Import/Export** - Sync database from CSV files
