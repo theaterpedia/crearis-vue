@@ -176,9 +176,11 @@
                         <ProjectStepPosts v-else-if="currentStepKey === 'posts'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepImages v-else-if="currentStepKey === 'images'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            :project-members="projectMembers" :is-locked="isLocked" @next="nextStep"
+                            @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
@@ -194,9 +196,10 @@
                         <ProjectStepPosts v-else-if="currentNavTab === 'posts'" :project-id="projectId"
                             :is-locked="isLocked" hide-actions />
                         <ProjectStepImages v-else-if="currentNavTab === 'images'" :project-id="projectId"
-                            :is-locked="isLocked" hide-actions />
+                            :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
+                            hide-actions />
                         <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
-                            :is-locked="isLocked" hide-actions />
+                            :project-members="projectMembers" :is-locked="isLocked" hide-actions />
                         <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" />
                         <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
@@ -254,6 +257,35 @@ const projectId = computed(() => {
 const projectData = ref<any>(null)
 const projectStatusId = ref<number | null>(null) // status_id from DB
 const projectType = computed(() => projectData.value?.type || 'project')
+const projectMembers = ref<any[]>([])
+
+// Eligible owners = project owner + all project members
+const eligibleOwners = computed(() => {
+    const owners: number[] = []
+
+    // Add project owner
+    if (projectData.value?.owner_id) {
+        owners.push(projectData.value.owner_id)
+    }
+
+    // Add all project members
+    projectMembers.value.forEach(member => {
+        if (member.user_id && !owners.includes(member.user_id)) {
+            owners.push(member.user_id)
+        }
+    })
+
+    return owners
+})
+
+// Default owner ID - use current user if eligible, otherwise project owner
+const defaultOwnerId = computed(() => {
+    const currentUserId = user.value?.id
+    if (currentUserId && eligibleOwners.value.includes(currentUserId)) {
+        return currentUserId
+    }
+    return projectData.value?.owner_id || null
+})
 
 // Current step (0-4) for stepper mode
 const currentStep = ref(0)
@@ -368,9 +400,27 @@ async function loadProjectData() {
             projectData.value = await response.json()
             // Use status_id (new field after migration 020)
             projectStatusId.value = projectData.value.status_id ?? null
+
+            // Load project members
+            await loadProjectMembers()
         }
     } catch (error) {
         console.error('Failed to load project data:', error)
+    }
+}
+
+// Load project members from project_members table
+async function loadProjectMembers() {
+    try {
+        // The users API supports filtering by project via project_members
+        const response = await fetch(`/api/users?project_id=${projectId.value}`)
+        if (response.ok) {
+            const users = await response.json()
+            // Store as members with user_id for compatibility
+            projectMembers.value = users.map((u: any) => ({ user_id: u.id, ...u }))
+        }
+    } catch (error) {
+        console.error('Failed to load project members:', error)
     }
 }
 

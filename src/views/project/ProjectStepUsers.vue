@@ -5,18 +5,15 @@
             <p class="step-subtitle">Verwalten Sie Benutzer und Regionalprojekte</p>
         </div>
 
-        <!-- Horizontal Tabs -->
-        <div class="tabs-container">
-            <button v-for="tab in tabs" :key="tab.id" class="tab-button" :class="{ active: activeTab === tab.id }"
-                @click="activeTab = tab.id">
-                {{ tab.label }}
-            </button>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="tab-content">
-            <UsersConfigPanel v-if="activeTab === 'users'" :project-id="projectId" :is-locked="isLocked" />
-            <ProjectsConfigPanel v-else-if="activeTab === 'projects'" :project-id="projectId" :is-locked="isLocked" />
+        <!-- Project Members List -->
+        <div class="members-container">
+            <div v-if="usernames.length === 0" class="empty-state">
+                <p>No project members found.</p>
+            </div>
+            <div v-else class="members-list">
+                <p><strong>Project Members:</strong></p>
+                <p class="usernames">{{ usernames }}</p>
+            </div>
         </div>
 
         <div class="step-actions">
@@ -43,12 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import UsersConfigPanel from '@/components/UsersConfigPanel.vue'
-import ProjectsConfigPanel from '@/components/ProjectsConfigPanel.vue'
+import { computed } from 'vue'
 
 interface Props {
     projectId: string
+    projectMembers?: any[]
     isLocked?: boolean
 }
 
@@ -58,16 +54,20 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    projectMembers: () => [],
     isLocked: false
 })
 const emit = defineEmits<Emits>()
 
-const activeTab = ref('users')
-
-const tabs = [
-    { id: 'users', label: 'Users' },
-    { id: 'projects', label: 'Projects' }
-]
+// Compute comma-separated usernames from project members
+const usernames = computed(() => {
+    if (!props.projectMembers || props.projectMembers.length === 0) {
+        return ''
+    }
+    return props.projectMembers
+        .map(member => member.username || `User ${member.user_id}`)
+        .join(', ')
+})
 
 function handleNext() {
     emit('next')
@@ -99,38 +99,29 @@ function handlePrev() {
     margin: 0;
 }
 
-/* ===== HORIZONTAL TABS ===== */
-.tabs-container {
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: var(--border) solid var(--color-border);
-}
-
-.tab-button {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--color-dimmed);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.tab-button:hover {
-    color: var(--color-text);
+/* ===== MEMBERS CONTAINER ===== */
+.members-container {
+    padding: 1.5rem;
     background: var(--color-bg-soft);
+    border: var(--border) solid var(--color-border);
+    border-radius: var(--radius-medium);
+    min-height: 200px;
 }
 
-.tab-button.active {
-    color: var(--color-project);
-    border-bottom-color: var(--color-project);
+.empty-state {
+    text-align: center;
+    color: var(--color-dimmed);
+    padding: 2rem;
 }
 
-/* ===== TAB CONTENT ===== */
-.tab-content {
-    min-height: 400px;
+.members-list p {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.6;
+}
+
+.usernames {
+    color: var(--color-text);
+    font-size: 0.95rem;
 }
 
 /* ===== STEP ACTIONS ===== */

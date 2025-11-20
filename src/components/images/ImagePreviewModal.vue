@@ -3,11 +3,26 @@
         <div class="image-preview-modal">
             <div class="modal-header">
                 <h3>{{ image?.xmlid || 'Image Preview' }}</h3>
-                <button class="btn-close" @click="handleClose">×</button>
+                <div class="header-actions">
+                    <button class="btn-toggle" @click="toggleFullResolution"
+                        :title="isFullResolution ? 'Show optimized' : 'Show full resolution'">
+                        <svg v-if="!isFullResolution" fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M224,48H32a8,8,0,0,0-8,8V192a8,8,0,0,0,8,8H224a8,8,0,0,0,8-8V56A8,8,0,0,0,224,48Zm-8,136H40V64H216ZM96,136a8,8,0,0,1-8,8H72v16a8,8,0,0,1-16,0V136a8,8,0,0,1,8-8H88A8,8,0,0,1,96,136Zm104,0v24a8,8,0,0,1-8,8H168a8,8,0,0,1-8-8,8,8,0,0,1,8-8h16V136a8,8,0,0,1,16,0ZM96,96v24a8,8,0,0,1-8,8H64a8,8,0,0,1,0-16H80V96a8,8,0,0,1,16,0Zm104,0a8,8,0,0,1-8,8H176v16a8,8,0,0,1-16,0V96a8,8,0,0,1,8-8h24A8,8,0,0,1,200,96Z" />
+                        </svg>
+                        <svg v-else fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M168,48V88a8,8,0,0,1-16,0V67.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L140.69,56H120a8,8,0,0,1,0-16h40a8,8,0,0,1,8,8Zm-53.66,93.66L88,168v-20.69a8,8,0,0,0-16,0V168a8,8,0,0,0,8,8h40a8,8,0,0,0,0-16H99.31l26.35-26.34a8,8,0,0,0-11.32-11.32ZM208,40H48A16,16,0,0,0,32,56V200a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V56A16,16,0,0,0,208,40Zm0,160H48V56H208V200Z" />
+                        </svg>
+                    </button>
+                    <button class="btn-close" @click="handleClose">×</button>
+                </div>
             </div>
             <div class="modal-body">
-                <div class="image-container">
-                    <img v-if="transformUrl" :src="transformUrl" :alt="image?.alt_text || image?.xmlid"
+                <div class="image-container" :class="{ 'full-resolution': isFullResolution }">
+                    <img v-if="transformUrl" :key="imageKey" :src="transformUrl" :alt="image?.alt_text || image?.xmlid"
                         @error="handleImageError" />
                     <div v-else class="loading-spinner">
                         <div class="spinner"></div>
@@ -48,7 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 
 interface ImageData {
     id: number
@@ -58,37 +74,65 @@ interface ImageData {
     author?: any
     alt_text?: string
     sysreg?: number
+    url?: string
     img_source?: any
+    img_wide?: any
+    img_square?: any
+    img_tall?: any
 }
 
 interface Props {
     isOpen: boolean
     image: ImageData | null
+    fullResolution?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    fullResolution: false
+})
 
 const emit = defineEmits<{
     'update:isOpen': [value: boolean]
 }>()
 
-// Transform URL: For now, show source image scaled to max 800px width
-// TODO: Implement actual 800px transformation endpoint
+const { cardWidth } = useTheme()
+const isFullResolution = ref(props.fullResolution)
+const imageKey = ref(0)
+
+// Transform URL: Show full resolution from images.url if fullResolution=true, otherwise use img_wide or fallback shapes
 const transformUrl = computed(() => {
-    if (!props.image?.img_source) return null
+    if (!props.image) return null
 
-    try {
-        const sourceData = typeof props.image.img_source === 'string'
-            ? JSON.parse(props.image.img_source)
-            : props.image.img_source
-
-        // For now: Return source URL directly
-        // TODO: Call transform endpoint with width=800
-        return sourceData.url || null
-    } catch (e) {
-        console.error('Failed to parse img_source:', e)
-        return null
+    // If fullResolution is true, return the full resolution URL from images.url
+    if (isFullResolution.value && props.image.url) {
+        return props.image.url
     }
+
+    // Prefer img_wide, then fall back to other shapes
+    const imageFields = [
+        props.image.img_wide,
+        props.image.img_square,
+        props.image.img_tall,
+        props.image.img_source
+    ]
+
+    for (const imgData of imageFields) {
+        if (!imgData) continue
+
+        try {
+            const sourceData = typeof imgData === 'string'
+                ? JSON.parse(imgData)
+                : imgData
+
+            if (sourceData.url) {
+                return sourceData.url
+            }
+        } catch (e) {
+            console.error('Failed to parse image data:', e)
+        }
+    }
+
+    return null
 })
 
 // Parse sysreg tag
@@ -110,6 +154,11 @@ const handleClose = () => {
     emit('update:isOpen', false)
 }
 
+const toggleFullResolution = () => {
+    isFullResolution.value = !isFullResolution.value
+    imageKey.value++ // Force image reload
+}
+
 const handleImageError = () => {
     console.error('Failed to load image')
 }
@@ -121,6 +170,11 @@ watch(() => props.isOpen, (isOpen) => {
     } else {
         document.body.style.overflow = ''
     }
+})
+
+// Sync internal state with prop
+watch(() => props.fullResolution, (newVal) => {
+    isFullResolution.value = newVal
 })
 </script>
 
@@ -157,6 +211,12 @@ watch(() => props.isOpen, (isOpen) => {
     background: var(--color-muted-bg);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .modal-header h3 {
     margin: 0;
     font-size: 1.125rem;
@@ -165,6 +225,24 @@ watch(() => props.isOpen, (isOpen) => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.btn-toggle {
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: var(--radius-small);
+    transition: background 0.2s ease;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-toggle:hover {
+    background: var(--color-border);
 }
 
 .btn-close {
@@ -201,6 +279,11 @@ watch(() => props.isOpen, (isOpen) => {
     background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
     overflow: hidden;
+}
+
+.image-container:not(.full-resolution) {
+    max-width: var(--card-width, 21rem);
+    margin: 0 auto;
 }
 
 .image-container img {

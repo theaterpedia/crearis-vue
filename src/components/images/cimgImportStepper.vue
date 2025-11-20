@@ -1,5 +1,13 @@
 <template>
     <div class="cimg-import-stepper">
+        <!-- Owner Selection (Always Visible) -->
+        <div class="owner-selection-bar">
+            <label class="owner-label">Image Admin</label>
+            <sysDropDown v-model="selectedOwnerId" :items="eligibleUsers" placeholder="Select admin"
+                :disabled="isImporting" />
+            <p class="owner-hint">Admin muss nicht der Autor des Bildes sein</p>
+        </div>
+
         <!-- Empty State: Drop Zone -->
         <div v-if="images.length === 0" class="drop-zone-container">
             <div class="adapter-tabs">
@@ -194,15 +202,16 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                    }}</span>
+                }}</span>
             </button>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import sysDropDown from '@/components/sysDropDown.vue'
 
 interface ImageItem {
     file: File
@@ -222,15 +231,50 @@ interface ImageItem {
 
 interface Props {
     projectId: string
+    eligibleOwners?: number[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    eligibleOwners: () => []
+})
 
 const emit = defineEmits<{
     'images-imported': [imageIds: string[]]
 }>()
 
 const { user } = useAuth()
+
+// Owner selection - initialize from props or fallback to current user
+const selectedOwnerId = ref<number | null>(props.defaultOwnerId || user.value?.id || null)
+const eligibleUsers = ref<Array<{ id: number; name: string; description?: string }>>([])
+
+// Load eligible users for owner dropdown
+async function loadEligibleUsers() {
+    if (props.eligibleOwners.length === 0) {
+        // No filter, load all users (fallback)
+        eligibleUsers.value = user.value ? [{ id: user.value.id, name: user.value.username || `User ${user.value.id}` }] : []
+        return
+    }
+
+    try {
+        // Load full user details for eligible owner IDs
+        const userPromises = props.eligibleOwners.map(userId =>
+            fetch(`/api/users/${userId}`).then(r => r.ok ? r.json() : null)
+        )
+        const users = await Promise.all(userPromises)
+        eligibleUsers.value = users
+            .filter(u => u !== null)
+            .map(u => ({
+                id: u.id,
+                name: u.username || u.email || `User ${u.id}`,
+                description: u.email || undefined
+            }))
+    } catch (error) {
+        console.error('Failed to load eligible users:', error)
+        // Fallback to current user
+        eligibleUsers.value = user.value ? [{ id: user.value.id, name: user.value.username || `User ${user.value.id}` }] : []
+    }
+}
 
 // Adapter selection
 const adapters = [
@@ -354,6 +398,12 @@ const handleImport = async () => {
     if (images.value.length === 0) return
     if (isImporting.value) return
 
+    // Validate owner selection
+    if (!selectedOwnerId.value) {
+        alert('Please select an image owner')
+        return
+    }
+
     isImporting.value = true
     const importedIds: string[] = []
 
@@ -367,8 +417,8 @@ const handleImport = async () => {
             const formData = new FormData()
             formData.append('file', img.file)
             formData.append('xmlid', img.xmlid)
-            formData.append('project', props.projectId)
-            formData.append('owner', String(user.value?.id || ''))
+            formData.append('project_id', props.projectId)
+            formData.append('owner_id', String(selectedOwnerId.value))
             formData.append('author_name', img.author.name)
             formData.append('author_uri', img.author.uri)
             formData.append('author_adapter', 'local')
@@ -418,6 +468,11 @@ const buildCtags = (ageGroup: string): number => {
 
     return byte
 }
+
+// Load eligible users on mount
+onMounted(async () => {
+    await loadEligibleUsers()
+})
 </script>
 
 <style scoped>
@@ -426,6 +481,30 @@ const buildCtags = (ageGroup: string): number => {
     flex-direction: column;
     gap: 1.5rem;
     min-height: 400px;
+}
+
+/* Owner Selection Bar */
+.owner-selection-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+}
+
+.owner-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.owner-hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-muted-contrast);
+    font-style: italic;
 }
 
 /* Adapter Tabs */

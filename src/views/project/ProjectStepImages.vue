@@ -37,7 +37,8 @@
 
                 <div v-else class="images-grid">
                     <div v-for="img in projectImages" :key="img.id" class="image-card" @click="openImageModal(img)">
-                        <button class="delete-btn" @click.stop="handleImageDelete(img.id)" title="Delete image">
+                        <button v-if="canDeleteImage(img)" class="delete-btn" @click.stop="handleImageDelete(img.id)"
+                            title="Delete image">
                             <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -60,7 +61,8 @@
 
             <!-- Right: Import Panel -->
             <div class="import-panel-container">
-                <cimgImportStepper :project-id="props.projectId" @images-imported="handleImagesImported" />
+                <cimgImportStepper :project-id="props.projectId" :eligible-owners="props.eligibleOwners"
+                    @images-imported="handleImagesImported" />
             </div>
         </div>
 
@@ -83,6 +85,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 import cimgImportStepper from '@/components/images/cimgImportStepper.vue'
 import ImagePreviewModal from '@/components/images/ImagePreviewModal.vue'
 
@@ -90,6 +93,7 @@ interface Props {
     projectId: string
     isLocked?: boolean
     hideActions?: boolean
+    eligibleOwners?: number[]
 }
 
 interface Emits {
@@ -98,10 +102,12 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
     isLocked: false,
-    hideActions: false
+    hideActions: false,
+    eligibleOwners: () => []
 })
 const emit = defineEmits<Emits>()
 
+const { user } = useAuth()
 const projectImages = ref<any[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
@@ -118,7 +124,14 @@ async function loadProjectImages() {
         if (!response.ok) {
             throw new Error(`Failed to load images: ${response.statusText}`)
         }
-        projectImages.value = await response.json()
+        const allImages = await response.json()
+
+        // Filter images to only show those with xmlid starting with project domaincode
+        projectImages.value = allImages.filter((img: any) => {
+            if (!img.xmlid) return false
+            const xmlidPrefix = img.xmlid.split('.')[0]
+            return xmlidPrefix === props.projectId
+        })
     } catch (err) {
         console.error('Error loading images:', err)
         error.value = 'Failed to load images'
@@ -179,6 +192,12 @@ function getAuthorName(image: any): string {
     } catch (e) {
         return ''
     }
+}
+
+// Check if current user can delete an image (owner only)
+function canDeleteImage(image: any): boolean {
+    if (!user.value || !image.owner_id) return false
+    return user.value.id === image.owner_id
 }
 
 // Open image modal
