@@ -84,12 +84,6 @@ defineEmits<{
 // No longer need status helpers - using status_display from database
 // const { getStatusDisplayName, getStatusIdByName, cacheInitialized } = useStatus()
 
-// Removed status mapping - now using computed status_display column
-55: 'released'
-    }
-return statusMap[statusId] || 'unknown'
-}
-
 function formatDate(dateString: string): string {
     try {
         const date = new Date(dateString)
