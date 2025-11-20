@@ -18,7 +18,7 @@
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
             :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
             :anatomy="modalOptions?.anatomy ?? 'heroimage'"
-            :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_id: selectedItem?.status_id, table: entity }"
+            :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_display: selectedItem?.status_display, table: entity }"
             @close="closeRouteModal">
             <template #footer>
                 <button @click="navigateToRoute" class="route-nav-button">

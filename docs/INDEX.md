@@ -33,6 +33,14 @@ Complete documentation for the demo-data project including database management, 
 - [SCHEM-D Complete](./SCHEM-D-COMPLETE.md) - Version management integration
 - [Migration Template](../server/database/migrations/003_example.ts) - Example migration file (321 lines)
 
+### Sysreg System (Tag & Status Management)
+- **[SYSREG_SYSTEM.md](./SYSREG_SYSTEM.md)** - 🏷️ **START HERE** - Complete reference & entry point
+- [Use-Case Design](./SYSREG_USECASE_DESIGN.md) - Detailed use-case analysis (1692 lines)
+- [Phase 3+4 Complete](./SYSREG_PHASE3_PHASE4_COMPLETE.md) - Implementation details (667 lines)
+- [Phase 5+6 Complete](./SYSREG_PHASE5_PHASE6_COMPLETE.md) - Analytics & Admin UI implementation
+- [Testing Strategy](./SYSREG_TESTING_STRATEGY.md) - Test coverage & strategy
+- [Interface Specification](./SYSREG_INTERFACE_SPECIFICATION_ISSUE.md) - Type definitions & API contracts
+
 ### Testing Infrastructure
 - [Quick Start](./vitest/QUICK-START.md) - 2-minute setup
 - [Complete Guide](./vitest/README.md) - Full testing reference

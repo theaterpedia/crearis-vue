@@ -6,6 +6,8 @@ interface ImportedImage {
     url: string
     previewUrl: string
     status: 'pending' | 'loading' | 'success' | 'error'
+    file?: File  // For local uploads
+    isLocal?: boolean  // Flag to distinguish local vs URL imports
 }
 
 const props = defineProps<{
@@ -17,6 +19,9 @@ const emit = defineEmits<{
     save: [images: ImportedImage[]]
 }>()
 
+// Import mode: 'url' or 'local'
+const importMode = ref<'url' | 'local'>('url')
+
 // Form state
 const urlInput = ref('')
 const importedImages = ref<ImportedImage[]>([])
@@ -26,6 +31,7 @@ const keepOpen = ref(false)
 const xmlSubject = ref('mixed')
 const altText = ref('')
 const license = ref('BY')
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // CTags state (using bit groups like ImagesCoreAdmin)
 const ctagsAgeGroup = ref(0)
@@ -230,6 +236,60 @@ const removeImage = (index: number) => {
     importedImages.value.splice(index, 1)
 }
 
+// Handle file selection for local uploads
+const handleFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const files = target.files
+    
+    if (!files || files.length === 0) return
+
+    let addedCount = 0
+    const maxSize = 20 * 1024 * 1024 // 20MB
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            console.warn(`Skipped non-image file: ${file.name}`)
+            continue
+        }
+
+        // Validate file size
+        if (file.size > maxSize) {
+            alert(`File too large: ${file.name} (max 20MB)`)
+            continue
+        }
+
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file)
+
+        // Add to list
+        importedImages.value.push({
+            url: file.name,  // Store filename as URL placeholder
+            previewUrl,
+            status: 'pending',
+            file,
+            isLocal: true
+        })
+        addedCount++
+    }
+
+    if (addedCount > 0) {
+        console.log(`✅ Added ${addedCount} local file(s)`)
+    }
+
+    // Clear file input
+    if (target) {
+        target.value = ''
+    }
+}
+
+// Trigger file input click
+const selectFiles = () => {
+    fileInput.value?.click()
+}
+
 // Build ctags byte from bit groups
 const buildCtags = (): Uint8Array => {
     let byte = 0
@@ -239,10 +299,10 @@ const buildCtags = (): Uint8Array => {
     byte |= (ctagsQuality.value & 0x03) << 6        // bits 6-7
 
     return new Uint8Array([byte])
-}// Handle save - actually call the import API
+}// Handle save - supports both URL imports and local uploads
 const handleSave = async () => {
     if (importedImages.value.length === 0) {
-        alert('Please add at least one image URL')
+        alert('Please add at least one image')
         return
     }
 
@@ -257,51 +317,115 @@ const handleSave = async () => {
 
         // Get selected project's domaincode
         const selectedProjectData = projects.value.find(p => p.id === selectedProject.value)
+        const domaincode = selectedProjectData?.domaincode || 'tp'
 
-        // Prepare batch data
-        const batchData: any = {
-            owner_id: selectedOwner.value,
-            license: license.value,
-            xml_subject: xmlSubject.value,
-            ctags: ctagsBuffer
+        // Separate local uploads from URL imports
+        const localUploads = importedImages.value.filter(img => img.isLocal && img.file)
+        const urlImports = importedImages.value.filter(img => !img.isLocal)
+
+        let successCount = 0
+        let failCount = 0
+
+        // Handle local uploads
+        if (localUploads.length > 0) {
+            console.log(`[Local Upload] Processing ${localUploads.length} file(s)`)
+
+            for (const img of localUploads) {
+                if (!img.file) continue
+
+                try {
+                    // Generate xmlid: domaincode.image.subject-filename
+                    const fileBasename = img.file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9_-]/gi, '_')
+                    const timestamp = Date.now()
+                    const xmlid = `${domaincode}.image.${xmlSubject.value}-${fileBasename}_${timestamp}`
+
+                    // Prepare form data
+                    const formData = new FormData()
+                    formData.append('file', img.file)
+                    formData.append('xmlid', xmlid)
+                    formData.append('owner_id', selectedOwner.value.toString())
+                    if (selectedProject.value) {
+                        formData.append('project_id', selectedProject.value.toString())
+                    }
+                    if (altText.value) {
+                        formData.append('alt_text', altText.value)
+                    }
+                    formData.append('xml_subject', xmlSubject.value)
+                    formData.append('license', license.value)
+                    formData.append('ctags', ctagsBuffer.join(','))
+
+                    console.log(`[Local Upload] Uploading: ${img.file.name} as ${xmlid}`)
+
+                    // Upload file
+                    const response = await fetch('/api/images/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+
+                    if (!response.ok) {
+                        const errorText = await response.text()
+                        throw new Error(`Upload failed: ${response.status} ${errorText}`)
+                    }
+
+                    const result = await response.json()
+                    console.log(`[Local Upload] Success:`, result)
+                    successCount++
+
+                } catch (error) {
+                    console.error(`[Local Upload] Error uploading ${img.file.name}:`, error)
+                    failCount++
+                }
+            }
         }
 
-        // Only include alt_text if user provided a value (let adapter extract it otherwise)
-        if (altText.value && altText.value.trim().length > 0) {
-            batchData.alt_text = altText.value
+        // Handle URL imports
+        if (urlImports.length > 0) {
+            const batchData: any = {
+                owner_id: selectedOwner.value,
+                license: license.value,
+                xml_subject: xmlSubject.value,
+                ctags: ctagsBuffer
+            }
+
+            if (altText.value && altText.value.trim().length > 0) {
+                batchData.alt_text = altText.value
+            }
+
+            if (selectedProject.value && selectedProjectData?.domaincode) {
+                batchData.domaincode = selectedProjectData.domaincode
+            }
+
+            const payload = {
+                urls: urlImports.map((img: ImportedImage) => img.url),
+                batch: batchData
+            }
+
+            console.log('Importing images from URLs:', payload)
+
+            const response = await fetch('/api/images/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`Failed to import images: ${response.status} ${errorText}`)
+            }
+
+            const result = await response.json()
+            console.log('URL Import result:', result)
+            successCount += result.successful || 0
+            failCount += (result.total || 0) - (result.successful || 0)
         }
 
-        // Add domaincode if project selected
-        if (selectedProject.value && selectedProjectData?.domaincode) {
-            batchData.domaincode = selectedProjectData.domaincode
+        // Show summary message
+        const totalImages = importedImages.value.length
+        if (failCount === 0) {
+            alert(`Successfully processed ${successCount} of ${totalImages} image(s)!`)
+        } else {
+            alert(`Processed ${successCount} successfully, ${failCount} failed out of ${totalImages} total.`)
         }
-
-        const payload = {
-            urls: importedImages.value.map((img: ImportedImage) => img.url),
-            batch: batchData
-        }
-
-        console.log('Importing images with payload:', payload)
-        console.log('Selected project:', selectedProjectData)
-        console.log('Selected owner ID:', selectedOwner.value)
-
-        // Call import API
-        const response = await fetch('/api/images/import', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-
-        if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`Failed to import images: ${response.status} ${errorText}`)
-        }
-
-        const result = await response.json()
-        console.log('Import result:', result)
-
-        // Show success message
-        alert(`Successfully imported ${result.successful} of ${result.total} images!`)
 
         // Emit save event for parent to refresh
         emit('save', importedImages.value)
@@ -357,13 +481,29 @@ watch(() => props.isOpen, (newValue) => {
     <div v-if="isOpen" class="cimg-import-modal-overlay" @click.self="handleClose">
         <div class="cimg-import-modal">
             <div class="modal-header">
-                <h3>Import Images from URLs</h3>
+                <h3>Import Images</h3>
                 <button class="btn-close" @click="handleClose">×</button>
             </div>
 
             <div class="modal-content">
-                <!-- URL input -->
-                <div class="form-section">
+                <!-- Import mode switcher -->
+                <div class="mode-switcher">
+                    <button 
+                        :class="['mode-btn', { active: importMode === 'url' }]"
+                        @click="importMode = 'url'"
+                    >
+                        📎 From URL
+                    </button>
+                    <button 
+                        :class="['mode-btn', { active: importMode === 'local' }]"
+                        @click="importMode = 'local'"
+                    >
+                        📁 Upload Files
+                    </button>
+                </div>
+
+                <!-- URL input (shown when mode is 'url') -->
+                <div v-if="importMode === 'url'" class="form-section">
                     <label>Image URLs (one per line or comma-separated)</label>
                     <div class="url-input-group">
                         <textarea v-model="urlInput"
@@ -373,6 +513,25 @@ watch(() => props.isOpen, (newValue) => {
                         <button class="btn-add" @click="addUrl">Add URLs</button>
                     </div>
                     <small class="form-hint">Supports multiple URLs (separated by comma, newline, or space)</small>
+                </div>
+
+                <!-- File input (shown when mode is 'local') -->
+                <div v-if="importMode === 'local'" class="form-section">
+                    <label>Select Local Files</label>
+                    <div class="file-input-group">
+                        <input 
+                            ref="fileInput"
+                            type="file" 
+                            accept="image/*" 
+                            multiple 
+                            style="display: none"
+                            @change="handleFileSelect"
+                        />
+                        <button class="btn-select-files" @click="selectFiles">
+                            📁 Choose Files
+                        </button>
+                        <small class="file-hint">JPEG, PNG, WebP • Max 20MB per file</small>
+                    </div>
                 </div>
 
                 <!-- Image previews list -->
@@ -539,6 +698,72 @@ watch(() => props.isOpen, (newValue) => {
     flex-direction: column;
     overflow: hidden;
     margin: auto;
+}
+
+/* Mode switcher */
+.mode-switcher {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.25rem;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-medium);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-small);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration) var(--ease);
+    color: var(--color-muted-contrast);
+}
+
+.mode-btn:hover {
+    background: var(--color-card-bg);
+}
+
+.mode-btn.active {
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+}
+
+/* File input group */
+.file-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-select-files {
+    padding: 1rem 1.5rem;
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border: 2px dashed var(--color-primary-base);
+    border-radius: var(--radius-medium);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all var(--duration) var(--ease);
+    text-align: center;
+}
+
+.btn-select-files:hover {
+    background: var(--color-primary-bg);
+    border-color: var(--color-primary-bg);
+    transform: translateY(-1px);
+}
+
+.file-hint {
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--color-muted-contrast);
+    font-style: italic;
 }
 
 .modal-header {

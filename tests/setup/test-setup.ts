@@ -4,11 +4,13 @@
  * Runs before each test file to set up the test environment.
  * - Initializes environment variables
  * - Provides global test utilities
+ * - Mocks composables like useI18n
  */
 
-import { beforeEach, afterEach } from 'vitest'
+import { beforeEach, afterEach, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import { ref } from 'vue'
 
 // Load environment variables from .env file
 try {
@@ -42,6 +44,19 @@ if (testDbConfig.type === 'postgresql') {
     process.env.DATABASE_TYPE = 'sqlite'
     // SQLite test path will be set by test utilities
 }
+
+// Mock useI18n composable for tests
+vi.mock('@/composables/useI18n', () => ({
+    useI18n: () => ({
+        currentLanguage: ref('de'),
+        setLanguage: vi.fn(),
+        t: vi.fn((key: string) => key),
+        resolveText: vi.fn((entry: any, lang?: string) => {
+            const l = lang || 'de'
+            return entry?.[l] || entry?.de || entry?.en || ''
+        })
+    })
+}))
 
 // Global test lifecycle hooks can be added here
 beforeEach(() => {

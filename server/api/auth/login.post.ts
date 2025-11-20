@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
+import { getStatusByName } from '../../utils/status-helpers'
 
 interface ProjectRecord {
     id: string  // Legacy: stores domaincode for backward compatibility
@@ -57,10 +58,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role, instructor_id, status_id
+    SELECT id, sysmail, extmail, username, password, role, instructor_id, status_val
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_id'> | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_val'> | undefined
 
     if (!user) {
         throw createError({
@@ -80,23 +81,18 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check and update status if empty/null/undefined - set to 'new' status for users table
-    if (user.status_id === null || user.status_id === undefined) {
-        // Get the status.id for value=0 (new) in users table
-        const newStatus = await db.get(`
-            SELECT id FROM status
-            WHERE "table" = 'users' AND value = 0
-        `) as { id: number } | undefined
-
-        if (newStatus) {
+    if (!user.status_val) {
+        const statusVal = await getStatusByName('users > new')
+        if (statusVal) {
             await db.run(`
                 UPDATE users
-                SET status_id = ?
+                SET status_val = ?
                 WHERE id = ?
-            `, [newStatus.id, user.id])
-            console.log(`[LOGIN] Updated user ${user.id} status to ${newStatus.id} (new/activated)`)
-            user.status_id = newStatus.id
+            `, [statusVal, user.id])
+            console.log(`[LOGIN] Updated user ${user.id} status to 'users > new'`)
+            user.status_val = statusVal
         } else {
-            console.warn(`[LOGIN] Warning: Could not find 'new' status (value=0) for users table`)
+            console.warn(`[LOGIN] Warning: Could not find 'users > new' status`)
         }
     }
 

@@ -7,17 +7,17 @@ const debug = createDebugger('useI18n')
  * i18n Composable for Multi-language Support
  * 
  * Supports 3 languages: de (German), en (English), cz (Czech)
- * 4 translation types: button, nav, field, desc
+ * 5 translation types: button, nav, field, desc, sysreg
  * 
  * Strategy:
  * - Preload: button/nav types on app startup
- * - Lazy-load: field/desc types on demand
+ * - Lazy-load: field/desc/sysreg types on demand
  * - Caching: All translations cached in memory
  * - Fallback: requested lang → de → first available
  */
 
 type Language = 'de' | 'en' | 'cz'
-type TranslationType = 'button' | 'nav' | 'field' | 'desc'
+type TranslationType = 'button' | 'nav' | 'field' | 'desc' | 'sysreg'
 
 interface I18nCode {
     id: number
@@ -261,6 +261,15 @@ async function desc(name: string, variation: string = 'false'): Promise<string> 
 }
 
 /**
+ * Get sysreg translation
+ * @param name - The name of the sysreg entry (e.g., 'published', 'draft')
+ * @param tagfamily - The tagfamily context (e.g., 'status', 'ttags', 'dtags')
+ */
+async function sysreg(name: string, tagfamily: string = 'false'): Promise<string> {
+    return getTranslation(name, 'sysreg', tagfamily)
+}
+
+/**
  * Set current language
  */
 function setLanguage(lang: Language): void {
@@ -314,7 +323,8 @@ function getCacheStats() {
         button: entries.filter((e: I18nCode) => e.type === 'button').length,
         nav: entries.filter((e: I18nCode) => e.type === 'nav').length,
         field: entries.filter((e: I18nCode) => e.type === 'field').length,
-        desc: entries.filter((e: I18nCode) => e.type === 'desc').length
+        desc: entries.filter((e: I18nCode) => e.type === 'desc').length,
+        sysreg: entries.filter((e: I18nCode) => e.type === 'sysreg').length
     }
 
     return {
@@ -348,6 +358,7 @@ export function useI18n() {
         nav,
         field,
         desc,
+        sysreg,
 
         // Language management
         setLanguage,

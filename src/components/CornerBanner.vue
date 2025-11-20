@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useStatus } from '@/composables/useStatus'
+import { computed } from 'vue'
+// No longer need useStatus - using status_display from database
 
 interface Props {
     text?: string
@@ -15,8 +15,7 @@ interface Props {
     // Entity data for auto-detection
     entity?: {
         xmlid?: string
-        status_id?: number
-        status_value?: number
+        status_display?: string  // Computed status display from database
         table?: string // Entity table name (posts, events, instructors, etc.)
     }
 }
@@ -27,15 +26,6 @@ const props = withDefaults(defineProps<Props>(), {
     size: 'normal'
 })
 
-const { status4Lang, cacheInitialized, initializeCache } = useStatus()
-
-// Initialize status cache on mount
-onMounted(() => {
-    if (!cacheInitialized.value) {
-        initializeCache()
-    }
-})
-
 // Auto-detect if this is a demo entity
 const isDemo = computed(() => {
     if (!props.entity) return true // Show if no entity provided (manual mode)
@@ -43,14 +33,8 @@ const isDemo = computed(() => {
     // Check xmlid starts with '_demo'
     if (props.entity.xmlid?.startsWith('_demo')) return true
 
-    // Check status.value = 1 (demo status) if we have status_id and table
-    if (props.entity.status_id && props.entity.table && cacheInitialized.value) {
-        const statusInfo = status4Lang(props.entity.status_id, props.entity.table)
-        if (statusInfo?.value === 1) return true
-    }
-
-    // Direct status_value check (if already provided)
-    if (props.entity.status_value === 1) return true
+    // Check if status_display contains 'demo' (case-insensitive)
+    if (props.entity.status_display?.toLowerCase().includes('demo')) return true
 
     return false
 })

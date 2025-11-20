@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, getRouterParam, createError } from 'h3'
 import { db } from '../../database/init'
-import { getStatusIdByName } from '../../utils/status-helpers'
+import { getStatusByName } from '../../utils/status-helpers'
 import type { ProjectsTableFields } from '../../types/database'
 
 // PUT /api/projects/[id] - Update project
@@ -92,18 +92,18 @@ export default defineEventHandler(async (event) => {
             updates.push('description = ?')
             values.push(updateData.description)
         }
-        // Convert status name to status_id
+        // Convert status name to status_val (BYTEA)
         if (status !== undefined) {
-            const statusId = getStatusIdByName(status, 'projects')
-            if (!statusId) {
+            const statusInfo = await getStatusByName(db, status, 'projects')
+            if (!statusInfo) {
                 throw createError({
                     statusCode: 400,
                     message: `Invalid status '${status}'. Must be a valid status name for projects.`
                 })
             }
-            updateData.status_id = statusId
-            updates.push('status_id = ?')
-            values.push(updateData.status_id)
+            updateData.status_val = statusInfo.value
+            updates.push('status_val = ?')
+            values.push(updateData.status_val)
         }
         if (teaser !== undefined) {
             updateData.teaser = teaser

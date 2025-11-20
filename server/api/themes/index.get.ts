@@ -4,13 +4,23 @@
  */
 
 import { defineEventHandler } from 'h3'
-import { readFile } from 'fs/promises'
+import { readFile, access } from 'fs/promises'
 import { join } from 'path'
+import { constants } from 'fs'
 
 export default defineEventHandler(async () => {
     try {
-        // Use server/data symlink which points to persistent data directory
-        const themesDir = join(process.cwd(), 'server/data/themes')
+        // Try production path first (server/data/themes), then dev path (server/themes)
+        const productionPath = join(process.cwd(), 'server/data/themes')
+        const devPath = join(process.cwd(), 'server/themes')
+
+        let themesDir = productionPath
+        try {
+            await access(productionPath, constants.R_OK)
+        } catch {
+            themesDir = devPath
+        }
+
         const indexPath = join(themesDir, 'index.json')
 
         const indexContent = await readFile(indexPath, 'utf-8')

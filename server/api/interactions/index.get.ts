@@ -27,13 +27,10 @@ export default defineEventHandler(async (event) => {
             SELECT 
                 i.*,
                 p.domaincode AS project_domaincode,
-                u.username AS user_name,
-                s.name AS status_name,
-                s.name_i18n AS status_name_i18n
+                u.username AS user_name
             FROM interactions i
             LEFT JOIN projects p ON i.project_id = p.id
             LEFT JOIN users u ON i.user_id = u.id
-            LEFT JOIN status s ON i.status_id = s.id
             WHERE 1=1
         `
         const params: any[] = []

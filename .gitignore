@@ -16,6 +16,12 @@ server/public/
 # Deployment configuration
 scripts/.env.deploy
 
+# Local image storage (development)
+.local_images/
+
+# for local file-processing/
+temp_import/
+
 # Database files
 *.db
 *.db-shm
@@ -33,6 +39,9 @@ temp_backup/
 
 # Sensitive data
 server/data/
+
+# symlink
+server/data
 
 # Logs
 logs/

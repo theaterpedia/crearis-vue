@@ -12,11 +12,9 @@ export default defineEventHandler(async (event) => {
             SELECT 
                 i.*,
                 u.username as owner_username,
-                s.name as status_name,
                 p.name as project_name
             FROM images i
             LEFT JOIN users u ON i.owner_id = u.id
-            LEFT JOIN status s ON i.status_id = s.id AND s.table = 'images'
             LEFT JOIN projects p ON i.project_id = p.id
             WHERE 1=1
         `

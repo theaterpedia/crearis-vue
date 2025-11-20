@@ -98,31 +98,12 @@ async function saveInteraction() {
     saveSuccess.value = false
 
     try {
-        // Get status_id for 'new' status (value = 0) for interactions table
-        let statusId = null
-        try {
-            const statusResponse = await fetch('/api/status?table=interactions&value=0')
-            if (statusResponse.ok) {
-                const statusData = await statusResponse.json()
-                if (statusData.items && statusData.items.length > 0) {
-                    statusId = statusData.items[0].id
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching status:', error)
-        }
-
-        // Fallback if status lookup fails
-        if (!statusId) {
-            throw new Error('Konnte Status nicht ermitteln')
-        }
-
-        // Prepare interaction data
+        // Prepare interaction data with 'new' status
         const interactionData = {
             name: props.formName,
             user_id: props.userId || null,
             project: props.projectDomaincode || null, // Send domaincode, backend will convert to project_id
-            status_id: statusId,
+            status_name: 'interactions > new',  // Backend will convert to status_val
             from_mail: formData.value.email || null,
             to_mail: 'info@theaterpedia.org', // Default recipient
             subject: `${formDefinition.value?.title} - ${formData.value.name || 'Neue Anmeldung'}`,

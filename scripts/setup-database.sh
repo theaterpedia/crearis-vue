@@ -39,6 +39,19 @@ if psql -U "$SUPERUSER" -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
     read -p "Do you want to drop and recreate it? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # SAFETY CHECK: Prevent rebuild in production
+        if [ "$NODE_ENV" = "production" ]; then
+            echo -e "${RED}❌ BLOCKED: Cannot rebuild database in production${NC}"
+            echo -e "${YELLOW}   Rebuild option is ONLY for development${NC}"
+            exit 1
+        fi
+        
+        if [[ "$DB_NAME" == *"prod"* ]] || [[ "$DB_NAME" == *"production"* ]]; then
+            echo -e "${RED}❌ BLOCKED: Production database detected${NC}"
+            echo -e "${YELLOW}   DB_NAME=\"$DB_NAME\" contains 'prod' or 'production'${NC}"
+            exit 1
+        fi
+        
         echo -e "${BLUE}🗑️  Dropping database '$DB_NAME'...${NC}"
         psql -U "$SUPERUSER" -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
     else

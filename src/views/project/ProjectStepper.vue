@@ -70,6 +70,7 @@ const userLang = ref('de')
 const allSteps = ref<StepItem[]>([
     { key: 'events', label: 'Events', description: 'Loading...' },
     { key: 'posts', label: 'Posts', description: 'Loading...' },
+    { key: 'images', label: 'Images', description: 'Loading...' },
     { key: 'users', label: 'Users', description: 'Loading...' },
     { key: 'theme', label: 'Theme', description: 'Loading...' },
     { key: 'pages', label: 'Pages', description: 'Loading...' }
@@ -78,27 +79,28 @@ const allSteps = ref<StepItem[]>([
 // Computed steps based on project type
 const steps = computed(() => {
     const projectType = props.type || 'project'
-    
+
     if (projectType === 'topic') {
         // Topic: hide Events, start with Posts
         return allSteps.value.filter(step => step.key !== 'events')
     } else if (projectType === 'regio') {
-        // Regio: Users → Pages → Posts → Events (no Theme)
+        // Regio: Users → Pages → Posts → Images → Events (no Theme)
         return [
             allSteps.value.find(s => s.key === 'users')!,
             allSteps.value.find(s => s.key === 'pages')!,
             allSteps.value.find(s => s.key === 'posts')!,
+            allSteps.value.find(s => s.key === 'images')!,
             allSteps.value.find(s => s.key === 'events')!
         ].filter(Boolean)
     } else {
-        // Default: Events → Posts → Users → Theme → Pages
+        // Default: Events → Posts → Images → Users → Theme → Pages
         return allSteps.value
     }
 })
 
 // Header message computed
 const headerMessage = computed(() => {
-    const stepPrefixes = ['Schritt 1: ', 'Schritt 2: ', 'Schritt 3: ', 'Schritt 4: ', 'Schritt 5: ']
+    const stepPrefixes = ['Schritt 1: ', 'Schritt 2: ', 'Schritt 3: ', 'Schritt 4: ', 'Schritt 5: ', 'Schritt 6: ']
     const currentIndex = props.step
     if (currentIndex >= 0 && currentIndex < steps.value.length) {
         return stepPrefixes[currentIndex] + steps.value[currentIndex].label
