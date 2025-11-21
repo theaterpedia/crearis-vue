@@ -16,8 +16,97 @@
 
         <!-- Tab Content -->
         <div class="tab-content">
-            <!-- Tab 1: Tag Management -->
-            <div v-if="activeTab === 'tags'" class="panel">
+            <!-- Tab 1: Tag Viewer -->
+            <div v-if="activeTab === 'viewer'" class="panel">
+                <div class="viewer-topbar">
+                    <div class="filter-group language-switcher-group">
+                        <label>Language:</label>
+                        <div class="language-switcher-inline">
+                            <button type="button" @click.prevent="viewerLanguage = 'de'"
+                                :class="['lang-btn', { active: viewerLanguage === 'de' }]">
+                                🇩🇪
+                            </button>
+                            <button type="button" @click.prevent="viewerLanguage = 'en'"
+                                :class="['lang-btn', { active: viewerLanguage === 'en' }]">
+                                🇬🇧
+                            </button>
+                            <button type="button" @click.prevent="viewerLanguage = 'cz'"
+                                :class="['lang-btn', { active: viewerLanguage === 'cz' }]">
+                                🇨🇿
+                            </button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tag Family:</label>
+                        <select v-model="viewerFamily" class="form-select" @change="onFamilyChange">
+                            <option value="status">Status (Workflow States)</option>
+                            <option value="config">Config (Feature Flags)</option>
+                            <option value="rtags">Record Tags (Favorite, Pinned, etc.)</option>
+                            <option value="ctags">Content Tags (Age, Type, etc.)</option>
+                            <option value="ttags">Topic Tags (Democracy, Environment, etc.)</option>
+                            <option value="dtags">Domain Tags (Games, Workshops, etc.)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tag Logic:</label>
+                        <select v-model="filterLogic" class="form-select">
+                            <option value="">All Logic Types</option>
+                            <option v-for="logic in availableLogicTypes" :key="logic" :value="logic">{{ logic }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Bit Group:</label>
+                        <select v-model="filterBitGroup" class="form-select">
+                            <option value="">All Bit Groups</option>
+                            <option v-for="group in availableBitGroups" :key="group.value" :value="group.value"
+                                :title="group.description">
+                                {{ group.label }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tag Table -->
+                <div class="tag-table-container">
+                    <table class="tag-table">
+                        <thead>
+                            <tr>
+                                <th>Value</th>
+                                <th>Internal Name</th>
+                                <th>Label</th>
+                                <th>Logic</th>
+                                <th>Default</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="tag in viewerFilteredTags" :key="tag.id" @click="editTag(tag)"
+                                class="clickable-row">
+                                <td><code class="tag-value-code">{{ tag.value }}</code></td>
+                                <td>{{ tag.name }}</td>
+                                <td>{{ getTagLabel(tag) }}</td>
+                                <td><span class="logic-badge">{{ tag.taglogic }}</span></td>
+                                <td>
+                                    <span v-if="tag.is_default" class="badge badge-default">✓</span>
+                                    <span v-else class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" @click.stop="editTag(tag)">
+                                        ✏️ Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-if="viewerFilteredTags.length === 0" class="empty-state">
+                        <p>No tags match the current filters.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Create Tags -->
+            <div v-if="activeTab === 'create'" class="panel">
                 <div class="panel-header">
                     <h2>Tag Management</h2>
                     <button class="btn btn-primary" @click="showCreateDialog = true">
@@ -255,60 +344,76 @@
                     <button class="btn-close" @click="closeDialog">✕</button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Tag Family: <span class="required">*</span></label>
-                        <select v-model="tagForm.tagfamily" class="form-select" :disabled="!!editingTag">
-                            <option value="status">Status</option>
-                            <option value="config">Config</option>
-                            <option value="rtags">Record Tags</option>
-                            <option value="ctags">Content Tags</option>
-                            <option value="ttags">Topic Tags</option>
-                            <option value="dtags">Domain Tags</option>
-                        </select>
-                    </div>
+                    <div class="modal-body-columns">
+                        <!-- Left Column: Structural Fields -->
+                        <div class="modal-column-left">
+                            <div class="form-group">
+                                <label>Tag Family: <span class="required">*</span></label>
+                                <select v-model="tagForm.tagfamily" class="form-select" :disabled="!!editingTag">
+                                    <option value="status">Status</option>
+                                    <option value="config">Config</option>
+                                    <option value="rtags">Record Tags</option>
+                                    <option value="ctags">Content Tags</option>
+                                    <option value="ttags">Topic Tags</option>
+                                    <option value="dtags">Domain Tags</option>
+                                </select>
+                            </div>
 
-                    <div class="form-group">
-                        <label>Value (Hex): <span class="required">*</span></label>
-                        <input v-model="tagForm.value" type="text" class="form-input" placeholder="\x01"
-                            :disabled="!!editingTag" />
-                        <small>Format: \x01, \x02, \x04, \x08, etc.</small>
-                    </div>
+                            <div class="form-group">
+                                <label>Value (Hex): <span class="required">*</span></label>
+                                <input v-model="tagForm.value" type="text" class="form-input" placeholder="\x01"
+                                    :disabled="!!editingTag" />
+                                <small>Format: \x01, \x02, \x04, \x08, etc.</small>
+                            </div>
 
-                    <div class="form-group">
-                        <label>Internal Name: <span class="required">*</span></label>
-                        <input v-model="tagForm.name" type="text" class="form-input" placeholder="democracy" />
-                    </div>
+                            <div class="form-group">
+                                <label>Internal Name: <span class="required">*</span></label>
+                                <input v-model="tagForm.name" type="text" class="form-input" placeholder="democracy" />
+                            </div>
 
-                    <div class="form-group">
-                        <label>Tag Logic: <span class="required">*</span></label>
-                        <select v-model="tagForm.taglogic" class="form-select">
-                            <option value="category">Category (single selection)</option>
-                            <option value="toggle">Toggle (on/off)</option>
-                            <option value="option">Option (multiple choice)</option>
-                            <option value="subcategory">Subcategory</option>
-                        </select>
-                    </div>
+                            <div class="form-group">
+                                <label>Tag Logic: <span class="required">*</span></label>
+                                <select v-model="tagForm.taglogic" class="form-select">
+                                    <option value="category">Category (single selection)</option>
+                                    <option value="toggle">Toggle (on/off)</option>
+                                    <option value="option">Option (multiple choice)</option>
+                                    <option value="subcategory">Subcategory</option>
+                                </select>
+                            </div>
 
-                    <div class="form-group">
-                        <label>Label (English):</label>
-                        <input v-model="tagForm.label_en" type="text" class="form-input" placeholder="Democracy" />
-                    </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" v-model="tagForm.is_default" />
+                                    Default tag (cannot be deleted)
+                                </label>
+                            </div>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Label (German):</label>
-                        <input v-model="tagForm.label_de" type="text" class="form-input" placeholder="Demokratie" />
-                    </div>
+                        <!-- Right Column: Labels and Description -->
+                        <div class="modal-column-right">
+                            <div class="form-group">
+                                <label>Label (English):</label>
+                                <input v-model="tagForm.label_en" type="text" class="form-input"
+                                    placeholder="Democracy" />
+                            </div>
 
-                    <div class="form-group">
-                        <label>Description:</label>
-                        <textarea v-model="tagForm.description" class="form-textarea" rows="3"></textarea>
-                    </div>
+                            <div class="form-group">
+                                <label>Label (German):</label>
+                                <input v-model="tagForm.label_de" type="text" class="form-input"
+                                    placeholder="Demokratie" />
+                            </div>
 
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" v-model="tagForm.is_default" />
-                            Default tag (cannot be deleted)
-                        </label>
+                            <div class="form-group">
+                                <label>Label (Czech):</label>
+                                <input v-model="tagForm.label_cz" type="text" class="form-input"
+                                    placeholder="Demokracie" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description:</label>
+                                <textarea v-model="tagForm.description" class="form-textarea" rows="8"></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -327,11 +432,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useSysregOptions } from '@/composables/useSysregOptions'
 import { useSysregAnalytics } from '@/composables/useSysregAnalytics'
 import { useSysregBatchOperations } from '@/composables/useSysregBatchOperations'
+import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
 
 // Tab state
-const activeTab = ref<'tags' | 'analytics' | 'batch'>('tags')
+const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch'>('viewer')
 const tabs = [
-    { id: 'tags', label: 'Tag Management', icon: '🏷️' },
+    { id: 'viewer', label: 'Tag Viewer', icon: '👁️' },
+    { id: 'create', label: 'Create Tags', icon: '➕' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'batch', label: 'Batch Operations', icon: '⚡' }
 ]
@@ -348,10 +455,18 @@ const {
     fetchOptions
 } = useSysregOptions()
 
+const { getBitGroupsWithLabels, getLabelByBitRange } = useSysregBitGroups()
+
 const selectedFamily = ref<string>('status')
 const allTags = ref<any[]>([])
 const showCreateDialog = ref(false)
 const editingTag = ref<any>(null)
+
+// Viewer tab state
+const viewerFamily = ref<string>('status')
+const filterLogic = ref<string>('')
+const filterBitGroup = ref<string>('')
+const viewerLanguage = ref<'de' | 'en' | 'cz'>('de')
 
 const tagForm = ref({
     tagfamily: 'status',
@@ -360,6 +475,7 @@ const tagForm = ref({
     taglogic: 'category',
     label_en: '',
     label_de: '',
+    label_cz: '',
     description: '',
     is_default: false
 })
@@ -381,6 +497,70 @@ const isTagFormValid = computed(() => {
         tagForm.value.value &&
         tagForm.value.name &&
         tagForm.value.taglogic
+})
+
+// Viewer computed properties
+const viewerTags = computed(() => {
+    const familyOptions: Record<string, any> = {
+        status: statusOptions.value,
+        config: configOptions.value,
+        rtags: rtagsOptions.value,
+        ctags: ctagsOptions.value,
+        ttags: ttagsOptions.value,
+        dtags: dtagsOptions.value
+    }
+    return familyOptions[viewerFamily.value] || []
+})
+
+const availableLogicTypes = computed(() => {
+    const logicTypes = new Set<string>()
+    viewerTags.value.forEach(tag => {
+        if (tag.taglogic) logicTypes.add(tag.taglogic)
+    })
+    return Array.from(logicTypes).sort()
+})
+
+const availableBitGroups = computed(() => {
+    const bitGroupsWithLabels = getBitGroupsWithLabels(viewerFamily.value).value
+    return bitGroupsWithLabels.map(group => ({
+        value: `Bits ${group.bitRange}`,
+        label: group.label,
+        description: group.description
+    }))
+})
+
+const viewerFilteredTags = computed(() => {
+    let tags = viewerTags.value
+
+    // Filter by logic type
+    if (filterLogic.value) {
+        tags = tags.filter(tag => tag.taglogic === filterLogic.value)
+    }
+
+    // Filter by bit group
+    if (filterBitGroup.value) {
+        const match = filterBitGroup.value.match(/Bits (\d+)-(\d+)/)
+        if (match) {
+            const rangeStart = parseInt(match[1])
+            const rangeEnd = parseInt(match[2])
+            tags = tags.filter(tag => {
+                if (!tag.value) return false
+                const hex = tag.value.replace('\\x', '')
+                const byteValue = parseInt(hex, 16)
+                if (isNaN(byteValue) || byteValue === 0) return false
+
+                let bitPos = 0
+                let temp = byteValue
+                while (temp > 1) {
+                    temp = temp >> 1
+                    bitPos++
+                }
+                return bitPos >= rangeStart && bitPos <= rangeEnd
+            })
+        }
+    }
+
+    return tags
 })
 
 // Analytics
@@ -432,6 +612,23 @@ function getLabel(tag: any): string {
     return tag.name
 }
 
+function getTagLabel(tag: any): string {
+    const locale = viewerLanguage.value
+    if (tag.name_i18n && tag.name_i18n[locale]) {
+        return tag.name_i18n[locale]
+    }
+    if (tag.label) {
+        return tag.label
+    }
+    return tag.name
+}
+
+function onFamilyChange() {
+    // Reset filters when family changes
+    filterLogic.value = ''
+    filterBitGroup.value = ''
+}
+
 function editTag(tag: any) {
     editingTag.value = tag
     tagForm.value = {
@@ -441,7 +638,8 @@ function editTag(tag: any) {
         taglogic: tag.taglogic,
         label_en: tag.name_i18n?.en || '',
         label_de: tag.name_i18n?.de || '',
-        description: tag.description || '',
+        label_cz: tag.name_i18n?.cz || '',
+        description: tag.desc_i18n?.en || tag.desc_i18n?.de || tag.description || '',
         is_default: tag.is_default || false
     }
 }
@@ -456,6 +654,7 @@ function closeDialog() {
         taglogic: 'category',
         label_en: '',
         label_de: '',
+        label_cz: '',
         description: '',
         is_default: false
     }
@@ -464,10 +663,20 @@ function closeDialog() {
 async function saveTag() {
     try {
         const payload = {
-            ...tagForm.value,
+            tagfamily: tagForm.value.tagfamily,
+            value: tagForm.value.value,
+            name: tagForm.value.name,
+            taglogic: tagForm.value.taglogic,
+            is_default: tagForm.value.is_default,
             name_i18n: {
                 en: tagForm.value.label_en || tagForm.value.name,
-                de: tagForm.value.label_de || tagForm.value.name
+                de: tagForm.value.label_de || tagForm.value.name,
+                cz: tagForm.value.label_cz || tagForm.value.name
+            },
+            desc_i18n: {
+                en: tagForm.value.description || '',
+                de: tagForm.value.description || '',
+                cz: tagForm.value.description || ''
             }
         }
 
@@ -489,7 +698,6 @@ async function saveTag() {
 
         await fetchOptions(true) // Force refresh
         closeDialog()
-        alert(editingTag.value ? 'Tag updated successfully' : 'Tag created successfully')
     } catch (error) {
         console.error('Error saving tag:', error)
         alert('Error saving tag: ' + error)
@@ -657,6 +865,141 @@ async function executeBatch() {
 }
 
 .family-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.family-selector label {
+    font-weight: 600;
+}
+
+/* Viewer Tab */
+.viewer-topbar {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 6px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.language-switcher-group {
+    flex: 0 0 auto;
+}
+
+.language-switcher-inline {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.lang-btn {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #ccc;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    border-color: #2196F3;
+}
+
+.lang-btn.active {
+    border-color: #2196F3;
+    background: #e3f2fd;
+}
+
+.tag-table-container {
+    overflow-x: auto;
+}
+
+.tag-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.tag-table thead {
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tag-table th {
+    text-align: left;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.tag-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tag-table tbody tr {
+    transition: background 0.2s;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background: #f9f9f9;
+}
+
+.tag-value-code {
+    font-family: monospace;
+    background: #333;
+    color: #0f0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.logic-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.text-muted {
+    color: #999;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.tag-list {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -974,7 +1317,7 @@ async function executeBatch() {
 .modal-dialog {
     background: white;
     border-radius: 8px;
-    max-width: 600px;
+    max-width: 900px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
@@ -1002,6 +1345,19 @@ async function executeBatch() {
 
 .modal-body {
     padding: 1.5rem;
+}
+
+.modal-body-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.modal-column-left,
+.modal-column-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .modal-footer {

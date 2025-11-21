@@ -178,6 +178,16 @@ const isValidUrl = (url: string) => {
     }
 }
 
+// Validate XMLID format (no hyphens, only underscores allowed, exactly 2 dots)
+function validateXmlid(xmlid: string): boolean {
+    // Check for exactly 2 dots
+    const dotCount = (xmlid.match(/\./g) || []).length
+    if (dotCount !== 2) return false
+
+    const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
+    return pattern.test(xmlid) && !xmlid.includes('-')
+}
+
 // Add URL to import list
 const addUrl = () => {
     const input = urlInput.value.trim()
@@ -240,7 +250,7 @@ const removeImage = (index: number) => {
 const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement
     const files = target.files
-    
+
     if (!files || files.length === 0) return
 
     let addedCount = 0
@@ -334,10 +344,18 @@ const handleSave = async () => {
                 if (!img.file) continue
 
                 try {
-                    // Generate xmlid: domaincode.image.subject-filename
-                    const fileBasename = img.file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9_-]/gi, '_')
+                    // Generate xmlid: domaincode.entity_type.identifier (no hyphens, only underscores)
+                    const fileBasename = img.file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9_]/gi, '_')
                     const timestamp = Date.now()
-                    const xmlid = `${domaincode}.image.${xmlSubject.value}-${fileBasename}_${timestamp}`
+                    const entityType = xmlSubject.value ? `image_${xmlSubject.value}` : 'image'
+                    const xmlid = `${domaincode}.${entityType}.${fileBasename}_${timestamp}`
+
+                    // Validate xmlid
+                    if (!validateXmlid(xmlid)) {
+                        console.error(`[Local Upload] Invalid XMLID: ${xmlid}`)
+                        alert(`Invalid XMLID format: ${xmlid}\nNo hyphens allowed, only underscores.`)
+                        continue
+                    }
 
                     // Prepare form data
                     const formData = new FormData()
@@ -488,16 +506,10 @@ watch(() => props.isOpen, (newValue) => {
             <div class="modal-content">
                 <!-- Import mode switcher -->
                 <div class="mode-switcher">
-                    <button 
-                        :class="['mode-btn', { active: importMode === 'url' }]"
-                        @click="importMode = 'url'"
-                    >
+                    <button :class="['mode-btn', { active: importMode === 'url' }]" @click="importMode = 'url'">
                         📎 From URL
                     </button>
-                    <button 
-                        :class="['mode-btn', { active: importMode === 'local' }]"
-                        @click="importMode = 'local'"
-                    >
+                    <button :class="['mode-btn', { active: importMode === 'local' }]" @click="importMode = 'local'">
                         📁 Upload Files
                     </button>
                 </div>
@@ -519,14 +531,8 @@ watch(() => props.isOpen, (newValue) => {
                 <div v-if="importMode === 'local'" class="form-section">
                     <label>Select Local Files</label>
                     <div class="file-input-group">
-                        <input 
-                            ref="fileInput"
-                            type="file" 
-                            accept="image/*" 
-                            multiple 
-                            style="display: none"
-                            @change="handleFileSelect"
-                        />
+                        <input ref="fileInput" type="file" accept="image/*" multiple style="display: none"
+                            @change="handleFileSelect" />
                         <button class="btn-select-files" @click="selectFiles">
                             📁 Choose Files
                         </button>

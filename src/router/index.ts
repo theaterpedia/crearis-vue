@@ -36,6 +36,7 @@ const router = createRouter({
 
     // Demo routes - Floating Post-Its
     { path: '/demo/float-hard', component: () => import('../views/Demo/DemoFloatHard.vue') },
+    { path: '/demo/sysreg', component: () => import('../views/admin/SysregDemo.vue') },
     { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
     { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },

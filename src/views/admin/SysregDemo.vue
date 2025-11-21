@@ -8,7 +8,11 @@
                 </p>
             </div>
 
-            <div class="demo-sections">
+            <div v-if="isLoading" class="loading-state">
+                <p>Loading sysreg data...</p>
+            </div>
+
+            <div v-else class="demo-sections">
                 <!-- Section 1: Status Badge -->
                 <section class="demo-section">
                     <h2>StatusBadge Component</h2>
@@ -120,37 +124,38 @@
                 <section class="demo-section">
                     <h2>SysregBitGroupSelect Component</h2>
                     <p class="section-description">
-                        Radio buttons for CTags bit groups (age_group, subject_type, etc.).
+                        Radio buttons for CTags bit groups with semantic labels from bit group configuration.
                     </p>
 
                     <div class="demo-grid">
                         <div class="demo-item">
-                            <SysregBitGroupSelect v-model="selectedAgeGroup" bit-group="age_group" label="Age Group"
-                                hint="bits 0-1" @change="handleAgeGroupChange" />
+                            <h4>{{ getBitGroupLabel('ctags', 'age_group') }}</h4>
+                            <SysregBitGroupSelect v-model="selectedAgeGroup" bit-group="age_group"
+                                @change="handleAgeGroupChange" />
                             <div class="demo-output">
                                 Value: <code>{{ selectedAgeGroup }}</code> (bits 0-1)
                             </div>
                         </div>
 
                         <div class="demo-item">
-                            <SysregBitGroupSelect v-model="selectedSubjectType" bit-group="subject_type"
-                                label="Subject Type" hint="bits 2-3" />
+                            <h4>{{ getBitGroupLabel('ctags', 'subject_type') }}</h4>
+                            <SysregBitGroupSelect v-model="selectedSubjectType" bit-group="subject_type" />
                             <div class="demo-output">
                                 Value: <code>{{ selectedSubjectType }}</code> (bits 2-3)
                             </div>
                         </div>
 
                         <div class="demo-item">
-                            <SysregBitGroupSelect v-model="selectedAccessLevel" bit-group="access_level"
-                                label="Access Level" hint="bits 4-5" />
+                            <h4>{{ getBitGroupLabel('ctags', 'access_level') }}</h4>
+                            <SysregBitGroupSelect v-model="selectedAccessLevel" bit-group="access_level" />
                             <div class="demo-output">
                                 Value: <code>{{ selectedAccessLevel }}</code> (bits 4-5)
                             </div>
                         </div>
 
                         <div class="demo-item">
-                            <SysregBitGroupSelect v-model="selectedQuality" bit-group="quality" label="Quality"
-                                hint="bits 6-7" />
+                            <h4>{{ getBitGroupLabel('ctags', 'quality') }}</h4>
+                            <SysregBitGroupSelect v-model="selectedQuality" bit-group="quality" />
                             <div class="demo-output">
                                 Value: <code>{{ selectedQuality }}</code> (bits 6-7)
                             </div>
@@ -168,6 +173,29 @@
                                 age_group ({{ selectedAgeGroup }}) | subject_type ({{ selectedSubjectType }}) |
                                 access_level ({{ selectedAccessLevel }}) | quality ({{ selectedQuality }})
                             </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4.5: Bit Group System -->
+                <section class="demo-section">
+                    <h2>Bit Group Configuration System</h2>
+                    <p class="section-description">
+                        Semantic naming for bit groups across all tag families with i18n support.
+                    </p>
+
+                    <div class="bit-groups-overview">
+                        <div v-for="family in ['ctags', 'dtags', 'ttags', 'rtags', 'config']" :key="family"
+                            class="family-group">
+                            <h4>{{ family.toUpperCase() }}</h4>
+                            <div class="groups-list">
+                                <div v-for="group in getBitGroupsWithLabels(family).value" :key="group.name"
+                                    class="group-item">
+                                    <strong>{{ group.label }}</strong>
+                                    <span class="bit-range">Bits {{ group.bitRange }}</span>
+                                    <p v-if="group.description" class="group-desc">{{ group.description }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -209,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { StatusBadge, SysregSelect, SysregMultiToggle, SysregBitGroupSelect } from '@/components/sysreg'
 import {
@@ -221,10 +249,22 @@ import {
     byteArrayToBits,
     buildCtagsByte
 } from '@/composables/useSysregTags'
+import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
 
-// Initialize composable
+// Initialize composables
 const { initCache } = useSysregTags()
-initCache()
+const { getBitGroupsWithLabels, getBitGroupLabel } = useSysregBitGroups()
+const isLoading = ref(true)
+
+onMounted(async () => {
+    try {
+        await initCache()
+    } catch (error) {
+        console.error('Failed to initialize sysreg cache:', error)
+    } finally {
+        isLoading.value = false
+    }
+})
 
 // Status select state
 const selectedStatus = ref<string | null>(null)
@@ -279,11 +319,13 @@ function isBitSet(bit: number): boolean {
 }
 
 function getActiveBits(bytea: string | null): number[] {
-    return byteArrayToBits(bytea)
+    const bytes = parseByteaHex(bytea)
+    return byteArrayToBits(bytes)
 }
 
 function getBinary(bytea: string | null): string {
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     return num.toString(2).padStart(8, '0')
 }
 </script>
@@ -309,6 +351,13 @@ function getBinary(bytea: string | null): string {
 
 .demo-subtitle {
     font-size: 1rem;
+    color: var(--color-dimmed);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    font-size: 1.125rem;
     color: var(--color-dimmed);
 }
 
@@ -446,5 +495,65 @@ function getBinary(bytea: string | null): string {
     background: var(--color-primary, #3b82f6);
     color: white;
     border-color: var(--color-primary, #3b82f6);
+}
+
+.bit-groups-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.family-group {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.family-group h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary, #3b82f6);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.groups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.group-item {
+    padding: 0.625rem;
+    background: var(--color-card-bg);
+    border-radius: 6px;
+    border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.05));
+}
+
+.group-item strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+}
+
+.group-item .bit-range {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    color: var(--color-dimmed);
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.group-item .group-desc {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-dimmed);
+    font-style: italic;
 }
 </style>
