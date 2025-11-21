@@ -71,6 +71,29 @@ export default defineEventHandler(async (event) => {
             }
         }
 
+        // Filter by visibility (is_public, is_private, is_internal)
+        if (query.visibility) {
+            if (query.visibility === 'public') {
+                sql += ' AND i.is_public = TRUE'
+            } else if (query.visibility === 'private') {
+                sql += ' AND i.is_private = TRUE'
+            } else if (query.visibility === 'internal') {
+                sql += ' AND i.is_internal = TRUE'
+            }
+        }
+
+        // Filter by ctags (hex value, AND logic - all bits must match)
+        if (query.ctags) {
+            const ctagsHex = query.ctags.toString().replace(/^0x/, '')
+            sql += ` AND (get_byte(i.ctags, 0) & x'${ctagsHex}'::int) = x'${ctagsHex}'::int`
+        }
+
+        // Filter by rtags (hex value, AND logic - all bits must match)
+        if (query.rtags) {
+            const rtagsHex = query.rtags.toString().replace(/^0x/, '')
+            sql += ` AND (get_byte(i.rtags, 0) & x'${rtagsHex}'::int) = x'${rtagsHex}'::int`
+        }
+
         sql += ' ORDER BY i.created_at DESC'
 
         const images = await db.all(sql, params)

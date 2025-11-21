@@ -15,7 +15,7 @@ export interface AsideOptions {
         title?: string
     }
     list?: {
-        type?: 'posts' | 'events' | 'instructors' | 'projects'
+        type?: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
         header?: string
     }
     context?: {
@@ -25,7 +25,7 @@ export interface AsideOptions {
 
 export interface FooterOptions {
     gallery?: {
-        type?: 'posts' | 'events' | 'instructors' | 'projects'
+        type?: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
         header?: string
     }
     postit?: {
@@ -35,7 +35,7 @@ export interface FooterOptions {
         color?: string
     }
     slider?: {
-        type?: 'posts' | 'events' | 'instructors' | 'projects'
+        type?: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
         header?: string
     }
     repeat?: {

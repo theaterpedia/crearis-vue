@@ -104,8 +104,11 @@
           <pToc v-if="asideOptions.toc?.enabled" :title="asideOptions.toc.title" :isAside="true" />
 
           <!-- pList -->
-          <pList v-if="asideOptions.list?.type" :type="asideOptions.list.type" :header="asideOptions.list.header"
-            :isAside="true" :projectDomaincode="projectDomaincode" />
+          <pList v-if="asideOptions.list?.type && asideOptions.list.type !== 'images'" :type="asideOptions.list.type"
+            :header="asideOptions.list.header" :isAside="true" :projectDomaincode="projectDomaincode" />
+
+          <!-- pListImages -->
+          <pListImages v-if="asideOptions.list?.type === 'images' && projectId" :projectId="projectId" />
 
           <!-- pContext -->
           <pContext v-if="asideOptions.context?.content" :content="asideOptions.context.content" :isAside="true" />
@@ -120,8 +123,12 @@
         <!-- Dynamic footer content based on footerOptions -->
         <Container v-if="footerOptions">
           <!-- pGallery -->
-          <pGallery v-if="footerOptions.gallery?.type" :type="footerOptions.gallery.type"
-            :header="footerOptions.gallery.header" :isFooter="true" :projectDomaincode="projectDomaincode" />
+          <pGallery v-if="footerOptions.gallery?.type && footerOptions.gallery.type !== 'images'"
+            :type="footerOptions.gallery.type" :header="footerOptions.gallery.header" :isFooter="true"
+            :projectDomaincode="projectDomaincode" />
+
+          <!-- pGalleryImages -->
+          <pGalleryImages v-if="footerOptions.gallery?.type === 'images' && projectId" :projectId="projectId" />
 
           <!-- pPostit -->
           <pPostit v-if="footerOptions.postit?.enabled" :title="footerOptions.postit.title"
@@ -176,7 +183,9 @@ import {
   type SiteLayout
 } from '../layoutsettings'
 import pList from './page/pList.vue'
+import pListImages from './page/pListImages.vue'
 import pGallery from './page/pGallery.vue'
+import pGalleryImages from './page/pGalleryImages.vue'
 import pSlider from './page/pSlider.vue'
 import pPostit from './page/pPostit.vue'
 import pToc from './page/pToc.vue'
@@ -232,6 +241,7 @@ interface Props {
   asideOptions?: AsideOptions
   footerOptions?: FooterOptions
   projectDomaincode?: string
+  projectId?: number
   navItems?: TopnavParentItem[]
   navbarMode?: 'default' | 'home' | 'page' | 'dashboard'
   alertBanner?: { message: string; alertType: 'primary' | 'secondary' | 'muted' | 'accent' | 'positive' | 'negative' | 'warning' } | null

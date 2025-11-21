@@ -194,6 +194,11 @@
             </div>
         </div>
 
+        <!-- Sysreg Tags -->
+        <SysregTagDisplay v-if="images.length > 0" v-model:all-tags="allTags"
+            v-model:config-visibility="configVisibility" v-model:age-group="ageGroup" v-model:subject-type="subjectType"
+            v-model:core-themes="coreThemes" v-model:domains="domains" />
+
         <!-- Action Bar (when images exist) -->
         <div v-if="images.length > 0" class="action-bar">
             <button class="btn-cancel" @click="clearAll">
@@ -202,7 +207,7 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                }}</span>
+                    }}</span>
             </button>
         </div>
     </div>
@@ -212,6 +217,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import sysDropDown from '@/components/sysDropDown.vue'
+import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
 
 interface ImageItem {
     file: File
@@ -298,6 +304,12 @@ const isDragging = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const images = ref<ImageItem[]>([])
 const isImporting = ref(false)
+const allTags = ref(false)
+const configVisibility = ref(0)
+const ageGroup = ref(0)
+const subjectType = ref(0)
+const coreThemes = ref('\\x00')
+const domains = ref('\\x00')
 
 // Refine modal
 const refineModalOpen = ref(false)

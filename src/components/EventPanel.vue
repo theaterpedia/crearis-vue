@@ -87,6 +87,10 @@
                     placeholder="Event-Beschreibung"></textarea>
             </div>
 
+            <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
+                v-model:age-group="ageGroup" v-model:subject-type="subjectType" v-model:core-themes="coreThemes"
+                v-model:domains="domains" />
+
             <div class="action-buttons">
                 <button class="cancel-btn" @click="handleCancel" :disabled="isSubmitting">
                     Abbrechen
@@ -107,6 +111,7 @@ import EventCard from '@/components/EventCard.vue'
 import EventsDropdown from '@/components/EventsDropdown.vue'
 import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
+import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
 import type { Event, Instructor } from '@/types'
 
 interface Props {
@@ -148,6 +153,12 @@ const dateEnd = ref('')
 const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
+const allTags = ref(false)
+const configVisibility = ref(0)
+const ageGroup = ref(0)
+const subjectType = ref(0)
+const coreThemes = ref('\\x00')
+const domains = ref('\\x00')
 
 const previewEvent = computed(() => {
     if (!selectedEvent.value) return null

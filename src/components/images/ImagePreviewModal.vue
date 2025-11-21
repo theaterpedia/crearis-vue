@@ -56,6 +56,11 @@
                         <span class="detail-label">Alt Text:</span>
                         <span class="detail-value">{{ image.alt_text }}</span>
                     </div>
+                    <div class="detail-row detail-row-full">
+                        <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
+                            v-model:age-group="ageGroup" v-model:subject-type="subjectType"
+                            v-model:core-themes="coreThemes" v-model:domains="domains" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -65,6 +70,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
 
 interface ImageData {
     id: number
@@ -98,6 +104,12 @@ const emit = defineEmits<{
 const { cardWidth } = useTheme()
 const isFullResolution = ref(props.fullResolution)
 const imageKey = ref(0)
+const allTags = ref(false)
+const configVisibility = ref(0)
+const ageGroup = ref(0)
+const subjectType = ref(0)
+const coreThemes = ref('\\x00')
+const domains = ref('\\x00')
 
 // Transform URL: Show full resolution from images.url if fullResolution=true, otherwise use img_wide or fallback shapes
 const transformUrl = computed(() => {
@@ -334,6 +346,11 @@ watch(() => props.fullResolution, (newVal) => {
     display: flex;
     gap: 1rem;
     font-size: 0.875rem;
+}
+
+.detail-row-full {
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .detail-label {
