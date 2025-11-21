@@ -1,0 +1,223 @@
+{
+    "ctags": {
+        "groups": [
+            {
+                "name": "age_group",
+                "label": {
+                    "de": "Altersgruppen",
+                    "en": "Age Groups",
+                    "cz": "Věkové skupiny"
+                },
+                "bits": [
+                    0,
+                    1
+                ],
+                "description": {
+                    "de": "Zielgruppen-Altersklassen",
+                    "en": "Target age groups",
+                    "cz": "Cílové věkové skupiny"
+                }
+            },
+            {
+                "name": "subject_type",
+                "label": {
+                    "de": "Motivart",
+                    "en": "Subject Type",
+                    "cz": "Typ předmětu"
+                },
+                "bits": [
+                    2,
+                    3
+                ],
+                "description": {
+                    "de": "Art des Bildmotivs",
+                    "en": "Type of image subject",
+                    "cz": "Typ obrazového motivu"
+                }
+            },
+            {
+                "name": "access_level",
+                "label": {
+                    "de": "Zugriffsebene",
+                    "en": "Access Level",
+                    "cz": "Úroveň přístupu"
+                },
+                "bits": [
+                    4,
+                    5
+                ],
+                "description": {
+                    "de": "Sichtbarkeits- und Zugriffsrechte",
+                    "en": "Visibility and access rights",
+                    "cz": "Viditelnost a přístupová práva"
+                }
+            },
+            {
+                "name": "quality",
+                "label": {
+                    "de": "Qualität",
+                    "en": "Quality",
+                    "cz": "Kvalita"
+                },
+                "bits": [
+                    6,
+                    7
+                ],
+                "description": {
+                    "de": "Qualitätsstatus und Prüfmarkierungen",
+                    "en": "Quality status and review markers",
+                    "cz": "Stav kvality a kontrolní značky"
+                }
+            }
+        ]
+    },
+    "dtags": {
+        "groups": [
+            {
+                "name": "settings",
+                "label": {
+                    "de": "Raum-/Arbeitsformen",
+                    "en": "Settings/Work Forms",
+                    "cz": "Prostředí/Pracovní formy"
+                },
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3
+                ],
+                "description": {
+                    "de": "Workshop, Spiel, Performance, Diskussion",
+                    "en": "Workshop, Game, Performance, Discussion",
+                    "cz": "Workshop, Hra, Představení, Diskuse"
+                }
+            },
+            {
+                "name": "domains",
+                "label": {
+                    "de": "Fachbereiche",
+                    "en": "Subject Domains",
+                    "cz": "Odborné oblasti"
+                },
+                "bits": [
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "description": {
+                    "de": "Bildung, Medien, Politik, Bewusstsein",
+                    "en": "Education, Media, Policy, Awareness",
+                    "cz": "Vzdělávání, Média, Politika, Povědomí"
+                }
+            }
+        ]
+    },
+    "ttags": {
+        "groups": [
+            {
+                "name": "core_themes",
+                "label": {
+                    "de": "Kernthemen",
+                    "en": "Core Themes",
+                    "cz": "Hlavní témata"
+                },
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3
+                ],
+                "description": {
+                    "de": "Demokratie, Umwelt, Vielfalt, Bildung",
+                    "en": "Democracy, Environment, Diversity, Education",
+                    "cz": "Demokracie, Životní prostředí, Rozmanitost, Vzdělávání"
+                }
+            },
+            {
+                "name": "extended_themes",
+                "label": {
+                    "de": "Weitere Themen",
+                    "en": "Extended Themes",
+                    "cz": "Další témata"
+                },
+                "bits": [
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "description": {
+                    "de": "Zusätzliche Themenbereiche",
+                    "en": "Additional theme areas",
+                    "cz": "Další tematické oblasti"
+                }
+            }
+        ]
+    },
+    "rtags": {
+        "groups": [
+            {
+                "name": "resource_types",
+                "label": {
+                    "de": "Ressourcentypen",
+                    "en": "Resource Types",
+                    "cz": "Typy zdrojů"
+                },
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3
+                ],
+                "description": {
+                    "de": "Guide, Toolkit, Report, Fallstudie",
+                    "en": "Guide, Toolkit, Report, Case Study",
+                    "cz": "Průvodce, Nástroje, Zpráva, Případová studie"
+                }
+            }
+        ]
+    },
+    "config": {
+        "groups": [
+            {
+                "name": "visibility",
+                "label": {
+                    "de": "Sichtbarkeit",
+                    "en": "Visibility",
+                    "cz": "Viditelnost"
+                },
+                "bits": [
+                    0,
+                    1
+                ],
+                "description": {
+                    "de": "Öffentlich, Hervorgehoben",
+                    "en": "Public, Featured",
+                    "cz": "Veřejné, Vyzdvižené"
+                }
+            },
+            {
+                "name": "features",
+                "label": {
+                    "de": "Funktionen",
+                    "en": "Features",
+                    "cz": "Funkce"
+                },
+                "bits": [
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "description": {
+                    "de": "Zusätzliche Feature-Flags",
+                    "en": "Additional feature flags",
+                    "cz": "Další příznaky funkcí"
+                }
+            }
+        ]
+    }
+}

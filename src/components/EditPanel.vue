@@ -62,6 +62,11 @@
             <!-- Extension Fields Slot -->
             <slot name="extension-fields" :formData="formData" />
 
+            <!-- Sysreg Tags -->
+            <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
+                v-model:age-group="ageGroup" v-model:subject-type="subjectType" v-model:core-themes="coreThemes"
+                v-model:domains="domains" />
+
             <!-- Action Buttons -->
             <div class="form-actions">
                 <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSaving">
@@ -79,6 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import BasePanel from './BasePanel.vue'
+import SysregTagDisplay from './sysreg/SysregTagDisplay.vue'
 
 export interface EditPanelData {
     heading: string
@@ -113,6 +119,12 @@ const anchorRef = ref<HTMLElement>()
 const formData = ref<EditPanelData>({ ...props.data })
 const isSaving = ref(false)
 const imageError = ref(false)
+const allTags = ref(false)
+const configVisibility = ref(0)
+const ageGroup = ref(0)
+const subjectType = ref(0)
+const coreThemes = ref('\\x00')
+const domains = ref('\\x00')
 
 // Check if screen height is small (hide image preview if < 900px)
 const isSmallHeight = computed(() => {

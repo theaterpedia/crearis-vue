@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useSysregOptions } from '@/composables/useSysregOptions'
-import { byteArrayToBits, bitsToByteArray } from '@/composables/useSysregTags'
+import { parseByteaHex, byteArrayToBits, bitsToByteArray } from '@/composables/useSysregTags'
 
 interface Props {
     modelValue: string | null | undefined  // BYTEA hex string with multiple bits set
@@ -73,7 +73,8 @@ const allOptions = computed(() => {
 
 // Convert current value to bit positions
 const selectedBits = computed(() => {
-    return byteArrayToBits(props.modelValue || null)
+    const bytes = parseByteaHex(props.modelValue || null)
+    return byteArrayToBits(bytes)
 })
 
 const selectedCount = computed(() => selectedBits.value.length)
@@ -94,7 +95,8 @@ const gridClass = computed(() => {
 function isSelected(value: string): boolean {
     // Extract bit position from the value (assumes single-bit values in options)
     // For multi-bit toggle, each option represents one bit
-    const optionBit = byteArrayToBits(value)[0]
+    const bytes = parseByteaHex(value)
+    const optionBit = byteArrayToBits(bytes)[0]
     return selectedBits.value.includes(optionBit)
 }
 
@@ -102,7 +104,8 @@ function isSelected(value: string): boolean {
 function isDisabled(value: string): boolean {
     if (props.disabled || props.readonly) return true
 
-    const optionBit = byteArrayToBits(value)[0]
+    const bytes = parseByteaHex(value)
+    const optionBit = byteArrayToBits(bytes)[0]
     const isCurrentlySelected = selectedBits.value.includes(optionBit)
 
     // Disable if max selection reached and this option is not selected
@@ -120,7 +123,8 @@ function isDisabled(value: string): boolean {
 
 // Toggle option
 function toggleOption(value: string) {
-    const optionBit = byteArrayToBits(value)[0]
+    const bytes = parseByteaHex(value)
+    const optionBit = byteArrayToBits(bytes)[0]
     const isCurrentlySelected = selectedBits.value.includes(optionBit)
 
     let newBits: number[]

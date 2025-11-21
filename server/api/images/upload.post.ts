@@ -61,18 +61,58 @@ function validateFile(file: { filename?: string; type?: string; data: Buffer }):
 }
 
 /**
- * Validate xmlid format
- * Expected format: domaincode.image.subject-identifier OR domaincode.image.subject_identifier
- * Examples: tp.image.child-marie_2024, crearis.image.instructor-john_smith, start.image.scene_1763668214959
+ * Validate XMLID format
+ * Expected format: domaincode.entity_type.identifier
+ * Rules:
+ * - No hyphens allowed anywhere
+ * - Only underscores and alphanumeric characters
+ * - Domaincode: alphanumeric, can start with underscore (e.g., _aug, comictheater)
+ * - Entity type: 'image' or 'image_X' where X is alphanumeric (e.g., image, image_event, image_post)
+ * - Identifier: alphanumeric with underscores (e.g., comic_theater_5, 167_dasei2022_team_I8A7744_yry0zh)
+ * 
+ * Valid examples:
+ * - comictheater.image_event.comic_theater_5
+ * - comictheater.image.comic_theater_5
+ * - dev.image_post.167_dasei2022_team_I8A7744_yry0zh
+ * - _aug.image_instructor.nina_roob_1
+ * 
+ * Invalid examples:
+ * - comictheater.image-event.comic_theater_5 (hyphen in entity type)
+ * - comictheater.image.comic-theater_5 (hyphen in identifier)
+ * - dev_pro.image_post.167_dasei2022_team_I8A7744_yry0zh (underscore in middle of domaincode)
+ * - dev.image_post_variant.167_dasei2022_team_I8A7744_yry0zh (too many underscores in entity type)
  */
 function validateXmlid(xmlid: string): void {
-    const pattern = /^[a-z0-9_-]+\.image\.[a-z0-9_.-]+$/i
+    // Pattern breakdown:
+    // ^(_?[a-z0-9]+) - domaincode: optional leading underscore, then alphanumeric
+    // \.(image|image_[a-z0-9]+) - entity type: 'image' or 'image_' followed by alphanumeric
+    // \.([a-z0-9_]+)$ - identifier: alphanumeric with underscores
+    const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
+
     console.log('[Upload] Validating xmlid:', JSON.stringify(xmlid), 'Length:', xmlid.length)
+
+    // Check for exactly 2 dots
+    const dotCount = (xmlid.match(/\./g) || []).length
+    if (dotCount !== 2) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: `Invalid xmlid: must contain exactly 2 dots (found ${dotCount}). Expected format: domaincode.entity_type.identifier`
+        })
+    }
+
     if (!pattern.test(xmlid)) {
         console.error('[Upload] XMLID validation failed for:', JSON.stringify(xmlid))
         throw createError({
             statusCode: 400,
-            statusMessage: 'Invalid xmlid format. Expected: domaincode.image.subject-identifier'
+            statusMessage: 'Invalid xmlid format. Expected: domaincode.entity_type.identifier (no hyphens, only underscores allowed)'
+        })
+    }
+
+    // Additional check: ensure no hyphens anywhere
+    if (xmlid.includes('-')) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: 'Invalid xmlid: hyphens are not allowed. Use underscores instead.'
         })
     }
 }

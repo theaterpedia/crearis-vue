@@ -11,7 +11,7 @@
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :navItems="navigationItems">
+            :projectDomaincode="project.domaincode" :projectId="project.id" :navItems="navigationItems">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Edit Panel Button -->
@@ -76,12 +76,15 @@
 
                     <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
                         <Column v-for="post in posts.slice(0, 6)" :key="post.id" width="1/3">
-                            <RouterLink :to="`/sites/${domaincode}/posts/${post.id}`" style="text-decoration: none; color: inherit; display: block;">
+                            <RouterLink :to="`/sites/${domaincode}/posts/${post.id}`"
+                                style="text-decoration: none; color: inherit; display: block;">
                                 <CardHero height-tmp="medium" :img-tmp="post.cimg || ''" content-align-y="bottom"
                                     content-type="text">
                                     <Prose>
                                         <h3>{{ post.name || post.id }}</h3>
-                                        <p v-if="post.teaser">{{ post.teaser.substring(0, 100) }}{{ post.teaser.length > 100 ? '...' : '' }}</p>
+                                        <p v-if="post.teaser">{{ post.teaser.substring(0, 100) }}{{ post.teaser.length >
+                                            100 ? '...'
+                                            : '' }}</p>
                                         <p v-else-if="post.md">{{ post.md.substring(0, 100) }}...</p>
                                         <p v-else><em>No content available</em></p>
                                     </Prose>
@@ -238,7 +241,7 @@ const navigationItems = computed(() => {
             link: '/blog'
         }
     ]
-    
+
     // Add Back button for project role users
     if (user.value?.activeRole === 'project') {
         items.unshift({
@@ -246,7 +249,7 @@ const navigationItems = computed(() => {
             link: '/projects'
         })
     }
-    
+
     return items
 })
 
