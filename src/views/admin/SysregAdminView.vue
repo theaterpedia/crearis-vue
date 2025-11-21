@@ -59,7 +59,10 @@
                         <label>Bit Group:</label>
                         <select v-model="filterBitGroup" class="form-select">
                             <option value="">All Bit Groups</option>
-                            <option v-for="group in availableBitGroups" :key="group" :value="group">{{ group }}</option>
+                            <option v-for="group in availableBitGroups" :key="group.value" :value="group.value"
+                                :title="group.description">
+                                {{ group.label }}
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -429,6 +432,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useSysregOptions } from '@/composables/useSysregOptions'
 import { useSysregAnalytics } from '@/composables/useSysregAnalytics'
 import { useSysregBatchOperations } from '@/composables/useSysregBatchOperations'
+import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
 
 // Tab state
 const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch'>('viewer')
@@ -450,6 +454,8 @@ const {
     loading: optionsLoading,
     fetchOptions
 } = useSysregOptions()
+
+const { getBitGroupsWithLabels, getLabelByBitRange } = useSysregBitGroups()
 
 const selectedFamily = ref<string>('status')
 const allTags = ref<any[]>([])
@@ -515,28 +521,12 @@ const availableLogicTypes = computed(() => {
 })
 
 const availableBitGroups = computed(() => {
-    // Extract bit positions and group them
-    const bitGroups = new Set<string>()
-    viewerTags.value.forEach(tag => {
-        if (tag.value) {
-            const hex = tag.value.replace('\\x', '')
-            const byteValue = parseInt(hex, 16)
-            if (!isNaN(byteValue) && byteValue > 0) {
-                // Find which bit is set
-                let bitPos = 0
-                let temp = byteValue
-                while (temp > 1) {
-                    temp = temp >> 1
-                    bitPos++
-                }
-                // Group by ranges: 0-3, 4-7, 8-15, etc.
-                const groupStart = Math.floor(bitPos / 4) * 4
-                const groupEnd = groupStart + 3
-                bitGroups.add(`Bits ${groupStart}-${groupEnd}`)
-            }
-        }
-    })
-    return Array.from(bitGroups).sort()
+    const bitGroupsWithLabels = getBitGroupsWithLabels(viewerFamily.value).value
+    return bitGroupsWithLabels.map(group => ({
+        value: `Bits ${group.bitRange}`,
+        label: group.label,
+        description: group.description
+    }))
 })
 
 const viewerFilteredTags = computed(() => {

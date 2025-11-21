@@ -1,8 +1,8 @@
 <template>
     <div class="sysreg-bit-group-select" :class="{ 'is-disabled': disabled }">
-        <label v-if="label" class="bit-group-label">
-            {{ label }}
-            <span v-if="hint" class="label-hint">({{ hint }})</span>
+        <label v-if="displayLabel" class="bit-group-label">
+            {{ displayLabel }}
+            <span v-if="displayHint" class="label-hint">({{ displayHint }})</span>
         </label>
 
         <div class="bit-group-options">
@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useSysregOptions } from '@/composables/useSysregOptions'
+import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
 
 interface Props {
     modelValue: number         // Current value (0-3)
@@ -45,6 +46,7 @@ const emit = defineEmits<{
 
 // Get bit group options
 const { ctagsBitGroupOptions } = useSysregOptions()
+const { getBitGroupLabel, getBitGroupDescription, getBitGroupRange } = useSysregBitGroups()
 
 const options = computed(() => {
     return ctagsBitGroupOptions[props.bitGroup].value
@@ -53,6 +55,19 @@ const options = computed(() => {
 // Generate unique ID for radio button grouping
 const uniqueId = computed(() => {
     return Math.random().toString(36).substring(2, 9)
+})
+
+// Use semantic label and hint from bit group config if not provided
+const displayLabel = computed(() => {
+    if (props.label) return props.label
+    return getBitGroupLabel('ctags', props.bitGroup)
+})
+
+const displayHint = computed(() => {
+    if (props.hint) return props.hint
+    const range = getBitGroupRange('ctags', props.bitGroup)
+    const desc = getBitGroupDescription('ctags', props.bitGroup)
+    return desc || range
 })
 
 // Handle selection change

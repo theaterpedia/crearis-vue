@@ -220,14 +220,14 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         age_group: computed((): BitGroupOption[] => [
             { value: 0, label: 'Andere' },
             { value: 1, label: 'Kind' },
-            { value: 2, label: 'Jugendlich' },
+            { value: 2, label: 'Teens' },
             { value: 3, label: 'Erwachsen' }
         ]),
         subject_type: computed((): BitGroupOption[] => [
             { value: 0, label: 'Andere' },
-            { value: 1, label: 'Gruppe' },
+            { value: 1, label: 'Location' },
             { value: 2, label: 'Person' },
-            { value: 3, label: 'Portrait' }
+            { value: 3, label: 'Gruppe/Portrait' }
         ]),
         access_level: computed((): BitGroupOption[] => [
             { value: 0, label: 'Projekt' },
