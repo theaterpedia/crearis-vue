@@ -708,7 +708,6 @@ async function saveTag() {
 
         await fetchOptions(true) // Force refresh
         closeDialog()
-        alert(editingTag.value ? 'Tag aktualisiert' : 'Tag created successfully')
     } catch (error) {
         console.error('Error saving tag:', error)
         alert('Error saving tag: ' + error)
