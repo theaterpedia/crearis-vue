@@ -8,7 +8,11 @@
                 </p>
             </div>
 
-            <div class="demo-sections">
+            <div v-if="isLoading" class="loading-state">
+                <p>Loading sysreg data...</p>
+            </div>
+
+            <div v-else class="demo-sections">
                 <!-- Section 1: Status Badge -->
                 <section class="demo-section">
                     <h2>StatusBadge Component</h2>
@@ -209,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { StatusBadge, SysregSelect, SysregMultiToggle, SysregBitGroupSelect } from '@/components/sysreg'
 import {
@@ -224,7 +228,17 @@ import {
 
 // Initialize composable
 const { initCache } = useSysregTags()
-initCache()
+const isLoading = ref(true)
+
+onMounted(async () => {
+    try {
+        await initCache()
+    } catch (error) {
+        console.error('Failed to initialize sysreg cache:', error)
+    } finally {
+        isLoading.value = false
+    }
+})
 
 // Status select state
 const selectedStatus = ref<string | null>(null)
@@ -279,11 +293,13 @@ function isBitSet(bit: number): boolean {
 }
 
 function getActiveBits(bytea: string | null): number[] {
-    return byteArrayToBits(bytea)
+    const bytes = parseByteaHex(bytea)
+    return byteArrayToBits(bytes)
 }
 
 function getBinary(bytea: string | null): string {
-    const num = parseByteaHex(bytea)
+    const bytes = parseByteaHex(bytea)
+    const num = bytes[0] || 0
     return num.toString(2).padStart(8, '0')
 }
 </script>
@@ -309,6 +325,13 @@ function getBinary(bytea: string | null): string {
 
 .demo-subtitle {
     font-size: 1rem;
+    color: var(--color-dimmed);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    font-size: 1.125rem;
     color: var(--color-dimmed);
 }
 

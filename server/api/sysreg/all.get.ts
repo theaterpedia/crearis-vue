@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
         // Fetch all sysreg entries
         const entries = await db.all(`
       SELECT 
+        id,
         encode(value, 'hex') as value_hex,
         value,
         name,
@@ -47,6 +48,7 @@ export default defineEventHandler(async (event) => {
 
         for (const entry of entries) {
             const formatted = {
+                id: (entry as any).id,
                 value: `\\x${(entry as any).value_hex}`, // Format as BYTEA hex string
                 name: (entry as any).name,
                 tagfamily: (entry as any).tagfamily,

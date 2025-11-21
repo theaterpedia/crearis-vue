@@ -20,6 +20,7 @@ import { useI18n } from './useI18n'
 // ============================================================================
 
 export interface SysregOption {
+    id?: number         // Database ID (optional for new entries)
     value: string       // BYTEA hex string (e.g., '\\x01', '\\x02')
     name: string        // Internal name (e.g., 'democracy', 'raw')
     label: string       // Translated label
@@ -30,6 +31,8 @@ export interface SysregOption {
     tagfamily: string   // tagfamily name
     bit_group?: string  // For ctags: age_group, subject_type, etc.
     color?: string      // Optional UI color hint
+    name_i18n?: Record<string, string>  // Raw i18n object for editing
+    desc_i18n?: Record<string, string>  // Raw desc_i18n object for editing
 }
 
 export interface BitGroupOption {
@@ -45,7 +48,7 @@ export interface BitGroupOption {
 
 export function useSysregOptions(entity?: Ref<string> | string) {
     const { sysregCache, cacheInitialized, initCache } = useSysregTags()
-    const { currentLanguage } = useI18n()
+    const { language: currentLanguage } = useI18n()
 
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -86,7 +89,7 @@ export function useSysregOptions(entity?: Ref<string> | string) {
             return
         }
 
-        const langCode = currentLanguage.value
+        const langCode = currentLanguage?.value || 'de'
         const allOptions: SysregOption[] = []
 
         // Aggregate all options from all tagfamilies
@@ -100,6 +103,7 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                     const bitPosition = bit !== undefined && Number.isInteger(bit) ? bit : undefined
 
                     allOptions.push({
+                        id: entry.id,
                         value: hexValue,
                         name: entry.name,
                         label: getLabel(entry, langCode),
@@ -108,7 +112,9 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                         taglogic: entry.taglogic,
                         is_default: entry.is_default,
                         tagfamily: tagfamily,
-                        bit_group: entry.bit_group
+                        bit_group: entry.bit_group,
+                        name_i18n: entry.name_i18n,
+                        desc_i18n: entry.desc_i18n
                     })
                 })
             }
@@ -160,15 +166,19 @@ export function useSysregOptions(entity?: Ref<string> | string) {
             const entries = sysregCache.value[tagfamily as keyof typeof sysregCache.value]
             if (!entries) return []
 
-            const langCode = currentLanguage.value
+            const langCode = currentLanguage?.value || 'de'
 
             return entries.map((entry: any) => ({
+                id: entry.id,
                 value: entry.value,
                 name: entry.name,
                 label: getLabel(entry, langCode),
                 description: getDescription(entry, langCode),
                 taglogic: entry.taglogic,
-                is_default: entry.is_default
+                is_default: entry.is_default,
+                tagfamily: tagfamily,
+                name_i18n: entry.name_i18n,
+                desc_i18n: entry.desc_i18n
             }))
         })
     }
@@ -245,7 +255,7 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         const entry = entries.find((e: any) => e.value === value)
         if (!entry) return ''
 
-        const langCode = currentLanguage.value
+        const langCode = currentLanguage?.value || 'de'
         return getLabel(entry, langCode)
     }
 
@@ -280,7 +290,7 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         const entries = sysregCache.value[tagfamily as keyof typeof sysregCache.value]
         if (!entries || !Array.isArray(entries)) return []
 
-        const langCode = currentLanguage.value
+        const langCode = currentLanguage?.value || 'de'
 
         // Only ttags, dtags, rtags use bit positions (power-of-2 values)
         // Status, config use direct byte values
@@ -298,6 +308,7 @@ export function useSysregOptions(entity?: Ref<string> | string) {
             }
 
             return {
+                id: entry.id,
                 value: hexValue,
                 name: entry.name,
                 label: getLabel(entry, langCode),
@@ -306,7 +317,9 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                 taglogic: entry.taglogic,
                 is_default: entry.is_default,
                 tagfamily: tagfamily,
-                bit_group: entry.bit_group
+                bit_group: entry.bit_group,
+                name_i18n: entry.name_i18n,
+                desc_i18n: entry.desc_i18n
             }
         })
     }    /**

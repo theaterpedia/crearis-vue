@@ -25,6 +25,7 @@ export interface CtagsBitGroups {
 }
 
 export interface SysregEntry {
+    id: number     // Database ID
     value: string  // BYTEA as hex string (e.g., "\\x01")
     name: string
     tagfamily: string
