@@ -5,6 +5,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import i18nPlugin from './plugins/i18n'
+import sysregPlugin from './plugins/sysreg'
 import FloatingVue from 'floating-vue'
 import 'floating-vue/dist/style.css'
 
@@ -29,8 +30,11 @@ app.use(FloatingVue, {
     }
 })
 
-// Initialize i18n system
+// Initialize i18n system first (translations needed by sysreg)
 app.use(i18nPlugin)
+
+// Initialize sysreg cache (status values, depends on i18n being ready)
+app.use(sysregPlugin)
 
 app.use(router)
 app.mount('#app')

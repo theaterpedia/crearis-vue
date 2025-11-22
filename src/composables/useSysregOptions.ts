@@ -1,14 +1,22 @@
 /**
  * Composable: useSysregOptions
  * 
- * Fetches and caches sysreg metadata for dropdowns and filters.
- * Provides translated labels with i18n fallback chain.
+ * Provides sysreg metadata for dropdowns and filters with automatic i18n.
  * 
- * Features:
- * - Fetch options for specific tagfamily
- * - Get translated labels (de → en → base name)
- * - Filter options by entity type
- * - Cache management
+ * Key Features:
+ * - Auto-initializes cache on first use (no manual initCache needed)
+ * - Returns pre-translated labels based on current i18n language
+ * - Hides i18n complexity - components just use option.label
+ * - Reactive to language changes
+ * 
+ * Usage:
+ * ```ts
+ * const { getOptions } = useSysregOptions()
+ * const options = getOptions('ttags') // Returns options with translated labels
+ * 
+ * // In template:
+ * <option v-for="opt in options" :value="opt.value">{{ opt.label }}</option>
+ * ```
  */
 
 import { ref, computed, readonly, onMounted, type Ref, type ComputedRef } from 'vue'
@@ -23,16 +31,16 @@ export interface SysregOption {
     id?: number         // Database ID (optional for new entries)
     value: string       // BYTEA hex string (e.g., '\\x01', '\\x02')
     name: string        // Internal name (e.g., 'democracy', 'raw')
-    label: string       // Translated label
+    label: string       // Pre-translated label (uses current i18n language)
     bit?: number        // Bit position for bit-based tags (0-7)
-    description?: string // Translated description
+    description?: string // Pre-translated description
     taglogic: string    // category | subcategory | option | toggle
     is_default: boolean
     tagfamily: string   // tagfamily name
     bit_group?: string  // For ctags: age_group, subject_type, etc.
     color?: string      // Optional UI color hint
-    name_i18n?: Record<string, string>  // Raw i18n object for editing
-    desc_i18n?: Record<string, string>  // Raw desc_i18n object for editing
+    // Note: name_i18n and desc_i18n are internal only
+    // Components always receive pre-translated label/description
 }
 
 export interface BitGroupOption {
@@ -53,6 +61,13 @@ export function useSysregOptions(entity?: Ref<string> | string) {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const options = ref<SysregOption[]>([])
+
+    // Auto-initialize cache on first use
+    if (!cacheInitialized.value) {
+        initCache().catch(err => {
+            console.error('[useSysregOptions] Failed to auto-initialize cache:', err)
+        })
+    }
 
     /**
      * Get translated label with fallback chain
@@ -112,9 +127,9 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                         taglogic: entry.taglogic,
                         is_default: entry.is_default,
                         tagfamily: tagfamily,
-                        bit_group: entry.bit_group,
-                        name_i18n: entry.name_i18n,
-                        desc_i18n: entry.desc_i18n
+                        bit_group: entry.bit_group
+                        // Note: name_i18n and desc_i18n intentionally not exposed
+                        // Components should use pre-translated 'label' and 'description'
                     })
                 })
             }
@@ -176,9 +191,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                 description: getDescription(entry, langCode),
                 taglogic: entry.taglogic,
                 is_default: entry.is_default,
-                tagfamily: tagfamily,
-                name_i18n: entry.name_i18n,
-                desc_i18n: entry.desc_i18n
+                tagfamily: tagfamily
+                // Note: name_i18n not exposed - use pre-translated 'label'
             }))
         })
     }
@@ -317,9 +331,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                 taglogic: entry.taglogic,
                 is_default: entry.is_default,
                 tagfamily: tagfamily,
-                bit_group: entry.bit_group,
-                name_i18n: entry.name_i18n,
-                desc_i18n: entry.desc_i18n
+                bit_group: entry.bit_group
+                // Note: name_i18n not exposed to components
             }
         })
     }    /**
@@ -364,9 +377,9 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         getOptionByName,
         getOptionByValue,
         getOptionsByFamily,
-        getCtagsBitGroup,
+        getCtagsBitGroup
 
-        // Cache control
-        initCache
+        // Note: initCache removed - auto-initialization handles this
+        // Use fetchOptions(true) to force refresh if needed
     }
 }

@@ -599,7 +599,6 @@ const batchResult = ref<any>(null)
 
 // Lifecycle
 onMounted(async () => {
-    await fetchOptions()
     await fetchAnalytics()
 })
 

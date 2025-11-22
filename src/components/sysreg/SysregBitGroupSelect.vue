@@ -44,7 +44,7 @@ const emit = defineEmits<{
     'change': [value: number, label: string]
 }>()
 
-// Get bit group options
+// Get bit group options (auto-initializes cache)
 const { ctagsBitGroupOptions } = useSysregOptions()
 const { getBitGroupLabel, getBitGroupDescription, getBitGroupRange } = useSysregBitGroups()
 

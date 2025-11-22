@@ -41,7 +41,7 @@ export interface CtagsSuggestion {
 }
 
 export function useSysregSuggestions() {
-    const { getTagLabel, ctagsBitGroupOptions } = useSysregOptions()
+    const { getOptions, ctagsBitGroupOptions } = useSysregOptions()
 
     // Suggestion history (localStorage)
     const suggestionHistory = ref<Record<string, number>>({})
@@ -78,21 +78,23 @@ export function useSysregSuggestions() {
         tagfamily: 'ttags' | 'dtags' | 'rtags',
         limit = 5
     ): TagSuggestion[] {
+        const options = getOptions(tagfamily).value
         const prefix = `${tagfamily}-`
         const relevant = Object.entries(suggestionHistory.value)
             .filter(([key]) => key.startsWith(prefix))
             .map(([key, count]) => {
                 const bit = parseInt(key.split('-')[1])
                 const value = bitsToByteArray([bit])
+                const option = options.find(opt => opt.bit === bit)
                 return {
                     tagfamily,
                     bit,
                     value,
-                    label: getTagLabel(tagfamily, value),
+                    label: option?.label || `Bit ${bit}`,
                     count,
                     source: {
                         type: 'history' as const,
-                        confidence: Math.min(count / 10, 1), // Cap at 10 uses
+                        confidence: Math.min(count / 10, 1),
                         reason: `Used ${count} times before`
                     }
                 }

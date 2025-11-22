@@ -11,6 +11,7 @@
                     <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
                         placeholder="Enter heading..." required />
                 </div>
+                <!-- Header Type disabled
                 <div class="form-group form-group-fixed">
                     <label class="form-label" for="edit-header-type">Header Type</label>
                     <select id="edit-header-type" v-model="formData.header_type" class="form-select">
@@ -19,15 +20,34 @@
                         <option value="banner">Banner</option>
                         <option value="minimal">Minimal</option>
                     </select>
-                </div>
+                </div> -->
             </div>
 
-            <!-- Cover Image URL -->
-            <div class="form-group">
-                <label class="form-label" for="edit-cimg">Cover Image URL</label>
-                <input id="edit-cimg" v-model="formData.cimg" type="url" class="form-input" placeholder="https://..." />
-                <div v-if="formData.cimg && !isSmallHeight" class="image-preview">
-                    <img :src="formData.cimg" alt="Preview" @error="handleImageError" />
+            <!-- Status and Image Selection Row -->
+            <div class="form-row">
+                <div class="form-group form-group-flex">
+                    <label class="form-label" for="edit-status">Status</label>
+                    <select id="edit-status" v-model="formData.status_val" class="form-input">
+                        <option :value="null">-- Select status --</option>
+                        <option v-for="status in availableStatuses" :key="status.hex_value" :value="status.raw_value">
+                            {{ status.display_name }}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group form-group-flex">
+                    <label class="form-label">Cover Image</label>
+                    <DropdownList 
+                        entity="images"
+                        title="Select Cover Image"
+                        :project="projectDomaincode"
+                        size="small"
+                        width="medium"
+                        :dataMode="true"
+                        :multiSelect="false"
+                        v-model:selectedIds="formData.img_id"
+                        :displayXml="true"
+                    />
                 </div>
             </div>
 
@@ -85,6 +105,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import BasePanel from './BasePanel.vue'
 import SysregTagDisplay from './sysreg/SysregTagDisplay.vue'
+import { DropdownList } from '@/components/clist'
+import { sanitizeStatusVal } from '@/composables/useSysreg'
 
 export interface EditPanelData {
     heading: string
@@ -103,11 +125,14 @@ interface Props {
     data: EditPanelData
     sidebarMode?: 'left' | 'right' | 'none'
     availableFields?: string[] // Optional list of available fields
+    entityType?: string // Entity table name (e.g., 'posts', 'events', 'projects')
+    projectDomaincode?: string // Project domaincode for filtering images
 }
 
 const props = withDefaults(defineProps<Props>(), {
     sidebarMode: 'none',
-    availableFields: () => ['heading', 'teaser', 'cimg', 'header_type', 'md']
+    availableFields: () => ['heading', 'teaser', 'cimg', 'header_type', 'md'],
+    entityType: 'posts' // Default to posts
 })
 
 const emit = defineEmits<{
@@ -119,6 +144,8 @@ const anchorRef = ref<HTMLElement>()
 const formData = ref<EditPanelData>({ ...props.data })
 const isSaving = ref(false)
 const imageError = ref(false)
+const isInitializing = ref(false)
+const availableStatuses = ref<Array<{ hex_value: string; raw_value: any; display_name: string; name: string }>>([])
 const allTags = ref(false)
 const configVisibility = ref(0)
 const ageGroup = ref(0)
@@ -142,12 +169,54 @@ function handleClose() {
     emit('close')
 }
 
+// Load available statuses for the entity type
+async function loadStatuses() {
+    console.log(`[EditPanel] Loading statuses for entity type: ${props.entityType}...`)
+    try {
+        const response = await fetch(`/api/sysreg/status?family=${props.entityType}`)
+        console.log('[EditPanel] Status response:', { ok: response.ok, status: response.status })
+        if (!response.ok) throw new Error('Failed to load statuses')
+        const data = await response.json()
+        console.log('[EditPanel] Statuses data received:', data)
+        // Map status items to display format
+        availableStatuses.value = (data.items || []).map((item: any) => {
+            const hexValue = item.value || '0000'
+            const displayName = item.displayNameDe || item.name || `Status 0x${hexValue}`
+            return {
+                hex_value: hexValue,
+                raw_value: item.value,
+                display_name: displayName,
+                name: item.name
+            }
+        })
+        console.log('[EditPanel] Available statuses:', availableStatuses.value.length, 'items')
+    } catch (error) {
+        console.error('[EditPanel] Error loading statuses:', error)
+        availableStatuses.value = []
+    }
+}
+
 // Handle save
 function handleSave() {
     isSaving.value = true
-    // Emit save event with form data
-    // Parent component will handle the save and reset isSaving via close or data update
-    emit('save', { ...formData.value })
+    
+    // Sanitize data to prevent NULL bytes and ensure proper types
+    const saveData: any = {
+        ...formData.value,
+        ttags: coreThemes.value,
+        ctags: String.fromCharCode(configVisibility.value | (ageGroup.value << 2) | (subjectType.value << 4)),
+        dtags: domains.value
+    }
+    
+    // Ensure img_id is a valid number or null (not undefined or 0)
+    if (saveData.img_id === undefined || saveData.img_id === 0) {
+        saveData.img_id = null
+    }
+    
+    // Properly sanitize status_val to prevent Buffer stringification
+    saveData.status_val = sanitizeStatusVal(saveData.status_val)
+    
+    emit('save', saveData)
 }
 
 // Handle image load error
@@ -158,17 +227,28 @@ function handleImageError() {
 // Watch for data changes from parent
 watch(() => props.data, (newData) => {
     formData.value = { ...newData }
+    console.log('[EditPanel] Data updated:', { status_val: newData?.status_val, type: typeof newData?.status_val })
 }, { deep: true })
 
 // Reset form when panel opens/closes
 watch(() => props.isOpen, (isOpen) => {
+    console.log('[EditPanel] Panel open state changed:', isOpen)
     if (isOpen) {
+        console.log('[EditPanel] Initializing form with data:', props.data)
+        console.log('[EditPanel] Entity type:', props.entityType)
+        isInitializing.value = true
         formData.value = { ...props.data }
         imageError.value = false
         isSaving.value = false
+        loadStatuses()
+        // Clear initialization flag after components have mounted
+        setTimeout(() => {
+            isInitializing.value = false
+        }, 500)
     } else {
         // Reset saving state when closing
         isSaving.value = false
+        isInitializing.value = false
     }
 })
 </script>
@@ -220,6 +300,43 @@ watch(() => props.isOpen, (isOpen) => {
     font-size: 0.75rem;
     font-weight: 400;
     color: var(--color-dimmed);
+}
+
+/* Filter Row Styles */
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: -0.5rem;
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-dimmed);
+    white-space: nowrap;
+}
+
+.filter-input {
+    flex: 1;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    transition: border-color 0.15s ease-in-out;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* DropdownList integration */
+.form-group :deep(.dropdown-trigger) {
+    width: 100%;
 }
 
 .form-input,

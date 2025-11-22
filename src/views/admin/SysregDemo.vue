@@ -237,11 +237,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { StatusBadge, SysregSelect, SysregMultiToggle, SysregBitGroupSelect } from '@/components/sysreg'
 import {
-    useSysregTags,
     parseByteaHex,
     byteaFromNumber,
     toggleBit,
@@ -251,20 +250,8 @@ import {
 } from '@/composables/useSysregTags'
 import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
 
-// Initialize composables
-const { initCache } = useSysregTags()
+// Get bit group utilities (auto-initialized)
 const { getBitGroupsWithLabels, getBitGroupLabel } = useSysregBitGroups()
-const isLoading = ref(true)
-
-onMounted(async () => {
-    try {
-        await initCache()
-    } catch (error) {
-        console.error('Failed to initialize sysreg cache:', error)
-    } finally {
-        isLoading.value = false
-    }
-})
 
 // Status select state
 const selectedStatus = ref<string | null>(null)
