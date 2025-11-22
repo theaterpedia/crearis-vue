@@ -158,9 +158,8 @@ function goToStep(index: number) {
 }
 
 .stepper-header :deep(h2) {
-    font-size: 1.75rem;
     font-weight: 600;
-    color: var(--color-project);
+    color: var(--color-primary-contrast);
     margin: 0;
 }
 
