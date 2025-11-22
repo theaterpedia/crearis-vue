@@ -18,20 +18,28 @@ export default defineEventHandler(async (event) => {
             `UPDATE posts SET 
         name = ?,
         teaser = ?,
-        cimg = ?,
         md = ?,
-        project_id = ?,
+        html = ?,
         img_id = ?,
-        status_id = ?
+        header_type = ?,
+        header_size = ?,
+        status_val = ?,
+        ttags = ?,
+        ctags = ?,
+        dtags = ?
       WHERE id = ?`,
             [
                 body.name,
                 body.teaser,
-                body.cimg,
-                body.content || body.md,
-                body.project_id,
+                body.md,
+                body.html,
                 body.img_id,
-                body.status_id,
+                body.header_type,
+                body.header_size,
+                body.status_val,
+                body.ttags,
+                body.ctags,
+                body.dtags,
                 id
             ]
         )
