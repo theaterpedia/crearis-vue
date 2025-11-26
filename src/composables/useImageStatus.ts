@@ -34,8 +34,8 @@ import { useSysregOptions } from './useSysregOptions'
 
 export interface Image {
     id: number
-    status_val: string | null  // BYTEA hex string
-    ctags_val: string | null  // BYTEA hex string (config bits)
+    status: string | null  // BYTEA hex string
+    ctags: string | null  // BYTEA hex string (config bits)
     [key: string]: any
 }
 
@@ -61,11 +61,11 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
 
     // Parse current values - return BYTEA hex strings, not numbers
     const currentStatus = computed(() => {
-        return image.value?.status_val || '\\x00'
+        return image.value?.status || '\\x00'
     })
 
     const currentConfig = computed(() => {
-        return image.value?.ctags_val || '\\x00'
+        return image.value?.ctags || '\\x00'
     })
 
     // Helper to get status byte value for comparisons
@@ -189,8 +189,8 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x01),
-            ctags_val: setBit(currentConfig.value, 2) // Set needs_review
+            status: byteaFromNumber(0x01),
+            ctags: setBit(currentConfig.value, 2) // Set needs_review
         })
     }
 
@@ -201,8 +201,8 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x02),
-            ctags_val: clearBit(currentConfig.value, 2) // Clear needs_review
+            status: byteaFromNumber(0x02),
+            ctags: clearBit(currentConfig.value, 2) // Clear needs_review
         })
     }
 
@@ -213,8 +213,8 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x04),
-            ctags_val: setBit(currentConfig.value, 0) // Auto-set public
+            status: byteaFromNumber(0x04),
+            ctags: setBit(currentConfig.value, 0) // Auto-set public
         })
     }
 
@@ -225,15 +225,15 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x08),
-            ctags_val: clearBit(currentConfig.value, 1) // Clear featured
+            status: byteaFromNumber(0x08),
+            ctags: clearBit(currentConfig.value, 1) // Clear featured
         })
     }
 
     async function archiveImage() {
         return updateImageStatus({
-            status_val: byteaFromNumber(0x10),
-            ctags_val: clearBit(clearBit(currentConfig.value, 0), 1) // Clear public and featured
+            status: byteaFromNumber(0x10),
+            ctags: clearBit(clearBit(currentConfig.value, 0), 1) // Clear public and featured
         })
     }
 
@@ -244,20 +244,20 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status_val: byteaFromNumber(0x02) // Back to approved
+            status: byteaFromNumber(0x02) // Back to approved
         })
     }
 
     async function resetToRaw() {
         return updateImageStatus({
-            status_val: byteaFromNumber(0x00)
+            status: byteaFromNumber(0x00)
         })
     }
 
     // Config bit management
     function hasConfigBit(bit: number): boolean {
-        if (!image.value?.ctags_val) return false
-        return hasBit(image.value.ctags_val, bit)
+        if (!image.value?.ctags) return false
+        return hasBit(image.value.ctags, bit)
     }
 
     async function setConfigBit(bit: number, value: boolean) {
@@ -268,7 +268,7 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
             : clearBit(currentConfig.value, bit)
 
         return updateImageStatus({
-            ctags_val: newConfig
+            ctags: newConfig
         })
     }
 
@@ -278,27 +278,27 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         const bit = typeof bitOrName === 'number' ? bitOrName : CONFIG_BIT_MAP[bitOrName]
 
         return updateImageStatus({
-            ctags_val: toggleBit(currentConfig.value, bit)
+            ctags: toggleBit(currentConfig.value, bit)
         })
     }
 
     // Field-specific bit helpers (for direct image field manipulation)
-    function hasBitInField(field: 'status_val' | 'ctags_val', bit: number): boolean {
+    function hasBitInField(field: 'status' | 'ctags', bit: number): boolean {
         if (!image.value?.[field]) return false
         return hasBit(image.value[field], bit)
     }
 
-    function setBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+    function setBitInField(field: 'status' | 'ctags', bit: number) {
         if (!image.value) return
         image.value[field] = setBit(image.value[field], bit)
     }
 
-    function clearBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+    function clearBitInField(field: 'status' | 'ctags', bit: number) {
         if (!image.value) return
         image.value[field] = clearBit(image.value[field], bit)
     }
 
-    function toggleBitInField(field: 'status_val' | 'ctags_val', bit: number) {
+    function toggleBitInField(field: 'status' | 'ctags', bit: number) {
         if (!image.value) return
         image.value[field] = toggleBit(image.value[field], bit)
     }

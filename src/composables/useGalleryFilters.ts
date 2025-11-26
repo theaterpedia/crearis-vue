@@ -282,20 +282,20 @@ export function useGalleryFilters() {
         // Filter by status
         if (filters.value.status.length > 0) {
             result = result.filter(img =>
-                filters.value.status.includes(img.status_val)
+                filters.value.status.includes(img.status)
             )
         }
 
         // Filter by ttags (any match)
         if (filters.value.ttags.length > 0) {
             result = result.filter(img => {
-                if (!img.ttags_val) return false
+                if (!img.ttags) return false
                 // Check if any filter tag bits are set in image
                 return filters.value.ttags.some((filterTag: string) => {
                     // Both are hex strings like '\\x01'
                     // We need bitwise AND - if non-zero, there's overlap
                     const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
-                    const imageByte = parseInt(img.ttags_val.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.ttags.replace(/^\\x/, ''), 16)
                     return (filterByte & imageByte) !== 0
                 })
             })
@@ -304,10 +304,10 @@ export function useGalleryFilters() {
         // Filter by dtags (any match)
         if (filters.value.dtags.length > 0) {
             result = result.filter((img: any) => {
-                if (!img.dtags_val) return false
+                if (!img.dtags) return false
                 return filters.value.dtags.some((filterTag: string) => {
                     const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
-                    const imageByte = parseInt(img.dtags_val.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.dtags.replace(/^\\x/, ''), 16)
                     return (filterByte & imageByte) !== 0
                 })
             })
@@ -316,10 +316,10 @@ export function useGalleryFilters() {
         // Filter by rtags (any match)
         if (filters.value.rtags.length > 0) {
             result = result.filter((img: any) => {
-                if (!img.rtags_val) return false
+                if (!img.rtags) return false
                 return filters.value.rtags.some((filterTag: string) => {
                     const filterByte = parseInt(filterTag.replace(/^\\x/, ''), 16)
-                    const imageByte = parseInt(img.rtags_val.replace(/^\\x/, ''), 16)
+                    const imageByte = parseInt(img.rtags.replace(/^\\x/, ''), 16)
                     return (filterByte & imageByte) !== 0
                 })
             })
@@ -356,8 +356,8 @@ export function useGalleryFilters() {
             })
         } else if (sortField.value === 'status') {
             sorted.sort((a, b) => {
-                const statusA = a.status_val || '\\x00'
-                const statusB = b.status_val || '\\x00'
+                const statusA = a.status || '\\x00'
+                const statusB = b.status || '\\x00'
                 const comparison = statusA.localeCompare(statusB)
                 return sortOrder.value === 'asc' ? comparison : -comparison
             })

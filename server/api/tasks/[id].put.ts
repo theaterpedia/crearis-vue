@@ -124,9 +124,9 @@ export default defineEventHandler(async (event) => {
         }
 
         if (statusVal !== undefined) {
-            updateData.status_val = statusVal
-            updates.push('status_val = ?')
-            values.push(updateData.status_val)
+            updateData.status = statusVal
+            updates.push('status = ?')
+            values.push(updateData.status)
 
             // Auto-set completed_at when marking as final
             if (body.status === 'final' && !body.completed_at) {

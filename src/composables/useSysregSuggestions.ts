@@ -113,13 +113,13 @@ export function useSysregSuggestions() {
 
     // Suggest tags from project context
     function suggestFromProject(
-        project: { ttags_val?: string; dtags_val?: string },
+        project: { ttags?: string; dtags?: string },
         includeTagfamilies: ('ttags' | 'dtags')[] = ['ttags', 'dtags']
     ): TagSuggestion[] {
         const suggestions: TagSuggestion[] = []
 
-        if (includeTagfamilies.includes('ttags') && project.ttags_val) {
-            const bits = byteArrayToBits(project.ttags_val)
+        if (includeTagfamilies.includes('ttags') && project.ttags) {
+            const bits = byteArrayToBits(project.ttags)
             bits.forEach(bit => {
                 const value = bitsToByteArray([bit])
                 suggestions.push({
@@ -136,8 +136,8 @@ export function useSysregSuggestions() {
             })
         }
 
-        if (includeTagfamilies.includes('dtags') && project.dtags_val) {
-            const bits = byteArrayToBits(project.dtags_val)
+        if (includeTagfamilies.includes('dtags') && project.dtags) {
+            const bits = byteArrayToBits(project.dtags)
             bits.forEach(bit => {
                 const value = bitsToByteArray([bit])
                 suggestions.push({
@@ -289,9 +289,9 @@ export function useSysregSuggestions() {
     async function suggestFromSimilar(
         entity: string,
         currentTags: {
-            ttags_val?: string
-            dtags_val?: string
-            ctags_val?: string
+            ttags?: string
+            dtags?: string
+            ctags?: string
         },
         limit = 5
     ): Promise<TagSuggestion[]> {
@@ -299,12 +299,12 @@ export function useSysregSuggestions() {
             // Fetch similar entities based on current tags
             const params = new URLSearchParams()
 
-            if (currentTags.ttags_val) {
-                params.set('ttags_any', currentTags.ttags_val)
+            if (currentTags.ttags) {
+                params.set('ttags_any', currentTags.ttags)
             }
 
-            if (currentTags.dtags_val) {
-                params.set('dtags_any', currentTags.dtags_val)
+            if (currentTags.dtags) {
+                params.set('dtags_any', currentTags.dtags)
             }
 
             params.set('limit', '10')
@@ -322,15 +322,15 @@ export function useSysregSuggestions() {
             const dtagCounts: Record<number, number> = {}
 
             similar.forEach((item: any) => {
-                if (item.ttags_val) {
-                    const bits = byteArrayToBits(item.ttags_val)
+                if (item.ttags) {
+                    const bits = byteArrayToBits(item.ttags)
                     bits.forEach(bit => {
                         ttagCounts[bit] = (ttagCounts[bit] || 0) + 1
                     })
                 }
 
-                if (item.dtags_val) {
-                    const bits = byteArrayToBits(item.dtags_val)
+                if (item.dtags) {
+                    const bits = byteArrayToBits(item.dtags)
                     bits.forEach(bit => {
                         dtagCounts[bit] = (dtagCounts[bit] || 0) + 1
                     })
@@ -349,7 +349,7 @@ export function useSysregSuggestions() {
                     const value = bitsToByteArray([bit])
 
                     // Skip if already in current tags
-                    if (currentTags.ttags_val && hasBit(currentTags.ttags_val, bit)) {
+                    if (currentTags.ttags && hasBit(currentTags.ttags, bit)) {
                         return
                     }
 
@@ -375,7 +375,7 @@ export function useSysregSuggestions() {
                     const value = bitsToByteArray([bit])
 
                     // Skip if already in current tags
-                    if (currentTags.dtags_val && hasBit(currentTags.dtags_val, bit)) {
+                    if (currentTags.dtags && hasBit(currentTags.dtags, bit)) {
                         return
                     }
 

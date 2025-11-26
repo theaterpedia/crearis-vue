@@ -250,10 +250,10 @@
                                         @delete="deleteTask" @drag-start="handleDragStart" />
 
                                     <!-- Trashed watch tasks -->
-                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.status_value === STATUS_VALUE.TRASH)"
+                                    <AdminTaskCard v-for="task in watchTasks.filter((t: any) => t.statusue === STATUS_VALUE.TRASH)"
                                         :key="task.id" :task="task" @restore="restoreWatchTask" />
 
-                                    <div v-if="trashTasks.length === 0 && watchTasks.filter((t: any) => t.status_value === STATUS_VALUE.TRASH).length === 0"
+                                    <div v-if="trashTasks.length === 0 && watchTasks.filter((t: any) => t.statusue === STATUS_VALUE.TRASH).length === 0"
                                         class="empty-column">
                                         No tasks
                                     </div>
@@ -547,31 +547,31 @@ const stats = computed(() => {
     const filtered = filteredTasks.value
     return {
         total: filtered.length,
-        idea: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.IDEA).length,
-        draft: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.DRAFT).length,
-        final: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.FINAL).length,
-        reopen: filtered.filter((t: Task) => t.status_value === STATUS_VALUE.REOPEN).length
+        idea: filtered.filter((t: Task) => t.statusue === STATUS_VALUE.IDEA).length,
+        draft: filtered.filter((t: Task) => t.statusue === STATUS_VALUE.DRAFT).length,
+        final: filtered.filter((t: Task) => t.statusue === STATUS_VALUE.FINAL).length,
+        reopen: filtered.filter((t: Task) => t.statusue === STATUS_VALUE.REOPEN).length
     }
 })
 
 // Computed: Tasks by status value
 const ideaTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.IDEA)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.IDEA)
 )
 const newTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.NEW)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.NEW)
 )
 const draftTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.DRAFT)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.DRAFT)
 )
 const finalTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.FINAL)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.FINAL)
 )
 const reopenTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.REOPEN)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.REOPEN)
 )
 const trashTasks = computed(() =>
-    filteredTasks.value.filter((t: Task) => t.status_value === STATUS_VALUE.TRASH)
+    filteredTasks.value.filter((t: Task) => t.statusue === STATUS_VALUE.TRASH)
 )
 
 // Load tasks from API
@@ -699,7 +699,7 @@ function handleDragStart(task: Task) {
 function handleDrop(event: DragEvent, newStatusValue: number) {
     event.preventDefault()
 
-    if (draggedTask.value && draggedTask.value.status_value !== newStatusValue) {
+    if (draggedTask.value && draggedTask.value.statusue !== newStatusValue) {
         updateTaskStatus(draggedTask.value.id, newStatusValue)
     }
 

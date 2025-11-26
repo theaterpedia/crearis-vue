@@ -30,7 +30,7 @@
                     <Prose>
                         <!-- Post metadata -->
                         <div class="post-meta">
-                            <div v-if="post.status_val" class="post-status">
+                            <div v-if="post.status" class="post-status">
                                 <StatusBadge 
                                     :value="statusValueString" 
                                     :label="statusLabel"
@@ -180,8 +180,8 @@ const footerOptions = computed<FooterOptions>(() => {
 
 // Convert status_val to hex string and get label (synchronous with unified composable)
 const statusValueString = computed(() => {
-    if (!post.value?.status_val) return null
-    return bufferToHex(post.value.status_val)
+    if (!post.value?.status) return null
+    return bufferToHex(post.value.status)
 })
 
 const statusLabel = computed(() => {
@@ -200,7 +200,7 @@ const editPanelData = computed((): EditPanelData => {
         img_id: post.value.img_id || null,
         header_type: post.value.header_type || 'banner',
         header_size: post.value.header_size || null,
-        status_val: post.value.status_val || null  // Pass raw value to match dropdown
+        status: post.value.status || null  // Pass raw value to match dropdown
     }
 })
 
@@ -292,7 +292,7 @@ async function handleSavePost(data: Record<string, any>) {
             img_id: (data.img_id === undefined || data.img_id === 0) ? null : data.img_id,
             header_type: data.header_type || 'banner',
             header_size: data.header_size || null,
-            status_val: sanitizeStatusVal(data.status_val),
+            status: sanitizeStatusVal(data.status),
             // Include sysreg tags (sanitize to prevent NULL bytes)
             ttags: data.ttags || '\\x00',
             ctags: data.ctags || '\\x00',

@@ -58,10 +58,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role, instructor_id, status_val
+    SELECT id, sysmail, extmail, username, password, role, instructor_id, status
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_val'> | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status'> | undefined
 
     if (!user) {
         throw createError({

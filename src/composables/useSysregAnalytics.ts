@@ -109,7 +109,7 @@ export function useSysregAnalytics(entity: string = 'images') {
             // Calculate status distribution
             const statusCounts: Record<string, number> = {}
             entities.forEach((e: any) => {
-                const status = e.status_val || '\\x00'
+                const status = e.status || '\x00'
                 statusCounts[status] = (statusCounts[status] || 0) + 1
             })
 
@@ -128,8 +128,8 @@ export function useSysregAnalytics(entity: string = 'images') {
             // Calculate TTags usage
             const ttagCounts: Record<number, number> = {}
             entities.forEach((e: any) => {
-                if (e.ttags_val) {
-                    const bits = byteArrayToBits(e.ttags_val)
+                if (e.ttags) {
+                    const bits = byteArrayToBits(e.ttags)
                     bits.forEach(bit => {
                         ttagCounts[bit] = (ttagCounts[bit] || 0) + 1
                     })
@@ -156,8 +156,8 @@ export function useSysregAnalytics(entity: string = 'images') {
             // Calculate DTags usage
             const dtagCounts: Record<number, number> = {}
             entities.forEach((e: any) => {
-                if (e.dtags_val) {
-                    const bits = byteArrayToBits(e.dtags_val)
+                if (e.dtags) {
+                    const bits = byteArrayToBits(e.dtags)
                     bits.forEach(bit => {
                         dtagCounts[bit] = (dtagCounts[bit] || 0) + 1
                     })
@@ -184,8 +184,8 @@ export function useSysregAnalytics(entity: string = 'images') {
             // Calculate RTags usage
             const rtagCounts: Record<number, number> = {}
             entities.forEach((e: any) => {
-                if (e.rtags_val) {
-                    const bits = byteArrayToBits(e.rtags_val)
+                if (e.rtags) {
+                    const bits = byteArrayToBits(e.rtags)
                     bits.forEach(bit => {
                         rtagCounts[bit] = (rtagCounts[bit] || 0) + 1
                     })
@@ -243,8 +243,8 @@ export function useSysregAnalytics(entity: string = 'images') {
             const previousCounts: Record<string, number> = {}
 
             recentEntities.forEach((e: any) => {
-                if (e.ttags_val) {
-                    const bits = byteArrayToBits(e.ttags_val)
+                if (e.ttags) {
+                    const bits = byteArrayToBits(e.ttags)
                     bits.forEach(bit => {
                         const key = `ttags-${bit}`
                         recentCounts[key] = (recentCounts[key] || 0) + 1
@@ -253,8 +253,8 @@ export function useSysregAnalytics(entity: string = 'images') {
             })
 
             previousEntities.forEach((e: any) => {
-                if (e.ttags_val) {
-                    const bits = byteArrayToBits(e.ttags_val)
+                if (e.ttags) {
+                    const bits = byteArrayToBits(e.ttags)
                     bits.forEach(bit => {
                         const key = `ttags-${bit}`
                         previousCounts[key] = (previousCounts[key] || 0) + 1
@@ -267,7 +267,7 @@ export function useSysregAnalytics(entity: string = 'images') {
             const ttagOpts = getOptions('ttags').value
             const dtagOpts = getOptions('dtags').value
             const rtagOpts = getOptions('rtags').value
-            
+
             Object.keys(recentCounts).forEach(key => {
                 const [tagfamily, bitStr] = key.split('-')
                 const bit = parseInt(bitStr)
@@ -284,7 +284,7 @@ export function useSysregAnalytics(entity: string = 'images') {
                     if (tagfamily === 'ttags') option = ttagOpts.find(opt => opt.bit === bit)
                     else if (tagfamily === 'dtags') option = dtagOpts.find(opt => opt.bit === bit)
                     else if (tagfamily === 'rtags') option = rtagOpts.find(opt => opt.bit === bit)
-                    
+
                     trending.push({
                         tagfamily,
                         bit,
