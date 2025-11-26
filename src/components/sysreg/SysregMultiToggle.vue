@@ -64,8 +64,8 @@ const emit = defineEmits<{
     'change': [selectedBits: number[], selectedValues: string[]]
 }>()
 
-// Get options for the tagfamily
-const { getOptions, cacheInitialized, initCache } = useSysregOptions()
+// Get options for the tagfamily (auto-initializes cache)
+const { getOptions } = useSysregOptions()
 
 const allOptions = computed(() => {
     return getOptions(props.tagfamily).value
@@ -144,12 +144,7 @@ function toggleOption(value: string) {
     emit('change', newBits, newBits.map(bit => bitsToByteArray([bit])))
 }
 
-// Initialize cache
-onMounted(async () => {
-    if (!cacheInitialized.value) {
-        await initCache()
-    }
-})
+// Note: Cache auto-initialized by useSysregOptions composable
 </script>
 
 <style scoped>

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
         const family = query.family as string | undefined
         const name = query.name as string | undefined
 
-        let sql = 'SELECT name, value, display_name_de, display_name_en FROM sysreg_status WHERE 1=1'
+        let sql = 'SELECT name, value, name_i18n, desc_i18n FROM sysreg_status WHERE 1=1'
         const params: any[] = []
 
         // Filter by family (name starts with "family >")
@@ -31,17 +31,39 @@ export default defineEventHandler(async (event) => {
             params.push(name)
         }
 
-        sql += ' ORDER BY name'
+        sql += ' ORDER BY value'
 
+        console.log('[sysreg/status] Executing SQL:', sql, 'with params:', params)
         const results = await db.all(sql, params)
+        console.log('[sysreg/status] Query returned', results.length, 'rows')
+        console.log('[sysreg/status] First row sample:', results[0])
 
-        // Convert BYTEA values to hex strings for JSON serialization
-        const items = results.map((row: any) => ({
-            name: row.name,
-            value: row.value ? Buffer.from(row.value).toString('hex') : null,
-            displayNameDe: row.display_name_de,
-            displayNameEn: row.display_name_en
-        }))
+        // Convert BYTEA values to hex strings and extract i18n names
+        const items = results.map((row: any, index: number) => {
+            try {
+                console.log(`[sysreg/status] Processing row ${index}:`, {
+                    name: row.name,
+                    value_type: typeof row.value,
+                    value_isBuffer: Buffer.isBuffer(row.value),
+                    name_i18n_type: typeof row.name_i18n
+                })
+                
+                // name_i18n is already parsed as object by PostgreSQL driver
+                const nameI18n = row.name_i18n || {}
+                // row.value is already a Buffer from PostgreSQL
+                const hexValue = row.value ? (Buffer.isBuffer(row.value) ? row.value.toString('hex') : row.value) : null
+                
+                return {
+                    name: row.name,
+                    value: hexValue,
+                    displayNameDe: nameI18n.de || row.name,
+                    displayNameEn: nameI18n.en || row.name
+                }
+            } catch (err) {
+                console.error(`[sysreg/status] Error processing row ${index}:`, err, 'row:', row)
+                throw err
+            }
+        })
 
         return {
             items,

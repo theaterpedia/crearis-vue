@@ -4,11 +4,21 @@
  * Provides bit group metadata and labels for tag families.
  * Loads configuration from sysreg-bitgroups.json.
  * 
+ * Key Features:
+ * - Auto-detects current i18n language
+ * - Returns pre-translated labels and descriptions
+ * - Semantic names for bit ranges ("Altersgruppen" vs "Bits 0-1")
+ * 
  * Use cases:
- * - Display semantic names for bit ranges ("Altersgruppen" instead of "Bits 0-1")
+ * - Display semantic names for bit ranges
  * - Group tags in UI by bit group
  * - Show descriptions for bit groups
- * - Support i18n for bit group labels
+ * 
+ * Usage:
+ * ```ts
+ * const { getBitGroupLabel } = useSysregBitGroups()
+ * const label = getBitGroupLabel('ctags', 'age_group') // Auto-translated
+ * ```
  */
 
 import { computed } from 'vue'
@@ -110,6 +120,15 @@ export function useSysregBitGroups() {
     }
 
     /**
+     * Get bit range for a specific group by name
+     */
+    function getBitGroupRange(tagfamily: string, groupName: string): string {
+        const groups = getBitGroupsForFamily(tagfamily)
+        const group = groups.find(g => g.name === groupName)
+        return group ? getBitRangeString(group) : ''
+    }
+
+    /**
      * Get all bit groups for a family with translated labels (computed)
      */
     function getBitGroupsWithLabels(tagfamily: string) {
@@ -170,6 +189,7 @@ export function useSysregBitGroups() {
 
         // Utility
         getBitRangeString,
+        getBitGroupRange,
         hasBitGroups
     }
 }

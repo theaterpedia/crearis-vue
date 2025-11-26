@@ -4,15 +4,11 @@
             <div class="demo-header">
                 <h1>Sysreg System Components Demo</h1>
                 <p class="demo-subtitle">
-                    Phase 1 + Phase 2 Implementation: Core composables and base components
+                    Unified API - Auto-initialized, pre-translated, synchronous access
                 </p>
             </div>
 
-            <div v-if="isLoading" class="loading-state">
-                <p>Loading sysreg data...</p>
-            </div>
-
-            <div v-else class="demo-sections">
+            <div class="demo-sections">
                 <!-- Section 1: Status Badge -->
                 <section class="demo-section">
                     <h2>StatusBadge Component</h2>
@@ -237,34 +233,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import { StatusBadge, SysregSelect, SysregMultiToggle, SysregBitGroupSelect } from '@/components/sysreg'
-import {
-    useSysregTags,
-    parseByteaHex,
-    byteaFromNumber,
-    toggleBit,
-    hasBit,
-    byteArrayToBits,
-    buildCtagsByte
-} from '@/composables/useSysregTags'
-import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
+import { useSysreg } from '@/composables/useSysreg'
 
-// Initialize composables
-const { initCache } = useSysregTags()
-const { getBitGroupsWithLabels, getBitGroupLabel } = useSysregBitGroups()
-const isLoading = ref(true)
+// Get unified sysreg utilities (auto-initialized, pre-translated)
+const sysreg = useSysreg()
+const { getBitGroups: getBitGroupsWithLabels, getBitGroupLabel } = sysreg
 
-onMounted(async () => {
-    try {
-        await initCache()
-    } catch (error) {
-        console.error('Failed to initialize sysreg cache:', error)
-    } finally {
-        isLoading.value = false
-    }
-})
+// Aliases for utility functions
+const { parseByteaHex, toggleBit, hasBit, byteArrayToBits, buildCtagsByte } = sysreg
 
 // Status select state
 const selectedStatus = ref<string | null>(null)

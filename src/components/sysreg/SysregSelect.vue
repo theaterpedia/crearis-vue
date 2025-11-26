@@ -59,8 +59,8 @@ const emit = defineEmits<{
     'change': [option: { value: string; name: string; label: string }]
 }>()
 
-// Get options for the tagfamily
-const { getOptions, cacheInitialized, initCache } = useSysregOptions(props.entity)
+// Get options for the tagfamily (auto-initializes cache)
+const { getOptions } = useSysregOptions(props.entity)
 
 const options = computed(() => {
     return getOptions(props.tagfamily).value
@@ -86,13 +86,8 @@ function handleChange(event: Event) {
     }
 }
 
-// Initialize cache and set default value
-onMounted(async () => {
-    if (!cacheInitialized.value) {
-        await initCache()
-    }
-
-    // Set default value if provided and no value selected
+// Set default value if provided
+onMounted(() => {
     if (props.defaultValue && !props.modelValue) {
         emit('update:modelValue', props.defaultValue)
     }

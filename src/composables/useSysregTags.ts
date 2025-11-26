@@ -5,10 +5,14 @@
  * Handles bit operations, BYTEA conversion, and multi-select tags.
  * 
  * Features:
+ * - Auto-initializes cache on module load (no manual setup needed)
  * - CTags bit group extraction/building (age_group, subject_type, etc.)
  * - Multi-tag operations (rtags, ttags, dtags)
  * - BYTEA ↔ hex string ↔ bit array conversions
  * - Tag suggestions from project context
+ * 
+ * Note: Cache is initialized automatically. Components can start using
+ * bit operations immediately without calling initCache().
  */
 
 import { ref, readonly, type Ref } from 'vue'
@@ -91,6 +95,13 @@ async function initCache(): Promise<void> {
     }
 }
 
+// Auto-initialize cache on module load
+if (!cacheInitialized.value && !cacheLoading.value) {
+    initCache().catch(err => {
+        console.error('[useSysregTags] Failed to auto-initialize cache:', err)
+    })
+}
+
 /**
  * Reset cache (for testing)
  */
@@ -109,11 +120,23 @@ function resetCache(): void {
  * @param hex - BYTEA hex string (e.g., "\\x01" or "\\x0102")
  * @returns Array of byte values
  */
-export function parseByteaHex(hex: string | null | undefined): number[] {
+export function parseByteaHex(hex: string | null | undefined | Buffer | any): number[] {
     if (!hex) return [0]
 
+    // Convert Buffer or other objects to string
+    let hexString: string
+    if (typeof hex === 'string') {
+        hexString = hex
+    } else if (Buffer.isBuffer(hex)) {
+        hexString = `\\x${hex.toString('hex')}`
+    } else if (hex && typeof hex === 'object' && 'toString' in hex) {
+        hexString = String(hex)
+    } else {
+        return [0]
+    }
+
     // Remove \x or 0x prefix
-    const cleaned = hex.replace(/^\\x|^0x/, '')
+    const cleaned = hexString.replace(/^\\x|^0x/, '')
 
     // Validate hex string (only hex chars allowed)
     if (!/^[0-9a-fA-F]*$/.test(cleaned)) {

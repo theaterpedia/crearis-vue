@@ -765,7 +765,7 @@ onUnmounted(() => {
 
 /* Navigation Column (Left) - Stepper or Tabs */
 .navigation {
-    flex: 0 0 40%;
+    flex: 0 0 25%;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -777,7 +777,7 @@ onUnmounted(() => {
 
 /* Editor Column (Right) - Main Content Area */
 .editor {
-    flex: 0 0 60%;
+    flex: 0 0 75%;
     overflow-y: auto;
     padding-left: 1rem;
     border-left: var(--border) solid var(--color-border);
