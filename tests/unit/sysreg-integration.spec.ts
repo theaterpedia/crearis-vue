@@ -195,13 +195,13 @@ describe('Sysreg Composable Integration', () => {
     describe('useImageStatus + useSysregTags', () => {
         it('status workflow uses tag operations internally', async () => {
             setupGlobalFetchMock()
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { currentStatus, isRaw } = useImageStatus(image)
             const { parseByteaHex } = useSysregTags()
 
             expect(isRaw.value).toBe(true)
 
-            const bytes = parseByteaHex(image.value.status_val)
+            const bytes = parseByteaHex(image.value.status)
             expect(bytes[0]).toBe(0)
         })
 
@@ -210,19 +210,19 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { startProcessing, isProcessing } = useImageStatus(image)
 
             // Mock API call
             global.fetch = vi.fn().mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ id: 1, status_val: '\\x01', ctags_val: '\\x00' })
+                json: async () => ({ id: 1, status: '\\x01', ctags: '\\x00' })
             })
 
             await startProcessing()
 
             expect(isProcessing.value).toBe(true)
-            expect(image.value.status_val).toBe('\\x01')
+            expect(image.value.status).toBe('\\x01')
         })
 
         it('validates next transitions using tag values', async () => {
@@ -230,7 +230,7 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { canPublish, canApprove } = useImageStatus(image)
 
             expect(canPublish.value).toBe(false) // Can't publish from raw
@@ -242,14 +242,14 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { setBitInField, hasBitInField } = useImageStatus(image)
             const { hasBit } = useSysregTags()
 
-            setBitInField('ctags_val', 0)
+            setBitInField('ctags', 0)
 
-            expect(hasBitInField('ctags_val', 0)).toBe(true)
-            expect(hasBit(image.value.ctags_val, 0)).toBe(true)
+            expect(hasBitInField('ctags', 0)).toBe(true)
+            expect(hasBit(image.value.ctags, 0)).toBe(true)
         })
 
         it('multiple status transitions chain correctly', async () => {
@@ -257,23 +257,23 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { startProcessing, approveImage, publishImage, isPublished } = useImageStatus(image)
 
             // Mock API calls
             global.fetch = vi.fn()
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x01', ctags_val: '\\x00' }) })
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x02', ctags_val: '\\x00' }) })
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x04', ctags_val: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x01', ctags: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x02', ctags: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x04', ctags: '\\x00' }) })
 
             await startProcessing() // raw -> processing
-            expect(image.value.status_val).toBe('\\x01')
+            expect(image.value.status).toBe('\\x01')
 
             await approveImage() // processing -> approved
-            expect(image.value.status_val).toBe('\\x02')
+            expect(image.value.status).toBe('\\x02')
 
             await publishImage() // approved -> published
-            expect(image.value.status_val).toBe('\\x04')
+            expect(image.value.status).toBe('\\x04')
             expect(isPublished.value).toBe(true)
         })
 
@@ -284,7 +284,7 @@ describe('Sysreg Composable Integration', () => {
             await initCache()
             await fetchOptions()
 
-            const image = ref({ id: 1, status_val: '\\x04', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x04', ctags: '\\x00' })
             const { currentStatus } = useImageStatus(image)
 
             const option = getOptionByValue('status', '\\x04')
@@ -299,19 +299,19 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x04', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x04', ctags: '\\x00' })
             const { resetToRaw, isRaw } = useImageStatus(image)
 
             // Mock API call
             global.fetch = vi.fn().mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+                json: async () => ({ id: 1, status: '\\x00', ctags: '\\x00' })
             })
 
             await resetToRaw()
 
             expect(isRaw.value).toBe(true)
-            expect(image.value.status_val).toBe('\\x00')
+            expect(image.value.status).toBe('\\x00')
         })
 
         it('counts set config bits', async () => {
@@ -319,15 +319,15 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { setBitInField } = useImageStatus(image)
             const { countBits } = useSysregTags()
 
-            setBitInField('ctags_val', 0)
-            setBitInField('ctags_val', 2)
-            setBitInField('ctags_val', 4)
+            setBitInField('ctags', 0)
+            setBitInField('ctags', 2)
+            setBitInField('ctags', 4)
 
-            expect(countBits(image.value.ctags_val)).toBe(3)
+            expect(countBits(image.value.ctags)).toBe(3)
         })
 
         it('clears config bits individually', async () => {
@@ -335,14 +335,14 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x07' }) // Bits 0,1,2 set
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x07' }) // Bits 0,1,2 set
             const { clearBitInField, hasBitInField } = useImageStatus(image)
 
-            clearBitInField('ctags_val', 1)
+            clearBitInField('ctags', 1)
 
-            expect(hasBitInField('ctags_val', 0)).toBe(true)
-            expect(hasBitInField('ctags_val', 1)).toBe(false)
-            expect(hasBitInField('ctags_val', 2)).toBe(true)
+            expect(hasBitInField('ctags', 0)).toBe(true)
+            expect(hasBitInField('ctags', 1)).toBe(false)
+            expect(hasBitInField('ctags', 2)).toBe(true)
         })
 
         it('toggles config bits', async () => {
@@ -350,14 +350,14 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { toggleBitInField, hasBitInField } = useImageStatus(image)
 
-            toggleBitInField('ctags_val', 3)
-            expect(hasBitInField('ctags_val', 3)).toBe(true)
+            toggleBitInField('ctags', 3)
+            expect(hasBitInField('ctags', 3)).toBe(true)
 
-            toggleBitInField('ctags_val', 3)
-            expect(hasBitInField('ctags_val', 3)).toBe(false)
+            toggleBitInField('ctags', 3)
+            expect(hasBitInField('ctags', 3)).toBe(false)
         })
 
         it('status validation uses parseByteaHex', async () => {
@@ -365,10 +365,10 @@ describe('Sysreg Composable Integration', () => {
             const { initCache, parseByteaHex } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x02', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x02', ctags: '\\x00' })
             const { isApproved } = useImageStatus(image)
 
-            const bytes = parseByteaHex(image.value.status_val)
+            const bytes = parseByteaHex(image.value.status)
             expect(bytes[0]).toBe(2)
             expect(isApproved.value).toBe(true)
         })
@@ -378,7 +378,7 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x08', ctags_val: '\\x00' }) // Deprecated
+            const image = ref({ id: 1, status: '\\x08', ctags: '\\x00' }) // Deprecated
             const { canPublish, isDeprecated } = useImageStatus(image)
 
             expect(isDeprecated.value).toBe(true)
@@ -390,7 +390,7 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x10', ctags_val: '\\x00' }) // Archived
+            const image = ref({ id: 1, status: '\\x10', ctags: '\\x00' }) // Archived
             const { isArchived, canPublish, canApprove } = useImageStatus(image)
 
             expect(isArchived.value).toBe(true)
@@ -403,11 +403,11 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x04', ctags_val: '\\x01' })
+            const image = ref({ id: 1, status: '\\x04', ctags: '\\x01' })
             const { isPublished, hasBitInField } = useImageStatus(image)
 
             expect(isPublished.value).toBe(true)
-            expect(hasBitInField('ctags_val', 0)).toBe(true)
+            expect(hasBitInField('ctags', 0)).toBe(true)
         })
 
         it('workflow provides valid next steps', async () => {
@@ -415,7 +415,7 @@ describe('Sysreg Composable Integration', () => {
             const { initCache } = useSysregTags()
             await initCache()
 
-            const image = ref({ id: 1, status_val: '\\x01', ctags_val: '\\x00' }) // Processing
+            const image = ref({ id: 1, status: '\\x01', ctags: '\\x00' }) // Processing
             const { canApprove, canPublish } = useImageStatus(image)
 
             // From processing, can approve but can't publish directly
@@ -565,27 +565,27 @@ describe('Sysreg Composable Integration', () => {
             await initCache()
             await fetchOptions()
 
-            const image = ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' })
+            const image = ref({ id: 1, status: '\\x00', ctags: '\\x00' })
             const { startProcessing, approveImage, publishImage, isPublished } = useImageStatus(image)
 
             // Mock API calls for status transitions
             global.fetch = vi.fn()
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x01', ctags_val: '\\x00' }) })
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x02', ctags_val: '\\x00' }) })
-                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status_val: '\\x04', ctags_val: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x01', ctags: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x02', ctags: '\\x00' }) })
+                .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: '\\x04', ctags: '\\x00' }) })
 
             await startProcessing()
-            expect(image.value.status_val).toBe('\\x01')
+            expect(image.value.status).toBe('\\x01')
             const processingOpt = getOptionByValue('status', '\\x01')
             expect(processingOpt!.label).toBe('Processing')
 
             await approveImage()
-            expect(image.value.status_val).toBe('\\x02')
+            expect(image.value.status).toBe('\\x02')
             const approvedOpt = getOptionByValue('status', '\\x02')
             expect(approvedOpt!.label).toBe('Approved')
 
             await publishImage()
-            expect(image.value.status_val).toBe('\\x04')
+            expect(image.value.status).toBe('\\x04')
             expect(isPublished.value).toBe(true)
         })
 
@@ -610,18 +610,18 @@ describe('Sysreg Composable Integration', () => {
 
             // Mock API calls for each status update (3 images = 3 calls)
             global.fetch = vi.fn()
-                .mockResolvedValue({ ok: true, json: async () => ({ id: 1, status_val: '\\x01', ctags_val: '\\x00' }) })
+                .mockResolvedValue({ ok: true, json: async () => ({ id: 1, status: '\\x01', ctags: '\\x00' }) })
 
             const images = [
-                ref({ id: 1, status_val: '\\x00', ctags_val: '\\x00' }),
-                ref({ id: 2, status_val: '\\x00', ctags_val: '\\x00' }),
-                ref({ id: 3, status_val: '\\x00', ctags_val: '\\x00' })
+                ref({ id: 1, status: '\\x00', ctags: '\\x00' }),
+                ref({ id: 2, status: '\\x00', ctags: '\\x00' }),
+                ref({ id: 3, status: '\\x00', ctags: '\\x00' })
             ]
 
             for (const image of images) {
                 const { startProcessing } = useImageStatus(image)
                 await startProcessing()
-                expect(image.value.status_val).toBe('\\x01')
+                expect(image.value.status).toBe('\\x01')
             }
         })
 
@@ -647,7 +647,7 @@ describe('Sysreg Composable Integration', () => {
             await initCache()
             await fetchOptions()
 
-            const image = ref({ id: 1, status_val: '\\x04', ctags_val: '\\x01' })
+            const image = ref({ id: 1, status: '\\x04', ctags: '\\x01' })
             const { isPublished } = useImageStatus(image)
 
             const statusOpt = getOptionByValue('status', '\\x04')

@@ -62,12 +62,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
     const error = ref<string | null>(null)
     const options = ref<SysregOption[]>([])
 
-    // Auto-initialize cache on first use
-    if (!cacheInitialized.value) {
-        initCache().catch(err => {
-            console.error('[useSysregOptions] Failed to auto-initialize cache:', err)
-        })
-    }
+    // Note: Auto-initialization removed to prevent race conditions in tests
+    // Components should call fetchOptions() explicitly or use getOptions() which works with cached data
 
     /**
      * Get translated label with fallback chain

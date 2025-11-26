@@ -34,7 +34,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
     describe('Status initialization', () => {
         it('loads current status from image data', () => {
-            const image = createTestImage({ status_val: '\\x02' })
+            const image = createTestImage({ status: '\\x02' })
             const { currentStatus } = useImageStatus(ref(image))
 
             expect(currentStatus.value).toBe('\\x02')
@@ -47,7 +47,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('loads status label correctly', () => {
-            const image = createTestImage({ status_val: '\\x02' })
+            const image = createTestImage({ status: '\\x02' })
             const { statusLabel } = useImageStatus(ref(image))
 
             expect(statusLabel.value).toBe('Approved')
@@ -68,7 +68,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
     describe('Status transitions', () => {
         it('transitions raw → processing', async () => {
             const image = createImageWithStatus('raw')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x01' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x01' })
 
             const { startProcessing, currentStatus } = useImageStatus(ref(image))
             await startProcessing()
@@ -78,7 +78,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('transitions processing → approved', async () => {
             const image = createImageWithStatus('processing')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x02' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x02' })
 
             const { approveImage, currentStatus } = useImageStatus(ref(image))
             await approveImage()
@@ -88,7 +88,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('transitions approved → published', async () => {
             const image = createImageWithStatus('approved')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x04' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x04' })
 
             const { publishImage, currentStatus } = useImageStatus(ref(image))
             await publishImage()
@@ -98,7 +98,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('transitions published → deprecated', async () => {
             const image = createImageWithStatus('published')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x08' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x08' })
 
             const { deprecateImage, currentStatus } = useImageStatus(ref(image))
             await deprecateImage()
@@ -108,7 +108,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('transitions any → archived', async () => {
             const image = createImageWithStatus('approved')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x10' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x10' })
 
             const { archiveImage, currentStatus } = useImageStatus(ref(image))
             await archiveImage()
@@ -137,7 +137,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('allows processing → raw (reset)', async () => {
             const image = createImageWithStatus('processing')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x00' })
 
             const { resetToRaw, currentStatus } = useImageStatus(ref(image))
             await resetToRaw()
@@ -156,7 +156,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('sets loading state during transition', async () => {
             const image = createImageWithStatus('raw')
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x01' })
+            global.fetch = mockFetchMutation({ ...image, status: '\\x01' })
 
             const { startProcessing, loading } = useImageStatus(ref(image))
 
@@ -180,7 +180,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('emits update event on successful transition', async () => {
             const image = createImageWithStatus('raw')
-            const updatedImage = { ...image, status_val: '\\x01' }
+            const updatedImage = { ...image, status: '\\x01' }
             global.fetch = mockFetchMutation(updatedImage)
 
             const emitSpy = vi.fn()
@@ -189,7 +189,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
             await startProcessing()
 
             expect(emitSpy).toHaveBeenCalledWith('update:image', expect.objectContaining({
-                status_val: '\\x01'
+                status: '\\x01'
             }))
         })
     })
@@ -200,15 +200,15 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
     describe('Config bit management', () => {
         it('reads public bit correctly', () => {
-            const image = createTestImage({ ctags_val: '\\x01' })
+            const image = createTestImage({ ctags: '\\x01' })
             const { configBits } = useImageStatus(ref(image))
 
             expectBitSet(configBits.value.public ? '\\x01' : '\\x00', 0)
         })
 
         it('sets public bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x01' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x01' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('public')
@@ -217,8 +217,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('clears public bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x01' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x00' })
+            const image = createTestImage({ ctags: '\\x01' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x00' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('public')
@@ -227,8 +227,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('sets featured bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x02' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x02' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('featured')
@@ -238,8 +238,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('auto-sets public bit when publishing', async () => {
             const image = createImageWithStatus('approved')
-            image.ctags_val = '\\x00'
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x04', ctags_val: '\\x01' })
+            image.ctags = '\\x00'
+            global.fetch = mockFetchMutation({ ...image, status: '\\x04', ctags: '\\x01' })
 
             const { publishImage, configBits } = useImageStatus(ref(image))
             await publishImage()
@@ -249,8 +249,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
         it('clears featured bit when deprecated', async () => {
             const image = createImageWithStatus('published')
-            image.ctags_val = '\\x03' // public + featured
-            global.fetch = mockFetchMutation({ ...image, status_val: '\\x08', ctags_val: '\\x01' })
+            image.ctags = '\\x03' // public + featured
+            global.fetch = mockFetchMutation({ ...image, status: '\\x08', ctags: '\\x01' })
 
             const { deprecateImage, configBits } = useImageStatus(ref(image))
             await deprecateImage()
@@ -260,8 +260,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('manages needs_review bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x04' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x04' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('needs_review')
@@ -270,8 +270,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('manages has_people bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x08' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x08' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('has_people')
@@ -280,8 +280,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('manages ai_generated bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x10' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x10' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('ai_generated')
@@ -290,8 +290,8 @@ describe('useImageStatus - Image Lifecycle Management', () => {
         })
 
         it('manages high_res bit', async () => {
-            const image = createTestImage({ ctags_val: '\\x00' })
-            global.fetch = mockFetchMutation({ ...image, ctags_val: '\\x20' })
+            const image = createTestImage({ ctags: '\\x00' })
+            global.fetch = mockFetchMutation({ ...image, ctags: '\\x20' })
 
             const { toggleConfigBit, configBits } = useImageStatus(ref(image))
             await toggleConfigBit('high_res')
@@ -368,7 +368,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
                 capturedBody = options?.body || ''
                 return Promise.resolve({
                     ok: true,
-                    json: async () => ({ ...image, status_val: '\\x01' })
+                    json: async () => ({ ...image, status: '\\x01' })
                 })
             })
 
@@ -376,12 +376,12 @@ describe('useImageStatus - Image Lifecycle Management', () => {
             await startProcessing()
 
             expect(capturedUrl).toContain(`/api/images/${image.id}`)
-            expect(capturedBody).toContain('status_val')
+            expect(capturedBody).toContain('status')
         })
 
         it('updates local state after successful API call', async () => {
             const image = createImageWithStatus('raw')
-            const updatedImage = { ...image, status_val: '\\x01', updated_at: new Date().toISOString() }
+            const updatedImage = { ...image, status: '\\x01', updated_at: new Date().toISOString() }
             global.fetch = mockFetchMutation(updatedImage)
 
             const imageRef = ref(image)
@@ -389,13 +389,13 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
             await startProcessing()
 
-            expect(imageRef.value.status_val).toBe('\\x01')
+            expect(imageRef.value.status).toBe('\\x01')
             expect(imageRef.value.updated_at).toBe(updatedImage.updated_at)
         })
 
         it('does not update state on API error', async () => {
             const image = createImageWithStatus('raw')
-            const originalStatus = image.status_val
+            const originalStatus = image.status
             global.fetch = mockFetchError('Server error')
 
             const imageRef = ref(image)
@@ -403,7 +403,7 @@ describe('useImageStatus - Image Lifecycle Management', () => {
 
             await startProcessing()
 
-            expect(imageRef.value.status_val).toBe(originalStatus)
+            expect(imageRef.value.status).toBe(originalStatus)
         })
     })
 })

@@ -10,11 +10,11 @@ import { parseByteaHex, setBit, clearBit, bitsToByteArray } from '@/composables/
 export interface TestEntity {
     id: number
     name: string
-    status_val?: string
-    ttags_val?: string
-    dtags_val?: string
-    rtags_val?: string
-    ctags_val?: string
+    status?: string
+    ttags?: string
+    dtags?: string
+    rtags?: string
+    ctags?: string
     itags_val?: string
     [key: string]: any
 }
@@ -26,11 +26,11 @@ export function createTestImage(overrides?: Partial<TestEntity>): TestEntity {
     return {
         id: 1,
         name: 'Test Image',
-        status_val: '\\x02', // approved
-        ttags_val: '\\x05', // bits 0,2: democracy, environment
-        dtags_val: '\\x03', // bits 0,1: education, media
-        rtags_val: '\\x00',
-        ctags_val: '\\x06', // age_group=youth, subject_type=photo
+        status: '\\x02', // approved
+        ttags: '\\x05', // bits 0,2: democracy, environment
+        dtags: '\\x03', // bits 0,1: education, media
+        rtags: '\\x00',
+        ctags: '\\x06', // age_group=youth, subject_type=photo
         itags_val: '\\x00',
         img_square: '{"url":"test.jpg"}',
         created_at: new Date().toISOString(),
@@ -46,11 +46,11 @@ export function createTestProject(overrides?: Partial<TestEntity>): TestEntity {
     return {
         id: 1,
         name: 'Test Project',
-        status_val: '\\x04', // active
-        ttags_val: '\\x11', // bits 0,4
-        dtags_val: '\\x05', // bits 0,2
-        rtags_val: '\\x00',
-        ctags_val: '\\x08', // has_funding=true
+        status: '\\x04', // active
+        ttags: '\\x11', // bits 0,4
+        dtags: '\\x05', // bits 0,2
+        rtags: '\\x00',
+        ctags: '\\x08', // has_funding=true
         itags_val: '\\x00',
         description: 'Test project description',
         created_at: new Date().toISOString(),
@@ -66,11 +66,11 @@ export function createTestEvent(overrides?: Partial<TestEntity>): TestEntity {
     return {
         id: 1,
         name: 'Test Event',
-        status_val: '\\x02', // planned
-        ttags_val: '\\x09', // bits 0,3
-        dtags_val: '\\x06', // bits 1,2
-        rtags_val: '\\x00',
-        ctags_val: '\\x01', // registration_open=true
+        status: '\\x02', // planned
+        ttags: '\\x09', // bits 0,3
+        dtags: '\\x06', // bits 1,2
+        rtags: '\\x00',
+        ctags: '\\x01', // registration_open=true
         itags_val: '\\x00',
         date_begin: '2025-12-01',
         date_end: '2025-12-03',
@@ -87,11 +87,11 @@ export function createTestPost(overrides?: Partial<TestEntity>): TestEntity {
     return {
         id: 1,
         name: 'Test Post',
-        status_val: '\\x04', // published
-        ttags_val: '\\x03', // bits 0,1
-        dtags_val: '\\x02', // bit 1
-        rtags_val: '\\x00',
-        ctags_val: '\\x00',
+        status: '\\x04', // published
+        ttags: '\\x03', // bits 0,1
+        dtags: '\\x02', // bit 1
+        rtags: '\\x00',
+        ctags: '\\x00',
         itags_val: '\\x00',
         content: 'Test post content',
         created_at: new Date().toISOString(),
@@ -152,7 +152,7 @@ export function createImageWithStatus(status: string): TestEntity {
         deprecated: '\\x08',
         archived: '\\x10'
     }
-    return createTestImage({ status_val: statusMap[status] || status })
+    return createTestImage({ status: statusMap[status] || status })
 }
 
 /**
@@ -164,9 +164,9 @@ export function createImageWithTags(
     ctags: (number | string)[] = []
 ): TestEntity {
     return createTestImage({
-        ttags_val: bitsToHex(ttags),
-        dtags_val: bitsToHex(dtags),
-        ctags_val: bitsToHex(ctags)
+        ttags: bitsToHex(ttags),
+        dtags: bitsToHex(dtags),
+        ctags: bitsToHex(ctags)
     })
 }
 
@@ -182,7 +182,7 @@ export function createProjectWithStatus(status: string): TestEntity {
         completed: '\\x08',
         archived: '\\x10'
     }
-    return createTestProject({ status_val: statusMap[status] || status })
+    return createTestProject({ status: statusMap[status] || status })
 }
 
 /**
@@ -190,11 +190,11 @@ export function createProjectWithStatus(status: string): TestEntity {
  */
 export function createVariedTestImages(): TestEntity[] {
     return [
-        createTestImage({ id: 1, name: 'Raw Image', status_val: '\\x00', ttags_val: '\\x01' }),
-        createTestImage({ id: 2, name: 'Approved Image', status_val: '\\x02', ttags_val: '\\x03' }),
-        createTestImage({ id: 3, name: 'Published Image', status_val: '\\x04', ttags_val: '\\x05' }),
-        createTestImage({ id: 4, name: 'Featured Image', status_val: '\\x04', ctags_val: '\\x02' }),
-        createTestImage({ id: 5, name: 'Archived Image', status_val: '\\x10', ttags_val: '\\x01' })
+        createTestImage({ id: 1, name: 'Raw Image', status: '\\x00', ttags: '\\x01' }),
+        createTestImage({ id: 2, name: 'Approved Image', status: '\\x02', ttags: '\\x03' }),
+        createTestImage({ id: 3, name: 'Published Image', status: '\\x04', ttags: '\\x05' }),
+        createTestImage({ id: 4, name: 'Featured Image', status: '\\x04', ctags: '\\x02' }),
+        createTestImage({ id: 5, name: 'Archived Image', status: '\\x10', ttags: '\\x01' })
     ]
 }
 
@@ -227,11 +227,11 @@ export function createMinimalEntity(type: 'image' | 'project' | 'event' = 'image
     const base = {
         id: 1,
         name: 'Minimal Entity',
-        status_val: '\\x00',
-        ttags_val: '\\x00',
-        dtags_val: '\\x00',
-        rtags_val: '\\x00',
-        ctags_val: '\\x00',
+        status: '\\x00',
+        ttags: '\\x00',
+        dtags: '\\x00',
+        rtags: '\\x00',
+        ctags: '\\x00',
         itags_val: '\\x00'
     }
 
@@ -250,11 +250,11 @@ export function createMinimalEntity(type: 'image' | 'project' | 'event' = 'image
  */
 export function createEntityWithAllTags(): TestEntity {
     return createTestImage({
-        status_val: '\\xff',
-        ttags_val: '\\xff',
-        dtags_val: '\\xff',
-        rtags_val: '\\xff',
-        ctags_val: '\\xff',
+        status: '\\xff',
+        ttags: '\\xff',
+        dtags: '\\xff',
+        rtags: '\\xff',
+        ctags: '\\xff',
         itags_val: '\\xff'
     })
 }

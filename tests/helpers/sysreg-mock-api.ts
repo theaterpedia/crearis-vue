@@ -84,7 +84,7 @@ export function mockFetchSysregOptions() {
     // Convert flat mockSysregOptions to SysregCache format
     const cache = {
         status: mockSysregOptions.filter(opt => opt.tagfamily === 'status').map(toSysregEntry),
-        config: [],
+        config: [], // Empty but present - no config tags in test data yet
         rtags: mockSysregOptions.filter(opt => opt.tagfamily === 'rtags').map(toSysregEntry),
         ctags: mockSysregOptions.filter(opt => opt.tagfamily === 'ctags').map(toSysregEntry),
         ttags: mockSysregOptions.filter(opt => opt.tagfamily === 'ttags').map(toSysregEntry),
