@@ -3,7 +3,9 @@
     <div class="post-page">
         <!-- Edit Panel -->
         <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
-            subtitle="Update post information" :data="editPanelData" @close="closeEditPanel" @save="handleSavePost" />
+            subtitle="Update post information" :data="editPanelData" entity-type="posts" 
+            :projectDomaincode="post.domaincode"
+            @close="closeEditPanel" @save="handleSavePost" />
 
         <!-- Page Config Panel (for admins/owners) -->
         <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
@@ -18,8 +20,7 @@
             :navItems="navigationItems">
             <template #header>
                 <PageHeading :heading="post.name || String(post.id)"
-                    :teaserText="post.teaser || post.md || 'Read this post.'"
-                    :imgTmp="post.cimg || 'https://picsum.photos/1440/900?random=post'"
+                    :imgTmp="post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post'"
                     :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
             </template>
 
@@ -29,6 +30,14 @@
                     <Prose>
                         <!-- Post metadata -->
                         <div class="post-meta">
+                            <div v-if="post.status_val" class="post-status">
+                                <StatusBadge 
+                                    :value="statusValueString" 
+                                    :label="statusLabel"
+                                    variant="soft"
+                                    size="medium"
+                                />
+                            </div>
                             <p v-if="post.post_date"><strong>Published:</strong> {{ formatDate(post.post_date) }}</p>
                             <p v-if="post.author_id"><strong>Author:</strong> {{ post.author_id }}</p>
                         </div>
@@ -52,6 +61,7 @@
                                 </svg>
                             </button>
                         </div>
+                        <p v-if="post.teaser">{{ post.teaser }}</p>                        
 
                         <!-- Post HTML or Markdown content -->
                         <div v-if="post.html" v-html="post.html" class="post-html-content"></div>
@@ -93,10 +103,12 @@ import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
+import StatusBadge from '@/components/sysreg/StatusBadge.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
+import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 
 const router = useRouter()
@@ -166,42 +178,30 @@ const footerOptions = computed<FooterOptions>(() => {
     })
 })
 
-const editPanelData = computed((): EditPanelData[] => {
-    if (!post.value) return []
-    return [
-        {
-            label: 'Name',
-            key: 'name',
-            type: 'text',
-            value: post.value.name || '',
-            required: true
-        },
-        {
-            label: 'Teaser',
-            key: 'teaser',
-            type: 'textarea',
-            value: post.value.teaser || ''
-        },
-        {
-            label: 'Content (Markdown)',
-            key: 'md',
-            type: 'textarea',
-            value: post.value.md || ''
-        },
-        {
-            label: 'Cover Image URL',
-            key: 'cimg',
-            type: 'text',
-            value: post.value.cimg || ''
-        },
-        {
-            label: 'Header Type',
-            key: 'header_type',
-            type: 'select',
-            value: post.value.header_type || 'banner',
-            options: ['simple', 'banner', 'hero']
-        }
-    ]
+// Convert status_val to hex string and get label (synchronous with unified composable)
+const statusValueString = computed(() => {
+    if (!post.value?.status_val) return null
+    return bufferToHex(post.value.status_val)
+})
+
+const statusLabel = computed(() => {
+    const hex = statusValueString.value
+    if (!hex) return ''
+    // getStatusLabel auto-uses current i18n language
+    return getStatusLabel(hex, 'posts')
+})
+
+const editPanelData = computed((): EditPanelData => {
+    if (!post.value) return { heading: '', teaser: '', md: '' }
+    return {
+        heading: post.value.name || '',
+        teaser: post.value.teaser || '',
+        md: post.value.md || '',
+        img_id: post.value.img_id || null,
+        header_type: post.value.header_type || 'banner',
+        header_size: post.value.header_size || null,
+        status_val: post.value.status_val || null  // Pass raw value to match dropdown
+    }
 })
 
 // Methods
@@ -267,21 +267,73 @@ function closeConfigPanel() {
 }
 
 async function handleSavePost(data: Record<string, any>) {
+    console.log('[PostPage] ========================================')
+    console.log('[PostPage] handleSavePost CALLED')
+    console.log('[PostPage] Call stack:', new Error().stack)
+    console.log('[PostPage] Data received:', data)
+    console.log('[PostPage] ========================================')
+    
     try {
-        const response = await fetch(`/api/posts/${post.value.id}`, {
+        console.log('[PostPage] Saving post with data:', data)
+        
+        // Render markdown to HTML using marked
+        let html = ''
+        if (data.md) {
+            const { marked } = await import('marked')
+            html = marked(data.md)
+        }
+
+        // Prepare payload with proper field names and sanitize data
+        const payload = {
+            name: data.heading || '',
+            teaser: data.teaser || '',
+            md: data.md || '',
+            html: html || '',
+            img_id: (data.img_id === undefined || data.img_id === 0) ? null : data.img_id,
+            header_type: data.header_type || 'banner',
+            header_size: data.header_size || null,
+            status_val: sanitizeStatusVal(data.status_val),
+            // Include sysreg tags (sanitize to prevent NULL bytes)
+            ttags: data.ttags || '\\x00',
+            ctags: data.ctags || '\\x00',
+            dtags: data.dtags || '\\x00'
+        }
+
+        console.log('[PostPage] Sending payload:', payload)
+        console.log('[PostPage] POST URL:', `/api/demo/posts/${post.value.id}`)
+
+        const response = await fetch(`/api/demo/posts/${post.value.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
 
-        if (!response.ok) throw new Error('Failed to save post')
+        console.log('[PostPage] Response status:', response.status)
+        console.log('[PostPage] Response ok:', response.ok)
+        
+        if (!response.ok) {
+            const errorText = await response.text()
+            let errorData
+            try {
+                errorData = JSON.parse(errorText)
+            } catch {
+                errorData = errorText
+            }
+            console.error('[PostPage] Error response:', errorData)
+            const errorMessage = errorData?.message || 'Failed to save post'
+            throw new Error(errorMessage)
+        }
+
+        const result = await response.json()
+        console.log('[PostPage] Save successful, result:', result)
 
         // Reload post
         await loadPost()
         closeEditPanel()
-    } catch (error) {
-        console.error('Error saving post:', error)
-        alert('Failed to save post')
+    } catch (error: any) {
+        console.error('[PostPage] Error saving post:', error)
+        const errorMessage = error?.message || 'Failed to save post'
+        alert(`Failed to save post: ${errorMessage}`)
     }
 }
 
@@ -301,6 +353,10 @@ onMounted(() => {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--color-border);
     font-family: var(--headings);
+}
+
+.post-status {
+    margin-bottom: 1rem;
 }
 
 .post-controls {

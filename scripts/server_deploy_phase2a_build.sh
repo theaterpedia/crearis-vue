@@ -490,7 +490,12 @@ module.exports = {
       DB_PASSWORD: '$DB_PASSWORD',
       DB_NAME: '$DB_NAME',
       DB_HOST: '$DB_HOST',
-      DB_PORT: '$DB_PORT'
+      DB_PORT: '$DB_PORT',
+      LOCAL_IMAGE_STORAGE: '$LOCAL_IMAGE_STORAGE',
+      UNSPLASH_ACCESS_KEY: 'RA4wu9wpjD31upcYz8RC4MGpWctL64VUa6dS2mh_l8w',
+      CLOUDINARY_ID: 'little-papillon',
+      CLOUDINARY_ACCOUNT: 'little-papillon',
+      CLOUDINARY_INITIAL_VERSION: 'v1665139609'      
     },
     error_file: '$LOG_DIR/error.log',
     out_file: '$LOG_DIR/out.log',

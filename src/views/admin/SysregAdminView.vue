@@ -429,10 +429,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useSysreg } from '@/composables/useSysreg'
 import { useSysregOptions } from '@/composables/useSysregOptions'
 import { useSysregAnalytics } from '@/composables/useSysregAnalytics'
 import { useSysregBatchOperations } from '@/composables/useSysregBatchOperations'
-import { useSysregBitGroups } from '@/composables/useSysregBitGroups'
+
+// Use unified sysreg for common operations
+const sysreg = useSysreg()
 
 // Tab state
 const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch'>('viewer')
@@ -443,7 +446,7 @@ const tabs = [
     { id: 'batch', label: 'Batch Operations', icon: '⚡' }
 ]
 
-// Tag management
+// Tag management (uses unified API for better performance)
 const {
     statusOptions,
     configOptions,
@@ -455,7 +458,15 @@ const {
     fetchOptions
 } = useSysregOptions()
 
-const { getBitGroupsWithLabels, getLabelByBitRange } = useSysregBitGroups()
+// Bit groups from unified API (auto-translated)
+const { getBitGroups: getBitGroupsWithLabels, getBitGroupLabel } = sysreg
+const getLabelByBitRange = (family: string, range: string) => {
+    // Parse range and find group label
+    const match = range.match(/(\d+)-(\d+)/)
+    if (!match) return range
+    const groups = getBitGroupsWithLabels(family).value
+    return groups.find(g => g.bitRange === `${match[1]}-${match[2]}`)?.label || range
+}
 
 const selectedFamily = ref<string>('status')
 const allTags = ref<any[]>([])
@@ -599,7 +610,6 @@ const batchResult = ref<any>(null)
 
 // Lifecycle
 onMounted(async () => {
-    await fetchOptions()
     await fetchAnalytics()
 })
 

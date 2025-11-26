@@ -12,21 +12,21 @@
         placement="bottom-start">
         <!-- Trigger slot -->
         <slot name="trigger" :open="openDropdown" :is-open="isOpen">
-            <button class="dropdown-trigger"
-                :class="{ 'has-selection': dataMode && selectedItems.length > 0, 'with-xml': displayXml }"
+            <button type="button" class="dropdown-trigger"
+                :class="{ 'has-selection': dataMode && selectedIdsArray.length > 0, 'with-xml': displayXml }"
                 @click="openDropdown">
                 <!-- Default trigger content when no dataMode or no selection -->
-                <div v-if="!dataMode || selectedItems.length === 0" class="trigger-placeholder">
+                <div v-if="!dataMode || selectedIdsArray.length === 0" class="trigger-placeholder">
                     <slot name="trigger-content">Select {{ entity }}</slot>
                 </div>
 
                 <!-- Single selection: Show ItemRow -->
-                <div v-else-if="!multiSelect && selectedItems.length === 1" class="trigger-single-selection">
+                <div v-else-if="!multiSelect && selectedIdsArray.length === 1 && selectedItems.length > 0" class="trigger-single-selection">
                     <ItemRow v-bind="formatSelectedItem(selectedItems[0])" :size="size" />
                 </div>
 
                 <!-- Multi-selection: Show stacked avatars -->
-                <div v-else-if="multiSelect && selectedItems.length > 0" class="trigger-multi-selection">
+                <div v-else-if="multiSelect && selectedIdsArray.length > 0 && selectedItems.length > 0" class="trigger-multi-selection">
                     <div class="stacked-avatars">
                         <div v-for="(item, index) in displayedItems" :key="item.id" class="stacked-avatar"
                             :style="{ zIndex: displayedItems.length - index, marginLeft: index > 0 ? '-20px' : '0' }">
@@ -63,7 +63,7 @@
                 <!-- CL2: Use ItemList with entity fetching -->
                 <!-- Option A: Wrapper controls layout, ItemList inherits -->
                 <div class="dropdown-list-wrapper" :class="wrapperClasses" :style="systemTheme">
-                    <ItemList ref="itemListRef" :entity="entity" :project="project" :filterIds="filterIds"
+                    <ItemList ref="popperItemListRef" :entity="entity" :project="project" :filterIds="filterIds"
                         :filterXmlPrefix="filterXmlPrefix" :filterXmlPrefixes="filterXmlPrefixes"
                         :filterXmlPattern="filterXmlPattern" item-type="row" :size="size" width="inherit" columns="off"
                         :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
@@ -73,6 +73,14 @@
             </div>
         </template>
     </VDropdown>
+
+    <!-- Hidden ItemList for pre-loading data (enables trigger display of selected items) -->
+    <!-- Always mounted when dataMode is true to maintain entityData reference -->
+    <ItemList v-if="dataMode" v-show="false" ref="hiddenItemListRef" :entity="entity" :project="project"
+        :filterIds="filterIds" :filterXmlPrefix="filterXmlPrefix" :filterXmlPrefixes="filterXmlPrefixes"
+        :filterXmlPattern="filterXmlPattern" item-type="row" :size="size" width="inherit" columns="off"
+        :dataMode="dataMode" :multiSelect="multiSelect" :selectedIds="selectedIds" interaction="static"
+        @update:selectedIds="handleSelectedIdsUpdate" @selectedXml="handleSelectedXml" @selected="handleSelected" />
 </template>
 
 <script setup lang="ts">
@@ -120,7 +128,10 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
-const itemListRef = ref<InstanceType<typeof ItemList> | null>(null)
+const hiddenItemListRef = ref<InstanceType<typeof ItemList> | null>(null)
+const popperItemListRef = ref<InstanceType<typeof ItemList> | null>(null)
+// Use hidden ref for data access (always mounted), popper ref for interactions (only when open)
+const itemListRef = computed(() => hiddenItemListRef.value || popperItemListRef.value)
 const { avatarWidth } = useTheme()
 
 // System theme for dropdown (per FLOATING_VUE_AND_PANELS_GUIDE.md)
@@ -202,8 +213,7 @@ const formatSelectedItem = (item: any) => {
     return {
         heading: item.title || item.name || item.entityname || item.heading || `Item ${item.id}`,
         data: imageData,
-        shape: 'avatar' as const,
-        variant: 'default' as const
+        shape: 'thumb' as const
     }
 }
 

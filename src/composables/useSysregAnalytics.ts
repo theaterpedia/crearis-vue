@@ -51,7 +51,7 @@ export interface TrendingTag {
 }
 
 export function useSysregAnalytics(entity: string = 'images') {
-    const { getTagLabel, getOptionByValue } = useSysregOptions()
+    const { getOptions } = useSysregOptions()
 
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -136,15 +136,17 @@ export function useSysregAnalytics(entity: string = 'images') {
                 }
             })
 
+            const ttagOptions = getOptions('ttags').value
             ttagsUsage.value = Object.entries(ttagCounts)
                 .map(([bitStr, count]) => {
                     const bit = parseInt(bitStr)
                     const value = `\\x${(1 << bit).toString(16).padStart(2, '0')}`
+                    const option = ttagOptions.find(opt => opt.bit === bit)
                     return {
                         tagfamily: 'ttags',
                         bit,
                         value,
-                        label: getTagLabel('ttags', value),
+                        label: option?.label || `Bit ${bit}`,
                         count,
                         percentage: (count / entities.length) * 100
                     }
@@ -162,15 +164,17 @@ export function useSysregAnalytics(entity: string = 'images') {
                 }
             })
 
+            const dtagOptions = getOptions('dtags').value
             dtagsUsage.value = Object.entries(dtagCounts)
                 .map(([bitStr, count]) => {
                     const bit = parseInt(bitStr)
                     const value = `\\x${(1 << bit).toString(16).padStart(2, '0')}`
+                    const option = dtagOptions.find(opt => opt.bit === bit)
                     return {
                         tagfamily: 'dtags',
                         bit,
                         value,
-                        label: getTagLabel('dtags', value),
+                        label: option?.label || `Bit ${bit}`,
                         count,
                         percentage: (count / entities.length) * 100
                     }
@@ -188,15 +192,17 @@ export function useSysregAnalytics(entity: string = 'images') {
                 }
             })
 
+            const rtagOptions = getOptions('rtags').value
             rtagsUsage.value = Object.entries(rtagCounts)
                 .map(([bitStr, count]) => {
                     const bit = parseInt(bitStr)
                     const value = `\\x${(1 << bit).toString(16).padStart(2, '0')}`
+                    const option = rtagOptions.find(opt => opt.bit === bit)
                     return {
                         tagfamily: 'rtags',
                         bit,
                         value,
-                        label: getTagLabel('rtags', value),
+                        label: option?.label || `Bit ${bit}`,
                         count,
                         percentage: (count / entities.length) * 100
                     }
@@ -258,6 +264,10 @@ export function useSysregAnalytics(entity: string = 'images') {
 
             // Calculate growth rates
             const trending: TrendingTag[] = []
+            const ttagOpts = getOptions('ttags').value
+            const dtagOpts = getOptions('dtags').value
+            const rtagOpts = getOptions('rtags').value
+            
             Object.keys(recentCounts).forEach(key => {
                 const [tagfamily, bitStr] = key.split('-')
                 const bit = parseInt(bitStr)
@@ -270,11 +280,16 @@ export function useSysregAnalytics(entity: string = 'images') {
 
                 if (growthRate > 0) {
                     const value = `\\x${(1 << bit).toString(16).padStart(2, '0')}`
+                    let option
+                    if (tagfamily === 'ttags') option = ttagOpts.find(opt => opt.bit === bit)
+                    else if (tagfamily === 'dtags') option = dtagOpts.find(opt => opt.bit === bit)
+                    else if (tagfamily === 'rtags') option = rtagOpts.find(opt => opt.bit === bit)
+                    
                     trending.push({
                         tagfamily,
                         bit,
                         value,
-                        label: getTagLabel(tagfamily, value),
+                        label: option?.label || `Bit ${bit}`,
                         recentUse,
                         growthRate
                     })

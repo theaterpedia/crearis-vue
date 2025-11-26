@@ -1,0 +1,81 @@
+# Analysis
+
+## How should this be done to prepare the odoo-integration?
+
+## Feature General Status Entries
+Take a look into the Sysreg-Implementation and Spec to find out whether this requirement is met. table Sysreg_status (take a look at the records) + useSysregStatus: Is it possible to define general status like 'new', 'demo', 'draft', 'trash' and have special status for special cases per entity notated as 'events > started'. 
+
+**The system already implements exactly what the user is asking about!** Status entries are stored with entity-specific names like `events > draft`, `posts > published`, etc.
+
+However, there's **no support for general statuses** (cross-entity statuses without the `table >` prefix). Let me provide a comprehensive answer:
+
+Based on the database schema and migration code, here's what the current system supports:
+
+## Current Implementation
+
+**Entity-Specific Statuses (✅ Supported)**
+
+The system stores all status entries with the format `{table} > {name}`:
+- `events > new`
+- `events > started`
+- `events > completed`
+- `posts > draft`
+- `posts > published`
+- `tasks > new`
+- `tasks > active`
+
+This is done in **migration 022** (line 150):
+```typescript
+const contextName = `${entry.table} > ${entry.name}`
+```
+
+**General Statuses (❌ Not Currently Supported)**
+
+There's no mechanism for cross-entity statuses like 'new', 'draft', 'trash' that apply to all entities.
+
+## Options to Add General Status Support
+
+### Option 1: NULL or Wildcard Table Prefix (Recommended)
+
+Modify the naming convention to allow general statuses without entity prefix:
+
+```typescript
+// General statuses (no entity prefix)
+name: 'new'           // applies to all entities
+name: 'draft'         // applies to all entities
+name: 'trash'         // applies to all entities
+
+// Entity-specific statuses (with prefix)
+name: 'events > started'     // only for events
+name: 'posts > published'    // only for posts
+```
+
+**Implementation:**
+1. Update migration 022 to conditionally add prefix
+2. Support both formats in `get_sysreg_label()` function
+3. Update frontend composables to handle both patterns
+
+### Option 2: Special Table Value
+
+Use a special table value like `'*'` or `'general'` for cross-entity statuses:
+
+```sql
+-- General statuses
+INSERT INTO sysreg_status (value, name, tagfamily) VALUES ('\x0001'::bytea, 'general > new', 'status');
+
+-- Entity-specific
+INSERT INTO sysreg_status (value, name, tagfamily) VALUES ('\x0004'::bytea, 'events > started', 'status');
+```
+
+### Option 3: Hierarchical Lookup
+
+Keep current structure but add lookup logic that falls back to general statuses if entity-specific not found.
+
+## Recommendation
+
+**Use Option 1** with conditional naming:
+- Statuses without `>` are general (apply to all entities)
+- Statuses with `{table} >` are entity-specific
+- Frontend can filter/prioritize based on current entity context
+
+This requires minimal changes to existing code while providing the flexibility you need.
