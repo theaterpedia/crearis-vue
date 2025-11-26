@@ -170,10 +170,10 @@ export default defineEventHandler(async (event) => {
         `, [id])
 
         // Add status information if available
-        if (task && (task as any).status_val) {
+        if (task && (task as any).status) {
             const statusInfo = await getStatusByName(db, '', 'tasks')
             // In a real implementation, you'd call getStatusByValue here
-            // For now, just return the task with status_val
+            // For now, just return the task with status
         }
 
         return {

@@ -13,30 +13,25 @@ export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
 
-        let sql = 'SELECT * FROM status WHERE 1=1'
+        let sql = 'SELECT * FROM sysreg WHERE tagfamily = \'status\''
         const params: any[] = []
 
         if (query.id) {
-            sql += ' AND id = ?'
+            sql += ' AND id = $' + (params.length + 1)
             params.push(Number(query.id))
         }
 
-        if (query.table) {
-            sql += ' AND "table" = ?'
-            params.push(query.table)
-        }
-
         if (query.value !== undefined) {
-            sql += ' AND value = ?'
-            params.push(Number(query.value))
+            sql += ' AND value = $' + (params.length + 1)
+            params.push(query.value)
         }
 
         if (query.name) {
-            sql += ' AND name = ?'
+            sql += ' AND name = $' + (params.length + 1)
             params.push(query.name)
         }
 
-        sql += ' ORDER BY "table", value'
+        sql += ' ORDER BY name'
 
         const items = await db.all(sql, params)
 

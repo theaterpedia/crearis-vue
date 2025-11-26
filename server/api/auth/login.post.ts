@@ -81,18 +81,18 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check and update status if empty/null/undefined - set to 'new' status for users table
-    if (!user.status_val) {
-        const statusVal = await getStatusByName('users > new')
-        if (statusVal) {
+    if (!user.status) {
+        const statusInfo = await getStatusByName(db, 'new', 'users')
+        if (statusInfo) {
             await db.run(`
                 UPDATE users
-                SET status_val = ?
+                SET status = ?
                 WHERE id = ?
-            `, [statusVal, user.id])
-            console.log(`[LOGIN] Updated user ${user.id} status to 'users > new'`)
-            user.status_val = statusVal
+            `, [statusInfo.value, user.id])
+            console.log(`[LOGIN] Updated user ${user.id} status to 'new'`)
+            user.status = statusInfo.value
         } else {
-            console.warn(`[LOGIN] Warning: Could not find 'users > new' status`)
+            console.warn(`[LOGIN] Warning: Could not find 'new' status for users`)
         }
     }
 

@@ -46,10 +46,10 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Get status from status name (default to 'interactions > new')
-        const statusName = body.status_name || 'interactions > new'
-        const statusVal = await getStatusByName(statusName)
-        if (!statusVal) {
+        // Get status from status name (default to 'new')
+        const statusName = body.status_name || 'new'
+        const statusInfo = await getStatusByName(db, statusName, 'interactions')
+        if (!statusInfo) {
             throw createError({
                 statusCode: 400,
                 message: `Invalid status name: ${statusName}`
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
             name: body.name,
             user_id: body.user_id || null,
             project_id: projectId,
-            status: statusVal,
+            status: statusInfo.value,
             to_mail: body.to_mail || null,
             from_mail: body.from_mail || null,
             subject: body.subject || null,
