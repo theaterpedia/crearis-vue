@@ -228,9 +228,9 @@ export function useTagFamily(options: UseTagFamilyOptions): UseTagFamilyReturn {
 
     // Get label for a tag value
     const getTagLabel = (tagValue: number): string => {
-        // Convert integer back to hex string for getOptionByValue
-        const hexValue = `\\x${tagValue.toString(16).padStart(8, '0')}`
-        const option = getOptionByValue(familyName, hexValue)
+        const allOptions = getOptionsByFamily(familyName)
+        // Find option by integer value
+        const option = allOptions.find((opt: any) => opt.value === tagValue)
         return option?.label || ''
     }
 

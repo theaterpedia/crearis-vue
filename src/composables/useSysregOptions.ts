@@ -29,7 +29,7 @@ import { useI18n } from './useI18n'
 
 export interface SysregOption {
     id?: number         // Database ID (optional for new entries)
-    value: string       // BYTEA hex string (e.g., '\\x01', '\\x02')
+    value: number | string  // INTEGER value or BYTEA hex string (migration in progress)
     name: string        // Internal name (e.g., 'democracy', 'raw')
     label: string       // Pre-translated label (uses current i18n language)
     bit?: number        // Bit position for bit-based tags (0-7)
@@ -38,6 +38,7 @@ export interface SysregOption {
     is_default: boolean
     tagfamily: string   // tagfamily name
     bit_group?: string  // For ctags: age_group, subject_type, etc.
+    parent_bit?: number // For subcategories: bit position of parent category
     color?: string      // Optional UI color hint
     // Note: name_i18n and desc_i18n are internal only
     // Components always receive pre-translated label/description
@@ -325,7 +326,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                 taglogic: entry.taglogic,
                 is_default: entry.is_default,
                 tagfamily: tagfamily,
-                bit_group: entry.bit_group
+                bit_group: entry.bit_group,
+                parent_bit: entry.parent_bit
                 // Note: name_i18n not exposed to components
             }
         })

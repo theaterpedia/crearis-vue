@@ -109,8 +109,8 @@ describe('useTagFamilyDisplay - Display Composable', () => {
             })
 
             const text = display.compactText.value
-            // Should include emoji icon
-            expect(text).toMatch(/[\u{1F300}-\u{1F9FF}]/u)
+            // Should include icon name (actual icon rendering happens in Vue component)
+            expect(text).toContain('users-round')
         })
 
         it('separates groups with bullet', () => {
@@ -177,8 +177,9 @@ describe('useTagFamilyDisplay - Display Composable', () => {
             })
 
             const text = display.zoomedText.value
-            // Should include group label as header
-            expect(text).toMatch(/[\u{1F300}-\u{1F9FF}]/u) // Icon
+            // Should include group label and icon name as header
+            expect(text).toContain('users-round') // Icon name
+            expect(text).toContain('Spielform') // Group label
         })
 
         it('indents subcategories', () => {

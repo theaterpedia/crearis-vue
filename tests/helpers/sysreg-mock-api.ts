@@ -15,10 +15,18 @@ export interface SysregOption {
     value: string
     label: string
     bit_group?: string
+    name?: string
+    taglogic?: string
+    parent_bit?: number
 }
 
 /**
- * Complete mock sysreg options (all 38 entries)
+ * Complete mock sysreg options (62 entries total)
+ * - Status: 6 entries
+ * - TTags: 8 entries  
+ * - DTags: 32 entries (Migration 037 structure with 4 groups)
+ * - RTags: 4 entries
+ * - CTags: 12 entries
  */
 export const mockSysregOptions: SysregOption[] = [
     // Status (6 entries) - uses direct hex values, not bit positions
@@ -39,15 +47,46 @@ export const mockSysregOptions: SysregOption[] = [
     { bit: 6, tagfamily: 'ttags', value: 'arts_culture', label: 'Arts & Culture' },
     { bit: 7, tagfamily: 'ttags', value: 'economy', label: 'Economy' },
 
-    // DTags - Domain Tags (8 entries)
-    { bit: 0, tagfamily: 'dtags', value: 'education', label: 'Education' },
-    { bit: 1, tagfamily: 'dtags', value: 'media', label: 'Media' },
-    { bit: 2, tagfamily: 'dtags', value: 'advocacy', label: 'Advocacy' },
-    { bit: 3, tagfamily: 'dtags', value: 'research', label: 'Research' },
-    { bit: 4, tagfamily: 'dtags', value: 'community', label: 'Community' },
-    { bit: 5, tagfamily: 'dtags', value: 'policy', label: 'Policy' },
-    { bit: 6, tagfamily: 'dtags', value: 'awareness', label: 'Awareness' },
-    { bit: 7, tagfamily: 'dtags', value: 'training', label: 'Training' },
+    // DTags - Didactic Model Tags (32 entries across 4 groups)
+    // Group 1: spielform (bits 0-7)
+    { bit: 0, tagfamily: 'dtags', value: 'freies_spiel', label: 'Freies Spiel', bit_group: 'spielform', taglogic: 'category', name: 'freies_spiel' },
+    { bit: 1, tagfamily: 'dtags', value: 'improvisationstheater', label: 'Improvisationstheater', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 0, name: 'improvisationstheater' },
+    { bit: 2, tagfamily: 'dtags', value: 'rollenspiel', label: 'Rollenspiel', bit_group: 'spielform', taglogic: 'category', name: 'rollenspiel' },
+    { bit: 3, tagfamily: 'dtags', value: 'szenisches_spiel', label: 'Szenisches Spiel', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 2, name: 'szenisches_spiel' },
+    { bit: 4, tagfamily: 'dtags', value: 'theater_machen', label: 'Theater machen', bit_group: 'spielform', taglogic: 'category', name: 'theater_machen' },
+    { bit: 5, tagfamily: 'dtags', value: 'stueck_entwickeln', label: 'Stück entwickeln', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 4, name: 'stueck_entwickeln' },
+    { bit: 6, tagfamily: 'dtags', value: 'performatives_spiel', label: 'Performatives Spiel', bit_group: 'spielform', taglogic: 'category', name: 'performatives_spiel' },
+    { bit: 7, tagfamily: 'dtags', value: 'tanztheater', label: 'Tanztheater', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 6, name: 'tanztheater' },
+
+    // Group 2: animiertes_theaterspiel (bits 8-15)
+    { bit: 8, tagfamily: 'dtags', value: 'puppen_objekte', label: 'Puppen & Objekte', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'puppen_objekte' },
+    { bit: 9, tagfamily: 'dtags', value: 'figurentheater', label: 'Figurentheater', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 8, name: 'figurentheater' },
+    { bit: 10, tagfamily: 'dtags', value: 'schattentheater', label: 'Schattentheater', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'schattentheater' },
+    { bit: 11, tagfamily: 'dtags', value: 'licht_schatten', label: 'Licht & Schatten', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 10, name: 'licht_schatten' },
+    { bit: 12, tagfamily: 'dtags', value: 'maskentheater', label: 'Maskentheater', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'maskentheater' },
+    { bit: 13, tagfamily: 'dtags', value: 'charaktermasken', label: 'Charaktermasken', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 12, name: 'charaktermasken' },
+    { bit: 14, tagfamily: 'dtags', value: 'materialtheater', label: 'Materialtheater', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'materialtheater' },
+    { bit: 15, tagfamily: 'dtags', value: 'objekttheater', label: 'Objekttheater', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 14, name: 'objekttheater' },
+
+    // Group 3: szenische_themenarbeit (bits 16-25)
+    { bit: 16, tagfamily: 'dtags', value: 'biografisches_theater', label: 'Biografisches Theater', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'biografisches_theater' },
+    { bit: 17, tagfamily: 'dtags', value: 'lebensgeschichten', label: 'Lebensgeschichten', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 16, name: 'lebensgeschichten' },
+    { bit: 18, tagfamily: 'dtags', value: 'dokumentartheater', label: 'Dokumentartheater', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'dokumentartheater' },
+    { bit: 19, tagfamily: 'dtags', value: 'recherche_basiert', label: 'Recherche-basiert', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 18, name: 'recherche_basiert' },
+    { bit: 20, tagfamily: 'dtags', value: 'forum_theater', label: 'Forum Theater', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'forum_theater' },
+    { bit: 21, tagfamily: 'dtags', value: 'theater_der_unterdr', label: 'Theater der Unterdrückten', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 20, name: 'theater_der_unterdr' },
+    { bit: 22, tagfamily: 'dtags', value: 'politisches_theater', label: 'Politisches Theater', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'politisches_theater' },
+    { bit: 23, tagfamily: 'dtags', value: 'gesellschaftskritik', label: 'Gesellschaftskritik', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 22, name: 'gesellschaftskritik' },
+    { bit: 24, tagfamily: 'dtags', value: 'inklusives_theater', label: 'Inklusives Theater', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'inklusives_theater' },
+    { bit: 25, tagfamily: 'dtags', value: 'diversity_theater', label: 'Diversity Theater', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 24, name: 'diversity_theater' },
+
+    // Group 4: paedagogische_regie (bits 26-31)
+    { bit: 26, tagfamily: 'dtags', value: 'theatervermittlung', label: 'Theatervermittlung', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'theatervermittlung' },
+    { bit: 27, tagfamily: 'dtags', value: 'publikumsgespraech', label: 'Publikumsgespräch', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 26, name: 'publikumsgespraech' },
+    { bit: 28, tagfamily: 'dtags', value: 'inszenierung', label: 'Inszenierung', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'inszenierung' },
+    { bit: 29, tagfamily: 'dtags', value: 'regie_fuehrung', label: 'Regieführung', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 28, name: 'regie_fuehrung' },
+    { bit: 30, tagfamily: 'dtags', value: 'dramaturgie', label: 'Dramaturgie', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'dramaturgie' },
+    { bit: 31, tagfamily: 'dtags', value: 'stueckanalyse', label: 'Stückanalyse', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 30, name: 'stueckanalyse' },
 
     // RTags - Resource Tags (4 entries)
     { bit: 0, tagfamily: 'rtags', value: 'guide', label: 'Guide' },
@@ -104,7 +143,7 @@ export function mockFetchSysregOptions() {
 /**
  * Convert SysregOption to SysregEntry format
  */
-function toSysregEntry(opt: SysregOption): any {
+export function toSysregEntry(opt: SysregOption): any {
     let intValue: number
 
     // Status uses direct bit values, tags use bit positions
@@ -116,16 +155,23 @@ function toSysregEntry(opt: SysregOption): any {
         intValue = 1 << opt.bit
     }
 
-    return {
+    const entry: any = {
         value: intValue,
-        name: opt.value,
+        name: opt.name || opt.value,
+        label: opt.label, // Add direct label field
         tagfamily: opt.tagfamily,
-        taglogic: 'option',
+        taglogic: opt.taglogic || 'option',
         is_default: false,
-        name_i18n: { en: opt.label },
+        name_i18n: { en: opt.label, de: opt.label },
         desc_i18n: {},
-        ...(opt.bit_group ? { bit_group: opt.bit_group } : {})
+        bit: opt.bit
     }
+
+    // Add optional fields
+    if (opt.bit_group) entry.bit_group = opt.bit_group
+    if (opt.parent_bit !== undefined) entry.parent_bit = opt.parent_bit
+
+    return entry
 }
 
 /**

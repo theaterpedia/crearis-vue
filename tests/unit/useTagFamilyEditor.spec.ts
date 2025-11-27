@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useTagFamilyEditor } from '@/composables/useTagFamilyEditor'
 import { hasBit, setBit } from '@/composables/useSysregTags'
 
@@ -89,17 +89,18 @@ describe('useTagFamilyEditor - Editor Composable', () => {
             expect(editor.isDirty.value).toBe(true)
         })
 
-        it('clears dirty state on save', () => {
+        it('clears dirty state on save', async () => {
             const modelValue = ref(0)
             const editor = useTagFamilyEditor({
-                familyName: 'dtags',
+                familyName: 'ttags', // Use ttags which has optional groups
                 modelValue
             })
 
-            editor.setGroupValue('spielform', 1)
+            editor.setGroupValue('core_themes', 1) // Set one tag
             expect(editor.isDirty.value).toBe(true)
 
             editor.save()
+            await nextTick() // Wait for reactivity
 
             expect(editor.isDirty.value).toBe(false)
             expect(modelValue.value).toBe(editor.editValue.value)
@@ -146,15 +147,16 @@ describe('useTagFamilyEditor - Editor Composable', () => {
             expect(modelValue.value).toBe(5) // Unchanged until save
         })
 
-        it('updates model value on save', () => {
+        it('updates model value on save', async () => {
             const modelValue = ref(0)
             const editor = useTagFamilyEditor({
-                familyName: 'dtags',
+                familyName: 'ttags',
                 modelValue
             })
 
-            editor.setGroupValue('spielform', 1)
+            editor.setGroupValue('core_themes', 1)
             editor.save()
+            await nextTick()
 
             expect(modelValue.value).toBe(editor.editValue.value)
         })
@@ -244,6 +246,27 @@ describe('useTagFamilyEditor - Editor Composable', () => {
 
             expect(parent).toBeTruthy()
             expect(parent?.taglogic).toBe('category')
+        })
+
+        it('detects naming convention violations', () => {
+            const editor = useTagFamilyEditor({
+                familyName: 'dtags',
+                modelValue: 0
+            })
+
+            // Call getCategoryForSubcategory which triggers validation
+            // improvisationstheater (bit 1) should have parent freies_spiel (bit 0)
+            // but doesn't follow naming convention (should be freies_spiel_*)
+            editor.getCategoryForSubcategory('spielform', 2) // value 2 = bit 1
+
+            // Should have naming error
+            expect(editor.hasNamingErrors.value).toBe(true)
+            expect(editor.namingErrors.value.length).toBeGreaterThan(0)
+
+            const error = editor.namingErrors.value[0]
+            expect(error.tagName).toBe('improvisationstheater')
+            expect(error.categoryName).toBe('freies_spiel')
+            expect(error.message).toContain('muss umbenannt werden')
         })
 
         it('clears subcategories when switching category', () => {
@@ -399,15 +422,16 @@ describe('useTagFamilyEditor - Editor Composable', () => {
             expect(hasBit(editor.editValue.value, 8)).toBe(true)
         })
 
-        it('handles autosave mode', () => {
+        it('handles autosave mode', async () => {
             const modelValue = ref(0)
             const editor = useTagFamilyEditor({
-                familyName: 'dtags',
+                familyName: 'ttags',
                 modelValue,
                 autoSave: true
             })
 
-            editor.setGroupValue('spielform', 1)
+            editor.setGroupValue('core_themes', 1)
+            await nextTick()
 
             // Should auto-save
             expect(modelValue.value).toBe(editor.editValue.value)

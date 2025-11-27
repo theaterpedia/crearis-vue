@@ -16,6 +16,16 @@ import type { SysregOption } from './useSysregOptions'
 import { normalizeToInteger, hasBit, setBit, clearBit } from './useSysregTags'
 import type { TagGroup } from './useTagFamily'
 
+/**
+ * Validation error for tag naming conventions
+ */
+export interface TagNamingError {
+    tagName: string
+    categoryName: string
+    expectedPrefix: string
+    message: string
+}
+
 export interface UseTagFamilyEditorOptions {
     familyName: 'status' | 'config' | 'rtags' | 'ttags' | 'ctags' | 'dtags'
     modelValue: Ref<number> | number
@@ -52,6 +62,10 @@ export interface UseTagFamilyEditorReturn {
     // Validation
     validateGroup: (groupName: string) => boolean
     getValidationErrors: () => string[]
+
+    // Naming convention validation
+    namingErrors: Ref<TagNamingError[]>
+    hasNamingErrors: Ref<boolean>
 }
 
 export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFamilyEditorReturn {
@@ -72,17 +86,20 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
 
     const { getOptionsByFamily, getOptionByValue } = useSysregOptions()
 
+    // Naming convention validation state
+    const namingErrors = ref<TagNamingError[]>([])
+    const hasNamingErrors = computed(() => namingErrors.value.length > 0)
+
+    // Dirty state - computed from edit vs model values
+    const isDirty = computed(() => editValue.value !== modelValueRef.value)
+
     // Watch model value changes
-    watch(() => typeof modelValue === 'number' ? modelValue : modelValue.value, (newVal) => {
+    watch(() => typeof modelValue === 'number' ? modelValue : modelValue.value, (newVal: number) => {
         modelValueRef.value = newVal
+        // Don't auto-update editValue if user is editing (dirty)
         if (!isDirty.value) {
             editValue.value = newVal
         }
-    })
-
-    // Dirty state
-    const isDirty = computed(() => {
-        return editValue.value !== modelValueRef.value
     })
 
     // Get value for a specific group from edit state
@@ -261,16 +278,39 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
 
         if (!subcategory) return null
 
-        // Find category with same name prefix (before underscore)
-        const subcategoryName = subcategory.name
-        const categoryPrefix = subcategoryName.split('_')[0]
+        // PRIMARY: Use parent_bit field (Migration 037 structure)
+        let category: SysregOption | null = null
 
-        const category = options.find((opt: SysregOption) =>
-            opt.taglogic === 'category' &&
-            opt.name === categoryPrefix
-        )
+        if (subcategory.parent_bit !== undefined) {
+            category = options.find((opt: SysregOption) =>
+                opt.bit === subcategory.parent_bit &&
+                opt.taglogic === 'category'
+            ) || null
+        }
 
-        return category || null
+        // VALIDATION: Check naming convention (subcategory should start with category name)
+        if (category && subcategory.name && category.name) {
+            const expectedPrefix = category.name
+            const subcategoryName = subcategory.name
+
+            // Naming convention: subcategory should be "category_something"
+            if (!subcategoryName.startsWith(expectedPrefix + '_')) {
+                // User error: naming convention violated
+                const error: TagNamingError = {
+                    tagName: subcategoryName,
+                    categoryName: category.name,
+                    expectedPrefix: expectedPrefix,
+                    message: `Tag ${subcategoryName} muss umbenannt werden: ${category.name} > ${subcategoryName.split('_').pop() || subcategoryName}`
+                }
+
+                // Add to naming errors if not already present
+                if (!namingErrors.value.find((e: TagNamingError) => e.tagName === subcategoryName)) {
+                    namingErrors.value.push(error)
+                }
+            }
+        }
+
+        return category
     }
 
     // Validate a group
@@ -408,6 +448,10 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
 
         // Validation
         validateGroup,
-        getValidationErrors
+        getValidationErrors,
+
+        // Naming convention validation
+        namingErrors,
+        hasNamingErrors
     }
 }

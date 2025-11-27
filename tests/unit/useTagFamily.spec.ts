@@ -46,7 +46,7 @@ describe('useTagFamily - Core Composable', () => {
             })
 
             expect(family.familyConfig.value).toBeTruthy()
-            expect(family.familyConfig.value?.name).toBe('target_groups')
+            expect(family.familyConfig.value?.name).toBe('ttags')
         })
 
         it('loads all groups for dtags', () => {
@@ -430,7 +430,7 @@ describe('useTagFamily - Core Composable', () => {
 
             expect(family.isEmpty.value).toBe(true)
 
-            modelValue.value = 5
+            modelValue.value = 1 // Set bit 0
             expect(family.isEmpty.value).toBe(false)
         })
 

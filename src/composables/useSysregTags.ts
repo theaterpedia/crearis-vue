@@ -99,8 +99,8 @@ async function initCache(): Promise<void> {
     }
 }
 
-// Auto-initialize cache on module load
-if (!cacheInitialized.value && !cacheLoading.value) {
+// Auto-initialize cache on module load (skip in test environment)
+if (!cacheInitialized.value && !cacheLoading.value && process.env.NODE_ENV !== 'test') {
     initCache().catch(err => {
         console.error('[useSysregTags] Failed to auto-initialize cache:', err)
     })

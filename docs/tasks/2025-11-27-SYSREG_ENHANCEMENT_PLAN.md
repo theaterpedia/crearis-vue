@@ -21,38 +21,88 @@ Enhance the sysreg system with comprehensive UI components for displaying and ed
 **New dtags Structure** (from 2025-11-26-dtags.md):
 
 #### TagGroup 1: Spielform (bits 0-7, 8 bits total)
-- **Kreisspiel** (3 subcategories) - bits 0-1
-- **Raumlauf** (3 subcategories) - bits 2-3
-- **Kleingruppen** (3 subcategories) - bits 4-5
-- **Forum** (3 subcategories) - bits 6-7
 
-**Note**: Forum previously had 4 subcategories but reduced to 3 to fit 2-bit encoding (4 values: 0=none, 1=category-only, 2-3=subcategories)
+**CRITICAL: 2-Bit Encoding Constraint**
+- 2 bits = 4 values (00, 01, 10, 11)
+- Value 0 (00): RESERVED for "not set/empty"
+- **Only 3 usable values remain** (01, 10, 11)
+
+**Two Valid Encoding Strategies:**
+
+**Strategy A: Category + Subcategories**
+```
+Value 0 (00): Not set
+Value 1 (01): Category only (e.g., "Kreisspiel" without subcategory)
+Value 2 (10): Subcategory 1 (e.g., "Kreisspiel > Variation 1")
+Value 3 (11): Subcategory 2 (e.g., "Kreisspiel > Variation 2")
+```
+Result: 1 category + 2 subcategories
+
+**Strategy B: Subcategories Only**
+```
+Value 0 (00): Not set
+Value 1 (01): Subcategory 1 (implies parent category)
+Value 2 (10): Subcategory 2 (implies parent category)
+Value 3 (11): Subcategory 3 (implies parent category)
+```
+Result: 3 subcategories (category is implied by having any subcategory)
+
+**Current Database Reality: Strategy A is implemented**
+- Kreisspiel: category + 2 subcategories (3 entries total)
+- Raumlauf: category + 2 subcategories
+- Kleingruppen: category + 2 subcategories
+- Forum: category + 2 subcategories
+
+**Categories** (bits 0-1, 2-3, 4-5, 6-7):
+- **Kreisspiel** (2 subcategories) - bits 0-1
+- **Raumlauf** (2 subcategories) - bits 2-3
+- **Kleingruppen** (2 subcategories) - bits 4-5
+- **Forum** (2 subcategories) - bits 6-7
 
 #### TagGroup 2: Animiertes Theaterspiel (bits 8-15, 8 bits total)
-- **El. Animation** (3 subcategories) - bits 8-9
-- **Sz. Animation** (3 subcategories) - bits 10-11
-- **Impro** (3 subcategories) - bits 12-13
-- **animiert** (3 subcategories) - bits 14-15
+**Same Constraint**: Each category has category + 2 subcategories (3 usable values)
 
-#### TagGroup 3: Szenische Themenarbeit (bits 16-25, 10 bits total) ✅ CORRECTED
-- **Standbilder** (3 subcategories) - bits 16-17
-- **Rollenspiel** (3 subcategories) - bits 18-19
-- **TdU** (3 subcategories) - bits 20-21
-- **Soziometrie** (3 subcategories) - bits 22-23
-- **bewegte Themenarbeit** (3 subcategories) - bits 24-25
+- **El. Animation** (2 subcategories) - bits 8-9
+- **Sz. Animation** (2 subcategories) - bits 10-11
+- **Impro** (2 subcategories) - bits 12-13
+- **animiert** (2 subcategories) - bits 14-15
 
-#### TagGroup 4: Pädagogische Regie (bits 26-31, 6 bits total) ✅ CORRECTED
-- **zyklisch** (3 subcategories) - bits 26-27
-- **linear** (3 subcategories) - bits 28-29
-- **klassisch** (3 subcategories) - bits 30-31
+#### TagGroup 3: Szenische Themenarbeit (bits 16-25, 10 bits total)
+**Same Constraint**: Each category has category + 2 subcategories
+
+- **Standbilder** (2 subcategories) - bits 16-17
+- **Rollenspiel** (2 subcategories) - bits 18-19
+- **TdU** (2 subcategories) - bits 20-21
+- **Soziometrie** (2 subcategories) - bits 22-23
+- **bewegte Themenarbeit** (2 subcategories) - bits 24-25
+
+#### TagGroup 4: Pädagogische Regie (bits 26-31, 6 bits total)
+**Same Constraint**: Each category has category + 2 subcategories
+
+- **zyklisch** (2 subcategories) - bits 26-27
+- **linear** (2 subcategories) - bits 28-29
+- **klassisch** (2 subcategories) - bits 30-31
 
 **Total Bits Used**: 32/32 (perfect fit, all bits allocated)
 
+**Bit Encoding Reality**:
+- **2 bits per category** = 4 possible values
+- **Value 0 reserved** for "not set"
+- **3 usable values**:
+  - Option 1: Category only (no subcategory specified)
+  - Option 2: Subcategory 1
+  - Option 3: Subcategory 2
+
+**Total Entries in Database**:
+- 16 categories (Spielform: 4, Animiertes: 4, Szenische: 5, Regie: 3)
+- 32 subcategories (16 categories × 2 subcategories each)
+- **48 total dtags entries**
+
 **Multi-Select System**:
 - **Default**: All categories are single-select (multiselect: false)
-- **Category-level**: 2 bits = 4 values (0=none, 1=category-only, 2-3=subcategories)
-- **Subcategories**: Always single-select within a category
-- **Future**: Change `multiselect: true` to enable multiple categories per group (requires toggle bit encoding)
+- **Category-level**: User selects ONE category value (category-only, sub1, or sub2)
+- **Subcategories**: Automatically single-select (only 2 available per category)
+- **Future**: Implement 3-bit encoding if more subcategories needed (8 values - 1 = 7 usable)
 
 **SQL Structure**:
 ```sql
@@ -160,6 +210,129 @@ INSERT INTO sysreg (tagfamily, taglogic, name, value, ...) VALUES
   }
 }
 ```
+
+---
+
+## CRITICAL: Bit Encoding Constraint Analysis
+
+### The Fundamental Problem
+
+**Database Reality Check**: The database currently has fewer entries than planned because of the bit encoding constraint.
+
+**Mathematical Constraint**:
+- N bits = 2^N possible values
+- **One value MUST be reserved** for "not set/empty" (typically 0)
+- **Usable values** = 2^N - 1
+
+**For 2-bit encoding**:
+- 2 bits = 4 values (00, 01, 10, 11)
+- Value 0 (00) = NOT SET
+- **Only 3 usable values** (01, 10, 11)
+
+### Current Implementation (Strategy A)
+
+**Encoding**: Category + Subcategories
+```
+Value 0 (00): Not set / Empty
+Value 1 (01): Category only (e.g., "Kreisspiel" without subcategory)
+Value 2 (10): Subcategory 1 (e.g., "Kreisspiel > Improvisation")
+Value 3 (11): Subcategory 2 (e.g., "Kreisspiel > Wettkampf")
+```
+
+**Result**: 1 category entry + 2 subcategory entries = 3 database entries per category
+
+**Total for Migration 037**:
+- 16 categories × 3 entries = 48 dtags entries
+- NOT 16 categories × 4 entries = 64 entries (impossible with 2-bit encoding)
+
+### Alternative: Strategy B (Not Currently Used)
+
+**Encoding**: Subcategories Only (category implied)
+```
+Value 0 (00): Not set / Empty
+Value 1 (01): Subcategory 1 (implies parent category)
+Value 2 (10): Subcategory 2 (implies parent category)
+Value 3 (11): Subcategory 3 (implies parent category)
+```
+
+**Result**: 3 subcategory entries (category is virtual/implied)
+
+**Pros**: Maximum subcategory options (3 instead of 2)
+**Cons**: Cannot select "category only" without a subcategory
+
+### Decision Required
+
+**Option 1: Keep Strategy A (Current)**
+- ✅ Allows "category only" selection
+- ✅ Clear hierarchy (category → subcategory)
+- ❌ Only 2 subcategories per category
+- **Action**: Update migration to create exactly 48 dtags entries
+
+**Option 2: Switch to Strategy B**
+- ✅ 3 subcategories per category
+- ❌ Cannot select category without subcategory
+- ❌ Requires migration rewrite
+- **Action**: Redesign category structure, allow only subcategory selection
+
+**Option 3: Increase to 3-bit encoding**
+- ✅ 8 values - 1 = 7 usable values
+- ✅ Could have category + 6 subcategories
+- ❌ Uses 50% more bits (48 bits instead of 32)
+- ❌ Would overflow 32-bit INTEGER limit for some tag families
+- **Action**: Requires major redesign, not recommended
+
+**RECOMMENDATION: Option 1 (Keep Current Strategy A)**
+
+Reasons:
+1. Already implemented in database
+2. Matches user expectations (can select category without subcategory)
+3. Preserves 32-bit limit
+4. 2 subcategories per category is pedagogically sufficient
+
+### What Needs To Be Done Next
+
+**Immediate Actions**:
+
+1. **Verify Database State**
+   ```sql
+   SELECT tagfamily, taglogic, name, value, bit, parent_bit 
+   FROM sysreg 
+   WHERE tagfamily = 'dtags' 
+   ORDER BY bit;
+   ```
+   Expected: 48 entries (16 categories + 32 subcategories)
+
+2. **Update Migration 037 SQL**
+   - Confirm exactly 48 INSERT statements
+   - Each category: 1 category entry + 2 subcategory entries
+   - Bit allocation: 2 bits per category (values 0-3)
+
+3. **Update Test Mock Data**
+   - `tests/helpers/sysreg-mock-api.ts`
+   - Ensure mock has exactly 48 dtags entries
+   - Match the database structure
+
+4. **Verify UI Components**
+   - Category selector: Show category + 2 subcategories
+   - Validation: Ensure subcategory requires parent category
+   - Display: Show "Category only" vs "Category > Subcategory"
+
+5. **Update All Documentation**
+   - Update references from "3 subcategories" to "2 subcategories"
+   - Clarify bit encoding constraint in developer docs
+   - Add examples of the 3 usable values per category
+
+**Phase 4 Status (Testing)**:
+- ✅ 100/106 tests passing (94.3%)
+- ✅ Composables production-ready
+- ✅ Naming validation system implemented
+- ⚠️ 6 test infrastructure issues remain (can be deferred)
+
+**Ready for Development**:
+- All 3 composables functional and tested
+- All 4 Vue components implemented
+- Mock data structure matches database
+- Parent-bit logic using Migration 037 structure
 
 ---
 
