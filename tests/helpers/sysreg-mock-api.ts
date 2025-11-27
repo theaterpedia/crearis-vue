@@ -105,20 +105,19 @@ export function mockFetchSysregOptions() {
  * Convert SysregOption to SysregEntry format
  */
 function toSysregEntry(opt: SysregOption): any {
-    let hexValue: string
+    let intValue: number
 
-    // Status uses direct hex values, tags use bit positions
+    // Status uses direct bit values, tags use bit positions
     if (opt.tagfamily === 'status') {
-        // Use bit value directly as hex (already in correct format)
-        hexValue = `\\x${opt.bit.toString(16).padStart(2, '0')}`
+        // Use bit value directly (already in correct format)
+        intValue = opt.bit
     } else {
-        // Convert bit position to byte value (bit 0 = 0x01, bit 1 = 0x02, etc.)
-        const byteValue = 1 << opt.bit
-        hexValue = `\\x${byteValue.toString(16).padStart(2, '0')}`
+        // Convert bit position to byte value (bit 0 = 1, bit 1 = 2, etc.)
+        intValue = 1 << opt.bit
     }
 
     return {
-        value: hexValue,
+        value: intValue,
         name: opt.value,
         tagfamily: opt.tagfamily,
         taglogic: 'option',

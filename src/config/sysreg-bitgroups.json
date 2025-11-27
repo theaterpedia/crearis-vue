@@ -69,7 +69,7 @@
                     "cz": "Stav kvality a kontrolní značky"
                 }
             }
-        ]
+        ]     
     },
     "dtags": {
         "groups": [
@@ -111,7 +111,18 @@
                     "cz": "Vzdělávání, Média, Politika, Povědomí"
                 }
             }
-        ]
+        ],
+        "name": "didactic_model",
+        "label": {
+            "de": "Didaktisches Modell",
+            "en": "Instructional Model",
+            "cz": "Didaktický model"
+        },
+        "description": {
+            "de": "Auswahl aus konkreten Verfahrensweisen der Theaterpädagogik nach Zuteilung im didaktischen Dreieck, sowie 4 Hauptspielformen mitsamt Unterkategorien",
+            "en": "Selection from specific methods of theater education according to allocation in the didactic triangle, as well as 4 main forms of play including subcategories",
+            "cz": "Výběr z konkrétních metod divadelní pedagogiky podle zařazení v didaktickém trojúhelníku, stejně jako 4 hlavní formy hry včetně podkategorií"
+        }           
     },
     "ttags": {
         "groups": [

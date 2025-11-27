@@ -87,16 +87,16 @@ describe('useSysregTags - BYTEA Operations', () => {
             expect(byteArrayToBits([5])).toEqual([0, 2])
         })
 
-        it('converts [7] to [0, 1, 2]', () => {
-            expect(byteArrayToBits([7])).toEqual([0, 1, 2])
+        it('converts 7 to [0, 1, 2]', () => {
+            expect(byteArrayToBits(7)).toEqual([0, 1, 2])
         })
 
-        it('converts [255] to [0,1,2,3,4,5,6,7]', () => {
-            expect(byteArrayToBits([255])).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+        it('converts 255 to [0,1,2,3,4,5,6,7]', () => {
+            expect(byteArrayToBits(255)).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
         })
 
-        it('handles multi-byte arrays', () => {
-            expect(byteArrayToBits([3, 5])).toEqual([0, 1, 8, 10])
+        it('handles multi-bit integer (0x050003)', () => {
+            expect(byteArrayToBits(0x0503)).toEqual([0, 1, 8, 10])
         })
     })
 
@@ -107,36 +107,36 @@ describe('useSysregTags - BYTEA Operations', () => {
     describe('setBit', () => {
         it('sets bit 0 in \\x00 → \\x01', () => {
             const result = setBit('\\x00', 0)
-            expect(result).toBe('\\x01')
+            expect(result).toBe(1)
         })
 
         it('sets bit 1 in \\x00 → \\x02', () => {
             const result = setBit('\\x00', 1)
-            expect(result).toBe('\\x02')
+            expect(result).toBe(2)
         })
 
         it('sets bit 2 in \\x01 → \\x05', () => {
             const result = setBit('\\x01', 2)
-            expect(result).toBe('\\x05')
+            expect(result).toBe(5)
         })
 
         it('setting already-set bit is idempotent', () => {
             const result = setBit('\\x01', 0)
-            expect(result).toBe('\\x01')
+            expect(result).toBe(1)
         })
 
         it('sets multiple bits sequentially', () => {
             let val = '\\x00'
             val = setBit(val, 0)
             val = setBit(val, 2)
-            expect(val).toBe('\\x05')
+            expect(val).toBe(5)
             expectBitSet(val, 0)
             expectBitSet(val, 2)
         })
 
         it('handles high bit numbers (bit 7)', () => {
             const result = setBit('\\x00', 7)
-            expect(result).toBe('\\x80')
+            expect(result).toBe(128)
         })
     })
 
@@ -147,34 +147,34 @@ describe('useSysregTags - BYTEA Operations', () => {
     describe('clearBit', () => {
         it('clears bit 0 in \\x01 → \\x00', () => {
             const result = clearBit('\\x01', 0)
-            expect(result).toBe('\\x00')
+            expect(result).toBe(0)
         })
 
         it('clears bit 1 in \\x02 → \\x00', () => {
             const result = clearBit('\\x02', 1)
-            expect(result).toBe('\\x00')
+            expect(result).toBe(0)
         })
 
         it('clears bit 2 in \\x05 → \\x01', () => {
             const result = clearBit('\\x05', 2)
-            expect(result).toBe('\\x01')
+            expect(result).toBe(1)
         })
 
         it('clearing already-clear bit is idempotent', () => {
             const result = clearBit('\\x00', 0)
-            expect(result).toBe('\\x00')
+            expect(result).toBe(0)
         })
 
         it('clears multiple bits sequentially', () => {
             let val = '\\x07' // bits 0,1,2
             val = clearBit(val, 1)
-            expect(val).toBe('\\x05') // bits 0,2
+            expect(val).toBe(5) // bits 0,2
             expectBitClear(val, 1)
         })
 
         it('handles high bit numbers (bit 7)', () => {
             const result = clearBit('\\x80', 7)
-            expect(result).toBe('\\x00')
+            expect(result).toBe(0)
         })
     })
 
@@ -185,34 +185,34 @@ describe('useSysregTags - BYTEA Operations', () => {
     describe('toggleBit', () => {
         it('toggles bit 0: off → on', () => {
             const result = toggleBit('\\x00', 0)
-            expect(result).toBe('\\x01')
+            expect(result).toBe(1)
         })
 
         it('toggles bit 0: on → off', () => {
             const result = toggleBit('\\x01', 0)
-            expect(result).toBe('\\x00')
+            expect(result).toBe(0)
         })
 
         it('toggles bit 2 in \\x01 → \\x05', () => {
             const result = toggleBit('\\x01', 2)
-            expect(result).toBe('\\x05')
+            expect(result).toBe(5)
         })
 
         it('toggles bit 2 in \\x05 → \\x01', () => {
             const result = toggleBit('\\x05', 2)
-            expect(result).toBe('\\x01')
+            expect(result).toBe(1)
         })
 
         it('multiple toggles return to original', () => {
             let val = '\\x03'
             val = toggleBit(val, 1)
             val = toggleBit(val, 1)
-            expect(val).toBe('\\x03')
+            expect(val).toBe(3)
         })
 
         it('handles high bit numbers', () => {
             const result = toggleBit('\\x00', 7)
-            expect(result).toBe('\\x80')
+            expect(result).toBe(128)
         })
     })
 
@@ -257,27 +257,27 @@ describe('useSysregTags - BYTEA Operations', () => {
 
     describe('bitsToByteArray', () => {
         it('converts [] to [0]', () => {
-            expect(bitsToByteArray([])).toEqual([0])
+            expect(bitsToByteArray([])).toBe(0)
         })
 
         it('converts [0] to [1]', () => {
-            expect(bitsToByteArray([0])).toEqual([1])
+            expect(bitsToByteArray([0])).toBe(1)
         })
 
         it('converts [1] to [2]', () => {
-            expect(bitsToByteArray([1])).toEqual([2])
+            expect(bitsToByteArray([1])).toBe(2)
         })
 
         it('converts [0, 2] to [5]', () => {
-            expect(bitsToByteArray([0, 2])).toEqual([5])
+            expect(bitsToByteArray([0, 2])).toBe(5)
         })
 
         it('converts [0, 1, 2] to [7]', () => {
-            expect(bitsToByteArray([0, 1, 2])).toEqual([7])
+            expect(bitsToByteArray([0, 1, 2])).toBe(7)
         })
 
         it('handles high bit numbers', () => {
-            expect(bitsToByteArray([7])).toEqual([128])
+            expect(bitsToByteArray([7])).toBe(128)
         })
     })
 
@@ -287,7 +287,7 @@ describe('useSysregTags - BYTEA Operations', () => {
 
     describe('Complex bit operations', () => {
         it('combines multiple operations correctly', () => {
-            let val = '\\x00'
+            let val = 0
 
             // Set bits 0, 2, 4
             val = setBit(val, 0)
@@ -314,7 +314,7 @@ describe('useSysregTags - BYTEA Operations', () => {
 
         it('handles alternating bits pattern', () => {
             // Pattern: 01010101 = 0x55
-            let val = '\\x00'
+            let val = 0
             val = setBit(val, 0)
             val = setBit(val, 2)
             val = setBit(val, 4)
@@ -334,19 +334,19 @@ describe('useSysregTags - BYTEA Operations', () => {
         })
 
         it('validates idempotency of operations', () => {
-            const val = '\\x15' // bits 0, 2, 4
+            const val = 21 // bits 0, 2, 4 (0x15)
 
             // Setting already-set bits
             let result = setBit(val, 0)
             result = setBit(result, 2)
             result = setBit(result, 4)
-            expect(result).toBe(val)
+            expect(result).toBe(21)
 
             // Clearing already-clear bits
             result = clearBit(val, 1)
             result = clearBit(result, 3)
             result = clearBit(result, 5)
-            expect(result).toBe(val)
+            expect(result).toBe(21)
         })
     })
 
@@ -356,21 +356,21 @@ describe('useSysregTags - BYTEA Operations', () => {
 
     describe('Edge cases', () => {
         it('handles empty byte value', () => {
-            const val = '\\x00'
+            const val = 0
             expectEmpty(val)
             expectBitCount(val, 0)
         })
 
         it('handles single bit patterns', () => {
             for (let bit = 0; bit < 8; bit++) {
-                const val = setBit('\\x00', bit)
+                const val = setBit(0, bit)
                 expectBitCount(val, 1)
                 expectBitSet(val, bit)
             }
         })
 
         it('clears all bits one by one', () => {
-            let val = '\\xff' // All bits set
+            let val = 255 // All 8 bits set
             expectBitCount(val, 8)
 
             for (let bit = 0; bit < 8; bit++) {
@@ -381,7 +381,7 @@ describe('useSysregTags - BYTEA Operations', () => {
         })
 
         it('handles rapid bit toggling', () => {
-            let val = '\\x00'
+            let val = 0
 
             // Toggle each bit twice (should return to original)
             for (let bit = 0; bit < 4; bit++) {
@@ -393,7 +393,7 @@ describe('useSysregTags - BYTEA Operations', () => {
         })
 
         it('verifies bit positions are independent', () => {
-            let val = '\\x00'
+            let val = 0
 
             // Set every other bit
             val = setBit(val, 0)

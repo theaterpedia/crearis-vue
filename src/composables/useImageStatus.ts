@@ -4,7 +4,7 @@
  * Manages image status lifecycle and quality flags using sysreg system.
  * Provides status transition logic, config bit management, and validation.
  * 
- * Status values (status_val BYTEA):
+ * Status values (status INTEGER 32-bit):
  * - 0x00 (0): raw - Just imported, needs processing
  * - 0x01 (1): processing - Being processed/cropped
  * - 0x02 (2): approved - Ready for use
@@ -12,7 +12,7 @@
  * - 0x08 (8): deprecated - Old/outdated, not recommended
  * - 0x10 (16): archived - Removed from active use
  * 
- * Config bits (config_val BYTEA):
+ * Config bits (ctags INTEGER 32-bit):
  * - bit 0: public - Visible to public
  * - bit 1: featured - Highlighted in galleries
  * - bit 2: needs_review - Requires manual review
@@ -23,8 +23,6 @@
 
 import { ref, computed, type Ref } from 'vue'
 import {
-    parseByteaHex,
-    byteaFromNumber,
     hasBit,
     setBit,
     clearBit,
@@ -34,8 +32,8 @@ import { useSysregOptions } from './useSysregOptions'
 
 export interface Image {
     id: number
-    status: string | null  // BYTEA hex string
-    ctags: string | null  // BYTEA hex string (config bits)
+    status: number | null  // INTEGER (32-bit)
+    ctags: number | null  // INTEGER (32-bit) - config bits
     [key: string]: any
 }
 
@@ -59,24 +57,29 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
     const loading = ref(false)
     const error = ref<string | null>(null)
 
-    // Parse current values - return BYTEA hex strings, not numbers
+    // Parse current values - return integers directly
     const currentStatus = computed(() => {
-        return image.value?.status || '\\x00'
+        return image.value?.status ?? 0
     })
 
     const currentConfig = computed(() => {
-        return image.value?.ctags || '\\x00'
+        return image.value?.ctags ?? 0
     })
 
     // Helper to get status byte value for comparisons
     const statusByteValue = computed(() => {
-        const bytes = parseByteaHex(currentStatus.value)
-        return bytes[0] || 0
+        return currentStatus.value
     })
 
     // Get bit arrays for computed properties
-    const statusBits = computed(() => parseByteaHex(currentStatus.value))
-    const configBits = computed(() => parseByteaHex(currentConfig.value))
+    const statusBits = computed(() => {
+        const val = currentStatus.value
+        return [val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]
+    })
+    const configBits = computed(() => {
+        const val = currentConfig.value
+        return [val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]
+    })
 
     // Status checks
     const isRaw = computed(() => statusByteValue.value === 0x00)
@@ -189,7 +192,7 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status: byteaFromNumber(0x01),
+            status: 0x01,
             ctags: setBit(currentConfig.value, 2) // Set needs_review
         })
     }
@@ -201,7 +204,7 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status: byteaFromNumber(0x02),
+            status: 0x02,
             ctags: clearBit(currentConfig.value, 2) // Clear needs_review
         })
     }
@@ -213,7 +216,7 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status: byteaFromNumber(0x04),
+            status: 0x04,
             ctags: setBit(currentConfig.value, 0) // Auto-set public
         })
     }
@@ -225,14 +228,14 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status: byteaFromNumber(0x08),
+            status: 0x08,
             ctags: clearBit(currentConfig.value, 1) // Clear featured
         })
     }
 
     async function archiveImage() {
         return updateImageStatus({
-            status: byteaFromNumber(0x10),
+            status: 0x10,
             ctags: clearBit(clearBit(currentConfig.value, 0), 1) // Clear public and featured
         })
     }
@@ -244,13 +247,13 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         }
 
         return updateImageStatus({
-            status: byteaFromNumber(0x02) // Back to approved
+            status: 0x02 // Back to approved
         })
     }
 
     async function resetToRaw() {
         return updateImageStatus({
-            status: byteaFromNumber(0x00)
+            status: 0x00
         })
     }
 

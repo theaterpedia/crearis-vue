@@ -107,15 +107,14 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         Object.entries(sysregCache.value).forEach(([tagfamily, entries]) => {
             if (Array.isArray(entries)) {
                 entries.forEach((entry: any) => {
-                    // Extract bit position from hex value (if bit-based)
-                    const hexValue = entry.value || '\\x00'
-                    const byteValue = parseInt(hexValue.replace(/^\\x/, ''), 16)
-                    const bit = byteValue > 0 ? Math.log2(byteValue) : undefined
+                    // Extract bit position from integer value (power-of-2)
+                    const intValue = typeof entry.value === 'number' ? entry.value : 0
+                    const bit = intValue > 0 ? Math.log2(intValue) : undefined
                     const bitPosition = bit !== undefined && Number.isInteger(bit) ? bit : undefined
 
                     allOptions.push({
                         id: entry.id,
-                        value: hexValue,
+                        value: intValue,
                         name: entry.name,
                         label: getLabel(entry, langCode),
                         bit: bitPosition,
@@ -307,19 +306,18 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         const isBitBased = ['ttags', 'dtags', 'rtags', 'ctags'].includes(tagfamily)
 
         return entries.map((entry: any) => {
-            const hexValue = entry.value || '\\x00'
-            const byteValue = parseInt(hexValue.replace(/^\\x/, ''), 16)
+            const intValue = typeof entry.value === 'number' ? entry.value : 0
 
             // Extract bit position only for bit-based tagfamilies
-            // Check if value is a power of 2: (byteValue & (byteValue - 1)) === 0
+            // Check if value is a power of 2: (intValue & (intValue - 1)) === 0
             let bitPosition: number | undefined = undefined
-            if (isBitBased && byteValue > 0 && (byteValue & (byteValue - 1)) === 0) {
-                bitPosition = Math.log2(byteValue)
+            if (isBitBased && intValue > 0 && (intValue & (intValue - 1)) === 0) {
+                bitPosition = Math.log2(intValue)
             }
 
             return {
                 id: entry.id,
-                value: hexValue,
+                value: intValue,
                 name: entry.name,
                 label: getLabel(entry, langCode),
                 bit: bitPosition,
