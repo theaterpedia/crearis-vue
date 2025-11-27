@@ -69,60 +69,126 @@
                     "cz": "Stav kvality a kontrolní značky"
                 }
             }
-        ]     
+        ]
     },
     "dtags": {
+        "name": "didactic_model",
+        "label": {
+            "de": "Didaktisches Modell",
+            "en": "Didactic Model",
+            "cz": "Didaktický model"
+        },
+        "description": {
+            "de": "Theaterpädagogische Verfahren und Spielformen",
+            "en": "Theater pedagogy methods and play forms",
+            "cz": "Metody divadelní pedagogiky a herní formy"
+        },
         "groups": [
             {
-                "name": "settings",
+                "name": "spielform",
                 "label": {
-                    "de": "Raum-/Arbeitsformen",
-                    "en": "Settings/Work Forms",
-                    "cz": "Prostředí/Pracovní formy"
+                    "de": "Spielform",
+                    "en": "Play Form",
+                    "cz": "Herní forma"
                 },
+                "description": {
+                    "de": "Grundlegende Spielformen im Theaterpädagogischen Kontext",
+                    "en": "Basic play forms in theater pedagogy context",
+                    "cz": "Základní herní formy v kontextu divadelní pedagogiky"
+                },
+                "icon": "users-round",
                 "bits": [
                     0,
                     1,
                     2,
-                    3
-                ],
-                "description": {
-                    "de": "Workshop, Spiel, Performance, Diskussion",
-                    "en": "Workshop, Game, Performance, Discussion",
-                    "cz": "Workshop, Hra, Představení, Diskuse"
-                }
-            },
-            {
-                "name": "domains",
-                "label": {
-                    "de": "Fachbereiche",
-                    "en": "Subject Domains",
-                    "cz": "Odborné oblasti"
-                },
-                "bits": [
+                    3,
                     4,
                     5,
                     6,
                     7
                 ],
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "animiertes_theaterspiel",
+                "label": {
+                    "de": "Animiertes Theaterspiel",
+                    "en": "Animated Theater Play",
+                    "cz": "Animovaná divadelní hra"
+                },
                 "description": {
-                    "de": "Bildung, Medien, Politik, Bewusstsein",
-                    "en": "Education, Media, Policy, Awareness",
-                    "cz": "Vzdělávání, Média, Politika, Povědomí"
-                }
+                    "de": "Animationstechniken im Theater",
+                    "en": "Animation techniques in theater",
+                    "cz": "Animační techniky v divadle"
+                },
+                "icon": "sparkles",
+                "bits": [
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15
+                ],
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "szenische_themenarbeit",
+                "label": {
+                    "de": "Szenische Themenarbeit",
+                    "en": "Scenic Theme Work",
+                    "cz": "Scénická tématická práce"
+                },
+                "description": {
+                    "de": "Szenische Verfahren zur Themenbearbeitung",
+                    "en": "Scenic methods for theme-based work",
+                    "cz": "Scénické metody pro tématickou práci"
+                },
+                "icon": "theater",
+                "bits": [
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25
+                ],
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "paedagogische_regie",
+                "label": {
+                    "de": "Pädagogische Regie",
+                    "en": "Pedagogical Direction",
+                    "cz": "Pedagogické řízení"
+                },
+                "description": {
+                    "de": "Pädagogische Regie, Theatervermittlung",
+                    "en": "Pedagogical direction and theater mediation",
+                    "cz": "Pedagogické řízení a divadelní zprostředkování"
+                },
+                "icon": "clapperboard",
+                "bits": [
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31
+                ],
+                "optional": true,
+                "multiselect": false
             }
-        ],
-        "name": "didactic_model",
-        "label": {
-            "de": "Didaktisches Modell",
-            "en": "Instructional Model",
-            "cz": "Didaktický model"
-        },
-        "description": {
-            "de": "Auswahl aus konkreten Verfahrensweisen der Theaterpädagogik nach Zuteilung im didaktischen Dreieck, sowie 4 Hauptspielformen mitsamt Unterkategorien",
-            "en": "Selection from specific methods of theater education according to allocation in the didactic triangle, as well as 4 main forms of play including subcategories",
-            "cz": "Výběr z konkrétních metod divadelní pedagogiky podle zařazení v didaktickém trojúhelníku, stejně jako 4 hlavní formy hry včetně podkategorií"
-        }           
+        ]
     },
     "ttags": {
         "groups": [
