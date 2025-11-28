@@ -1,8 +1,11 @@
 # Sysreg System: Use-Case Driven Design Specification
 
-**Date:** November 19, 2025  
-**Status:** Design Proposal  
-**Phase:** Pre-Implementation Analysis
+**Date:** November 19, 2025 (Updated: November 28, 2025)  
+**Status:** ⚠️ Historical Reference (BYTEA → INTEGER migration complete)  
+**Phase:** Phases 1-6 Complete
+
+> **Note:** This document was created during the BYTEA era. The system now uses INTEGER (32-bit) bitmasks.
+> For current specification, see [SYSREG_SPEC.md](./SYSREG_SPEC.md).
 
 ## Executive Summary
 

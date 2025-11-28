@@ -1,72 +1,49 @@
 {
     "ctags": {
+        "name": "common_tags",
+        "label": {
+            "de": "Allgemeine Tags",
+            "en": "Common Tags",
+            "cz": "Obecné značky"
+        },
+        "description": {
+            "de": "Gemeinsame Tags für den kreativen Arbeitsbereich",
+            "en": "Shared tags for the creative work domain",
+            "cz": "Sdílené značky pro kreativní pracovní oblast"
+        },
         "groups": [
             {
                 "name": "age_group",
                 "label": {
-                    "de": "Altersgruppen",
-                    "en": "Age Groups",
-                    "cz": "Věkové skupiny"
+                    "de": "Teilnehmer-Alter",
+                    "en": "Participant Ages",
+                    "cz": "Věk účastníků"
                 },
                 "bits": [
                     0,
                     1
                 ],
                 "description": {
-                    "de": "Zielgruppen-Altersklassen",
-                    "en": "Target age groups",
-                    "cz": "Cílové věkové skupiny"
+                    "de": "Typische Altersgruppen der Teilnehmenden in Workshops",
+                    "en": "Typical age groups of participants in workshops",
+                    "cz": "Typické věkové skupiny účastníků workshopů"
                 }
             },
             {
                 "name": "subject_type",
                 "label": {
-                    "de": "Motivart",
-                    "en": "Subject Type",
-                    "cz": "Typ předmětu"
+                    "de": "Arbeitsraum",
+                    "en": "Working Space",
+                    "cz": "Pracovní prostor"
                 },
                 "bits": [
                     2,
                     3
                 ],
                 "description": {
-                    "de": "Art des Bildmotivs",
-                    "en": "Type of image subject",
-                    "cz": "Typ obrazového motivu"
-                }
-            },
-            {
-                "name": "access_level",
-                "label": {
-                    "de": "Zugriffsebene",
-                    "en": "Access Level",
-                    "cz": "Úroveň přístupu"
-                },
-                "bits": [
-                    4,
-                    5
-                ],
-                "description": {
-                    "de": "Sichtbarkeits- und Zugriffsrechte",
-                    "en": "Visibility and access rights",
-                    "cz": "Viditelnost a přístupová práva"
-                }
-            },
-            {
-                "name": "quality",
-                "label": {
-                    "de": "Qualität",
-                    "en": "Quality",
-                    "cz": "Kvalita"
-                },
-                "bits": [
-                    6,
-                    7
-                ],
-                "description": {
-                    "de": "Qualitätsstatus und Prüfmarkierungen",
-                    "en": "Quality status and review markers",
-                    "cz": "Stav kvality a kontrolní značky"
+                    "de": "Arbeitsräume für kreative Arbeit",
+                    "en": "Working spaces for creative work",
+                    "cz": "Pracovní prostory pro kreativní práci"
                 }
             }
         ]
@@ -190,6 +167,17 @@
         ]
     },
     "ttags": {
+        "name": "topic_tags",
+        "label": {
+            "de": "Themen-Tags",
+            "en": "Topic Tags",
+            "cz": "Tématické značky"
+        },
+        "description": {
+            "de": "Katalog der Gesprächsthemen",
+            "en": "Catalog of conversation topics",
+            "cz": "Katalog konverzačních témat"
+        },
         "groups": [
             {
                 "name": "core_themes",
@@ -205,9 +193,9 @@
                     3
                 ],
                 "description": {
-                    "de": "Demokratie, Umwelt, Vielfalt, Bildung",
-                    "en": "Democracy, Environment, Diversity, Education",
-                    "cz": "Demokracie, Životní prostředí, Rozmanitost, Vzdělávání"
+                    "de": "Demokratie, Nachhaltigkeit, Vielfalt, Bildung",
+                    "en": "Democracy, Sustainability, Diversity, Education",
+                    "cz": "Demokracie, Udržitelnost, Rozmanitost, Vzdělávání"
                 }
             },
             {
@@ -224,37 +212,53 @@
                     7
                 ],
                 "description": {
-                    "de": "Zusätzliche Themenbereiche",
-                    "en": "Additional theme areas",
-                    "cz": "Další tematické oblasti"
+                    "de": "Kultur, Soziales, Geschichte, Innovation",
+                    "en": "Culture, Social Issues, History, Innovation",
+                    "cz": "Kultura, Sociální témata, Historie, Inovace"
                 }
             }
         ]
     },
     "rtags": {
-        "groups": [
-            {
-                "name": "resource_types",
-                "label": {
-                    "de": "Ressourcentypen",
-                    "en": "Resource Types",
-                    "cz": "Typy zdrojů"
-                },
-                "bits": [
-                    0,
-                    1,
-                    2,
-                    3
-                ],
-                "description": {
-                    "de": "Guide, Toolkit, Report, Fallstudie",
-                    "en": "Guide, Toolkit, Report, Case Study",
-                    "cz": "Průvodce, Nástroje, Zpráva, Případová studie"
-                }
-            }
-        ]
+        "name": "record_tags",
+        "label": {
+            "de": "Datensatz-Tags",
+            "en": "Record Tags",
+            "cz": "Značky záznamu"
+        },
+        "description": {
+            "de": "Rein technische Datensatzeigenschaften (leer für Alpha)",
+            "en": "Pure technical data record properties (empty for alpha)",
+            "cz": "Čistě technické vlastnosti datových záznamů (prázdné pro alfa)"
+        },
+        "groups": []
+    },
+    "status": {
+        "name": "status",
+        "label": {
+            "de": "Status",
+            "en": "Status",
+            "cz": "Stav"
+        },
+        "description": {
+            "de": "Streng einzelwertiger Bearbeitungsstatus (new/trash, public/internal)",
+            "en": "Strict single-option processing status (new/trash, public/internal)",
+            "cz": "Přísně jednoznačný stav zpracování (nový/koš, veřejný/interní)"
+        },
+        "singleOption": true
     },
     "config": {
+        "name": "config",
+        "label": {
+            "de": "Konfiguration",
+            "en": "Configuration",
+            "cz": "Konfigurace"
+        },
+        "description": {
+            "de": "Feature-Flags und Sichtbarkeitseinstellungen",
+            "en": "Feature flags and visibility settings",
+            "cz": "Příznaky funkcí a nastavení viditelnosti"
+        },
         "groups": [
             {
                 "name": "visibility",

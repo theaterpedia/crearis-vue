@@ -581,3 +581,54 @@ POST /api/sysreg/import/validate
 ---
 
 Would you like me to implement any specific Phase 7 feature, or do you need more detailed design documents for a particular area?
+
+---
+
+## 🔍 **Components Pending Review**
+
+### SysregTagDisplay.vue (257 lines)
+**Location:** `src/components/sysreg/SysregTagDisplay.vue`  
+**Used by:** EditPanel.vue, EventPanel.vue, ImagePreviewModal.vue, cimgImportStepper.vue
+
+**Purpose:** Inline tag display/editor with visibility, age groups, topics, domains.
+
+**Issues to Review:**
+- Complex local state management with multiple v-models
+- Hardcoded bit group names (age_group, subject_type, etc.)
+- May need refactoring to use new TagFamilyTile/TagGroupEditor pattern
+- Consider simplification or replacement with TagFamilies component
+
+**Recommendation:** Evaluate if this can be replaced by `TagFamilies` component with appropriate layout options.
+
+---
+
+### ImageStatusControls.vue (507 lines)
+**Location:** `src/components/sysreg/ImageStatusControls.vue`  
+**Used by:** Currently UNUSED (no imports found in codebase)
+
+**Purpose:** Complete image workflow UI with status transitions and config toggles.
+
+**Matches:** `useImageStatus.ts` composable which creates a full set of status entries.
+
+**Status Values to Review:**
+The composable and component define 6 statuses for images:
+- `0x00` - Raw (just imported)
+- `0x01` - Processing (being edited)
+- `0x02` - Approved (ready for use)
+- `0x04` - Published (actively used)
+- `0x08` - Deprecated (outdated)
+- `0x10` - Archived (removed from active use)
+
+**Config Flags (bits 0-5):**
+- bit 0: `public` - Visible to public
+- bit 1: `featured` - Highlighted in galleries
+- bit 2: `needs_review` - Requires manual review
+- bit 3: `has_people` - Contains identifiable people
+- bit 4: `ai_generated` - Created by AI
+- bit 5: `high_res` - High resolution available
+
+**Recommendation:** 
+1. Review if all 6 status values are needed (consider reducing to 4: raw→approved→published→archived)
+2. Review config flags - are all 6 needed?
+3. If component is useful, integrate it into the UI
+4. If not, consider removing both component AND reducing the composable scope
