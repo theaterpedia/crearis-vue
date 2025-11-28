@@ -102,25 +102,40 @@ const allTags = computed(() => {
     const tags = getOptionsByFamily(props.familyName)
     console.log('[TagGroupEditor] All tags for', props.familyName, ':', tags.length)
     console.log('[TagGroupEditor] Group bits:', props.group.bits)
+    // Debug: show all subcategories with parent_bit
+    const subs = tags.filter((t: any) => t.taglogic === 'subcategory')
+    console.log('[TagGroupEditor] All subcategories:', subs.map((s: any) => ({ name: s.name, parent_bit: s.parent_bit, value: s.value })))
     return tags
 })
 
 // Filter tags by group bits
-// Tags have INTEGER values (power-of-2: 1, 2, 4, 8, etc.)
-// We need to check if the tag's bit position is within this group's bit range
+// Tags use 2-bit encoding per category (values 0-3 within each 2-bit group)
+// Categories have power-of-2 values, subcategories have parent_bit pointing to category
 const groupTags = computed(() => {
     const filtered = allTags.value.filter((tag: any) => {
         // Skip if value is 0 or invalid
         if (!tag.value || tag.value === 0) return false
 
-        // Calculate bit position from power-of-2 value
+        // For subcategories: check if parent_bit is in group's bit range
+        if (tag.taglogic === 'subcategory' && tag.parent_bit !== null && tag.parent_bit !== undefined) {
+            const matches = props.group.bits.includes(tag.parent_bit)
+            if (matches) {
+                console.log('[TagGroupEditor] Matched subcategory:', tag.name, 'parent_bit:', tag.parent_bit)
+            }
+            return matches
+        }
+
+        // For categories: check if bit position (log2 of value) is in group's bit range
         const bitPos = Math.log2(tag.value)
+        // Only valid if bitPos is an integer (power-of-2 value)
+        if (!Number.isInteger(bitPos)) {
+            console.log('[TagGroupEditor] Skipping non-power-of-2 value:', tag.name, 'value:', tag.value)
+            return false
+        }
 
-        // Check if this bit position is in the group's bit range
         const matches = props.group.bits.includes(bitPos)
-
         if (matches) {
-            console.log('[TagGroupEditor] Matched tag:', tag.name, 'value:', tag.value, 'bit:', bitPos)
+            console.log('[TagGroupEditor] Matched category:', tag.name, 'value:', tag.value, 'bit:', bitPos)
         }
 
         return matches
@@ -151,11 +166,27 @@ const toggles = computed(() => {
 })
 
 // Current selections
+// NOTE: modelValue is RELATIVE to the group (already shifted by getGroupValue in useTagFamilyEditor)
+// So for animiertes_theaterspiel with bits [8,9,10,11,12,13,14]:
+// - If bit 8 is set in entity, modelValue = 1 (shifted by 8)
+// - If bit 10 is set, modelValue = 4 (1 << (10-8))
 const selectedCategory = computed(() => {
-    // Check which category is selected based on current value
+    // Find which category is selected based on current relative value
     for (const cat of categories.value) {
-        const bitPos = Math.log2(cat.value)
-        if (hasBit(bitPos)) {
+        // Get the category's bit position (absolute)
+        const catBitPos = Math.log2(cat.value)
+        if (!Number.isInteger(catBitPos)) continue
+
+        // Convert to relative position within group
+        const relativeBitPos = catBitPos - props.group.bits[0]
+
+        // Create mask for 2 bits at this relative position
+        const mask = 0b11 << relativeBitPos
+        // Extract the 2-bit value at this position from modelValue (which is already relative)
+        const extractedValue = props.modelValue & mask
+
+        // If extracted value is non-zero, this category slot is active
+        if (extractedValue !== 0) {
             return cat.value
         }
     }
@@ -165,21 +196,29 @@ const selectedCategory = computed(() => {
 const selectedSubcategory = computed(() => {
     if (!selectedCategory.value) return 0
 
-    // Find the parent category's bit position
-    const parentBit = Math.log2(selectedCategory.value)
+    // Find the category's absolute bit position
+    const catBitPos = Math.log2(selectedCategory.value)
+    if (!Number.isInteger(catBitPos)) return 0
 
-    // Filter subcategories that belong to this category using parent_bit
-    const matchingSubcategories = subcategories.value.filter((s: any) => {
-        return s.parent_bit === parentBit
-    })
+    // Convert to relative position
+    const relativeBitPos = catBitPos - props.group.bits[0]
 
-    // Find which subcategory is currently selected
-    for (const sub of matchingSubcategories) {
-        const bitPos = Math.log2(sub.value)
-        if (hasBit(bitPos)) {
+    // Create mask for 2 bits at this relative position
+    const mask = 0b11 << relativeBitPos
+    // Extract the actual relative value stored in modelValue for this slot
+    const extractedRelativeValue = props.modelValue & mask
+
+    // Convert back to absolute value for comparison with subcategory values
+    // The extracted relative value needs to be shifted back to absolute
+    const extractedAbsoluteValue = extractedRelativeValue << props.group.bits[0]
+
+    // Find which subcategory matches this extracted absolute value
+    for (const sub of availableSubcategories.value) {
+        if (sub.value === extractedAbsoluteValue) {
             return sub.value
         }
     }
+
     return 0
 })
 
@@ -192,41 +231,52 @@ const availableSubcategories = computed(() => {
 
     const parentBit = Math.log2(selectedCategory.value)
     console.log('[TagGroupEditor] Selected category value:', selectedCategory.value, 'parent bit:', parentBit)
-    console.log('[TagGroupEditor] All subcategories:', subcategories.value.length)
+    console.log('[TagGroupEditor] All subcategories in groupTags:', subcategories.value.length, subcategories.value.map((s: any) => ({ name: s.name, parent_bit: s.parent_bit })))
 
     const filtered = subcategories.value.filter((s: any) => {
-        console.log('[TagGroupEditor] Checking subcategory:', s.name, 'parent_bit:', s.parent_bit, 'matches:', s.parent_bit === parentBit)
-        return s.parent_bit === parentBit
+        const matches = s.parent_bit === parentBit
+        console.log('[TagGroupEditor] Checking subcategory:', s.name, 'parent_bit:', s.parent_bit, 'expected:', parentBit, 'matches:', matches, 'type match:', typeof s.parent_bit, typeof parentBit)
+        return matches
     })
 
-    console.log('[TagGroupEditor] Filtered subcategories:', filtered.length)
+    console.log('[TagGroupEditor] Filtered subcategories:', filtered.length, filtered.map((s: any) => s.name))
     return filtered
 })
 
 // Helper functions
-function hasBit(bit: number): boolean {
-    return (props.modelValue & (1 << bit)) !== 0
+// NOTE: modelValue is RELATIVE to group (shifted by group.bits[0])
+function hasBit(relativeBit: number): boolean {
+    return (props.modelValue & (1 << relativeBit)) !== 0
 }
 
-function setBits(bits: number[]): number {
+function setBits(relativeBits: number[]): number {
     let value = props.modelValue
-    bits.forEach(bit => {
+    relativeBits.forEach(bit => {
         value |= (1 << bit)
     })
     return value
 }
 
+// Clear all bits in the group's range (working with relative modelValue)
 function clearGroupBits(): number {
+    // modelValue is relative, so we clear bits 0 to (group.bits.length - 1)
     let value = props.modelValue
-    props.group.bits.forEach((bit: number) => {
-        value &= ~(1 << bit)
-    })
+    for (let i = 0; i < props.group.bits.length; i++) {
+        value &= ~(1 << i)
+    }
     return value
 }
 
+// Convert absolute tag value to relative value for this group
+function toRelativeValue(absoluteValue: number): number {
+    // absoluteValue is like 256 (bit 8 set)
+    // We need to shift it down by the group's starting bit
+    return absoluteValue >> props.group.bits[0]
+}
+
 function hasToggle(tagValue: number): boolean {
-    const bitPos = Math.log2(tagValue)
-    return hasBit(bitPos)
+    const relativeBitPos = Math.log2(tagValue) - props.group.bits[0]
+    return hasBit(relativeBitPos)
 }
 
 function getLabel(labels: Record<string, string>): string {
@@ -260,37 +310,40 @@ function getSubcategoryLabel(tag: any): string {
 }
 
 // Actions
-function selectCategory(value: number) {
-    if (value === 0) {
+function selectCategory(absoluteValue: number) {
+    if (absoluteValue === 0) {
         // Clear all group bits
         emit('update:modelValue', clearGroupBits())
     } else {
-        // Clear group bits and set category bit
-        const bitPos = Math.log2(value)
+        // Convert absolute value to relative and set it
+        const relativeValue = toRelativeValue(absoluteValue)
         let newValue = clearGroupBits()
-        newValue |= (1 << bitPos)
+        newValue |= relativeValue
+        console.log('[TagGroupEditor] selectCategory:', absoluteValue, '-> relative:', relativeValue, 'newValue:', newValue)
         emit('update:modelValue', newValue)
     }
 }
 
-function selectSubcategory(value: number) {
-    if (value === 0) return
+function selectSubcategory(absoluteValue: number) {
+    if (absoluteValue === 0) return
 
-    // Clear group bits and set subcategory bit
-    const bitPos = Math.log2(value)
+    // Convert absolute value to relative and set it
+    const relativeValue = toRelativeValue(absoluteValue)
     let newValue = clearGroupBits()
-    newValue |= (1 << bitPos)
+    newValue |= relativeValue
+    console.log('[TagGroupEditor] selectSubcategory:', absoluteValue, '-> relative:', relativeValue, 'newValue:', newValue)
     emit('update:modelValue', newValue)
 }
 
-function toggleOption(value: number) {
-    const bitPos = Math.log2(value)
+function toggleOption(absoluteValue: number) {
+    const relativeValue = toRelativeValue(absoluteValue)
+    const relativeBitPos = Math.log2(relativeValue)
     let newValue = props.modelValue
 
-    if (hasBit(bitPos)) {
-        newValue &= ~(1 << bitPos)
+    if (hasBit(relativeBitPos)) {
+        newValue &= ~(1 << relativeBitPos)
     } else {
-        newValue |= (1 << bitPos)
+        newValue |= (1 << relativeBitPos)
     }
 
     emit('update:modelValue', newValue)
