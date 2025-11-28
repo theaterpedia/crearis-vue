@@ -48,6 +48,7 @@ import migration031 from './031_add_local_adapter'
 import { migration as migration035 } from './035_rename_val_columns'
 import { migration as migration036 } from './036_bytea_to_integer'
 import { migration as migration037 } from './037_dtags_restructure'
+import { migration as migration038 } from './038_ctags_ttags_restructure'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -100,6 +101,7 @@ const migrations: Migration[] = [
     { run: migration035.up, down: migration035.down, metadata: { id: migration035.id, description: migration035.description, version: '0.2.0', date: '2025-11-26' }, reversible: true },
     { run: migration036.up, down: migration036.down, metadata: { id: migration036.id, description: migration036.description, version: '0.2.1', date: '2025-11-26' }, reversible: true },
     { run: migration037.up, down: migration037.down, metadata: { id: migration037.id, description: migration037.description, version: '0.2.2', date: '2025-11-27' }, reversible: true },
+    { run: migration038.up, down: migration038.down, metadata: { id: migration038.id, description: migration038.description, version: '0.2.3', date: '2025-11-29' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

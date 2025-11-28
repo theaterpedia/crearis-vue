@@ -1,50 +1,67 @@
 {
     "ctags": {
-        "name": "common_tags",
+        "name": "ablauf_struktur",
         "label": {
-            "de": "Allgemeine Tags",
-            "en": "Common Tags",
-            "cz": "Obecné značky"
+            "de": "Ablauf & Struktur",
+            "en": "Process & Structure",
+            "cz": "Proces a struktura"
         },
         "description": {
-            "de": "Gemeinsame Tags für den kreativen Arbeitsbereich",
-            "en": "Shared tags for the creative work domain",
-            "cz": "Sdílené značky pro kreativní pracovní oblast"
+            "de": "Ablauf- und Strukturmerkmale von Veranstaltungen",
+            "en": "Process and structural features of events",
+            "cz": "Procesní a strukturální rysy akcí"
         },
         "groups": [
             {
-                "name": "age_group",
+                "name": "realisierung",
                 "label": {
-                    "de": "Teilnehmer-Alter",
-                    "en": "Participant Ages",
-                    "cz": "Věk účastníků"
+                    "de": "Realisierung",
+                    "en": "Realization",
+                    "cz": "Realizace"
                 },
-                "bits": [
-                    0,
-                    1
-                ],
+                "bits": [0, 1, 2, 3, 4, 5],
                 "description": {
-                    "de": "Typische Altersgruppen der Teilnehmenden in Workshops",
-                    "en": "Typical age groups of participants in workshops",
-                    "cz": "Typické věkové skupiny účastníků workshopů"
-                }
+                    "de": "Art der Durchführung: präsenz, online, hybrid",
+                    "en": "Type of implementation: in-person, online, hybrid",
+                    "cz": "Typ realizace: prezenční, online, hybridní"
+                },
+                "icon": "monitor-smartphone",
+                "optional": false,
+                "multiselect": false
             },
             {
-                "name": "subject_type",
+                "name": "format",
                 "label": {
-                    "de": "Arbeitsraum",
-                    "en": "Working Space",
-                    "cz": "Pracovní prostor"
+                    "de": "Format",
+                    "en": "Format",
+                    "cz": "Formát"
                 },
-                "bits": [
-                    2,
-                    3
-                ],
+                "bits": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
                 "description": {
-                    "de": "Arbeitsräume für kreative Arbeit",
-                    "en": "Working spaces for creative work",
-                    "cz": "Pracovní prostory pro kreativní práci"
-                }
+                    "de": "Veranstaltungsformat: Workshop, Kurs, Projekt, Konferenz, Sonstige",
+                    "en": "Event format: Workshop, Course, Project, Conference, Other",
+                    "cz": "Formát akce: Workshop, Kurz, Projekt, Konference, Ostatní"
+                },
+                "icon": "calendar-range",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "altersgruppen",
+                "label": {
+                    "de": "Altersgruppen",
+                    "en": "Age Groups",
+                    "cz": "Věkové skupiny"
+                },
+                "bits": [18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
+                "description": {
+                    "de": "Zielgruppen nach Alter",
+                    "en": "Target groups by age",
+                    "cz": "Cílové skupiny podle věku"
+                },
+                "icon": "users",
+                "optional": true,
+                "multiselect": true
             }
         ]
     },
@@ -167,55 +184,51 @@
         ]
     },
     "ttags": {
-        "name": "topic_tags",
+        "name": "themen_ziele",
         "label": {
-            "de": "Themen-Tags",
-            "en": "Topic Tags",
-            "cz": "Tématické značky"
+            "de": "Themen & Ziele",
+            "en": "Topics & Goals",
+            "cz": "Témata a cíle"
         },
         "description": {
-            "de": "Katalog der Gesprächsthemen",
-            "en": "Catalog of conversation topics",
-            "cz": "Katalog konverzačních témat"
+            "de": "Thematische Schwerpunkte und Lernziele",
+            "en": "Thematic focuses and learning goals",
+            "cz": "Tematické zaměření a cíle učení"
         },
         "groups": [
             {
-                "name": "core_themes",
+                "name": "medium",
                 "label": {
-                    "de": "Kernthemen",
-                    "en": "Core Themes",
-                    "cz": "Hlavní témata"
+                    "de": "Medium",
+                    "en": "Medium",
+                    "cz": "Médium"
                 },
-                "bits": [
-                    0,
-                    1,
-                    2,
-                    3
-                ],
+                "bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "description": {
-                    "de": "Demokratie, Nachhaltigkeit, Vielfalt, Bildung",
-                    "en": "Democracy, Sustainability, Diversity, Education",
-                    "cz": "Demokracie, Udržitelnost, Rozmanitost, Vzdělávání"
-                }
+                    "de": "Künstlerische und pädagogische Medien",
+                    "en": "Artistic and pedagogical media",
+                    "cz": "Umělecká a pedagogická média"
+                },
+                "icon": "palette",
+                "optional": false,
+                "multiselect": true
             },
             {
-                "name": "extended_themes",
+                "name": "themenfelder",
                 "label": {
-                    "de": "Weitere Themen",
-                    "en": "Extended Themes",
-                    "cz": "Další témata"
+                    "de": "Themenfelder",
+                    "en": "Topic Areas",
+                    "cz": "Tematické oblasti"
                 },
-                "bits": [
-                    4,
-                    5,
-                    6,
-                    7
-                ],
+                "bits": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
                 "description": {
-                    "de": "Kultur, Soziales, Geschichte, Innovation",
-                    "en": "Culture, Social Issues, History, Innovation",
-                    "cz": "Kultura, Sociální témata, Historie, Inovace"
-                }
+                    "de": "Gesellschaftliche Themenfelder",
+                    "en": "Social topic areas",
+                    "cz": "Společenské tematické oblasti"
+                },
+                "icon": "target",
+                "optional": true,
+                "multiselect": true
             }
         ]
     },
