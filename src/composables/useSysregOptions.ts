@@ -113,6 +113,14 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                     const bit = intValue > 0 ? Math.log2(intValue) : undefined
                     const bitPosition = bit !== undefined && Number.isInteger(bit) ? bit : undefined
 
+                    // DEPRECATION WARNING: 'option' taglogic is deprecated, use 'toggle' instead
+                    if (entry.taglogic === 'option') {
+                        console.warn(
+                            `[DEPRECATED] taglogic 'option' is deprecated for entry '${entry.name}' in '${tagfamily}'. ` +
+                            `Use 'toggle' instead. This will be removed in a future migration.`
+                        )
+                    }
+
                     allOptions.push({
                         id: entry.id,
                         value: intValue,

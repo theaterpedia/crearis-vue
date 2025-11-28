@@ -165,7 +165,7 @@ const subcategories = computed(() => {
 
 const toggles = computed(() => {
     return groupTags.value.filter((tag: any) =>
-        tag.taglogic === 'toggle' || tag.taglogic === 'option'
+        tag.taglogic === 'toggle'
     )
 })
 

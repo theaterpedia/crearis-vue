@@ -160,7 +160,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
 
         // Filter to only non-optional groups for compact text
         const coreGroups = displayGroups.value.filter(d => !d.isOptional)
-        
+
         // If no core groups, fall back to optional groups (for 'options' groupSelection mode)
         const groupsToShow = coreGroups.length > 0 ? coreGroups : displayGroups.value.filter(d => d.isOptional)
 
@@ -168,7 +168,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
             // If there's a subcategory, show it (it already includes category context in its label)
             // Otherwise show the category
             const hasSubcategory = display.tags.some(tag => tag.isSubcategory)
-            
+
             const tagLabels = display.tags
                 .filter(tag => hasSubcategory ? tag.isSubcategory : tag.isCategory)
                 .map(tag => tag.label)
@@ -204,7 +204,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
     const optionalTagsText = computed<string>(() => {
         const coreGroups = displayGroups.value.filter(d => !d.isOptional)
         const optionalGroups = displayGroups.value.filter(d => d.isOptional)
-        
+
         // If there are no core groups, don't show optional in secondary area
         // (they'll be shown in the primary compactText area via fallback)
         if (coreGroups.length === 0) return ''

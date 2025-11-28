@@ -60,7 +60,7 @@ CREATE TABLE sysreg (
     name TEXT NOT NULL,               -- Internal identifier
     description TEXT,
     tagfamily TEXT NOT NULL,          -- 'status', 'config', 'rtags', 'ctags', 'ttags', 'dtags'
-    taglogic TEXT NOT NULL,           -- 'category', 'toggle', 'option', 'subcategory', 'group'
+    taglogic TEXT NOT NULL,           -- 'category', 'toggle', 'subcategory' (⚠️ 'option' DEPRECATED)
     is_default BOOLEAN DEFAULT false,
     multiselect BOOLEAN DEFAULT false, -- Allow multi-select in UI
     parent_bit INTEGER,               -- For subcategories: parent category bit
@@ -339,6 +339,26 @@ const label = getTagLabel('ttags', entry.value)  // Returns localized label
 | 022-029 | Sysreg with BYTEA | ✅ |
 | 036 | BYTEA → INTEGER conversion | ✅ |
 | 037 | dtags restructure with parent_bit | 🔄 In Progress |
+
+---
+
+## ⚠️ Deprecations
+
+### `taglogic: 'option'` - DEPRECATED
+
+**Status:** Deprecated as of 2025-11-28  
+**Replacement:** Use `taglogic: 'toggle'` instead  
+**Removal:** Database constraint will be updated in a future migration
+
+**Reason:** From a bitmask logic perspective, `option` and `toggle` are identical:
+- Both are single-bit flags (power-of-2 values)
+- Both can be independently set/unset
+- The `multiselect` property on the **group** controls mutual exclusivity, not the taglogic
+
+**Migration:** Change all `taglogic = 'option'` entries to `taglogic = 'toggle'`:
+```sql
+UPDATE sysreg SET taglogic = 'toggle' WHERE taglogic = 'option';
+```
 
 ---
 
