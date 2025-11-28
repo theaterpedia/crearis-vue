@@ -19,7 +19,14 @@
                     "en": "Realization",
                     "cz": "Realizace"
                 },
-                "bits": [0, 1, 2, 3, 4, 5],
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                ],
                 "description": {
                     "de": "Art der Durchführung: präsenz, online, hybrid",
                     "en": "Type of implementation: in-person, online, hybrid",
@@ -36,7 +43,20 @@
                     "en": "Format",
                     "cz": "Formát"
                 },
-                "bits": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+                "bits": [
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                ],
                 "description": {
                     "de": "Veranstaltungsformat: Workshop, Kurs, Projekt, Konferenz, Sonstige",
                     "en": "Event format: Workshop, Course, Project, Conference, Other",
@@ -53,7 +73,18 @@
                     "en": "Age Groups",
                     "cz": "Věkové skupiny"
                 },
-                "bits": [18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
+                "bits": [
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27
+                ],
                 "description": {
                     "de": "Zielgruppen nach Alter",
                     "en": "Target groups by age",
@@ -203,7 +234,18 @@
                     "en": "Medium",
                     "cz": "Médium"
                 },
-                "bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9
+                ],
                 "description": {
                     "de": "Künstlerische und pädagogische Medien",
                     "en": "Artistic and pedagogical media",
@@ -220,7 +262,29 @@
                     "en": "Topic Areas",
                     "cz": "Tematické oblasti"
                 },
-                "bits": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+                "bits": [
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30
+                ],
                 "description": {
                     "de": "Gesellschaftliche Themenfelder",
                     "en": "Social topic areas",
@@ -254,11 +318,66 @@
             "cz": "Stav"
         },
         "description": {
-            "de": "Streng einzelwertiger Bearbeitungsstatus (new/trash, public/internal)",
-            "en": "Strict single-option processing status (new/trash, public/internal)",
-            "cz": "Přísně jednoznačný stav zpracování (nový/koš, veřejný/interní)"
+            "de": "Lebenszyklus-Status und Sichtbarkeitsbereich",
+            "en": "Lifecycle status and visibility scope",
+            "cz": "Stav životního cyklu a rozsah viditelnosti"
         },
-        "singleOption": true
+        "groups": [
+            {
+                "name": "status",
+                "label": {
+                    "de": "Kernstatus",
+                    "en": "Core Status",
+                    "cz": "Základní stav"
+                },
+                "bits": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12
+                ],
+                "description": {
+                    "de": "Lebenszyklus-Status des Datensatzes",
+                    "en": "Lifecycle status of the record",
+                    "cz": "Stav životního cyklu záznamu"
+                },
+                "icon": "circle-dot",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "scope",
+                "label": {
+                    "de": "Sichtbarkeit",
+                    "en": "Scope",
+                    "cz": "Rozsah"
+                },
+                "bits": [
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                ],
+                "description": {
+                    "de": "Sichtbarkeitsbereich des Datensatzes",
+                    "en": "Visibility scope of the record",
+                    "cz": "Rozsah viditelnosti záznamu"
+                },
+                "icon": "eye",
+                "optional": true,
+                "multiselect": true
+            }
+        ]
     },
     "config": {
         "name": "config",

@@ -67,3 +67,66 @@ ALTER TABLE sysreg ADD CONSTRAINT sysreg_taglogic_check
 **Affected entries (as of 2025-11-28):**
 - ctags: child, adult, teen, location
 - status: posts > new, posts > draft, posts > publish, posts > released, users > new, users > verified
+
+## 4. Rebuild compute_image_shape_fields Trigger Logic
+
+**Status:** TODO  
+**Priority:** HIGH  
+**Added:** 2025-11-29 (Migration 039)
+
+The trigger function `compute_image_shape_fields()` on the `images` table had a dependency on BYTEA ctags column which was changed to INTEGER.
+
+**Original logic (removed):**
+```sql
+-- Compute img_show: true if quality bits (6+7) are 0 (ok) or 64 (is_deprecated)
+NEW.img_show := (get_byte(NEW.ctags, 0) & 192) IN (0, 64);
+```
+
+**Current state:**
+Migration 039 temporarily sets `img_show := true` for all images.
+
+**Action Required:**
+1. Define which ctags bits control image visibility/quality
+2. Rebuild the `img_show` computation logic using INTEGER bit operations
+3. Example new logic (once bits are defined):
+   ```sql
+   -- Assuming quality bits are at positions X and Y in the new ctags INTEGER
+   NEW.img_show := (NEW.ctags & <quality_mask>) IN (0, <deprecated_value>);
+   ```
+
+**Trigger location:** PostgreSQL function `compute_image_shape_fields()`
+
+## 5. Rebuild update_image_computed_fields Trigger Logic
+
+**Status:** TODO  
+**Priority:** HIGH  
+**Added:** 2025-11-29 (Migration 039)
+
+The trigger function `update_image_computed_fields()` on the `images` table had dependencies on BYTEA ctags column for visibility and quality flags.
+
+**Original logic (removed):**
+```sql
+-- Compute is_public, is_private, is_internal from bits 4+5 of ctags
+NEW.is_public := (get_byte(NEW.ctags, 0) & 48) = 16;
+NEW.is_private := (get_byte(NEW.ctags, 0) & 48) = 32;
+NEW.is_internal := (get_byte(NEW.ctags, 0) & 48) = 48;
+
+-- Compute is_deprecated, has_issues from bits 6+7 of ctags
+NEW.is_deprecated := (get_byte(NEW.ctags, 0) & 192) = 64;
+NEW.has_issues := (get_byte(NEW.ctags, 0) & 192) IN (128, 192);
+```
+
+**Current state:**
+Migration 039 temporarily sets:
+- `is_public := false`
+- `is_private := false`
+- `is_internal := true`
+- `is_deprecated := false`
+- `is_issues := false`
+
+**Action Required:**
+1. Visibility flags (`is_public`, `is_private`, `is_internal`) should be derived from `status.scope` (not ctags)
+2. Quality flags (`is_deprecated`, `has_issues`) need a new home - either in ctags or rtags
+3. Rebuild trigger with new INTEGER-based logic
+
+**Trigger location:** PostgreSQL function `update_image_computed_fields()`

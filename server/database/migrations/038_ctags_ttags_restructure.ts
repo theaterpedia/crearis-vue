@@ -133,49 +133,49 @@ export const migration = {
 
         // ==================== CTAGS: Realisierung (bits 0-4) ====================
         console.log('\n📖 Step 3: Insert ctags - Realisierung (bits 0-4)')
-        
+
         // präsenz: bit 0 (1-bit category)
         await insertCtag(db, 'category', 'praesenz', 1, 'Präsenz', 'In-Person')
-        
+
         // online: bit 1 (1-bit category)
         await insertCtag(db, 'category', 'online', 2, 'Online', 'Online')
-        
+
         // hybrid: bits 2-4 (category + 2 subcategories, 2-bit encoding at position 2)
         await insertCtag(db, 'category', 'hybrid', 4, 'Hybrid (synchron)', 'Hybrid (synchronous)')
         await insertCtag(db, 'subcategory', 'hybrid_alternierend', 8, 'hybrid > Alternierend', 'hybrid > Alternating', 2)
         await insertCtag(db, 'subcategory', 'hybrid_livestream', 12, 'hybrid > Livestream', 'hybrid > Livestream', 2)
-        
+
         console.log('  ✓ Inserted Realisierung: 3 categories, 2 subcategories')
 
         // ==================== CTAGS: Format (bits 5-15) ====================
         console.log('\n📖 Step 4: Insert ctags - Format (bits 5-15)')
-        
+
         // workshop: bits 5-7 (category + 2 subcategories)
         await insertCtag(db, 'category', 'workshop', 32, 'Workshop (4-8 Std.)', 'Workshop (4-8 hours)')
         await insertCtag(db, 'subcategory', 'workshop_kurz', 64, 'workshop > Kurz', 'workshop > Short', 5)
         await insertCtag(db, 'subcategory', 'workshop_mehrtaegig', 96, 'workshop > Mehrtägig', 'workshop > Multi-day', 5)
-        
+
         // kurs: bits 8-10 (category + 2 subcategories)
         await insertCtag(db, 'category', 'kurs', 256, 'Kurs (4-10 Monate)', 'Course (4-10 months)')
         await insertCtag(db, 'subcategory', 'kurs_kurz', 512, 'kurs > Kurz', 'course > Short', 8)
         await insertCtag(db, 'subcategory', 'kurs_fortlaufend', 768, 'kurs > Fortlaufend', 'course > Ongoing', 8)
-        
+
         // projekt: bits 11-13 (category + 2 subcategories)
         await insertCtag(db, 'category', 'projekt', 2048, 'Projekt (5-9 Tage)', 'Project (5-9 days)')
         await insertCtag(db, 'subcategory', 'projekt_kurz', 4096, 'projekt > Kurz', 'project > Short', 11)
         await insertCtag(db, 'subcategory', 'projekt_mehrphasig', 6144, 'projekt > Mehrphasig', 'project > Multi-phase', 11)
-        
+
         // konferenz: bit 14 (1-bit category)
         await insertCtag(db, 'category', 'konferenz', 16384, 'Konferenz', 'Conference')
-        
+
         // sonstige: bit 15 (1-bit category)
         await insertCtag(db, 'category', 'sonstige', 32768, 'Sonstige', 'Other')
-        
+
         console.log('  ✓ Inserted Format: 5 categories, 6 subcategories')
 
         // ==================== CTAGS: Altersgruppen (bits 18-27) ====================
         console.log('\n📖 Step 5: Insert ctags - Altersgruppen (bits 18-27)')
-        
+
         await insertCtag(db, 'toggle', 'age_3_6', 262144, '3-6 (Kindergartenalter)', '3-6 (Kindergarten age)')
         await insertCtag(db, 'toggle', 'age_6_9', 524288, '6-9 (Grundschulalter)', '6-9 (Elementary school age)')
         await insertCtag(db, 'toggle', 'age_9_12', 1048576, '9-12 (späte Kindheit)', '9-12 (Late childhood)')
@@ -186,12 +186,12 @@ export const migration = {
         await insertCtag(db, 'toggle', 'age_40_55', 33554432, '40-55 (40er)', '40-55 (40s)')
         await insertCtag(db, 'toggle', 'age_55_70', 67108864, '55-70 (60er)', '55-70 (60s)')
         await insertCtag(db, 'toggle', 'age_70_99', 134217728, '70-99 (Ü70)', '70-99 (70+)')
-        
+
         console.log('  ✓ Inserted Altersgruppen: 10 toggles')
 
         // ==================== TTAGS: Medium (bits 0-9) ====================
         console.log('\n📖 Step 6: Insert ttags - Medium (bits 0-9)')
-        
+
         await insertTtag(db, 'toggle', 'medium_koerper', 1, 'Körper & Bewegung', 'Body & Movement')
         await insertTtag(db, 'toggle', 'medium_stimme', 2, 'Stimme & Sprache', 'Voice & Language')
         await insertTtag(db, 'toggle', 'medium_orte', 4, 'Orte & Räume', 'Places & Spaces')
@@ -202,12 +202,12 @@ export const migration = {
         await insertTtag(db, 'toggle', 'medium_masken', 128, 'Masken & Kostüm', 'Masks & Costumes')
         await insertTtag(db, 'toggle', 'medium_musik', 256, 'Musik', 'Music')
         await insertTtag(db, 'toggle', 'medium_medien', 512, 'Medien', 'Media')
-        
+
         console.log('  ✓ Inserted Medium: 10 toggles')
 
         // ==================== TTAGS: Themenfelder (bits 10-24) ====================
         console.log('\n📖 Step 7: Insert ttags - Themenfelder (bits 10-24)')
-        
+
         // Demokratie: bits 10-12 (category + 6 subcategories, 3-bit encoding)
         await insertTtag(db, 'category', 'demokratie', 1024, 'Demokratie', 'Democracy')
         await insertTtag(db, 'subcategory', 'demokratie_zivilcourage', 2048, 'demokratie > Zivilcourage', 'democracy > Civic Courage', 10)
@@ -216,33 +216,33 @@ export const migration = {
         await insertTtag(db, 'subcategory', 'demokratie_partizipation', 5120, 'demokratie > Partizipation', 'democracy > Participation', 10)
         await insertTtag(db, 'subcategory', 'demokratie_resilienz', 6144, 'demokratie > Resilienz', 'democracy > Resilience', 10)
         await insertTtag(db, 'subcategory', 'demokratie_minderheiten', 7168, 'demokratie > Minderheiten', 'democracy > Minorities', 10)
-        
+
         // Migration: bits 13-15 (category + 3 subcategories, 2-bit encoding)
         await insertTtag(db, 'category', 'migration', 8192, 'Migration', 'Migration')
         await insertTtag(db, 'subcategory', 'migration_flucht', 16384, 'migration > Flucht', 'migration > Flight', 13)
         await insertTtag(db, 'subcategory', 'migration_integration', 24576, 'migration > Berufl. Integration', 'migration > Professional Integration', 13)
         await insertTtag(db, 'subcategory', 'migration_sprachfoerderung', 32768, 'migration > Sprachförderung', 'migration > Language Support', 13)
-        
+
         // Diversität: bits 16-18 (category + 4 subcategories, 3-bit encoding)
         await insertTtag(db, 'category', 'diversitaet', 65536, 'Diversität', 'Diversity')
         await insertTtag(db, 'subcategory', 'diversitaet_gender', 131072, 'diversität > Gender', 'diversity > Gender', 16)
         await insertTtag(db, 'subcategory', 'diversitaet_inklusion', 196608, 'diversität > Inklusion', 'diversity > Inclusion', 16)
         await insertTtag(db, 'subcategory', 'diversitaet_kulturell', 262144, 'diversität > Kult. Vielfalt', 'diversity > Cultural Diversity', 16)
         await insertTtag(db, 'subcategory', 'diversitaet_international', 327680, 'diversität > Intern. Begegnung', 'diversity > International Encounter', 16)
-        
+
         // Nachhaltigkeit: bits 19-21 (category + 3 subcategories, 2-bit encoding)
         await insertTtag(db, 'category', 'nachhaltigkeit', 524288, 'Nachhaltigkeit', 'Sustainability')
         await insertTtag(db, 'subcategory', 'nachhaltigkeit_regional', 1048576, 'nachhaltigkeit > Regionalität', 'sustainability > Regionality', 19)
         await insertTtag(db, 'subcategory', 'nachhaltigkeit_klima', 1572864, 'nachhaltigkeit > Klimawandel', 'sustainability > Climate Change', 19)
         await insertTtag(db, 'subcategory', 'nachhaltigkeit_generationen', 2097152, 'nachhaltigkeit > Generationenverhältnis', 'sustainability > Generational Relations', 19)
-        
+
         // Digitalität: bits 22-24 (category + 4 subcategories, 3-bit encoding)
         await insertTtag(db, 'category', 'digitalitaet', 4194304, 'Digitalität', 'Digitality')
         await insertTtag(db, 'subcategory', 'digitalitaet_sichtbarkeit', 8388608, 'digitalität > Sichtbarkeit', 'digitality > Visibility', 22)
         await insertTtag(db, 'subcategory', 'digitalitaet_creative_commons', 12582912, 'digitalität > Creative Commons', 'digitality > Creative Commons', 22)
         await insertTtag(db, 'subcategory', 'digitalitaet_medienkompetenz', 16777216, 'digitalität > Medienkompetenz', 'digitality > Media Literacy', 22)
         await insertTtag(db, 'subcategory', 'digitalitaet_datenschutz', 20971520, 'digitalität > Datenschutz', 'digitality > Data Protection', 22)
-        
+
         console.log('  ✓ Inserted Themenfelder: 5 categories, 20 subcategories')
 
         // ==================== Summary ====================
@@ -259,11 +259,11 @@ export const migration = {
 
     async down(db: DatabaseAdapter): Promise<void> {
         console.log('Rolling back migration 038...')
-        
+
         // Delete all ctags and ttags
         await db.run('DELETE FROM sysreg_ctags WHERE tagfamily = $1', ['ctags'])
         await db.run('DELETE FROM sysreg_ttags WHERE tagfamily = $1', ['ttags'])
-        
+
         console.log('  ✓ Deleted all ctags and ttags entries')
         console.log('  ⚠️  Note: Original data not restored - was already cleared before this migration')
         console.log('✅ Rollback complete')
