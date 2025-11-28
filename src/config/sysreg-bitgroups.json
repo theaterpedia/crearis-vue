@@ -304,11 +304,29 @@
             "cz": "Značky záznamu"
         },
         "description": {
-            "de": "Rein technische Datensatzeigenschaften (leer für Alpha)",
-            "en": "Pure technical data record properties (empty for alpha)",
-            "cz": "Čistě technické vlastnosti datových záznamů (prázdné pro alfa)"
+            "de": "Technische Qualitäts- und Statusmarkierungen für Datensätze",
+            "en": "Technical quality and status markers for records",
+            "cz": "Technické značky kvality a stavu pro záznamy"
         },
-        "groups": []
+        "groups": [
+            {
+                "name": "quality",
+                "label": {
+                    "de": "Qualität",
+                    "en": "Quality",
+                    "cz": "Kvalita"
+                },
+                "bits": [0, 1],
+                "description": {
+                    "de": "Qualitätsmarkierungen: deprecated (Bit 0), issues (Bit 1)",
+                    "en": "Quality markers: deprecated (bit 0), issues (bit 1)",
+                    "cz": "Značky kvality: zastaralé (bit 0), problémy (bit 1)"
+                },
+                "icon": "alert-triangle",
+                "optional": true,
+                "multiselect": true
+            }
+        ]
     },
     "status": {
         "name": "status",
@@ -343,16 +361,102 @@
                     9,
                     10,
                     11,
-                    12
+                    12,
+                    13,
+                    14,
+                    15,
+                    16
                 ],
                 "description": {
-                    "de": "Lebenszyklus-Status des Datensatzes",
-                    "en": "Lifecycle status of the record",
+                    "de": "Lebenszyklus-Status des Datensatzes (new: 0-2, demo: 3-5, draft: 6-8, confirmed: 9-11, released: 12-14, archived: 15, trash: 16)",
+                    "en": "Lifecycle status of the record (new: 0-2, demo: 3-5, draft: 6-8, confirmed: 9-11, released: 12-14, archived: 15, trash: 16)",
                     "cz": "Stav životního cyklu záznamu"
                 },
                 "icon": "circle-dot",
                 "optional": false,
-                "multiselect": false
+                "multiselect": false,
+                "categories": [
+                    {
+                        "name": "new",
+                        "bits": [
+                            0,
+                            1,
+                            2
+                        ],
+                        "label": {
+                            "de": "Neu",
+                            "en": "New"
+                        }
+                    },
+                    {
+                        "name": "demo",
+                        "bits": [
+                            3,
+                            4,
+                            5
+                        ],
+                        "label": {
+                            "de": "Demo",
+                            "en": "Demo"
+                        }
+                    },
+                    {
+                        "name": "draft",
+                        "bits": [
+                            6,
+                            7,
+                            8
+                        ],
+                        "label": {
+                            "de": "Entwurf",
+                            "en": "Draft"
+                        }
+                    },
+                    {
+                        "name": "confirmed",
+                        "bits": [
+                            9,
+                            10,
+                            11
+                        ],
+                        "label": {
+                            "de": "Bestätigt",
+                            "en": "Confirmed"
+                        }
+                    },
+                    {
+                        "name": "released",
+                        "bits": [
+                            12,
+                            13,
+                            14
+                        ],
+                        "label": {
+                            "de": "Freigegeben",
+                            "en": "Released"
+                        }
+                    },
+                    {
+                        "name": "archived",
+                        "bits": [
+                            15
+                        ],
+                        "label": {
+                            "de": "Archiviert",
+                            "en": "Archived"
+                        }
+                    },
+                    {
+                        "name": "trash",
+                        "bits": [
+                            16
+                        ],
+                        "label": {
+                            "de": "Papierkorb",
+                            "en": "Trash"
+                        }
+                    }
+                ]
             },
             {
                 "name": "scope",
@@ -362,20 +466,62 @@
                     "cz": "Rozsah"
                 },
                 "bits": [
-                    13,
-                    14,
-                    15,
-                    16,
-                    17
+                    17,
+                    18,
+                    19,
+                    20,
+                    21
                 ],
                 "description": {
-                    "de": "Sichtbarkeitsbereich des Datensatzes",
-                    "en": "Visibility scope of the record",
+                    "de": "Sichtbarkeitsbereich des Datensatzes (team: 17, login: 18, project: 19, regio: 20, public: 21)",
+                    "en": "Visibility scope of the record (team: 17, login: 18, project: 19, regio: 20, public: 21)",
                     "cz": "Rozsah viditelnosti záznamu"
                 },
                 "icon": "eye",
                 "optional": true,
-                "multiselect": true
+                "multiselect": true,
+                "toggles": [
+                    {
+                        "name": "team",
+                        "bit": 17,
+                        "label": {
+                            "de": "Team",
+                            "en": "Team"
+                        }
+                    },
+                    {
+                        "name": "login",
+                        "bit": 18,
+                        "label": {
+                            "de": "Login",
+                            "en": "Login"
+                        }
+                    },
+                    {
+                        "name": "project",
+                        "bit": 19,
+                        "label": {
+                            "de": "Projekt",
+                            "en": "Project"
+                        }
+                    },
+                    {
+                        "name": "regio",
+                        "bit": 20,
+                        "label": {
+                            "de": "Regional",
+                            "en": "Regional"
+                        }
+                    },
+                    {
+                        "name": "public",
+                        "bit": 21,
+                        "label": {
+                            "de": "Öffentlich",
+                            "en": "Public"
+                        }
+                    }
+                ]
             }
         ]
     },

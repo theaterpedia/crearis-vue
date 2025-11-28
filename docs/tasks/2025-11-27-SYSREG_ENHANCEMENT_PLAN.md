@@ -8,6 +8,90 @@ Enhance the sysreg system with comprehensive UI components for displaying and ed
 
 ---
 
+## Reference: Legacy Status Values (Pre-Migration)
+
+These tables document the **old status_id values** from the legacy status table before the sysreg INTEGER migration.
+
+### Images (Legacy Status)
+
+| Old Value | Name | German Label | English Label | Notes |
+|-----------|------|--------------|---------------|-------|
+| 0 | new | Neu | New | Newly uploaded |
+| 1 | demo | Demo | Demo | Demo/example data |
+| 2 | draft | Entwurf | Draft | Work in progress |
+| 4 | done | Fertig | Done | Processing complete |
+| 16 | trash | Papierkorb | Trash | Marked for deletion |
+| 32 | archived | Archiviert | Archived | Long-term storage |
+
+### Projects (Legacy Status)
+
+| Old Value | Name | German Label | English Label | Notes |
+|-----------|------|--------------|---------------|-------|
+| 0 | new | Neu | New | Newly created |
+| 1 | demo | Demo | Demo | Demo/example data |
+| 2 | draft/progress | Entwurf | Draft | Work in progress |
+| 3 | publish | Veröffentlicht | Published | Live/public |
+| 4 | done/released | Freigegeben | Released | Completed |
+| 16 | trash | Papierkorb | Trash | Marked for deletion |
+| 32 | archived | Archiviert | Archived | Long-term storage |
+| 48 | linked | Verknüpft | Linked | Referenced data |
+
+### Users (Legacy Status)
+
+| Old Value | Name | German Label | English Label | Notes |
+|-----------|------|--------------|---------------|-------|
+| 0 | new | Neu | New | Newly created account |
+| 1 | demo | Demo | Demo | Demo/test account |
+| 2 | verified/progress | Verifiziert | Verified | Email verified |
+| 3 | publish | Veröffentlicht | Published | Public profile |
+| 4 | done/synced | Synchronisiert | Synced | Synced with external |
+| 6 | public | Öffentlich | Public | Fully public user |
+| 16 | trash | Papierkorb | Trash | Marked for deletion |
+| 32 | archived | Archiviert | Archived | Inactive account |
+| 48 | linked | Verknüpft | Linked | Referenced data |
+
+### Events (Legacy Status)
+
+| Old Value | Name | German Label | English Label | Notes |
+|-----------|------|--------------|---------------|-------|
+| 2 | draft | Entwurf | Draft | Work in progress |
+| 3 | publish | Veröffentlicht | Published | Live |
+| 4 | released | Freigegeben | Released | Confirmed |
+| 6 | confirmed | Bestätigt | Confirmed | Booking confirmed |
+| 8 | running | Laufend | Running | Currently active |
+| 9 | passed | Beendet | Passed | Event completed |
+| 12 | documented | Dokumentiert | Documented | Post-event docs |
+
+### Posts (Legacy Status)
+
+| Old Value | Name | German Label | English Label | Notes |
+|-----------|------|--------------|---------------|-------|
+| 2 | draft | Entwurf | Draft | Work in progress |
+| 3 | publish | Veröffentlicht | Published | Live |
+| 4 | released | Freigegeben | Released | Final version |
+
+### New Status Bit Allocation (Migration 040)
+
+| Category | Bits | Value (Category) | Subcategory Values | Description |
+|----------|------|------------------|-------------------|-------------|
+| new | 0-2 | 1 (2⁰) | 2, 3, 4, 5, 6, 7 | 3-bit slot, 6 subcategories |
+| demo | 3-5 | 8 (2³) | 16, 24, 32, 40, 48, 56 | 3-bit slot, 6 subcategories |
+| draft | 6-8 | 64 (2⁶) | 128, 192, 256, 320, 384, 448 | 3-bit slot, 6 subcategories |
+| confirmed | 9-11 | 512 (2⁹) | 1024, 1536, ... | 3-bit slot, 6 subcategories |
+| released | 12-14 | 4096 (2¹²) | 8192, 12288, ... | 3-bit slot, 6 subcategories |
+| archived | 15 | 32768 (2¹⁵) | - | 1 bit, no subcategories |
+| trash | 16 | 65536 (2¹⁶) | - | 1 bit, no subcategories |
+
+| Scope Toggle | Bit | Value | Description |
+|--------------|-----|-------|-------------|
+| team | 17 | 131072 (2¹⁷) | Visible to team |
+| login | 18 | 262144 (2¹⁸) | Visible to logged-in users |
+| project | 19 | 524288 (2¹⁹) | Visible to project members |
+| regio | 20 | 1048576 (2²⁰) | Visible to region |
+| public | 21 | 2097152 (2²¹) | Publicly visible |
+
+---
+
 ## Phase 1: Database & Configuration Updates
 
 ### 1.1 Migration 037: dtags Restructure
