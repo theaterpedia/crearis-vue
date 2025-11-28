@@ -36,9 +36,16 @@ export interface TagItemDisplay {
 
 export interface UseTagFamilyDisplayOptions {
     familyName: 'status' | 'config' | 'rtags' | 'ttags' | 'ctags' | 'dtags'
-    modelValue: number | null
+    modelValue: Ref<number | null> | number | null
     groupSelection?: 'all' | 'core' | 'options'
+    zoom?: Ref<boolean> | boolean
     locale?: string // Override i18n locale
+}
+
+export interface ZoomedBlock {
+    icon: string
+    groupLabel: string
+    tags: string
 }
 
 export interface UseTagFamilyDisplayReturn {
@@ -46,6 +53,8 @@ export interface UseTagFamilyDisplayReturn {
     displayGroups: ComputedRef<TagDisplay[]>
     compactText: ComputedRef<string>
     zoomedText: ComputedRef<string>
+    optionalTagsText: ComputedRef<string>
+    zoomedBlocks: ComputedRef<ZoomedBlock[]>
 
     // Utilities
     getGroupDisplay: (groupName: string) => TagDisplay | null
@@ -55,11 +64,21 @@ export interface UseTagFamilyDisplayReturn {
 
     // State
     hasActiveTags: ComputedRef<boolean>
+    isEmpty: ComputedRef<boolean>
     activeGroupCount: ComputedRef<number>
 }
 
 export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTagFamilyDisplayReturn {
-    const { familyName, modelValue, groupSelection = 'all', locale } = options
+    const { familyName, groupSelection = 'all', locale } = options
+
+    // Normalize modelValue to ref
+    const modelValueRef = computed(() => {
+        const val = options.modelValue
+        if (typeof val === 'object' && val !== null && 'value' in val) {
+            return val.value
+        }
+        return val
+    })
 
     // Get i18n composable
     const { language } = useI18n()
@@ -68,7 +87,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
     // Get tag family composable
     const tagFamily = useTagFamily({
         familyName,
-        modelValue: modelValue ?? 0,
+        modelValue: modelValueRef.value ?? 0,
         groupSelection
     })
 
@@ -86,7 +105,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
             for (const option of options) {
                 if (option.bit !== undefined && group.bits.includes(option.bit)) {
                     // Check if this tag is active
-                    if (hasBit(modelValue ?? 0, option.bit)) {
+                    if (hasBit(modelValueRef.value ?? 0, option.bit)) {
                         tags.push({
                             value: normalizeToInteger(option.value),
                             label: getLocalizedLabel(option, displayLocale),
@@ -131,19 +150,19 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
         return item.name || ''
     }
 
-    // Compact display text (icons + short labels)
+    // Compact display text (short labels only, no icons)
+    // Icons are rendered separately as components in the tile
     const compactText = computed<string>(() => {
         const parts: string[] = []
 
         for (const display of displayGroups.value) {
-            const icon = display.groupIcon ? `${display.groupIcon} ` : ''
             const tagLabels = display.tags
                 .filter(tag => tag.isCategory) // Only show categories in compact mode
                 .map(tag => tag.label)
                 .join(', ')
 
             if (tagLabels) {
-                parts.push(`${icon}${tagLabels}`)
+                parts.push(tagLabels)
             }
         }
 
@@ -165,6 +184,30 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
         }
 
         return parts.join('\n\n')
+    })
+
+    // Optional tags text (for bottom row in compact view)
+    const optionalTagsText = computed<string>(() => {
+        const optionalGroups = displayGroups.value.filter(d => d.isOptional)
+        if (optionalGroups.length === 0) return ''
+
+        return optionalGroups
+            .flatMap(d => d.tags.map(t => t.label))
+            .join(', ')
+    })
+
+    // Zoomed blocks (for structured zoomed view)
+    const zoomedBlocks = computed<ZoomedBlock[]>(() => {
+        return displayGroups.value.map(display => ({
+            icon: display.groupIcon || 'tag',
+            groupLabel: display.groupLabel,
+            tags: display.tags.map(tag => tag.label).join(', ')
+        }))
+    })
+
+    // Check if empty (no active tags)
+    const isEmpty = computed<boolean>(() => {
+        return displayGroups.value.length === 0
     })
 
     // Get display for a specific group
@@ -221,6 +264,8 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
         displayGroups,
         compactText,
         zoomedText,
+        optionalTagsText,
+        zoomedBlocks,
 
         // Utilities
         getGroupDisplay,
@@ -230,6 +275,7 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
 
         // State
         hasActiveTags,
+        isEmpty,
         activeGroupCount
     }
 }

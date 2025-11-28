@@ -9,7 +9,7 @@
  * - Dirty state tracking
  */
 
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, ref, watch, isRef, isReadonly, type Ref } from 'vue'
 import { useTagFamily } from './useTagFamily'
 import { useSysregOptions } from './useSysregOptions'
 import type { SysregOption } from './useSysregOptions'
@@ -36,17 +36,23 @@ export interface UseTagFamilyEditorOptions {
 export interface UseTagFamilyEditorReturn {
     // State
     editValue: Ref<number>
+    editingValue: Ref<number> // Alias for editValue
     isDirty: Ref<boolean>
     isValid: Ref<boolean>
 
     // Tag family data
     familyConfig: ReturnType<typeof useTagFamily>['familyConfig']
     groups: ReturnType<typeof useTagFamily>['groups']
+    activeGroupNames: Ref<string[]>
+    inactiveGroupNames: Ref<string[]>
 
     // Group operations
     getGroupValue: (groupName: string) => number
     setGroupValue: (groupName: string, value: number) => void
+    updateGroup: (groupName: string, value: number) => void // Alias for setGroupValue
     clearGroup: (groupName: string) => void
+    addGroup: (groupName: string) => void
+    removeGroup: (groupName: string) => void
     toggleTag: (groupName: string, tagValue: number) => void
 
     // Category/subcategory logic
@@ -55,7 +61,7 @@ export interface UseTagFamilyEditorReturn {
     getCategoryForSubcategory: (groupName: string, subcategoryValue: number) => SysregOption | null
 
     // Edit operations
-    save: () => void
+    save: () => number
     cancel: () => void
     reset: () => void
 
@@ -70,6 +76,9 @@ export interface UseTagFamilyEditorReturn {
 
 export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFamilyEditorReturn {
     const { familyName, modelValue, groupSelection = 'all', autoSave = false } = options
+
+    // Check if modelValue is a writable ref
+    const isWritableRef = isRef(modelValue) && !isReadonly(modelValue)
 
     // Convert to ref if needed
     const modelValueRef = ref(typeof modelValue === 'number' ? modelValue : modelValue.value)
@@ -374,12 +383,10 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
         const errors: string[] = []
 
         for (const group of tagFamily.groups.value) {
-            if (!validateGroup(group.name)) {
-                if (!group.optional && !hasActiveGroup(group.name)) {
-                    errors.push(`${group.label.en || group.name} is required`)
-                } else {
-                    errors.push(`${group.label.en || group.name} has invalid selection`)
-                }
+            // Only validate groups that have active selections
+            // (Don't require non-optional groups to be filled - allow partial editing)
+            if (hasActiveGroup(group.name) && !validateGroup(group.name)) {
+                errors.push(`${group.label.en || group.name} has invalid selection`)
             }
         }
 
@@ -391,19 +398,57 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
         return getValidationErrors().length === 0
     })
 
-    // Save changes to model
-    const save = (): void => {
+    // Computed: Active group names (groups with at least one active bit)
+    const activeGroupNames = computed<string[]>(() => {
+        return tagFamily.groups.value
+            .filter((group: TagGroup) => hasActiveGroup(group.name))
+            .map((group: TagGroup) => group.name)
+    })
+
+    // Computed: Inactive group names (groups with no active bits)
+    const inactiveGroupNames = computed<string[]>(() => {
+        return tagFamily.groups.value
+            .filter((group: TagGroup) => !hasActiveGroup(group.name))
+            .map((group: TagGroup) => group.name)
+    })
+
+    // Add a group (activate it with default/first tag)
+    const addGroup = (groupName: string): void => {
+        const group = tagFamily.groups.value.find((g: TagGroup) => g.name === groupName)
+        if (!group || group.bits.length === 0) return
+
+        // Set first bit in the group
+        let newVal = editValue.value
+        newVal = setBit(newVal, group.bits[0])
+        editValue.value = newVal
+
+        if (autoSave) {
+            save()
+        }
+    }
+
+    // Remove a group (clear all its bits)
+    const removeGroup = (groupName: string): void => {
+        clearGroup(groupName)
+    }
+
+    // Save changes to model and return the new value
+    const saveAndReturn = (): number => {
         if (!isValid.value) {
-            console.warn('Cannot save: validation errors exist')
-            return
+            const errors = getValidationErrors()
+            console.warn('Cannot save: validation errors exist', errors)
+            return modelValueRef.value
         }
 
+        // Update our internal tracking ref
         modelValueRef.value = editValue.value
 
-        // Update original ref if it's a ref
-        if (typeof modelValue !== 'number' && 'value' in modelValue) {
-            modelValue.value = editValue.value
+        // Only try to update the original ref if it's a writable ref
+        if (isWritableRef && 'value' in modelValue) {
+            (modelValue as Ref<number>).value = editValue.value
         }
+
+        return editValue.value
     }
 
     // Cancel editing (revert to model value)
@@ -423,17 +468,23 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
     return {
         // State
         editValue,
+        editingValue: editValue, // Alias
         isDirty,
         isValid,
 
         // Tag family data
         familyConfig: tagFamily.familyConfig,
         groups: tagFamily.groups,
+        activeGroupNames,
+        inactiveGroupNames,
 
         // Group operations
         getGroupValue,
         setGroupValue,
+        updateGroup: setGroupValue, // Alias
         clearGroup,
+        addGroup,
+        removeGroup,
         toggleTag,
 
         // Category/subcategory logic
@@ -442,7 +493,7 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
         getCategoryForSubcategory,
 
         // Edit operations
-        save,
+        save: saveAndReturn,
         cancel,
         reset,
 
