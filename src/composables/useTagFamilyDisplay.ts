@@ -167,10 +167,17 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
         for (const display of groupsToShow) {
             // If there's a subcategory, show it (it already includes category context in its label)
             // Otherwise show the category
+            // For toggles (neither category nor subcategory), show all of them
             const hasSubcategory = display.tags.some(tag => tag.isSubcategory)
+            const hasCategory = display.tags.some(tag => tag.isCategory)
 
             const tagLabels = display.tags
-                .filter(tag => hasSubcategory ? tag.isSubcategory : tag.isCategory)
+                .filter(tag => {
+                    if (hasSubcategory) return tag.isSubcategory
+                    if (hasCategory) return tag.isCategory
+                    // Neither category nor subcategory = toggles, show all
+                    return true
+                })
                 .map(tag => tag.label)
                 .join(', ')
 
@@ -214,8 +221,14 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
         const parts: string[] = []
         for (const display of optionalGroups) {
             const hasSubcategory = display.tags.some(tag => tag.isSubcategory)
+            const hasCategory = display.tags.some(tag => tag.isCategory)
             const tagLabels = display.tags
-                .filter(tag => hasSubcategory ? tag.isSubcategory : tag.isCategory)
+                .filter(tag => {
+                    if (hasSubcategory) return tag.isSubcategory
+                    if (hasCategory) return tag.isCategory
+                    // Neither category nor subcategory = toggles, show all
+                    return true
+                })
                 .map(tag => tag.label)
                 .join(', ')
             if (tagLabels) {
