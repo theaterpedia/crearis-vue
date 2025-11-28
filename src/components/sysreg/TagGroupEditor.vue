@@ -8,6 +8,10 @@
                     {{ getLabel(group.description) }}
                 </p>
             </div>
+            <!-- Clear button (x) to deselect all -->
+            <button v-if="hasSelection" class="clear-button" @click="clearSelection" title="Clear selection">
+                <XIcon :size="16" />
+            </button>
         </div>
 
         <div class="group-controls">
@@ -65,7 +69,7 @@
 import { computed } from 'vue'
 import { useSysregOptions } from '@/composables/useSysregOptions'
 import type { TagGroup } from '@/composables/useTagFamily'
-import { UsersRound, Sparkles, Theater, Clapperboard, Tag } from 'lucide-vue-next'
+import { UsersRound, Sparkles, Theater, Clapperboard, Tag, X as XIcon } from 'lucide-vue-next'
 import type { LucideIcon } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -165,6 +169,27 @@ const toggles = computed(() => {
     )
 })
 
+// Calculate bit width needed for a category (based on subcategory count)
+// 0 subs = 1 bit (just the category)
+// 1-2 subs = 2 bits (0=empty, 1=cat, 2-3=subs)
+// 3-6 subs = 3 bits (0=empty, 1=cat, 2-7=subs)
+function getCategoryBitWidth(categoryValue: number): number {
+    const catBitPos = Math.log2(categoryValue)
+    const subsForCat = subcategories.value.filter((s: any) => s.parent_bit === catBitPos)
+    const subCount = subsForCat.length
+    if (subCount === 0) return 1
+    if (subCount <= 2) return 2
+    return 3 // up to 6 subcategories
+}
+
+// Create a bit mask for a category's slot
+function getCategoryMask(categoryValue: number): number {
+    const catBitPos = Math.log2(categoryValue)
+    const relativeBitPos = catBitPos - props.group.bits[0]
+    const bitWidth = getCategoryBitWidth(categoryValue)
+    return ((1 << bitWidth) - 1) << relativeBitPos
+}
+
 // Current selections
 // NOTE: modelValue is RELATIVE to the group (already shifted by getGroupValue in useTagFamilyEditor)
 // So for animiertes_theaterspiel with bits [8,9,10,11,12,13,14]:
@@ -180,9 +205,9 @@ const selectedCategory = computed(() => {
         // Convert to relative position within group
         const relativeBitPos = catBitPos - props.group.bits[0]
 
-        // Create mask for 2 bits at this relative position
-        const mask = 0b11 << relativeBitPos
-        // Extract the 2-bit value at this position from modelValue (which is already relative)
+        // Create mask based on actual bit width for this category
+        const mask = getCategoryMask(cat.value)
+        // Extract the value at this position from modelValue (which is already relative)
         const extractedValue = props.modelValue & mask
 
         // If extracted value is non-zero, this category slot is active
@@ -203,8 +228,8 @@ const selectedSubcategory = computed(() => {
     // Convert to relative position
     const relativeBitPos = catBitPos - props.group.bits[0]
 
-    // Create mask for 2 bits at this relative position
-    const mask = 0b11 << relativeBitPos
+    // Create mask based on actual bit width for this category
+    const mask = getCategoryMask(selectedCategory.value)
     // Extract the actual relative value stored in modelValue for this slot
     const extractedRelativeValue = props.modelValue & mask
 
@@ -348,6 +373,16 @@ function toggleOption(absoluteValue: number) {
 
     emit('update:modelValue', newValue)
 }
+
+// Check if there's any selection in this group
+const hasSelection = computed(() => {
+    return props.modelValue !== 0
+})
+
+// Clear all selections in this group
+function clearSelection() {
+    emit('update:modelValue', 0)
+}
 </script>
 
 <style scoped>
@@ -376,6 +411,27 @@ function toggleOption(absoluteValue: number) {
 
 .group-info {
     flex: 1;
+}
+
+.clear-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.clear-button:hover {
+    background: var(--color-background);
+    color: var(--color-danger, #dc3545);
 }
 
 .group-label {
@@ -449,13 +505,24 @@ function toggleOption(absoluteValue: number) {
 
 .subcategory-controls {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     padding-left: 1rem;
+    flex-wrap: wrap;
+}
+
+.subcategory-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
 }
 
 .subcategory-separator {
     font-size: 1.2rem;
     color: var(--color-text-muted);
+    flex-shrink: 0;
+    line-height: 2.25rem;
 }
 </style>

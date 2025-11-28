@@ -84,10 +84,10 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
     const { language } = useI18n()
     const displayLocale = locale || language.value
 
-    // Get tag family composable
+    // Get tag family composable - pass the ref for reactivity
     const tagFamily = useTagFamily({
         familyName,
-        modelValue: modelValueRef.value ?? 0,
+        modelValue: modelValueRef,  // Pass the computed ref, not the value
         groupSelection
     })
 
@@ -151,13 +151,26 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
     }
 
     // Compact display text (short labels only, no icons)
+    // Shows ONLY non-optional (core/required) groups normally
+    // Falls back to showing optional groups if there are NO core groups
     // Icons are rendered separately as components in the tile
+    // Shows the most specific selection: subcategory if selected, otherwise category
     const compactText = computed<string>(() => {
         const parts: string[] = []
 
-        for (const display of displayGroups.value) {
+        // Filter to only non-optional groups for compact text
+        const coreGroups = displayGroups.value.filter(d => !d.isOptional)
+        
+        // If no core groups, fall back to optional groups (for 'options' groupSelection mode)
+        const groupsToShow = coreGroups.length > 0 ? coreGroups : displayGroups.value.filter(d => d.isOptional)
+
+        for (const display of groupsToShow) {
+            // If there's a subcategory, show it (it already includes category context in its label)
+            // Otherwise show the category
+            const hasSubcategory = display.tags.some(tag => tag.isSubcategory)
+            
             const tagLabels = display.tags
-                .filter(tag => tag.isCategory) // Only show categories in compact mode
+                .filter(tag => hasSubcategory ? tag.isSubcategory : tag.isCategory)
                 .map(tag => tag.label)
                 .join(', ')
 
@@ -187,13 +200,29 @@ export function useTagFamilyDisplay(options: UseTagFamilyDisplayOptions): UseTag
     })
 
     // Optional tags text (for bottom row in compact view)
+    // Only shown if there are ALSO core groups (otherwise optional is shown in compactText)
     const optionalTagsText = computed<string>(() => {
+        const coreGroups = displayGroups.value.filter(d => !d.isOptional)
         const optionalGroups = displayGroups.value.filter(d => d.isOptional)
+        
+        // If there are no core groups, don't show optional in secondary area
+        // (they'll be shown in the primary compactText area via fallback)
+        if (coreGroups.length === 0) return ''
         if (optionalGroups.length === 0) return ''
 
-        return optionalGroups
-            .flatMap(d => d.tags.map(t => t.label))
-            .join(', ')
+        // Show optional groups with their most specific selection
+        const parts: string[] = []
+        for (const display of optionalGroups) {
+            const hasSubcategory = display.tags.some(tag => tag.isSubcategory)
+            const tagLabels = display.tags
+                .filter(tag => hasSubcategory ? tag.isSubcategory : tag.isCategory)
+                .map(tag => tag.label)
+                .join(', ')
+            if (tagLabels) {
+                parts.push(tagLabels)
+            }
+        }
+        return parts.join(', ')
     })
 
     // Zoomed blocks (for structured zoomed view)

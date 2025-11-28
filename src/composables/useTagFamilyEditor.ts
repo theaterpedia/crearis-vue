@@ -337,29 +337,13 @@ export function useTagFamilyEditor(options: UseTagFamilyEditorOptions): UseTagFa
             return false
         }
 
-        // Check category/subcategory consistency
-        const options = getOptionsByFamily(familyName)
-        const groupOptions = options.filter((opt: SysregOption) =>
-            opt.bit !== undefined && group.bits.includes(opt.bit)
-        )
-
-        let hasCategory = false
-        let hasSubcategory = false
-
-        for (const option of groupOptions) {
-            if (option.bit !== undefined && hasBit(editValue.value, option.bit)) {
-                if (option.taglogic === 'category') {
-                    hasCategory = true
-                } else if (option.taglogic === 'subcategory') {
-                    hasSubcategory = true
-                }
-            }
-        }
-
-        // If has subcategory, must have category
-        if (hasSubcategory && !hasCategory) {
-            return false
-        }
+        // With 2-bit/3-bit category encoding, when a subcategory is selected,
+        // the category bit itself may not be set (e.g., subcategory value 4 = bit 2 only).
+        // The encoding is: 1=category, 2+=subcategories within the category slot.
+        // So if ANY bit in a category's slot is set, that category slot is active.
+        // We don't need to validate category/subcategory consistency because
+        // the encoding inherently represents either "category only" or "specific subcategory".
+        // Both are valid selections.
 
         return true
     }
