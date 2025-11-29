@@ -118,24 +118,23 @@ function validateXmlid(xmlid: string): void {
 }
 
 /**
- * Parse ctags from comma-separated string to Buffer
+ * Parse ctags/rtags from comma-separated string to INTEGER
+ * After Migration 036, these are INTEGER columns (not BYTEA)
  */
-function parseTagBuffer(tagString?: string): Buffer {
+function parseTagValue(tagString?: string): number {
     if (!tagString) {
-        return Buffer.from([0])
+        return 0
     }
 
     try {
-        const bytes = tagString.split(',').map(s => parseInt(s.trim(), 10))
-        if (bytes.some(b => isNaN(b) || b < 0 || b > 255)) {
-            throw new Error('Invalid byte value')
+        // Parse as integer directly
+        const value = parseInt(tagString.trim(), 10)
+        if (isNaN(value)) {
+            return 0
         }
-        return Buffer.from(bytes)
+        return value
     } catch (error) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid tag format. Expected comma-separated bytes (0-255)'
-        })
+        return 0
     }
 }
 
@@ -222,9 +221,9 @@ export default defineEventHandler(async (event) => {
         // Validate xmlid format
         validateXmlid(xmlid)
 
-        // Parse tags
-        const ctags = parseTagBuffer(ctagsStr)
-        const rtags = parseTagBuffer(rtagsStr)
+        // Parse tags (now INTEGER, not BYTEA)
+        const ctags = parseTagValue(ctagsStr)
+        const rtags = parseTagValue(rtagsStr)
 
         // Extract domaincode from xmlid for batch data
         const domaincode = xmlid.split('.')[0]
