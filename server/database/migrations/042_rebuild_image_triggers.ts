@@ -104,7 +104,7 @@ export const migration = {
 
         // ==================== Step 3: Rebuild compute_image_shape_fields trigger ====================
         console.log('\n📖 Step 3: Rebuild compute_image_shape_fields trigger')
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION compute_image_shape_fields()
             RETURNS TRIGGER AS $$
@@ -129,7 +129,7 @@ export const migration = {
 
         // ==================== Step 4: Rebuild update_image_computed_fields trigger ====================
         console.log('\n📖 Step 4: Rebuild update_image_computed_fields trigger')
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION update_image_computed_fields()
             RETURNS TRIGGER AS $$
@@ -193,7 +193,7 @@ export const migration = {
 
         // ==================== Step 5: Refresh existing images ====================
         console.log('\n📖 Step 5: Refresh computed fields on existing images')
-        
+
         // Touch all images to trigger recomputation
         await db.exec(`
             UPDATE images SET updated_at = NOW();
@@ -202,10 +202,10 @@ export const migration = {
 
         // ==================== Summary ====================
         console.log('\n📖 Step 6: Migration Summary')
-        
+
         const rtagsCount = await db.get('SELECT COUNT(*) as count FROM sysreg_rtags WHERE tagfamily = $1', ['rtags'])
         const imgCount = await db.get('SELECT COUNT(*) as count FROM images')
-        
+
         console.log(`  ✓ rtags entries: ${(rtagsCount as any).count} (Quality group: deprecated, issues)`)
         console.log(`  ✓ Images refreshed: ${(imgCount as any).count}`)
         console.log('  ✓ Triggers rebuilt with INTEGER-based logic')

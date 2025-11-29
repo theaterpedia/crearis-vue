@@ -316,7 +316,10 @@
                     "en": "Quality",
                     "cz": "Kvalita"
                 },
-                "bits": [0, 1],
+                "bits": [
+                    0,
+                    1
+                ],
                 "description": {
                     "de": "Qualitätsmarkierungen: deprecated (Bit 0), issues (Bit 1)",
                     "en": "Quality markers: deprecated (bit 0), issues (bit 1)",

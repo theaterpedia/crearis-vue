@@ -45,7 +45,7 @@ export const migration = {
 
         // ==================== IMAGES ====================
         console.log('\n📷 Step 1: Update images status')
-        
+
         // All images get DRAFT status (64)
         const imageUpdates: Array<{ xmlid: string; status: number; comment: string }> = [
             { xmlid: 'aktivkreativ.image_child.kostuem_probe2', status: STATUS.DRAFT, comment: 'draft' },
@@ -188,11 +188,11 @@ export const migration = {
 
         // ==================== Summary ====================
         console.log('\n📊 Step 4: Migration Summary')
-        
+
         const imgCount = await db.get(`SELECT COUNT(*) as count FROM images`)
         const projCount = await db.get(`SELECT COUNT(*) as count FROM projects`)
         const userCount = await db.get(`SELECT COUNT(*) as count FROM users`)
-        
+
         console.log(`  ✓ Images: ${(imgCount as any).count} total`)
         console.log(`  ✓ Projects: ${(projCount as any).count} total`)
         console.log(`  ✓ Users: ${(userCount as any).count} total`)
@@ -201,12 +201,12 @@ export const migration = {
 
     async down(db: DatabaseAdapter): Promise<void> {
         console.log('Rolling back migration 041...')
-        
+
         // Reset all status to NULL (or previous values if known)
         await db.run(`UPDATE images SET status = NULL`)
         await db.run(`UPDATE projects SET status = NULL`)
         await db.run(`UPDATE users SET status = NULL`)
-        
+
         console.log('  ✓ Reset all status to NULL')
         console.log('  ⚠️  Note: Original status values not preserved in rollback')
         console.log('✅ Rollback complete')
