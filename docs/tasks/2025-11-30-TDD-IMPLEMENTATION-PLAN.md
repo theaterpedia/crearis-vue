@@ -262,6 +262,11 @@ pnpm test:health
 2. [ ] Update imports in test files
 3. [ ] Add version annotations to relevant tests
 
+### Phase 2b: Integration Tests Reintegration (Dec 4)
+1. [ ] Review existing tests/integration tests from mid-November
+2. [ ] Update integration tests to use versioned-test infrastructure
+3. [ ] Ensure integration tests align with v0.3 milestone
+
 ### Phase 3: Health Reporting (Dec 9)
 1. [ ] Implement health report generation
 2. [ ] Create summary script for deprecated/draft analysis
@@ -272,14 +277,12 @@ pnpm test:health
 ## 6. Dependencies
 
 ### Required Packages
-```bash
-pnpm add -D semver @types/semver
-```
+No external dependencies needed! Version comparison implemented inline.
 
-### Files to Modify
-- `vitest.config.ts` - Add report configuration
-- `package.json` - Add new test scripts
-- `tests/setup/test-setup.ts` - Import health report hooks
+### Files Modified
+- `package.json` - Added new test scripts
+- `tests/helpers/versioned-test.ts` - Core infrastructure (NEW)
+- `tests/unit/common.versioned-test-demo.spec.ts` - Demo/verification (NEW)
 
 ---
 

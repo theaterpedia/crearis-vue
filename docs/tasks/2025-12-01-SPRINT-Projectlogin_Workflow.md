@@ -31,7 +31,8 @@ This sprint delivers the core project workflow system, enabling consistent login
 
 ### Entity Types
 - **Projects:** topic, project, regio, special
-- **Project special subtypes:** dev, tp
+- **Priority:** topic, project, regio (fully tested) > special (prototype, code-hacks OK)
+- **Special projects:** 'dev' and 'tp' are two specific projects, not subtypes
 
 ### Database
 - PostgreSQL with `sysreg_status`, `sysreg_rtags` tables
@@ -83,7 +84,7 @@ This sprint delivers the core project workflow system, enabling consistent login
 | Track | Target |
 |-------|--------|
 | A: Kanban | Per-project and per-user kanban views |
-| B: Special | 'dev' and 'tp' project functionality, 'features' entity |
+| B: Special | 'dev' and 'tp' projects (prototype, accepts code-hacks, not fully tested) |
 | C: Roadmap | External roadmap display, interactions table integration |
 
 **Key Deliverables:**
@@ -101,7 +102,7 @@ This sprint delivers the core project workflow system, enabling consistent login
 | Dec 1 | ⬜ | |
 | Dec 2 | ⬜ | **v0.2 deadline** |
 | Dec 3 | ⬜ | |
-| Dec 4 | ⬜ | |
+| Dec 4 | ⬜ | Reintegrate tests/integration tests |
 | Dec 5 | ⬜ | **v0.3 deadline** |
 | Dec 8 | ⬜ | |
 | Dec 9 | ⬜ | **v0.4 deadline** |
