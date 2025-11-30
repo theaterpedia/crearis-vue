@@ -1,6 +1,47 @@
 # Post-Migration 036 Tasks
 
-## 1. Restore Sysreg Values
+## 1. Generated Columns on Projects Table
+
+**Status:** TODO
+**Priority:** HIGH
+
+The `projects` table has 3 generated columns that depend on the `config` column:
+- `is_onepage` - COALESCE(((config ->> 'onepage')::boolean), false)
+- `is_service` - COALESCE(((config ->> 'service')::byoolean), false)  
+- `is_sidebar` - COALESCE(((config ->> 'sidebar')::boolean), false)
+
+These were dropped during Migration 036 to allow the `config` column type change from BYTEA to INTEGER.
+
+**Action Required:**
+Recreate these generated columns using the new INTEGER-based config system once the config bit mapping is defined.
+
+**Note:** The `config` column was changed from BYTEA to INTEGER as part of the sysreg standardization. The generated columns need to be updated to work with the new bit-based config system instead of JSONB properties.
+
+## 2. Remove Deprecated 'option' taglogic
+
+**Status:** TODO  
+**Priority:** MEDIUM  
+**Depends on:** Testing deprecation warnings work correctly
+
+### Step 1: Convert existing 'option' entries to 'toggle'
+```sql
+UPDATE sysreg SET taglogic = 'toggle' WHERE taglogic = 'option';
+```
+
+### Step 2: Update database constraint (future migration)
+```sql
+-- Remove 'option' from allowed taglogic values
+ALTER TABLE sysreg DROP CONSTRAINT sysreg_taglogic_check;
+ALTER TABLE sysreg ADD CONSTRAINT sysreg_taglogic_check 
+    CHECK (taglogic = ANY (ARRAY['category'::text, 'subcategory'::text, 'toggle'::text]));
+```
+
+**Affected entries (as of 2025-11-28):**
+- ctags: child, adult, teen, location
+- status: posts > new, posts > draft, posts > publish, posts > released, users > new, users > verified
+
+
+## 3. Restore Sysreg Values
 
 **Status:** ✅ COMPLETED  
 **Priority:** URGENT
@@ -27,46 +68,6 @@ WHERE sysreg.id = subq.id;
 - ttags: 6 entries, values 1 to 32 (2^0 to 2^5)
 
 Unique constraint (value, tagfamily) is now properly enforced.
-
-## 2. Generated Columns on Projects Table
-
-**Status:** TODO
-**Priority:** HIGH
-
-The `projects` table has 3 generated columns that depend on the `config` column:
-- `is_onepage` - COALESCE(((config ->> 'onepage')::boolean), false)
-- `is_service` - COALESCE(((config ->> 'service')::byoolean), false)  
-- `is_sidebar` - COALESCE(((config ->> 'sidebar')::boolean), false)
-
-These were dropped during Migration 036 to allow the `config` column type change from BYTEA to INTEGER.
-
-**Action Required:**
-Recreate these generated columns using the new INTEGER-based config system once the config bit mapping is defined.
-
-**Note:** The `config` column was changed from BYTEA to INTEGER as part of the sysreg standardization. The generated columns need to be updated to work with the new bit-based config system instead of JSONB properties.
-
-## 3. Remove Deprecated 'option' taglogic
-
-**Status:** TODO  
-**Priority:** MEDIUM  
-**Depends on:** Testing deprecation warnings work correctly
-
-### Step 1: Convert existing 'option' entries to 'toggle'
-```sql
-UPDATE sysreg SET taglogic = 'toggle' WHERE taglogic = 'option';
-```
-
-### Step 2: Update database constraint (future migration)
-```sql
--- Remove 'option' from allowed taglogic values
-ALTER TABLE sysreg DROP CONSTRAINT sysreg_taglogic_check;
-ALTER TABLE sysreg ADD CONSTRAINT sysreg_taglogic_check 
-    CHECK (taglogic = ANY (ARRAY['category'::text, 'subcategory'::text, 'toggle'::text]));
-```
-
-**Affected entries (as of 2025-11-28):**
-- ctags: child, adult, teen, location
-- status: posts > new, posts > draft, posts > publish, posts > released, users > new, users > verified
 
 ## 4. Rebuild compute_image_shape_fields Trigger Logic
 
