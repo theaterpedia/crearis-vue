@@ -529,55 +529,170 @@
         ]
     },
     "config": {
-        "name": "config",
+        "name": "capabilities_matrix",
         "label": {
-            "de": "Konfiguration",
-            "en": "Configuration",
-            "cz": "Konfigurace"
+            "de": "Berechtigungsmatrix",
+            "en": "Capabilities Matrix",
+            "cz": "Matice oprávnění"
         },
         "description": {
-            "de": "Feature-Flags und Sichtbarkeitseinstellungen",
-            "en": "Feature flags and visibility settings",
-            "cz": "Příznaky funkcí a nastavení viditelnosti"
+            "de": "Rollenbasierte Zugriffsrechte für Entitäten",
+            "en": "Role-based access rights for entities",
+            "cz": "Oprávnění pro přístup k entitám podle rolí"
         },
         "groups": [
             {
-                "name": "visibility",
+                "name": "project_type",
                 "label": {
-                    "de": "Sichtbarkeit",
-                    "en": "Visibility",
-                    "cz": "Viditelnost"
+                    "de": "Projekttyp",
+                    "en": "Project Type",
+                    "cz": "Typ projektu"
                 },
-                "bits": [
-                    0,
-                    1
-                ],
+                "bits": [0, 1, 2],
                 "description": {
-                    "de": "Öffentlich, Hervorgehoben",
-                    "en": "Public, Featured",
-                    "cz": "Veřejné, Vyzdvižené"
-                }
+                    "de": "Projekttyp und Default/Special-Flag",
+                    "en": "Project type and default/special flag",
+                    "cz": "Typ projektu a příznak default/special"
+                },
+                "icon": "folder",
+                "optional": false,
+                "multiselect": false
             },
             {
-                "name": "features",
+                "name": "entity",
                 "label": {
-                    "de": "Funktionen",
-                    "en": "Features",
-                    "cz": "Funkce"
+                    "de": "Entität",
+                    "en": "Entity",
+                    "cz": "Entita"
                 },
-                "bits": [
-                    2,
-                    3,
-                    4,
-                    5,
-                    6,
-                    7
-                ],
+                "bits": [3, 4, 5, 6],
                 "description": {
-                    "de": "Zusätzliche Feature-Flags",
-                    "en": "Additional feature flags",
-                    "cz": "Další příznaky funkcí"
-                }
+                    "de": "Ziel-Entität für die Berechtigung",
+                    "en": "Target entity for the capability",
+                    "cz": "Cílová entita pro oprávnění"
+                },
+                "icon": "database",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "state",
+                "label": {
+                    "de": "Datensatz-Status",
+                    "en": "Record State",
+                    "cz": "Stav záznamu"
+                },
+                "bits": [7, 8, 9],
+                "description": {
+                    "de": "Status des Datensatzes (new, draft, released, etc.)",
+                    "en": "Record status (new, draft, released, etc.)",
+                    "cz": "Status záznamu (new, draft, released, atd.)"
+                },
+                "icon": "git-branch",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "cap_read",
+                "label": {
+                    "de": "Lesen",
+                    "en": "Read",
+                    "cz": "Čtení"
+                },
+                "bits": [10, 11, 12],
+                "description": {
+                    "de": "Leseberechtigungen",
+                    "en": "Read capabilities",
+                    "cz": "Oprávnění ke čtení"
+                },
+                "icon": "eye",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "cap_update",
+                "label": {
+                    "de": "Bearbeiten",
+                    "en": "Update",
+                    "cz": "Úpravy"
+                },
+                "bits": [13, 14, 15],
+                "description": {
+                    "de": "Bearbeitungsberechtigungen",
+                    "en": "Update capabilities",
+                    "cz": "Oprávnění k úpravám"
+                },
+                "icon": "pencil",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "cap_create",
+                "label": {
+                    "de": "Erstellen",
+                    "en": "Create",
+                    "cz": "Vytváření"
+                },
+                "bits": [16, 17, 18],
+                "description": {
+                    "de": "Erstellungsberechtigungen",
+                    "en": "Create capabilities",
+                    "cz": "Oprávnění k vytváření"
+                },
+                "icon": "plus-circle",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "cap_manage",
+                "label": {
+                    "de": "Verwalten",
+                    "en": "Manage",
+                    "cz": "Správa"
+                },
+                "bits": [19, 20, 21],
+                "description": {
+                    "de": "Verwaltungsberechtigungen (Status, Config, Delete)",
+                    "en": "Management capabilities (status, config, delete)",
+                    "cz": "Oprávnění ke správě (status, konfigurace, mazání)"
+                },
+                "icon": "settings",
+                "optional": false,
+                "multiselect": false
+            },
+            {
+                "name": "cap_simple",
+                "label": {
+                    "de": "Einfache Rechte",
+                    "en": "Simple Rights",
+                    "cz": "Jednoduchá práva"
+                },
+                "bits": [22, 23],
+                "description": {
+                    "de": "Einfache Berechtigungen (list, share)",
+                    "en": "Simple capabilities (list, share)",
+                    "cz": "Jednoduchá oprávnění (seznam, sdílení)"
+                },
+                "icon": "list",
+                "optional": true,
+                "multiselect": true
+            },
+            {
+                "name": "roles",
+                "label": {
+                    "de": "Rollen",
+                    "en": "Roles",
+                    "cz": "Role"
+                },
+                "bits": [24, 25, 26, 27, 28],
+                "description": {
+                    "de": "Projektrollen (anonym, partner, participant, member, owner)",
+                    "en": "Project roles (anonym, partner, participant, member, owner)",
+                    "cz": "Projektové role (anonym, partner, účastník, člen, vlastník)"
+                },
+                "icon": "users",
+                "optional": false,
+                "multiselect": true
             }
         ]
     }

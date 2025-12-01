@@ -19,7 +19,7 @@ import { v, vDescribe, vtest, getHealthReport, writeHealthReport } from '../help
 // ============================================================================
 
 describe('Versioned Test Infrastructure', () => {
-    
+
     describe('Unversioned tests', () => {
         vtest('should always run without version filter', () => {
             expect(true).toBe(true)
@@ -34,7 +34,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Version 0.2 Tests (run with TEST_MAXV >= 0.2)
     // ========================================================================
-    
+
     describe('v0.2 - Status Management', () => {
         v({ version: '0.2' })('status composable returns current status', () => {
             // Placeholder for actual implementation
@@ -57,7 +57,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Version 0.3 Tests (run with TEST_MAXV >= 0.3)
     // ========================================================================
-    
+
     vDescribe({ version: '0.3' })('v0.3 - Workflow System', () => {
         vtest('workflow state machine initializes', () => {
             const workflow = { state: 'idle' }
@@ -79,7 +79,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Version 0.4 Tests (run with TEST_MAXV >= 0.4)
     // ========================================================================
-    
+
     v({ version: '0.4' })('kanban displays unified status columns', () => {
         const columns = ['new', 'draft', 'confirmed', 'released', 'archived']
         expect(columns.length).toBe(5)
@@ -93,7 +93,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Deprecated Tests (never run, logged in health report)
     // ========================================================================
-    
+
     v({ deprecated: true, reason: 'Replaced by new status API in v0.2' })(
         'old status check using string comparison',
         () => {
@@ -105,7 +105,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Draft Tests (never run, logged in health report)
     // ========================================================================
-    
+
     v({ draft: true, reason: 'Waiting for interactions table implementation' })(
         'interactions collect user feedback on features',
         () => {
@@ -125,7 +125,7 @@ describe('Versioned Test Infrastructure', () => {
     // ========================================================================
     // Health Report Output
     // ========================================================================
-    
+
     afterAll(async () => {
         // Generate health report after all tests
         await writeHealthReport()
