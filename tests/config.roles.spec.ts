@@ -69,7 +69,7 @@ function setRoles(roles: string[]): number {
 // ============================================================================
 
 vDescribe({ version: '0.2' })('config.roles', () => {
-    
+
     describe('Role Bit Constants', () => {
         v({ version: '0.2' })('should have correct bit positions', () => {
             expect(ROLE_BITS.anonym).toBe(24)
@@ -78,7 +78,7 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(ROLE_BITS.member).toBe(27)
             expect(ROLE_BITS.owner).toBe(28)
         })
-        
+
         v({ version: '0.2' })('should have correct bit values', () => {
             expect(ROLE_VALUES.anonym).toBe(16777216)
             expect(ROLE_VALUES.partner).toBe(33554432)
@@ -86,14 +86,14 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(ROLE_VALUES.member).toBe(134217728)
             expect(ROLE_VALUES.owner).toBe(268435456)
         })
-        
+
         v({ version: '0.5', draft: true })('should handle admin on sign bit (v0.5)', () => {
             expect(ROLE_BITS.admin).toBe(31)
             // Sign bit produces negative value
             expect(ROLE_VALUES.admin).toBeLessThan(0)
         })
     })
-    
+
     describe('hasRole()', () => {
         v({ version: '0.2' })('should detect single role', () => {
             const configWithAnonym = ROLE_VALUES.anonym
@@ -101,7 +101,7 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(hasRole(configWithAnonym, 'member')).toBe(false)
             expect(hasRole(configWithAnonym, 'owner')).toBe(false)
         })
-        
+
         v({ version: '0.2' })('should detect multiple roles', () => {
             const configWithMemberAndOwner = ROLE_VALUES.member | ROLE_VALUES.owner
             expect(hasRole(configWithMemberAndOwner, 'member')).toBe(true)
@@ -109,17 +109,17 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(hasRole(configWithMemberAndOwner, 'anonym')).toBe(false)
             expect(hasRole(configWithMemberAndOwner, 'participant')).toBe(false)
         })
-        
+
         v({ version: '0.2' })('should handle all roles set', () => {
-            const allRoles = ROLE_VALUES.anonym | ROLE_VALUES.partner | 
-                           ROLE_VALUES.participant | ROLE_VALUES.member | ROLE_VALUES.owner
+            const allRoles = ROLE_VALUES.anonym | ROLE_VALUES.partner |
+                ROLE_VALUES.participant | ROLE_VALUES.member | ROLE_VALUES.owner
             expect(hasRole(allRoles, 'anonym')).toBe(true)
             expect(hasRole(allRoles, 'partner')).toBe(true)
             expect(hasRole(allRoles, 'participant')).toBe(true)
             expect(hasRole(allRoles, 'member')).toBe(true)
             expect(hasRole(allRoles, 'owner')).toBe(true)
         })
-        
+
         v({ version: '0.2' })('should handle zero (no roles)', () => {
             const noRoles = 0
             expect(hasRole(noRoles, 'anonym')).toBe(false)
@@ -127,16 +127,16 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(hasRole(noRoles, 'owner')).toBe(false)
         })
     })
-    
+
     describe('getRoles()', () => {
         v({ version: '0.2' })('should return empty array for zero', () => {
             expect(getRoles(0)).toEqual([])
         })
-        
+
         v({ version: '0.2' })('should return single role', () => {
             expect(getRoles(ROLE_VALUES.owner)).toEqual(['owner'])
         })
-        
+
         v({ version: '0.2' })('should return multiple roles in order', () => {
             const value = ROLE_VALUES.anonym | ROLE_VALUES.member
             const roles = getRoles(value)
@@ -144,7 +144,7 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(roles).toContain('member')
             expect(roles.length).toBe(2)
         })
-        
+
         v({ version: '0.2' })('should ignore non-role bits', () => {
             // Set some lower bits (not roles) plus a role
             const value = 0b111 | ROLE_VALUES.owner
@@ -152,26 +152,26 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(roles).toEqual(['owner'])
         })
     })
-    
+
     describe('setRoles()', () => {
         v({ version: '0.2' })('should return zero for empty array', () => {
             expect(setRoles([])).toBe(0)
         })
-        
+
         v({ version: '0.2' })('should set single role', () => {
             expect(setRoles(['owner'])).toBe(ROLE_VALUES.owner)
         })
-        
+
         v({ version: '0.2' })('should set multiple roles', () => {
             const value = setRoles(['anonym', 'member', 'owner'])
             expect(value).toBe(ROLE_VALUES.anonym | ROLE_VALUES.member | ROLE_VALUES.owner)
         })
-        
+
         v({ version: '0.2' })('should ignore invalid role names', () => {
             const value = setRoles(['owner', 'invalid', 'member'])
             expect(value).toBe(ROLE_VALUES.owner | ROLE_VALUES.member)
         })
-        
+
         v({ version: '0.2' })('should be reversible with getRoles()', () => {
             const roles = ['anonym', 'partner', 'participant', 'member', 'owner']
             const value = setRoles(roles)
@@ -179,12 +179,12 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             expect(retrieved.sort()).toEqual(roles.sort())
         })
     })
-    
+
     describe('Role Hierarchy', () => {
         v({ version: '0.2' })('should understand role priority order', () => {
             // Owner > Member > Participant > Partner > Anonym
             const rolePriority = ['anonym', 'partner', 'participant', 'member', 'owner']
-            
+
             for (let i = 0; i < rolePriority.length - 1; i++) {
                 const lowerRole = rolePriority[i]!
                 const higherRole = rolePriority[i + 1]!
@@ -193,26 +193,26 @@ vDescribe({ version: '0.2' })('config.roles', () => {
                 expect(higherBit).toBeGreaterThan(lowerBit)
             }
         })
-        
+
         v({ version: '0.2' })('should resolve highest role from multiple', () => {
             function getHighestRole(configValue: number): string | null {
                 const roles = getRoles(configValue)
                 if (roles.length === 0) return null
-                
+
                 const priority = ['owner', 'member', 'participant', 'partner', 'anonym']
                 for (const role of priority) {
                     if (roles.includes(role)) return role
                 }
                 return null
             }
-            
+
             expect(getHighestRole(ROLE_VALUES.anonym | ROLE_VALUES.member)).toBe('member')
             expect(getHighestRole(ROLE_VALUES.owner | ROLE_VALUES.participant)).toBe('owner')
             expect(getHighestRole(ROLE_VALUES.anonym)).toBe('anonym')
             expect(getHighestRole(0)).toBe(null)
         })
     })
-    
+
     describe('Role + Other Bits Integration', () => {
         v({ version: '0.2' })('should preserve role bits when other bits are set', () => {
             // Simulate a full config value with project type, entity, state, and roles
@@ -220,19 +220,19 @@ vDescribe({ version: '0.2' })('config.roles', () => {
             const entity = 0b1100 // post entity (bits 3-6)
             const state = 0b101 << 7 // released state (bits 7-9)
             const roles = ROLE_VALUES.member | ROLE_VALUES.owner
-            
+
             const fullConfig = projectType | entity | state | roles
-            
+
             // Roles should still be detectable
             expect(hasRole(fullConfig, 'member')).toBe(true)
             expect(hasRole(fullConfig, 'owner')).toBe(true)
             expect(hasRole(fullConfig, 'anonym')).toBe(false)
         })
-        
+
         v({ version: '0.2' })('should correctly extract roles from full config', () => {
-            const fullConfig = 0b010 | (0b1100) | (0b101 << 7) | 
-                              ROLE_VALUES.anonym | ROLE_VALUES.partner | ROLE_VALUES.member
-            
+            const fullConfig = 0b010 | (0b1100) | (0b101 << 7) |
+                ROLE_VALUES.anonym | ROLE_VALUES.partner | ROLE_VALUES.member
+
             const roles = getRoles(fullConfig)
             expect(roles).toContain('anonym')
             expect(roles).toContain('partner')
@@ -254,7 +254,7 @@ vDescribe({ version: '0.5', draft: true })('config.roles.admin', () => {
         // Value should be negative due to sign bit
         expect(configWithAdmin).toBeLessThan(0)
     })
-    
+
     v({ version: '0.5', draft: true })('should handle admin combined with other roles', () => {
         const configWithAdminAndOwner = ROLE_VALUES.admin | ROLE_VALUES.owner
         expect(hasRole(configWithAdminAndOwner, 'admin')).toBe(true)
