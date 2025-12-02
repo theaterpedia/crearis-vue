@@ -212,6 +212,38 @@ Each entity table will have these generated columns (computed from status bits):
 
 These are **generated columns** based on the entity's `status` field, following the sysreg_config matrix. A database trigger maintains these.
 
+### Implementation Status ✅ (Dec 2)
+
+**Implemented in migrations 045-047:**
+- `project_members.configrole` INTEGER column (maps role to bits: member=8, participant=4, partner=2)
+- `r_*` columns + `owner_id` added to posts, images, projects tables
+- `compute_role_visibility(entity_type, entity_state)` trigger function
+- Triggers fire on INSERT or UPDATE OF status
+
+**Trigger Logic:**
+```sql
+-- Extracts role bits (25-29) from sysreg_config entries
+-- matching entity type + state, aggregates with bit OR
+SELECT bit_or(
+  ((config::jsonb->'sysreg'->>'value')::INTEGER >> 25) & 31
+) INTO role_bits
+FROM crearis_config
+WHERE (config::jsonb->>'key') = 'sysreg'
+  AND (config::jsonb->'sysreg'->>'type') = 'config'
+  AND ((config::jsonb->'sysreg'->>'value')::INTEGER >> 3) & 31 = entity_type_int
+  AND (
+    ((config::jsonb->'sysreg'->>'value')::INTEGER >> 8) & 7 = entity_state
+    OR ((config::jsonb->'sysreg'->>'value')::INTEGER >> 8) & 7 = 0
+  );
+```
+
+**Verification Query:**
+```sql
+SELECT id, status, owner_id, r_anonym, r_partner, r_participant, r_member, r_owner 
+FROM posts ORDER BY id DESC LIMIT 10;
+-- Posts with status=0 show r_member=true, r_owner=true (based on sysreg_config)
+```
+
 ---
 
 ## Example Config Entries

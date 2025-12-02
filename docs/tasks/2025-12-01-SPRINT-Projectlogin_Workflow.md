@@ -98,9 +98,9 @@ This sprint delivers the core project workflow system, enabling consistent login
 
 | Date | Status | Summary |
 |------|--------|---------|
-| Nov 30 | 🟡 | Sprint preparation, TDD infrastructure |
-| Dec 1 | ⬜ | |
-| Dec 2 | ⬜ | **v0.2 deadline** |
+| Nov 30 | 🟢 | Sprint preparation, TDD infrastructure |
+| Dec 1 | 🟢 | AUTH-SYSTEM-SPEC created, CapabilitiesEditor.vue, CSS/DB conventions docs |
+| Dec 2 | 🟡 | **DB triggers implemented** (mig 045-048), owner_id in posts/AddPostPanel, alpha-prod testing |
 | Dec 3 | ⬜ | |
 | Dec 4 | ⬜ | Reintegrate tests/integration tests |
 | Dec 5 | ⬜ | **v0.3 deadline** |

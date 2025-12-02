@@ -161,6 +161,8 @@ export default defineEventHandler(async (event) => {
         let license: string = 'BY'
         let ctagsStr: string | undefined
         let rtagsStr: string | undefined
+        let ttagsStr: string | undefined
+        let dtagsStr: string | undefined
 
         for (const part of formData) {
             const name = part.name
@@ -191,6 +193,10 @@ export default defineEventHandler(async (event) => {
                 ctagsStr = Buffer.from(value).toString('utf-8')
             } else if (name === 'rtags') {
                 rtagsStr = Buffer.from(value).toString('utf-8')
+            } else if (name === 'ttags') {
+                ttagsStr = Buffer.from(value).toString('utf-8')
+            } else if (name === 'dtags') {
+                dtagsStr = Buffer.from(value).toString('utf-8')
             }
         }
 
@@ -225,6 +231,8 @@ export default defineEventHandler(async (event) => {
         // Parse tags
         const ctags = parseTagBuffer(ctagsStr)
         const rtags = parseTagBuffer(rtagsStr)
+        const ttags = parseTagBuffer(ttagsStr)
+        const dtags = parseTagBuffer(dtagsStr)
 
         // Extract domaincode from xmlid for batch data
         const domaincode = xmlid.split('.')[0]
@@ -239,7 +247,9 @@ export default defineEventHandler(async (event) => {
             xml_subject,
             license,
             ctags,
-            rtags
+            rtags,
+            ttags,
+            dtags
         }
 
         console.log('[Upload] Processing file:', {
