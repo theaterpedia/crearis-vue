@@ -26,12 +26,13 @@ export default defineEventHandler(async (event) => {
         `
         const params: any[] = []
 
-        // Filter by project (via project_members) - accepts domaincode
+        // Filter by project (via project_members + project owner) - accepts domaincode
         if (query.project_id) {
-            // Lookup project numeric id by domaincode
-            const project = await db.get('SELECT id FROM projects WHERE domaincode = ?', [query.project_id])
+            // Lookup project numeric id and owner_id by domaincode
+            const project = await db.get('SELECT id, owner_id FROM projects WHERE domaincode = ?', [query.project_id])
 
             if (project) {
+                // Get all project members PLUS the project owner
                 sql = `
                     SELECT DISTINCT
                         u.id,
@@ -39,12 +40,16 @@ export default defineEventHandler(async (event) => {
                         u.role,
                         u.created_at,
                         u.extmail,
-                        u.sysmail
+                        u.sysmail,
+                        CASE 
+                            WHEN u.id = ? THEN 'owner'
+                            ELSE pm.role 
+                        END as project_role
                     FROM users u
-                    INNER JOIN project_members pm ON u.id = pm.user_id
-                    WHERE pm.project_id = ?
+                    LEFT JOIN project_members pm ON u.id = pm.user_id AND pm.project_id = ?
+                    WHERE pm.project_id = ? OR u.id = ?
                 `
-                params.push(project.id)  // Use numeric project id for FK join
+                params.push(project.owner_id, project.id, project.id, project.owner_id)
             } else {
                 // If project not found, return empty results
                 return []

@@ -1,0 +1,19 @@
+{
+    "description": "Images status migration from old BYTEA to new bit allocation (Migration 040)",
+    "mapping_legend": {
+        "old_value": "0x0300 (all images have this value)",
+        "new_values": {
+            "1": "new (bits 0-2)",
+            "8": "demo (bits 3-5)",
+            "64": "draft (bits 6-8)",
+            "512": "confirmed (bits 9-11)",
+            "4096": "released (bits 12-14)"
+        }
+    },
+    "images": {
+        "rule": "All images currently have status_val = 0x0300, migrate to draft (64)",
+        "current_status": "0x0300",
+        "new_status": 64
+    },
+    "sql_update": "UPDATE images SET status_val = 64 WHERE status_val = '\\x0300'::bytea;"
+}

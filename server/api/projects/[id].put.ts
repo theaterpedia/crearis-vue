@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
             updates.push('description = ?')
             values.push(updateData.description)
         }
-        // Convert status name to status_val (BYTEA)
+        // Convert status name to status (BYTEA)
         if (status !== undefined) {
             const statusInfo = await getStatusByName(db, status, 'projects')
             if (!statusInfo) {
@@ -101,9 +101,9 @@ export default defineEventHandler(async (event) => {
                     message: `Invalid status '${status}'. Must be a valid status name for projects.`
                 })
             }
-            updateData.status_val = statusInfo.value
-            updates.push('status_val = ?')
-            values.push(updateData.status_val)
+            updateData.status = statusInfo.value
+            updates.push('status = ?')
+            values.push(updateData.status)
         }
         if (teaser !== undefined) {
             updateData.teaser = teaser

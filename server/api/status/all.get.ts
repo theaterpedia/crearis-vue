@@ -13,12 +13,13 @@ export default defineEventHandler(async (event) => {
             SELECT 
                 id, 
                 value, 
-                name, 
-                "table",
+                name,
+                tagfamily,
                 name_i18n,
                 desc_i18n
-            FROM status
-            ORDER BY "table", value
+            FROM sysreg
+            WHERE tagfamily = 'status'
+            ORDER BY name
         `, [])
 
         // Parse JSON fields for PostgreSQL

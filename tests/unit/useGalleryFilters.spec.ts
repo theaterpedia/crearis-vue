@@ -303,7 +303,7 @@ describe('useGalleryFilters - Filter State Management', () => {
             filterByStatus(['\\x04'])
 
             expect(filteredImages.value).toHaveLength(1)
-            expect(filteredImages.value[0].status_val).toBe('\\x04')
+            expect(filteredImages.value[0].status).toBe('\\x04')
         })
 
         it('filters images by ttags locally', () => {
@@ -334,15 +334,15 @@ describe('useGalleryFilters - Filter State Management', () => {
 
         it('combines multiple filters (AND logic)', () => {
             const matchingImage = createImageWithStatus('published')
-            matchingImage.ttags_val = '\\x01'
+            matchingImage.ttags = '\\x01'
             matchingImage.title = 'Democracy'
 
             const wrongStatus = createImageWithStatus('raw')
-            wrongStatus.ttags_val = '\\x01'
+            wrongStatus.ttags = '\\x01'
             wrongStatus.title = 'Democracy'
 
             const wrongTag = createImageWithStatus('published')
-            wrongTag.ttags_val = '\\x02'
+            wrongTag.ttags = '\\x02'
             wrongTag.title = 'Democracy'
 
             const { setImages, applyFilters, filteredImages } = useGalleryFilters()

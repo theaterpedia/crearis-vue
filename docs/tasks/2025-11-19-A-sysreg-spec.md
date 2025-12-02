@@ -71,12 +71,13 @@ child default (if age: child|all -> default means 'all children', else this mean
 teen default (same as child for teens)
 12-15
 15-18
-18-27
+18-25
 
 adult default (same as child for adults)
 25-40
-35-60
-60+ (resembles 60-99)
+40-55
+55-70
+70-99
 
 default (or no choice -> default)
 

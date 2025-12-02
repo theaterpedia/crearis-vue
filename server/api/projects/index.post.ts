@@ -56,8 +56,8 @@ export default defineEventHandler(async (event) => {
         const description = body.description || null
         const header_size = body.header_size || null
 
-        // Get status_val from status name (default: 'new')
-        let status_val: Buffer
+        // Get status from status name (default: 'new')
+        let status: Buffer
         if (body.status) {
             const statusInfo = await getStatusByName(db, body.status, 'projects')
             if (!statusInfo) {
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
                     message: `Invalid status '${body.status}'. Must be a valid status name for projects.`
                 })
             }
-            status_val = statusInfo.value
+            status = statusInfo.value
         } else {
             // Default to 'new' status
             const statusInfo = await getStatusByName(db, 'new', 'projects')
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
                     message: 'Default status (new) not found. Run migration 020.'
                 })
             }
-            status_val = statusInfo.value
+            status = statusInfo.value
         }
 
         // Convert owner_id to INTEGER if provided
@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
             name,
             heading,
             description,
-            status_val,
+            status,
             owner_id,
             header_size,
             img_id: body.img_id || null
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
 
         // Insert project
         const stmt = db.prepare(`
-            INSERT INTO projects (domaincode, name, heading, description, status_val, owner_id, header_size, img_id)
+            INSERT INTO projects (domaincode, name, heading, description, status, owner_id, header_size, img_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
             projectData.name,
             projectData.heading,
             projectData.description,
-            projectData.status_val,
+            projectData.status,
             projectData.owner_id,
             projectData.header_size,
             projectData.img_id

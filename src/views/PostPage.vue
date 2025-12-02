@@ -3,9 +3,8 @@
     <div class="post-page">
         <!-- Edit Panel -->
         <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
-            subtitle="Update post information" :data="editPanelData" entity-type="posts" 
-            :projectDomaincode="post.domaincode"
-            @close="closeEditPanel" @save="handleSavePost" />
+            subtitle="Update post information" :data="editPanelData" entity-type="posts"
+            :projectDomaincode="post.domaincode" @close="closeEditPanel" @save="handleSavePost" />
 
         <!-- Page Config Panel (for admins/owners) -->
         <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
@@ -24,19 +23,26 @@
                     :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
             </template>
 
+            <!-- Tag Families Row -->
+            <Section v-if="post.ttags || post.ctags || post.dtags" background="muted" spacing="compact">
+                <Container>
+                    <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags" v-model:dtags="post.dtags"
+                        :status="post.status" :config="post.config" :enable-edit="canEdit" group-selection="core"
+                        layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
+                        @update:ctags="handleUpdateTags('ctags', $event)"
+                        @update:dtags="handleUpdateTags('dtags', $event)" />
+                </Container>
+            </Section>
+
             <!-- Post Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
                         <!-- Post metadata -->
                         <div class="post-meta">
-                            <div v-if="post.status_val" class="post-status">
-                                <StatusBadge 
-                                    :value="statusValueString" 
-                                    :label="statusLabel"
-                                    variant="soft"
-                                    size="medium"
-                                />
+                            <div v-if="post.status" class="post-status">
+                                <StatusBadge :value="statusValueString" :label="statusLabel" variant="soft"
+                                    size="medium" />
                             </div>
                             <p v-if="post.post_date"><strong>Published:</strong> {{ formatDate(post.post_date) }}</p>
                             <p v-if="post.author_id"><strong>Author:</strong> {{ post.author_id }}</p>
@@ -61,7 +67,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <p v-if="post.teaser">{{ post.teaser }}</p>                        
+                        <p v-if="post.teaser">{{ post.teaser }}</p>
 
                         <!-- Post HTML or Markdown content -->
                         <div v-if="post.html" v-html="post.html" class="post-html-content"></div>
@@ -104,6 +110,7 @@ import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import StatusBadge from '@/components/sysreg/StatusBadge.vue'
+import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
@@ -143,7 +150,7 @@ const navigationItems = computed(() => {
             link: `/sites/${domaincode.value}`
         }
     ]
-    
+
     // Add Back button for project role users
     if (user?.value?.activeRole === 'project') {
         items.unshift({
@@ -151,7 +158,7 @@ const navigationItems = computed(() => {
             link: '/projects'
         })
     }
-    
+
     return items
 })
 
@@ -180,8 +187,8 @@ const footerOptions = computed<FooterOptions>(() => {
 
 // Convert status_val to hex string and get label (synchronous with unified composable)
 const statusValueString = computed(() => {
-    if (!post.value?.status_val) return null
-    return bufferToHex(post.value.status_val)
+    if (!post.value?.status) return null
+    return bufferToHex(post.value.status)
 })
 
 const statusLabel = computed(() => {
@@ -200,7 +207,7 @@ const editPanelData = computed((): EditPanelData => {
         img_id: post.value.img_id || null,
         header_type: post.value.header_type || 'banner',
         header_size: post.value.header_size || null,
-        status_val: post.value.status_val || null  // Pass raw value to match dropdown
+        status: post.value.status || null  // Pass raw value to match dropdown
     }
 })
 
@@ -216,7 +223,7 @@ async function loadPost() {
         console.log('[PostPage] Fetching project:', `/api/projects/${domaincode.value}`)
         const projectRes = await fetch(`/api/projects/${domaincode.value}`)
         console.log('[PostPage] Project response:', { ok: projectRes.ok, status: projectRes.status })
-        
+
         if (!projectRes.ok) throw new Error('Project not found')
         const projectData = await projectRes.json()
         console.log('[PostPage] Project data:', projectData)
@@ -226,7 +233,7 @@ async function loadPost() {
         console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)
         const response = await fetch(`/api/posts/${postId}`)
         console.log('[PostPage] Post response:', { ok: response.ok, status: response.status })
-        
+
         if (!response.ok) throw new Error('Failed to load post')
         const data = await response.json()
         console.log('[PostPage] Post data:', data)
@@ -266,16 +273,44 @@ function closeConfigPanel() {
     showConfigPanel.value = false
 }
 
+async function handleUpdateTags(family: string, value: number) {
+    try {
+        console.log(`[PostPage] Updating ${family} to ${value}`)
+
+        const response = await fetch(`/api/posts/${post.value.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ [family]: value })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed to update ${family}`)
+        }
+
+        // Update local state
+        if (post.value) {
+            post.value[family] = value
+        }
+
+        console.log(`[PostPage] Successfully updated ${family}`)
+    } catch (error) {
+        console.error(`[PostPage] Error updating ${family}:`, error)
+        // Optionally show error toast/notification
+    }
+}
+
 async function handleSavePost(data: Record<string, any>) {
     console.log('[PostPage] ========================================')
     console.log('[PostPage] handleSavePost CALLED')
     console.log('[PostPage] Call stack:', new Error().stack)
     console.log('[PostPage] Data received:', data)
     console.log('[PostPage] ========================================')
-    
+
     try {
         console.log('[PostPage] Saving post with data:', data)
-        
+
         // Render markdown to HTML using marked
         let html = ''
         if (data.md) {
@@ -292,7 +327,7 @@ async function handleSavePost(data: Record<string, any>) {
             img_id: (data.img_id === undefined || data.img_id === 0) ? null : data.img_id,
             header_type: data.header_type || 'banner',
             header_size: data.header_size || null,
-            status_val: sanitizeStatusVal(data.status_val),
+            status: sanitizeStatusVal(data.status),
             // Include sysreg tags (sanitize to prevent NULL bytes)
             ttags: data.ttags || '\\x00',
             ctags: data.ctags || '\\x00',
@@ -310,7 +345,7 @@ async function handleSavePost(data: Record<string, any>) {
 
         console.log('[PostPage] Response status:', response.status)
         console.log('[PostPage] Response ok:', response.ok)
-        
+
         if (!response.ok) {
             const errorText = await response.text()
             let errorData

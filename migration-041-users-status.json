@@ -1,0 +1,19 @@
+{
+    "description": "Users status migration from old BYTEA to new bit allocation (Migration 040)",
+    "mapping_legend": {
+        "new_values": {
+            "0": "no status (inactive placeholder)",
+            "1": "new (bits 0-2)",
+            "8": "demo (bits 3-5)",
+            "64": "draft (bits 6-8)",
+            "512": "confirmed (bits 9-11)",
+            "4096": "released (bits 12-14)"
+        }
+    },
+    "users": {
+        "rule": "First 8 users (up to sysmail hasn.doenitz@theaterpedia.org) = 0, rest = 64 (draft)",
+        "first_8_inactive": 0,
+        "remaining_draft": 64
+    },
+    "sql_update": "UPDATE users SET status_val = CASE WHEN id <= 8 THEN 0 ELSE 64 END;"
+}

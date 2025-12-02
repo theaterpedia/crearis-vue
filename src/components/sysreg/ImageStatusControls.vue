@@ -4,7 +4,7 @@
         <div class="status-section">
             <div class="section-header">
                 <h4>Status</h4>
-                <StatusBadge :value="image?.status_val || null" :label="statusLabel" variant="solid" size="medium" />
+                <StatusBadge :value="image?.status || null" :label="statusLabel" variant="solid" size="medium" />
             </div>
 
             <!-- Status Transition Buttons -->
@@ -167,13 +167,13 @@ const {
 
 // Hex display values
 const currentStatusHex = computed(() => {
-    if (!props.image?.status_val) return '\\x00'
-    return props.image.status_val
+    if (!props.image?.status) return '\\x00'
+    return props.image.status
 })
 
 const currentConfigHex = computed(() => {
-    if (!props.image?.config_val) return '\\x00'
-    return props.image.config_val
+    if (!props.image?.config) return '\\x00'
+    return props.image.config
 })
 
 // Action handlers

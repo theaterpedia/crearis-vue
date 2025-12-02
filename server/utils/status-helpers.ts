@@ -1,8 +1,8 @@
 /**
  * Status Value Helper Utilities
  * 
- * Helper functions for working with BYTEA status values in the sysreg system.
- * Replaces legacy status_id INTEGER lookups with BYTEA value operations.
+ * Helper functions for working with INTEGER status values in the sysreg system.
+ * Uses 32-bit integer bitmask encoding (after Migration 036).
  */
 
 import type { DatabaseAdapter } from '../database/adapter'
@@ -12,7 +12,7 @@ import type { DatabaseAdapter } from '../database/adapter'
  */
 export interface StatusInfo {
     name: string          // e.g., "new", "draft", "published"
-    value: Buffer         // BYTEA value
+    value: number         // INTEGER value (bitmask)
     fullName: string      // e.g., "events > new"
     description: string
     nameI18n: Record<string, string>
@@ -20,11 +20,11 @@ export interface StatusInfo {
 }
 
 /**
- * Get status info by BYTEA value
+ * Get status info by INTEGER value
  */
 export async function getStatusByValue(
     db: DatabaseAdapter,
-    value: Buffer
+    value: number
 ): Promise<StatusInfo | null> {
     const result = await db.get(
         `SELECT 
@@ -53,7 +53,11 @@ export async function getStatusByValue(
 
 /**
  * Get status info by name (e.g., "draft", "published")
- * Optionally specify family/table (e.g., "events", "posts")
+ * Optionally specify family/table (e.g., "events", "posts", "users")
+ * 
+ * Supports two naming patterns:
+ * 1. Legacy: "family > name" (e.g., "events > new")
+ * 2. Current: "name_family" (e.g., "new_user", "draft_user")
  */
 export async function getStatusByName(
     db: DatabaseAdapter,
@@ -64,7 +68,10 @@ export async function getStatusByName(
     let params: any[]
 
     if (family) {
-        // Search for "family > name" pattern
+        // Search for multiple patterns:
+        // 1. Exact match: "name_family" (e.g., "new_user")
+        // 2. Legacy: "family > name" (e.g., "users > new")
+        // 3. Generic name without suffix (e.g., "new" for any table)
         query = `SELECT 
             name,
             value,
@@ -72,9 +79,23 @@ export async function getStatusByName(
             name_i18n as "nameI18n",
             desc_i18n as "descI18n"
         FROM sysreg_status
-        WHERE name = $1 OR name LIKE $2
+        WHERE name = $1 
+           OR name = $2
+           OR name = $3
+        ORDER BY 
+            CASE 
+                WHEN name = $1 THEN 1  -- Exact family match first
+                WHEN name = $2 THEN 2  -- Legacy pattern second
+                ELSE 3                  -- Generic name last
+            END
         LIMIT 1`
-        params = [`${family} > ${statusName}`, `${family} > ${statusName}`]
+        // Convert family to singular for suffix pattern (users -> user)
+        const familySingular = family.endsWith('s') ? family.slice(0, -1) : family
+        params = [
+            `${statusName}_${familySingular}`,  // e.g., "new_user"
+            `${family} > ${statusName}`,         // e.g., "users > new"
+            statusName                            // e.g., "new"
+        ]
     } else {
         // Search by name only (may match multiple families)
         query = `SELECT 
@@ -84,9 +105,9 @@ export async function getStatusByName(
             name_i18n as "nameI18n",
             desc_i18n as "descI18n"
         FROM sysreg_status
-        WHERE name LIKE $1
+        WHERE name = $1 OR name LIKE $2
         LIMIT 1`
-        params = [`% > ${statusName}`]
+        params = [statusName, `% > ${statusName}`]
     }
 
     const result = await db.get(query, params)
@@ -108,11 +129,11 @@ export async function getStatusByName(
  * Check if entity has a specific status
  */
 export function hasStatus(
-    entity: { status_val?: Buffer | null },
-    statusValue: Buffer
+    entity: { status?: number | null },
+    statusValue: number
 ): boolean {
-    if (!entity.status_val) return false
-    return entity.status_val.equals(statusValue)
+    if (entity.status == null) return false
+    return entity.status === statusValue
 }
 
 /**
@@ -120,16 +141,16 @@ export function hasStatus(
  */
 export async function hasStatusByName(
     db: DatabaseAdapter,
-    entity: { status_val?: Buffer | null },
+    entity: { status?: number | null },
     statusName: string,
     family?: string
 ): Promise<boolean> {
-    if (!entity.status_val) return false
+    if (entity.status == null) return false
 
     const statusInfo = await getStatusByName(db, statusName, family)
     if (!statusInfo) return false
 
-    return entity.status_val.equals(statusInfo.value)
+    return entity.status === statusInfo.value
 }
 
 /**
@@ -173,15 +194,37 @@ export function formatStatus(
 }
 
 /**
- * Create status value from hex string (e.g., "0001" -> Buffer)
+ * Create status value from bit position (e.g., 0 -> 1, 1 -> 2, 2 -> 4)
  */
-export function statusValueFromHex(hex: string): Buffer {
-    return Buffer.from(hex, 'hex')
+export function statusValueFromBit(bit: number): number {
+    return 1 << bit
 }
 
 /**
- * Convert status value to hex string (e.g., Buffer -> "0001")
+ * Get bit position from status value (e.g., 1 -> 0, 2 -> 1, 4 -> 2)
  */
-export function statusValueToHex(value: Buffer): string {
-    return value.toString('hex')
+export function statusValueToBit(value: number): number {
+    return Math.log2(value)
+}
+
+/**
+ * Check if a specific bit is set in a status value
+ */
+export function hasBit(value: number | null, bit: number): boolean {
+    if (value == null) return false
+    return (value & (1 << bit)) !== 0
+}
+
+/**
+ * Set a specific bit in a status value
+ */
+export function setBit(value: number | null, bit: number): number {
+    return (value ?? 0) | (1 << bit)
+}
+
+/**
+ * Clear a specific bit in a status value
+ */
+export function clearBit(value: number | null, bit: number): number {
+    return (value ?? 0) & ~(1 << bit)
 }

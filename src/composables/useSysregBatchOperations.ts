@@ -90,7 +90,7 @@ export function useSysregBatchOperations() {
                 const response = await fetch(`/api/${entity}/${id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status_val: newStatus })
+                    body: JSON.stringify({ status: newStatus })
                 })
 
                 if (!response.ok) {
@@ -275,14 +275,14 @@ export function useSysregBatchOperations() {
                 }
 
                 const current = await getResponse.json()
-                const currentValue = current.config_val || '\\x00'
+                const currentValue = current.config || '\\x00'
                 const newValue = toggleBit(currentValue, bit)
 
                 // Update entity
                 const patchResponse = await fetch(`/api/${entity}/${id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ config_val: newValue })
+                    body: JSON.stringify({ config: newValue })
                 })
 
                 if (!patchResponse.ok) {
@@ -336,14 +336,14 @@ export function useSysregBatchOperations() {
                 }
 
                 const current = await getResponse.json()
-                const currentValue = current.config_val || '\\x00'
+                const currentValue = current.config || '\\x00'
                 const newValue = value ? setBit(currentValue, bit) : clearBit(currentValue, bit)
 
                 // Update entity
                 const patchResponse = await fetch(`/api/${entity}/${id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ config_val: newValue })
+                    body: JSON.stringify({ config: newValue })
                 })
 
                 if (!patchResponse.ok) {

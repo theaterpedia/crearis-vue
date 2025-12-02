@@ -27,7 +27,7 @@
             <div class="form-row">
                 <div class="form-group form-group-flex">
                     <label class="form-label" for="edit-status">Status</label>
-                    <select id="edit-status" v-model="formData.status_val" class="form-input">
+                    <select id="edit-status" v-model="formData.status" class="form-input">
                         <option :value="null">-- Select status --</option>
                         <option v-for="status in availableStatuses" :key="status.hex_value" :value="status.raw_value">
                             {{ status.display_name }}
@@ -214,7 +214,7 @@ function handleSave() {
     }
     
     // Properly sanitize status_val to prevent Buffer stringification
-    saveData.status_val = sanitizeStatusVal(saveData.status_val)
+    saveData.status = sanitizeStatusVal(saveData.status)
     
     emit('save', saveData)
 }
@@ -227,7 +227,7 @@ function handleImageError() {
 // Watch for data changes from parent
 watch(() => props.data, (newData) => {
     formData.value = { ...newData }
-    console.log('[EditPanel] Data updated:', { status_val: newData?.status_val, type: typeof newData?.status_val })
+    console.log('[EditPanel] Data updated:', { status: newData?.status, type: typeof newData?.status })
 }, { deep: true })
 
 // Reset form when panel opens/closes
