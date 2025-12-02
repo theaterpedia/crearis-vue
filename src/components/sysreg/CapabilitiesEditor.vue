@@ -636,11 +636,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/**
+ * Capabilities Editor - Internal Component
+ * Follows Opus-CSS-Conventions.md
+ */
+
 .capabilities-editor {
     padding: 1rem;
     max-width: 1400px;
     margin: 0 auto;
 }
+
+/**
+ * Header & Filters
+ */
 
 .editor-header {
     margin-bottom: 1rem;
@@ -648,6 +657,7 @@ onMounted(() => {
 
 .editor-header h2 {
     margin: 0 0 0.5rem 0;
+    color: var(--color-contrast);
 }
 
 .filter-row {
@@ -665,21 +675,31 @@ onMounted(() => {
 .filter-group label {
     font-weight: 500;
     white-space: nowrap;
+    color: var(--color-dimmed);
 }
 
 .form-select {
     padding: 0.25rem 0.5rem;
-    border: 1px solid var(--vp-c-divider);
-    border-radius: 4px;
-    background: var(--vp-c-bg);
-    color: var(--vp-c-text-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
+}
+
+.form-select:focus {
+    border-color: var(--color-primary-bg);
+    outline: none;
 }
 
 .loading {
     text-align: center;
     padding: 2rem;
-    color: var(--vp-c-text-2);
+    color: var(--color-dimmed);
 }
+
+/**
+ * Table
+ */
 
 .entries-container {
     overflow-x: auto;
@@ -695,21 +715,26 @@ onMounted(() => {
 .capabilities-table td {
     padding: 0.5rem;
     text-align: left;
-    border-bottom: 1px solid var(--vp-c-divider);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .capabilities-table th {
     font-weight: 600;
-    background: var(--vp-c-bg-soft);
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
 }
 
 .entry-row:hover {
-    background: var(--vp-c-bg-soft);
+    background: var(--color-muted-bg);
 }
 
 .entry-row.editing {
-    background: var(--vp-c-brand-soft);
+    background: oklch(from var(--color-primary-bg) l c h / 0.15);
 }
+
+/**
+ * Table Cells
+ */
 
 .name-cell {
     min-width: 200px;
@@ -718,28 +743,29 @@ onMounted(() => {
 .name-cell code {
     display: block;
     font-weight: 600;
+    color: var(--color-contrast);
 }
 
 .name-cell .description {
     font-size: 0.75rem;
-    color: var(--vp-c-text-2);
+    color: var(--color-dimmed);
 }
 
 .inactive {
-    color: var(--vp-c-text-3);
+    color: var(--color-dimmed);
 }
 
 .active {
-    color: var(--vp-c-green-1);
+    color: var(--color-positive-bg);
     font-weight: 500;
 }
 
 .active.full {
-    color: var(--vp-c-green-1);
+    color: var(--color-positive-bg);
 }
 
 .active.partial {
-    color: var(--vp-c-yellow-1);
+    color: var(--color-warning-bg);
 }
 
 .roles-cell {
@@ -748,37 +774,45 @@ onMounted(() => {
     flex-wrap: wrap;
 }
 
+/**
+ * Role Badges - Using OKLCH
+ */
+
 .role-badge {
     padding: 0.125rem 0.375rem;
-    border-radius: 3px;
+    border-radius: var(--radius);
     font-size: 0.75rem;
     font-weight: 500;
 }
 
 .role-anonym {
-    background: #e1e1e1;
-    color: #666;
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
 }
 
 .role-partner {
-    background: #c8e6c9;
-    color: #2e7d32;
+    background: oklch(from var(--color-positive-bg) 90% c h);
+    color: oklch(from var(--color-positive-bg) 35% c h);
 }
 
 .role-participant {
-    background: #bbdefb;
-    color: #1565c0;
+    background: oklch(from var(--color-secondary-bg) 90% c h);
+    color: oklch(from var(--color-secondary-bg) 40% c h);
 }
 
 .role-member {
-    background: #ffecb3;
-    color: #ff6f00;
+    background: oklch(from var(--color-warning-bg) 92% c h);
+    color: oklch(from var(--color-warning-bg) 45% c h);
 }
 
 .role-owner {
-    background: #f8bbd9;
-    color: #ad1457;
+    background: oklch(from var(--color-negative-bg) 90% c h);
+    color: oklch(from var(--color-negative-bg) 40% c h);
 }
+
+/**
+ * Action Buttons
+ */
 
 .actions-cell {
     white-space: nowrap;
@@ -786,9 +820,10 @@ onMounted(() => {
 
 .btn {
     padding: 0.25rem 0.5rem;
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-sm {
@@ -796,20 +831,53 @@ onMounted(() => {
 }
 
 .btn-edit {
-    background: var(--vp-c-bg-soft);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
+}
+
+.btn-edit:hover {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-bg);
 }
 
 .btn-delete {
-    background: var(--vp-c-danger-soft);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
 }
 
+.btn-delete:hover {
+    background: var(--color-negative-bg);
+    color: var(--color-negative-contrast);
+    border-color: var(--color-negative-bg);
+}
+
+/* Primary button: accent → primary on hover */
 .btn-primary {
-    background: var(--vp-c-brand-1);
-    color: white;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    border-color: var(--color-accent-bg);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-bg);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-secondary {
-    background: var(--vp-c-bg-soft);
+    background: transparent;
+    color: var(--color-contrast);
+    border-color: var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-muted-bg);
 }
 
 .add-entry-row {
@@ -818,14 +886,17 @@ onMounted(() => {
     text-align: center;
 }
 
-/* Modal styles */
+/**
+ * Modal
+ */
+
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: oklch(0% 0 0 / 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -833,9 +904,11 @@ onMounted(() => {
 }
 
 .modal-content {
-    background: var(--vp-c-bg);
+    background: var(--color-popover-bg);
+    color: var(--color-popover-contrast);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
     max-width: 600px;
     width: 90%;
     max-height: 90vh;
@@ -844,7 +917,12 @@ onMounted(() => {
 
 .modal-content h3 {
     margin: 0 0 1rem 0;
+    color: var(--color-contrast);
 }
+
+/**
+ * Form Elements
+ */
 
 .form-group {
     margin-bottom: 1rem;
@@ -854,15 +932,21 @@ onMounted(() => {
     display: block;
     font-weight: 500;
     margin-bottom: 0.25rem;
+    color: var(--color-dimmed);
 }
 
 .form-input {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid var(--vp-c-divider);
-    border-radius: 4px;
-    background: var(--vp-c-bg);
-    color: var(--vp-c-text-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
+}
+
+.form-input:focus {
+    border-color: var(--color-primary-bg);
+    outline: none;
 }
 
 .capabilities-group .capability-selects {
@@ -880,6 +964,7 @@ onMounted(() => {
 .cap-item span {
     min-width: 60px;
     font-weight: 500;
+    color: var(--color-contrast);
 }
 
 .cap-item .form-select {
@@ -897,18 +982,20 @@ onMounted(() => {
     align-items: center;
     gap: 0.25rem;
     cursor: pointer;
+    color: var(--color-contrast);
 }
 
 .roles-checkboxes .checkbox-label {
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
 }
 
 .preview-group .value-preview {
     display: block;
     padding: 0.5rem;
-    background: var(--vp-c-bg-soft);
-    border-radius: 4px;
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
+    border-radius: var(--radius);
     font-family: monospace;
 }
 
