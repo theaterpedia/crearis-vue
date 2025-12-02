@@ -118,7 +118,7 @@ const projectUsersLoading = ref(false)
 // Fetch project users when component mounts or projectId changes
 async function loadProjectUsers() {
     if (!props.projectId) return
-    
+
     projectUsersLoading.value = true
     try {
         const response = await fetch(`/api/users?project_id=${props.projectId}`)

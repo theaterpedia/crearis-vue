@@ -41,7 +41,7 @@ export const migration = {
         // ===================================================================
         // CORE FUNCTION: Compute visibility from sysreg_config
         // ===================================================================
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION compute_role_visibility(
                 p_entity_bits INTEGER,  -- Entity type bits (already shifted: post=32, image=48, project=8)
@@ -99,7 +99,7 @@ export const migration = {
         // ===================================================================
         // POSTS TRIGGER
         // ===================================================================
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_posts_visibility()
             RETURNS trigger AS $$
@@ -131,7 +131,7 @@ export const migration = {
         // ===================================================================
         // IMAGES TRIGGER
         // ===================================================================
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_images_visibility()
             RETURNS trigger AS $$
@@ -163,7 +163,7 @@ export const migration = {
         // ===================================================================
         // PROJECTS TRIGGER
         // ===================================================================
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_projects_visibility()
             RETURNS trigger AS $$

@@ -34,7 +34,7 @@ export const migration = {
         // ===================================================================
         // POSTS TABLE
         // ===================================================================
-        
+
         // Add owner_id to posts (it only has public_user for display author)
         await db.exec(`
             ALTER TABLE posts 
@@ -61,7 +61,7 @@ export const migration = {
         // ===================================================================
         // IMAGES TABLE
         // ===================================================================
-        
+
         // Add role visibility columns to images
         await db.exec(`
             ALTER TABLE images 
@@ -80,7 +80,7 @@ export const migration = {
         // ===================================================================
         // PROJECTS TABLE
         // ===================================================================
-        
+
         // Add role visibility columns to projects
         await db.exec(`
             ALTER TABLE projects 
