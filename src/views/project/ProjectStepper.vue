@@ -34,6 +34,19 @@
         <div class="stepper-description">
             <p>{{ steps[step].description }}</p>
         </div>
+
+        <!-- Activate Button (only on activate step) -->
+        <div v-if="isActivateStep" class="activate-section">
+            <button class="btn-activate" @click="handleActivateProject">
+                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z">
+                    </path>
+                </svg>
+                Projekt aktivieren
+            </button>
+        </div>
     </div>
 </template>
 
@@ -52,13 +65,17 @@ interface Props {
     step: number
     projectId: string
     type?: string // Project type: 'topic', 'regio', 'project', 'special'
+    isOwner?: boolean // Is current user the project owner
 }
 
 interface Emits {
     (e: 'update:step', value: number): void
+    (e: 'activate-project'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    isOwner: false
+})
 const emit = defineEmits<Emits>()
 
 const { button, setLanguage } = useI18n()
@@ -73,40 +90,75 @@ const allSteps = ref<StepItem[]>([
     { key: 'images', label: 'Images', description: 'Loading...' },
     { key: 'users', label: 'Users', description: 'Loading...' },
     { key: 'theme', label: 'Theme', description: 'Loading...' },
-    { key: 'pages', label: 'Pages', description: 'Loading...' }
+    { key: 'pages', label: 'Pages', description: 'Loading...' },
+    { key: 'activate', label: 'Aktivieren', description: 'Projekt aktivieren und veröffentlichen' }
 ])
 
-// Computed steps based on project type
+// Computed steps based on project type and owner status
 const steps = computed(() => {
     const projectType = props.type || 'project'
+    const isOwner = props.isOwner
+
+    let baseSteps: StepItem[]
 
     if (projectType === 'topic') {
         // Topic: hide Events, start with Posts
-        return allSteps.value.filter(step => step.key !== 'events')
+        baseSteps = allSteps.value.filter((step: StepItem) => step.key !== 'events' && step.key !== 'activate')
     } else if (projectType === 'regio') {
         // Regio: Users → Pages → Posts → Images → Events (no Theme)
-        return [
-            allSteps.value.find(s => s.key === 'users')!,
-            allSteps.value.find(s => s.key === 'pages')!,
-            allSteps.value.find(s => s.key === 'posts')!,
-            allSteps.value.find(s => s.key === 'images')!,
-            allSteps.value.find(s => s.key === 'events')!
-        ].filter(Boolean)
+        baseSteps = [
+            allSteps.value.find((s: StepItem) => s.key === 'users')!,
+            allSteps.value.find((s: StepItem) => s.key === 'pages')!,
+            allSteps.value.find((s: StepItem) => s.key === 'posts')!,
+            allSteps.value.find((s: StepItem) => s.key === 'images')!,
+            allSteps.value.find((s: StepItem) => s.key === 'events')!
+        ].filter(Boolean) as StepItem[]
     } else {
         // Default: Events → Posts → Images → Users → Theme → Pages
-        return allSteps.value
+        baseSteps = allSteps.value.filter((step: StepItem) => step.key !== 'activate')
     }
+
+    // Non-owners don't see Users and Theme steps
+    if (!isOwner) {
+        baseSteps = baseSteps.filter((step: StepItem) => step.key !== 'users' && step.key !== 'theme')
+    }
+
+    // Owners get the Activate step at the end
+    if (isOwner) {
+        const activateStep = allSteps.value.find((s: StepItem) => s.key === 'activate')!
+        baseSteps = [...baseSteps, activateStep]
+    }
+
+    return baseSteps
 })
 
 // Header message computed
 const headerMessage = computed(() => {
-    const stepPrefixes = ['Schritt 1: ', 'Schritt 2: ', 'Schritt 3: ', 'Schritt 4: ', 'Schritt 5: ', 'Schritt 6: ']
+    const stepPrefixes = ['Schritt 1: ', 'Schritt 2: ', 'Schritt 3: ', 'Schritt 4: ', 'Schritt 5: ', 'Schritt 6: ', 'Schritt 7: ']
     const currentIndex = props.step
     if (currentIndex >= 0 && currentIndex < steps.value.length) {
-        return stepPrefixes[currentIndex] + steps.value[currentIndex].label
+        const step = steps.value[currentIndex]
+        // Special header for activate step
+        if (step.key === 'activate') {
+            return 'Projekt aktivieren'
+        }
+        return stepPrefixes[currentIndex] + step.label
     }
     return ''
 })
+
+// Check if current step is the activate step
+const isActivateStep = computed(() => {
+    const currentIndex = props.step
+    if (currentIndex >= 0 && currentIndex < steps.value.length) {
+        return steps.value[currentIndex].key === 'activate'
+    }
+    return false
+})
+
+function handleActivateProject() {
+    emit('activate-project')
+}
 
 onMounted(async () => {
     // Detect language (simplified - could check user role or preferences)
@@ -265,6 +317,40 @@ function goToStep(index: number) {
     font-size: 0.875rem;
     color: var(--color-text);
     line-height: 1.5;
+}
+
+/* ===== ACTIVATE SECTION ===== */
+.activate-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-activate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: var(--color-success);
+    color: white;
+    border: none;
+    border-radius: var(--radius-medium);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-activate:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px oklch(0 0 0 / 0.15);
+}
+
+.btn-activate:active {
+    transform: translateY(0);
 }
 
 /* ===== RESPONSIVE ===== */

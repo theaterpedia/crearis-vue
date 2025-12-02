@@ -237,7 +237,7 @@ onMounted(async () => {
 
 .step-subtitle {
     font-size: 0.875rem;
-    color: var(--color-dimmed);
+    color: var(--color-muted-contrast);
     margin: 0;
 }
 
@@ -247,10 +247,10 @@ onMounted(async () => {
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: #fee;
-    border: 1px solid #fcc;
-    border-radius: 6px;
-    color: #c33;
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-medium);
+    color: var(--color-danger-contrast);
 }
 
 .error-banner svg {
@@ -271,7 +271,7 @@ onMounted(async () => {
     width: 40px;
     height: 40px;
     border: 4px solid var(--color-border);
-    border-top-color: var(--color-primary, #3b82f6);
+    border-top-color: var(--color-primary-bg);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -283,7 +283,7 @@ onMounted(async () => {
 }
 
 .loading-container p {
-    color: var(--color-text-muted);
+    color: var(--color-muted-contrast);
     font-size: 0.875rem;
 }
 
@@ -307,15 +307,15 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     padding: 3rem 2rem;
-    background: var(--color-background-soft);
+    background: var(--color-muted-bg);
     border: 2px dashed var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-medium);
     text-align: center;
     min-height: 400px;
 }
 
 .empty-state svg {
-    color: var(--color-primary, #3b82f6);
+    color: var(--color-primary-bg);
     opacity: 0.5;
     margin-bottom: 1rem;
 }
@@ -323,13 +323,13 @@ onMounted(async () => {
 .empty-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--color-heading);
+    color: var(--color-text);
     margin: 0 0 0.5rem 0;
 }
 
 .empty-text {
     font-size: 0.875rem;
-    color: var(--color-text-muted);
+    color: var(--color-muted-contrast);
     margin: 0;
     max-width: 400px;
 }
@@ -344,9 +344,9 @@ onMounted(async () => {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--color-background-soft);
+    background: var(--color-card-bg);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-medium);
     overflow: hidden;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -362,9 +362,9 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
+    background: oklch(100% 0 0 / 0.9);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-small);
     cursor: pointer;
     transition: all 0.2s ease;
     opacity: 0;
@@ -375,15 +375,15 @@ onMounted(async () => {
 }
 
 .delete-btn:hover {
-    background: #fee;
-    border-color: #fcc;
-    color: #c33;
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger);
+    color: var(--color-danger-contrast);
     transform: scale(1.1);
 }
 
 .image-card:hover {
-    border-color: var(--color-border-hover);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary-bg);
+    box-shadow: 0 2px 8px oklch(0 0 0 / 0.1);
     transform: translateY(-2px);
 }
 
@@ -437,7 +437,7 @@ onMounted(async () => {
     justify-content: flex-end;
     gap: 1rem;
     padding-top: 1rem;
-    border-top: var(--border) solid var(--color-border);
+    border-top: 1px solid var(--color-border);
 }
 
 .action-btn {
@@ -446,7 +446,7 @@ onMounted(async () => {
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: var(--radius-button);
+    border-radius: var(--radius-medium);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
