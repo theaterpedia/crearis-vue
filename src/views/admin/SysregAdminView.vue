@@ -815,11 +815,20 @@ async function executeBatch() {
 </script>
 
 <style scoped>
+/**
+ * SysregAdminView - Internal Component
+ * Follows Opus-CSS-Conventions.md
+ */
+
 .sysreg-admin {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
 }
+
+/**
+ * Header
+ */
 
 .admin-header {
     margin-bottom: 2rem;
@@ -828,17 +837,22 @@ async function executeBatch() {
 .admin-header h1 {
     font-size: 2rem;
     margin-bottom: 0.5rem;
+    color: var(--color-contrast);
 }
 
 .subtitle {
-    color: #666;
+    color: var(--color-dimmed);
     font-size: 1.1rem;
 }
+
+/**
+ * Tab Navigation
+ */
 
 .tabs {
     display: flex;
     gap: 0.5rem;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid var(--color-border);
     margin-bottom: 2rem;
 }
 
@@ -849,23 +863,29 @@ async function executeBatch() {
     border-bottom: 3px solid transparent;
     cursor: pointer;
     font-size: 1rem;
+    color: var(--color-dimmed);
     transition: all 0.2s;
 }
 
 .tab:hover {
-    background: #f5f5f5;
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
 }
 
 .tab.active {
-    border-bottom-color: #2196F3;
-    color: #2196F3;
+    border-bottom-color: var(--color-primary-bg);
+    color: var(--color-accent-bg);
     font-weight: 600;
 }
 
+/**
+ * Panels
+ */
+
 .panel {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     padding: 2rem;
 }
 
@@ -879,6 +899,7 @@ async function executeBatch() {
 .panel-header h2 {
     margin: 0;
     font-size: 1.5rem;
+    color: var(--color-contrast);
 }
 
 .family-selector {
@@ -890,16 +911,20 @@ async function executeBatch() {
 
 .family-selector label {
     font-weight: 600;
+    color: var(--color-contrast);
 }
 
-/* Viewer Tab */
+/**
+ * Viewer Tab - Topbar & Filters
+ */
+
 .viewer-topbar {
     display: flex;
     gap: 1.5rem;
     margin-bottom: 2rem;
     padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 6px;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius);
 }
 
 .filter-group {
@@ -912,6 +937,7 @@ async function executeBatch() {
 .filter-group label {
     font-weight: 600;
     font-size: 0.9rem;
+    color: var(--color-dimmed);
 }
 
 .language-switcher-group {
@@ -925,22 +951,26 @@ async function executeBatch() {
 
 .lang-btn {
     padding: 0.5rem 0.75rem;
-    border: 2px solid #ccc;
-    background: white;
+    border: 2px solid var(--color-border);
+    background: var(--color-card-bg);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: var(--radius);
     font-size: 1.25rem;
     transition: all 0.2s;
 }
 
 .lang-btn:hover {
-    border-color: #2196F3;
+    border-color: var(--color-primary-bg);
 }
 
 .lang-btn.active {
-    border-color: #2196F3;
-    background: #e3f2fd;
+    border-color: var(--color-primary-bg);
+    background: oklch(from var(--color-primary-bg) 95% c h);
 }
+
+/**
+ * Tag Table
+ */
 
 .tag-table-container {
     overflow-x: auto;
@@ -949,12 +979,12 @@ async function executeBatch() {
 .tag-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: var(--color-card-bg);
 }
 
 .tag-table thead {
-    background: #f5f5f5;
-    border-bottom: 2px solid #e0e0e0;
+    background: var(--color-muted-bg);
+    border-bottom: 2px solid var(--color-border);
 }
 
 .tag-table th {
@@ -962,12 +992,13 @@ async function executeBatch() {
     padding: 1rem;
     font-weight: 600;
     font-size: 0.9rem;
-    color: #333;
+    color: var(--color-muted-contrast);
 }
 
 .tag-table td {
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-contrast);
 }
 
 .tag-table tbody tr {
@@ -979,36 +1010,36 @@ async function executeBatch() {
 }
 
 .clickable-row:hover {
-    background: #f9f9f9;
+    background: var(--color-muted-bg);
 }
 
 .tag-value-code {
     font-family: monospace;
-    background: #333;
-    color: #0f0;
+    background: var(--color-accent-bg);
+    color: var(--color-primary-bg);
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     font-size: 0.85rem;
 }
 
 .logic-badge {
     display: inline-block;
     padding: 0.25rem 0.5rem;
-    background: #e3f2fd;
-    color: #1976d2;
-    border-radius: 4px;
+    background: oklch(from var(--color-secondary-bg) 92% c h);
+    color: oklch(from var(--color-secondary-bg) 40% c h);
+    border-radius: var(--radius);
     font-size: 0.85rem;
     font-weight: 500;
 }
 
 .text-muted {
-    color: #999;
+    color: var(--color-dimmed);
 }
 
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
-    color: #666;
+    color: var(--color-dimmed);
 }
 
 .empty-state p {
@@ -1016,16 +1047,9 @@ async function executeBatch() {
     font-size: 1.1rem;
 }
 
-.tag-list {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.family-selector label {
-    font-weight: 600;
-}
+/**
+ * Tag List (Card View)
+ */
 
 .tag-list {
     display: flex;
@@ -1038,9 +1062,9 @@ async function executeBatch() {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background: #fafafa;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-muted-bg);
 }
 
 .tag-info {
@@ -1056,28 +1080,28 @@ async function executeBatch() {
 
 .tag-value {
     font-family: monospace;
-    background: #333;
-    color: #0f0;
+    background: var(--color-accent-bg);
+    color: var(--color-primary-bg);
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     font-size: 0.85rem;
 }
 
 .tag-name {
     font-weight: 600;
-    color: #333;
+    color: var(--color-contrast);
 }
 
 .badge {
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     font-size: 0.75rem;
     font-weight: 600;
 }
 
 .badge-default {
-    background: #FFC107;
-    color: #333;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-contrast);
 }
 
 .tag-details {
@@ -1087,17 +1111,17 @@ async function executeBatch() {
 }
 
 .tag-label {
-    color: #2196F3;
+    color: var(--color-secondary-bg);
     font-weight: 500;
 }
 
 .tag-logic {
-    color: #666;
+    color: var(--color-dimmed);
     font-size: 0.9rem;
 }
 
 .tag-description {
-    color: #666;
+    color: var(--color-dimmed);
     font-size: 0.9rem;
     margin: 0;
 }
@@ -1107,7 +1131,10 @@ async function executeBatch() {
     gap: 0.5rem;
 }
 
-/* Analytics */
+/**
+ * Analytics
+ */
+
 .analytics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -1115,16 +1142,17 @@ async function executeBatch() {
 }
 
 .analytics-card {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     padding: 1.5rem;
-    background: #fafafa;
+    background: var(--color-muted-bg);
 }
 
 .analytics-card h3 {
     margin-top: 0;
     margin-bottom: 1rem;
     font-size: 1.2rem;
+    color: var(--color-contrast);
 }
 
 .distribution-chart,
@@ -1143,20 +1171,21 @@ async function executeBatch() {
 .bar-label {
     font-weight: 500;
     font-size: 0.9rem;
+    color: var(--color-contrast);
 }
 
 .bar-container {
     position: relative;
     height: 30px;
-    background: #e0e0e0;
-    border-radius: 4px;
+    background: var(--color-border);
+    border-radius: var(--radius);
     overflow: hidden;
 }
 
 .bar-fill {
     position: absolute;
     height: 100%;
-    background: linear-gradient(90deg, #2196F3, #21CBF3);
+    background: linear-gradient(90deg, var(--color-secondary-bg), oklch(from var(--color-secondary-bg) l c calc(h + 30)));
     transition: width 0.3s;
 }
 
@@ -1167,7 +1196,7 @@ async function executeBatch() {
     transform: translateY(-50%);
     font-size: 0.85rem;
     font-weight: 600;
-    color: #333;
+    color: var(--color-contrast);
 }
 
 .usage-item {
@@ -1180,30 +1209,30 @@ async function executeBatch() {
 .usage-label {
     flex: 1;
     font-weight: 500;
+    color: var(--color-contrast);
 }
 
 .usage-count {
-    color: #666;
+    color: var(--color-dimmed);
     font-size: 0.9rem;
 }
 
 .usage-bar {
     width: 100px;
     height: 8px;
-    background: #e0e0e0;
-    border-radius: 4px;
+    background: var(--color-border);
+    border-radius: var(--radius);
     overflow: hidden;
 }
 
 .usage-fill {
     height: 100%;
-    background: #4CAF50;
+    background: var(--color-positive-bg);
 }
 
-/* Batch Operations */
-.batch-form {
-    max-width: 800px;
-}
+/**
+ * Form Elements
+ */
 
 .form-group {
     margin-bottom: 1.5rem;
@@ -1213,10 +1242,11 @@ async function executeBatch() {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    color: var(--color-contrast);
 }
 
 .required {
-    color: #f44336;
+    color: var(--color-negative-bg);
 }
 
 .form-select,
@@ -1224,16 +1254,18 @@ async function executeBatch() {
 .form-textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     font-size: 1rem;
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
 }
 
 .form-select:focus,
 .form-input:focus,
 .form-textarea:focus {
     outline: none;
-    border-color: #2196F3;
+    border-color: var(--color-primary-bg);
 }
 
 .tag-checkboxes {
@@ -1247,40 +1279,49 @@ async function executeBatch() {
     align-items: center;
     gap: 0.5rem;
     font-weight: normal;
+    color: var(--color-contrast);
 }
 
 .checkbox-label input {
     width: auto;
 }
 
+/**
+ * Batch Operations
+ */
+
+.batch-form {
+    max-width: 800px;
+}
+
 .batch-progress {
     margin-top: 1.5rem;
     padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 4px;
+    background: var(--color-muted-bg);
+    border-radius: var(--radius);
 }
 
 .progress-bar {
     height: 20px;
-    background: #e0e0e0;
-    border-radius: 4px;
+    background: var(--color-border);
+    border-radius: var(--radius);
     overflow: hidden;
     margin-bottom: 0.5rem;
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    background: linear-gradient(90deg, var(--color-positive-bg), oklch(from var(--color-positive-bg) l calc(c * 0.7) calc(h + 20)));
     transition: width 0.3s;
 }
 
 .progress-text {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-dimmed);
 }
 
 .text-error {
-    color: #f44336;
+    color: var(--color-negative-bg);
     font-weight: 600;
 }
 
@@ -1290,22 +1331,23 @@ async function executeBatch() {
 
 .result-box {
     padding: 1.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     border: 2px solid;
 }
 
 .result-box.success {
-    background: #E8F5E9;
-    border-color: #4CAF50;
+    background: oklch(from var(--color-positive-bg) 95% c h);
+    border-color: var(--color-positive-bg);
 }
 
 .result-box.error {
-    background: #FFEBEE;
-    border-color: #f44336;
+    background: oklch(from var(--color-negative-bg) 95% c h);
+    border-color: var(--color-negative-bg);
 }
 
 .result-box h4 {
     margin-top: 0;
+    color: var(--color-contrast);
 }
 
 .errors {
@@ -1315,16 +1357,20 @@ async function executeBatch() {
 .errors ul {
     margin: 0.5rem 0;
     padding-left: 1.5rem;
+    color: var(--color-contrast);
 }
 
-/* Modal */
+/**
+ * Modal
+ */
+
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: oklch(0% 0 0 / 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1332,8 +1378,9 @@ async function executeBatch() {
 }
 
 .modal-dialog {
-    background: white;
-    border-radius: 8px;
+    background: var(--color-popover-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
     max-width: 900px;
     width: 90%;
     max-height: 90vh;
@@ -1345,11 +1392,12 @@ async function executeBatch() {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h2 {
     margin: 0;
+    color: var(--color-contrast);
 }
 
 .btn-close {
@@ -1357,7 +1405,11 @@ async function executeBatch() {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--color-dimmed);
+}
+
+.btn-close:hover {
+    color: var(--color-contrast);
 }
 
 .modal-body {
@@ -1382,14 +1434,17 @@ async function executeBatch() {
     justify-content: flex-end;
     gap: 0.5rem;
     padding: 1.5rem;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--color-border);
 }
 
-/* Buttons */
+/**
+ * Buttons - accent → primary on hover pattern
+ */
+
 .btn {
     padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
@@ -1402,30 +1457,37 @@ async function executeBatch() {
 }
 
 .btn-primary {
-    background: #2196F3;
-    color: white;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    border-color: var(--color-accent-bg);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #1976D2;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-bg);
 }
 
 .btn-secondary {
-    background: #757575;
-    color: white;
+    background: transparent;
+    color: var(--color-contrast);
+    border-color: var(--color-border);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #616161;
+    background: var(--color-muted-bg);
 }
 
 .btn-danger {
-    background: #f44336;
-    color: white;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    border-color: var(--color-accent-bg);
 }
 
 .btn-danger:hover:not(:disabled) {
-    background: #d32f2f;
+    background: var(--color-negative-bg);
+    color: var(--color-negative-contrast);
+    border-color: var(--color-negative-bg);
 }
 
 .btn-sm {
@@ -1441,6 +1503,14 @@ async function executeBatch() {
 .loading {
     text-align: center;
     padding: 2rem;
-    color: #666;
+    color: var(--color-dimmed);
+}
+
+/**
+ * Capabilities Panel
+ */
+
+.capabilities-panel {
+    padding: 0;
 }
 </style>

@@ -250,6 +250,43 @@ These are convenience mappings defined in `00-theme.css`:
 }
 ```
 
+### Role Badges (Semantic Mapping)
+
+| Role | Semantic Color | Reasoning |
+|------|---------------|------------|
+| anonym | muted | Neutral, no special status |
+| partner | positive | Collaborative, invited guest |
+| participant | secondary | Active involvement |
+| member | primary | Core team member |
+| owner | negative | Highest authority (red = attention) |
+
+```css
+.role-anonym {
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
+}
+
+.role-partner {
+    background: oklch(from var(--color-positive-bg) 90% c h);
+    color: oklch(from var(--color-positive-bg) 35% c h);
+}
+
+.role-participant {
+    background: oklch(from var(--color-secondary-bg) 90% c h);
+    color: oklch(from var(--color-secondary-bg) 40% c h);
+}
+
+.role-member {
+    background: oklch(from var(--color-primary-bg) 90% c h);
+    color: oklch(from var(--color-primary-bg) 35% c h);
+}
+
+.role-owner {
+    background: oklch(from var(--color-negative-bg) 90% c h);
+    color: oklch(from var(--color-negative-bg) 40% c h);
+}
+```
+
 ---
 
 ## H) Tables and Data Grids

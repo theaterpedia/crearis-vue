@@ -785,6 +785,10 @@ onMounted(() => {
     font-weight: 500;
 }
 
+/* Role → Semantic Color Mapping:
+   anonym → muted, partner → positive, participant → secondary,
+   member → primary, owner → negative */
+
 .role-anonym {
     background: var(--color-muted-bg);
     color: var(--color-muted-contrast);
@@ -801,8 +805,8 @@ onMounted(() => {
 }
 
 .role-member {
-    background: oklch(from var(--color-warning-bg) 92% c h);
-    color: oklch(from var(--color-warning-bg) 45% c h);
+    background: oklch(from var(--color-primary-bg) 90% c h);
+    color: oklch(from var(--color-primary-bg) 35% c h);
 }
 
 .role-owner {
