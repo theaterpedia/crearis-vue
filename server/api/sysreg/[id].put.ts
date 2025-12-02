@@ -1,6 +1,9 @@
 /**
  * PUT /api/sysreg/[id]
  * Update an existing sysreg tag
+ * 
+ * Note: For config entries (capabilities matrix), value can be updated.
+ * For other families, value is structural and cannot be changed.
  */
 
 import { defineEventHandler, readBody, getRouterParam, createError } from 'h3'
@@ -16,7 +19,8 @@ export default defineEventHandler(async (event) => {
         taglogic,
         is_default,
         name_i18n,
-        desc_i18n
+        desc_i18n,
+        value // Allow value updates for config entries
     } = body
 
     if (!id) {
@@ -26,13 +30,10 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Note: We don't allow changing tagfamily or value as they're structural
-    // Only metadata can be updated
-
     try {
         // First, get the tag to determine which table it's in
         const getQuery = 'SELECT * FROM sysreg WHERE id = $1'
-        const existingTag = await db.get(getQuery, [id])
+        const existingTag = await db.get(getQuery, [id]) as any
 
         if (!existingTag) {
             throw createError({
@@ -47,6 +48,17 @@ export default defineEventHandler(async (event) => {
         const updates: string[] = []
         const values: any[] = []
         let paramCount = 1
+
+        // For config entries, allow value updates (capabilities matrix)
+        if (value !== undefined && existingTag.tagfamily === 'config') {
+            updates.push(`value = $${paramCount++}`)
+            values.push(value)
+        } else if (value !== undefined) {
+            throw createError({
+                statusCode: 400,
+                message: 'Value cannot be updated for non-config entries'
+            })
+        }
 
         if (name !== undefined) {
             updates.push(`name = $${paramCount++}`)
