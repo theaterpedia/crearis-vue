@@ -152,7 +152,7 @@ export const migration = {
         await db.exec(`DROP FUNCTION IF EXISTS recompute_all_capabilities();`)
         await db.exec(`DROP FUNCTION IF EXISTS recompute_entity_capabilities(TEXT);`)
         await db.exec(`DROP FUNCTION IF EXISTS recompute_project_capabilities(INTEGER);`)
-        
+
         // Remove capabilities_version from JSONB config
         await db.exec(`
             UPDATE crearis_config 

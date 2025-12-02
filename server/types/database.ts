@@ -376,10 +376,17 @@ export interface PostsTableFields {
     lang?: string | null // default: 'de'::text
     md?: string | null
     name?: string | null
+    owner_id?: number | null  // Migration 046: record owner (FK to users.id)
     post_date?: string | null
     project_id?: number | null
     public_user?: number | null
     regio_id?: number | null
+    // Role visibility columns (Migration 046 - maintained by triggers)
+    r_anonym?: boolean | null  // default: false
+    r_partner?: boolean | null  // default: false
+    r_participant?: boolean | null  // default: false
+    r_member?: boolean | null  // default: true
+    r_owner?: boolean | null  // default: true
     status?: string | null
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_val?: Buffer | null

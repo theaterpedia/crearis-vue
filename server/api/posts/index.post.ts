@@ -8,6 +8,9 @@ import type { PostsTableFields } from '../../types/database'
 // - posts.xmlid can optionally store old TEXT id
 // - posts.project_id stores INTEGER FK to projects.id
 // - body.project accepts domaincode (TEXT) for lookup
+// After Migration 046:
+// - posts.owner_id stores INTEGER FK to users.id (record owner)
+// - owner_id is set from body.owner_id (user who creates/owns the post)
 export default defineEventHandler(async (event) => {
     try {
         const body = await readBody(event)
@@ -41,15 +44,16 @@ export default defineEventHandler(async (event) => {
             project_id: projectId,
             template: body.template || null,
             public_user: body.public_user || null,
-            img_id: body.img_id || null
+            img_id: body.img_id || null,
+            owner_id: body.owner_id || null  // Record owner (user who creates the post)
         }
 
         // Insert post (id is auto-generated)
         const sql = `
             INSERT INTO posts (
                 xmlid, name, subtitle, teaser, cimg, post_date,
-                isbase, project_id, template, public_user, img_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                isbase, project_id, template, public_user, img_id, owner_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -64,7 +68,8 @@ export default defineEventHandler(async (event) => {
             postData.project_id,
             postData.template,
             postData.public_user,
-            postData.img_id
+            postData.img_id,
+            postData.owner_id
         ])
 
         // Extract the new post ID from the result
