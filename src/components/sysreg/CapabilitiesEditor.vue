@@ -566,30 +566,38 @@ function closeModal() {
 async function saveEntry() {
     const payload = {
         value: computedValue.value,
-        name: editForm.value.name.trim(),
-        description: editForm.value.description.trim(),
+        name: editForm.value.name?.trim() || '',
+        description: editForm.value.description?.trim() || '',
         tagfamily: 'config',
         taglogic: 'toggle',
         is_default: false,
     }
 
+    console.log('Saving entry:', { editingId: editingId.value, isEditing: isEditing.value, payload })
+
     try {
         if (isEditing.value) {
-            // Update existing
-            const response = await fetch(`/api/sysreg/config/${editingId.value}`, {
+            // Update existing - endpoint is /api/sysreg/[id] (not /api/sysreg/config/[id])
+            const response = await fetch(`/api/sysreg/${editingId.value}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
         } else {
             // Create new
-            const response = await fetch('/api/sysreg/config', {
+            const response = await fetch('/api/sysreg', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             })
-            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
         }
         await loadEntries()
         closeModal()
@@ -603,7 +611,7 @@ async function confirmDelete(entry: ConfigEntry) {
     if (!confirm(`Delete capability "${entry.name}"?`)) return
 
     try {
-        const response = await fetch(`/api/sysreg/config/${entry.id}`, {
+        const response = await fetch(`/api/sysreg/${entry.id}`, {
             method: 'DELETE',
         })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
