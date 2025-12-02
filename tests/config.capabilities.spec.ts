@@ -1,69 +1,67 @@
 /**
- * config.capabilities.spec.ts - Tests for capability detection and inheritance
+ * config.capabilities.spec.ts - Tests for capability detection (explicit flags)
  * 
  * Version: v0.2
  * Sprint: Projectlogin Workflow (Dec 1-9, 2025)
  * 
  * Tests the capability portion of the sysreg_config matrix:
- * - Bits 10-12: Read capability (category + subcategories)
- * - Bits 13-15: Update capability (category + subcategories)
- * - Bits 16-18: Create capability (category + subcategories)
- * - Bits 19-21: Manage capability (category + subcategories)
- * - Bits 22-23: Simple capabilities (list, share)
+ * - Bits 11-13: Read capability (category + subcategories)
+ * - Bits 14-16: Update capability (category + subcategories)
+ * - Bits 17-19: Create capability (category + subcategories)
+ * - Bits 20-22: Manage capability (category + subcategories)
+ * - Bits 23-24: Simple capabilities (list, share)
  * 
- * Also tests capability inheritance:
- * - read → includes list
- * - update → includes read, list, share
- * - create → includes read, list, share
- * - manage → includes list, share
+ * NOTE: Capability inheritance is DROPPED for v0.2-v0.4.
+ * All capabilities must be explicitly set in config entries.
+ * The CapabilitiesEditor UI handles this automatically.
  */
 
 import { describe, it, expect } from 'vitest'
 import { v, vDescribe } from './helpers/versioned-test'
 
 // ============================================================================
-// Bit Constants
+// Bit Constants (updated for 5-bit entity: bits 3-7)
 // ============================================================================
 
 // Capability bit positions
 const CAP_BITS = {
-    read: { start: 10, width: 3 },
-    update: { start: 13, width: 3 },
-    create: { start: 16, width: 3 },
-    manage: { start: 19, width: 3 },
-    list: { bit: 22 },
-    share: { bit: 23 }
+    read: { start: 11, width: 3 },
+    update: { start: 14, width: 3 },
+    create: { start: 17, width: 3 },
+    manage: { start: 20, width: 3 },
+    list: { bit: 23 },
+    share: { bit: 24 }
 } as const
 
 // Capability values (category = 001 in each 3-bit group)
 const CAP_VALUES = {
     // Read capabilities
-    read: 0b001 << 10,           // Full read (category)
-    read_preview: 0b010 << 10,   // Preview only
-    read_metadata: 0b011 << 10,  // Metadata only
+    read: 0b001 << 11,           // Full read (category)
+    read_preview: 0b010 << 11,   // Preview only
+    read_metadata: 0b011 << 11,  // Metadata only
 
     // Update capabilities
-    update: 0b001 << 13,         // Full update (category)
-    update_comment: 0b010 << 13, // Add comments only
-    update_append: 0b011 << 13,  // Append content only
-    update_replace: 0b100 << 13, // Replace content
-    update_shift: 0b101 << 13,   // Change date/costs/count
+    update: 0b001 << 14,         // Full update (category)
+    update_comment: 0b010 << 14, // Add comments only
+    update_append: 0b011 << 14,  // Append content only
+    update_replace: 0b100 << 14, // Replace content
+    update_shift: 0b101 << 14,   // Change date/costs/count
 
     // Create capabilities
-    create: 0b001 << 16,         // Full create (category)
-    create_draft: 0b010 << 16,   // Create as draft only
-    create_template: 0b011 << 16, // From template only
+    create: 0b001 << 17,         // Full create (category)
+    create_draft: 0b010 << 17,   // Create as draft only
+    create_template: 0b011 << 17, // From template only
 
     // Manage capabilities
-    manage: 0b001 << 19,         // Full manage (category)
-    manage_status: 0b010 << 19,  // Status changes only
-    manage_config: 0b011 << 19,  // Config changes only
-    manage_delete: 0b100 << 19,  // Delete/trash only
-    manage_archive: 0b101 << 19, // Archive only
+    manage: 0b001 << 20,         // Full manage (category)
+    manage_status: 0b010 << 20,  // Status changes only
+    manage_config: 0b011 << 20,  // Config changes only
+    manage_delete: 0b100 << 20,  // Delete/trash only
+    manage_archive: 0b101 << 20, // Archive only
 
     // Simple capabilities
-    list: 1 << 22,
-    share: 1 << 23
+    list: 1 << 23,
+    share: 1 << 24
 } as const
 
 // ============================================================================
@@ -118,15 +116,12 @@ function getCapabilitySubcategory(configValue: number, capability: 'read' | 'upd
 }
 
 /**
- * Apply capability inheritance to resolve effective capabilities
+ * Get all capabilities directly set on a config entry.
  * 
- * Inheritance rules:
- * - read → includes list
- * - update → includes read, list, share
- * - create → includes read, list, share
- * - manage → includes list, share
+ * NOTE: NO INHERITANCE in v0.2-v0.4. What you see is what you get.
+ * Each capability must be explicitly set in the config entry.
  */
-function resolveEffectiveCapabilities(configValue: number): {
+function getCapabilities(configValue: number): {
     read: boolean
     update: boolean
     create: boolean
@@ -134,20 +129,13 @@ function resolveEffectiveCapabilities(configValue: number): {
     list: boolean
     share: boolean
 } {
-    const hasRead = hasCapability(configValue, 'read')
-    const hasUpdate = hasCapability(configValue, 'update')
-    const hasCreate = hasCapability(configValue, 'create')
-    const hasManage = hasCapability(configValue, 'manage')
-    const hasList = hasSimpleCapability(configValue, 'list')
-    const hasShare = hasSimpleCapability(configValue, 'share')
-
     return {
-        read: hasRead || hasUpdate || hasCreate,
-        update: hasUpdate,
-        create: hasCreate,
-        manage: hasManage,
-        list: hasList || hasRead || hasUpdate || hasCreate || hasManage,
-        share: hasShare || hasUpdate || hasCreate || hasManage
+        read: hasCapability(configValue, 'read'),
+        update: hasCapability(configValue, 'update'),
+        create: hasCapability(configValue, 'create'),
+        manage: hasCapability(configValue, 'manage'),
+        list: hasSimpleCapability(configValue, 'list'),
+        share: hasSimpleCapability(configValue, 'share')
     }
 }
 
@@ -159,10 +147,10 @@ vDescribe({ version: '0.2' })('config.capabilities', () => {
 
     describe('Capability Bit Constants', () => {
         v({ version: '0.2' })('should have correct bit positions for complex capabilities', () => {
-            expect(CAP_BITS.read.start).toBe(10)
-            expect(CAP_BITS.update.start).toBe(13)
-            expect(CAP_BITS.create.start).toBe(16)
-            expect(CAP_BITS.manage.start).toBe(19)
+            expect(CAP_BITS.read.start).toBe(11)
+            expect(CAP_BITS.update.start).toBe(14)
+            expect(CAP_BITS.create.start).toBe(17)
+            expect(CAP_BITS.manage.start).toBe(20)
         })
 
         v({ version: '0.2' })('should have 3-bit width for complex capabilities', () => {
@@ -173,8 +161,8 @@ vDescribe({ version: '0.2' })('config.capabilities', () => {
         })
 
         v({ version: '0.2' })('should have correct bit positions for simple capabilities', () => {
-            expect(CAP_BITS.list.bit).toBe(22)
-            expect(CAP_BITS.share.bit).toBe(23)
+            expect(CAP_BITS.list.bit).toBe(23)
+            expect(CAP_BITS.share.bit).toBe(24)
         })
     })
 
@@ -280,40 +268,43 @@ vDescribe({ version: '0.2' })('config.capabilities', () => {
         })
     })
 
-    describe('Capability Inheritance', () => {
-        v({ version: '0.2' })('should include list with read', () => {
-            const caps = resolveEffectiveCapabilities(CAP_VALUES.read)
+    describe('Explicit Capabilities (No Inheritance)', () => {
+        v({ version: '0.2' })('should require explicit list flag (not inherited from read)', () => {
+            // In v0.2, read does NOT automatically grant list
+            const caps = getCapabilities(CAP_VALUES.read)
             expect(caps.read).toBe(true)
-            expect(caps.list).toBe(true)
-            expect(caps.share).toBe(false)
+            expect(caps.list).toBe(false) // NOT inherited!
         })
 
-        v({ version: '0.2' })('should include read, list, share with update', () => {
-            const caps = resolveEffectiveCapabilities(CAP_VALUES.update)
+        v({ version: '0.2' })('should require explicit flags with update', () => {
+            // In v0.2, update does NOT automatically grant read/list/share
+            const caps = getCapabilities(CAP_VALUES.update)
             expect(caps.update).toBe(true)
-            expect(caps.read).toBe(true)
-            expect(caps.list).toBe(true)
-            expect(caps.share).toBe(true)
+            expect(caps.read).toBe(false)  // NOT inherited!
+            expect(caps.list).toBe(false)  // NOT inherited!
+            expect(caps.share).toBe(false) // NOT inherited!
         })
 
-        v({ version: '0.2' })('should include read, list, share with create', () => {
-            const caps = resolveEffectiveCapabilities(CAP_VALUES.create)
+        v({ version: '0.2' })('should require explicit flags with create', () => {
+            // In v0.2, create does NOT automatically grant read/list/share
+            const caps = getCapabilities(CAP_VALUES.create)
             expect(caps.create).toBe(true)
-            expect(caps.read).toBe(true)
-            expect(caps.list).toBe(true)
-            expect(caps.share).toBe(true)
+            expect(caps.read).toBe(false)  // NOT inherited!
+            expect(caps.list).toBe(false)  // NOT inherited!
+            expect(caps.share).toBe(false) // NOT inherited!
         })
 
-        v({ version: '0.2' })('should include list, share with manage (but not read)', () => {
-            const caps = resolveEffectiveCapabilities(CAP_VALUES.manage)
+        v({ version: '0.2' })('should require explicit flags with manage', () => {
+            // In v0.2, manage does NOT automatically grant list/share
+            const caps = getCapabilities(CAP_VALUES.manage)
             expect(caps.manage).toBe(true)
-            expect(caps.list).toBe(true)
-            expect(caps.share).toBe(true)
-            expect(caps.read).toBe(false) // manage doesn't imply read
+            expect(caps.list).toBe(false)  // NOT inherited!
+            expect(caps.share).toBe(false) // NOT inherited!
+            expect(caps.read).toBe(false)
         })
 
         v({ version: '0.2' })('should handle no capabilities', () => {
-            const caps = resolveEffectiveCapabilities(0)
+            const caps = getCapabilities(0)
             expect(caps.read).toBe(false)
             expect(caps.update).toBe(false)
             expect(caps.create).toBe(false)
@@ -322,12 +313,16 @@ vDescribe({ version: '0.2' })('config.capabilities', () => {
             expect(caps.share).toBe(false)
         })
 
-        v({ version: '0.2' })('should handle explicit list/share overriding inheritance', () => {
-            // Just list, no complex capabilities
-            const caps = resolveEffectiveCapabilities(CAP_VALUES.list)
+        v({ version: '0.2' })('should correctly read explicit flags', () => {
+            // CapabilitiesEditor will set all needed flags explicitly
+            const fullAccess = CAP_VALUES.read | CAP_VALUES.update | CAP_VALUES.list | CAP_VALUES.share
+            const caps = getCapabilities(fullAccess)
+            expect(caps.read).toBe(true)
+            expect(caps.update).toBe(true)
             expect(caps.list).toBe(true)
-            expect(caps.share).toBe(false)
-            expect(caps.read).toBe(false)
+            expect(caps.share).toBe(true)
+            expect(caps.create).toBe(false)
+            expect(caps.manage).toBe(false)
         })
     })
 
@@ -388,12 +383,13 @@ vDescribe({ version: '0.2' })('config.capabilities', () => {
 // ============================================================================
 
 vDescribe({ version: '0.2' })('config.capabilities.matrix', () => {
+    // New bit layout for 5-bit entity
     // Project type bits (0-2)
     const PROJECT_BITS = { start: 0, width: 3 }
-    // Entity bits (3-6)
-    const ENTITY_BITS = { start: 3, width: 4 }
-    // State bits (7-9)
-    const STATE_BITS = { start: 7, width: 3 }
+    // Entity bits (3-7) - 5 bits = 32 entity types
+    const ENTITY_BITS = { start: 3, width: 5 }
+    // State bits (8-10)
+    const STATE_BITS = { start: 8, width: 3 }
 
     function getProjectType(value: number): number {
         const mask = ((1 << PROJECT_BITS.width) - 1) << PROJECT_BITS.start
@@ -411,34 +407,37 @@ vDescribe({ version: '0.2' })('config.capabilities.matrix', () => {
     }
 
     v({ version: '0.2' })('should parse full config entry', () => {
-        // Example: default project, post entity, released state, read capability, anonym role
+        // Example: default project, post entity (00100), released state, read capability, anonym role
         const projectType = 0b010 // project (bits 0-2)
-        const entity = 0b1100 << 3 // specific + post (bits 3-6) - MUST shift!
-        const state = 0b101 << 7 // released (bits 7-9)
-        const read = 0b001 << 10 // read category (bits 10-12)
-        const roles = 1 << 24 // anonym (bit 24)
+        const entity = 0b00100 << 3 // post entity (bits 3-7)
+        const state = 0b101 << 8 // released (bits 8-10)
+        const read = 0b001 << 11 // read category (bits 11-13)
+        const list = 1 << 23 // explicit list
+        const roles = 1 << 25 // anonym (bit 25)
 
-        const configEntry = projectType | entity | state | read | roles
+        const configEntry = projectType | entity | state | read | list | roles
 
         expect(getProjectType(configEntry)).toBe(0b010)
-        expect(getEntity(configEntry)).toBe(0b1100)
+        expect(getEntity(configEntry)).toBe(0b00100)
         expect(getState(configEntry)).toBe(0b101)
         expect(getCapabilityValue(configEntry, 'read')).toBe(1)
+        expect(hasSimpleCapability(configEntry, 'list')).toBe(true)
     })
 
     v({ version: '0.2' })('should handle example: "Released posts readable by anyone"', () => {
-        // Build config: default project, post, released, read, all roles
+        // Build config: default project, post (00100), released, read + list, all roles
         const entry =
-            0b010 |             // project type (bits 0-2)
-            (0b1100 << 3) |     // specific + post (bits 3-6) - MUST shift!
-            (0b101 << 7) |      // released state (bits 7-9)
-            (0b001 << 10) |     // read capability (bits 10-12)
-            (0b11111 << 24)     // all roles (bits 24-28)
+            0b010 |              // project type (bits 0-2)
+            (0b00100 << 3) |     // post entity (bits 3-7)
+            (0b101 << 8) |       // released state (bits 8-10)
+            (0b001 << 11) |      // read capability (bits 11-13)
+            (1 << 23) |          // list (explicit - bit 23)
+            (0b11111 << 25)      // all roles (bits 25-29)
 
         expect(getProjectType(entry)).toBe(2) // project
-        expect((entry >> 3) & 0b1).toBe(0) // specific entity flag (bit 3)
-        expect((entry >> 3) & 0b1111).toBe(0b1100) // full entity value
+        expect(getEntity(entry)).toBe(0b00100) // post
         expect(getState(entry)).toBe(5) // released
         expect(hasFullCapability(entry, 'read')).toBe(true)
+        expect(hasSimpleCapability(entry, 'list')).toBe(true)
     })
 })

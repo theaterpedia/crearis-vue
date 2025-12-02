@@ -1,7 +1,7 @@
 # Auth-System Specification: sysreg_config Capabilities Matrix
 
 **Sprint:** December 1-9, 2025 (Projectlogin Workflow)  
-**Version:** v0.2 target  
+**Version:** v0.2-v0.4  
 **Branch:** `alpha/projectlogin_workflow`
 
 ---
@@ -14,30 +14,38 @@ This document specifies the refactored auth-system using `sysreg_config` to defi
 
 1. **Default-deny**: Nothing is allowed unless explicitly configured
 2. **Bit-based encoding**: Follows sysreg pattern (like ctags, dtags)
-3. **Category→Subcategory inheritance**: Capabilities use parent_bit pattern
-4. **Computed simplification**: Higher capabilities include lower ones
+3. **Explicit configuration**: Each entity configured separately (no "all entities" templating)
+4. **No capability inheritance**: Capabilities are explicit, no computed simplification
 5. **Project-scoped**: Capabilities are evaluated per-project based on user's role
+6. **Record ownership**: Creator owns the record; project-owner gets elevated capabilities via config
+
+### Ownership Model (Variant 3)
+
+- **Record creator = owner** of that specific record
+- **Project-owner gets elevated *capabilities*** (via sysreg_config), not elevated role
+- Project-owner acts as 'member' on records they didn't create, but with extra manage permissions
+- This provides sandbox autonomy while allowing project-level control
 
 ---
 
-## Bit Allocation: 28 bits (+ sign bit for admin)
+## Bit Allocation: 31 bits (+ sign bit for admin)
 
 | Bit Range | Purpose | Values |
 |-----------|---------|--------|
 | 0 | Default/Special flag | 0=merge with default, 1=special project |
 | 1-2 | Project Type | 4 types |
-| 3 | Entity scope flag | 0=all entities, 1=specific entity |
-| 4-6 | Entity type | 8 entity types |
-| 7-9 | Record state | 8 states |
-| 10-12 | Read capability | category + subcategories |
-| 13-15 | Update capability | category + subcategories |
-| 16-18 | Create capability | category + subcategories |
-| 19-21 | Manage capability | category + subcategories |
-| 22-23 | Simple capabilities | list, share |
-| 24-28 | Roles | 5 project-roles |
+| 3-7 | Entity type | 32 entity types (5 bits) |
+| 8-10 | Record state | 8 states |
+| 11-13 | Read capability | category + subcategories |
+| 14-16 | Update capability | category + subcategories |
+| 17-19 | Create capability | category + subcategories |
+| 20-22 | Manage capability | category + subcategories |
+| 23-24 | Simple capabilities | list, share |
+| 25-29 | Roles | 5 project-roles |
+| 30 | (reserved) | Future use |
 | 31 (sign) | Admin role | (v0.5 - deferred) |
 
-**Total: 29 active bits + sign bit = 30 bits used** (within 32-bit signed integer)
+**Total: 30 active bits + sign bit = 31 bits used** (within 32-bit signed integer)
 
 ---
 
@@ -68,36 +76,32 @@ This document specifies the refactored auth-system using `sysreg_config` to defi
 
 ---
 
-### Group 2: Entity (bits 3-6)
+### Group 2: Entity (bits 3-7) - 5 bits, 32 values
 
-#### Bit 3: Entity Scope Flag
-| Value | Meaning |
-|-------|---------|
-| 0 | All entities (default rule) |
-| 1 | Specific entity (bits 4-6 define which) |
-
-#### Bits 4-6: Entity Type (when bit 3 = 1)
 | Value | Entity | Notes |
 |-------|--------|-------|
-| 000 | default | Unspecified (features, etc.) |
-| 001 | user | Users, instructors, persons |
-| 010 | project | Project records |
-| 011 | image | Images |
-| 100 | post | Blog posts |
-| 101 | event | Events |
-| 110 | (reserved) | Future use |
-| 111 | (reserved) | Future use |
+| 00000 | (all) | Reserved for future "all entities" if needed |
+| 00001 | user | Users, instructors, persons |
+| 00010 | project | Project records |
+| 00011 | image | Images |
+| 00100 | post | Blog posts |
+| 00101 | event | Events |
+| 00110 | task | Tasks |
+| 00111 | location | Locations |
+| 01000-11111 | (reserved) | Future entities |
+
+**Note:** Each entity is configured explicitly. No "all entities" templating in v0.2-v0.4.
 
 ---
 
-### Group 3: Record State (bits 7-9)
+### Group 3: Record State (bits 8-10)
 
 Maps to `sysreg_status` categories:
 
 | Value | State | Description |
 |-------|-------|-------------|
 | 000 | all | Applies to all states |
-| 001 | new | Newly created, undefined |
+| 001 | new | Newly created, undefined (also = "no record yet") |
 | 010 | demo | Demo/example content |
 | 011 | draft | Work in progress |
 | 100 | review | Awaiting review/approval |
@@ -105,23 +109,24 @@ Maps to `sysreg_status` categories:
 | 110 | archived | Historical/inactive |
 | 111 | trash | Marked for deletion |
 
+**Note:** State `new` (001) is equivalent to "record doesn't exist yet" for create capability checks.
+
 ---
 
-### Group 4: Complex Capabilities (bits 10-21)
+### Group 4: Complex Capabilities (bits 11-22)
 
 Each complex capability uses 3 bits with category→subcategory pattern:
 
-#### Read Capability (bits 10-12)
+#### Read Capability (bits 11-13)
 | Value | Capability | Description |
 |-------|------------|-------------|
 | 000 | (none) | No read access |
 | 001 | read | Full read access (category) |
 | 010 | read > preview | Preview/summary only |
 | 011 | read > metadata | Metadata only |
-| 100 | read > (reserved) | |
-| 101-111 | (reserved) | |
+| 100-111 | (reserved) | |
 
-#### Update Capability (bits 13-15)
+#### Update Capability (bits 14-16)
 | Value | Capability | Description |
 |-------|------------|-------------|
 | 000 | (none) | No update access |
@@ -132,7 +137,7 @@ Each complex capability uses 3 bits with category→subcategory pattern:
 | 101 | update > shift | Change date/costs/count |
 | 110-111 | (reserved) | |
 
-#### Create Capability (bits 16-18)
+#### Create Capability (bits 17-19)
 | Value | Capability | Description |
 |-------|------------|-------------|
 | 000 | (none) | No create access |
@@ -141,7 +146,7 @@ Each complex capability uses 3 bits with category→subcategory pattern:
 | 011 | create > from_template | Create from template only |
 | 100-111 | (reserved) | |
 
-#### Manage Capability (bits 19-21)
+#### Manage Capability (bits 20-22)
 | Value | Capability | Description |
 |-------|------------|-------------|
 | 000 | (none) | No manage access |
@@ -154,42 +159,42 @@ Each complex capability uses 3 bits with category→subcategory pattern:
 
 ---
 
-### Group 5: Simple Capabilities (bits 22-23)
+### Group 5: Simple Capabilities (bits 23-24)
 
 | Bit | Capability | Description |
 |-----|------------|-------------|
-| 22 | list | See name/stats, not content |
-| 23 | share | Download, link, external share |
+| 23 | list | See name/stats, not content |
+| 24 | share | Download, link, external share |
 
 ---
 
-### Group 6: Roles (bits 24-28 + sign bit)
+### Group 6: Roles (bits 25-29 + sign bit)
 
 | Bit | Role | Description |
 |-----|------|-------------|
-| 24 | anonym | Anonymous public user, not logged in |
-| 25 | partner | Parents, sponsors, interested persons |
-| 26 | participant | Actors, attendees, active participants |
-| 27 | member | Instructors, staff, team members |
-| 28 | owner | Responsible person, project owner |
+| 25 | anonym | Anonymous public user, not logged in |
+| 26 | partner | Parents, sponsors, interested persons |
+| 27 | participant | Actors, attendees, active participants |
+| 28 | member | Instructors, staff, team members |
+| 29 | owner | Record owner (creator of the record) |
 | 31 (sign) | admin | System administrator (v0.5) |
 
 **Note:** Multiple role bits can be set to grant capability to multiple roles.
 
+**Important:** The `owner` role (bit 29) refers to the **record owner** (whoever created the record), NOT the project-owner. Project-owners receive elevated capabilities via separate config entries granting them member-level access plus manage permissions.
+
 ---
 
-## Capability Inheritance (Computed Simplification)
+## NO Capability Inheritance (Explicit Configuration)
 
-Higher capabilities automatically include lower ones:
+**DROPPED for v0.2-v0.4:** The computed simplification (read→list, update→read+list+share, etc.) is NOT implemented.
 
-```
-read    → includes: list
-update  → includes: read, list, share
-create  → includes: read, list, share
-manage  → includes: list, share
-```
+**Reason:** 
+1. Hard to implement in database triggers
+2. Not stoppable (can't opt-out of inherited capabilities)
+3. Explicit configuration via CapabilitiesEditor is clearer
 
-This means if a config entry grants `update` to a role, that role also gets `read`, `list`, and `share` automatically.
+**Instead:** Each config entry explicitly sets all needed capability bits. The CapabilitiesEditor UI makes this trivial.
 
 ---
 
@@ -213,35 +218,71 @@ These are **generated columns** based on the entity's `status` field, following 
 
 ### Entry 1: "Released posts readable by anyone"
 ```
-Bits: 0|10|1|100|101|001|000|000|000|00|11111
-      │ │  │ │   │   │   │   │   │   │  └─ all roles
-      │ │  │ │   │   │   │   │   │   └─ no simple caps (implied by read)
-      │ │  │ │   │   │   │   │   └─ no manage
-      │ │  │ │   │   │   │   └─ no create
-      │ │  │ │   │   │   └─ no update
-      │ │  │ │   │   └─ read (category)
-      │ │  │ │   └─ released state
-      │ │  │ └─ post entity
-      │ │  └─ specific entity
-      │ └─ project type
+Bits: 0|00|00100|101|001|000|000|000|11|11111|0
+      │ │  │     │   │   │   │   │   │  │     └─ reserved
+      │ │  │     │   │   │   │   │   │  └─ all roles (anonym,partner,participant,member,owner)
+      │ │  │     │   │   │   │   │   └─ list,share (explicit)
+      │ │  │     │   │   │   │   └─ no manage
+      │ │  │     │   │   │   └─ no create
+      │ │  │     │   │   └─ no update
+      │ │  │     │   └─ read (category)
+      │ │  │     └─ released state
+      │ │  └─ post entity (00100)
+      │ └─ project type (00 = all)
       └─ default (merge)
 ```
+**Note:** list and share are explicitly set because there's no capability inheritance.
 
 ### Entry 2: "Draft events updatable by members"
 ```
-Bits: 0|10|1|101|011|001|001|000|000|00|01000
-      │ │  │ │   │   │   │   │   │   │  └─ member only
-      │ │  │ │   │   │   │   │   │   └─ no simple caps
-      │ │  │ │   │   │   │   │   └─ no manage
-      │ │  │ │   │   │   │   └─ no create
-      │ │  │ │   │   │   └─ update (category)
-      │ │  │ │   │   └─ read (included by update)
-      │ │  │ │   └─ draft state
-      │ │  │ └─ event entity
-      │ │  └─ specific entity
-      │ └─ project type
+Bits: 0|00|00101|011|001|001|000|000|11|01100|0
+      │ │  │     │   │   │   │   │   │  │     └─ reserved
+      │ │  │     │   │   │   │   │   │  └─ participant,member
+      │ │  │     │   │   │   │   │   └─ list,share (explicit)
+      │ │  │     │   │   │   │   └─ no manage
+      │ │  │     │   │   │   └─ no create
+      │ │  │     │   │   └─ update (category)
+      │ │  │     │   └─ read (category)
+      │ │  │     └─ draft state
+      │ │  └─ event entity (00101)
+      │ └─ project type (00 = all)
       └─ default (merge)
 ```
+**Note:** read, list, and share are all explicitly set alongside update.
+
+### Entry 3: "Record owner can manage their own records"
+```
+Bits: 0|00|00000|000|001|001|001|001|11|10000|0
+      │ │  │     │   │   │   │   │   │  │     └─ reserved
+      │ │  │     │   │   │   │   │   │  └─ owner only
+      │ │  │     │   │   │   │   │   └─ list,share
+      │ │  │     │   │   │   │   └─ manage (category)
+      │ │  │     │   │   │   └─ create (category)
+      │ │  │     │   │   └─ update (category)
+      │ │  │     │   └─ read (category)
+      │ │  │     └─ all states
+      │ │  └─ all entities (00000)
+      │ └─ project type (00 = all)
+      └─ default (merge)
+```
+**Note:** This grants the record owner full CRUD access to records they created.
+
+### Entry 4: "Project-owner elevated access (as member)"
+```
+Bits: 0|00|00000|000|001|001|000|001|11|01000|0
+      │ │  │     │   │   │   │   │   │  │     └─ reserved
+      │ │  │     │   │   │   │   │   │  └─ member (project-owner is treated as member)
+      │ │  │     │   │   │   │   │   └─ list,share
+      │ │  │     │   │   │   │   └─ manage (category)
+      │ │  │     │   │   │   └─ no create (optional, depends on entity)
+      │ │  │     │   │   └─ update (category)
+      │ │  │     │   └─ read (category)
+      │ │  │     └─ all states
+      │ │  └─ all entities (00000)
+      │ └─ project type (00 = all)
+      └─ default (merge)
+```
+**Note:** Project-owners are assigned the `member` role for other people's records, giving them elevated capabilities. This is Variant 3 ownership model - no role inheritance, just explicit config.
 
 ---
 
@@ -272,19 +313,22 @@ Bits: 0|10|1|101|011|001|001|000|000|00|01000
 ## Testing Strategy
 
 ### Test File: `tests/config.roles.spec.ts`
-- Role bit detection
+- Role bit detection (bits 25-29)
 - Role priority resolution
 - Multi-role scenarios
+- Owner vs member distinction
 
 ### Test File: `tests/config.capabilities.spec.ts`
-- Capability inheritance
-- State filtering
-- Entity filtering
+- Capability bit extraction (bits 11-24)
+- Complex capability subcategories
+- Simple capability flags
+- Explicit flag combinations (no inheritance)
 
 ### Test File: `tests/config.matrix.spec.ts`
 - Full matrix resolution
 - Project-type merging
 - Default/special flag handling
+- Ownership model resolution
 
 ---
 
@@ -303,9 +347,12 @@ Bits: 0|10|1|101|011|001|001|000|000|00|01000
 - Admin role on sign bit (bit 31)
 - Home route '/' as hub/showcase with search functionality
 - Entity-level config override (per-record config field)
+- **Project-main-owner concept:** A designated project-owner who can delegate ownership
+- Bit 30 reserved for future use
 
 ## Notes for v1.1 (Future)
 
 - Config merging strategy (local config overrides)
 - Review-by-owner for config changes
 - 2FA for sensitive operations
+- Capability inheritance (optional opt-in)

@@ -5,34 +5,38 @@
  * Sprint: Projectlogin Workflow (Dec 1-9, 2025)
  * 
  * Tests the role portion of the sysreg_config capabilities matrix:
- * - Bit 24: anonym
- * - Bit 25: partner
- * - Bit 26: participant
- * - Bit 27: member
- * - Bit 28: owner
+ * - Bit 25: anonym
+ * - Bit 26: partner
+ * - Bit 27: participant
+ * - Bit 28: member
+ * - Bit 29: owner (record owner)
+ * - Bit 30: reserved
  * - Bit 31 (sign): admin (v0.5 - deferred)
+ * 
+ * Note: "owner" refers to record owner (creator of the record), NOT project-owner.
+ * Project-owners receive elevated capabilities via separate config entries.
  */
 
 import { describe, it, expect } from 'vitest'
 import { v, vDescribe } from './helpers/versioned-test'
 
-// Role bit positions
+// Role bit positions (updated for 5-bit entity)
 const ROLE_BITS = {
-    anonym: 24,
-    partner: 25,
-    participant: 26,
-    member: 27,
-    owner: 28,
-    admin: 31 // sign bit - v0.5
+    anonym: 25,
+    partner: 26,
+    participant: 27,
+    member: 28,
+    owner: 29,     // Record owner (creator of the record)
+    admin: 31      // sign bit - v0.5
 } as const
 
 // Role bit values (1 << bit position)
 const ROLE_VALUES = {
-    anonym: 1 << 24,      // 16777216
-    partner: 1 << 25,     // 33554432
-    participant: 1 << 26, // 67108864
-    member: 1 << 27,      // 134217728
-    owner: 1 << 28,       // 268435456
+    anonym: 1 << 25,      // 33554432
+    partner: 1 << 26,     // 67108864
+    participant: 1 << 27, // 134217728
+    member: 1 << 28,      // 268435456
+    owner: 1 << 29,       // 536870912
     admin: 1 << 31        // -2147483648 (negative due to sign bit)
 } as const
 
@@ -72,19 +76,19 @@ vDescribe({ version: '0.2' })('config.roles', () => {
 
     describe('Role Bit Constants', () => {
         v({ version: '0.2' })('should have correct bit positions', () => {
-            expect(ROLE_BITS.anonym).toBe(24)
-            expect(ROLE_BITS.partner).toBe(25)
-            expect(ROLE_BITS.participant).toBe(26)
-            expect(ROLE_BITS.member).toBe(27)
-            expect(ROLE_BITS.owner).toBe(28)
+            expect(ROLE_BITS.anonym).toBe(25)
+            expect(ROLE_BITS.partner).toBe(26)
+            expect(ROLE_BITS.participant).toBe(27)
+            expect(ROLE_BITS.member).toBe(28)
+            expect(ROLE_BITS.owner).toBe(29)
         })
 
         v({ version: '0.2' })('should have correct bit values', () => {
-            expect(ROLE_VALUES.anonym).toBe(16777216)
-            expect(ROLE_VALUES.partner).toBe(33554432)
-            expect(ROLE_VALUES.participant).toBe(67108864)
-            expect(ROLE_VALUES.member).toBe(134217728)
-            expect(ROLE_VALUES.owner).toBe(268435456)
+            expect(ROLE_VALUES.anonym).toBe(33554432)
+            expect(ROLE_VALUES.partner).toBe(67108864)
+            expect(ROLE_VALUES.participant).toBe(134217728)
+            expect(ROLE_VALUES.member).toBe(268435456)
+            expect(ROLE_VALUES.owner).toBe(536870912)
         })
 
         v({ version: '0.5', draft: true })('should handle admin on sign bit (v0.5)', () => {
@@ -216,9 +220,10 @@ vDescribe({ version: '0.2' })('config.roles', () => {
     describe('Role + Other Bits Integration', () => {
         v({ version: '0.2' })('should preserve role bits when other bits are set', () => {
             // Simulate a full config value with project type, entity, state, and roles
+            // New bit layout: project(0-2), entity(3-7), state(8-10), caps(11-24), roles(25-29)
             const projectType = 0b010 // project type (bits 0-2)
-            const entity = 0b1100 // post entity (bits 3-6)
-            const state = 0b101 << 7 // released state (bits 7-9)
+            const entity = 0b00100 << 3 // post entity (bits 3-7) - 5 bits now
+            const state = 0b101 << 8 // released state (bits 8-10)
             const roles = ROLE_VALUES.member | ROLE_VALUES.owner
 
             const fullConfig = projectType | entity | state | roles
@@ -230,7 +235,8 @@ vDescribe({ version: '0.2' })('config.roles', () => {
         })
 
         v({ version: '0.2' })('should correctly extract roles from full config', () => {
-            const fullConfig = 0b010 | (0b1100) | (0b101 << 7) |
+            // New bit layout
+            const fullConfig = 0b010 | (0b00100 << 3) | (0b101 << 8) |
                 ROLE_VALUES.anonym | ROLE_VALUES.partner | ROLE_VALUES.member
 
             const roles = getRoles(fullConfig)
