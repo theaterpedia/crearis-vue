@@ -178,13 +178,9 @@
                         </div>
                         <div class="form-group">
                             <label>Tags</label>
-                            <TagFamilies
-                                v-model:ttags="currentImage!.ttags"
-                                v-model:ctags="currentImage!.ctags"
-                                v-model:dtags="currentImage!.dtags"
-                                :enable-edit="['ttags', 'ctags', 'dtags']"
-                                layout="wrap"
-                            />
+                            <TagFamilies v-model:ttags="currentImage!.ttags" v-model:ctags="currentImage!.ctags"
+                                v-model:dtags="currentImage!.dtags" :enable-edit="['ttags', 'ctags', 'dtags']"
+                                layout="wrap" />
                         </div>
                     </div>
                 </div>
@@ -198,13 +194,8 @@
         <!-- Batch Tag Editor -->
         <div v-if="images.length > 0" class="batch-tags-section">
             <label class="batch-tags-label">Default Tags (applied to all images)</label>
-            <TagFamilies
-                v-model:ttags="defaultTtags"
-                v-model:ctags="defaultCtags"
-                v-model:dtags="defaultDtags"
-                :enable-edit="['ttags', 'ctags', 'dtags']"
-                layout="wrap"
-            />
+            <TagFamilies v-model:ttags="defaultTtags" v-model:ctags="defaultCtags" v-model:dtags="defaultDtags"
+                :enable-edit="['ttags', 'ctags', 'dtags']" layout="wrap" />
         </div>
 
         <!-- Action Bar (when images exist) -->
@@ -215,7 +206,7 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                    }}</span>
+                }}</span>
             </button>
         </div>
     </div>

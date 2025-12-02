@@ -158,8 +158,8 @@
             <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
             <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
-                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId"
-                    :type="projectType" :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
+                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType"
+                    :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
 
                 <!-- Navigation Mode: status >= 2 -->
                 <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"

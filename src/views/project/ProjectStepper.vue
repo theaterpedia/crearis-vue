@@ -38,8 +38,11 @@
         <!-- Activate Button (only on activate step) -->
         <div v-if="isActivateStep" class="activate-section">
             <button class="btn-activate" @click="handleActivateProject">
-                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z">
+                    </path>
                 </svg>
                 Projekt aktivieren
             </button>
@@ -95,7 +98,7 @@ const allSteps = ref<StepItem[]>([
 const steps = computed(() => {
     const projectType = props.type || 'project'
     const isOwner = props.isOwner
-    
+
     let baseSteps: StepItem[]
 
     if (projectType === 'topic') {
@@ -114,18 +117,18 @@ const steps = computed(() => {
         // Default: Events → Posts → Images → Users → Theme → Pages
         baseSteps = allSteps.value.filter((step: StepItem) => step.key !== 'activate')
     }
-    
+
     // Non-owners don't see Users and Theme steps
     if (!isOwner) {
         baseSteps = baseSteps.filter((step: StepItem) => step.key !== 'users' && step.key !== 'theme')
     }
-    
+
     // Owners get the Activate step at the end
     if (isOwner) {
         const activateStep = allSteps.value.find((s: StepItem) => s.key === 'activate')!
         baseSteps = [...baseSteps, activateStep]
     }
-    
+
     return baseSteps
 })
 
