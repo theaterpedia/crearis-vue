@@ -548,7 +548,11 @@
                     "en": "Project Type",
                     "cz": "Typ projektu"
                 },
-                "bits": [0, 1, 2],
+                "bits": [
+                    0,
+                    1,
+                    2
+                ],
                 "description": {
                     "de": "Projekttyp und Default/Special-Flag",
                     "en": "Project type and default/special flag",
@@ -565,7 +569,13 @@
                     "en": "Entity",
                     "cz": "Entita"
                 },
-                "bits": [3, 4, 5, 6, 7],
+                "bits": [
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
                 "description": {
                     "de": "Ziel-Entität (5 bits = 32 Entitäten)",
                     "en": "Target entity (5 bits = 32 entities)",
@@ -582,7 +592,11 @@
                     "en": "Record State",
                     "cz": "Stav záznamu"
                 },
-                "bits": [8, 9, 10],
+                "bits": [
+                    8,
+                    9,
+                    10
+                ],
                 "description": {
                     "de": "Status des Datensatzes (new, draft, released, etc.)",
                     "en": "Record status (new, draft, released, etc.)",
@@ -599,7 +613,11 @@
                     "en": "Read",
                     "cz": "Čtení"
                 },
-                "bits": [11, 12, 13],
+                "bits": [
+                    11,
+                    12,
+                    13
+                ],
                 "description": {
                     "de": "Leseberechtigungen (read, preview, metadata)",
                     "en": "Read capabilities (read, preview, metadata)",
@@ -616,7 +634,11 @@
                     "en": "Update",
                     "cz": "Úpravy"
                 },
-                "bits": [14, 15, 16],
+                "bits": [
+                    14,
+                    15,
+                    16
+                ],
                 "description": {
                     "de": "Bearbeitungsberechtigungen (update, comment, append, replace, shift)",
                     "en": "Update capabilities (update, comment, append, replace, shift)",
@@ -633,7 +655,11 @@
                     "en": "Create",
                     "cz": "Vytváření"
                 },
-                "bits": [17, 18, 19],
+                "bits": [
+                    17,
+                    18,
+                    19
+                ],
                 "description": {
                     "de": "Erstellungsberechtigungen (create, draft, from_template)",
                     "en": "Create capabilities (create, draft, from_template)",
@@ -650,7 +676,11 @@
                     "en": "Manage",
                     "cz": "Správa"
                 },
-                "bits": [20, 21, 22],
+                "bits": [
+                    20,
+                    21,
+                    22
+                ],
                 "description": {
                     "de": "Verwaltungsberechtigungen (manage, status, config, delete, archive)",
                     "en": "Management capabilities (manage, status, config, delete, archive)",
@@ -667,7 +697,10 @@
                     "en": "Simple Rights",
                     "cz": "Jednoduchá práva"
                 },
-                "bits": [23, 24],
+                "bits": [
+                    23,
+                    24
+                ],
                 "description": {
                     "de": "Einfache Berechtigungen: bit 23 = list, bit 24 = share",
                     "en": "Simple capabilities: bit 23 = list, bit 24 = share",
@@ -684,7 +717,13 @@
                     "en": "Roles",
                     "cz": "Role"
                 },
-                "bits": [25, 26, 27, 28, 29],
+                "bits": [
+                    25,
+                    26,
+                    27,
+                    28,
+                    29
+                ],
                 "description": {
                     "de": "Projektrollen: bit 25=anonym, 26=partner, 27=participant, 28=member, 29=owner (record owner)",
                     "en": "Project roles: bit 25=anonym, 26=partner, 27=participant, 28=member, 29=owner (record owner)",

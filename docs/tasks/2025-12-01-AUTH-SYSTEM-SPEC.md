@@ -349,6 +349,37 @@ Bits: 0|00|00000|000|001|001|000|001|11|01000|0
 - Entity-level config override (per-record config field)
 - **Project-main-owner concept:** A designated project-owner who can delegate ownership
 - Bit 30 reserved for future use
+- **Migration runner fix:** Currently requires `SKIP_MIGRATIONS=false` in `.env`, then `pnpm dev`, then set back to `true`. Investigate cleaner solution.
+
+### v0.5: Project State Influence on Entity Visibility
+
+**Trigger enhancement:** When project state changes, recompute `r_*` columns for all entities in that project.
+
+**Rules:**
+- Project `new`/`demo` → only owner + members see entities (override entity-level config)
+- Project `trash`/`archive` → restrict visibility (entities become invisible to non-admins)
+- Project `review`+ → use entity-level config as normal
+
+**Implementation:**
+```sql
+-- Additional trigger on projects table
+CREATE TRIGGER trigger_project_state_cascade
+AFTER UPDATE OF status ON projects
+FOR EACH ROW
+WHEN (OLD.status IS DISTINCT FROM NEW.status)
+EXECUTE FUNCTION cascade_project_visibility();
+
+-- Function touches all entities in project to trigger their r_* recomputation
+CREATE OR REPLACE FUNCTION cascade_project_visibility()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE posts SET status = status WHERE project_id = NEW.id;
+  UPDATE images SET status = status WHERE project_id = NEW.id;
+  -- other entities...
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
 
 ## Notes for v1.1 (Future)
 

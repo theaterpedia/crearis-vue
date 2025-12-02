@@ -224,7 +224,7 @@
                 <div class="form-group preview-group">
                     <label>Value Preview:</label>
                     <code class="value-preview">{{ computedValue }} (0x{{ computedValue.toString(16).toUpperCase()
-                        }})</code>
+                    }})</code>
                 </div>
 
                 <!-- Actions -->
