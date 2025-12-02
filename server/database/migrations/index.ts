@@ -53,6 +53,7 @@ import { migration as migration039 } from './039_status_restructure'
 import { migration as migration040 } from './040_status_fix_bit_allocation'
 import { migration as migration041 } from './041_entity_status_values'
 import { migration as migration042 } from './042_rebuild_image_triggers'
+import { migration as migration044 } from './044_capabilities_matrix'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -110,6 +111,7 @@ const migrations: Migration[] = [
     { run: migration040.up, down: migration040.down, metadata: { id: migration040.id, description: migration040.description, version: '0.2.5', date: '2025-11-29' }, reversible: true },
     { run: migration041.up, down: migration041.down, metadata: { id: migration041.id, description: migration041.description, version: '0.2.6', date: '2025-11-29' }, reversible: true },
     { run: migration042.up, down: migration042.down, metadata: { id: migration042.id, description: migration042.description, version: '0.2.7', date: '2025-11-28' }, reversible: true },
+    { run: migration044.up, down: migration044.down, metadata: { id: migration044.id, description: migration044.description, version: '0.2.8', date: '2025-12-02' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

@@ -536,9 +536,9 @@
             "cz": "Matice oprávnění"
         },
         "description": {
-            "de": "Rollenbasierte Zugriffsrechte für Entitäten",
-            "en": "Role-based access rights for entities",
-            "cz": "Oprávnění pro přístup k entitám podle rolí"
+            "de": "Rollenbasierte Zugriffsrechte für Entitäten (v0.2 - explizite Konfiguration)",
+            "en": "Role-based access rights for entities (v0.2 - explicit configuration)",
+            "cz": "Oprávnění pro přístup k entitám podle rolí (v0.2 - explicitní konfigurace)"
         },
         "groups": [
             {
@@ -548,11 +548,7 @@
                     "en": "Project Type",
                     "cz": "Typ projektu"
                 },
-                "bits": [
-                    0,
-                    1,
-                    2
-                ],
+                "bits": [0, 1, 2],
                 "description": {
                     "de": "Projekttyp und Default/Special-Flag",
                     "en": "Project type and default/special flag",
@@ -569,16 +565,11 @@
                     "en": "Entity",
                     "cz": "Entita"
                 },
-                "bits": [
-                    3,
-                    4,
-                    5,
-                    6
-                ],
+                "bits": [3, 4, 5, 6, 7],
                 "description": {
-                    "de": "Ziel-Entität für die Berechtigung",
-                    "en": "Target entity for the capability",
-                    "cz": "Cílová entita pro oprávnění"
+                    "de": "Ziel-Entität (5 bits = 32 Entitäten)",
+                    "en": "Target entity (5 bits = 32 entities)",
+                    "cz": "Cílová entita (5 bitů = 32 entit)"
                 },
                 "icon": "database",
                 "optional": false,
@@ -591,11 +582,7 @@
                     "en": "Record State",
                     "cz": "Stav záznamu"
                 },
-                "bits": [
-                    7,
-                    8,
-                    9
-                ],
+                "bits": [8, 9, 10],
                 "description": {
                     "de": "Status des Datensatzes (new, draft, released, etc.)",
                     "en": "Record status (new, draft, released, etc.)",
@@ -612,15 +599,11 @@
                     "en": "Read",
                     "cz": "Čtení"
                 },
-                "bits": [
-                    10,
-                    11,
-                    12
-                ],
+                "bits": [11, 12, 13],
                 "description": {
-                    "de": "Leseberechtigungen",
-                    "en": "Read capabilities",
-                    "cz": "Oprávnění ke čtení"
+                    "de": "Leseberechtigungen (read, preview, metadata)",
+                    "en": "Read capabilities (read, preview, metadata)",
+                    "cz": "Oprávnění ke čtení (čtení, náhled, metadata)"
                 },
                 "icon": "eye",
                 "optional": false,
@@ -633,15 +616,11 @@
                     "en": "Update",
                     "cz": "Úpravy"
                 },
-                "bits": [
-                    13,
-                    14,
-                    15
-                ],
+                "bits": [14, 15, 16],
                 "description": {
-                    "de": "Bearbeitungsberechtigungen",
-                    "en": "Update capabilities",
-                    "cz": "Oprávnění k úpravám"
+                    "de": "Bearbeitungsberechtigungen (update, comment, append, replace, shift)",
+                    "en": "Update capabilities (update, comment, append, replace, shift)",
+                    "cz": "Oprávnění k úpravám (aktualizace, komentář, připojení, nahrazení, posun)"
                 },
                 "icon": "pencil",
                 "optional": false,
@@ -654,15 +633,11 @@
                     "en": "Create",
                     "cz": "Vytváření"
                 },
-                "bits": [
-                    16,
-                    17,
-                    18
-                ],
+                "bits": [17, 18, 19],
                 "description": {
-                    "de": "Erstellungsberechtigungen",
-                    "en": "Create capabilities",
-                    "cz": "Oprávnění k vytváření"
+                    "de": "Erstellungsberechtigungen (create, draft, from_template)",
+                    "en": "Create capabilities (create, draft, from_template)",
+                    "cz": "Oprávnění k vytváření (vytvoření, koncept, ze šablony)"
                 },
                 "icon": "plus-circle",
                 "optional": false,
@@ -675,15 +650,11 @@
                     "en": "Manage",
                     "cz": "Správa"
                 },
-                "bits": [
-                    19,
-                    20,
-                    21
-                ],
+                "bits": [20, 21, 22],
                 "description": {
-                    "de": "Verwaltungsberechtigungen (Status, Config, Delete)",
-                    "en": "Management capabilities (status, config, delete)",
-                    "cz": "Oprávnění ke správě (status, konfigurace, mazání)"
+                    "de": "Verwaltungsberechtigungen (manage, status, config, delete, archive)",
+                    "en": "Management capabilities (manage, status, config, delete, archive)",
+                    "cz": "Oprávnění ke správě (správa, status, konfigurace, mazání, archivace)"
                 },
                 "icon": "settings",
                 "optional": false,
@@ -696,14 +667,11 @@
                     "en": "Simple Rights",
                     "cz": "Jednoduchá práva"
                 },
-                "bits": [
-                    22,
-                    23
-                ],
+                "bits": [23, 24],
                 "description": {
-                    "de": "Einfache Berechtigungen (list, share)",
-                    "en": "Simple capabilities (list, share)",
-                    "cz": "Jednoduchá oprávnění (seznam, sdílení)"
+                    "de": "Einfache Berechtigungen: bit 23 = list, bit 24 = share",
+                    "en": "Simple capabilities: bit 23 = list, bit 24 = share",
+                    "cz": "Jednoduchá oprávnění: bit 23 = seznam, bit 24 = sdílení"
                 },
                 "icon": "list",
                 "optional": true,
@@ -716,17 +684,11 @@
                     "en": "Roles",
                     "cz": "Role"
                 },
-                "bits": [
-                    24,
-                    25,
-                    26,
-                    27,
-                    28
-                ],
+                "bits": [25, 26, 27, 28, 29],
                 "description": {
-                    "de": "Projektrollen (anonym, partner, participant, member, owner)",
-                    "en": "Project roles (anonym, partner, participant, member, owner)",
-                    "cz": "Projektové role (anonym, partner, účastník, člen, vlastník)"
+                    "de": "Projektrollen: bit 25=anonym, 26=partner, 27=participant, 28=member, 29=owner (record owner)",
+                    "en": "Project roles: bit 25=anonym, 26=partner, 27=participant, 28=member, 29=owner (record owner)",
+                    "cz": "Projektové role: bit 25=anonym, 26=partner, 27=účastník, 28=člen, 29=vlastník (vlastník záznamu)"
                 },
                 "icon": "users",
                 "optional": false,
