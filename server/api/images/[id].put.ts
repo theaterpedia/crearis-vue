@@ -143,15 +143,15 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Handle ctags and rtags separately (bytea fields)
+        // Handle ctags and rtags separately (INTEGER fields after Migration 036)
         if (body.ctags !== undefined) {
             updates.push('ctags = ?')
-            values.push(body.ctags ? Buffer.from(body.ctags) : null)
+            values.push(typeof body.ctags === 'number' ? body.ctags : (body.ctags ?? 0))
         }
 
         if (body.rtags !== undefined) {
             updates.push('rtags = ?')
-            values.push(body.rtags ? Buffer.from(body.rtags) : null)
+            values.push(typeof body.rtags === 'number' ? body.rtags : (body.rtags ?? 0))
         }
 
         if (updates.length === 0) {

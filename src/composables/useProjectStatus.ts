@@ -33,21 +33,21 @@ import {
 
 export interface Project {
     id: number
-    status_val: string | null  // BYTEA hex string
-    config_val: string | null  // BYTEA hex string
+    status: string | null  // BYTEA hex string
+    config: string | null  // BYTEA hex string
     [key: string]: any
 }
 
 export function useProjectStatus(project: Ref<Project | null>) {
     // Parse current values
     const currentStatus = computed(() => {
-        if (!project.value?.status_val) return 0
-        return parseByteaHex(project.value.status_val)
+        if (!project.value?.status) return 0
+        return parseByteaHex(project.value.status)
     })
 
     const currentConfig = computed(() => {
-        if (!project.value?.config_val) return 0
-        return parseByteaHex(project.value.config_val)
+        if (!project.value?.config) return 0
+        return parseByteaHex(project.value.config)
     })
 
     // Status checks
@@ -59,12 +59,12 @@ export function useProjectStatus(project: Ref<Project | null>) {
     const isArchived = computed(() => currentStatus.value === 0x10)
 
     // Config bit checks
-    const isPublic = computed(() => hasBit(project.value?.config_val || '\\x00', 0))
-    const isFeatured = computed(() => hasBit(project.value?.config_val || '\\x00', 1))
-    const registrationOpen = computed(() => hasBit(project.value?.config_val || '\\x00', 2))
-    const hasFunding = computed(() => hasBit(project.value?.config_val || '\\x00', 3))
-    const isRecurring = computed(() => hasBit(project.value?.config_val || '\\x00', 4))
-    const isArchivedConfig = computed(() => hasBit(project.value?.config_val || '\\x00', 5))
+    const isPublic = computed(() => hasBit(project.value?.config || '\\x00', 0))
+    const isFeatured = computed(() => hasBit(project.value?.config || '\\x00', 1))
+    const registrationOpen = computed(() => hasBit(project.value?.config || '\\x00', 2))
+    const hasFunding = computed(() => hasBit(project.value?.config || '\\x00', 3))
+    const isRecurring = computed(() => hasBit(project.value?.config || '\\x00', 4))
+    const isArchivedConfig = computed(() => hasBit(project.value?.config || '\\x00', 5))
 
     // Status transition validations
     const canStartPlanning = computed(() => {
@@ -102,7 +102,7 @@ export function useProjectStatus(project: Ref<Project | null>) {
         }
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x01)
+            status: byteaFromNumber(0x01)
         })
     }
 
@@ -112,7 +112,7 @@ export function useProjectStatus(project: Ref<Project | null>) {
         }
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x02)
+            status: byteaFromNumber(0x02)
         })
     }
 
@@ -122,8 +122,8 @@ export function useProjectStatus(project: Ref<Project | null>) {
         }
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x04),
-            config_val: setBit(project.value!.config_val || '\\x00', 0) // Set public
+            status: byteaFromNumber(0x04),
+            config: setBit(project.value!.config || '\\x00', 0) // Set public
         })
     }
 
@@ -141,8 +141,8 @@ export function useProjectStatus(project: Ref<Project | null>) {
         if (!confirmed) return null
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x08),
-            config_val: clearBit(project.value!.config_val || '\\x00', 2) // Close registration
+            status: byteaFromNumber(0x08),
+            config: clearBit(project.value!.config || '\\x00', 2) // Close registration
         })
     }
 
@@ -158,8 +158,8 @@ export function useProjectStatus(project: Ref<Project | null>) {
         if (!confirmed) return null
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x10),
-            config_val: clearBit(clearBit(project.value!.config_val || '\\x00', 0), 1) // Clear public and featured
+            status: byteaFromNumber(0x10),
+            config: clearBit(clearBit(project.value!.config || '\\x00', 0), 1) // Clear public and featured
         })
     }
 
@@ -169,7 +169,7 @@ export function useProjectStatus(project: Ref<Project | null>) {
         }
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x08) // Back to completed
+            status: byteaFromNumber(0x08) // Back to completed
         })
     }
 
@@ -185,25 +185,25 @@ export function useProjectStatus(project: Ref<Project | null>) {
         if (!confirmed) return null
 
         return updateProjectStatus({
-            status_val: byteaFromNumber(0x04) // Back to active
+            status: byteaFromNumber(0x04) // Back to active
         })
     }
 
     // Config bit management
     function hasConfigBit(bit: number): boolean {
-        if (!project.value?.config_val) return false
-        return hasBit(project.value.config_val, bit)
+        if (!project.value?.config) return false
+        return hasBit(project.value.config, bit)
     }
 
     async function setConfigBit(bit: number, value: boolean) {
         if (!project.value) return null
 
         const newConfig = value
-            ? setBit(project.value.config_val || '\\x00', bit)
-            : clearBit(project.value.config_val || '\\x00', bit)
+            ? setBit(project.value.config || '\\x00', bit)
+            : clearBit(project.value.config || '\\x00', bit)
 
         return updateProjectStatus({
-            config_val: newConfig
+            config: newConfig
         })
     }
 
@@ -211,7 +211,7 @@ export function useProjectStatus(project: Ref<Project | null>) {
         if (!project.value) return null
 
         return updateProjectStatus({
-            config_val: toggleBit(project.value.config_val || '\\x00', bit)
+            config: toggleBit(project.value.config || '\\x00', bit)
         })
     }
 

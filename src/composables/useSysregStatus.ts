@@ -140,7 +140,7 @@ export function getStatusesForTable(table: string): SysregStatusEntry[] {
  * 
  * Usage:
  * ```ts
- * const { statusHex, updateStatus, prepareForSave } = useSysregStatus(formData, 'status_val')
+ * const { statusHex, updateStatus, prepareForSave } = useSysregStatus(formData, 'status')
  * 
  * // Display: use statusHex for v-model on select
  * <select v-model="statusHex">
@@ -148,11 +148,11 @@ export function getStatusesForTable(table: string): SysregStatusEntry[] {
  * // On save: use prepareForSave to get proper value
  * const payload = {
  *   ...formData,
- *   status_val: prepareForSave()
+ *   status: prepareForSave()
  * }
  * ```
  */
-export function useSysregStatus(data: Ref<any>, fieldName: string = 'status_val') {
+export function useSysregStatus(data: Ref<any>, fieldName: string = 'status') {
     /**
      * Computed hex value for display/binding
      * Converts Buffer to hex string

@@ -25,10 +25,10 @@ export default defineEventHandler(async (event) => {
 
     // Find admin user
     const user = await db.get(`
-        SELECT id, sysmail, extmail, username, password, role, instructor_id, status_val
+        SELECT id, sysmail, extmail, username, password, role, instructor_id, status
         FROM users
         WHERE sysmail = ? OR extmail = ?
-    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status_val'> | undefined
+    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status'> | undefined
 
     if (!user) {
         throw createError({
@@ -38,15 +38,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check and update status if needed
-    if (!user.status_val) {
-        const statusVal = await getStatusByName('users > new')
-        if (statusVal) {
+    if (!user.status) {
+        const statusInfo = await getStatusByName(db, 'new', 'users')
+        if (statusInfo) {
             await db.run(`
                 UPDATE users
-                SET status_val = ?
+                SET status = ?
                 WHERE id = ?
-            `, [statusVal, user.id])
-            user.status_val = statusVal
+            `, [statusInfo.value, user.id])
+            user.status = statusInfo.value
         }
     }
 

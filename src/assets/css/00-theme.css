@@ -94,6 +94,15 @@
   /* Transparency */
   --transparency: var(--transparency-none);
   --transparency-banner: var(--transparency-small);
+
+  /* Code-Automation */
+  --color-background-mute: var(--color-muted-bg);
+  --color-background-soft: var(--color-bg);
+  --color-border-hover: var(--color-border);
+  --color-primary: var(--color-accent-bg);
+  --color-primary-hover: var(--color-primary-bg);
+  --color-text-muted: var(--color-muted-contrast);
+  --color-border-hover: var(--color-border);
 }
 
 /* Higher specificity for inverted mode with data attribute */

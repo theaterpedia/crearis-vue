@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         img_id = ?,
         header_type = ?,
         header_size = ?,
-        status_val = ?,
+        status = ?,
         ttags = ?,
         ctags = ?,
         dtags = ?
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
                 body.img_id,
                 body.header_type,
                 body.header_size,
-                body.status_val,
+                body.status,
                 body.ttags,
                 body.ctags,
                 body.dtags,

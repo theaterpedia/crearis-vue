@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
             name: body.name.trim(),
             description: body.description || null,
             category: body.category || 'main',
-            status_val: statusVal,
+            status: statusVal,
             priority: body.priority || 'medium',
             release_id: body.release_id || null,
             record_type: body.record_type || null,
@@ -125,7 +125,7 @@ export default defineEventHandler(async (event) => {
                 name, 
                 description, 
                 category,
-                status_val,
+                status,
                 priority, 
                 release_id,
                 record_type, 
@@ -146,7 +146,7 @@ export default defineEventHandler(async (event) => {
             taskData.name,
             taskData.description,
             taskData.category,
-            taskData.status_val,
+            taskData.status,
             taskData.priority,
             taskData.release_id,
             taskData.record_type,
@@ -170,10 +170,10 @@ export default defineEventHandler(async (event) => {
         `, [id])
 
         // Add status information if available
-        if (task && (task as any).status_val) {
+        if (task && (task as any).status) {
             const statusInfo = await getStatusByName(db, '', 'tasks')
             // In a real implementation, you'd call getStatusByValue here
-            // For now, just return the task with status_val
+            // For now, just return the task with status
         }
 
         return {

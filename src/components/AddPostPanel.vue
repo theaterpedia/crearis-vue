@@ -47,13 +47,14 @@
             <div class="section-label">Anpassen</div>
 
             <div class="form-group">
-                <label class="form-label">Autor</label>
-                <select v-model="selectedInstructor" class="form-select">
-                    <option value="">Autor wählen</option>
-                    <option v-for="instructor in allInstructors" :key="instructor.id" :value="instructor.id">
-                        {{ instructor.name }}
+                <label class="form-label">Owner</label>
+                <select v-model="selectedOwner" class="form-select">
+                    <option value="">Owner wählen</option>
+                    <option v-for="user in projectUsers" :key="user.id" :value="user.id">
+                        {{ user.username }}
                     </option>
                 </select>
+                <small v-if="projectUsersLoading" class="form-hint">Lade Projekt-Mitglieder...</small>
             </div>
 
             <div class="form-group">
@@ -81,10 +82,16 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import PostCard from '@/components/PostCard.vue'
 import type { Post, Instructor } from '@/types'
+
+interface ProjectUser {
+    id: number
+    username: string
+    role?: string
+}
 
 const props = defineProps<{
     projectId: string
@@ -99,10 +106,38 @@ const emit = defineEmits<{
 const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
 const selectedPost = ref<Post | null>(null)
-const selectedInstructor = ref('')
+const selectedOwner = ref<number | ''>('')
 const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
+
+// Project users state
+const projectUsers = ref<ProjectUser[]>([])
+const projectUsersLoading = ref(false)
+
+// Fetch project users when component mounts or projectId changes
+async function loadProjectUsers() {
+    if (!props.projectId) return
+
+    projectUsersLoading.value = true
+    try {
+        const response = await fetch(`/api/users?project_id=${props.projectId}`)
+        if (!response.ok) {
+            throw new Error(`Failed to load project users: ${response.statusText}`)
+        }
+        projectUsers.value = await response.json()
+    } catch (err) {
+        console.error('Error loading project users:', err)
+        projectUsers.value = []
+    } finally {
+        projectUsersLoading.value = false
+    }
+}
+
+// Watch for projectId changes
+watch(() => props.projectId, () => {
+    loadProjectUsers()
+}, { immediate: true })
 
 const previewPost = computed(() => {
     if (!selectedPost.value) return null
@@ -111,12 +146,12 @@ const previewPost = computed(() => {
         ...selectedPost.value,
         name: customName.value || selectedPost.value.name,
         teaser: customTeaser.value || selectedPost.value.teaser,
-        public_user: selectedInstructor.value || selectedPost.value.public_user
+        public_user: selectedOwner.value || selectedPost.value.public_user
     }
 })
 
 const canApply = computed(() => {
-    return selectedPost.value && selectedInstructor.value && customName.value
+    return selectedPost.value && selectedOwner.value && customName.value
 })
 
 const toggleDropdown = () => {
@@ -127,13 +162,14 @@ const selectBasePost = (post: Post) => {
     selectedPost.value = post
     customName.value = post.name
     customTeaser.value = post.teaser || ''
-    selectedInstructor.value = post.public_user || ''
+    // Don't pre-select owner - let user choose
+    selectedOwner.value = ''
     isDropdownOpen.value = false
 }
 
 const handleCancel = () => {
     selectedPost.value = null
-    selectedInstructor.value = ''
+    selectedOwner.value = ''
     customName.value = ''
     customTeaser.value = ''
 }
@@ -164,7 +200,8 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            public_user: selectedInstructor.value
+            owner_id: selectedOwner.value,  // Record owner (Migration 046)
+            public_user: selectedOwner.value  // Also set as display author for now
         }
 
         // Call API to create the post
@@ -388,6 +425,12 @@ onBeforeUnmount(() => {
 .form-textarea {
     resize: vertical;
     font-family: inherit;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6b7280);
+    margin-top: 0.25rem;
 }
 
 /* Action Buttons */

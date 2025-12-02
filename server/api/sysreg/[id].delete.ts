@@ -40,12 +40,12 @@ export default defineEventHandler(async (event) => {
 
         // Check if tag is in use
         const usageChecks = {
-            status: 'SELECT COUNT(*) FROM images WHERE status_val = $1',
-            config: 'SELECT COUNT(*) FROM images WHERE (config_val & $1::bytea) = $1::bytea',
-            rtags: 'SELECT COUNT(*) FROM images WHERE (rtags_val & $1::bytea) = $1::bytea',
-            ctags: 'SELECT COUNT(*) FROM images WHERE (ctags_val & $1::bytea) = $1::bytea',
-            ttags: 'SELECT COUNT(*) FROM images WHERE (ttags_val & $1::bytea) = $1::bytea',
-            dtags: 'SELECT COUNT(*) FROM images WHERE (dtags_val & $1::bytea) = $1::bytea'
+            status: 'SELECT COUNT(*) FROM images WHERE status = $1',
+            config: 'SELECT COUNT(*) FROM images WHERE (config & $1::bytea) = $1::bytea',
+            rtags: 'SELECT COUNT(*) FROM images WHERE (rtags & $1::bytea) = $1::bytea',
+            ctags: 'SELECT COUNT(*) FROM images WHERE (ctags & $1::bytea) = $1::bytea',
+            ttags: 'SELECT COUNT(*) FROM images WHERE (ttags & $1::bytea) = $1::bytea',
+            dtags: 'SELECT COUNT(*) FROM images WHERE (dtags & $1::bytea) = $1::bytea'
         }
 
         const usageQuery = usageChecks[tag.tagfamily as keyof typeof usageChecks]

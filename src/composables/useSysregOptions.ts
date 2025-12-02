@@ -29,7 +29,7 @@ import { useI18n } from './useI18n'
 
 export interface SysregOption {
     id?: number         // Database ID (optional for new entries)
-    value: string       // BYTEA hex string (e.g., '\\x01', '\\x02')
+    value: number | string  // INTEGER value or BYTEA hex string (migration in progress)
     name: string        // Internal name (e.g., 'democracy', 'raw')
     label: string       // Pre-translated label (uses current i18n language)
     bit?: number        // Bit position for bit-based tags (0-7)
@@ -38,6 +38,7 @@ export interface SysregOption {
     is_default: boolean
     tagfamily: string   // tagfamily name
     bit_group?: string  // For ctags: age_group, subject_type, etc.
+    parent_bit?: number // For subcategories: bit position of parent category
     color?: string      // Optional UI color hint
     // Note: name_i18n and desc_i18n are internal only
     // Components always receive pre-translated label/description
@@ -62,12 +63,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
     const error = ref<string | null>(null)
     const options = ref<SysregOption[]>([])
 
-    // Auto-initialize cache on first use
-    if (!cacheInitialized.value) {
-        initCache().catch(err => {
-            console.error('[useSysregOptions] Failed to auto-initialize cache:', err)
-        })
-    }
+    // Note: Auto-initialization removed to prevent race conditions in tests
+    // Components should call fetchOptions() explicitly or use getOptions() which works with cached data
 
     /**
      * Get translated label with fallback chain
@@ -111,15 +108,22 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         Object.entries(sysregCache.value).forEach(([tagfamily, entries]) => {
             if (Array.isArray(entries)) {
                 entries.forEach((entry: any) => {
-                    // Extract bit position from hex value (if bit-based)
-                    const hexValue = entry.value || '\\x00'
-                    const byteValue = parseInt(hexValue.replace(/^\\x/, ''), 16)
-                    const bit = byteValue > 0 ? Math.log2(byteValue) : undefined
+                    // Extract bit position from integer value (power-of-2)
+                    const intValue = typeof entry.value === 'number' ? entry.value : 0
+                    const bit = intValue > 0 ? Math.log2(intValue) : undefined
                     const bitPosition = bit !== undefined && Number.isInteger(bit) ? bit : undefined
+
+                    // DEPRECATION WARNING: 'option' taglogic is deprecated, use 'toggle' instead
+                    if (entry.taglogic === 'option') {
+                        console.warn(
+                            `[DEPRECATED] taglogic 'option' is deprecated for entry '${entry.name}' in '${tagfamily}'. ` +
+                            `Use 'toggle' instead. This will be removed in a future migration.`
+                        )
+                    }
 
                     allOptions.push({
                         id: entry.id,
-                        value: hexValue,
+                        value: intValue,
                         name: entry.name,
                         label: getLabel(entry, langCode),
                         bit: bitPosition,
@@ -311,19 +315,18 @@ export function useSysregOptions(entity?: Ref<string> | string) {
         const isBitBased = ['ttags', 'dtags', 'rtags', 'ctags'].includes(tagfamily)
 
         return entries.map((entry: any) => {
-            const hexValue = entry.value || '\\x00'
-            const byteValue = parseInt(hexValue.replace(/^\\x/, ''), 16)
+            const intValue = typeof entry.value === 'number' ? entry.value : 0
 
             // Extract bit position only for bit-based tagfamilies
-            // Check if value is a power of 2: (byteValue & (byteValue - 1)) === 0
+            // Check if value is a power of 2: (intValue & (intValue - 1)) === 0
             let bitPosition: number | undefined = undefined
-            if (isBitBased && byteValue > 0 && (byteValue & (byteValue - 1)) === 0) {
-                bitPosition = Math.log2(byteValue)
+            if (isBitBased && intValue > 0 && (intValue & (intValue - 1)) === 0) {
+                bitPosition = Math.log2(intValue)
             }
 
             return {
                 id: entry.id,
-                value: hexValue,
+                value: intValue,
                 name: entry.name,
                 label: getLabel(entry, langCode),
                 bit: bitPosition,
@@ -331,7 +334,8 @@ export function useSysregOptions(entity?: Ref<string> | string) {
                 taglogic: entry.taglogic,
                 is_default: entry.is_default,
                 tagfamily: tagfamily,
-                bit_group: entry.bit_group
+                bit_group: entry.bit_group,
+                parent_bit: entry.parent_bit
                 // Note: name_i18n not exposed to components
             }
         })

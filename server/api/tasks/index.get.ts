@@ -86,6 +86,7 @@ export default defineEventHandler(async (event) => {
                     END
                 ) as entity_image
             FROM tasks
+            LEFT JOIN sysreg_status as status ON tasks.status = status.value
             LEFT JOIN events ON tasks.record_type = 'event' AND tasks.record_id = events.id
             LEFT JOIN posts ON tasks.record_type = 'post' AND tasks.record_id = posts.id
             LEFT JOIN locations ON tasks.record_type = 'location' AND tasks.record_id = locations.id

@@ -1,6 +1,10 @@
 /**
  * POST /api/sysreg
  * Create a new sysreg tag
+ * 
+ * Note: After Migration 036, value is INTEGER (not BYTEA).
+ * For config entries (capabilities matrix), value should be an integer.
+ * For other families, value can be hex string (converted) or integer.
  */
 
 import { defineEventHandler, readBody, createError } from 'h3'
@@ -21,7 +25,7 @@ export default defineEventHandler(async (event) => {
     } = body
 
     // Validation
-    if (!tagfamily || !value || !name || !taglogic) {
+    if (!tagfamily || value === undefined || !name || !taglogic) {
         throw createError({
             statusCode: 400,
             message: 'Missing required fields: tagfamily, value, name, taglogic'
@@ -46,11 +50,20 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Validate value format (should be hex like \x01)
-    if (!value.match(/^\\x[0-9a-fA-F]+$/)) {
+    // Convert value to integer if needed
+    let intValue: number
+    if (typeof value === 'number') {
+        intValue = value
+    } else if (typeof value === 'string' && value.match(/^\\x[0-9a-fA-F]+$/)) {
+        // Legacy hex format - convert to integer
+        const hex = value.replace(/^\\x/, '')
+        intValue = parseInt(hex, 16)
+    } else if (typeof value === 'string' && !isNaN(parseInt(value))) {
+        intValue = parseInt(value)
+    } else {
         throw createError({
             statusCode: 400,
-            message: 'Invalid value format. Must be hex like \\x01, \\x02, etc.'
+            message: 'Invalid value format. Must be an integer or hex like \\x01'
         })
     }
 
@@ -76,7 +89,7 @@ export default defineEventHandler(async (event) => {
     `
 
         const result = await db.run(query, [
-            value,
+            intValue,
             name,
             description || null,
             tagfamily,
@@ -88,7 +101,7 @@ export default defineEventHandler(async (event) => {
 
         // Get the created tag
         const getQuery = `SELECT * FROM ${tableName} WHERE value = $1 AND tagfamily = $2`
-        const createdTag = await db.get(getQuery, [value, tagfamily])
+        const createdTag = await db.get(getQuery, [intValue, tagfamily])
 
         return {
             success: true,

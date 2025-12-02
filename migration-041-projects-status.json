@@ -1,0 +1,184 @@
+{
+    "description": "Projects status migration from old BYTEA to new bit allocation (Migration 040)",
+    "mapping_legend": {
+        "old_values": {
+            "0x0001": "demo (1)",
+            "0x0002": "draft (2)",
+            "0x0004": "done/released (4)"
+        },
+        "new_values": {
+            "1": "new (bits 0-2)",
+            "8": "demo (bits 3-5)",
+            "64": "draft (bits 6-8)",
+            "512": "confirmed (bits 9-11)",
+            "4096": "released (bits 12-14)",
+            "32768": "archived (bit 15)",
+            "65536": "trash (bit 16)"
+        }
+    },
+    "projects": [
+        {
+            "id": 1,
+            "domaincode": "tp",
+            "name": "Project Overline **tp**",
+            "type": "special",
+            "old_status": "0x0004",
+            "new_status": 4096,
+            "comment": "released - main platform project"
+        },
+        {
+            "id": 5,
+            "domaincode": "aug",
+            "name": "Regio Augsburg",
+            "type": "regio",
+            "old_status": "0x0002",
+            "new_status": 64,
+            "comment": "draft - regio in development"
+        },
+        {
+            "id": 6,
+            "domaincode": "aktivkreativ",
+            "name": "Aktiv-Kreativ-Theater",
+            "type": "project",
+            "old_status": "0x0004",
+            "new_status": 4096,
+            "comment": "released - active project"
+        },
+        {
+            "id": 7,
+            "domaincode": "hoftheaterschrobenhausen",
+            "name": "Hoftheater Schrobenhausen",
+            "type": "project",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - placeholder/template"
+        },
+        {
+            "id": 8,
+            "domaincode": "bewaehrungshilfeaugsburg",
+            "name": "Bewährungshilfe Augsburg",
+            "type": "project",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - placeholder/template"
+        },
+        {
+            "id": 9,
+            "domaincode": "physicaltheatre",
+            "name": "Physical Theatre",
+            "type": "topic",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - topic placeholder"
+        },
+        {
+            "id": 10,
+            "domaincode": "comictheater",
+            "name": "Comic Theater",
+            "type": "topic",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - topic placeholder"
+        },
+        {
+            "id": 11,
+            "domaincode": "einthemaeintag",
+            "name": "Ein Thema - Ein Tag",
+            "type": "topic",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - topic placeholder"
+        },
+        {
+            "id": 12,
+            "domaincode": "oberland",
+            "name": "Regio Oberland",
+            "type": "regio",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - regio placeholder"
+        },
+        {
+            "id": 13,
+            "domaincode": "mue",
+            "name": "Regio München",
+            "type": "regio",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - regio placeholder"
+        },
+        {
+            "id": 14,
+            "domaincode": "nue",
+            "name": "Regio Nürnberg",
+            "type": "regio",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - regio placeholder"
+        },
+        {
+            "id": 15,
+            "domaincode": "wahlfische",
+            "name": "Wahlfische",
+            "type": "project",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - placeholder"
+        },
+        {
+            "id": 16,
+            "domaincode": "linklaternuernberg",
+            "name": "Linklater Nürnberg",
+            "type": "project",
+            "old_status": "0x0001",
+            "new_status": 8,
+            "comment": "demo - placeholder"
+        },
+        {
+            "id": 17,
+            "domaincode": "utopiainaction",
+            "name": "Utopia in Action",
+            "type": "project",
+            "old_status": "0x0004",
+            "new_status": 4096,
+            "comment": "released - active project"
+        },
+        {
+            "id": 18,
+            "domaincode": "start",
+            "name": "Theaterpedia Launch",
+            "type": "project",
+            "old_status": "0x0004",
+            "new_status": 4096,
+            "comment": "released - launch project"
+        },
+        {
+            "id": 19,
+            "domaincode": "dev",
+            "name": "Dev Blog Theaterpedia",
+            "type": "topic",
+            "old_status": "0x0004",
+            "new_status": 64,
+            "comment": "draft - dev blog (not released)"
+        },
+        {
+            "id": 20,
+            "domaincode": "dasei",
+            "name": "DASEI",
+            "type": "project",
+            "old_status": "0x0002",
+            "new_status": 64,
+            "comment": "draft - in development"
+        },
+        {
+            "id": 21,
+            "domaincode": "raumlauf",
+            "name": "Raumlauf",
+            "type": "topic",
+            "old_status": "0x0002",
+            "new_status": 64,
+            "comment": "draft - topic in development"
+        }
+    ],
+    "sql_update": "UPDATE projects SET status_val = CASE id WHEN 1 THEN 4096 WHEN 5 THEN 64 WHEN 6 THEN 4096 WHEN 7 THEN 8 WHEN 8 THEN 8 WHEN 9 THEN 8 WHEN 10 THEN 8 WHEN 11 THEN 8 WHEN 12 THEN 8 WHEN 13 THEN 8 WHEN 14 THEN 8 WHEN 15 THEN 8 WHEN 16 THEN 8 WHEN 17 THEN 4096 WHEN 18 THEN 4096 WHEN 19 THEN 64 WHEN 20 THEN 64 WHEN 21 THEN 64 END WHERE id IN (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21);"
+}

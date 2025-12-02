@@ -1,8 +1,10 @@
 # Sysreg System - Complete Reference & Entry Point
 
-**Date:** November 19, 2025  
-**Status:** ✅ Production Ready (Phases 1-6 Complete)  
+**Date:** November 28, 2025  
+**Status:** ✅ Production Ready (Migration 036 Complete)  
+**Storage:** INTEGER (32-bit bitmask)  
 **Admin UI:** `/admin/sysreg` (requires admin role)  
+**Master Spec:** See [SYSREG_SPEC.md](./SYSREG_SPEC.md) for authoritative reference
 
 ---
 
@@ -10,10 +12,10 @@
 
 ### What is Sysreg?
 
-The **Sysreg** (System Registry) is a PostgreSQL-based tag and status management system that replaces legacy integer-based lookups with **BYTEA bitmask fields**. It provides:
+The **Sysreg** (System Registry) is a PostgreSQL-based tag and status management system using **INTEGER bitmask fields** (32-bit). It provides:
 
 - 🏷️ **Unified tagging system** - Topic tags, domain tags, record tags, content tags
-- ⚡ **High-performance filtering** - Bitwise operations on indexed BYTEA columns
+- ⚡ **High-performance filtering** - Bitwise operations on indexed INTEGER columns
 - 🌍 **Multilingual labels** - i18n support with fallback chains
 - 📊 **Status workflows** - Validated state transitions for entities
 - 🔧 **Configuration flags** - Per-entity feature toggles via bit flags
@@ -23,7 +25,7 @@ The **Sysreg** (System Registry) is a PostgreSQL-based tag and status management
 | Concept | Description | Example |
 |---------|-------------|---------|
 | **tagfamily** | Category of tags | `status`, `config`, `rtags`, `ctags`, `ttags`, `dtags` |
-| **BYTEA value** | Binary tag representation | `\x01`, `\x02`, `\x04` (single bit per tag) |
+| **INTEGER value** | 32-bit bitmask | `1`, `4`, `256` (bit positions as powers of 2) |
 | **taglogic** | Tag behavior type | `category`, `toggle`, `option`, `subcategory` |
 | **Bit operations** | Combine tags with OR | `\x05` = bits 0+2 set (democracy + equality) |
 
@@ -48,18 +50,20 @@ The **Sysreg** (System Registry) is a PostgreSQL-based tag and status management
 
 ## 🗄️ Database Architecture
 
-### PostgreSQL Table Inheritance (Package C: Migrations 022-029)
+### PostgreSQL Table (Migration 036: BYTEA → INTEGER)
 
 **Base Table:**
 ```sql
 CREATE TABLE sysreg (
   id SERIAL PRIMARY KEY,
-  value BYTEA NOT NULL,              -- Tag identifier (e.g., \x01, \x02)
+  value INTEGER NOT NULL,            -- 32-bit bitmask (e.g., 1, 4, 256)
   name TEXT NOT NULL,                -- Internal name (e.g., 'democracy', 'draft')
   description TEXT,
   tagfamily TEXT NOT NULL,           -- 'status', 'config', 'rtags', 'ctags', 'ttags', 'dtags'
-  taglogic TEXT NOT NULL,            -- 'category', 'toggle', 'option', 'subcategory'
+  taglogic TEXT NOT NULL,            -- 'category', 'toggle', 'option', 'subcategory', 'group'
   is_default BOOLEAN DEFAULT false,
+  multiselect BOOLEAN DEFAULT false, -- Allow multi-select in UI
+  parent_bit INTEGER,                -- For subcategories: parent category bit
   name_i18n JSONB,                   -- Multilingual labels
   desc_i18n JSONB,                   -- Multilingual descriptions
   UNIQUE (value, tagfamily)
@@ -76,27 +80,29 @@ CREATE TABLE sysreg_ttags () INHERITS (sysreg);   -- 6 records
 CREATE TABLE sysreg_dtags () INHERITS (sysreg);   -- 5 records
 ```
 
-**Total Records:** 38 (all stored in child tables, queried via parent)
+**Total Records:** 38+ (stored in child tables, queried via parent)
 
 **Migration History:**
 - **Migration 022**: Creates base sysreg table and seeds status/ctags
 - **Migration 024**: Creates inherited child tables with CHECK constraints
 - **Migration 026**: Seeds config, rtags, ttags, dtags into child tables
-- **Migration 027**: Migrates entity status_id_depr → status_val BYTEA
+- **Migration 027**: Migrates entity status_id_depr → status_val
 - **Migration 028**: Integrates sysreg translations into i18n_codes table
 - **Migration 029**: Moves existing records from base to child tables
+- **Migration 036**: BYTEA → INTEGER conversion ✅
+- **Migration 037**: dtags restructure with parent_bit 🔄 In Progress
 
 ### Entity Integration
 
 **Entity Tables with Sysreg Support:**
 ```sql
--- All entity tables have these columns:
-status_val BYTEA,      -- Single status (category, e.g., \x01 = draft)
-config_val BYTEA,      -- Configuration flags (bits 0-7)
-rtags_val BYTEA,       -- Record tags (favorite, pinned, urgent, reviewed)
-ctags_val BYTEA,       -- Content tags (bit groups: age_group, subject_type, etc.)
-ttags_val BYTEA,       -- Topic tags (democracy, environment, equality, etc.)
-dtags_val BYTEA        -- Domain tags (games, workshops, performance, etc.)
+-- All entity tables have these INTEGER columns (Migration 036):
+status_val INTEGER,    -- Single status value
+config_val INTEGER,    -- Configuration flags (bit field)
+rtags_val INTEGER,     -- Record tags (currently empty for alpha)
+ctags_val INTEGER,     -- Common tags (participant ages, working spaces)
+ttags_val INTEGER,     -- Topic tags (democracy, sustainability, etc.)
+dtags_val INTEGER      -- Domain tags (theater pedagogy taxonomy)
 ```
 
 **Entities with Full Sysreg Support:**
@@ -121,7 +127,7 @@ dtags_val BYTEA        -- Domain tags (games, workshops, performance, etc.)
 import { useSysregTags } from '@/composables/useSysregTags'
 
 const {
-  // BYTEA conversion
+  // INTEGER/hex conversion (legacy support)
   parseByteaHex,           // '\x0105' → [1, 5]
   byteaFromNumber,         // 5 → '\x05'
   
@@ -151,7 +157,7 @@ const {
 ```
 
 **Use Cases:**
-- Direct BYTEA manipulation
+- Direct INTEGER bit manipulation
 - Building filter queries
 - Bit group extraction (CTags)
 - Low-level tag operations
@@ -836,7 +842,7 @@ onMounted(async () => {
 
 ---
 
-### BYTEA Hex String Confusion
+### Hex String Confusion (Legacy BYTEA patterns)
 
 **Problem:** Value showing as `"\x01"` but not matching
 
@@ -974,7 +980,7 @@ const image: any = { ... }  // Type safety lost
 
 **Common Tasks:**
 - Adding new tagfamily: Extend migrations 024 + 026, update types
-- Adding entity support: Add 6 BYTEA columns + composable
+- Adding entity support: Add 6 INTEGER columns + composable
 - Creating UI components: Use `useSysregOptions` for options, `useGalleryFilters` for state
 
 ---

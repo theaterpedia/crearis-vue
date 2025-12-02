@@ -45,6 +45,19 @@ import { migration as migration028 } from './028_integrate_sysreg_i18n'
 import { migration as migration029 } from './029_move_sysreg_to_child_tables'
 import { migration as migration030 } from './030_drop_legacy_status_columns'
 import migration031 from './031_add_local_adapter'
+import { migration as migration035 } from './035_rename_val_columns'
+import { migration as migration036 } from './036_bytea_to_integer'
+import { migration as migration037 } from './037_dtags_restructure'
+import { migration as migration038 } from './038_ctags_ttags_restructure'
+import { migration as migration039 } from './039_status_restructure'
+import { migration as migration040 } from './040_status_fix_bit_allocation'
+import { migration as migration041 } from './041_entity_status_values'
+import { migration as migration042 } from './042_rebuild_image_triggers'
+import { migration as migration044 } from './044_capabilities_matrix'
+import { migration as migration045 } from './045_project_members_configrole'
+import { migration as migration046 } from './046_entity_role_visibility_columns'
+import { migration as migration047 } from './047_role_visibility_triggers'
+import { migration as migration048 } from './048_capabilities_recompute'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -93,6 +106,20 @@ const migrations: Migration[] = [
     { run: migration029.up, down: migration029.down, metadata: { id: migration029.id, description: migration029.description, version: '0.1.0', date: '2025-11-19' }, reversible: true },
     { run: migration030.up, down: migration030.down, metadata: { id: migration030.id, description: migration030.description, version: '0.1.0', date: '2025-11-19' }, reversible: false },
     { run: async (db) => await db.run(migration031, []), metadata: { id: '031_add_local_adapter', description: 'Add local adapter to media_adapter_type enum', version: '0.1.1', date: '2025-11-20' }, reversible: false },
+    // Package D (035+) - Schema standardization
+    { run: migration035.up, down: migration035.down, metadata: { id: migration035.id, description: migration035.description, version: '0.2.0', date: '2025-11-26' }, reversible: true },
+    { run: migration036.up, down: migration036.down, metadata: { id: migration036.id, description: migration036.description, version: '0.2.1', date: '2025-11-26' }, reversible: true },
+    { run: migration037.up, down: migration037.down, metadata: { id: migration037.id, description: migration037.description, version: '0.2.2', date: '2025-11-27' }, reversible: true },
+    { run: migration038.up, down: migration038.down, metadata: { id: migration038.id, description: migration038.description, version: '0.2.3', date: '2025-11-29' }, reversible: true },
+    { run: migration039.up, down: migration039.down, metadata: { id: migration039.id, description: migration039.description, version: '0.2.4', date: '2025-11-29' }, reversible: true },
+    { run: migration040.up, down: migration040.down, metadata: { id: migration040.id, description: migration040.description, version: '0.2.5', date: '2025-11-29' }, reversible: true },
+    { run: migration041.up, down: migration041.down, metadata: { id: migration041.id, description: migration041.description, version: '0.2.6', date: '2025-11-29' }, reversible: true },
+    { run: migration042.up, down: migration042.down, metadata: { id: migration042.id, description: migration042.description, version: '0.2.7', date: '2025-11-28' }, reversible: true },
+    { run: migration044.up, down: migration044.down, metadata: { id: migration044.id, description: migration044.description, version: '0.2.8', date: '2025-12-02' }, reversible: true },
+    { run: migration045.up, down: migration045.down, metadata: { id: migration045.id, description: migration045.description, version: '0.2.9', date: '2025-12-02' }, reversible: true },
+    { run: migration046.up, down: migration046.down, metadata: { id: migration046.id, description: migration046.description, version: '0.2.10', date: '2025-12-02' }, reversible: true },
+    { run: migration047.up, down: migration047.down, metadata: { id: migration047.id, description: migration047.description, version: '0.2.11', date: '2025-12-02' }, reversible: true },
+    { run: migration048.up, down: migration048.down, metadata: { id: migration048.id, description: migration048.description, version: '0.2.12', date: '2025-12-02' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

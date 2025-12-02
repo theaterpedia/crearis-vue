@@ -59,6 +59,7 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
             }
 
             // Merge metadata with batch data
+            // Note: ctags, rtags are INTEGER (32-bit) columns after Migration 036
             const imageData = {
                 name: metadata.name || this.extractFilename(url),
                 url: metadata.url,
@@ -74,8 +75,8 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 geo: metadata.geo ? JSON.stringify(metadata.geo) : null,
                 date: metadata.date || null,
                 about: metadata.about || null,
-                ctags: batchData?.ctags ? Buffer.from(batchData.ctags) : Buffer.from([0]),
-                rtags: batchData?.rtags ? Buffer.from(batchData.rtags) : Buffer.from([0]),
+                ctags: batchData?.ctags ?? 0,  // INTEGER, not BYTEA
+                rtags: batchData?.rtags ?? 0,  // INTEGER, not BYTEA
                 // Author info as composite type (adapter, file_id, account_id, folder_id, info, config)
                 author: metadata.author ? `(${metadata.author.adapter},"${metadata.author.file_id || ''}","${metadata.author.account_id || ''}","${metadata.author.folder_id || ''}","${metadata.author.info || ''}",${metadata.author.config ? `"${JSON.stringify(metadata.author.config).replace(/"/g, '\\"')}"` : 'null'})` : null
             }

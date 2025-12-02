@@ -24,12 +24,12 @@ import { useGalleryFilters } from './useGalleryFilters'
 export interface Event {
     id?: number
     name: string
-    status_val: string | null
-    config_val: string | null
-    rtags_val: string | null  // bit 0 = is_template
-    ctags_val: string | null
-    ttags_val: string | null
-    dtags_val: string | null
+    status: string | null
+    config: string | null
+    rtags: string | null  // bit 0 = is_template
+    ctags: string | null
+    ttags: string | null
+    dtags: string | null
     date_begin?: string | null
     date_end?: string | null
     project_id?: number | null
@@ -85,15 +85,15 @@ export function useEventTemplates(options?: {
         if (activeFilters.value.status) {
             const statusValue = parseByteaHex(activeFilters.value.status)
             filtered = filtered.filter(t =>
-                parseByteaHex(t.status_val) === statusValue
+                parseByteaHex(t.status) === statusValue
             )
         }
 
         // Filter by age group
         if (activeFilters.value.ctags_age_group !== null) {
             filtered = filtered.filter(t => {
-                if (!t.ctags_val) return false
-                const ctags = parseByteaHex(t.ctags_val)
+                if (!t.ctags) return false
+                const ctags = parseByteaHex(t.ctags)
                 const ageGroup = (ctags >> 0) & 0x03 // bits 0-1
                 return ageGroup === activeFilters.value.ctags_age_group
             })
@@ -102,8 +102,8 @@ export function useEventTemplates(options?: {
         // Filter by subject type
         if (activeFilters.value.ctags_subject_type !== null) {
             filtered = filtered.filter(t => {
-                if (!t.ctags_val) return false
-                const ctags = parseByteaHex(t.ctags_val)
+                if (!t.ctags) return false
+                const ctags = parseByteaHex(t.ctags)
                 const subjectType = (ctags >> 2) & 0x03 // bits 2-3
                 return subjectType === activeFilters.value.ctags_subject_type
             })
@@ -112,10 +112,10 @@ export function useEventTemplates(options?: {
         // Filter by topic tags (at least one must match)
         if (activeFilters.value.ttags.length > 0) {
             filtered = filtered.filter(t => {
-                if (!t.ttags_val) return false
-                const ttags = parseByteaHex(t.ttags_val)
+                if (!t.ttags) return false
+                const ttags = parseByteaHex(t.ttags)
                 return activeFilters.value.ttags.some(bit =>
-                    hasBit(t.ttags_val!, bit)
+                    hasBit(t.ttags!, bit)
                 )
             })
         }
@@ -123,10 +123,10 @@ export function useEventTemplates(options?: {
         // Filter by domain tags (at least one must match)
         if (activeFilters.value.dtags.length > 0) {
             filtered = filtered.filter(t => {
-                if (!t.dtags_val) return false
-                const dtags = parseByteaHex(t.dtags_val)
+                if (!t.dtags) return false
+                const dtags = parseByteaHex(t.dtags)
                 return activeFilters.value.dtags.some(bit =>
-                    hasBit(t.dtags_val!, bit)
+                    hasBit(t.dtags!, bit)
                 )
             })
         }
@@ -145,12 +145,12 @@ export function useEventTemplates(options?: {
 
         templates.value.forEach(t => {
             // Count by status
-            const status = parseByteaHex(t.status_val)
+            const status = parseByteaHex(t.status)
             stats.byStatus[status] = (stats.byStatus[status] || 0) + 1
 
             // Count by age group
-            if (t.ctags_val) {
-                const ctags = parseByteaHex(t.ctags_val)
+            if (t.ctags) {
+                const ctags = parseByteaHex(t.ctags)
                 const ageGroup = (ctags >> 0) & 0x03
                 stats.byAgeGroup[ageGroup] = (stats.byAgeGroup[ageGroup] || 0) + 1
             }
@@ -231,16 +231,16 @@ export function useEventTemplates(options?: {
                 project_id: customization.project_id || projectId?.value || null,
 
                 // Copy tag values
-                ctags_val: template.ctags_val,
-                ttags_val: template.ttags_val,
-                dtags_val: template.dtags_val,
+                ctags: template.ctags,
+                ttags: template.ttags,
+                dtags: template.dtags,
 
                 // Set status to draft (0x01)
-                status_val: '\\x01',
+                status: '\\x01',
 
                 // Copy config but remove template bit from rtags
-                config_val: template.config_val,
-                rtags_val: template.rtags_val ? clearBit(template.rtags_val, 0) : '\\x00',
+                config: template.config,
+                rtags: template.rtags ? clearBit(template.rtags, 0) : '\\x00',
 
                 // Apply any additional customization
                 ...customization
@@ -289,7 +289,7 @@ export function useEventTemplates(options?: {
             const cloned: Partial<Event> = {
                 ...template,
                 name: newName || `${template.name} (Copy)`,
-                status_val: '\\x01', // Draft
+                status: '\\x01', // Draft
                 id: undefined // New record
             }
 
@@ -372,8 +372,8 @@ export function useEventTemplates(options?: {
     }
 
     // Suggest templates based on project tags
-    function suggestTemplatesForProject(project: { ttags_val?: string; dtags_val?: string }) {
-        if (!project.ttags_val && !project.dtags_val) {
+    function suggestTemplatesForProject(project: { ttags?: string; dtags?: string }) {
+        if (!project.ttags && !project.dtags) {
             return templates.value
         }
 
@@ -382,18 +382,18 @@ export function useEventTemplates(options?: {
             let score = 0
 
             // Compare TTags
-            if (project.ttags_val && template.ttags_val) {
-                const projectTtags = parseByteaHex(project.ttags_val)
-                const templateTtags = parseByteaHex(template.ttags_val)
+            if (project.ttags && template.ttags) {
+                const projectTtags = parseByteaHex(project.ttags)
+                const templateTtags = parseByteaHex(template.ttags)
                 // Count matching bits
                 const matches = projectTtags & templateTtags
                 score += countBits(matches)
             }
 
             // Compare DTags
-            if (project.dtags_val && template.dtags_val) {
-                const projectDtags = parseByteaHex(project.dtags_val)
-                const templateDtags = parseByteaHex(template.dtags_val)
+            if (project.dtags && template.dtags) {
+                const projectDtags = parseByteaHex(project.dtags)
+                const templateDtags = parseByteaHex(template.dtags)
                 // Count matching bits
                 const matches = projectDtags & templateDtags
                 score += countBits(matches) * 2 // Weight domain matches higher

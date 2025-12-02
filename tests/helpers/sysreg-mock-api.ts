@@ -15,10 +15,18 @@ export interface SysregOption {
     value: string
     label: string
     bit_group?: string
+    name?: string
+    taglogic?: string
+    parent_bit?: number
 }
 
 /**
- * Complete mock sysreg options (all 38 entries)
+ * Complete mock sysreg options (73 entries total)
+ * - Status: 6 entries
+ * - TTags: 8 entries  
+ * - DTags: 43 entries (Migration 037 V2 structure - 31 bits, 4 groups, 16 categories, 27 subcategories)
+ * - RTags: 4 entries
+ * - CTags: 12 entries
  */
 export const mockSysregOptions: SysregOption[] = [
     // Status (6 entries) - uses direct hex values, not bit positions
@@ -39,15 +47,71 @@ export const mockSysregOptions: SysregOption[] = [
     { bit: 6, tagfamily: 'ttags', value: 'arts_culture', label: 'Arts & Culture' },
     { bit: 7, tagfamily: 'ttags', value: 'economy', label: 'Economy' },
 
-    // DTags - Domain Tags (8 entries)
-    { bit: 0, tagfamily: 'dtags', value: 'education', label: 'Education' },
-    { bit: 1, tagfamily: 'dtags', value: 'media', label: 'Media' },
-    { bit: 2, tagfamily: 'dtags', value: 'advocacy', label: 'Advocacy' },
-    { bit: 3, tagfamily: 'dtags', value: 'research', label: 'Research' },
-    { bit: 4, tagfamily: 'dtags', value: 'community', label: 'Community' },
-    { bit: 5, tagfamily: 'dtags', value: 'policy', label: 'Policy' },
-    { bit: 6, tagfamily: 'dtags', value: 'awareness', label: 'Awareness' },
-    { bit: 7, tagfamily: 'dtags', value: 'training', label: 'Training' },
+    // DTags - Didactic Model Tags (43 entries: 16 categories + 27 subcategories)
+    // Migration 037 V2: 31 bits total (bit 31 unused/sign bit)
+
+    // Group 1: spielform (bits 0-7, 8 bits, 4 categories + 8 subcategories = 12 entries)
+    { bit: 0, tagfamily: 'dtags', value: 1, label: 'Kreisspiele', bit_group: 'spielform', taglogic: 'category', name: 'kreisspiele' },
+    { bit: 1, tagfamily: 'dtags', value: 2, label: 'Kreisspiel > Impulskreis', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 0, name: 'kreisspiel_impulskreis' },
+    { bit: 1, tagfamily: 'dtags', value: 3, label: 'Kreisspiel > Synchronkreis', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 0, name: 'kreisspiel_synchronkreis' },
+
+    { bit: 2, tagfamily: 'dtags', value: 4, label: 'Raumlauf', bit_group: 'spielform', taglogic: 'category', name: 'raumlauf' },
+    { bit: 3, tagfamily: 'dtags', value: 8, label: 'Raumlauf > Einzelgänger', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 2, name: 'raumlauf_einzelgaenger' },
+    { bit: 3, tagfamily: 'dtags', value: 12, label: 'Raumlauf > Begegnungen', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 2, name: 'raumlauf_begegnungen' },
+
+    { bit: 4, tagfamily: 'dtags', value: 16, label: 'Kleingruppen', bit_group: 'spielform', taglogic: 'category', name: 'kleingruppen' },
+
+    { bit: 5, tagfamily: 'dtags', value: 32, label: 'Forum', bit_group: 'spielform', taglogic: 'category', name: 'forum' },
+    { bit: 6, tagfamily: 'dtags', value: 64, label: 'Forum > Abklatschspiel', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 5, name: 'forum_abklatschspiel' },
+    { bit: 6, tagfamily: 'dtags', value: 96, label: 'Forum > Werkstattprobe', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 5, name: 'forum_werkstattprobe' },
+    { bit: 7, tagfamily: 'dtags', value: 128, label: 'Forum > Showing', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 5, name: 'forum_showing' },
+    { bit: 7, tagfamily: 'dtags', value: 160, label: 'Forum > Durchlaufproben', bit_group: 'spielform', taglogic: 'subcategory', parent_bit: 5, name: 'forum_durchlaufproben' },
+
+    // Group 2: animiertes_theaterspiel (bits 8-14, 7 bits, 4 categories + 6 subcategories = 10 entries)
+    { bit: 8, tagfamily: 'dtags', value: 256, label: 'El. Animation', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'el_animation' },
+    { bit: 9, tagfamily: 'dtags', value: 512, label: 'El. Animation > Zwei-Kreise-Modell', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 8, name: 'el_animation_zwei_kreise_modell' },
+    { bit: 9, tagfamily: 'dtags', value: 768, label: 'El. Animation > Variante 2', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 8, name: 'el_animation_variante_2' },
+
+    { bit: 10, tagfamily: 'dtags', value: 1024, label: 'Sz. Animation', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'sz_animation' },
+    { bit: 11, tagfamily: 'dtags', value: 2048, label: 'Sz. Animation > Variante 1', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 10, name: 'sz_animation_variante_1' },
+    { bit: 11, tagfamily: 'dtags', value: 3072, label: 'Sz. Animation > Variante 2', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 10, name: 'sz_animation_variante_2' },
+
+    { bit: 12, tagfamily: 'dtags', value: 4096, label: 'Impro', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'impro' },
+
+    { bit: 13, tagfamily: 'dtags', value: 8192, label: 'animiert', bit_group: 'animiertes_theaterspiel', taglogic: 'category', name: 'animiert' },
+    { bit: 14, tagfamily: 'dtags', value: 16384, label: 'animiert > SAFARI', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 13, name: 'animiert_safari' },
+    { bit: 14, tagfamily: 'dtags', value: 24576, label: 'animiert > Variante 2', bit_group: 'animiertes_theaterspiel', taglogic: 'subcategory', parent_bit: 13, name: 'animiert_variante_2' },
+
+    // Group 3: szenische_themenarbeit (bits 15-24, 10 bits, 5 categories + 8 subcategories = 13 entries)
+    { bit: 15, tagfamily: 'dtags', value: 32768, label: 'Standbilder', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'standbilder' },
+    { bit: 16, tagfamily: 'dtags', value: 65536, label: 'Standbilder > variante 1', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 15, name: 'standbilder_variante_1' },
+    { bit: 16, tagfamily: 'dtags', value: 98304, label: 'Standbilder > variante 2', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 15, name: 'standbilder_variante_2' },
+    { bit: 17, tagfamily: 'dtags', value: 131072, label: 'Standbilder > variante 3', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 15, name: 'standbilder_variante_3' },
+
+    { bit: 18, tagfamily: 'dtags', value: 262144, label: 'Rollenspiel', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'rollenspiel' },
+    { bit: 19, tagfamily: 'dtags', value: 524288, label: 'Rollenspiel > variante 1', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 18, name: 'rollenspiel_variante_1' },
+    { bit: 19, tagfamily: 'dtags', value: 786432, label: 'Rollenspiel > variante 2', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 18, name: 'rollenspiel_variante_2' },
+    { bit: 20, tagfamily: 'dtags', value: 1048576, label: 'Rollenspiel > variante 3', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 18, name: 'rollenspiel_variante_3' },
+
+    { bit: 21, tagfamily: 'dtags', value: 2097152, label: 'TdU', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'tdu' },
+    { bit: 22, tagfamily: 'dtags', value: 4194304, label: 'TdU > Forumtheater', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 21, name: 'tdu_forumtheater' },
+    { bit: 22, tagfamily: 'dtags', value: 6291456, label: 'TdU > Regenbogen der Wünsche', bit_group: 'szenische_themenarbeit', taglogic: 'subcategory', parent_bit: 21, name: 'tdu_regenbogen_der_wuensche' },
+
+    { bit: 23, tagfamily: 'dtags', value: 8388608, label: 'Soziometrie', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'soziometrie' },
+
+    { bit: 24, tagfamily: 'dtags', value: 16777216, label: 'bewegte Themenarbeit', bit_group: 'szenische_themenarbeit', taglogic: 'category', name: 'bewegte_themenarbeit' },
+
+    // Group 4: paedagogische_regie (bits 25-30, 6 bits, 3 categories + 5 subcategories = 8 entries)
+    { bit: 25, tagfamily: 'dtags', value: 33554432, label: 'zyklisch', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'zyklisch' },
+    { bit: 26, tagfamily: 'dtags', value: 67108864, label: 'zyklisch > RSVP-Zyklus-Modell', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 25, name: 'zyklisch_rsvp_zyklus_modell' },
+    { bit: 26, tagfamily: 'dtags', value: 100663296, label: 'zyklisch > variante 2', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 25, name: 'zyklisch_variante_2' },
+    { bit: 27, tagfamily: 'dtags', value: 134217728, label: 'zyklisch > Theatrales Mischpult', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 25, name: 'zyklisch_theatrales_mischpult' },
+
+    { bit: 28, tagfamily: 'dtags', value: 268435456, label: 'linear', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'linear' },
+    { bit: 29, tagfamily: 'dtags', value: 536870912, label: 'linear > 7-Tage-Modell', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 28, name: 'linear_7_tage_modell' },
+    { bit: 29, tagfamily: 'dtags', value: 805306368, label: 'linear > variante 2', bit_group: 'paedagogische_regie', taglogic: 'subcategory', parent_bit: 28, name: 'linear_variante_2' },
+
+    { bit: 30, tagfamily: 'dtags', value: 1073741824, label: 'klassisch', bit_group: 'paedagogische_regie', taglogic: 'category', name: 'klassisch' },
 
     // RTags - Resource Tags (4 entries)
     { bit: 0, tagfamily: 'rtags', value: 'guide', label: 'Guide' },
@@ -84,7 +148,7 @@ export function mockFetchSysregOptions() {
     // Convert flat mockSysregOptions to SysregCache format
     const cache = {
         status: mockSysregOptions.filter(opt => opt.tagfamily === 'status').map(toSysregEntry),
-        config: [],
+        config: [], // Empty but present - no config tags in test data yet
         rtags: mockSysregOptions.filter(opt => opt.tagfamily === 'rtags').map(toSysregEntry),
         ctags: mockSysregOptions.filter(opt => opt.tagfamily === 'ctags').map(toSysregEntry),
         ttags: mockSysregOptions.filter(opt => opt.tagfamily === 'ttags').map(toSysregEntry),
@@ -104,29 +168,35 @@ export function mockFetchSysregOptions() {
 /**
  * Convert SysregOption to SysregEntry format
  */
-function toSysregEntry(opt: SysregOption): any {
-    let hexValue: string
+export function toSysregEntry(opt: SysregOption): any {
+    let intValue: number
 
-    // Status uses direct hex values, tags use bit positions
+    // Status uses direct bit values, tags use bit positions
     if (opt.tagfamily === 'status') {
-        // Use bit value directly as hex (already in correct format)
-        hexValue = `\\x${opt.bit.toString(16).padStart(2, '0')}`
+        // Use bit value directly (already in correct format)
+        intValue = opt.bit
     } else {
-        // Convert bit position to byte value (bit 0 = 0x01, bit 1 = 0x02, etc.)
-        const byteValue = 1 << opt.bit
-        hexValue = `\\x${byteValue.toString(16).padStart(2, '0')}`
+        // Convert bit position to byte value (bit 0 = 1, bit 1 = 2, etc.)
+        intValue = 1 << opt.bit
     }
 
-    return {
-        value: hexValue,
-        name: opt.value,
+    const entry: any = {
+        value: intValue,
+        name: opt.name || opt.value,
+        label: opt.label, // Add direct label field
         tagfamily: opt.tagfamily,
-        taglogic: 'option',
+        taglogic: opt.taglogic || 'option',
         is_default: false,
-        name_i18n: { en: opt.label },
+        name_i18n: { en: opt.label, de: opt.label },
         desc_i18n: {},
-        ...(opt.bit_group ? { bit_group: opt.bit_group } : {})
+        bit: opt.bit
     }
+
+    // Add optional fields
+    if (opt.bit_group) entry.bit_group = opt.bit_group
+    if (opt.parent_bit !== undefined) entry.parent_bit = opt.parent_bit
+
+    return entry
 }
 
 /**
