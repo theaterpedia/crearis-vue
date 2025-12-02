@@ -336,6 +336,11 @@
             </div>
         </div>
 
+        <!-- Capabilities Matrix Tab -->
+        <div v-if="activeTab === 'capabilities'" class="panel capabilities-panel">
+            <CapabilitiesEditor />
+        </div>
+
         <!-- Create/Edit Tag Dialog -->
         <div v-if="showCreateDialog || editingTag" class="modal-overlay" @click.self="closeDialog">
             <div class="modal-dialog">
@@ -433,14 +438,16 @@ import { useSysreg } from '@/composables/useSysreg'
 import { useSysregOptions } from '@/composables/useSysregOptions'
 import { useSysregAnalytics } from '@/composables/useSysregAnalytics'
 import { useSysregBatchOperations } from '@/composables/useSysregBatchOperations'
+import CapabilitiesEditor from '@/components/sysreg/CapabilitiesEditor.vue'
 
 // Use unified sysreg for common operations
 const sysreg = useSysreg()
 
 // Tab state
-const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch'>('viewer')
+const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch' | 'capabilities'>('viewer')
 const tabs = [
     { id: 'viewer', label: 'Tag Viewer', icon: '👁️' },
+    { id: 'capabilities', label: 'Capabilities Matrix', icon: '🔐' },
     { id: 'create', label: 'Create Tags', icon: '➕' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'batch', label: 'Batch Operations', icon: '⚡' }

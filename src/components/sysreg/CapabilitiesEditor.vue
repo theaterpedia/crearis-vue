@@ -443,7 +443,7 @@ const isValid = computed(() => {
 
 // Filtered entries
 const filteredEntries = computed(() => {
-    return entries.value.filter(entry => {
+    return entries.value.filter((entry: ConfigEntry) => {
         if (selectedEntity.value !== '' && getEntityValue(entry.value) !== selectedEntity.value) return false
         if (selectedState.value !== '' && getStateValue(entry.value) !== selectedState.value) return false
         if (selectedProjectType.value !== '' && getProjectTypeValue(entry.value) !== selectedProjectType.value)
@@ -576,16 +576,20 @@ async function saveEntry() {
     try {
         if (isEditing.value) {
             // Update existing
-            await $fetch(`/api/sysreg/config/${editingId.value}`, {
+            const response = await fetch(`/api/sysreg/config/${editingId.value}`, {
                 method: 'PUT',
-                body: payload,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             })
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
         } else {
             // Create new
-            await $fetch('/api/sysreg/config', {
+            const response = await fetch('/api/sysreg/config', {
                 method: 'POST',
-                body: payload,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             })
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
         }
         await loadEntries()
         closeModal()
@@ -599,9 +603,10 @@ async function confirmDelete(entry: ConfigEntry) {
     if (!confirm(`Delete capability "${entry.name}"?`)) return
 
     try {
-        await $fetch(`/api/sysreg/config/${entry.id}`, {
+        const response = await fetch(`/api/sysreg/config/${entry.id}`, {
             method: 'DELETE',
         })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         await loadEntries()
     } catch (error) {
         console.error('Failed to delete entry:', error)
@@ -613,7 +618,9 @@ async function confirmDelete(entry: ConfigEntry) {
 async function loadEntries() {
     loading.value = true
     try {
-        const data = await $fetch<{ config: ConfigEntry[] }>('/api/sysreg/all')
+        const response = await fetch('/api/sysreg/all')
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const data = await response.json()
         entries.value = data.config || []
     } catch (error) {
         console.error('Failed to load config entries:', error)
