@@ -159,7 +159,7 @@
             <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId"
-                    :type="projectType" />
+                    :type="projectType" :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
 
                 <!-- Navigation Mode: status >= 2 -->
                 <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
@@ -305,6 +305,12 @@ const isLocked = computed(() => {
     return false
 })
 
+// Check if current user is the project owner
+const isProjectOwner = computed(() => {
+    if (!user.value?.id || !projectData.value?.owner_id) return false
+    return user.value.id === projectData.value.owner_id
+})
+
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
     const tabs: string[] = ['homepage', 'events', 'posts', 'images', 'users', 'theme', 'layout', 'navigation', 'pages']
@@ -343,17 +349,25 @@ const navbarLogoText = computed(() => {
 // Computed step keys based on type (matching ProjectStepper logic)
 const stepKeys = computed(() => {
     const type = projectType.value
+    let baseSteps: string[]
 
     if (type === 'topic') {
         // Topic: hide Events, start with Posts
-        return ['posts', 'images', 'users', 'theme', 'pages']
+        baseSteps = ['posts', 'images', 'users', 'theme', 'pages']
     } else if (type === 'regio') {
         // Regio: Users → Pages → Posts → Events (no Theme)
-        return ['users', 'pages', 'posts', 'images', 'events']
+        baseSteps = ['users', 'pages', 'posts', 'images', 'events']
     } else {
         // Default: Events → Posts → Images → Users → Theme → Pages
-        return ['events', 'posts', 'images', 'users', 'theme', 'pages']
+        baseSteps = ['events', 'posts', 'images', 'users', 'theme', 'pages']
     }
+
+    // Filter out 'users' and 'theme' if not owner
+    if (!isProjectOwner.value) {
+        return baseSteps.filter(key => key !== 'users' && key !== 'theme')
+    }
+
+    return baseSteps
 })
 
 const currentStepKey = computed(() => stepKeys.value[currentStep.value])
@@ -450,6 +464,36 @@ function completeProject() {
     console.log('Project completed!')
     // TODO: Save project and navigate
     router.push('/')
+}
+
+// Handle project activation: change status to 'draft' and switch to navigation mode
+async function handleActivateProject() {
+    try {
+        // Status 'draft' has status_id = 2 (from sysreg_statuses)
+        const response = await fetch(`/api/projects/${projectId.value}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status_id: 2 })
+        })
+
+        if (response.ok) {
+            // Update local state
+            projectStatusId.value = 2
+            if (projectData.value) {
+                projectData.value.status_id = 2
+            }
+            // Reset to first navigation tab
+            currentNavTab.value = 'homepage'
+            console.log('Project activated - status changed to draft')
+        } else {
+            const error = await response.json()
+            console.error('Failed to activate project:', error)
+            alert('Fehler beim Aktivieren des Projekts')
+        }
+    } catch (error) {
+        console.error('Failed to activate project:', error)
+        alert('Fehler beim Aktivieren des Projekts')
+    }
 }
 
 // Config dropdown functions

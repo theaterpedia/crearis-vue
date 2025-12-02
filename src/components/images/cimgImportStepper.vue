@@ -81,7 +81,8 @@
                     <span>{{ images.length }} image{{ images.length !== 1 ? 's' : '' }} ready</span>
                 </div>
                 <div class="preview-actions">
-                    <button class="btn-add-more" @click="triggerFileInput">
+                    <!-- TODO v0.5: Enable Add More functionality -->
+                    <button class="btn-add-more" disabled title="Coming in v0.5">
                         <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                             xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -118,10 +119,13 @@
                     </div>
                     <div class="preview-info">
                         <div class="preview-xmlid">{{ img.xmlid }}</div>
+                        <!-- TODO v0.5: Show preset tags from TagFamilies here -->
+                        <!--
                         <div class="preview-meta">
-                            <span class="preview-tag">{{ img.tags.ageGroup }}</span>
-                            <span class="preview-tag">{{ img.tags.topic }}</span>
+                            <span class="preview-tag">ttags: {{ img.ttags }}</span>
+                            <span class="preview-tag">ctags: {{ img.ctags }}</span>
                         </div>
+                        -->
                     </div>
                     <button class="btn-remove" @click.stop="removeImage(index)" title="Remove image">
                         <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
@@ -150,17 +154,19 @@
                         <div class="form-group">
                             <label>XMLID</label>
                             <input v-model="currentImage!.xmlid" type="text" class="form-input"
-                                :placeholder="`${projectId}.image.scene-filename_timestamp`" />
-                            <span class="form-hint">Format: {project}.image.scene-{subject}_{timestamp}</span>
+                                :placeholder="`${projectId}.image_scene.filename`" />
+                            <span class="form-hint">Format: {project}.image_{subject}.{name...}</span>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Author (from composite)</label>
+                                <label>Owner</label>
+                                <sysDropDown v-model="currentImage!.ownerId" :items="eligibleUsers"
+                                    placeholder="Select owner" />
+                            </div>
+                            <div class="form-group author-stack">
+                                <label>Author</label>
                                 <input v-model="currentImage!.author.name" type="text" class="form-input"
                                     placeholder="Author name" />
-                            </div>
-                            <div class="form-group">
-                                <label>Author URI</label>
                                 <input v-model="currentImage!.author.uri" type="text" class="form-input"
                                     placeholder="https://..." />
                             </div>
@@ -170,20 +176,15 @@
                             <input v-model="currentImage!.altText" type="text" class="form-input"
                                 placeholder="Descriptive alt text" />
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Age Group (Tag)</label>
-                                <select v-model="currentImage!.tags.ageGroup" class="form-select">
-                                    <option value="adult">Adult</option>
-                                    <option value="teen">Teen</option>
-                                    <option value="child">Child</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Topic (Tag)</label>
-                                <input v-model="currentImage!.tags.topic" type="text" class="form-input"
-                                    placeholder="scene, portrait, etc." />
-                            </div>
+                        <div class="form-group">
+                            <label>Tags</label>
+                            <TagFamilies
+                                v-model:ttags="currentImage!.ttags"
+                                v-model:ctags="currentImage!.ctags"
+                                v-model:dtags="currentImage!.dtags"
+                                :enable-edit="['ttags', 'ctags', 'dtags']"
+                                layout="wrap"
+                            />
                         </div>
                     </div>
                 </div>
@@ -194,10 +195,17 @@
             </div>
         </div>
 
-        <!-- Sysreg Tags -->
-        <SysregTagDisplay v-if="images.length > 0" v-model:all-tags="allTags"
-            v-model:config-visibility="configVisibility" v-model:age-group="ageGroup" v-model:subject-type="subjectType"
-            v-model:core-themes="coreThemes" v-model:domains="domains" />
+        <!-- Batch Tag Editor -->
+        <div v-if="images.length > 0" class="batch-tags-section">
+            <label class="batch-tags-label">Default Tags (applied to all images)</label>
+            <TagFamilies
+                v-model:ttags="defaultTtags"
+                v-model:ctags="defaultCtags"
+                v-model:dtags="defaultDtags"
+                :enable-edit="['ttags', 'ctags', 'dtags']"
+                layout="wrap"
+            />
+        </div>
 
         <!-- Action Bar (when images exist) -->
         <div v-if="images.length > 0" class="action-bar">
@@ -217,22 +225,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import sysDropDown from '@/components/sysDropDown.vue'
-import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
+import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 
 interface ImageItem {
     file: File
     previewUrl: string
     xmlid: string
+    ownerId: number | null
     author: {
         name: string
         uri: string
         adapter: string
     }
     altText: string
-    tags: {
-        ageGroup: string
-        topic: string
-    }
+    ttags: number
+    ctags: number
+    dtags: number
 }
 
 interface Props {
@@ -304,12 +312,11 @@ const isDragging = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const images = ref<ImageItem[]>([])
 const isImporting = ref(false)
-const allTags = ref(false)
-const configVisibility = ref(0)
-const ageGroup = ref(0)
-const subjectType = ref(0)
-const coreThemes = ref('\\x00')
-const domains = ref('\\x00')
+
+// Default tag values for batch application
+const defaultTtags = ref(0)
+const defaultCtags = ref(0)
+const defaultDtags = ref(0)
 
 // Refine modal
 const refineModalOpen = ref(false)
@@ -363,21 +370,21 @@ const processFiles = (files: File[]) => {
         const basename = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9_]/g, '_')
         const xmlid = `${props.projectId}.image_scene.${basename}_${timestamp}`
 
-        // Create image item with defaults (hardcoded as per spec)
+        // Create image item with defaults
         images.value.push({
             file,
             previewUrl,
             xmlid,
+            ownerId: selectedOwnerId.value,
             author: {
                 name: user.value?.username || 'Unknown',
                 uri: '',
                 adapter: 'local'
             },
             altText: '',
-            tags: {
-                ageGroup: 'adult',  // Hardcoded default
-                topic: 'scene'      // Hardcoded default
-            }
+            ttags: defaultTtags.value,
+            ctags: defaultCtags.value,
+            dtags: defaultDtags.value
         })
         added++
     }
@@ -431,21 +438,19 @@ const handleImport = async () => {
 
     try {
         for (const img of images.value) {
-            // Build ctags (hardcoded strategy as per spec)
-            // For now: adult=3, scene as xmlid fragment
-            const ctagsValue = buildCtags(img.tags.ageGroup)
-
             // Build FormData for upload
             const formData = new FormData()
             formData.append('file', img.file)
             formData.append('xmlid', img.xmlid)
             formData.append('project_id', props.projectId)
-            formData.append('owner_id', String(selectedOwnerId.value))
+            formData.append('owner_id', String(img.ownerId || selectedOwnerId.value))
             formData.append('author_name', img.author.name)
             formData.append('author_uri', img.author.uri)
             formData.append('author_adapter', 'local')
             formData.append('alt_text', img.altText)
-            formData.append('ctags', String(ctagsValue))
+            formData.append('ttags', String(img.ttags))
+            formData.append('ctags', String(img.ctags))
+            formData.append('dtags', String(img.dtags))
 
             const response = await fetch('/api/images/upload', {
                 method: 'POST',
@@ -474,21 +479,6 @@ const handleImport = async () => {
     } finally {
         isImporting.value = false
     }
-}
-
-// Build ctags byte (simplified - using sysreg strategy)
-const buildCtags = (ageGroup: string): number => {
-    // Bits 0-1: Age group (0=other, 1=child, 2=teen, 3=adult)
-    let byte = 0
-    if (ageGroup === 'adult') byte |= 3 << 0
-    else if (ageGroup === 'teen') byte |= 2 << 0
-    else if (ageGroup === 'child') byte |= 1 << 0
-
-    // Bits 2-3: Subject type (hardcoded to 0=other for now)
-    // Bits 4-5: Access level (hardcoded to 0=project)
-    // Bits 6-7: Quality (hardcoded to 0=OK)
-
-    return byte
 }
 
 // Load eligible users on mount
@@ -740,10 +730,15 @@ onMounted(async () => {
     transition: all 0.2s ease;
 }
 
-.btn-add-more:hover {
+.btn-add-more:hover:not(:disabled) {
     background: var(--color-primary-bg);
     border-color: var(--color-primary-bg);
     color: var(--color-primary-contrast);
+}
+
+.btn-add-more:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-clear-all:hover {
@@ -992,6 +987,33 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+}
+
+.author-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.author-stack .form-input:first-of-type {
+    margin-bottom: 0;
+}
+
+/* Batch Tags Section */
+.batch-tags-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+}
+
+.batch-tags-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
 }
 
 .modal-footer {
