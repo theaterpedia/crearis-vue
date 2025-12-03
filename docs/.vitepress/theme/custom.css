@@ -1,0 +1,187 @@
+/**
+ * VitePress Custom Theme
+ * Uses Crearis oklch color system for future useTheme integration
+ */
+
+/* Import VitePress default styles */
+@import 'vitepress/dist/client/theme-default/styles/vars.css';
+
+:root {
+    /* ===== Crearis oklch Color System ===== */
+    /* These map to the Crearis theme vars for future useTheme integration */
+
+    /* Primary - Theaterpedia Green */
+    --vp-c-brand-1: oklch(72.21% 0.2812 144.53);
+    --vp-c-brand-2: oklch(65% 0.25 144.53);
+    --vp-c-brand-3: oklch(58% 0.22 144.53);
+    --vp-c-brand-soft: oklch(72.21% 0.2812 144.53 / 0.14);
+
+    /* Secondary - Purple accent */
+    --color-secondary: oklch(65.74% 0.2393 304.41);
+
+    /* Warning - Yellow */
+    --color-warning: oklch(84.67% 0.1867 88.36);
+
+    /* Positive - Green */
+    --color-positive: oklch(68.87% 0.1715 141.94);
+
+    /* Negative - Red */
+    --color-negative: oklch(63.68% 0.2078 25.33);
+
+    /* Neutral tones */
+    --color-neutral: oklch(88.45% 0 0);
+    --color-gray: oklch(55.47% 0 0);
+
+    /* Background */
+    --vp-c-bg: oklch(96.19% 0 0);
+    --vp-c-bg-soft: oklch(92% 0 0);
+    --vp-c-bg-mute: oklch(88.45% 0 0);
+    --vp-c-bg-alt: oklch(94% 0 0);
+
+    /* Text */
+    --vp-c-text-1: oklch(20% 0 0);
+    --vp-c-text-2: oklch(40% 0 0);
+    --vp-c-text-3: oklch(55% 0 0);
+
+    /* Borders */
+    --vp-c-border: oklch(85% 0 0);
+    --vp-c-divider: oklch(90% 0 0);
+    --vp-c-gutter: oklch(92% 0 0);
+
+    /* ===== Typography ===== */
+    /* Monaspace Neon as primary (loaded from theaterpedia.org) */
+    --vp-font-family-base: 'MonaspaceNeon', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --vp-font-family-mono: 'MonaspaceNeon', 'Consolas', 'Monaco', monospace;
+
+    /* ===== Layout ===== */
+    --vp-layout-max-width: 1440px;
+
+    /* Border radius - matching Crearis conventions */
+    --vp-border-radius: 0.25rem;
+
+    /* ===== Custom Crearis Vars (for future useTheme) ===== */
+    --card-width: 21rem;
+    --card-height: 14rem;
+    --tile-width: 8rem;
+    --tile-height: 4rem;
+    --avatar: 4rem;
+}
+
+/* Dark mode overrides */
+.dark {
+    --vp-c-bg: oklch(15% 0.02 260);
+    --vp-c-bg-soft: oklch(20% 0.02 260);
+    --vp-c-bg-mute: oklch(25% 0.02 260);
+    --vp-c-bg-alt: oklch(18% 0.02 260);
+
+    --vp-c-text-1: oklch(95% 0 0);
+    --vp-c-text-2: oklch(75% 0 0);
+    --vp-c-text-3: oklch(55% 0 0);
+
+    --vp-c-border: oklch(30% 0.02 260);
+    --vp-c-divider: oklch(25% 0.02 260);
+}
+
+/* ===== Component Overrides ===== */
+
+/* Logo styling */
+.VPNavBarTitle .logo {
+    height: 32px;
+    margin-right: 8px;
+}
+
+/* Hero section */
+.VPHero .name {
+    background: linear-gradient(135deg,
+            oklch(72.21% 0.2812 144.53) 0%,
+            oklch(65.74% 0.2393 304.41) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Feature cards */
+.VPFeature {
+    border: 1px solid var(--vp-c-border);
+    border-radius: var(--vp-border-radius);
+    transition: all 0.2s ease;
+}
+
+.VPFeature:hover {
+    border-color: var(--vp-c-brand-1);
+    box-shadow: 0 2px 12px oklch(72.21% 0.2812 144.53 / 0.15);
+}
+
+/* Badge styling */
+.VPBadge {
+    border-radius: var(--vp-border-radius);
+}
+
+/* Beta feature badge */
+.beta-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    background: oklch(84.67% 0.1867 88.36 / 0.2);
+    color: oklch(50% 0.15 88.36);
+    border-radius: var(--vp-border-radius);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+/* Post-release badge */
+.post-release-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    background: oklch(65.74% 0.2393 304.41 / 0.2);
+    color: oklch(50% 0.2 304.41);
+    border-radius: var(--vp-border-radius);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+/* Warning banner for outdated content */
+.warning-banner {
+    padding: 1rem;
+    margin: 1rem 0;
+    background: oklch(84.67% 0.1867 88.36 / 0.2);
+    border-left: 4px solid oklch(84.67% 0.1867 88.36);
+    border-radius: var(--vp-border-radius);
+}
+
+.warning-banner strong {
+    color: oklch(50% 0.15 88.36);
+}
+
+/* Placeholder image style */
+.placeholder-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--vp-c-bg-mute);
+    border: 2px dashed var(--vp-c-border);
+    border-radius: var(--vp-border-radius);
+    color: var(--vp-c-text-3);
+    font-size: 0.875rem;
+    min-height: 200px;
+}
+
+/* Screenshot placeholder */
+.screenshot-placeholder {
+    background: linear-gradient(135deg,
+            var(--vp-c-bg-soft) 0%,
+            var(--vp-c-bg-mute) 100%);
+    border: 2px dashed var(--vp-c-border);
+    border-radius: var(--vp-border-radius);
+    padding: 2rem;
+    text-align: center;
+    color: var(--vp-c-text-3);
+}
+
+.screenshot-placeholder::before {
+    content: '📸';
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}

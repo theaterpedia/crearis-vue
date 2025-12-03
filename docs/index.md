@@ -2,37 +2,82 @@
 layout: home
 
 hero:
-  name: Crearis
-  text: Vue Platform for Creative Projects
-  tagline: Build and manage collaborative creative projects with ease
+  name: Theaterpedia
+  text: Regional vernetzt. Digital sichtbar.
+  tagline: Eine Plattform für die Theaterpädagogik in Bayern und darüber hinaus
+  image:
+    src: /logo.png
+    alt: Theaterpedia Logo
   actions:
     - theme: brand
-      text: Get Started
-      link: /guide/
+      text: Anleitung (DE)
+      link: /de/
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/theaterpedia/crearis-vue
+      text: Developer Docs
+      link: /dev/
+    - theme: alt
+      text: Admin Guide
+      link: /admin/
 
 features:
   - icon: 🎭
-    title: Project Workflow
-    details: Guided stepper flow for setting up projects with events, posts, images, users, and themes.
-  - icon: 🏷️
-    title: Tag System
-    details: Flexible tagging with TagFamilies - ttags, ctags, dtags for content organization.
-  - icon: 🔐
-    title: Role-Based Access
-    details: Owner, Partner, Participant, Member roles with configurable visibility triggers.
-  - icon: 🎨
-    title: Opus CSS
-    details: Consistent styling conventions using oklch colors and CSS custom properties.
+    title: Für die Theaterpädagogik
+    details: Theaterpedia macht theaterpädagogische Arbeit im Internet sichtbar und regional auffindbar.
+  - icon: 🌐
+    title: Regionale Vernetzung
+    details: Organisiert in "Regios" - von Nürnberg bis München, von Augsburg bis zur tschechischen Grenze.
+  - icon: 🔧
+    title: Einfache Projektverwaltung
+    details: Ein geführter Workflow zum Erstellen und Verwalten von Projekten, Kursen und Veranstaltungen.
+  - icon: 👥
+    title: Für Teams
+    details: Rollen-basierte Zusammenarbeit mit Owner, Partner, Participant und Member.
 ---
 
-## Version Roadmap
+## What is Theaterpedia?
 
-| Version | Status | Description |
-|---------|--------|-------------|
-| v0.2 | ✅ Released | Core infrastructure, migrations, basic workflow |
-| v0.3 | 🔄 Current | Project stepper, image import, tag families |
-| v0.4 | 📋 Planned | Final alpha before Christmas - full workflow |
-| v0.5 | 🔮 Future | Post-holiday refinements |
+Theaterpedia is a platform for theater pedagogy (Theaterpädagogik), similar in spirit to Wikipedia but focused on making regional theater education visible and accessible online.
+
+### The Problem It Solves
+
+Theater educators often work in isolation. When someone wants to find a theater workshop for their school or community, they face:
+- Scattered information across personal websites, social media, and email lists
+- Difficulty finding qualified professionals in their region
+- No central place to discover what's available locally
+
+### The Solution
+
+Theaterpedia provides:
+- **Regional visibility** - Organized by geographic regions ("Regios") across Bavaria
+- **Project management** - Easy tools for educators to create and manage their offerings
+- **Event catalogs** - Searchable programs that can be booked directly
+- **Professional networking** - Connect with other theater educators in your area
+
+---
+
+## Documentation Structure
+
+| Section | Audience | Language |
+|---------|----------|----------|
+| [Anleitung](/de/) | End-users, practitioners | German |
+| [Admin Guide](/admin/) | Administrators | English |
+| [Developer Docs](/dev/) | Developers, code automation | English |
+
+---
+
+## Version Status
+
+| Version | Status | Focus |
+|---------|--------|-------|
+| v0.2 | ✅ Released | Core infrastructure |
+| v0.3 | 🔄 In Progress | Project stepper, image import |
+| v0.4 | 📋 Planned | Final alpha (before Christmas) |
+| v0.5 | 🔮 Beta | Post-holiday refinements |
+
+---
+
+<div style="text-align: center; margin-top: 2rem; color: var(--vp-c-text-3);">
+
+*Theaterpedia e.V. - Eine Initiative für die Professionalisierung der Theaterpädagogik*
+
+</div>
