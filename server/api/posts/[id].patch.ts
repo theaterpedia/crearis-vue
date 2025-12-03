@@ -49,21 +49,24 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check authorization
-        // Allow: post owner, project owner, or project member
+        // Allow: post owner, project owner, or project member (configrole=8)
+        // Partners (configrole=2) and participants (configrole=4) can only edit their own posts
         const isPostOwner = post.owner_id === session.userId
         const isProjectOwner = post.project_owner_id === session.userId
         
-        // Check if user is a project member
-        let isProjectMember = false
+        // Check if user is a project member with edit rights (configrole=8)
+        let isProjectMemberWithEditRights = false
         if (post.project_id) {
             const membership = await db.get(
                 'SELECT configrole FROM project_members WHERE project_id = ? AND user_id = ?',
                 [post.project_id, session.userId]
-            )
-            isProjectMember = !!membership
+            ) as { configrole: number } | undefined
+            // Only full members (configrole=8) can edit any post
+            // Partners (2) and participants (4) can only edit their own posts
+            isProjectMemberWithEditRights = membership?.configrole === 8
         }
 
-        if (!isPostOwner && !isProjectOwner && !isProjectMember) {
+        if (!isPostOwner && !isProjectOwner && !isProjectMemberWithEditRights) {
             throw createError({
                 statusCode: 403,
                 message: 'Not authorized to update this post'
