@@ -1,6 +1,7 @@
 # Deferred Tasks from Projectlogin Workflow Sprint
 
 **Sprint:** December 1-9, 2025  
+**Deferred Analysis:** December 11, 2025  
 **Purpose:** Collection point for tasks, ideas, and references that don't fit into the current day or are flagged as 'nice-to-have'.
 
 > ⚠️ This file is a dropbox - it will have duplicates, missing items, and needs thorough analysis after the sprint ends.
@@ -125,8 +126,8 @@
 
 ---
 
-## Post-Sprint Analysis (Dec 10+)
-<!-- Fill in after sprint ends -->
+## Post-Sprint Analysis (Dec 11+)
+<!-- Fill in after sprint ends - Dec 10 is DevDocs day -->
 
 ### Priority Items for Next Sprint
 1. 
