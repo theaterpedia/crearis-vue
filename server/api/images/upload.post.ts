@@ -89,8 +89,6 @@ function validateXmlid(xmlid: string): void {
     // \.([a-z0-9_]+)$ - identifier: alphanumeric with underscores
     const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
 
-    console.log('[Upload] Validating xmlid:', JSON.stringify(xmlid), 'Length:', xmlid.length)
-
     // Check for exactly 2 dots
     const dotCount = (xmlid.match(/\./g) || []).length
     if (dotCount !== 2) {

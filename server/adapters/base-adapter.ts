@@ -81,14 +81,6 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 author: metadata.author ? metadata.author : null
             }
 
-            console.log(`[${this.type}] Image data prepared:`, {
-                name: imageData.name,
-                alt_text: imageData.alt_text,
-                alt_text_source: batchData?.alt_text ? 'batch' : 'metadata',
-                about: imageData.about,
-                url: imageData.url.substring(0, 80) + '...'
-            })
-
             // Build params array
             const baseParams = [
                 imageData.name,
@@ -130,11 +122,6 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 )
                 RETURNING id
             `
-
-            // DEBUG: Log SQL and params
-            console.log(`[${this.type}] INSERT SQL:`, sql.replace(/\s+/g, ' ').trim())
-            console.log(`[${this.type}] Params count:`, allParams.length)
-            console.log(`[${this.type}] Params:`, allParams.map((p, i) => `${i}: ${typeof p} = ${JSON.stringify(p)?.substring(0, 50)}`))
 
             // Insert image - author uses ROW()::media_adapter for composite type
             const result = await db.run(sql, allParams)
