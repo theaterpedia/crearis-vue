@@ -4,19 +4,32 @@ Quick reference tables for system registry values. Use this when you need to qui
 
 ## Dev Tables (Auth Focus)
 
-### sysreg_statuses
+### sysreg_statuses (Migration 040)
 
-Entity lifecycle states:
+Entity lifecycle states with 3-bit slots:
 
-| ID | Name | Description | Scope |
-|----|------|-------------|-------|
-| 1 | idea | Initial concept | General |
-| 2 | draft | Work in progress | General |
-| 3 | review | Under review | General |
-| 4 | published | Public/live | General |
-| 5 | archived | No longer active | General |
-| 18 | new | New project | Project (stepper) |
-| 19 | demo | Demo project | Project (stepper) |
+| Value | Bits | Name | Label DE | Scope |
+|-------|------|------|----------|-------|
+| 1 | 0-2 | new | Neu | Category |
+| 2 | 0-2 | new_image | Roh | Subcategory |
+| 3 | 0-2 | new_user | Passiv | Subcategory |
+| 8 | 3-5 | demo | Demo | Category |
+| 16 | 3-5 | demo_event | Vorlage | Subcategory |
+| 24 | 3-5 | demo_project | Vorlage | Subcategory |
+| 64 | 6-8 | draft | Entwurf | Category |
+| 512 | 9-11 | confirmed | Bestätigt | Category |
+| 4096 | 12-14 | released | Freigegeben | Category |
+| 32768 | 15 | archived | Archiviert | Single bit |
+| 65536 | 16 | trash | Papierkorb | Single bit |
+
+**Scope toggles (bits 17-21):**
+| Value | Bit | Name | Description |
+|-------|-----|------|-------------|
+| 131072 | 17 | scope_team | Team visibility |
+| 262144 | 18 | scope_login | Login visibility |
+| 524288 | 19 | scope_project | Project scope |
+| 1048576 | 20 | scope_regio | Regional scope |
+| 2097152 | 21 | scope_public | Public scope |
 
 ### sysreg_configs
 
@@ -146,11 +159,19 @@ WHERE project_id = ?
 
 ### Status checks in code
 ```typescript
-// Stepper mode (status 18 or 19)
-const isStepper = status_id === 18 || status_id === 19
+// Status values from Migration 040
+const STATUS_NEW = 1        // bits 0-2
+const STATUS_DEMO = 8       // bits 3-5
+const STATUS_DRAFT = 64     // bits 6-8
 
-// Published (status 4)
-const isPublished = status_id === 4
+// Stepper mode (status new=1 or demo=8)
+const isStepper = status_id === 1 || status_id === 8
+
+// Draft and above (activated)
+const isActivated = status_id >= 64
+
+// Published (released category)
+const isPublished = status_id >= 4096 && status_id < 32768
 ```
 
 ---

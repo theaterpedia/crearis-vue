@@ -293,12 +293,17 @@ const currentStep = ref(0)
 // Current tab for navigation mode
 const currentNavTab = ref('events')
 
+// Status values from Migration 040
+const STATUS_NEW = 1        // bits 0-2
+const STATUS_DEMO = 8       // bits 3-5
+const STATUS_DRAFT = 64     // bits 6-8
+
 // Computed props based on project status
-// Stepper mode: status 'new' (18) or 'demo' (19)
-// Navigation mode: all other statuses
+// Stepper mode: status 'new' (1) or 'demo' (8)
+// Navigation mode: all other statuses (draft and above)
 const isStepper = computed(() => {
     if (projectStatusId.value === null) return true // Default to stepper while loading
-    return projectStatusId.value === 18 || projectStatusId.value === 19
+    return projectStatusId.value === STATUS_NEW || projectStatusId.value === STATUS_DEMO
 })
 const isLocked = computed(() => {
     // TODO: Define when project should be locked (e.g., status 'released' or higher)
@@ -469,22 +474,22 @@ function completeProject() {
 // Handle project activation: change status to 'draft' and switch to navigation mode
 async function handleActivateProject() {
     try {
-        // Status 'draft' has status_id = 2 (from sysreg_statuses)
+        // Status 'draft' has status_id = 64 (from Migration 040: bits 6-8)
         const response = await fetch(`/api/projects/${projectId.value}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status_id: 2 })
+            body: JSON.stringify({ status_id: STATUS_DRAFT })
         })
 
         if (response.ok) {
             // Update local state
-            projectStatusId.value = 2
+            projectStatusId.value = STATUS_DRAFT
             if (projectData.value) {
-                projectData.value.status_id = 2
+                projectData.value.status_id = STATUS_DRAFT
             }
             // Reset to first navigation tab
             currentNavTab.value = 'homepage'
-            console.log('Project activated - status changed to draft')
+            console.log('Project activated - status changed to draft (64)')
         } else {
             const error = await response.json()
             console.error('Failed to activate project:', error)
