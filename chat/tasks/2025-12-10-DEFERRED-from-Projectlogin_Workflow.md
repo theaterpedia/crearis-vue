@@ -64,6 +64,41 @@
 - [ ] **Database constraint**: Ensure every project has an owner (prevent inaccessible projects)
 - [ ] **Superuser pattern**: Create user with owner role on all projects (instead of admin acting as superuser)
 
+### Project-Level Entity Containment (v0.5 Priority)
+> **IMPORTANT CONCEPT** - Do NOT duplicate this logic in v0.2-v0.4 state machines!
+
+The current auth system has two levels:
+1. **Project-level access**: Who can see/access the project itself
+2. **Entity-level access**: Who can see/access posts/images/events within the project
+
+**Problem:** When a project is in certain states (`new`, `trash`, `archived`), all entities within it should be "contained" - invisible to non-owners even if the entity's own r-flags would normally allow access.
+
+**Solution (v0.5):** Implement a DB-level trigger/constraint that:
+- Checks project status before returning any entity within that project
+- Prevents "leaking" of entities from inconsistent projects
+- Allows full project recovery (trash → restore) without altering entity states
+- Works like a "containment field" around the project
+
+**Edge cases to handle:**
+| Project Status | Who Sees Project | Who Sees Entities Within |
+|----------------|------------------|--------------------------|
+| `new (1)` | Owner only | Owner only (containment) |
+| `trash` | Owner only | Owner only (containment) |
+| `archived` | Owner + members? | TBD - may allow read-only |
+| `demo (8)+` | Per capability rules | Per entity r-flags |
+
+**Why defer to v0.5:**
+- Requires careful DB trigger design
+- Must handle edge cases (cross-project images, shared entities)
+- Current v0.2-v0.4 work focuses on entity-level state machines
+- Premature implementation would create duplication
+
+**For v0.2-v0.4 state machine work:**
+- Keep state machine logic LOCAL to the entity
+- Don't try to check project status in entity workflows
+- The project-role → entity-role cascade is a v0.5 concern
+- Comment in code: `// v0.5: Project containment trigger handles project-level visibility`
+
 ---
 
 ## v1.1 Features (Future / Nice-to-Have)

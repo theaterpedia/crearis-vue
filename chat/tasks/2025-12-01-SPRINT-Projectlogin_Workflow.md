@@ -74,6 +74,11 @@ This sprint delivers the core project workflow system, enabling consistent login
 | 2. publish-a-post (partial) | Post | draft→review | Fri AM |
 | 3. upload-review-release-image | Image | new→draft→confirmed→released | Fri PM |
 
+> ⚠️ **IMPORTANT: Keep state machines LOCAL to entity!**
+> Do NOT implement project-status → entity-visibility cascade in v0.3.
+> The "project containment" logic (new/trash/archived projects hide all entities) is a v0.5 DB trigger.
+> See: [Deferred Tasks - Project-Level Entity Containment](./2025-12-10-DEFERRED-from-Projectlogin_Workflow.md#project-level-entity-containment-v05-priority)
+
 **Key Deliverables:**
 - [ ] Workflow 1: Project stepper + dashboard activation
 - [ ] Workflow 2: Post publishing (complete in v0.4)
