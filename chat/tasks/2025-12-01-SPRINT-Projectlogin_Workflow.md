@@ -48,49 +48,54 @@ This sprint delivers the core project workflow system, enabling consistent login
 
 ## Milestones
 
-### VERSION 0.2 / December 2nd, 16:00
-**Focus:** Core Status Management + Internal Project Experience
+### VERSION 0.2final / December 3rd (Wed)
+**Focus:** Surface roles/auth + tags with 3 patches
+
+| Patch | Entity | What |
+|-------|--------|------|
+| 1 | Posts | dtags/ctags/ttags + owner visibility |
+| 2 | Images | TagFamilies in cimgImportStepper (✅ working) |
+| 3 | Project Check-in | new→demo/draft + enable dashboard + members |
+
+**Key Deliverables:**
+- [x] Fix stepper visibility (status values updated to Migration 040)
+- [ ] Project check-in: advance status, switch to dashboard view
+- [ ] Basic posts editing with tags
+- [x] Images with TagFamilies verified
+
+### VERSION 0.3 / December 5th (Fri) 16:00
+**Focus:** Consistent responsive experience in Stepper + Dashboard
+
+**3 Workflows (TDD approach: middleware → composable → endpoint → UI):**
+
+| Workflow | Entity | States | Day |
+|----------|--------|--------|-----|
+| 1. create-and-prepare-a-project | Project | new→demo→draft→review | Thu |
+| 2. publish-a-post (partial) | Post | draft→review | Fri AM |
+| 3. upload-review-release-image | Image | new→draft→confirmed→released | Fri PM |
+
+**Key Deliverables:**
+- [ ] Workflow 1: Project stepper + dashboard activation
+- [ ] Workflow 2: Post publishing (complete in v0.4)
+- [ ] Workflow 3: Image consent workflow + tasks table
+- [ ] Kanban as **feature preview** (showcase for tasks table design)
+
+> ⚠️ **Note for Hans:** Do NOT try to finish or release Kanban before v0.5!
+> Kanban serves as interface spec for tasks table, not production feature.
+
+### VERSION 0.4 / December 9th (Tue morning)
+**Focus:** Publishing workflow → acceptable external pages
 
 | Track | Target |
 |-------|--------|
-| A: Status | Composables per entity, tagFamilyDisplay/Editor integration, db-trigger alignment |
-| B: Internal | Project types (topic/project), stepper, dashboard, post/image editing, page config |
-| C: Auth | Owner/member/admin differentiation, draft inter-project relationships |
+| A: Publishing | Complete post workflow: draft→review→released |
+| B: External | Public project presentation, acceptable pages |
+| C: Images | Full consent/release workflow |
 
 **Key Deliverables:**
-- [ ] `useProjectStatus`, `useEventStatus`, `usePostStatus` composables
-- [ ] Status UI components integrated from sysreg
-- [ ] Project stepper functional for draft→released
-- [ ] Basic post and image editing
-
-### VERSION 0.3 / December 5th, 16:00
-**Focus:** Workflow Logic + External Presentation
-
-| Track | Target |
-|-------|--------|
-| A: Workflow | Enhanced status with workflow examples (events) |
-| B: Internal | Event editing, event-page config, post/image→event association |
-| C: External | Project pages, layouts, galleries, lists, legal pages |
-
-**Key Deliverables:**
-- [ ] Event workflow prototype
-- [ ] External project presentation
-- [ ] Configurable event checkout
-- [ ] Legal page editing (impressum, contact, datenschutz)
-
-### VERSION 0.4 / December 9th, 16:00
-**Focus:** Kanban + Special Projects + Roadmap
-
-| Track | Target |
-|-------|--------|
-| A: Kanban | Per-project and per-user kanban views |
-| B: Special | 'dev' and 'tp' projects (prototype, accepts code-hacks, not fully tested) |
-| C: Roadmap | External roadmap display, interactions table integration |
-
-**Key Deliverables:**
-- [ ] Kanban board with unified status ordering
-- [ ] Features entity and roadmap display
-- [ ] Interaction system for roadmap feedback
+- [ ] Core publishing workflow produces acceptable external pages
+- [ ] Complete image consent workflow
+- [ ] External project pages functional
 
 ---
 

@@ -30,6 +30,18 @@
 
 ## v0.5 Features (Next Sprint)
 
+### Kanban System (Feature Preview → Production)
+> Kanban was used as interface spec for tasks table in v0.3, now ready for production work.
+
+- [ ] **Complete Kanban implementation**: Full drag-drop, persistence, filters
+- [ ] **Per-project kanban view**: Project-scoped task boards
+- [ ] **Per-user kanban view**: Cross-project task aggregation
+- [ ] **Unified status ordering**: Align Kanban columns with 7 entity states
+- [ ] **Components to complete:**
+  - `KanbanDemo.vue` - Make production-ready
+  - `TaskDashboard.vue` - Integrate with tasks table
+  - `Kanban.vue` - Core component polish
+
 ### Auth-System
 - [ ] **Admin role on sign bit (bit 31)**: Implement admin role detection with sign bit handling
   - Sign bit produces negative value in JavaScript (-2147483648)
