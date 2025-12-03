@@ -118,24 +118,26 @@ function validateXmlid(xmlid: string): void {
 }
 
 /**
- * Parse ctags from comma-separated string to Buffer
+ * Parse tags from string to INTEGER
+ * After Migration 036, ctags/rtags are INTEGER columns (32-bit)
+ * Accepts: empty string, single integer value, or defaults to 0
+ * Examples: "", "0", "128", "255"
  */
-function parseTagBuffer(tagString?: string): Buffer {
-    if (!tagString) {
-        return Buffer.from([0])
+function parseTagInteger(tagString?: string): number {
+    // Handle empty, null, undefined, or whitespace-only strings
+    if (!tagString || tagString.trim() === '') {
+        return 0
     }
 
     try {
-        const bytes = tagString.split(',').map(s => parseInt(s.trim(), 10))
-        if (bytes.some(b => isNaN(b) || b < 0 || b > 255)) {
-            throw new Error('Invalid byte value')
-        }
-        return Buffer.from(bytes)
+        const trimmed = tagString.trim()
+        const parsed = parseInt(trimmed, 10)
+        // Treat NaN as 0 for robustness
+        return isNaN(parsed) ? 0 : parsed
     } catch (error) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Invalid tag format. Expected comma-separated bytes (0-255)'
-        })
+        console.error('[Upload] Tag parse error:', error, 'Input:', tagString)
+        // Return default instead of throwing
+        return 0
     }
 }
 
@@ -228,11 +230,11 @@ export default defineEventHandler(async (event) => {
         // Validate xmlid format
         validateXmlid(xmlid)
 
-        // Parse tags
-        const ctags = parseTagBuffer(ctagsStr)
-        const rtags = parseTagBuffer(rtagsStr)
-        const ttags = parseTagBuffer(ttagsStr)
-        const dtags = parseTagBuffer(dtagsStr)
+        // Parse tags as integers (Migration 036 changed these from BYTEA to INTEGER)
+        const ctags = parseTagInteger(ctagsStr)
+        const rtags = parseTagInteger(rtagsStr)
+        const ttags = parseTagInteger(ttagsStr)
+        const dtags = parseTagInteger(dtagsStr)
 
         // Extract domaincode from xmlid for batch data
         const domaincode = xmlid.split('.')[0]

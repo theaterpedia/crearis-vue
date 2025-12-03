@@ -77,8 +77,8 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 about: metadata.about || null,
                 ctags: batchData?.ctags ?? 0,  // INTEGER, not BYTEA
                 rtags: batchData?.rtags ?? 0,  // INTEGER, not BYTEA
-                // Author info as composite type (adapter, file_id, account_id, folder_id, info, config)
-                author: metadata.author ? `(${metadata.author.adapter},"${metadata.author.file_id || ''}","${metadata.author.account_id || ''}","${metadata.author.folder_id || ''}","${metadata.author.info || ''}",${metadata.author.config ? `"${JSON.stringify(metadata.author.config).replace(/"/g, '\\"')}"` : 'null'})` : null
+                // Author info as composite type - needs ROW() syntax for PostgreSQL
+                author: metadata.author ? metadata.author : null
             }
 
             console.log(`[${this.type}] Image data prepared:`, {
@@ -89,14 +89,8 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 url: imageData.url.substring(0, 80) + '...'
             })
 
-            // Insert image
-            const result = await db.run(`
-                INSERT INTO images (
-                    name, url, project_id, owner_id, alt_text, title,
-                    x, y, fileformat, license, xmlid, geo, date, about, ctags, rtags, author
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                RETURNING id
-            `, [
+            // Build params array
+            const baseParams = [
                 imageData.name,
                 imageData.url,
                 imageData.project_id,
@@ -112,9 +106,38 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 imageData.date,
                 imageData.about,
                 imageData.ctags,
-                imageData.rtags,
-                imageData.author
-            ])
+                imageData.rtags
+            ]
+
+            const authorParams = imageData.author ? [
+                imageData.author.adapter,
+                imageData.author.file_id || '',
+                imageData.author.account_id || '',
+                imageData.author.folder_id || '',
+                imageData.author.info || '',
+                imageData.author.config ? JSON.stringify(imageData.author.config) : null
+            ] : []
+
+            const allParams = [...baseParams, ...authorParams]
+
+            // Build SQL
+            const sql = `
+                INSERT INTO images (
+                    name, url, project_id, owner_id, alt_text, title,
+                    x, y, fileformat, license, xmlid, geo, date, about, ctags, rtags, author
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                    ${imageData.author ? `ROW(?, ?, ?, ?, ?, ?::jsonb)::media_adapter` : 'NULL'}
+                )
+                RETURNING id
+            `
+
+            // DEBUG: Log SQL and params
+            console.log(`[${this.type}] INSERT SQL:`, sql.replace(/\s+/g, ' ').trim())
+            console.log(`[${this.type}] Params count:`, allParams.length)
+            console.log(`[${this.type}] Params:`, allParams.map((p, i) => `${i}: ${typeof p} = ${JSON.stringify(p)?.substring(0, 50)}`))
+
+            // Insert image - author uses ROW()::media_adapter for composite type
+            const result = await db.run(sql, allParams)
 
             const imageId = result.rows?.[0]?.id
 

@@ -12,9 +12,14 @@
             <Columns>
                 <Column width="auto">
                     <Prose>
-                        <Heading overline="Projekte starten und vernetzen" is="h2"
-                            headline="Websites in der Pipeline"></Heading>
-                        <p>Die Digitalisierung stellt die Demokratie auf die Probe. Viele Theaterpädagog:innen möchten sich einsetzen für die Sache eine nachhaltige Gesellschaftsform im 21. Jahrhundert. Es braucht dafür ein offenes Internet. Wenn Theaterpädagogik sich einbringen möchte dann braucht dies einen souveränen Webauftritt. Dies ist das Kernanliegen von Theaterpedia. Eine transparente und wirksame Vernetzung soll entstehen - einzig und allein entlang der inhaltlichen Linien. </p>
+                        <Heading overline="Projekte starten und vernetzen" is="h2" headline="Websites in der Pipeline">
+                        </Heading>
+                        <p>Die Digitalisierung stellt die Demokratie auf die Probe. Viele Theaterpädagog:innen möchten
+                            sich einsetzen für die Sache eine nachhaltige Gesellschaftsform im 21. Jahrhundert. Es
+                            braucht dafür ein offenes Internet. Wenn Theaterpädagogik sich einbringen möchte dann
+                            braucht dies einen souveränen Webauftritt. Dies ist das Kernanliegen von Theaterpedia. Eine
+                            transparente und wirksame Vernetzung soll entstehen - einzig und allein entlang der
+                            inhaltlichen Linien. </p>
 
                     </Prose>
                     <button style="background-color: var(--color-secondary-bg)" data-fpostlink data-hlogic="default">
@@ -257,7 +262,7 @@ function setupVisibilityRefresh() {
         }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    
+
     // Return cleanup function
     cleanupVisibility = () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -266,7 +271,7 @@ function setupVisibilityRefresh() {
 
 onMounted(async () => {
     await fetchProjects()
-    
+
     // Set up auto-refresh on page visibility change
     setupVisibilityRefresh()
 })
