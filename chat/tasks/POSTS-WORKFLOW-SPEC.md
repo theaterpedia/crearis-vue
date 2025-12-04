@@ -504,6 +504,94 @@ Authorization:
 
 ---
 
+## Internal Design Clarification (v0.3)
+
+### Entry Point: PostPage.vue
+
+The primary implementation entry point is `src/views/PostPage.vue`. Current functional elements:
+- Edit button (opens EditPanel)
+- Config button (opens PageConfigController)
+- TagFamilies component (ctags, ttags, dtags display + editing)
+- StatusBadge (display only)
+
+**Location**: Below heading/hero, top of main column in PageLayout
+
+### Tag Families Display (ctags, ttags, dtags)
+
+Already implemented via `TagFamilies.vue` component:
+```vue
+<TagFamilies 
+  v-model:ttags="post.ttags" 
+  v-model:ctags="post.ctags" 
+  v-model:dtags="post.dtags"
+  :status="post.status" 
+  :enable-edit="canEdit" 
+  group-selection="core"
+/>
+```
+
+**Optional Rule**: Participants/partners who own a post should NOT edit tags (limited taxonomy understanding). Implement via extended `canEdit` check.
+
+### Status Display + Editing (Key Mount Point)
+
+**Critical**: Status is NOT handled by TagFamilies. Status needs its own control path:
+
+1. **Display**: Similar tile to TagFamilyTile, but status-specific
+2. **Editing**: Controlled by entity (`PostPage.vue` → `usePostStatus`)
+3. **Workflow Surface**: StatusEditor is where we surface the 15 rules
+
+**StatusEditor Component Pattern** (to be created):
+- Clone/extend TagGroupEditor.vue logic (tested patterns)
+- Add workflow-specific UI:
+  - Available transitions (from `availableTransitions`)
+  - Approval/reject buttons (for project owner)
+  - Skip review option (if team ≤ 3)
+
+**Slots Inside StatusEditor**:
+```vue
+<StatusEditor :post="post" :project="project">
+  <!-- Tab 1: Status transitions -->
+  <template #transitions>
+    <TransitionButtons :available="availableTransitions" @transition="handleTransition" />
+  </template>
+  
+  <!-- Tab 2: Tasks access (via endpoint) -->
+  <template #tasks>
+    <TasksList :entity-type="'posts'" :entity-id="post.id" />
+  </template>
+  
+  <!-- Tab 3: rtags (region tags) -->
+  <template #rtags>
+    <TagGroupEditor family-name="rtags" v-model="post.rtags" />
+  </template>
+</StatusEditor>
+```
+
+**Display UI**: Simplified TagFamilyTile pattern:
+- Few lines summary
+- Zoom option → modal with deep read-only visualization
+
+### Config Pane Integration
+
+Status editing is primarily owner/project-owner activity. On route `/sites/[domaincode]/posts`:
+- Config pane = place for workflows, configurations
+- Show available transitions
+- Tasks access
+- rtags editing
+
+### Implementation Files
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| `PostPage.vue` | Entry point, orchestrates all | Exists |
+| `usePostPermissions.ts` | Frontend permission composable | ✅ Created |
+| `posts-permissions.ts` | Server permission utils | ✅ Created |
+| `StatusTile.vue` | Status display (like TagFamilyTile) | TODO |
+| `StatusEditor.vue` | Status editing with workflow | TODO |
+| `usePostStatus.ts` | Status state management | TODO |
+
+---
+
 ## Implementation Checklist
 
 ### v0.2 (Completed ✅)
