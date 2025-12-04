@@ -29,10 +29,12 @@
   - Future: `tasks WHERE type='comment'` (closer to Odoo chatter pattern)
   - Rationale: Tasks already bridge states, comments often become tasks
   - Decision: JSONB for v0.3-v0.4 (fast, contained), evaluate migration for v0.5+
-- [ ] **write-nocreate project config**: Project-level config to prevent members from creating new entities
-  - Field: `config.memberWriteMode: 'write-all' | 'write-nocreate'`
-  - Default: `write-all` (members can create entities from draft+)
-  - Use case: Special projects where only owner creates content
+- [ ] **Workflow & Tags Extensions**: See [WORKFLOW-TAGS-EXTENSIONS.md](./WORKFLOW-TAGS-EXTENSIONS.md)
+  - `read-summary` limitation for participants
+  - `write-nocreate` project config mode
+  - `write-body` vs `write-meta` distinction
+  - Tag edit restriction for delegated owners (participants/partners)
+  - rtags (record tags) specification: `isFeatured`, `isDeprecated`, `isPinned`, etc.
 
 ### From v0.4 (Dec 9)
 <!-- Add items here during v0.4 work -->

@@ -10,8 +10,8 @@
 |-------|------|------|------|--------|
 | Early Sunrise | 05:30-07:00 | Meta-reflection | Lead discussions | Ask questions, propose alternatives |
 | Late Sunrise | 07:30-08:30 | Plan of Day | Clarify scope | Confirm understanding, no execution |
-| Morning | 08:30-12:00 | Deep Work | Active guidance | Execute with guidance |
-| Midday Report | 12:00-12:30 | Written Handoff | Review later | Write report, list questions |
+| Morning | 08:30-11:30 | Deep Work | Active guidance | Execute with guidance |
+| **Lunch Summary** | **11:30-12:00** | **Closing Procedure** | **Review sidelined** | **Write summary, list deferred** |
 | Afternoon | 14:00-18:00 | Surface to UI | 5-min hourly check-ins | More autonomous, create tests/UI |
 | Evening | 18:00+ | Docs & Envisioning | Occasional assist | Prepare options, demo branches |
 
@@ -99,34 +99,60 @@ When scope is clear but direction needs exploration. Shortcut to hands-on protot
 
 ---
 
-### 4. Midday Report (12:00-12:30) - Written Handoff
+### 4. Lunch Summary (11:30-12:00) - Closing Procedure
 
-**Focus:** Create written artifact for afternoon continuity
+**Focus:** Reflect on morning, capture sidelined items, prepare afternoon
 
-**Report template:**
+**Why this matters:**
+- Creates anchor points in chat logs for deferred ideas
+- Makes it easy to find entry points when picking up tasks weeks/months later
+- Ensures nothing gets lost in the flow
+
+**Procedure:**
+
+1. **Review Sidelined Items** (5 min)
+   - Claude lists all "put on v0.5" or "defer" items from morning session
+   - 2-3 lines explanation per item: what, why deferred, where it originated
+   - Hans decides: keep deferred, move to afternoon, or drop
+
+2. **Write Lunch Summary** (15 min)
+   - File: `chat/tasks/YYYY-MM-DD-lunch-summary.md`
+   - Morning accomplishments
+   - Sidelined items with anchors
+   - Afternoon plan
+   - Open questions
+
+3. **Quick Sync** (10 min)
+   - Hans reviews summary
+   - Clarify any afternoon blockers
+   - Commit summary to git
+
+**Summary template:**
 ```markdown
-## Morning Session Report - [Date]
+## Lunch Summary - [Date]
 
-### Completed
-- [ ] Task 1
-- [ ] Task 2
+### Morning Accomplished
+- [x] Task 1
+- [x] Task 2
 
-### In Progress
-- [ ] Task with current state
+### Sidelined/Deferred Items
+| Item | Why Deferred | Origin | Target |
+|------|--------------|--------|--------|
+| Feature X | Scope creep | 09:15 discussion | v0.5 |
+| Idea Y | Needs more spec | 10:30 chat | Tomorrow |
+
+### Afternoon Plan
+1. Priority task
+2. Secondary task
 
 ### Open Questions
-1. Question needing Hans's input
-2. Another question
-
-### Afternoon Proposal
-Suggested focus: [specific task]
-Estimated autonomy: [high/medium/low]
+1. Question for afternoon
 ```
 
 **Claude's behavioral preset:**
-- Write the report proactively
-- List concrete questions, not vague concerns
-- Propose afternoon focus with confidence level
+- Proactively list sidelined items before Hans asks
+- Include chat timestamps or context for traceability
+- Propose afternoon priorities based on morning learnings
 
 ---
 
