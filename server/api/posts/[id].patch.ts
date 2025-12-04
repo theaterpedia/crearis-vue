@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
         // Partners (configrole=2) and participants (configrole=4) can only edit their own posts
         const isPostOwner = post.owner_id === session.userId
         const isProjectOwner = post.project_owner_id === session.userId
-        
+
         // Check if user is a project member with edit rights (configrole=8)
         let isProjectMemberWithEditRights = false
         if (post.project_id) {

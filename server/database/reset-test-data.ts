@@ -7,17 +7,20 @@
  * Test Projects:
  * - opus1 (id=9): type=topic, owner=Hans Opus (id=8)
  * - opus2 (id=17): type=project, owner=Rosa Königer (id=18)
- * - opus3 (id=5): type=regio, owner=Kathrin Jung (id=9)
+ * - opus3 (id=5): type=regio, owner=Kathrin Opus (id=9)
  * 
  * Test Users for opus1:
- * - Hans Opus (id=8, hans.opus@theaterpedia.org) - owner
- * - Nina Opus (id=17, nina.opus@theaterpedia.org) - member (configrole=8)
- * - Rosa Opus (id=7, rosa.opus@theaterpedia.org) - participant (configrole=4)
- * - Marc Opus (id=103, marc.opus@theaterpedia.org) - partner (configrole=2)
+ * - Hans Opus (id=8, hans.opus@theaterpedia.org) - owner, pw: opus1hans
+ * - Nina Opus (id=17, nina.opus@theaterpedia.org) - member, pw: opus1nina
+ * - Rosa Opus (id=7, rosa.opus@theaterpedia.org) - participant, pw: opus1rosa
+ * - Marc Opus (id=103, marc.opus@theaterpedia.org) - partner, pw: opus1marc
+ * 
+ * Test Users for opus3:
+ * - Kathrin Opus (id=9, kathrin.opus@theaterpedia.org) - owner, pw: opus1kathrin
  * 
  * Run: npx tsx server/database/reset-test-data.ts
  * Options:
- *   --passwords  Also reset test user passwords (requires env vars)
+ *   --passwords  Also reset test user passwords (uses default passwords if env not set)
  *   --status=<value>  Set opus1 project status (new|demo|draft|confirmed|released)
  */
 
@@ -70,12 +73,13 @@ const TEST_PROJECTS = [
 ]
 
 // Test user definitions for opus1
-const TEST_USERS = [
+const TEST_USERS_OPUS1 = [
   {
     id: 8,
     username: 'Hans Opus',
     sysmail: 'hans.opus@theaterpedia.org',
     envKey: 'TEST_USER_HANS_PASSWORD',
+    defaultPassword: 'opus1hans',
     project_id: 9,
     configrole: null,  // owner - determined by owner_id
     role: 'owner'
@@ -85,6 +89,7 @@ const TEST_USERS = [
     username: 'Nina Opus',
     sysmail: 'nina.opus@theaterpedia.org',
     envKey: 'TEST_USER_NINA_PASSWORD',
+    defaultPassword: 'opus1nina',
     project_id: 9,
     configrole: CONFIGROLE.member,
     role: 'member'
@@ -94,6 +99,7 @@ const TEST_USERS = [
     username: 'Rosa Opus',
     sysmail: 'rosa.opus@theaterpedia.org',
     envKey: 'TEST_USER_ROSA_PASSWORD',
+    defaultPassword: 'opus1rosa',
     project_id: 9,
     configrole: CONFIGROLE.participant,
     role: 'participant'
@@ -103,11 +109,29 @@ const TEST_USERS = [
     username: 'Marc Opus',
     sysmail: 'marc.opus@theaterpedia.org',
     envKey: 'TEST_USER_MARC_PASSWORD',
+    defaultPassword: 'opus1marc',
     project_id: 9,
     configrole: CONFIGROLE.partner,
     role: 'partner'
   }
 ]
+
+// Test user definitions for opus3
+const TEST_USERS_OPUS3 = [
+  {
+    id: 9,
+    username: 'Kathrin Opus',
+    sysmail: 'kathrin.opus@theaterpedia.org',
+    envKey: 'TEST_USER_KATHRIN_PASSWORD',
+    defaultPassword: 'opus1kathrin',
+    project_id: 5,
+    configrole: null,  // owner - determined by owner_id
+    role: 'owner'
+  }
+]
+
+// Combined test users
+const TEST_USERS = [...TEST_USERS_OPUS1, ...TEST_USERS_OPUS3]
 
 // Parse command line arguments
 const args = process.argv.slice(2)
@@ -122,7 +146,7 @@ async function resetTestData() {
   console.log('📦 Resetting project statuses...')
   for (const project of TEST_PROJECTS) {
     let targetStatus = project.defaultStatus
-    
+
     // Special handling for opus1 if status flag provided
     if (project.domaincode === 'opus1' && requestedStatus) {
       if (requestedStatus in STATUS) {
@@ -141,8 +165,18 @@ async function resetTestData() {
     console.log(`   ✅ ${project.domaincode}: status → ${statusName} (${targetStatus})`)
   }
 
-  // 2. Verify/reset project_members for opus1
-  console.log('\n👥 Verifying project members for opus1...')
+  // 2. Verify/update test user emails and names
+  console.log('\n📧 Verifying test user accounts...')
+  for (const user of TEST_USERS) {
+    await db.run(
+      `UPDATE users SET username = ?, sysmail = ? WHERE id = ?`,
+      [user.username, user.sysmail, user.id]
+    )
+    console.log(`   ✅ ${user.username}: ${user.sysmail}`)
+  }
+
+  // 3. Verify/reset project_members
+  console.log('\n👥 Verifying project members...')
   for (const user of TEST_USERS) {
     if (user.configrole === null) {
       // Owner - verify owner_id on project
@@ -150,7 +184,7 @@ async function resetTestData() {
         `SELECT owner_id FROM projects WHERE id = ?`,
         [user.project_id]
       ) as { owner_id: number } | undefined
-      
+
       if (project?.owner_id === user.id) {
         console.log(`   ✅ ${user.username}: owner (via owner_id)`)
       } else {
@@ -184,13 +218,14 @@ async function resetTestData() {
     }
   }
 
-  // 3. Reset passwords if requested
+  // 4. Reset passwords if requested
   if (resetPasswords) {
     console.log('\n🔑 Resetting test user passwords...')
     for (const user of TEST_USERS) {
-      const password = process.env[user.envKey]
+      // Use env var if set, otherwise use defaultPassword
+      const password = process.env[user.envKey] || user.defaultPassword
       if (!password) {
-        console.log(`   ⚠️  ${user.username}: ${user.envKey} not set`)
+        console.log(`   ⚠️  ${user.username}: no password available`)
         continue
       }
 
@@ -199,11 +234,12 @@ async function resetTestData() {
         `UPDATE users SET password = ? WHERE id = ?`,
         [hashedPassword, user.id]
       )
-      console.log(`   ✅ ${user.username}: password updated`)
+      const source = process.env[user.envKey] ? 'env' : 'default'
+      console.log(`   ✅ ${user.username}: password updated (${source})`)
     }
   }
 
-  // 4. Verification summary
+  // 5. Verification summary
   console.log('\n' + '='.repeat(60))
   console.log('📊 VERIFICATION SUMMARY')
   console.log('='.repeat(60))
@@ -252,7 +288,7 @@ async function resetTestData() {
   console.log('  npx tsx server/database/reset-test-data.ts                 # Reset to defaults')
   console.log('  npx tsx server/database/reset-test-data.ts --status=draft  # Set opus1 to draft')
   console.log('  npx tsx server/database/reset-test-data.ts --passwords     # Also reset passwords')
-  
+
   process.exit(0)
 }
 

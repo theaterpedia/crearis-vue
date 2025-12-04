@@ -101,6 +101,7 @@ export default defineConfig({
                     items: [
                         { text: 'Auth Focus: Status, Config, Rtags', link: '/dev/sysreg/auth' },
                         { text: 'Content Focus: Ctags, Ttags, Dtags', link: '/dev/sysreg/content' },
+                        { text: 'How to work with capabilities', link: '/dev/sysreg/capabilities-howto' },
                     ]
                 }
             ],

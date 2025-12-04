@@ -23,6 +23,17 @@
 ### From v0.3 (Dec 5)
 <!-- Add items here during v0.3 work -->
 
+### From Dec 4 (Posts Workflow)
+- [ ] **Comments system migration to tasks table**: Consider moving from JSONB to tasks-based comments
+  - Current: `comments JSONB` field on posts/events/images/projects
+  - Future: `tasks WHERE type='comment'` (closer to Odoo chatter pattern)
+  - Rationale: Tasks already bridge states, comments often become tasks
+  - Decision: JSONB for v0.3-v0.4 (fast, contained), evaluate migration for v0.5+
+- [ ] **write-nocreate project config**: Project-level config to prevent members from creating new entities
+  - Field: `config.memberWriteMode: 'write-all' | 'write-nocreate'`
+  - Default: `write-all` (members can create entities from draft+)
+  - Use case: Special projects where only owner creates content
+
 ### From v0.4 (Dec 9)
 <!-- Add items here during v0.4 work -->
 

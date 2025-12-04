@@ -283,7 +283,30 @@ Examples:
 
 ## Best Practices
 
-### 1. Prefer Specific States Over `all`
+### 1. AllRole Convention (Shortcut for Non-Anonymous)
+
+When designing a new capabilities matrix, **1-3 AllRole capabilities** at the beginning are acceptable:
+
+✅ **Allowed:**
+```
+POST_ALLROLE_READ_RELEASED   // All logged-in users can read released posts
+POST_ALLROLE_COMMENT_REVIEW  // All logged-in users can comment on review+ posts
+```
+
+**Rules for AllRole:**
+- Must be prefixed with `AllRole` (e.g., `POST_ALLROLE_*`)
+- **Excludes anonymous** - anonym always requires explicit declaration
+- Maximum 1-3 per entity, for commonly shared capabilities
+- Useful when prototyping, can be refined to per-role rules later
+
+❌ **Forbidden:**
+```
+POST_MEMBER_UPDATE  // Named as member-specific but configured for all roles
+```
+
+> If a capability applies to all roles, NAME it as AllRole. Don't mislead with role-specific naming.
+
+### 2. Prefer Specific States Over `all`
 
 ❌ **Bad:** `project_member_update` with `state=all`
 - Members can see NEW projects before owner is ready
@@ -294,7 +317,7 @@ project_member_read_draft    (state=draft)
 project_member_read_released (state=released)
 ```
 
-### 2. Think in Two Levels
+### 3. Think in Two Levels
 
 Always consider:
 1. **Project-level access:** Can user access the project at all?
@@ -302,20 +325,27 @@ Always consider:
 
 ⚠️ In v0.2-v0.4, entity-level is implemented. Project-level containment is v0.5.
 
-### 3. Use r-flags for Entity-Level Visibility
+### 4. Use r-flags for Entity-Level Visibility
 
 Posts and images have `r_owner`, `r_member`, `r_partner`, `r_participant` columns.
 These are the final word on entity visibility within a project.
 
-### 4. Owner Means Record Owner
+### 5. Owner Means Record Owner
 
 The `owner` role in capabilities = whoever created the record.
 Project-owner gets elevated caps via `member` role + explicit manage entries.
 
-### 5. Explicit Over Inherited
+### 6. Explicit Over Inherited
 
 No capability inheritance. If you want `read + list + share`, set all three bits.
 The CapabilitiesEditor UI makes this easy.
+
+### 7. Anonymous Always Explicit
+
+Never assume anonymous access. Always declare it explicitly:
+```
+POST_ANON_READ_RELEASED  // Explicit: anon can read released posts
+```
 
 ---
 

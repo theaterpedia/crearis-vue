@@ -31,14 +31,14 @@ export default defineEventHandler(async (event) => {
             // Get current user's session
             const sessionId = getCookie(event, 'sessionId')
             const session = sessionId ? sessions.get(sessionId) : null
-            
+
             if (!session || session.expiresAt < Date.now()) {
                 // Anonymous user - only see r_anonym=true posts
                 sql += ` AND p.r_anonym = true`
             } else {
                 // Authenticated user - check role-based visibility
                 const userId = session.userId
-                
+
                 // Build visibility condition based on user's relationship to the post/project
                 // User can see post if:
                 // 1. r_anonym = true (anyone can see)
