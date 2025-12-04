@@ -51,6 +51,7 @@
 | File | Origin Doc | Status |
 |------|------------|--------|
 | `posts-permissions.test.ts` | NEW (Dec 4) | ✅ 88 tests |
+| `usePostStatus.test.ts` | STATUS_EDITOR_GUIDE | ✅ 55 tests |
 | `i18n-composable.test.ts` | TEST_STATUS | ✅ PostgreSQL |
 | `rebuildShapeUrlWithXYZ.test.ts` | _archived/TEST_IMPLEMENTATION_SUMMARY | ✅ |
 | `shape-editor.test.ts` | _archived/PLAN_G_INTEGRATION_TESTS | ✅ |
@@ -81,6 +82,7 @@
 
 | File | Origin Doc | Status |
 |------|------------|--------|
+| `StatusEditor.test.ts` | STATUS_EDITOR_GUIDE | ✅ 23 tests |
 | `ItemRow.test.ts` | TEST_SPEC_ENTITY_COMPONENTS | ✅ 45 tests |
 | `ItemTile.test.ts` | TEST_SPEC_ENTITY_COMPONENTS | ✅ 36 tests |
 | `ItemCard.test.ts` | TEST_SPEC_ENTITY_COMPONENTS | ✅ 44 tests |
