@@ -223,10 +223,14 @@ export function usePostStatus(
         transitionError.value = null
 
         try {
-            await $fetch(`/api/posts/${post.value.id}`, {
+            const response = await fetch(`/api/posts/${post.value.id}`, {
                 method: 'PATCH',
-                body: { status: targetStatus }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: targetStatus })
             })
+            if (!response.ok) {
+                throw new Error('Failed to update status')
+            }
             return true
         } catch (err: any) {
             transitionError.value = err.message ?? 'Fehler beim Statuswechsel'
