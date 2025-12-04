@@ -19,6 +19,7 @@ interface ProjectRecord {
 
 interface SessionData {
     userId: number
+    sysmail: string  // Added for permission checks
     username: string
     availableRoles: string[]
     activeRole: string
@@ -278,6 +279,7 @@ export default defineEventHandler(async (event) => {
     // Build session data
     const sessionData: SessionData = {
         userId: user.id,
+        sysmail: user.sysmail,  // Added for permission checks
         username: user.username,
         availableRoles,
         activeRole,
@@ -302,6 +304,7 @@ export default defineEventHandler(async (event) => {
     // Build response user object
     const responseUser = {
         id: user.id,
+        sysmail: user.sysmail,  // Added for permission checks
         username: user.username,
         availableRoles,
         activeRole,

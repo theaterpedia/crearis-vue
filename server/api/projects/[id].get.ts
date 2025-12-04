@@ -69,9 +69,17 @@ export default defineEventHandler(async (event) => {
             }
         }
 
+        // Get owner's sysmail for permission checks
+        let owner_sysmail: string | null = null
+        if (rawProject.owner_id) {
+            const owner = await db.get('SELECT sysmail FROM users WHERE id = ?', [rawProject.owner_id]) as { sysmail: string } | undefined
+            owner_sysmail = owner?.sysmail || null
+        }
+
         // Return project with user role info
         const project = {
             ...rawProject,
+            owner_sysmail,
             _userRole,
             _userConfigrole,
             _userRoleLabel

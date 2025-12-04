@@ -126,7 +126,7 @@ function createUsePostStatusMock(overrides: Partial<ReturnType<typeof usePostSta
             availableTransitions: computed(() => [256])
         }
     }
-    
+
     return { ...defaults, ...overrides }
 }
 
@@ -156,7 +156,7 @@ describe('StatusEditor - Rendering', () => {
 
         // Header should show title
         expect(wrapper.find('.header-label').text()).toBe('Status ändern')
-        
+
         // Current status should show label
         expect(wrapper.find('.status-badge').exists()).toBe(true)
         expect(wrapper.text()).toContain('Entwurf')
@@ -529,11 +529,11 @@ describe('StatusEditor - Dropdown Mode', () => {
         // Verify dropdown mode is rendered
         const select = wrapper.find('.transition-select')
         expect(select.exists()).toBe(true)
-        
+
         // Verify all options are present
         const options = select.findAll('option')
         expect(options.length).toBe(6) // 5 actions + 1 placeholder
-        
+
         // Verify apply button exists
         const applyBtn = wrapper.find('.apply-button')
         expect(applyBtn.exists()).toBe(true)

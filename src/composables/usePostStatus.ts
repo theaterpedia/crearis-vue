@@ -107,7 +107,7 @@ export function usePostStatus(
     membership?: Ref<MembershipData | null>
 ) {
     const permissions = usePostPermissions(post, project, membership)
-    
+
     // Loading state for async transitions
     const isTransitioning = ref(false)
     const transitionError = ref<string | null>(null)
@@ -117,7 +117,9 @@ export function usePostStatus(
     // ============================================================
 
     const currentStatus = computed(() => {
-        return post.value?.status ?? STATUS.NEW
+        // Treat 0, null, undefined as NEW
+        const status = post.value?.status
+        return (status && status > 0) ? status : STATUS.NEW
     })
 
     const currentStatusMeta = computed(() => {

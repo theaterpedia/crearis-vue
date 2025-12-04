@@ -179,7 +179,7 @@ describe('usePostStatus - STATUS_META', () => {
 
     describe('Color variants are CSS-safe', () => {
         const validColors = ['muted', 'primary', 'secondary', 'warning', 'positive', 'negative', 'accent', 'dimmed']
-        
+
         it('all colors are in the valid set', () => {
             Object.values(STATUS_META).forEach(meta => {
                 expect(validColors).toContain(meta.color)
@@ -424,7 +424,7 @@ describe('usePostStatus - Integration Scenarios', () => {
         it('NEW post shows "Als Entwurf speichern" as primary action', () => {
             const currentStatus = STATUS.NEW
             const availableTransitions = [STATUS.DRAFT] // From usePostPermissions
-            
+
             const actions = availableTransitions.map(target => ({
                 value: target,
                 label: getTransitionLabel(currentStatus, target),
@@ -441,7 +441,7 @@ describe('usePostStatus - Integration Scenarios', () => {
         it('DRAFT post shows "Zur Prüfung einreichen" as primary', () => {
             const currentStatus = STATUS.DRAFT
             const availableTransitions = [STATUS.REVIEW] // Non-owner cannot skip
-            
+
             const actions = availableTransitions.map(target => ({
                 value: target,
                 label: getTransitionLabel(currentStatus, target),
@@ -458,7 +458,7 @@ describe('usePostStatus - Integration Scenarios', () => {
         it('REVIEW post shows both approve and reject options', () => {
             const currentStatus = STATUS.REVIEW
             const availableTransitions = [STATUS.CONFIRMED, STATUS.DRAFT] // Owner can approve/reject
-            
+
             const actions = availableTransitions
                 .filter(t => t !== STATUS.TRASH)
                 .map(target => ({
@@ -468,11 +468,11 @@ describe('usePostStatus - Integration Scenarios', () => {
                 }))
 
             expect(actions).toHaveLength(2)
-            
+
             const approveAction = actions.find(a => a.value === STATUS.CONFIRMED)
             expect(approveAction?.label).toBe('Freigeben')
             expect(approveAction?.isPrimary).toBe(true)
-            
+
             const rejectAction = actions.find(a => a.value === STATUS.DRAFT)
             expect(rejectAction?.label).toBe('Zurück an Autor')
             expect(rejectAction?.isPrimary).toBe(false)
@@ -483,7 +483,7 @@ describe('usePostStatus - Integration Scenarios', () => {
         it('Owner sees "Direkt bestätigen" option on DRAFT', () => {
             const currentStatus = STATUS.DRAFT
             const availableTransitions = [STATUS.REVIEW, STATUS.CONFIRMED] // Owner can skip
-            
+
             const actions = availableTransitions.map(target => ({
                 value: target,
                 label: getTransitionLabel(currentStatus, target),
@@ -491,7 +491,7 @@ describe('usePostStatus - Integration Scenarios', () => {
             }))
 
             expect(actions).toHaveLength(2)
-            
+
             const skipAction = actions.find(a => a.value === STATUS.CONFIRMED)
             expect(skipAction?.label).toBe('Direkt bestätigen')
             expect(skipAction?.isPrimary).toBe(false) // Skip is not the primary path
@@ -502,7 +502,7 @@ describe('usePostStatus - Integration Scenarios', () => {
         it('CONFIRMED post shows "Veröffentlichen" as primary', () => {
             const currentStatus = STATUS.CONFIRMED
             const availableTransitions = [STATUS.RELEASED, STATUS.REVIEW] // Can publish or send back
-            
+
             const actions = availableTransitions.map(target => ({
                 value: target,
                 label: getTransitionLabel(currentStatus, target),

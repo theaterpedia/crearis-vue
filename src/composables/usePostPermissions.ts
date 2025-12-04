@@ -42,7 +42,8 @@ export type ContentDepth = 'none' | 'summary' | 'core' | 'full'
  */
 export interface PostData {
     id: number
-    owner_id: number
+    owner_id?: number  // Deprecated: use owner_sysmail
+    owner_sysmail?: string
     status: number
     project_id: number
 }
@@ -52,7 +53,8 @@ export interface PostData {
  */
 export interface ProjectData {
     id: number
-    owner_id: number
+    owner_id?: number  // Deprecated: use owner_sysmail
+    owner_sysmail?: string
     status: number
     team_size?: number
 }
@@ -138,14 +140,27 @@ export function usePostPermissions(
     // ROLE CHECKS
     // ============================================================
 
+    // Get user sysmail for ownership checks
+    const userSysmail = computed(() => user.value?.sysmail || null)
+
     const isPostOwner = computed(() => {
-        if (!post.value || !userId.value) return false
-        return post.value.owner_id === userId.value
+        if (!post.value || !userSysmail.value) return false
+        // Prefer sysmail comparison, fallback to ID comparison
+        if (post.value.owner_sysmail) {
+            return post.value.owner_sysmail === userSysmail.value
+        }
+        // Fallback: compare IDs (deprecated)
+        return userId.value ? post.value.owner_id === userId.value : false
     })
 
     const isProjectOwner = computed(() => {
-        if (!project.value || !userId.value) return false
-        return project.value.owner_id === userId.value
+        if (!project.value || !userSysmail.value) return false
+        // Prefer sysmail comparison, fallback to ID comparison
+        if (project.value.owner_sysmail) {
+            return project.value.owner_sysmail === userSysmail.value
+        }
+        // Fallback: compare IDs (deprecated)
+        return userId.value ? project.value.owner_id === userId.value : false
     })
 
     const isMember = computed(() => {

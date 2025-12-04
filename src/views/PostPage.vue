@@ -48,6 +48,13 @@
                             <p v-if="post.author_id"><strong>Author:</strong> {{ post.author_id }}</p>
                         </div>
 
+                        <!-- StatusBadge / StatusEditor -->
+                        <div v-if="post && project" class="post-status-editor">
+                            <PostStatusBadge :post="postDataForPermissions" :project="projectDataForPermissions"
+                                :membership="null" @status-changed="handleStatusChange" @trash="handleTrash"
+                                @restore="handleRestore" @error="handleStatusError" />
+                        </div>
+
                         <!-- Admin/Owner Controls -->
                         <div v-if="canEdit" class="post-controls">
                             <button class="icon-btn" @click="openEditPanel" title="Edit Post">
@@ -110,6 +117,7 @@ import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import StatusBadge from '@/components/sysreg/StatusBadge.vue'
+import PostStatusBadge from '@/components/PostStatusBadge.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
@@ -124,6 +132,7 @@ const { user } = useAuth()
 
 // State
 const post = ref<any>(null)
+const project = ref<any>(null)
 const projectId = ref<number | null>(null)
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
@@ -211,6 +220,30 @@ const editPanelData = computed((): EditPanelData => {
     }
 })
 
+// Computed data for PostStatusBadge
+const postDataForPermissions = computed(() => {
+    if (!post.value) return { id: 0, owner_id: 0, status: 1, project_id: 0 }
+    // Treat NULL/0 status as NEW (1)
+    const status = post.value.status || 1
+    return {
+        id: post.value.id,
+        owner_id: post.value.owner_id || 0,
+        status: status,
+        project_id: post.value.project_id || projectId.value || 0
+    }
+})
+
+const projectDataForPermissions = computed(() => {
+    if (!project.value) return { id: 0, owner_sysmail: '', status: 0 }
+    return {
+        id: project.value.id,
+        owner_sysmail: project.value.owner_sysmail || '',
+        owner_id: project.value.owner_id || 0,  // Deprecated fallback
+        status: project.value.status || 0,
+        team_size: project.value.team_size
+    }
+})
+
 // Methods
 async function loadPost() {
     const postId = route.params.id
@@ -227,6 +260,7 @@ async function loadPost() {
         if (!projectRes.ok) throw new Error('Project not found')
         const projectData = await projectRes.json()
         console.log('[PostPage] Project data:', projectData)
+        project.value = projectData
         projectId.value = projectData.id
 
         // Load post
@@ -271,6 +305,49 @@ function openConfigPanel() {
 
 function closeConfigPanel() {
     showConfigPanel.value = false
+}
+
+// Status Editor Handlers
+async function handleStatusChange(newStatus: number) {
+    console.log('[PostPage] Status change requested:', newStatus)
+    try {
+        const response = await fetch(`/api/posts/${post.value.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to update status')
+        }
+
+        // Update local state
+        if (post.value) {
+            post.value.status = newStatus
+        }
+        console.log('[PostPage] Status updated successfully to:', newStatus)
+    } catch (error) {
+        console.error('[PostPage] Error updating status:', error)
+    }
+}
+
+async function handleTrash() {
+    console.log('[PostPage] Trash requested')
+    // Move to trash (status = 65536)
+    await handleStatusChange(65536)
+}
+
+async function handleRestore() {
+    console.log('[PostPage] Restore requested')
+    // Restore from trash to draft (status = 64)
+    await handleStatusChange(64)
+}
+
+function handleStatusError(error: string) {
+    console.error('[PostPage] Status Editor error:', error)
+    // TODO: Show error toast/notification
 }
 
 async function handleUpdateTags(family: string, value: number) {

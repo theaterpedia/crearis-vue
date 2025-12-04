@@ -1,18 +1,8 @@
 <template>
-    <VDropdown
-        v-model:shown="isOpen"
-        :auto-hide="true"
-        theme="status-editor"
-        placement="bottom-start"
-        :distance="4"
-    >
+    <VDropdown v-model:shown="isOpen" :auto-hide="true" theme="status-editor" placement="bottom-start" :distance="4">
         <!-- Trigger: Status Badge -->
-        <button 
-            class="post-status-trigger"
-            :class="[`status-${currentStatusColor}`, { 'is-open': isOpen }]"
-            :disabled="!canEdit"
-            @click="isOpen = !isOpen"
-        >
+        <button class="post-status-trigger" :class="[`status-${currentStatusColor}`, { 'is-open': isOpen }]"
+            :disabled="!canEdit" @click="isOpen = !isOpen">
             <span class="status-icon">{{ currentStatusIcon }}</span>
             <span class="status-label">{{ currentStatusLabel }}</span>
             <ChevronDown v-if="canEdit" :size="14" class="chevron" />
@@ -20,15 +10,8 @@
 
         <!-- Popper: Status Editor -->
         <template #popper>
-            <StatusEditor
-                :post="post"
-                :project="project"
-                :membership="membership"
-                @status-changed="handleStatusChanged"
-                @trash="handleTrash"
-                @restore="handleRestore"
-                @error="handleError"
-            />
+            <StatusEditor :post="post" :project="project" :membership="membership" @status-changed="handleStatusChanged"
+                @trash="handleTrash" @restore="handleRestore" @error="handleError" />
         </template>
     </VDropdown>
 </template>

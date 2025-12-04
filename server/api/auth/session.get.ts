@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
         authenticated: true,
         user: {
             id: session.userId,
+            sysmail: session.sysmail,  // Added for permission checks
             username: session.username,
             availableRoles: session.availableRoles,
             activeRole: session.activeRole,

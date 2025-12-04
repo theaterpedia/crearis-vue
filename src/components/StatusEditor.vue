@@ -9,12 +9,8 @@
                     Aktuell: <strong>{{ currentStatusLabel }}</strong>
                 </p>
             </div>
-            <button 
-                v-if="canTrash && !isTrashed" 
-                class="trash-button"
-                @click="handleTrash"
-                title="In Papierkorb verschieben"
-            >
+            <button v-if="canTrash && !isTrashed" class="trash-button" @click="handleTrash"
+                title="In Papierkorb verschieben">
                 <Trash2 :size="18" />
             </button>
         </div>
@@ -33,20 +29,14 @@
         <!-- Transition Controls -->
         <div v-if="transitionActions.length > 0" class="transition-controls">
             <p class="transition-label">Verfügbare Aktionen:</p>
-            
+
             <!-- Horizontal buttons for ≤4 transitions -->
             <div v-if="transitionActions.length <= 4" class="transition-buttons">
-                <button
-                    v-for="action in transitionActions"
-                    :key="action.value"
-                    :class="[
-                        'transition-button',
-                        `status-${action.color}`,
-                        { 'is-primary': action.isPrimary }
-                    ]"
-                    :disabled="isTransitioning"
-                    @click="handleTransition(action.value)"
-                >
+                <button v-for="action in transitionActions" :key="action.value" :class="[
+                    'transition-button',
+                    `status-${action.color}`,
+                    { 'is-primary': action.isPrimary }
+                ]" :disabled="isTransitioning" @click="handleTransition(action.value)">
                     <span class="action-icon">{{ action.icon }}</span>
                     <span class="action-label">{{ action.label }}</span>
                 </button>
@@ -54,25 +44,13 @@
 
             <!-- Dropdown for >4 transitions -->
             <div v-else class="transition-dropdown">
-                <select 
-                    v-model="selectedTransition"
-                    class="transition-select"
-                    :disabled="isTransitioning"
-                >
+                <select v-model="selectedTransition" class="transition-select" :disabled="isTransitioning">
                     <option :value="null">Aktion wählen...</option>
-                    <option 
-                        v-for="action in transitionActions" 
-                        :key="action.value"
-                        :value="action.value"
-                    >
+                    <option v-for="action in transitionActions" :key="action.value" :value="action.value">
                         {{ action.icon }} {{ action.label }}
                     </option>
                 </select>
-                <button 
-                    class="apply-button"
-                    :disabled="!selectedTransition || isTransitioning"
-                    @click="handleApply"
-                >
+                <button class="apply-button" :disabled="!selectedTransition || isTransitioning" @click="handleApply">
                     <Check :size="16" />
                     Anwenden
                 </button>
@@ -89,12 +67,7 @@
         <div v-if="isTrashed" class="trashed-state">
             <Trash2 :size="18" class="trashed-icon" />
             <span>Dieser Beitrag ist im Papierkorb</span>
-            <button 
-                v-if="canRestore"
-                class="restore-button"
-                :disabled="isTransitioning"
-                @click="handleRestore"
-            >
+            <button v-if="canRestore" class="restore-button" :disabled="isTransitioning" @click="handleRestore">
                 <RotateCcw :size="16" />
                 Wiederherstellen
             </button>
@@ -116,12 +89,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { 
-    GitPullRequestDraft, 
-    Check, 
-    Trash2, 
-    RotateCcw, 
-    AlertCircle, 
+import {
+    GitPullRequestDraft,
+    Check,
+    Trash2,
+    RotateCcw,
+    AlertCircle,
     XCircle,
     Loader2
 } from 'lucide-vue-next'
@@ -189,9 +162,9 @@ const canRestore = computed(() => {
 
 async function handleTransition(targetStatus: number) {
     console.log('[StatusEditor] handleTransition:', currentStatus.value, '->', targetStatus)
-    
+
     const success = await transitionTo(targetStatus)
-    
+
     if (success) {
         emit('status-changed', targetStatus)
         selectedTransition.value = null
@@ -209,7 +182,7 @@ async function handleApply() {
 async function handleTrash() {
     console.log('[StatusEditor] handleTrash')
     const success = await transitionTo(STATUS.TRASH)
-    
+
     if (success) {
         emit('trash')
     } else if (transitionError.value) {
@@ -221,7 +194,7 @@ async function handleRestore() {
     console.log('[StatusEditor] handleRestore')
     // Restore to DRAFT status
     const success = await transitionTo(STATUS.DRAFT)
-    
+
     if (success) {
         emit('restore')
     } else if (transitionError.value) {
@@ -559,8 +532,13 @@ async function handleRestore() {
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* --- Error Message --- */
