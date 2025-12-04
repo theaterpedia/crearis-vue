@@ -7,6 +7,50 @@
 
 ---
 
+## Permission Rules (15 Rules)
+
+### AllRole Rules (apply to all roles)
+
+| # | Rule Name | Description | Implementation |
+|---|-----------|-------------|----------------|
+| 1 | `POST_ALLROLE_READ_RELEASED` | Anyone can read released posts in released projects | `post.status >= 4096 && project.status >= 4096` |
+
+### Owner Rules (post-level ownership)
+
+| # | Rule Name | Description | Implementation |
+|---|-----------|-------------|----------------|
+| 2 | `POST_OWNER_FULL` | Post owner has full access to their post | `post.owner_user_id === user.id` |
+
+### Read Rules
+
+| # | Rule Name | Description | Implementation |
+|---|-----------|-------------|----------------|
+| 3 | `POST_READ_P_OWNER` | Project owner reads all posts | `isProjectOwner(user, project)` |
+| 4 | `POST_READ_P_MEMBER_DRAFT` | Members read posts in draft+ state | `isMember && post.status >= 64` |
+| 5 | `POST_READ_P_PARTICIPANT_REVIEW` | Participants read posts in review+ | `isParticipant && post.status >= 256` |
+| 6 | `POST_READ_P_PARTNER_CONFIRMED` | Partners read posts in confirmed+ | `isPartner && post.status >= 512` |
+| 7 | `POST_READ_DEPTH_BY_PROJECT` | Content depth by project state | `demo→summary, draft→core, review+→full` |
+
+### Write Rules
+
+| # | Rule Name | Description | Implementation |
+|---|-----------|-------------|----------------|
+| 8 | `POST_WRITE_OWN` | Post owner can edit own post | `post.owner_user_id === user.id` |
+| 9 | `POST_WRITE_P_OWNER` | Project owner can edit any post | `isProjectOwner(user, project)` |
+| 10 | `POST_WRITE_P_MEMBER_EDITOR` | Member with configrole=8 can edit | `isMember && role.configrole === 8` |
+| 11 | `POST_CREATE_P_MEMBER` | Members can create posts in draft+ projects | `isMember && project.status >= 64` |
+
+### State Transition Rules
+
+| # | Rule Name | Description | Implementation |
+|---|-----------|-------------|----------------|
+| 12 | `POST_TRANSITION_CREATOR_SUBMIT` | Creator can submit new→draft, draft→review | `isCreator && validTransition` |
+| 13 | `POST_TRANSITION_P_OWNER_APPROVE` | Project owner approves review→confirmed | `isProjectOwner` |
+| 14 | `POST_TRANSITION_P_OWNER_REJECT` | Project owner rejects review→draft (send-back) | `isProjectOwner` |
+| 15 | `POST_TRANSITION_P_OWNER_SKIP` | Owner can skip review if team ≤ 3 | `teamSize <= 3 && isProjectOwner` |
+
+---
+
 ## Overview
 
 This spec defines the post lifecycle within a project context. Posts are **contained entities** - their visibility and editability depend on both their own state AND their parent project's state.
@@ -115,31 +159,46 @@ Within an accessible project, the **post state** determines who sees it:
 - Members can create new posts
 - No entity-level comments yet
 
-### Project in `review+` State (Dashboard + Comments)
+### Project in `review+` State (Dashboard + Post-It Comments)
 
 ```
-┌────────────────────────────────────┬────────────┐
-│  📝 Posts                          │  💬 Comments│
-├────────────────────────────────────┼────────────┤
-│                                    │            │
-│  ┌──────────────────────────┐     │ On: Post 1 │
-│  │ Theater und Partizipation│     │            │
-│  │ [📄] [✏️] [💬 3]          │     │ Nina: "..."│
-│  └──────────────────────────┘     │ Hans: "..."│
-│                                    │            │
-│  ┌──────────────────────────┐     │            │
-│  │ Methoden der Aktivierung │     │            │
-│  │ [📄] [✏️] [💬 0]          │     │            │
-│  └──────────────────────────┘     │            │
-│                                    │            │
-└────────────────────────────────────┴────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  📝 Posts                                               │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────────────────────────────┐           │
+│  │ Theater und Partizipation        [📄]  │  [💬p1]   │
+│  │ Ein Beitrag über demokratische...      │           │
+│  │ [✏️ Edit] [📤 Submit for Review]        │           │
+│  └─────────────────────────────────────────┘           │
+│                                    ↘                   │
+│                              ┌──────────────────┐      │
+│                              │ 💬 Nina:         │      │
+│                              │ "Great point..." │      │
+│                              │ ├─ Hans: "Thx!" │      │
+│                              │ └─ [Reply]       │      │
+│                              └──────────────────┘      │
+│                                                         │
+│  ┌─────────────────────────────────────────┐           │
+│  │ Methoden der Aktivierung         [📄]  │  [💬p2]   │
+│  │ Wie wir Menschen einbeziehen...        │           │
+│  └─────────────────────────────────────────┘           │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 ```
 
 **Rules:**
 - Full content access
-- Entity-level comments in sidebar
+- **Post-it comments** (max 9 per page, anchored to content)
+- Simple Q&A threading (replies to root only, no deeper)
 - Edit buttons for authorized users
 - State transition buttons for owner
+
+**Why Post-its (not aside)?**
+- Solves vertical sync problem naturally
+- Core crearis design element
+- Same pattern for internal review AND published reader comments
+- See: [POSTIT-COMMENTS-INTEGRATION-PLAN.md](./POSTIT-COMMENTS-INTEGRATION-PLAN.md)
 
 ---
 
@@ -153,8 +212,22 @@ Within an accessible project, the **post state** determines who sees it:
 | Project owner | Always |
 | Member with configrole=8 | If project in `draft+` AND post in `draft+` |
 | Other members | Cannot edit others' posts |
-| Participants | Cannot edit |
-| Partners | Cannot edit |
+| Participants | **Can edit posts they own** (via delegation) |
+| Partners | **Can edit posts they own** (via delegation) |
+
+### Delegation Pattern
+
+**Key insight:** Project owner can delegate a post to a participant or partner by transferring `owner_user_id`. This gives them edit access on that specific item (per-item basis, not role-wide).
+
+**Use case:** Participant has something interesting to share → owner creates post shell → transfers ownership → participant can now edit that specific post.
+
+```typescript
+// Delegation = transfer owner_user_id
+await $fetch(`/api/posts/${postId}`, {
+  method: 'PATCH',
+  body: { owner_user_id: participantUserId }
+})
+```
 
 ### Who Can Create a Post?
 
@@ -185,9 +258,23 @@ new → draft → review → confirmed → released → archived
 | `new → draft` | Post creator |
 | `draft → review` | Post creator, project owner |
 | `review → confirmed` | Project owner only |
-| `review → draft` | Project owner (reject) |
+| `review → draft` | Project owner (reject/send-back) |
 | `confirmed → released` | Project owner only |
 | `* → trash` | Post creator, project owner |
+
+### Skip Rule (Small Teams)
+
+**Rule:** If team ≤ 3 persons (owner + up to 2 members), owner can skip `review` state and go directly `draft → confirmed`.
+
+**Rationale:** With only 2-3 people, they're expected to have co-worked on the draft already. Formal review step adds friction without value.
+
+```typescript
+// Check if skip is allowed
+const canSkipReview = (project: Project) => {
+  const teamSize = 1 + project.members.length // owner + members
+  return teamSize <= 3
+}
+```
 
 ---
 
@@ -204,7 +291,7 @@ Posts support multiple tag dimensions (implemented in v0.2):
 
 ---
 
-## Comments System
+## Comments System (Post-It Based)
 
 ### Storage Decision (v0.3)
 
@@ -219,15 +306,36 @@ Posts support multiple tag dimensions (implemented in v0.2):
 **Schema:**
 ```typescript
 interface PostComment {
-  id: string           // UUID
-  user_id: number      // Author
-  text: string         // Comment content
-  created_at: string   // ISO timestamp
-  updated_at?: string  // If edited
+  id: string              // UUID
+  user_id: number         // Author
+  text: string            // Comment content (markdown supported)
+  anchor_key: string      // p1-p9 positioning key for post-it
+  anchor_selector?: string // Optional: CSS selector for precise anchoring
+  parent_id?: string      // For Q&A threading (root comments only)
+  visibility: 'internal' | 'published'  // review vs reader-visible
+  created_at: string      // ISO timestamp
+  updated_at?: string     // If edited
 }
 
 // posts.comments: PostComment[] (JSONB, default '[]')
 ```
+
+### Threading Logic (Simple Q&A)
+
+```
+Comment (p1) ─── "Great point about the methodology"
+    └── Reply ─── "Thanks! We expanded on it in section 3"
+    └── Reply ─── "Could you clarify the timeline?"
+         └── (NO DEEPER - replies to replies not allowed)
+```
+
+**Rule:** `parent_id` can only reference a root comment (where `parent_id` is null).
+
+### Max 9 Comments Displayed
+
+Post-it system enforces max 9 open. For posts with >9 comments:
+- Show 9 most recent
+- "View all comments" collapses older into scrollable list
 
 **Access Rules:**
 | Project State | Who Can Comment |
