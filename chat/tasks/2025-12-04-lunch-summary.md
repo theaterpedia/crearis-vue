@@ -1,6 +1,6 @@
 # Lunch Summary - December 4, 2025
 
-**Time**: 12:25  
+**Time**: 12:25 - 13:15  
 **Sprint**: Projectlogin Workflow (Dec 1-9)  
 **Branch**: alpha/projectlogin_workflow
 
@@ -15,15 +15,16 @@
 | Early Sunrise | ✅ | Analyzed sprint structure |
 | Late Sunrise | ✅ | Plan of day created |
 | Morning | ✅ | 15 rules defined + shared utils created |
-| **Lunch Summary** | ✅ | This document (new phase!) |
-| Afternoon | ⏳ | Surface to UI/tests (NOW) |
-| Evening | 🕐 | Review/commit (later) |
+| **Lunch Summary** | ✅ | This document (new phase added to daily workflow!) |
+| Afternoon | ⏳ | TDD + PageLayout investigation |
+| Evening | 🕐 | StatusEditor prep (Hans provides prompts) |
 
-### Commits Today (5 total)
+### Commits Today (6 total)
 
 1. `f502989` - Workflow specs, test data, best practices
 2. `0b2421b` - Posts workflow: 15 rules, post-it comments plan
 3. `695c5d1` - Posts permissions: Shared utils + Internal design
+4. `4b12814` - Lunch summary: Daily workflow update + sidelined items review
 
 ### Files Created
 
@@ -32,32 +33,56 @@
 | `chat/tasks/PROJECT-WORKFLOW-SPEC.md` | Full project lifecycle spec |
 | `chat/tasks/POSTS-WORKFLOW-SPEC.md` | 15 permission rules + internal design |
 | `chat/tasks/POSTIT-COMMENTS-INTEGRATION-PLAN.md` | Post-it comments roadmap |
+| `chat/tasks/WORKFLOW-TAGS-EXTENSIONS.md` | Consolidated deferred extensions |
 | `server/utils/posts-permissions.ts` | Server-side permission functions |
 | `src/composables/usePostPermissions.ts` | Frontend reactive composable |
 
 ---
 
-## Sidelined/Deferred Items
+## Lunch Review Decisions
 
-| Item | Why Deferred | Origin | Target |
-|------|--------------|--------|--------|
-| Comments → Tasks migration | Post-its handle immediate need; tasks system needs maturity | ~09:30 comments storage discussion | v0.5+ |
-| Workflow & Tags Extensions | Consolidated into [WORKFLOW-TAGS-EXTENSIONS.md](./WORKFLOW-TAGS-EXTENSIONS.md) | Multiple morning discussions | v0.5 |
+### Process Improvement: Lunch Summary Phase
+- **Added to DAILY-WORKFLOW.md**: New "Lunch Summary" phase (11:30-12:00)
+- **Purpose**: Review sidelined items, create anchors for future retrieval
+- **Procedure**: Claude prepares initial findings → Hans reviews → Update with decisions
 
-### Workflow & Tags Extensions (New Doc)
+### Sidelined Items Actions
 
-Grouped 5 related items into single reference document:
-1. **`read-summary` for participants** - Limited content depth
-2. **`write-nocreate` mode** - Project config for creation restriction
-3. **`write-body` vs `write-meta`** - Fine-grained edit permissions
-4. **Tag edit restriction** - Delegated owners can't edit taxonomy
-5. **rtags specification** - Record tags: `isFeatured`, `isDeprecated`, `isPinned`, etc.
+| Item | Action Taken | Result |
+|------|--------------|--------|
+| Comments → Tasks migration | Left as-is | Stays in deferred (v0.5+) |
+| 5 workflow/tags extensions | **Grouped into new doc** | [WORKFLOW-TAGS-EXTENSIONS.md](./WORKFLOW-TAGS-EXTENSIONS.md) |
+| rtags definition | **Corrected** | rtags = "record tags" (not region), flags like `isFeatured`, `isDeprecated` |
 
-**Correction**: rtags = "record tags" (not region tags) - boolean flags for well-known record states.
+### Afternoon Direction: Option 2 Selected
+
+**Two options presented:**
+1. ~~Design polish~~ - Wire up UI, visual refinement
+2. **✅ Project Workflow Alignment** - Leverage posts-workflow for projects
+
+**Why Option 2:**
+- Creates reusable patterns (not one-off polish)
+- TDD foundation for two entity types
+- Perfect sunrise reflection material tomorrow
+- Tomorrow = UI/design work + test with real Nina
+
+**Key Question to Investigate:**
+> "How can we align project-stepper + dashboard closer to PageLayout.vue?"
 
 ---
 
-## Afternoon Plan: TDD Testing Strategy
+## Afternoon Plan (Confirmed)
+
+| Time | Activity |
+|------|----------|
+| 14:00-15:00 | Unit tests for posts-permissions (pure functions) |
+| 15:00-16:00 | Investigate PageLayout ↔ Stepper/Dashboard alignment |
+| 16:00+ | Check-in with Hans, present findings |
+| Evening | StatusEditor prep (Hans provides prompts) |
+
+---
+
+## Testing Strategy
 
 ### What Can Be Tested Now
 
@@ -121,14 +146,17 @@ Grouped 5 related items into single reference document:
 
 ---
 
-## End of Day Goal
+## End of Day Goal (Updated)
 
 > "By the end of the day we will have a complete internal experience for the posts including the statusEditor"
+
+**Refined focus:**
+- Today: TDD + data-processing logic + StatusEditor prep
+- Tomorrow: Design/UI interaction work (test with real Nina)
 
 ### Deliverables
 
 - [ ] Unit tests for posts-permissions.ts
-- [ ] Extended integration tests
-- [ ] StatusTile.vue (display component)
-- [ ] StatusEditor.vue (workflow surface with transitions)
-- [ ] Wire up to PostPage.vue
+- [ ] PageLayout ↔ Stepper/Dashboard alignment investigation
+- [ ] StatusEditor prep (evening prompts from Hans)
+- [ ] Project workflow alignment plan
