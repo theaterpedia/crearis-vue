@@ -13,12 +13,26 @@
 import { computed, type Ref, type ComputedRef } from 'vue'
 import { useAuth } from './useAuth'
 
-// Status bit values (mirror server/utils/posts-permissions.ts)
+/**
+ * Status bit values (mirror server/utils/posts-permissions.ts)
+ * 
+ * Bit allocation (3 bits per category):
+ * - new:       bits 0-2  (1, 2, 3...)
+ * - demo:      bits 3-5  (8, 16, 24...)
+ * - draft:     bits 6-8  (64, 128, 192, 256...)
+ * - confirmed: bits 9-11 (512, 1024...)
+ * - released:  bits 12-14 (4096, 8192...)
+ * - archived:  bit 15    (32768)
+ * - trash:     bit 16    (65536)
+ * 
+ * Note: REVIEW (256) is a subcategory of DRAFT (parent_bit=64)
+ * It represents "draft under review" in the workflow.
+ */
 export const STATUS = {
     NEW: 1,
     DEMO: 8,
     DRAFT: 64,
-    REVIEW: 256,
+    REVIEW: 256,      // draft_review - subcategory of DRAFT
     CONFIRMED: 512,
     RELEASED: 4096,
     ARCHIVED: 32768,

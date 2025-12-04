@@ -6,6 +6,18 @@
  * 
  * Uses usePostPermissions for authorization checks.
  * 
+ * ## i18n Integration (TODO)
+ * 
+ * Labels are currently hardcoded in German in:
+ * - STATUS_META: Status labels and descriptions
+ * - SCOPE_META: Scope toggle labels and descriptions  
+ * - TRANSITION_LABELS: Workflow action labels
+ * 
+ * To integrate with useI18n:
+ * 1. Create DB entries in i18n_codes table with type='sysreg'
+ * 2. Use useI18n().getText('status_new', '', 'sysreg') pattern
+ * 3. Replace hardcoded strings with computed i18n lookups
+ * 
  * Usage:
  * ```vue
  * const { currentStatusLabel, availableStatusOptions, transitionTo } = usePostStatus(post, project)
@@ -14,6 +26,66 @@
 
 import { computed, ref, type Ref, type ComputedRef } from 'vue'
 import { usePostPermissions, STATUS, type PostData, type ProjectData, type MembershipData } from './usePostPermissions'
+
+/**
+ * Scope toggle bits (17-21)
+ * These control visibility independent of workflow status
+ */
+export const SCOPE = {
+    TEAM: 1 << 17,      // 131072 - visible to team members
+    LOGIN: 1 << 18,     // 262144 - visible to logged-in users
+    PROJECT: 1 << 19,   // 524288 - visible within project
+    REGIO: 1 << 20,     // 1048576 - visible in region
+    PUBLIC: 1 << 21,    // 2097152 - publicly visible
+} as const
+
+/**
+ * Scope option for toggle UI
+ */
+export interface ScopeOption {
+    bit: number
+    name: string
+    label: string
+    description: string
+    icon: string
+    isActive: boolean
+}
+
+/**
+ * Scope metadata
+ */
+const SCOPE_META: Record<number, { name: string; label: string; description: string; icon: string }> = {
+    [SCOPE.TEAM]: {
+        name: 'team',
+        label: 'Team',
+        description: 'Sichtbar für Teammitglieder',
+        icon: '👥'
+    },
+    [SCOPE.LOGIN]: {
+        name: 'login',
+        label: 'Angemeldete',
+        description: 'Sichtbar für angemeldete Nutzer',
+        icon: '🔑'
+    },
+    [SCOPE.PROJECT]: {
+        name: 'project',
+        label: 'Projekt',
+        description: 'Sichtbar innerhalb des Projekts',
+        icon: '📁'
+    },
+    [SCOPE.REGIO]: {
+        name: 'regio',
+        label: 'Region',
+        description: 'Sichtbar in der Region',
+        icon: '🗺️'
+    },
+    [SCOPE.PUBLIC]: {
+        name: 'public',
+        label: 'Öffentlich',
+        description: 'Öffentlich sichtbar',
+        icon: '🌐'
+    }
+}
 
 /**
  * Status option for dropdown/buttons
@@ -266,6 +338,94 @@ export function usePostStatus(
         return currentStatus.value >= STATUS.RELEASED
     })
 
+    // ============================================================
+    // SCOPE TOGGLES
+    // ============================================================
+
+    /**
+     * Get current scope bits from the full status value
+     * The full status contains both workflow status (bits 0-16) and scope (bits 17-21)
+     */
+    const currentScopeBits = computed(() => {
+        const fullStatus = post.value?.status ?? 0
+        // Extract only scope bits (mask with bits 17-21)
+        const scopeMask = SCOPE.TEAM | SCOPE.LOGIN | SCOPE.PROJECT | SCOPE.REGIO | SCOPE.PUBLIC
+        return fullStatus & scopeMask
+    })
+
+    /**
+     * Check if a specific scope is active
+     */
+    const hasScope = (scopeBit: number): boolean => {
+        return (currentScopeBits.value & scopeBit) !== 0
+    }
+
+    /**
+     * Get scope options with current state
+     */
+    const scopeOptions = computed<ScopeOption[]>(() => {
+        return Object.entries(SCOPE_META).map(([bitStr, meta]) => {
+            const bit = parseInt(bitStr)
+            return {
+                bit,
+                name: meta.name,
+                label: meta.label,
+                description: meta.description,
+                icon: meta.icon,
+                isActive: hasScope(bit)
+            }
+        })
+    })
+
+    /**
+     * Toggle a scope bit
+     */
+    const toggleScope = async (scopeBit: number): Promise<boolean> => {
+        if (!post.value || !permissions.canEdit.value) {
+            return false
+        }
+
+        isTransitioning.value = true
+        transitionError.value = null
+
+        try {
+            const currentFull = post.value.status ?? 0
+            // Toggle the scope bit
+            const newStatus = (currentFull & scopeBit) !== 0
+                ? currentFull & ~scopeBit  // Remove bit
+                : currentFull | scopeBit   // Add bit
+
+            const response = await fetch(`/api/posts/${post.value.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.message || 'Scope-Änderung fehlgeschlagen')
+            }
+
+            // Update local state
+            post.value.status = newStatus
+            return true
+        } catch (error) {
+            transitionError.value = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            return false
+        } finally {
+            isTransitioning.value = false
+        }
+    }
+
+    /**
+     * Convenience computed for common scope checks
+     */
+    const isTeamVisible = computed(() => hasScope(SCOPE.TEAM))
+    const isLoginVisible = computed(() => hasScope(SCOPE.LOGIN))
+    const isProjectVisible = computed(() => hasScope(SCOPE.PROJECT))
+    const isRegioVisible = computed(() => hasScope(SCOPE.REGIO))
+    const isPublicVisible = computed(() => hasScope(SCOPE.PUBLIC))
+
     /**
      * Is this post in trash?
      */
@@ -306,10 +466,21 @@ export function usePostStatus(
         isTrashed,
         isEditable,
 
+        // Scope toggles
+        currentScopeBits,
+        scopeOptions,
+        toggleScope,
+        hasScope,
+        isTeamVisible,
+        isLoginVisible,
+        isProjectVisible,
+        isRegioVisible,
+        isPublicVisible,
+
         // Re-export permissions for convenience
         permissions
     }
 }
 
-// Re-export STATUS for consumers
-export { STATUS }
+// Re-export STATUS and SCOPE for consumers
+export { STATUS, SCOPE }

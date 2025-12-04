@@ -63,6 +63,25 @@
             <span>Keine Statusänderungen verfügbar</span>
         </div>
 
+        <!-- Scope Toggles Section -->
+        <div v-if="!isTrashed" class="scope-section">
+            <p class="scope-label">Sichtbarkeit:</p>
+            <div class="scope-toggles">
+                <button
+                    v-for="scope in scopeOptions"
+                    :key="scope.bit"
+                    :class="['scope-toggle', { 'is-active': scope.isActive }]"
+                    :title="scope.description"
+                    :disabled="isTransitioning"
+                    @click="handleScopeToggle(scope.bit)"
+                >
+                    <component :is="scope.isActive ? Eye : EyeOff" :size="14" class="scope-icon" />
+                    <span class="scope-emoji">{{ scope.icon }}</span>
+                    <span class="scope-name">{{ scope.label }}</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Trashed state -->
         <div v-if="isTrashed" class="trashed-state">
             <Trash2 :size="18" class="trashed-icon" />
@@ -96,7 +115,9 @@ import {
     RotateCcw,
     AlertCircle,
     XCircle,
-    Loader2
+    Loader2,
+    Eye,
+    EyeOff
 } from 'lucide-vue-next'
 import { usePostStatus, STATUS } from '@/composables/usePostStatus'
 import type { PostData, ProjectData, MembershipData } from '@/composables/usePostPermissions'
@@ -137,7 +158,9 @@ const {
     isTransitioning,
     transitionError,
     transitionTo,
-    isTrashed
+    isTrashed,
+    scopeOptions,
+    toggleScope
 } = usePostStatus(postRef, projectRef, membershipRef)
 
 // ============================================================
@@ -200,6 +223,11 @@ async function handleRestore() {
     } else if (transitionError.value) {
         emit('error', transitionError.value)
     }
+}
+
+async function handleScopeToggle(scopeBit: number) {
+    console.log('[StatusEditor] handleScopeToggle:', scopeBit)
+    await toggleScope(scopeBit)
 }
 </script>
 
@@ -552,5 +580,73 @@ async function handleRestore() {
     color: var(--color-negative-contrast);
     border-radius: 0.25rem;
     font-size: 0.875rem;
+}
+
+/* --- Scope Toggles Section --- */
+
+.scope-section {
+    border-top: 1px solid var(--color-border);
+    padding-top: 1rem;
+}
+
+.scope-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.scope-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.scope-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: var(--color-background);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.scope-toggle:hover:not(:disabled) {
+    border-color: var(--color-text-muted);
+    background: var(--color-background-soft);
+}
+
+.scope-toggle.is-active {
+    border-color: var(--color-positive);
+    background: var(--color-positive-bg);
+    color: var(--color-positive-contrast);
+}
+
+.scope-toggle.is-active .scope-icon {
+    color: var(--color-positive);
+}
+
+.scope-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.scope-icon {
+    flex-shrink: 0;
+}
+
+.scope-emoji {
+    font-size: 0.875rem;
+}
+
+.scope-name {
+    font-weight: 500;
 }
 </style>
