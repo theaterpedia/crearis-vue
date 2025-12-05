@@ -94,9 +94,15 @@ export function usePostStatusV2(
     // STATUS INFO
     // ============================================================
 
+    // Mask for workflow status bits (0-16), excludes scope bits (17-21)
+    const WORKFLOW_MASK = (1 << 17) - 1  // 0x1FFFF = bits 0-16
+
     const currentStatus = computed(() => {
         const status = post.value?.status
-        return (status && status > 0) ? status : STATUS.NEW
+        if (!status || status <= 0) return STATUS.NEW
+        // Extract only workflow bits, ignore scope bits
+        const workflowStatus = status & WORKFLOW_MASK
+        return workflowStatus > 0 ? workflowStatus : STATUS.NEW
     })
 
     const currentStatusMeta = computed(() => {
@@ -168,31 +174,39 @@ export function usePostStatusV2(
         return TRANSITION_LABELS[key] ?? `→ ${STATUS_META[to]?.label ?? 'Unknown'}`
     }
 
-    async function transitionTo(targetStatus: number): Promise<boolean> {
-        if (!post.value) return false
+    async function transitionTo(targetStatus: number): Promise<number | null> {
+        if (!post.value) return null
         if (!caps.canTransitionTo(targetStatus)) {
             transitionError.value = 'Transition nicht erlaubt'
-            return false
+            return null
         }
 
         isTransitioning.value = true
         transitionError.value = null
 
         try {
+            // Preserve scope bits (17-21) while changing workflow status
+            const currentFull = post.value.status ?? 0
+            const scopeMask = SCOPE.TEAM | SCOPE.LOGIN | SCOPE.PROJECT | SCOPE.REGIO | SCOPE.PUBLIC
+            const existingScope = currentFull & scopeMask
+            const newStatus = targetStatus | existingScope
+
             const response = await fetch(`/api/posts/${post.value.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: targetStatus })
+                body: JSON.stringify({ status: newStatus })
             })
             if (!response.ok) {
                 throw new Error('Failed to update status')
             }
+            // Update local state
+            post.value.status = newStatus
             // Refresh capabilities after status change
             await caps.refresh()
-            return true
+            return newStatus
         } catch (err: any) {
             transitionError.value = err.message ?? 'Fehler beim Statuswechsel'
-            return false
+            return null
         } finally {
             isTransitioning.value = false
         }
@@ -240,8 +254,8 @@ export function usePostStatusV2(
         })
     })
 
-    const toggleScope = async (scopeBit: number): Promise<boolean> => {
-        if (!post.value || !caps.canEdit.value) return false
+    const toggleScope = async (scopeBit: number): Promise<number | null> => {
+        if (!post.value || !caps.canEdit.value) return null
 
         isTransitioning.value = true
         transitionError.value = null
@@ -263,10 +277,10 @@ export function usePostStatusV2(
             }
 
             post.value.status = newStatus
-            return true
+            return newStatus
         } catch (error) {
             transitionError.value = error instanceof Error ? error.message : 'Unbekannter Fehler'
-            return false
+            return null
         } finally {
             isTransitioning.value = false
         }

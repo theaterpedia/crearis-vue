@@ -51,8 +51,8 @@
                         <!-- StatusBadge / StatusEditor -->
                         <div v-if="post && project" class="post-status-editor">
                             <PostStatusBadge :post="postDataForPermissions" :project="projectDataForPermissions"
-                                :membership="null" @status-changed="handleStatusChange" @trash="handleTrash"
-                                @restore="handleRestore" @error="handleStatusError" />
+                                :membership="null" @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
+                                @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
                         </div>
 
                         <!-- Admin/Owner Controls -->
@@ -313,7 +313,12 @@ function closeConfigPanel() {
 // Note: StatusEditor already saves to API via usePostStatus
 // This handler just updates local state to keep UI in sync
 function handleStatusChange(newStatus: number) {
-    console.log('[PostPage] Status changed to:', newStatus)
+    console.log('[PostPage] Status changed to:', newStatus, typeof newStatus)
+    // Guard against invalid values
+    if (typeof newStatus !== 'number') {
+        console.error('[PostPage] Invalid status type:', typeof newStatus, newStatus)
+        return
+    }
     // Update local state (API was already called by StatusEditor)
     if (post.value) {
         post.value.status = newStatus

@@ -129,6 +129,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'status-changed': [newStatus: number]
+    'scope-changed': [newStatus: number]
     'trash': []
     'restore': []
     'error': [error: string]
@@ -181,11 +182,11 @@ const canRestore = computed(() => {
 async function handleTransition(targetStatus: number) {
     console.log('[StatusEditor] handleTransition:', currentStatus.value, '->', targetStatus)
 
-    const success = await transitionTo(targetStatus)
+    const newStatus = await transitionTo(targetStatus)
 
-    if (success) {
-        // Emit actual post status (includes scope bits preserved)
-        emit('status-changed', props.post.status)
+    if (newStatus !== null) {
+        // Emit the actual new status (with scope bits preserved)
+        emit('status-changed', newStatus)
         selectedTransition.value = null
     } else if (transitionError.value) {
         emit('error', transitionError.value)
@@ -200,9 +201,9 @@ async function handleApply() {
 
 async function handleTrash() {
     console.log('[StatusEditor] handleTrash')
-    const success = await transitionTo(STATUS.TRASH)
+    const newStatus = await transitionTo(STATUS.TRASH)
 
-    if (success) {
+    if (newStatus !== null) {
         emit('trash')
     } else if (transitionError.value) {
         emit('error', transitionError.value)
@@ -212,9 +213,9 @@ async function handleTrash() {
 async function handleRestore() {
     console.log('[StatusEditor] handleRestore')
     // Restore to DRAFT status
-    const success = await transitionTo(STATUS.DRAFT)
+    const newStatus = await transitionTo(STATUS.DRAFT)
 
-    if (success) {
+    if (newStatus !== null) {
         emit('restore')
     } else if (transitionError.value) {
         emit('error', transitionError.value)
@@ -223,10 +224,11 @@ async function handleRestore() {
 
 async function handleScopeToggle(scopeBit: number) {
     console.log('[StatusEditor] handleScopeToggle:', scopeBit)
-    const success = await toggleScope(scopeBit)
-    if (success && props.post) {
-        // Emit the new status so parent can update its state
-        emit('status-changed', props.post.status)
+    const newStatus = await toggleScope(scopeBit)
+    console.log('[StatusEditor] toggleScope returned:', newStatus, typeof newStatus)
+    if (newStatus !== null) {
+        // Emit scope-changed with actual new status (keeps modal open)
+        emit('scope-changed', newStatus)
     }
 }
 </script>
@@ -627,6 +629,12 @@ async function handleScopeToggle(scopeBit: number) {
     border-color: var(--color-positive);
     background: var(--color-positive-bg);
     color: var(--color-positive-contrast);
+}
+
+.scope-toggle.is-active:hover:not(:disabled) {
+    border-color: var(--color-positive);
+    background: var(--color-positive-bg);
+    color: white;
 }
 
 .scope-toggle.is-active .scope-icon {
