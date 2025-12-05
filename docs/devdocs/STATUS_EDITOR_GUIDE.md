@@ -1,14 +1,21 @@
 # StatusEditor & PostStatusBadge Guide
 
-> **Version:** 1.0 (December 4, 2025)  
+> **Version:** 2.0 (December 5, 2025)  
 > **Sprint:** Projectlogin Workflow (Dec 1-9)  
-> **Status:** Initial Implementation
+> **Status:** Config-Driven Implementation ✅
 
 ## Overview
 
-The **StatusEditor** and **PostStatusBadge** components provide a complete UI for managing post status transitions within the Crearis platform. They implement a permission-aware workflow system that respects the 15 rules defined in `posts-permissions.ts`.
+The **StatusEditor** and **PostStatusBadge** components provide a complete UI for managing post status transitions within the Crearis platform. They implement a **config-driven permission system** where all capabilities and transitions are defined in `sysreg_config` table.
 
-### Architecture Layers
+### Key Changes in v2.0
+
+- **Single Source of Truth:** `sysreg_config` table defines all capabilities and transitions
+- **taglogic field:** Transitions marked as `category` (primary) or `subcategory` (alternative)
+- **Visual Hierarchy:** Primary transitions = large prominent buttons, alternatives = smaller "Weitere Optionen"
+- **API-driven:** `/api/sysreg/capabilities` returns transitions with taglogic metadata
+
+### Architecture Layers (v2.0 Config-Driven)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -21,19 +28,29 @@ The **StatusEditor** and **PostStatusBadge** components provide a complete UI fo
               │                               │
               ▼                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Composables                              │
+│                    Composables (v2)                         │
 │  ┌─────────────────────┐    ┌─────────────────────────────┐ │
-│  │  usePostStatus.ts   │───▶│  usePostPermissions.ts      │ │
-│  │  (UI state/actions) │    │  (Permission logic)         │ │
+│  │ usePostStatusV2.ts  │───▶│   useCapabilities.ts        │ │
+│  │ (UI state/actions)  │    │   (API-driven permissions)  │ │
 │  └─────────────────────┘    └──────────────┬──────────────┘ │
 └────────────────────────────────────────────┼────────────────┘
                                              │
                                              ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Server Utils                             │
+│                    API Layer                                │
 │  ┌─────────────────────────────────────────────────────────┐│
-│  │              posts-permissions.ts                       ││
-│  │              (15 rules, single source of truth)         ││
+│  │       /api/sysreg/capabilities.get.ts                   ││
+│  │       (Returns capabilities + transitions with taglogic)││
+│  └─────────────────────────────────────────────────────────┘│
+└────────────────────────────────────────────┼────────────────┘
+                                             │
+                                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Database: sysreg_config                     │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │  Migration 051: capabilities_matrix_v2                  ││
+│  │  - Capabilities: read, update, manage, list, share      ││
+│  │  - Transitions: name + taglogic (category/subcategory)  ││
 │  └─────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -43,14 +60,16 @@ The **StatusEditor** and **PostStatusBadge** components provide a complete UI fo
 ## Component: StatusEditor.vue
 
 **Location:** `src/components/StatusEditor.vue`  
-**Lines:** ~450  
-**Dependencies:** `usePostStatus`, Lucide icons, Opus CSS
+**Lines:** ~700  
+**Dependencies:** `usePostStatusV2`, Lucide icons, Opus CSS
 
 ### Purpose
 
 StatusEditor provides a complete workflow UI for changing post status. It displays:
-- Current status with icon, label, and description
-- Available transition actions as buttons or dropdown
+- Current status badge (compact header)
+- **Primary transitions** (category) as large, prominent buttons
+- **Alternative transitions** (subcategory) as smaller buttons under "Weitere Optionen:"
+- Scope toggles (Team, Login, Project, Regio, Public)
 - Trash/restore functionality
 - Loading and error states
 
@@ -79,84 +98,87 @@ StatusEditor provides a complete workflow UI for changing post status. It displa
 **[Screenshot 2: StatusEditor - DRAFT with Multiple Transitions]**
 > Shows StatusEditor with a post in DRAFT status. Multiple transition buttons visible: "Zur Prüfung einreichen" (primary), "Direkt bestätigen". Trash button visible in header corner.
 
-**[Screenshot 3: StatusEditor - REVIEW Status (Owner View)]**
-> Shows owner perspective with REVIEW status. Actions: "Freigeben" (primary), "Zurück an Autor". Demonstrates owner-specific transitions.
+**[Screenshot 3: StatusEditor - Primary/Alternative Transitions]**
+> Shows DRAFT status with visual hierarchy: large "Zur Prüfung einreichen" button (primary/category), smaller "Weitere Optionen:" section with alternative transitions below.
 
-**[Screenshot 4: StatusEditor - Dropdown Mode (>4 transitions)]**
-> Shows dropdown mode when more than 4 transitions available. Select element with "Aktion wählen..." placeholder and "Anwenden" button.
+**[Screenshot 4: StatusEditor - Scope Toggles]**
+> Shows scope toggles section: Team 👥, Login 🔑, Project 📁, Regio 🗺️, Public 🌐. Active scopes highlighted.
 
 **[Screenshot 5: StatusEditor - Trashed State]**
 > Shows trashed post state with negative background color, trash icon, "Dieser Beitrag ist im Papierkorb" message, and "Wiederherstellen" button.
 
-### Template Structure
+### Template Structure (v2.0)
 
 ```vue
 <div class="status-editor">
-    <!-- Header: Icon + Title + Trash Button -->
+    <!-- Compact Header: Status Badge + Trash -->
     <div class="status-header">
-        <GitPullRequestDraft class="header-icon" />
-        <div class="header-info">
-            <h3>Status ändern</h3>
-            <p>Aktuell: <strong>{{ currentStatusLabel }}</strong></p>
-        </div>
-        <button v-if="canTrash" class="trash-button">
-            <Trash2 />
-        </button>
+        <span class="status-badge">{{ currentStatusIcon }} {{ currentStatusLabel }}</span>
+        <button v-if="canTrash" class="trash-button"><Trash2 /></button>
     </div>
 
-    <!-- Current Status Badge -->
-    <div class="current-status">
-        <span class="status-badge">
-            {{ currentStatusIcon }} {{ currentStatusLabel }}
-        </span>
-        <span class="status-description">{{ description }}</span>
-    </div>
-
-    <!-- Transition Controls (buttons or dropdown) -->
+    <!-- Transition Controls -->
     <div class="transition-controls">
-        <!-- ≤4 transitions: horizontal buttons -->
-        <!-- >4 transitions: dropdown + apply button -->
+        <!-- Primary transitions (category) - large prominent buttons -->
+        <div class="primary-transitions">
+            <button v-for="action in primaryTransitionActions" 
+                class="primary-transition-button">
+                {{ action.icon }} {{ action.label }}
+            </button>
+        </div>
+
+        <!-- Alternative transitions (subcategory) - smaller -->
+        <div class="alternative-transitions">
+            <p class="alternatives-label">Weitere Optionen:</p>
+            <div class="alternative-buttons">
+                <button v-for="action in alternativeTransitionActions"
+                    class="alternative-transition-button">
+                    {{ action.icon }} {{ action.label }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scope Toggles -->
+    <div class="scope-section">
+        <p class="scope-label">Sichtbarkeit:</p>
+        <div class="scope-toggles">
+            <button v-for="scope in scopeOptions" class="scope-toggle">
+                {{ scope.icon }} {{ scope.label }}
+            </button>
+        </div>
     </div>
 
     <!-- States: No transitions, Trashed, Loading, Error -->
 </div>
 ```
 
-### Adaptive UI Pattern
+### Primary vs Alternative Transitions
 
-Borrowed from **TagGroupEditor.vue**:
+The `taglogic` field in `sysreg_config` determines display hierarchy:
 
-```vue
-<!-- Horizontal buttons for ≤4 options -->
-<div v-if="transitionActions.length <= 4" class="transition-buttons">
-    <button v-for="action in transitionActions" ...>
-        {{ action.icon }} {{ action.label }}
-    </button>
-</div>
+| taglogic | UI Treatment | Example |
+|----------|--------------|---------|
+| `category` | Large prominent button | "Zur Prüfung einreichen" |
+| `subcategory` | Small button in "Weitere Optionen" | "Direkt bestätigen" |
+| `toggle` | Not a transition - used for scopes | Team, Public, etc. |
 
-<!-- Dropdown for >4 options -->
-<div v-else class="transition-dropdown">
-    <select v-model="selectedTransition">
-        <option :value="null">Aktion wählen...</option>
-        <option v-for="action in transitionActions" ...>
-            {{ action.icon }} {{ action.label }}
-        </option>
-    </select>
-    <button @click="handleApply">Anwenden</button>
-</div>
+```typescript
+// Transition naming convention (from sysreg_config)
+post_transition_*        // Primary transitions (category)
+post_alt_transition_*    // Alternative transitions (subcategory)
 ```
 
 ### Lucide Icons Used
 
 | Icon | Usage |
 |------|-------|
-| `GitPullRequestDraft` | Header icon (workflow concept) |
-| `Check` | Apply button |
 | `Trash2` | Trash button, trashed state |
 | `RotateCcw` | Restore button |
 | `AlertCircle` | No transitions available |
 | `XCircle` | Error message |
 | `Loader2` | Loading spinner |
+| `Eye` / `EyeOff` | Scope toggle active/inactive |
 
 ---
 
@@ -244,19 +266,77 @@ Custom theme defined in global (non-scoped) style:
 
 ---
 
-## Composable: usePostStatus.ts
+## Composables (v2.0)
 
-**Location:** `src/composables/usePostStatus.ts`  
-**Lines:** ~310  
-**Dependencies:** `usePostPermissions`
+### useCapabilities.ts
 
-### Purpose
+**Location:** `src/composables/useCapabilities.ts`  
+**Lines:** ~350  
+**Dependencies:** Vue 3, fetch API
 
-Bridge between `usePostPermissions` (logic) and StatusEditor UI. Provides:
-- Status metadata (labels, colors, icons, descriptions)
-- Transition action labels
-- Workflow state helpers
-- API call for status transition
+Core config-driven composable that fetches capabilities from `sysreg_config` via API.
+
+```typescript
+// Key types
+export interface TransitionInfo {
+    name: string
+    taglogic: 'category' | 'subcategory'
+}
+
+// Key exports
+export function useCapabilities(entity, status, relation) {
+    return {
+        capabilities,           // { read, update, manage, list, share }
+        transitions,            // TransitionInfo[]
+        availableTransitions,   // number[] (status values)
+        primaryTransitions,     // number[] (category only)
+        alternativeTransitions, // number[] (subcategory only)
+        canTransitionTo(status),
+        isPrimaryTransition(status),
+        // ... more
+    }
+}
+```
+
+### usePostStatusV2.ts
+
+**Location:** `src/composables/usePostStatusV2.ts`  
+**Lines:** ~340  
+**Dependencies:** `useCapabilities`
+
+UI-focused composable for StatusEditor. Wraps `useCapabilities` with status metadata.
+
+```typescript
+export interface TransitionAction {
+    value: number
+    label: string
+    color: string
+    icon: string
+    isPrimary: boolean
+}
+
+export function usePostStatusV2(post, project, membership) {
+    return {
+        // Status info
+        currentStatus, currentStatusLabel, currentStatusColor, currentStatusIcon,
+        
+        // Transitions (from useCapabilities + UI metadata)
+        transitionActions,            // TransitionAction[]
+        primaryTransitionActions,     // TransitionAction[] (isPrimary = true)
+        alternativeTransitionActions, // TransitionAction[] (isPrimary = false)
+        
+        // Scope toggles (bits 17-21)
+        scopeOptions,
+        toggleScope(bit),
+        
+        // Actions
+        transitionTo(target),
+        canTrash,
+        isTransitioning,
+        transitionError,
+    }
+}
+```
 
 ### STATUS_META
 
@@ -573,141 +653,86 @@ The underlying `posts-permissions.ts` has 88 unit tests covering all 15 rules:
 
 ---
 
-## Further Planning: Table-Driven Capabilities
+## Implementation Status: Config-Driven Capabilities ✅
 
-### Current State: Utils-Driven Architecture
+### Migration Complete (Dec 5, 2025)
 
-The current permission system uses **hardcoded rules in TypeScript**:
-
-```
-posts-permissions.ts (server)
-         ↓
-usePostPermissions.ts (client composable)
-         ↓
-StatusEditor.vue / PostStatusBadge.vue (UI)
-```
-
-**Advantages:**
-- Type-safe, compile-time checked
-- Fast execution (no DB lookups)
-- Clear rule naming (POST_OWNER_FULL, etc.)
-
-**Disadvantages:**
-- Requires code deployment to change rules
-- Rules duplicated between server and client
-- No per-project customization possible
-- Hard to audit/visualize all capabilities
-
-### Target State: sysreg_config as Single Source of Truth
-
-The goal is to move capability rules from TypeScript into **sysreg_config** table:
+The permission system has been migrated from hardcoded TypeScript rules to **sysreg_config** table:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      sysreg_config                          │
 │  (Single Source of Truth for all capability rules)          │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │ r_* triggers │    │ API middleware│    │ UI composables│ │
-│  │ (DB level)   │    │ (server)     │    │ (client)      │ │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-│         ↑                   ↑                   ↑          │
-│         └───────────────────┴───────────────────┘          │
-│                    All read from sysreg_config             │
+│  Migration 051: capabilities_matrix_v2                      │
+│  - Capabilities: read, update, manage, list, share          │
+│  - Transitions: name + taglogic (category/subcategory)      │
+│  - Scopes: team, login, project, regio, public (toggles)    │
 └─────────────────────────────────────────────────────────────┘
+         ↓                   ↓                   ↓
+   r_* triggers          API endpoint       UI composables
+   (DB level)        /api/sysreg/caps      useCapabilities
 ```
 
-### Implementation Proposals
+### Implementation Phases Completed
 
-#### Proposal A: Gradual Migration (Recommended)
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1: r-flags | ✅ Done | Triggers read sysreg_config (migrations 045-048) |
+| Phase 2: StatusEditor | ✅ Done | `useCapabilities` fetches from API |
+| Phase 2b: taglogic | ✅ Done | Primary/alternative transition hierarchy |
+| Phase 3: API middleware | 🔄 Partial | `/api/sysreg/capabilities` endpoint done |
+| Phase 4: Deprecate utils | ⏳ Future | Keep `posts-permissions.ts` as fallback |
 
-1. **Phase 1: r-flags from config** (Done ✅)
-   - Triggers already read sysreg_config to set `r_owner`, `r_member`, etc.
-   - Migrations 045-048 implemented this
-
-2. **Phase 2: StatusEditor reads config**
-   - `usePostStatus` fetches allowed transitions from sysreg_config
-   - Keep `posts-permissions.ts` as server-side validator
-   - Config entries define: entity + state + from_status + to_status + roles
-
-3. **Phase 3: API middleware from config**
-   - Create `checkCapability(entity, action)` middleware factory
-   - Middleware reads sysreg_config, validates against user role
-   - Replace hardcoded permission checks in API routes
-
-4. **Phase 4: Deprecate posts-permissions.ts**
-   - All rules now in sysreg_config
-   - TypeScript constants remain for STATUS values only
-   - Remove rule functions, keep only types
-
-#### Proposal B: New Transition Config Entries
-
-Add transition-specific entries to sysreg_config:
+### sysreg_config Entry Structure
 
 ```typescript
-// Example config entry for "draft→review" transition
+// Example: Primary transition (category)
 {
-  name: 'post_transition_draft_review',
-  value: ENTITY_POST | STATE_DRAFT | ROLE_OWNER | ROLE_MEMBER,
-  description: 'Creator/member can submit draft for review',
-  metadata: {
-    from_status: 64,    // DRAFT
-    to_status: 256,     // REVIEW  
-    action: 'submit'
-  }
+  name: 'post_transition_draft_review_creator',
+  value: ENTITY_POST | STATE_DRAFT,  // bit pattern
+  taglogic: 'category',               // → primary button
+  description: 'Creator submits draft for review',
+  metadata: { from: 64, to: 256 }
+}
+
+// Example: Alternative transition (subcategory)
+{
+  name: 'post_alt_transition_draft_confirmed_P_owner',
+  value: ENTITY_POST | STATE_DRAFT,
+  taglogic: 'subcategory',            // → smaller button
+  description: 'Project owner directly confirms draft',
+  metadata: { from: 64, to: 512 }
 }
 ```
 
-This extends the existing capability bit pattern with transition semantics.
+### Naming Convention
 
-#### Proposal C: StatusConfigPanel Wrapper
+See `docs/devdocs/CAPABILITIES_NAMING_CONVENTION.md` for full details:
 
-Create `StatusConfigPanel.vue` that wraps StatusEditor with:
-- Live reload from sysreg_config
-- Admin mode to edit transitions inline
-- Preview mode to see "who can do what"
-
-```vue
+| Prefix | Meaning |
+|--------|---------|
+| `post_transition_*` | Primary workflow transition (category) |
+| `post_alt_transition_*` | Alternative transition (subcategory) |
+| `post_scope_*` | Visibility toggle (toggle) |
+| `post_cap_*` | Capability flag (read, update, etc.) |
 <StatusConfigPanel 
-  :post="post" 
-  :project="project"
-  :admin-mode="isAdmin"
-/>
-```
+### Future Enhancements
 
-### Migration Path for 15 Rules
+| Feature | Priority | Description |
+|---------|----------|-------------|
+| StatusConfigPanel | Low | Admin UI to edit sysreg_config transitions inline |
+| Per-project overrides | Low | Allow projects to customize default capabilities |
+| Caching | Medium | Client-side caching with invalidation on config change |
+| Batch transitions | Low | Apply status change to multiple posts |
 
-| Rule | Current Location | Target Location |
-|------|------------------|-----------------|
-| POST_ALLROLE_READ_RELEASED | posts-permissions.ts | sysreg_config entry |
-| POST_OWNER_FULL | posts-permissions.ts | sysreg_config entry |
-| POST_READ_P_OWNER | posts-permissions.ts | sysreg_config entry |
-| POST_READ_P_MEMBER_DRAFT | posts-permissions.ts | sysreg_config entry |
-| ... | ... | ... |
+### Resolved Questions (from Dec 4 Sunrise Talk)
 
-### Scope Toggles Integration
-
-The recently added scope toggles (TEAM, LOGIN, PROJECT, REGIO, PUBLIC) should be:
-- Stored as bits 17-21 in post.status
-- Interpreted by sysreg_config entries for visibility rules
-- Displayed in StatusEditor's scope toggles section
-
-### Open Questions for Sunrise Talk
-
-1. **Transition metadata:** Embed in sysreg_config.value bits, or use separate JSONB field?
-2. **Caching strategy:** How to invalidate client cache when sysreg_config changes?
-3. **Fallback behavior:** What happens if no matching config entry? Default-deny or error?
-4. **Per-project overrides:** Allow projects to customize default capabilities?
-
-### Timeline Estimate
-
-| Phase | Effort | Target |
-|-------|--------|--------|
-| Phase 1 (r-flags) | Done | ✅ Dec 2 |
-| Phase 2 (StatusEditor) | 2 days | v0.3 |
-| Phase 3 (API middleware) | 3 days | v0.4 |
-| Phase 4 (Deprecate utils) | 1 day | v0.5 |
+1. **Transition metadata:** Using `taglogic` field (category/subcategory/toggle)
+2. **Naming convention:** `post_transition_*` vs `post_alt_transition_*` prefix
+3. **Fallback behavior:** Default-deny (no config = no capability)
+4. **Per-project overrides:** Deferred to future sprint
 
 ---
 
-*Last updated: December 4, 2025*
+*Last updated: December 5, 2025*
