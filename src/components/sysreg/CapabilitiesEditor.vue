@@ -86,7 +86,7 @@
                             {{ hasSimpleCap(entry.value, 'share') ? '✓' : '-' }}
                         </td>
                         <td class="type-cell" :class="'type-' + entry.taglogic">
-                            {{ getTaglogicLabel(entry.taglogic) }}
+                            {{ getTaglogicLabel(entry) }}
                         </td>
                         <td class="roles-cell">
                             <span v-for="role in getRoles(entry.value)" :key="role" class="role-badge"
@@ -168,6 +168,20 @@
                     </select>
                     <small class="help-text">
                         Toggle = simple capability, Category/Subcategory = transition button
+                    </small>
+                </div>
+
+                <!-- Parent Category (only for subcategories) -->
+                <div v-if="editForm.taglogic === 'subcategory'" class="form-group">
+                    <label>Parent Category:</label>
+                    <select v-model="editForm.parentBit" class="form-select">
+                        <option :value="null">Select primary transition...</option>
+                        <option v-for="cat in availableParentCategories" :key="cat.id" :value="cat.id">
+                            {{ cat.name }} ({{ getToStateLabel(cat.value) }})
+                        </option>
+                    </select>
+                    <small v-if="availableParentCategories.length === 0" class="help-text warning">
+                        ⚠️ No category entries found for this FROM state. Create a primary transition first.
                     </small>
                 </div>
 
@@ -379,6 +393,7 @@ interface ConfigEntry {
     tagfamily: string
     taglogic: string
     is_default: boolean
+    parent_bit: number | null  // id of parent category entry (for subcategories)
 }
 
 const loading = ref(true)
@@ -407,6 +422,7 @@ const editForm = ref({
     entity: BITS.ENTITY_ALL,
     state: BITS.STATE_ALL,
     taglogic: 'toggle' as 'toggle' | 'category' | 'subcategory',
+    parentBit: null as number | null,  // id of parent category (for subcategories)
     read: 0,
     update: 0,
     toState: 0,  // Transition target state (bits 17-19)
@@ -414,6 +430,16 @@ const editForm = ref({
     list: false,
     share: false,
     roles: [] as number[],
+})
+
+// Available parent categories for subcategory selection
+// Shows category entries with the same FROM state
+const availableParentCategories = computed(() => {
+    if (editForm.value.taglogic !== 'subcategory') return []
+    return entries.value.filter(e => 
+        e.taglogic === 'category' && 
+        getStateValue(e.value) === editForm.value.state
+    )
 })
 
 // Computed value from form
@@ -546,13 +572,22 @@ function getToStateClass(value: number): string {
     return 'active transition'
 }
 
-// Get taglogic display label
-function getTaglogicLabel(taglogic: string): string {
-    switch (taglogic) {
+// Get taglogic display label (with parent name for subcategories)
+function getTaglogicLabel(entry: ConfigEntry): string {
+    switch (entry.taglogic) {
         case 'category': return '🔵 Primary'
-        case 'subcategory': return '🔹 Alt'
+        case 'subcategory': {
+            if (entry.parent_bit) {
+                const parent = entries.value.find(e => e.id === entry.parent_bit)
+                if (parent) {
+                    const toState = getToStateLabel(parent.value)
+                    return `🔹 Alt (${toState})`
+                }
+            }
+            return '🔹 Alt'
+        }
         case 'toggle': return '⚪ Toggle'
-        default: return taglogic || '?'
+        default: return entry.taglogic || '?'
     }
 }
 
@@ -574,6 +609,7 @@ function startNewEntry() {
         entity: BITS.ENTITY_ALL,
         state: BITS.STATE_ALL,
         taglogic: 'toggle',
+        parentBit: null,
         read: 0,
         update: 0,
         toState: 0,
@@ -594,6 +630,7 @@ function startEdit(entry: ConfigEntry) {
         entity: getEntityValue(entry.value),
         state: getStateValue(entry.value),
         taglogic: (entry.taglogic as 'toggle' | 'category' | 'subcategory') || 'toggle',
+        parentBit: entry.parent_bit,
         read: getCapabilityValue(entry.value, 'read'),
         update: getCapabilityValue(entry.value, 'update'),
         toState: getCapabilityValue(entry.value, 'toState'),
@@ -617,6 +654,7 @@ async function saveEntry() {
         description: editForm.value.description?.trim() || '',
         tagfamily: 'config',
         taglogic: editForm.value.taglogic,
+        parent_bit: editForm.value.taglogic === 'subcategory' ? editForm.value.parentBit : null,
         is_default: false,
     }
 
@@ -1106,5 +1144,9 @@ td.active.transition {
     margin-top: 0.25rem;
     font-size: 0.8em;
     color: var(--color-dimmed);
+}
+
+.help-text.warning {
+    color: var(--color-warning-bg, #f0ad4e);
 }
 </style>
