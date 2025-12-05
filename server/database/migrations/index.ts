@@ -58,6 +58,7 @@ import { migration as migration045 } from './045_project_members_configrole'
 import { migration as migration046 } from './046_entity_role_visibility_columns'
 import { migration as migration047 } from './047_role_visibility_triggers'
 import { migration as migration048 } from './048_capabilities_recompute'
+import { migration as migration049 } from './049_status_review_scopes_i18n'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -120,6 +121,7 @@ const migrations: Migration[] = [
     { run: migration046.up, down: migration046.down, metadata: { id: migration046.id, description: migration046.description, version: '0.2.10', date: '2025-12-02' }, reversible: true },
     { run: migration047.up, down: migration047.down, metadata: { id: migration047.id, description: migration047.description, version: '0.2.11', date: '2025-12-02' }, reversible: true },
     { run: migration048.up, down: migration048.down, metadata: { id: migration048.id, description: migration048.description, version: '0.2.12', date: '2025-12-02' }, reversible: true },
+    { run: migration049.up, down: migration049.down, metadata: { id: migration049.id, description: migration049.description, version: '0.2.13', date: '2025-12-04' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

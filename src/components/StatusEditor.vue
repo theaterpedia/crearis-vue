@@ -67,14 +67,9 @@
         <div v-if="!isTrashed" class="scope-section">
             <p class="scope-label">Sichtbarkeit:</p>
             <div class="scope-toggles">
-                <button
-                    v-for="scope in scopeOptions"
-                    :key="scope.bit"
-                    :class="['scope-toggle', { 'is-active': scope.isActive }]"
-                    :title="scope.description"
-                    :disabled="isTransitioning"
-                    @click="handleScopeToggle(scope.bit)"
-                >
+                <button v-for="scope in scopeOptions" :key="scope.bit"
+                    :class="['scope-toggle', { 'is-active': scope.isActive }]" :title="scope.description"
+                    :disabled="isTransitioning" @click="handleScopeToggle(scope.bit)">
                     <component :is="scope.isActive ? Eye : EyeOff" :size="14" class="scope-icon" />
                     <span class="scope-emoji">{{ scope.icon }}</span>
                     <span class="scope-name">{{ scope.label }}</span>

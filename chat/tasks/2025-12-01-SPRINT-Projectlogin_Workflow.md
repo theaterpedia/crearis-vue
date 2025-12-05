@@ -112,8 +112,8 @@ This sprint delivers the core project workflow system, enabling consistent login
 | Dec 1 | 🟢 | AUTH-SYSTEM-SPEC created, CapabilitiesEditor.vue, CSS/DB conventions docs |
 | Dec 2 | 🟡 | **DB triggers implemented** (mig 045-048), owner_id in posts/AddPostPanel, alpha-prod testing |
 | Dec 3 | 🟢 | **VitePress docs setup**, 3-audience structure, oklch theming |
-| Dec 4 | ⬜ | **after-v0.3 (evening):** Docs session #1 |
-| Dec 5 | ⬜ | **v0.3 deadline**, Docs session #1 continues if needed |
+| Dec 4 | 🟢 | **StatusEditor + PostStatusBadge** complete (38 tests), scope toggles, migration 049 (draft_review + i18n), CAPABILITIES_REFACTORING_PLAN.md |
+| Dec 5 | ⬜ | **v0.3 deadline**, Sunrise talk: sysreg_config as single source of truth |
 | Dec 8 | ⬜ | Sprint work |
 | Dec 9 | ⬜ | **v0.4 deadline** |
 | Dec 10 | ⬜ | **after-v0.4:** Day-long DevDocs session |
@@ -137,8 +137,8 @@ Legend: 🟢 Complete | 🟡 In Progress | 🔴 Blocked | ⬜ Not Started
 ### Task Documents
 - [Nov 30 Tasks](./2025-11-30.md)
 - [Dec 1 Tasks](./2025-12-01.md)
-- [Dec 4 Tasks](./2025-12-04.md) - Evening docs session #1 (oklch)
-- [Dec 5 Tasks](./2025-12-05.md) - v0.3 deadline
+- [Dec 4 Tasks](./2025-12-04.md) - StatusEditor, scope toggles, capabilities refactoring plan
+- [Dec 5 Tasks](./2025-12-05.md) - v0.3 deadline, sunrise talk
 - [Dec 10 Tasks](./2025-12-10.md) - **Day-long DevDocs session**
 - [Deferred Tasks](./2025-12-10-DEFERRED-from-Projectlogin_Workflow.md) - Analysis Dec 11
 
@@ -146,3 +146,4 @@ Legend: 🟢 Complete | 🟡 In Progress | 🔴 Blocked | ⬜ Not Started
 - [TDD Implementation Plan](./2025-11-30-TDD-IMPLEMENTATION-PLAN.md)
 - [Vitest Infrastructure Guide](./2025-11-13_VITEST_INFRASTRUCTURE_GUIDE.md)
 - [Sysreg Spec](./2025-11-19-A-sysreg-spec.md)
+- [Capabilities Refactoring Plan](../../docs/devdocs/CAPABILITIES_REFACTORING_PLAN.md) - Utils → Table-driven

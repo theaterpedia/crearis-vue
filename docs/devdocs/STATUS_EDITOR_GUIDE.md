@@ -573,4 +573,141 @@ The underlying `posts-permissions.ts` has 88 unit tests covering all 15 rules:
 
 ---
 
+## Further Planning: Table-Driven Capabilities
+
+### Current State: Utils-Driven Architecture
+
+The current permission system uses **hardcoded rules in TypeScript**:
+
+```
+posts-permissions.ts (server)
+         ↓
+usePostPermissions.ts (client composable)
+         ↓
+StatusEditor.vue / PostStatusBadge.vue (UI)
+```
+
+**Advantages:**
+- Type-safe, compile-time checked
+- Fast execution (no DB lookups)
+- Clear rule naming (POST_OWNER_FULL, etc.)
+
+**Disadvantages:**
+- Requires code deployment to change rules
+- Rules duplicated between server and client
+- No per-project customization possible
+- Hard to audit/visualize all capabilities
+
+### Target State: sysreg_config as Single Source of Truth
+
+The goal is to move capability rules from TypeScript into **sysreg_config** table:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      sysreg_config                          │
+│  (Single Source of Truth for all capability rules)          │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │ r_* triggers │    │ API middleware│    │ UI composables│ │
+│  │ (DB level)   │    │ (server)     │    │ (client)      │ │
+│  └──────────────┘    └──────────────┘    └──────────────┘  │
+│         ↑                   ↑                   ↑          │
+│         └───────────────────┴───────────────────┘          │
+│                    All read from sysreg_config             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Proposals
+
+#### Proposal A: Gradual Migration (Recommended)
+
+1. **Phase 1: r-flags from config** (Done ✅)
+   - Triggers already read sysreg_config to set `r_owner`, `r_member`, etc.
+   - Migrations 045-048 implemented this
+
+2. **Phase 2: StatusEditor reads config**
+   - `usePostStatus` fetches allowed transitions from sysreg_config
+   - Keep `posts-permissions.ts` as server-side validator
+   - Config entries define: entity + state + from_status + to_status + roles
+
+3. **Phase 3: API middleware from config**
+   - Create `checkCapability(entity, action)` middleware factory
+   - Middleware reads sysreg_config, validates against user role
+   - Replace hardcoded permission checks in API routes
+
+4. **Phase 4: Deprecate posts-permissions.ts**
+   - All rules now in sysreg_config
+   - TypeScript constants remain for STATUS values only
+   - Remove rule functions, keep only types
+
+#### Proposal B: New Transition Config Entries
+
+Add transition-specific entries to sysreg_config:
+
+```typescript
+// Example config entry for "draft→review" transition
+{
+  name: 'post_transition_draft_review',
+  value: ENTITY_POST | STATE_DRAFT | ROLE_OWNER | ROLE_MEMBER,
+  description: 'Creator/member can submit draft for review',
+  metadata: {
+    from_status: 64,    // DRAFT
+    to_status: 256,     // REVIEW  
+    action: 'submit'
+  }
+}
+```
+
+This extends the existing capability bit pattern with transition semantics.
+
+#### Proposal C: StatusConfigPanel Wrapper
+
+Create `StatusConfigPanel.vue` that wraps StatusEditor with:
+- Live reload from sysreg_config
+- Admin mode to edit transitions inline
+- Preview mode to see "who can do what"
+
+```vue
+<StatusConfigPanel 
+  :post="post" 
+  :project="project"
+  :admin-mode="isAdmin"
+/>
+```
+
+### Migration Path for 15 Rules
+
+| Rule | Current Location | Target Location |
+|------|------------------|-----------------|
+| POST_ALLROLE_READ_RELEASED | posts-permissions.ts | sysreg_config entry |
+| POST_OWNER_FULL | posts-permissions.ts | sysreg_config entry |
+| POST_READ_P_OWNER | posts-permissions.ts | sysreg_config entry |
+| POST_READ_P_MEMBER_DRAFT | posts-permissions.ts | sysreg_config entry |
+| ... | ... | ... |
+
+### Scope Toggles Integration
+
+The recently added scope toggles (TEAM, LOGIN, PROJECT, REGIO, PUBLIC) should be:
+- Stored as bits 17-21 in post.status
+- Interpreted by sysreg_config entries for visibility rules
+- Displayed in StatusEditor's scope toggles section
+
+### Open Questions for Sunrise Talk
+
+1. **Transition metadata:** Embed in sysreg_config.value bits, or use separate JSONB field?
+2. **Caching strategy:** How to invalidate client cache when sysreg_config changes?
+3. **Fallback behavior:** What happens if no matching config entry? Default-deny or error?
+4. **Per-project overrides:** Allow projects to customize default capabilities?
+
+### Timeline Estimate
+
+| Phase | Effort | Target |
+|-------|--------|--------|
+| Phase 1 (r-flags) | Done | ✅ Dec 2 |
+| Phase 2 (StatusEditor) | 2 days | v0.3 |
+| Phase 3 (API middleware) | 3 days | v0.4 |
+| Phase 4 (Deprecate utils) | 1 day | v0.5 |
+
+---
+
 *Last updated: December 4, 2025*
