@@ -30,22 +30,37 @@ This document specifies the refactored auth-system using `sysreg_config` to defi
 
 ## Bit Allocation: 31 bits (+ sign bit for admin)
 
+> **Updated Dec 5, 2025:** Sunrise talk decisions applied.
+> - Bits 17-19 repurposed from "create" to "to_status" (for transitions)
+> - "Roles" renamed to "Relations" (contextual relationships)
+> - Bit 29 "owner" renamed to "creator" (record creator)
+
 | Bit Range | Purpose | Values |
 |-----------|---------|--------|
 | 0 | Default/Special flag | 0=merge with default, 1=special project |
 | 1-2 | Project Type | 4 types |
 | 3-7 | Entity type | 32 entity types (5 bits) |
-| 8-10 | Record state | 8 states |
+| 8-10 | Record state (from) | 8 states |
 | 11-13 | Read capability | category + subcategories |
 | 14-16 | Update capability | category + subcategories |
-| 17-19 | Create capability | category + subcategories |
+| 17-19 | **To-state (transitions)** | 8 states (was: create capability) |
 | 20-22 | Manage capability | category + subcategories |
 | 23-24 | Simple capabilities | list, share |
-| 25-29 | Roles | 5 project-roles |
+| 25-29 | **Relations** | 5 contextual relations (was: roles) |
 | 30 | (reserved) | Future use |
-| 31 (sign) | Admin role | (v0.5 - deferred) |
+| 31 (sign) | Admin relation | (v0.5 - deferred) |
 
 **Total: 30 active bits + sign bit = 31 bits used** (within 32-bit signed integer)
+
+### Key Design Decisions (Dec 5 Sunrise)
+
+1. **Create capability removed from entity level** - Creation is a project-level permission, not entity-level. Check project config for "can create posts in this project", not entity capability bits.
+
+2. **Bits 17-19 repurposed for transitions** - When `to_status != 0`, this entry defines a state transition rule (from state in bits 8-10, to state in bits 17-19).
+
+3. **"Relations" not "Roles"** - These bits describe contextual relationships to the record/project, not fixed identities. Same user has different relations to different records.
+
+4. **"Creator" not "Owner"** - Bit 29 indicates the record creator (historical fact), not ownership (possession claim). Project owner is resolved via FK lookup, not a relation bit.
 
 ---
 
@@ -137,14 +152,22 @@ Each complex capability uses 3 bits with category→subcategory pattern:
 | 101 | update > shift | Change date/costs/count |
 | 110-111 | (reserved) | |
 
-#### Create Capability (bits 17-19)
-| Value | Capability | Description |
-|-------|------------|-------------|
-| 000 | (none) | No create access |
-| 001 | create | Full create access (category) |
-| 010 | create > draft | Create as draft only |
-| 011 | create > from_template | Create from template only |
-| 100-111 | (reserved) | |
+#### To-State for Transitions (bits 17-19)
+
+> **Changed Dec 5:** Previously "Create Capability". Create is now project-level config.
+
+| Value | To-State | Description |
+|-------|----------|-------------|
+| 000 | (none) | Not a transition entry (capability only) |
+| 001 | new | Transition target: new |
+| 010 | demo | Transition target: demo |
+| 011 | draft | Transition target: draft |
+| 100 | review | Transition target: review |
+| 101 | released | Transition target: released |
+| 110 | archived | Transition target: archived |
+| 111 | trash | Transition target: trash |
+
+**Usage:** When bits 17-19 are non-zero, this config entry defines who can transition from state (bits 8-10) to state (bits 17-19).
 
 #### Manage Capability (bits 20-22)
 | Value | Capability | Description |
@@ -168,20 +191,26 @@ Each complex capability uses 3 bits with category→subcategory pattern:
 
 ---
 
-### Group 6: Roles (bits 25-29 + sign bit)
+### Group 6: Relations (bits 25-29 + sign bit)
 
-| Bit | Role | Description |
-|-----|------|-------------|
-| 25 | anonym | Anonymous public user, not logged in |
-| 26 | partner | Parents, sponsors, interested persons |
-| 27 | participant | Actors, attendees, active participants |
-| 28 | member | Instructors, staff, team members |
-| 29 | owner | Record owner (creator of the record) |
-| 31 (sign) | admin | System administrator (v0.5) |
+> **Renamed Dec 5:** "Roles" → "Relations" to emphasize contextual relationships.
 
-**Note:** Multiple role bits can be set to grant capability to multiple roles.
+| Bit | Relation | Determined By | Description |
+|-----|----------|---------------|-------------|
+| 25 | anonym | Session state | Not logged in |
+| 26 | partner | `project_members.configrole` | Parents, sponsors, interested persons |
+| 27 | participant | `project_members.configrole` | Actors, attendees, active participants |
+| 28 | member | `project_members.configrole` | Instructors, staff, team members |
+| 29 | **creator** | `entity.creator_id === user.id` | Record creator (was: owner) |
+| 31 (sign) | admin | User flag | System administrator (v0.5) |
 
-**Important:** The `owner` role (bit 29) refers to the **record owner** (whoever created the record), NOT the project-owner. Project-owners receive elevated capabilities via separate config entries granting them member-level access plus manage permissions.
+**Note:** Multiple relation bits can be set to grant capability to multiple relations.
+
+**Key Distinction:**
+- **creator** (bit 29) = who created this specific record (historical fact, immutable)
+- **project owner** = resolved via `entity.project_id → projects.owner_id` (FK lookup, not a relation bit)
+
+Config entries with `P_OWNER` in the name indicate project-owner capabilities, checked via FK lookup at runtime.
 
 ---
 
