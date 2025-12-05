@@ -49,10 +49,11 @@
                         <th>State</th>
                         <th>Read</th>
                         <th>Update</th>
-                        <th>Create</th>
+                        <th>Transition</th>
                         <th>Manage</th>
                         <th>List</th>
                         <th>Share</th>
+                        <th>Type</th>
                         <th>Roles</th>
                         <th>Actions</th>
                     </tr>
@@ -72,8 +73,8 @@
                         <td :class="getCapabilityClass('update', entry.value)">
                             {{ getCapabilityLabel('update', entry.value) }}
                         </td>
-                        <td :class="getCapabilityClass('create', entry.value)">
-                            {{ getCapabilityLabel('create', entry.value) }}
+                        <td :class="getToStateClass(entry.value)">
+                            {{ getToStateLabel(entry.value) }}
                         </td>
                         <td :class="getCapabilityClass('manage', entry.value)">
                             {{ getCapabilityLabel('manage', entry.value) }}
@@ -83,6 +84,9 @@
                         </td>
                         <td :class="{ active: hasSimpleCap(entry.value, 'share') }">
                             {{ hasSimpleCap(entry.value, 'share') ? '✓' : '-' }}
+                        </td>
+                        <td class="type-cell" :class="'type-' + entry.taglogic">
+                            {{ getTaglogicLabel(entry.taglogic) }}
                         </td>
                         <td class="roles-cell">
                             <span v-for="role in getRoles(entry.value)" :key="role" class="role-badge"
@@ -146,7 +150,7 @@
 
                 <!-- State -->
                 <div class="form-group">
-                    <label>Record State:</label>
+                    <label>From State:</label>
                     <select v-model="editForm.state" class="form-select">
                         <option v-for="state in STATES" :key="state.value" :value="state.value">
                             {{ state.name }}
@@ -154,9 +158,22 @@
                     </select>
                 </div>
 
+                <!-- Taglogic Type -->
+                <div class="form-group">
+                    <label>Entry Type:</label>
+                    <select v-model="editForm.taglogic" class="form-select">
+                        <option v-for="opt in TAGLOGIC_OPTIONS" :key="opt.value" :value="opt.value">
+                            {{ opt.name }}
+                        </option>
+                    </select>
+                    <small class="help-text">
+                        Toggle = simple capability, Category/Subcategory = transition button
+                    </small>
+                </div>
+
                 <!-- Complex Capabilities -->
                 <div class="form-group capabilities-group">
-                    <label>Complex Capabilities:</label>
+                    <label>Capabilities:</label>
                     <div class="capability-selects">
                         <div class="cap-item">
                             <span>Read:</span>
@@ -175,10 +192,10 @@
                             </select>
                         </div>
                         <div class="cap-item">
-                            <span>Create:</span>
-                            <select v-model="editForm.create" class="form-select">
-                                <option v-for="opt in CREATE_OPTIONS" :key="opt.value" :value="opt.value">
-                                    {{ opt.name }}
+                            <span>→ To-State:</span>
+                            <select v-model="editForm.toState" class="form-select">
+                                <option v-for="state in STATES" :key="state.value" :value="state.value">
+                                    {{ state.value === 0 ? '(none)' : state.name }}
                                 </option>
                             </select>
                         </div>
@@ -282,7 +299,7 @@ const BITS = {
     ROLE_PARTNER: 1 << 26,
     ROLE_PARTICIPANT: 1 << 27,
     ROLE_MEMBER: 1 << 28,
-    ROLE_OWNER: 1 << 29,
+    ROLE_CREATOR: 1 << 29,
 }
 
 // Options arrays for dropdowns
@@ -334,12 +351,7 @@ const UPDATE_OPTIONS = [
     { value: 5, name: 'update > shift' },
 ]
 
-const CREATE_OPTIONS = [
-    { value: 0, name: '(none)' },
-    { value: 1, name: 'create (full)' },
-    { value: 2, name: 'create > draft' },
-    { value: 3, name: 'create > template' },
-]
+// Note: CREATE_OPTIONS removed - bits 17-19 are now used for TO_STATE (transition target)
 
 const MANAGE_OPTIONS = [
     { value: 0, name: '(none)' },
@@ -355,7 +367,7 @@ const ROLES = [
     { bit: BITS.ROLE_PARTNER, name: 'partner' },
     { bit: BITS.ROLE_PARTICIPANT, name: 'participant' },
     { bit: BITS.ROLE_MEMBER, name: 'member' },
-    { bit: BITS.ROLE_OWNER, name: 'owner' },
+    { bit: BITS.ROLE_CREATOR, name: 'creator' },
 ]
 
 // State
@@ -380,6 +392,13 @@ const selectedEntity = ref<number | string>('')
 const selectedState = ref<number | string>('')
 const selectedProjectType = ref<number | string>('')
 
+// Taglogic options
+const TAGLOGIC_OPTIONS = [
+    { value: 'toggle', name: 'Toggle (simple capability)' },
+    { value: 'category', name: 'Category (primary transition)' },
+    { value: 'subcategory', name: 'Subcategory (alternative transition)' },
+]
+
 // Edit form
 const editForm = ref({
     name: '',
@@ -387,9 +406,10 @@ const editForm = ref({
     projectType: BITS.PROJECT_ALL,
     entity: BITS.ENTITY_ALL,
     state: BITS.STATE_ALL,
+    taglogic: 'toggle' as 'toggle' | 'category' | 'subcategory',
     read: 0,
     update: 0,
-    create: 0,
+    toState: 0,  // Transition target state (bits 17-19)
     manage: 0,
     list: false,
     share: false,
@@ -406,7 +426,7 @@ const computedValue = computed(() => {
     // Entity (bits 3-7)
     value |= editForm.value.entity << 3
 
-    // State (bits 8-10)
+    // State (bits 8-10) - FROM state
     value |= editForm.value.state << 8
 
     // Read (bits 11-13)
@@ -415,8 +435,8 @@ const computedValue = computed(() => {
     // Update (bits 14-16)
     value |= editForm.value.update << 14
 
-    // Create (bits 17-19)
-    value |= editForm.value.create << 17
+    // To-State (bits 17-19) - Transition target state
+    value |= editForm.value.toState << 17
 
     // Manage (bits 20-22)
     value |= editForm.value.manage << 20
@@ -465,8 +485,8 @@ function getStateValue(value: number): number {
     return (value >> 8) & 0b111 // bits 8-10
 }
 
-function getCapabilityValue(value: number, cap: 'read' | 'update' | 'create' | 'manage'): number {
-    const offsets = { read: 11, update: 14, create: 17, manage: 20 }
+function getCapabilityValue(value: number, cap: 'read' | 'update' | 'toState' | 'manage'): number {
+    const offsets = { read: 11, update: 14, toState: 17, manage: 20 }
     return (value >> offsets[cap]) & 0b111
 }
 
@@ -496,19 +516,44 @@ function getStateName(value: number): string {
     return state?.name || '?'
 }
 
-function getCapabilityLabel(cap: 'read' | 'update' | 'create' | 'manage', value: number): string {
+function getCapabilityLabel(cap: 'read' | 'update' | 'manage', value: number): string {
     const capVal = getCapabilityValue(value, cap)
     if (capVal === 0) return '-'
-    const options = { read: READ_OPTIONS, update: UPDATE_OPTIONS, create: CREATE_OPTIONS, manage: MANAGE_OPTIONS }
+    const options: Record<string, typeof READ_OPTIONS> = { read: READ_OPTIONS, update: UPDATE_OPTIONS, manage: MANAGE_OPTIONS }
     const opt = options[cap].find(o => o.value === capVal)
     return opt?.name.replace(/.*> /, '') || String(capVal)
 }
 
-function getCapabilityClass(cap: 'read' | 'update' | 'create' | 'manage', value: number): string {
+// Get transition target state label
+function getToStateLabel(value: number): string {
+    const toStateVal = getCapabilityValue(value, 'toState')
+    if (toStateVal === 0) return '-'
+    const state = STATES.find(s => s.value === toStateVal)
+    return state?.name ? `→ ${state.name}` : '-'
+}
+
+function getCapabilityClass(cap: 'read' | 'update' | 'manage', value: number): string {
     const capVal = getCapabilityValue(value, cap)
     if (capVal === 0) return 'inactive'
     if (capVal === 1) return 'active full'
     return 'active partial'
+}
+
+// Get transition target state class
+function getToStateClass(value: number): string {
+    const toStateVal = getCapabilityValue(value, 'toState')
+    if (toStateVal === 0) return 'inactive'
+    return 'active transition'
+}
+
+// Get taglogic display label
+function getTaglogicLabel(taglogic: string): string {
+    switch (taglogic) {
+        case 'category': return '🔵 Primary'
+        case 'subcategory': return '🔹 Alt'
+        case 'toggle': return '⚪ Toggle'
+        default: return taglogic || '?'
+    }
 }
 
 function getRoles(value: number): string[] {
@@ -528,9 +573,10 @@ function startNewEntry() {
         projectType: BITS.PROJECT_ALL,
         entity: BITS.ENTITY_ALL,
         state: BITS.STATE_ALL,
+        taglogic: 'toggle',
         read: 0,
         update: 0,
-        create: 0,
+        toState: 0,
         manage: 0,
         list: false,
         share: false,
@@ -547,9 +593,10 @@ function startEdit(entry: ConfigEntry) {
         projectType: getProjectTypeValue(entry.value),
         entity: getEntityValue(entry.value),
         state: getStateValue(entry.value),
+        taglogic: (entry.taglogic as 'toggle' | 'category' | 'subcategory') || 'toggle',
         read: getCapabilityValue(entry.value, 'read'),
         update: getCapabilityValue(entry.value, 'update'),
-        create: getCapabilityValue(entry.value, 'create'),
+        toState: getCapabilityValue(entry.value, 'toState'),
         manage: getCapabilityValue(entry.value, 'manage'),
         list: hasSimpleCap(entry.value, 'list'),
         share: hasSimpleCap(entry.value, 'share'),
@@ -569,7 +616,7 @@ async function saveEntry() {
         name: editForm.value.name?.trim() || '',
         description: editForm.value.description?.trim() || '',
         tagfamily: 'config',
-        taglogic: 'toggle',
+        taglogic: editForm.value.taglogic,
         is_default: false,
     }
 
@@ -1020,5 +1067,44 @@ onMounted(() => {
 
 .modal-actions .btn {
     padding: 0.5rem 1rem;
+}
+
+/**
+ * Type column styling
+ */
+.type-cell {
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.type-cell.type-category {
+    color: var(--color-primary-bg);
+    font-weight: 600;
+}
+
+.type-cell.type-subcategory {
+    color: var(--color-accent-bg);
+}
+
+.type-cell.type-toggle {
+    color: var(--color-dimmed);
+}
+
+/**
+ * Transition column styling
+ */
+td.active.transition {
+    color: var(--color-positive-bg);
+    font-weight: 500;
+}
+
+/**
+ * Help text
+ */
+.help-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8em;
+    color: var(--color-dimmed);
 }
 </style>
