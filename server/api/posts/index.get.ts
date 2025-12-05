@@ -42,12 +42,12 @@ export default defineEventHandler(async (event) => {
                 // Build visibility condition based on user's relationship to the post/project
                 // User can see post if:
                 // 1. r_anonym = true (anyone can see)
-                // 2. User is the post owner (r_owner = true and owner_id matches)
+                // 2. User is the post creator (r_creator = true and creator_id matches)
                 // 3. User is project owner
                 // 4. User is project member with appropriate role flag
                 sql += ` AND (
                     p.r_anonym = true
-                    OR (p.r_owner = true AND p.owner_id = ?)
+                    OR (p.r_creator = true AND p.creator_id = ?)
                     OR pr.owner_id = ?
                     OR EXISTS (
                         SELECT 1 FROM project_members pm 

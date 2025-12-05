@@ -60,11 +60,12 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
 
             // Merge metadata with batch data
             // Note: ctags, rtags are INTEGER (32-bit) columns after Migration 036
+            // Accept owner_id for backward compat, store as creator_id
             const imageData = {
                 name: metadata.name || this.extractFilename(url),
                 url: metadata.url,
                 project_id,
-                owner_id: batchData?.owner_id || null,
+                creator_id: batchData?.creator_id || batchData?.owner_id || null,
                 alt_text: batchData?.alt_text || metadata.alt_text || null,
                 title: metadata.title || null,
                 x: metadata.x || null,
@@ -86,7 +87,7 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
                 imageData.name,
                 imageData.url,
                 imageData.project_id,
-                imageData.owner_id,
+                imageData.creator_id,
                 imageData.alt_text,
                 imageData.title,
                 imageData.x,
@@ -115,7 +116,7 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
             // Build SQL
             const sql = `
                 INSERT INTO images (
-                    name, url, project_id, owner_id, alt_text, title,
+                    name, url, project_id, creator_id, alt_text, title,
                     x, y, fileformat, license, xmlid, geo, date, about, ctags, rtags, author
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                     ${imageData.author ? `ROW(?, ?, ?, ?, ?, ?::jsonb)::media_adapter` : 'NULL'}

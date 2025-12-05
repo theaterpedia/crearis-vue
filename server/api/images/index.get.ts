@@ -11,10 +11,10 @@ export default defineEventHandler(async (event) => {
         let sql = `
             SELECT 
                 i.*,
-                u.username as owner_username,
+                u.username as creator_username,
                 p.name as project_name
             FROM images i
-            LEFT JOIN users u ON i.owner_id = u.id
+            LEFT JOIN users u ON i.creator_id = u.id
             LEFT JOIN projects p ON i.project_id = p.id
             WHERE 1=1
         `
@@ -30,9 +30,10 @@ export default defineEventHandler(async (event) => {
             params.push(Number(query.project_id))
         }
 
-        if (query.owner_id) {
-            sql += ' AND i.owner_id = ?'
-            params.push(Number(query.owner_id))
+        // Accept both creator_id and owner_id for backward compatibility
+        if (query.creator_id || query.owner_id) {
+            sql += ' AND i.creator_id = ?'
+            params.push(Number(query.creator_id || query.owner_id))
         }
 
         if (query.status_id !== undefined) {

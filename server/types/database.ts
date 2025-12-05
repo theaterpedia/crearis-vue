@@ -176,7 +176,7 @@ export interface ImagesTableFields {
     length?: number | null
     license?: any | null // default: 'BY'::media_licence
     name: string
-    owner_id?: number | null
+    creator_id?: number | null  // Migration 050: renamed from owner_id
     producer?: any | null
     project_domaincode?: string | null
     project_id?: number | null
@@ -376,7 +376,7 @@ export interface PostsTableFields {
     lang?: string | null // default: 'de'::text
     md?: string | null
     name?: string | null
-    owner_id?: number | null  // Migration 046: record owner (FK to users.id)
+    creator_id?: number | null  // Migration 050: renamed from owner_id
     post_date?: string | null
     project_id?: number | null
     public_user?: number | null
@@ -386,7 +386,7 @@ export interface PostsTableFields {
     r_partner?: boolean | null  // default: false
     r_participant?: boolean | null  // default: false
     r_member?: boolean | null  // default: true
-    r_owner?: boolean | null  // default: true
+    r_creator?: boolean | null  // default: true (Migration 050: renamed from r_owner)
     status?: string | null
     status_display?: string | null // GENERATED COLUMN (read-only)
     status_val?: Buffer | null

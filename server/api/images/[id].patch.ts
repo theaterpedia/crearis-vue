@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
         const allowedFields: (keyof ImagesTableFields)[] = [
             'name', 'url', 'alt_text', 'title', 'project_id', 'status_id',
-            'owner_id', 'x', 'y', 'fileformat', 'embedformat', 'license', 'length',
+            'creator_id', 'x', 'y', 'fileformat', 'embedformat', 'license', 'length',
             'xmlid', 'author', 'shape_square', 'shape_wide', 'shape_vertical', 'shape_thumb',
             'ctags'
         ]
@@ -166,9 +166,9 @@ export default defineEventHandler(async (event) => {
         const updated = await db.get(`
             SELECT 
                 i.*,
-                u.username as owner_username
+                u.username as creator_username
             FROM images i
-            LEFT JOIN users u ON i.owner_id = u.id
+            LEFT JOIN users u ON i.creator_id = u.id
             WHERE i.id = ?
         `, [id])
 

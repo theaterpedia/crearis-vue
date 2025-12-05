@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
             url: body.url,
             project_id: body.project_id || null,
             status_id: body.status_id || 0,
-            owner_id: body.owner_id || null,
+            creator_id: body.creator_id || body.owner_id || null,  // Accept both, prefer creator_id
             alt_text: body.alt_text || null,
             title: body.title || null,
             x: body.x || null,
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
 
         const sql = `
             INSERT INTO images (
-                xmlid, name, url, project_id, status_id, owner_id,
+                xmlid, name, url, project_id, status_id, creator_id,
                 alt_text, title, x, y, fileformat, embedformat, license, length,
                 shape_square, shape_wide, shape_vertical, shape_thumb
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
             imageData.url,
             imageData.project_id,
             imageData.status_id,
-            imageData.owner_id,
+            imageData.creator_id,
             imageData.alt_text,
             imageData.title,
             imageData.x,
