@@ -54,6 +54,17 @@ export interface StatusOption {
     canTransition: boolean
 }
 
+/**
+ * Transition action for StatusEditor
+ */
+export interface TransitionAction {
+    value: number
+    label: string
+    color: string
+    icon: string
+    isPrimary: boolean
+}
+
 const STATUS_META: Record<number, { label: string; color: string; icon: string; description: string }> = {
     [STATUS.NEW]: { label: 'Neu', color: 'muted', icon: '📝', description: 'Gerade erstellt, nur für Ersteller sichtbar' },
     [STATUS.DEMO]: { label: 'Demo', color: 'secondary', icon: '👁️', description: 'Vorschau-Modus' },
@@ -135,13 +146,13 @@ export function usePostStatusV2(
         }).filter(opt => opt.canTransition || opt.isCurrentStatus)
     })
 
-    const transitionActions = computed(() => {
+    const transitionActions = computed((): TransitionAction[] => {
         const current = currentStatus.value
         const available = caps.availableTransitions.value
 
         return available
-            .filter(target => target !== STATUS.TRASH)
-            .map(target => {
+            .filter((target: number) => target !== STATUS.TRASH)
+            .map((target: number) => {
                 const key = `${current}_${target}`
                 const meta = STATUS_META[target] ?? { label: 'Unknown', color: 'muted', icon: '?' }
                 return {
@@ -149,10 +160,19 @@ export function usePostStatusV2(
                     label: TRANSITION_LABELS[key] ?? `→ ${meta.label}`,
                     color: meta.color,
                     icon: meta.icon,
-                    isPrimary: isPrimaryTransition(current, target)
+                    isPrimary: caps.isPrimaryTransition(target)
                 }
             })
     })
+
+    // Separate primary and alternative transitions for UI
+    const primaryTransitionActions = computed((): TransitionAction[] => 
+        transitionActions.value.filter((a: TransitionAction) => a.isPrimary)
+    )
+
+    const alternativeTransitionActions = computed((): TransitionAction[] => 
+        transitionActions.value.filter((a: TransitionAction) => !a.isPrimary)
+    )
 
     const canTrash = computed(() => {
         return caps.availableTransitions.value.includes(STATUS.TRASH)
@@ -161,13 +181,6 @@ export function usePostStatusV2(
     // ============================================================
     // TRANSITION HELPERS
     // ============================================================
-
-    function isPrimaryTransition(from: number, to: number): boolean {
-        if (from === STATUS.NEW && to === STATUS.DRAFT) return true
-        if (from === STATUS.DRAFT && to === STATUS.REVIEW) return true
-        if (from === STATUS.REVIEW && to === STATUS.RELEASED) return true
-        return false
-    }
 
     function getTransitionLabel(from: number, to: number): string {
         const key = `${from}_${to}`
@@ -297,6 +310,8 @@ export function usePostStatusV2(
         // Options for UI
         availableStatusOptions,
         transitionActions,
+        primaryTransitionActions,
+        alternativeTransitionActions,
         canTrash,
 
         // Transition
