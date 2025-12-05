@@ -436,8 +436,8 @@ const editForm = ref({
 // Shows category entries with the same FROM state
 const availableParentCategories = computed(() => {
     if (editForm.value.taglogic !== 'subcategory') return []
-    return entries.value.filter(e => 
-        e.taglogic === 'category' && 
+    return entries.value.filter(e =>
+        e.taglogic === 'category' &&
         getStateValue(e.value) === editForm.value.state
     )
 })

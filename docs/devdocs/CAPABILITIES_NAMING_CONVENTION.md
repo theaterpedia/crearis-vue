@@ -243,7 +243,7 @@ Full 32-bit layout for capability entries:
 | 20-22 | 3 bits | Manage capability |
 | 23 | 1 bit | List capability |
 | 24 | 1 bit | Share capability |
-| 25-29 | 5 bits | Relation flags |
+| 25-31 | 7 bits | Relation flags (see below) |
 
 ### Entity Codes
 
@@ -258,15 +258,20 @@ Full 32-bit layout for capability entries:
 | 6 | image |
 | 7 | location |
 
-### Relation Bits (25-29)
+### Relation Bits (25-31)
 
-| Bit | Relation |
-|-----|----------|
-| 25 | anonym |
-| 26 | partner |
-| 27 | participant |
-| 28 | member |
-| 29 | creator |
+| Bit | Value | Relation | Description |
+|-----|-------|----------|-------------|
+| 25 | 33554432 | anonym | Anonymous/public user |
+| 26 | 67108864 | partner | External partner |
+| 27 | 134217728 | participant | Project participant |
+| 28 | 268435456 | member | Project member |
+| 29 | 536870912 | creator | Content creator |
+| 30 | 1073741824 | owner | Project owner |
+| 31 | 2147483648 | admin | System admin (sign bit) |
+
+**Note:** Bit 31 is the sign bit in signed 32-bit integers. When used, 
+the value becomes negative. Handle with `>>> 0` for unsigned comparison.
 
 ---
 

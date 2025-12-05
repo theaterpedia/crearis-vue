@@ -208,18 +208,79 @@ DELETE /api/posts/:id/comments/:commentId # Delete comment
 
 ---
 
-## Open Questions
+## Open Questions → Resolved
 
-1. **Markdown in comments?** - Probably yes (simple subset)
-2. **Comment notifications?** - Deferred (v0.6+)
-3. **Comment moderation?** - Owner can delete any, author can edit own
-4. **Anchor persistence?** - What if anchored content is deleted?
+| Question | Decision | Notes |
+|----------|----------|-------|
+| **1. Markdown in comments?** | ✅ **Yes** | Simple subset (bold, italic, links, code) |
+| **2. Comment notifications?** | ⏳ **Deferred** | v1.0+ |
+| **3. Comment moderation?** | ✅ **Decided** | Owner can delete any, author can edit own |
+| **4. Anchor persistence?** | ⏳ **Deferred to v1.1** | If anchored content deleted → Post-IT deleted too. Group with moderation features |
+
+### Moderation Rules (v0.4)
+- **p_owner**: Can delete ANY comment in project
+- **p_creator**: Can delete own comments + member/participant comments
+- **member**: Can edit/delete own comments only
+- **participant**: Can edit/delete own comments only
+- **Orphan handling**: Deferred to v1.1 (for now: cascade delete)
+
+---
+
+## Cross-Check with Report 2 (chat/imagination/)
+
+### ✅ Aligned
+- Data model structure (`entity_type`, `parent_id`, `author_relation`)
+- Role-based color assignment (orange=owner, purple=creator, yellow=member, blue=participant)
+- Threading: max 1 level deep (Q&A style)
+- Components: PostITNote, PostITBoard, PostITComposer, usePostITComments
+
+### ⚠️ Needs Clarification/Merge
+
+| Report 2 | Integration Plan | Resolution |
+|----------|------------------|------------|
+| `entity_type: 'post' \| 'project' \| 'event' \| 'image'` | JSONB in posts table only | **Extend**: Support all entity types via separate `comments` table (Report 2 approach) |
+| `PostITSidebar.vue` for frontend | Not mentioned | **Add** to Phase 5 |
+| `PostITBottomSheet.vue` for mobile | Not mentioned | **Add** to Phase 5 |
+| `reactions` array | Not in Integration Plan | **Add**: Simple emoji reactions (❤️, 👍, 👀) |
+| `is_pinned` boolean | Not in Integration Plan | **Add**: Owner/creator can pin important comments |
+| `visibility: 'internal' \| 'published'` | In Integration Plan ✅ | Keep |
+
+### 📝 Missing from Report 2 (add here)
+- **Anchor strategy** (`anchor_key`, `anchor_selector`) - Report 2 assumes position-based only
+- **Max 9 constraint** - Not mentioned in Report 2, keep from fpostit system
+- **Integration with existing `useFpostitController`** - Report 2 proposes new system, we reuse existing
+
+---
+
+## Updated Data Model (Merged)
+
+```typescript
+interface PostITComment {
+  id: string                    // UUID
+  entity_type: 'post' | 'project' | 'event' | 'image'
+  entity_id: string             // FK to entity
+  parent_id: string | null      // For threading (max 1 level)
+  author_id: string             // FK to users
+  author_name: string           // Denormalized for display
+  author_relation: ProjectRelation  // Role at time of comment
+  content: string               // Markdown-enabled
+  anchor_key?: string           // p1-p9 positioning (fpostit compat)
+  anchor_selector?: string      // CSS selector (future)
+  visibility: 'internal' | 'published'
+  is_pinned: boolean
+  reactions: { emoji: string; user_ids: string[] }[]
+  created_at: string
+  updated_at?: string
+}
+```
 
 ---
 
 ## Next Steps (Today)
 
 1. ✅ Plan created
-2. ⏳ Finalize posts permission rules (10:30-11:00)
-3. ⏳ Create shared utils for posts workflow (11:00-11:30)
-4. 📋 Comments integration starts Dec 5 (v0.3)
+2. ✅ Open questions resolved
+3. ✅ Cross-checked with Report 2
+4. ⏳ Finalize posts permission rules
+5. ⏳ Create shared utils for posts workflow
+6. 📋 See `POSTIT-DEMO-THREADS.md` for realistic test scenarios

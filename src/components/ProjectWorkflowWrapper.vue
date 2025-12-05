@@ -1,22 +1,12 @@
 <template>
     <div class="project-workflow-wrapper">
         <!-- Activation Panel (modal) -->
-        <ProjectActivationPanel
-            :is-open="isActivationPanelOpen"
-            :project="projectData"
-            :entity-counts="entityCounts"
-            :membership="membershipData"
-            @close="closeActivationPanel"
-            @activated="handleActivated"
-        />
+        <ProjectActivationPanel :is-open="isActivationPanelOpen" :project="projectData" :entity-counts="entityCounts"
+            :membership="membershipData" @close="closeActivationPanel" @activated="handleActivated" />
 
         <!-- Activation Trigger Button (when applicable) -->
         <div v-if="showActivationButton" class="activation-trigger">
-            <button 
-                class="activation-btn"
-                :class="{ 'highlight': shouldHighlight }"
-                @click="openActivationPanel"
-            >
+            <button class="activation-btn" :class="{ 'highlight': shouldHighlight }" @click="openActivationPanel">
                 <span class="btn-icon">🚀</span>
                 <span class="btn-text">{{ activationButtonLabel }}</span>
             </button>
@@ -39,16 +29,9 @@
         </div>
 
         <!-- Slot for child content (ProjectSite, etc.) -->
-        <slot 
-            :layout-type="layoutType"
-            :panel-detail-mode="panelDetailMode"
-            :is-stepper="isStepper"
-            :is-dashboard="isDashboard"
-            :user-relation="userRelation"
-            :current-status="currentStatus"
-            :can-manage="canManageProject"
-            :can-transition="canTransition"
-        />
+        <slot :layout-type="layoutType" :panel-detail-mode="panelDetailMode" :is-stepper="isStepper"
+            :is-dashboard="isDashboard" :user-relation="userRelation" :current-status="currentStatus"
+            :can-manage="canManageProject" :can-transition="canTransition" />
     </div>
 </template>
 
@@ -186,14 +169,14 @@ function closeActivationPanel() {
 // Handle activation
 function handleActivated(newStatus: number) {
     emit('activated', newStatus)
-    
+
     // Check if layout changed
     const oldLayoutType = layoutType.value
     // Layout will be recalculated by composable, but we need to emit if it changed
     // For now, trigger a reload if crossing the stepper/dashboard boundary
     const wasStepper = currentStatus.value < PROJECT_STATUS.DRAFT
     const willBeDashboard = newStatus >= PROJECT_STATUS.DRAFT
-    
+
     if (wasStepper && willBeDashboard) {
         emit('layoutChange', 'dashboard')
     } else if (!wasStepper && newStatus < PROJECT_STATUS.DRAFT) {
@@ -259,9 +242,12 @@ provide('projectWorkflow', {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
+
     50% {
         box-shadow: 0 4px 20px var(--color-primary-base);
     }
@@ -318,12 +304,35 @@ provide('projectWorkflow', {
     color: var(--color-muted);
 }
 
-.status-badge.status-new { background: var(--color-info-bg); color: var(--color-info-base); }
-.status-badge.status-demo { background: var(--color-warning-bg); color: var(--color-warning-base); }
-.status-badge.status-draft { background: var(--color-info-bg); color: var(--color-info-base); }
-.status-badge.status-confirmed { background: var(--color-positive-bg); color: var(--color-positive-base); }
-.status-badge.status-released { background: var(--color-positive-bg); color: var(--color-positive-base); }
-.status-badge.status-archived { background: var(--color-muted-bg); color: var(--color-muted); }
+.status-badge.status-new {
+    background: var(--color-info-bg);
+    color: var(--color-info-base);
+}
+
+.status-badge.status-demo {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-base);
+}
+
+.status-badge.status-draft {
+    background: var(--color-info-bg);
+    color: var(--color-info-base);
+}
+
+.status-badge.status-confirmed {
+    background: var(--color-positive-bg);
+    color: var(--color-positive-base);
+}
+
+.status-badge.status-released {
+    background: var(--color-positive-bg);
+    color: var(--color-positive-base);
+}
+
+.status-badge.status-archived {
+    background: var(--color-muted-bg);
+    color: var(--color-muted);
+}
 
 .relation-badge {
     background: var(--color-accent-bg);
