@@ -212,12 +212,20 @@ export function useCapabilities(
     const userSysmail = computed(() => user.value?.sysmail || null)
     
     const relation = computed(() => {
-        return getRelation(
+        const result = getRelation(
             entity.value,
             project.value,
             membership?.value ?? null,
             userSysmail.value
         )
+        console.log('[useCapabilities] relation computed:', {
+            userSysmail: userSysmail.value,
+            entityCreator: entity.value?.creator_sysmail || entity.value?.owner_sysmail,
+            projectOwner: project.value?.owner_sysmail,
+            membership: membership?.value,
+            result
+        })
+        return result
     })
 
     // Computed status name
@@ -228,6 +236,13 @@ export function useCapabilities(
 
     // Fetch capabilities when inputs change
     async function refresh() {
+        console.log('[useCapabilities] refresh called:', {
+            entityType,
+            entity: entity.value,
+            statusName: statusName.value,
+            relation: relation.value
+        })
+
         if (!entity.value && entityType !== 'project') {
             // No entity yet (create mode)
             capabilities.value = { read: false, update: false, manage: false, list: true, share: false }
@@ -240,6 +255,7 @@ export function useCapabilities(
 
         try {
             const result = await fetchCapabilities(entityType, statusName.value, relation.value)
+            console.log('[useCapabilities] API result:', result)
             if (result) {
                 capabilities.value = result.capabilities
                 transitions.value = result.transitions
@@ -312,8 +328,3 @@ export function useCapabilities(
         refresh,
     }
 }
-
-/**
- * Re-export STATUS for convenience
- */
-export { STATUS }

@@ -303,6 +303,8 @@ export function usePostStatus(
             if (!response.ok) {
                 throw new Error('Failed to update status')
             }
+            // Update local state to keep UI in sync
+            post.value.status = targetStatus
             return true
         } catch (err: any) {
             transitionError.value = err.message ?? 'Fehler beim Statuswechsel'
@@ -481,6 +483,3 @@ export function usePostStatus(
         permissions
     }
 }
-
-// Re-export STATUS and SCOPE for consumers
-export { STATUS, SCOPE }

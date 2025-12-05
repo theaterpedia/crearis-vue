@@ -308,5 +308,3 @@ export function usePostStatusV2(
         permissions: caps
     }
 }
-
-export { SCOPE }

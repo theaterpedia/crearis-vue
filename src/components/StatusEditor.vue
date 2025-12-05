@@ -184,7 +184,8 @@ async function handleTransition(targetStatus: number) {
     const success = await transitionTo(targetStatus)
 
     if (success) {
-        emit('status-changed', targetStatus)
+        // Emit actual post status (includes scope bits preserved)
+        emit('status-changed', props.post.status)
         selectedTransition.value = null
     } else if (transitionError.value) {
         emit('error', transitionError.value)
@@ -222,7 +223,11 @@ async function handleRestore() {
 
 async function handleScopeToggle(scopeBit: number) {
     console.log('[StatusEditor] handleScopeToggle:', scopeBit)
-    await toggleScope(scopeBit)
+    const success = await toggleScope(scopeBit)
+    if (success && props.post) {
+        // Emit the new status so parent can update its state
+        emit('status-changed', props.post.status)
+    }
 }
 </script>
 

@@ -128,7 +128,7 @@ import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOp
 
 const router = useRouter()
 const route = useRoute()
-const { user } = useAuth()
+const { user, checkSession, isLoading: authLoading } = useAuth()
 
 // State
 const post = ref<any>(null)
@@ -228,6 +228,8 @@ const postDataForPermissions = computed(() => {
     return {
         id: post.value.id,
         owner_id: post.value.owner_id || 0,
+        creator_id: post.value.creator_id || 0,
+        creator_sysmail: post.value.creator_sysmail || '',
         status: status,
         project_id: post.value.project_id || projectId.value || 0
     }
@@ -308,28 +310,13 @@ function closeConfigPanel() {
 }
 
 // Status Editor Handlers
-async function handleStatusChange(newStatus: number) {
-    console.log('[PostPage] Status change requested:', newStatus)
-    try {
-        const response = await fetch(`/api/posts/${post.value.id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status: newStatus })
-        })
-
-        if (!response.ok) {
-            throw new Error('Failed to update status')
-        }
-
-        // Update local state
-        if (post.value) {
-            post.value.status = newStatus
-        }
-        console.log('[PostPage] Status updated successfully to:', newStatus)
-    } catch (error) {
-        console.error('[PostPage] Error updating status:', error)
+// Note: StatusEditor already saves to API via usePostStatus
+// This handler just updates local state to keep UI in sync
+function handleStatusChange(newStatus: number) {
+    console.log('[PostPage] Status changed to:', newStatus)
+    // Update local state (API was already called by StatusEditor)
+    if (post.value) {
+        post.value.status = newStatus
     }
 }
 
@@ -449,7 +436,9 @@ async function handleSavePost(data: Record<string, any>) {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
+    // Ensure auth session is loaded before loading post (fixes direct URL navigation)
+    await checkSession()
     loadPost()
 })
 </script>
