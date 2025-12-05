@@ -21,9 +21,8 @@ import { ref, computed } from 'vue'
 import { Dropdown as VDropdown } from 'floating-vue'
 import { ChevronDown } from 'lucide-vue-next'
 import StatusEditor from './StatusEditor.vue'
-import { usePostStatus } from '@/composables/usePostStatus'
-import { usePostPermissions } from '@/composables/usePostPermissions'
-import type { PostData, ProjectData, MembershipData } from '@/composables/usePostPermissions'
+import { usePostStatusV2 as usePostStatus } from '@/composables/usePostStatusV2'
+import type { PostData, ProjectData, MembershipData } from '@/composables/usePostStatusV2'
 
 // ============================================================
 // PROPS & EMITS
@@ -60,10 +59,9 @@ const membershipRef = computed(() => props.membership ?? null)
 const {
     currentStatusLabel,
     currentStatusColor,
-    currentStatusIcon
+    currentStatusIcon,
+    permissions
 } = usePostStatus(postRef, projectRef, membershipRef)
-
-const permissions = usePostPermissions(postRef, projectRef, membershipRef)
 
 const canEdit = computed(() => permissions.canEdit.value)
 
