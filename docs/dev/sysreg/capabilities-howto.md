@@ -1,6 +1,7 @@
 # Capabilities System: Developer Howto
 
 **Created:** December 3, 2025  
+**Updated:** December 5, 2025  
 **Sprint:** Projectlogin Workflow (Dec 1-9, 2025)  
 **Purpose:** Deep technical guide for working with the capabilities matrix
 
@@ -11,12 +12,17 @@
 1. [Quick Reference](#quick-reference)
 2. [Test Environment](#test-environment)
 3. [Bit Layout Cheat Sheet](#bit-layout-cheat-sheet)
-4. [Current Capabilities Matrix](#current-capabilities-matrix)
-5. [Common Scenarios with Examples](#common-scenarios-with-examples)
-6. [Naming Conventions](#naming-conventions)
-7. [Best Practices](#best-practices)
-8. [Troubleshooting](#troubleshooting)
-9. [Tools](#tools)
+4. [Transitions & taglogic](#transitions--taglogic)
+5. [CapabilitiesEditor Component](#capabilitieseditor-component)
+6. [Current Capabilities Matrix](#current-capabilities-matrix)
+7. [Common Scenarios with Examples](#common-scenarios-with-examples)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
+10. [Tools](#tools)
+
+::: tip Naming Conventions
+For detailed naming conventions (entity prefixes, relations, capability patterns, transition naming), see **[CAPABILITIES_NAMING_CONVENTION.md](../../devdocs/CAPABILITIES_NAMING_CONVENTION.md)**.
+:::
 
 ---
 
@@ -27,8 +33,9 @@
 new       = 1     (stepper mode)
 demo      = 8     (stepper mode)
 draft     = 64    (dashboard mode)
-confirmed = 512
-released  = 4096
+review    = 256   (awaiting approval)
+confirmed = 512   (legacy)
+released  = 4096  (published)
 ```
 
 ### Role Bits (bits 25-29)
@@ -37,7 +44,7 @@ anonym      = 1 << 25 = 33554432
 partner     = 1 << 26 = 67108864
 participant = 1 << 27 = 134217728
 member      = 1 << 28 = 268435456
-owner       = 1 << 29 = 536870912
+creator     = 1 << 29 = 536870912   # renamed from 'owner'
 ```
 
 ### Configrole Values (project_members.configrole)
@@ -45,7 +52,7 @@ owner       = 1 << 29 = 536870912
 partner     = 2  (bit 1)
 participant = 4  (bit 2)
 member      = 8  (bit 3)
-owner       = (determined by projects.owner_id, not configrole)
+p_owner     = (determined by projects.creator_id, not configrole)
 ```
 
 ---
@@ -107,10 +114,10 @@ Bit:  31  30  29  28  27  26  25  24  23  22-20  19-17  16-14  13-11  10-8  7-3 
       │   │   │   │   │   │   │   │   │   │      │      │      │      │     │     │
       │   │   │   │   │   │   │   │   │   │      │      │      │      │     │     └── Project type
       │   │   │   │   │   │   │   │   │   │      │      │      │      │     └── Entity (5 bits)
-      │   │   │   │   │   │   │   │   │   │      │      │      │      └── State (3 bits)
+      │   │   │   │   │   │   │   │   │   │      │      │      │      └── FROM State (3 bits)
       │   │   │   │   │   │   │   │   │   │      │      │      └── Read cap (3 bits)
       │   │   │   │   │   │   │   │   │   │      │      └── Update cap (3 bits)
-      │   │   │   │   │   │   │   │   │   │      └── Create cap (3 bits)
+      │   │   │   │   │   │   │   │   │   │      └── TO State (3 bits) ← transitions!
       │   │   │   │   │   │   │   │   │   └── Manage cap (3 bits)
       │   │   │   │   │   │   │   │   └── List cap
       │   │   │   │   │   │   │   └── Share cap
@@ -118,10 +125,14 @@ Bit:  31  30  29  28  27  26  25  24  23  22-20  19-17  16-14  13-11  10-8  7-3 
       │   │   │   │   │   └── Role: partner
       │   │   │   │   └── Role: participant
       │   │   │   └── Role: member
-      │   │   └── Role: owner
+      │   │   └── Role: creator
       │   └── Reserved
       └── Admin (sign bit, v0.5)
 ```
+
+::: warning Bits 17-19: TO State (not Create)
+As of Dec 5, 2025, bits 17-19 store the **transition target state** instead of create permissions. A non-zero TO State indicates this config entry is a **transition** (status change), not a simple capability.
+:::
 
 ### Entity Codes (bits 3-7)
 
@@ -136,18 +147,154 @@ Bit:  31  30  29  28  27  26  25  24  23  22-20  19-17  16-14  13-11  10-8  7-3 
 | 00110 | 48 | image |
 | 00111 | 56 | location |
 
-### State Codes (bits 8-10)
+### State Codes (bits 8-10 for FROM, bits 17-19 for TO)
 
-| Binary | Decimal (<<8) | State |
-|--------|---------------|-------|
+| Binary | Value | State |
+|--------|-------|-------|
 | 000 | 0 | all |
-| 001 | 256 | new |
-| 010 | 512 | demo |
-| 011 | 768 | draft |
-| 100 | 1024 | review |
-| 101 | 1280 | released |
-| 110 | 1536 | archived |
-| 111 | 1792 | trash |
+| 001 | 1 | new |
+| 010 | 2 | demo |
+| 011 | 3 | draft |
+| 100 | 4 | review |
+| 101 | 5 | released |
+| 110 | 6 | archived |
+| 111 | 7 | trash |
+
+---
+
+## Transitions & taglogic
+
+### What Makes an Entry a Transition?
+
+A config entry is a **transition** when bits 17-19 (TO State) are non-zero:
+
+```typescript
+const TO_STATE_MASK = 0b111 << 17
+const isTransition = (value & TO_STATE_MASK) !== 0
+```
+
+### taglogic Field
+
+The `taglogic` field determines how transitions appear in the UI:
+
+| taglogic | Meaning | UI Display |
+|----------|---------|------------|
+| `category` | Primary transition | Large prominent button |
+| `subcategory` | Alternative transition | Smaller secondary buttons |
+| `toggle` | Simple capability (not a transition) | N/A |
+
+### Parent-Child Relationships
+
+Subcategories link to their parent category via `parent_bit` (stores the **id** of the parent config entry):
+
+```
+From DRAFT state:
+├── "Zur Prüfung einreichen" → REVIEW  [taglogic: category, id: 42]
+├── "← Demo"                 → DEMO    [taglogic: subcategory, parent_bit: 42]
+└── "Trash"                  → TRASH   [taglogic: subcategory, parent_bit: 42]
+```
+
+**In the StatusEditor UI**, this renders as:
+
+```
+┌─────────────────────────────────────────┐
+│ 🔍 Zur Prüfung einreichen               │  ← PRIMARY (category)
+└─────────────────────────────────────────┘
+
+Weitere Optionen:
+┌─────────┐  ┌─────────┐
+│ ← Demo  │  │ 🗑 Trash │                    ← ALTERNATIVES (subcategory)
+└─────────┘  └─────────┘
+```
+
+---
+
+## CapabilitiesEditor Component
+
+**Location:** `src/components/sysreg/CapabilitiesEditor.vue`
+
+The CapabilitiesEditor is a visual editor for `sysreg_config` entries, designed for admins to manage the capabilities matrix without writing SQL.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Filter by context** | Entity, FROM state, project type |
+| **Visual bit editing** | Dropdowns for each bit group |
+| **Live value preview** | Decimal + hex display |
+| **Role checkboxes** | Multi-select for relation flags |
+| **Transition support** | TO State dropdown for transitions |
+| **taglogic selector** | Toggle / Category / Subcategory |
+| **Parent linking** | Dropdown to link subcategories to their parent |
+
+### Table Columns
+
+| Column | Description |
+|--------|-------------|
+| **Name** | Entry identifier + description |
+| **Entity** | Target entity type |
+| **State** | FROM state (workflow context) |
+| **Read/Update/Manage** | Capability levels |
+| **Transition** | TO State (shows "→ Review" for transitions) |
+| **List/Share** | Boolean capabilities |
+| **Type** | taglogic display: 🔵 Primary / 🔹 Alt / ⚪ Toggle |
+| **Roles** | Relation badges |
+
+### Creating a Transition Entry
+
+1. Set **Entity** and **FROM State** (context)
+2. Set **Entry Type** to `Category (primary)` or `Subcategory (alternative)`
+3. For subcategories: select **Parent Category** (filters by same FROM state)
+4. Set **→ To-State** to the target status
+5. Set **Manage** capability (typically `manage > status`)
+6. Select **Roles** who can perform this transition
+
+### Key Implementation Details
+
+```typescript
+// Available parent categories computed (only for subcategories)
+const availableParentCategories = computed(() => {
+    if (editForm.value.taglogic !== 'subcategory') return []
+    return entries.value.filter(e => 
+        e.taglogic === 'category' && 
+        getStateValue(e.value) === editForm.value.state  // same FROM state
+    )
+})
+
+// Type column shows parent's target for subcategories
+function getTaglogicLabel(entry: ConfigEntry): string {
+    if (entry.taglogic === 'subcategory' && entry.parent_bit) {
+        const parent = entries.value.find(e => e.id === entry.parent_bit)
+        if (parent) return `🔹 Alt (${getToStateLabel(parent.value)})`
+    }
+    // ...
+}
+```
+
+### API Integration
+
+The editor uses these endpoints:
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/sysreg/all` | GET | Load all config entries |
+| `/api/sysreg` | POST | Create new entry |
+| `/api/sysreg/[id]` | PUT | Update existing entry |
+| `/api/sysreg/[id]` | DELETE | Delete entry |
+
+### Payload Structure
+
+```typescript
+const payload = {
+    value: computedValue,           // 32-bit packed integer
+    name: 'post_transition_...',    // unique identifier
+    description: 'Human readable',
+    tagfamily: 'config',
+    taglogic: 'category',           // or 'subcategory' or 'toggle'
+    parent_bit: 42,                 // id of parent (subcategories only)
+    is_default: false
+}
+```
 
 ---
 
@@ -239,49 +386,11 @@ Bit:  31  30  29  28  27  26  25  24  23  22-20  19-17  16-14  13-11  10-8  7-3 
 
 ---
 
-## Naming Conventions
-
-### Config Entry Names
-
-**Pattern:** `{entity}_{state}_{capability}_{role}`
-
-Examples:
-- `post_released_read_all` - Posts in released state, read capability, all roles
-- `post_draft_update_active` - Posts in draft state, update capability, active roles
-- `project_owner_manage` - Projects in any state, manage capability, owner role
-
-### State Keywords
-
-| Keyword | Meaning |
-|---------|---------|
-| `released` | Only released entities |
-| `draft` | Only draft entities |
-| `new` | Only new entities |
-| `all` | All states (use sparingly!) |
-
-### Role Keywords
-
-| Keyword | Meaning |
-|---------|---------|
-| `all` | All roles including anonym |
-| `auth` | Authenticated users (partner+participant+member+owner) |
-| `active` | Active roles (participant+member+owner) |
-| `owner` | Record owner only |
-| `member` | Member role only |
-
-### Capability Keywords
-
-| Keyword | Meaning |
-|---------|---------|
-| `read` | Can read/view |
-| `update` | Can edit |
-| `create` | Can create new |
-| `manage` | Can change status, delete, archive |
-| `full` | All capabilities |
-
----
-
 ## Best Practices
+
+::: tip Full Naming Conventions
+See **[CAPABILITIES_NAMING_CONVENTION.md](../../devdocs/CAPABILITIES_NAMING_CONVENTION.md)** for complete naming patterns, transition naming, and entity prefixes.
+:::
 
 ### 1. AllRole Convention (Shortcut for Non-Anonymous)
 
@@ -396,17 +505,9 @@ WHERE p.domaincode = 'opus1';
 
 ### CapabilitiesEditor.vue
 
-Visual editor for sysreg_config entries.
+See [CapabilitiesEditor Component](#capabilitieseditor-component) section above for full documentation.
 
-**Location:** `/src/components/sysreg/CapabilitiesEditor.vue`
-
-**Features:**
-- Filter by entity, state, project type
-- Visual bit editing with dropdowns
-- Live value preview (decimal + hex)
-- Role checkboxes
-
-**Access:** Admin panel at `/admin/capabilities` (when implemented)
+**Quick access:** Admin panel at `/admin/sysreg` → Capabilities tab
 
 ### Decode Capability Script
 
@@ -416,18 +517,20 @@ import { db } from './server/database/init'
 
 const BITS = {
     ENTITY_POST: 32, ENTITY_PROJECT: 8, ENTITY_IMAGE: 48,
-    STATE_NEW: 256, STATE_DEMO: 512, STATE_DRAFT: 768, STATE_RELEASED: 1280,
-    CAP_READ: 2048, CAP_UPDATE: 16384, CAP_CREATE: 131072, CAP_MANAGE: 1048576,
+    STATE_NEW: 1, STATE_DEMO: 2, STATE_DRAFT: 3, STATE_REVIEW: 4, STATE_RELEASED: 5,
+    CAP_READ: 2048, CAP_UPDATE: 16384, CAP_MANAGE: 1048576,
     CAP_LIST: 8388608, CAP_SHARE: 16777216,
     ROLE_ANONYM: 33554432, ROLE_PARTNER: 67108864, 
-    ROLE_PARTICIPANT: 134217728, ROLE_MEMBER: 268435456, ROLE_OWNER: 536870912
+    ROLE_PARTICIPANT: 134217728, ROLE_MEMBER: 268435456, ROLE_CREATOR: 536870912
 }
 
 function decode(value: number) {
-    const entity = value & (0b11111 << 3)
-    const state = value & (0b111 << 8)
+    const entity = (value >> 3) & 0b11111
+    const fromState = (value >> 8) & 0b111
+    const toState = (value >> 17) & 0b111
+    
     const roles = []
-    if (value & BITS.ROLE_OWNER) roles.push('owner')
+    if (value & BITS.ROLE_CREATOR) roles.push('creator')
     if (value & BITS.ROLE_MEMBER) roles.push('member')
     if (value & BITS.ROLE_PARTICIPANT) roles.push('participant')
     if (value & BITS.ROLE_PARTNER) roles.push('partner')
@@ -436,20 +539,21 @@ function decode(value: number) {
     const caps = []
     if (value & BITS.CAP_READ) caps.push('read')
     if (value & BITS.CAP_UPDATE) caps.push('update')
-    if (value & BITS.CAP_CREATE) caps.push('create')
     if (value & BITS.CAP_MANAGE) caps.push('manage')
     if (value & BITS.CAP_LIST) caps.push('list')
     if (value & BITS.CAP_SHARE) caps.push('share')
     
-    return { entity, state, roles: roles.join(','), caps: caps.join(',') }
+    const isTransition = toState !== 0
+    return { entity, fromState, toState, isTransition, roles: roles.join(','), caps: caps.join(',') }
 }
 
 async function main() {
     await new Promise(r => setTimeout(r, 1000))
-    const configs = await db.all(`SELECT name, value FROM sysreg_config ORDER BY name`)
+    const configs = await db.all(`SELECT name, value, taglogic FROM sysreg_config ORDER BY name`)
     for (const c of configs) {
         const d = decode(c.value)
-        console.log(`${c.name}: entity=${d.entity}, state=${d.state}, roles=[${d.roles}], caps=[${d.caps}]`)
+        const type = d.isTransition ? `TRANSITION ${d.fromState}→${d.toState}` : `CAP state=${d.fromState}`
+        console.log(`${c.name} [${c.taglogic}]: ${type}, roles=[${d.roles}], caps=[${d.caps}]`)
     }
     process.exit(0)
 }
@@ -460,10 +564,10 @@ main()
 
 ## References
 
-- [AUTH-SYSTEM-SPEC](../../chat/tasks/2025-12-01-AUTH-SYSTEM-SPEC.md) - Full specification
-- [Migration 044](../../server/database/migrations/044_capabilities_matrix.ts) - Seed data
-- [Migration 045-047](../../server/database/migrations/) - Role visibility triggers
-- [Deferred Tasks](../../chat/tasks/2025-12-10-DEFERRED-from-Projectlogin_Workflow.md) - Project containment (v0.5)
+- [CAPABILITIES_NAMING_CONVENTION.md](../../devdocs/CAPABILITIES_NAMING_CONVENTION.md) - Naming patterns and conventions
+- [STATUS_EDITOR_GUIDE.md](../../devdocs/STATUS_EDITOR_GUIDE.md) - StatusEditor v2 documentation
+- [Migration 051](../../server/database/migrations/051_capabilities_matrix_v2.ts) - Capabilities matrix v2
+- [Migration 052-054](../../server/database/migrations/) - Trigger fixes for creator rename
 
 ---
 
@@ -493,14 +597,14 @@ main()
 **Proposed:**
 ```typescript
 {
-    name: 'project_new_owner_only',
-    value: PROJECT_ALL | ENTITY_PROJECT | STATE_NEW | CAP_READ | CAP_UPDATE | CAP_MANAGE | CAP_LIST | ROLE_OWNER,
-    description: 'Only owner can access new projects'
+    name: 'project_new_creator_only',
+    value: PROJECT_ALL | ENTITY_PROJECT | STATE_NEW | CAP_READ | CAP_UPDATE | CAP_MANAGE | CAP_LIST | ROLE_CREATOR,
+    description: 'Only creator can access new projects'
 }
 ```
 
-This ensures projects in `new` status are truly owner-only until activated.
+This ensures projects in `new` status are truly creator-only until activated.
 
 ---
 
-*Last updated: December 3, 2025*
+*Last updated: December 5, 2025*
