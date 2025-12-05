@@ -171,13 +171,10 @@ function handleClose() {
 
 // Load available statuses for the entity type
 async function loadStatuses() {
-    console.log(`[EditPanel] Loading statuses for entity type: ${props.entityType}...`)
     try {
         const response = await fetch(`/api/sysreg/status?family=${props.entityType}`)
-        console.log('[EditPanel] Status response:', { ok: response.ok, status: response.status })
         if (!response.ok) throw new Error('Failed to load statuses')
         const data = await response.json()
-        console.log('[EditPanel] Statuses data received:', data)
         // Map status items to display format
         availableStatuses.value = (data.items || []).map((item: any) => {
             const hexValue = item.value || '0000'
@@ -189,7 +186,6 @@ async function loadStatuses() {
                 name: item.name
             }
         })
-        console.log('[EditPanel] Available statuses:', availableStatuses.value.length, 'items')
     } catch (error) {
         console.error('[EditPanel] Error loading statuses:', error)
         availableStatuses.value = []
@@ -227,15 +223,11 @@ function handleImageError() {
 // Watch for data changes from parent
 watch(() => props.data, (newData) => {
     formData.value = { ...newData }
-    console.log('[EditPanel] Data updated:', { status: newData?.status, type: typeof newData?.status })
 }, { deep: true })
 
 // Reset form when panel opens/closes
 watch(() => props.isOpen, (isOpen) => {
-    console.log('[EditPanel] Panel open state changed:', isOpen)
     if (isOpen) {
-        console.log('[EditPanel] Initializing form with data:', props.data)
-        console.log('[EditPanel] Entity type:', props.entityType)
         isInitializing.value = true
         formData.value = { ...props.data }
         imageError.value = false

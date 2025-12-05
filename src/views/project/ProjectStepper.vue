@@ -165,28 +165,48 @@ onMounted(async () => {
     setLanguage(userLang.value as any)
 
     // Load i18n strings for step labels
+    // Note: We only update specific steps, keeping the full allSteps array intact
     try {
-        const stepNames = [
-            await button('events-select'),
-            await button('posts-create'),
-            await button('users-regio-config'),
-            await button('theme-layout-navigation'),
-            await button('landing-heading-pages')
-        ]
+        const i18nUpdates: Record<string, { label?: string; description?: string }> = {
+            'events': {
+                label: await button('events-select') || 'Events',
+                description: 'Wählen Sie die Veranstaltungen für Ihr Projekt'
+            },
+            'posts': {
+                label: await button('posts-create') || 'Posts',
+                description: 'Erstellen Sie Posts für Ihr Projekt'
+            },
+            'images': {
+                label: 'Bilder',
+                description: 'Laden Sie Bilder für Ihr Projekt hoch'
+            },
+            'users': {
+                label: await button('users-regio-config') || 'Users',
+                description: 'Konfigurieren Sie Benutzer und Regionalprojekte'
+            },
+            'theme': {
+                label: await button('theme-layout-navigation') || 'Theme',
+                description: 'Passen Sie Theme, Layout und Navigation an'
+            },
+            'pages': {
+                label: await button('landing-heading-pages') || 'Pages',
+                description: 'Gestalten Sie Landing-Page, Heading und Pages'
+            }
+            // 'activate' keeps its default values
+        }
 
-        const stepDescs = [
-            'Wählen Sie die Veranstaltungen für Ihr Projekt',
-            'Erstellen Sie Posts für Ihr Projekt',
-            'Konfigurieren Sie Benutzer und Regionalprojekte',
-            'Passen Sie Theme, Layout und Navigation an',
-            'Gestalten Sie Landing-Page, Heading und Pages'
-        ]
-
-        allSteps.value = stepNames.map((name, i) => ({
-            key: allSteps.value[i].key,
-            label: name || allSteps.value[i].label,
-            description: stepDescs[i]
-        }))
+        // Update steps in place without losing any
+        allSteps.value = allSteps.value.map(step => {
+            const update = i18nUpdates[step.key]
+            if (update) {
+                return {
+                    ...step,
+                    label: update.label || step.label,
+                    description: update.description || step.description
+                }
+            }
+            return step
+        })
     } catch (error) {
         console.error('Failed to load step i18n:', error)
     }

@@ -2,6 +2,7 @@
  * Stage D Preparation: Database Compatibility Test Batch
  * 
  * Tests 4 typical db.ts usage patterns for SQLite vs PostgreSQL compatibility
+ * Tests are automatically skipped if the database is not accessible.
  * 
  * Test Categories:
  * 1. Simple SELECT queries (.get() and .all())
@@ -10,14 +11,23 @@
  * 4. Complex JOINs with aggregations
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { createTestDatabase } from '../utils/db-test-utils'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest'
+import { createTestDatabase, isDatabaseAccessible, DB_SKIP_REASON } from '../utils/db-test-utils'
 import type { DatabaseAdapter } from '../../server/database/adapter'
 
 describe('Stage D: Database Compatibility Tests', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
 
         // Create test tables
@@ -42,11 +52,13 @@ describe('Stage D: Database Compatibility Tests', () => {
     })
 
     afterEach(async () => {
-        // Cleanup
-        await db.exec('DROP TABLE IF EXISTS test_tasks')
-        await db.exec('DROP TABLE IF EXISTS test_releases')
-        if (db.close) {
-            await db.close()
+        if (db) {
+            // Cleanup
+            await db.exec('DROP TABLE IF EXISTS test_tasks')
+            await db.exec('DROP TABLE IF EXISTS test_releases')
+            if (db.close) {
+                await db.close()
+            }
         }
     })
 

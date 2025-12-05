@@ -3,9 +3,11 @@
  * 
  * Tests for both SQLite and PostgreSQL adapters.
  * Tagged with @pgintegration for PostgreSQL-specific tests.
+ * 
+ * These tests are automatically skipped if the database is not accessible.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest'
 import {
     createTestDatabase,
     cleanupTestDatabase,
@@ -15,22 +17,32 @@ import {
     countRows,
     assertTableEmpty,
     assertTableRowCount,
-    isPostgreSQLTest
+    isPostgreSQLTest,
+    isDatabaseAccessible,
+    DB_SKIP_REASON
 } from '../utils/db-test-utils.js'
 import type { DatabaseAdapter } from '../../server/database/adapter.js'
 
-// Helper to conditionally skip tests on SQLite
-const describeOrSkip = isPostgreSQLTest() ? describe : describe.skip
-
 describe('Database Adapter - Basic Operations', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should initialize database with schema', async () => {
@@ -113,15 +125,26 @@ describe('Database Adapter - Basic Operations', () => {
     })
 })
 
-describeOrSkip('Database Adapter - Prepared Statements @pgintegration', () => {
+describe('Database Adapter - Prepared Statements @pgintegration', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should use prepared statements for queries', async () => {
@@ -160,15 +183,26 @@ describeOrSkip('Database Adapter - Prepared Statements @pgintegration', () => {
     })
 })
 
-describeOrSkip('Database Adapter - Transactions @pgintegration', () => {
+describe('Database Adapter - Transactions @pgintegration', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should commit transaction on success', async () => {
@@ -199,10 +233,19 @@ describeOrSkip('Database Adapter - Transactions @pgintegration', () => {
     })
 })
 
-describeOrSkip('Database Adapter - PostgreSQL Specific @pgintegration', () => {
+describe('Database Adapter - PostgreSQL Specific @pgintegration', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
@@ -212,7 +255,7 @@ describeOrSkip('Database Adapter - PostgreSQL Specific @pgintegration', () => {
         }
     })
 
-    it('should handle PostgreSQL timestamp functions', { skip: !isPostgreSQLTest() }, async () => {
+    it('should handle PostgreSQL timestamp functions', async () => {
         // Insert event with PostgreSQL NOW()
         await db.run(
             'INSERT INTO events (id, name, status) VALUES (?, ?, ?)',
@@ -230,7 +273,7 @@ describeOrSkip('Database Adapter - PostgreSQL Specific @pgintegration', () => {
         }
     })
 
-    it('should handle concurrent connections', { skip: !isPostgreSQLTest() }, async () => {
+    it('should handle concurrent connections', async () => {
         // Insert multiple records concurrently
         await Promise.all([
             insertTestEvent(db, { name: 'Event 1' }),

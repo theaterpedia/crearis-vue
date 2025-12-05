@@ -275,7 +275,7 @@ export class LocalAdapter extends BaseMediaAdapter {
                 date: undefined,
                 about: undefined,
                 author: {
-                    adapter: 'local',
+                    adapter: 'crearis',
                     file_id: temp.name,
                     account_id: undefined,
                     folder_id: undefined,
@@ -309,7 +309,7 @@ export class LocalAdapter extends BaseMediaAdapter {
                 date: undefined,
                 about: undefined,
                 author: {
-                    adapter: 'local',
+                    adapter: 'crearis',
                     file_id: filename,
                     account_id: undefined,
                     folder_id: undefined,

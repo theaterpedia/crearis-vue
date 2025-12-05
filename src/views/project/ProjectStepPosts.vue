@@ -294,21 +294,30 @@ onMounted(async () => {
 /* Main Layout: Two Columns */
 .posts-layout {
     display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
+    grid-template-columns: 1fr minmax(250px, 400px);
+    gap: 1.5rem;
     min-height: 400px;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 900px) {
+    .posts-layout {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Left Column: Posts Gallery */
 .posts-gallery {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Prevent overflow */
 }
 
 .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
 }
 
 @media (min-width: 1200px) {

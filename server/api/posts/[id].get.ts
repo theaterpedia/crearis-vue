@@ -16,9 +16,11 @@ export default defineEventHandler(async (event) => {
         const sql = `
             SELECT 
                 p.*,
-                pr.domaincode AS domaincode
+                pr.domaincode AS domaincode,
+                u.sysmail AS creator_sysmail
             FROM posts p
             LEFT JOIN projects pr ON p.project_id = pr.id
+            LEFT JOIN users u ON p.creator_id = u.id
             WHERE p.id = ?
         `
 
@@ -37,7 +39,7 @@ export default defineEventHandler(async (event) => {
         if (error.statusCode) {
             throw error
         }
-        
+
         console.error('Error fetching post:', error)
         throw createError({
             statusCode: 500,

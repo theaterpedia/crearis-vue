@@ -29,14 +29,14 @@
                 </svg>
                 Zurück
             </button>
-            <button class="action-btn success-btn" @click="handleComplete">
+            <button class="action-btn success-btn" @click="handleNext">
                 <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
-                        d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z">
+                        d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69l-58.35-58.34a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z">
                     </path>
                 </svg>
-                Abschließen
+                Weiter
             </button>
         </div>
     </div>
@@ -50,7 +50,7 @@ interface Props {
 
 interface Emits {
     (e: 'prev'): void
-    (e: 'complete'): void
+    (e: 'next'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -62,8 +62,8 @@ function handlePrev() {
     emit('prev')
 }
 
-function handleComplete() {
-    emit('complete')
+function handleNext() {
+    emit('next')
 }
 </script>
 
@@ -114,7 +114,7 @@ function handleComplete() {
 .placeholder-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
     margin: 0 0 0.5rem 0;
 }
 
@@ -157,7 +157,7 @@ function handleComplete() {
 
 .secondary-btn {
     background: var(--color-bg-soft);
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .secondary-btn:hover {

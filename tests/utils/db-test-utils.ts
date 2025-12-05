@@ -5,6 +5,7 @@
  * - Database initialization and cleanup
  * - Test data fixtures
  * - Database state assertions
+ * - Database connectivity checks with skip support
  */
 
 import type { DatabaseAdapter } from '../../server/database/adapter.js'
@@ -18,6 +19,53 @@ export { isPostgreSQLTest }
 
 // Track if schema has been initialized for PostgreSQL
 let postgresSchemaInitialized = false
+
+// Track database connectivity status (cached to avoid repeated checks)
+let dbConnectivityChecked = false
+let dbIsAccessible = false
+
+/**
+ * Check if the PostgreSQL database is accessible.
+ * Returns true if connection succeeds, false otherwise.
+ * Result is cached to avoid repeated connection attempts.
+ */
+export async function isDatabaseAccessible(): Promise<boolean> {
+    if (dbConnectivityChecked) {
+        return dbIsAccessible
+    }
+
+    dbConnectivityChecked = true
+
+    if (!isPostgreSQLTest()) {
+        // SQLite is deprecated, mark as not accessible
+        dbIsAccessible = false
+        return false
+    }
+
+    if (!testDbConfig.connectionString) {
+        console.warn('⚠️  PostgreSQL connection string not configured - skipping DB tests')
+        dbIsAccessible = false
+        return false
+    }
+
+    try {
+        const adapter = new PostgreSQLAdapter(testDbConfig.connectionString)
+        // Simple connectivity check - run a basic query
+        await adapter.get('SELECT 1 as test')
+        await adapter.close()
+        dbIsAccessible = true
+        return true
+    } catch (error) {
+        console.warn(`⚠️  Database not accessible - skipping DB tests: ${(error as Error).message}`)
+        dbIsAccessible = false
+        return false
+    }
+}
+
+/**
+ * Skip reason message for database tests when DB is not accessible
+ */
+export const DB_SKIP_REASON = 'Database not accessible (PostgreSQL not running or not configured)'
 
 /**
  * Create a test database adapter

@@ -11,6 +11,8 @@ import type { PostsTableFields } from '../../types/database'
 // After Migration 046:
 // - posts.owner_id stores INTEGER FK to users.id (record owner)
 // - owner_id is set from body.owner_id (user who creates/owns the post)
+// After v0.2final:
+// - Added support for tag fields: status, dtags, ctags, ttags, rtags
 export default defineEventHandler(async (event) => {
     try {
         const body = await readBody(event)
@@ -45,15 +47,22 @@ export default defineEventHandler(async (event) => {
             template: body.template || null,
             public_user: body.public_user || null,
             img_id: body.img_id || null,
-            owner_id: body.owner_id || null  // Record owner (user who creates the post)
+            owner_id: body.owner_id || null,  // Record owner (user who creates the post)
+            // Tag fields (integer bitmasks)
+            status: body.status ?? null,
+            dtags: body.dtags ?? null,
+            ctags: body.ctags ?? null,
+            ttags: body.ttags ?? null,
+            rtags: body.rtags ?? null
         }
 
         // Insert post (id is auto-generated)
         const sql = `
             INSERT INTO posts (
                 xmlid, name, subtitle, teaser, cimg, post_date,
-                isbase, project_id, template, public_user, img_id, owner_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                isbase, project_id, template, public_user, img_id, owner_id,
+                status, dtags, ctags, ttags, rtags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -69,7 +78,12 @@ export default defineEventHandler(async (event) => {
             postData.template,
             postData.public_user,
             postData.img_id,
-            postData.owner_id
+            postData.owner_id,
+            postData.status,
+            postData.dtags,
+            postData.ctags,
+            postData.ttags,
+            postData.rtags
         ])
 
         // Extract the new post ID from the result

@@ -9,25 +9,34 @@
  * - POST /api/i18n/get-or-create (get or create)
  * 
  * NOTE: These tests require PostgreSQL as they use JSONB fields.
+ * Tests are automatically skipped if the database is not accessible.
  * Run with: TEST_DATABASE_TYPE=postgresql pnpm test
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest'
 import {
     createTestDatabase,
     cleanupTestDatabase,
-    isPostgreSQLTest
+    isPostgreSQLTest,
+    isDatabaseAccessible,
+    DB_SKIP_REASON
 } from '../utils/db-test-utils.js'
 import type { DatabaseAdapter } from '../../server/database/adapter.js'
 import type { I18nCodesTableFields } from '../../server/types/database'
 
-// Skip all i18n tests if not running on PostgreSQL
-const describeOrSkip = isPostgreSQLTest() ? describe : describe.skip
-
-describeOrSkip('i18n API - GET /api/i18n', () => {
+describe('i18n API - GET /api/i18n', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
 
         // Insert test data
@@ -43,7 +52,9 @@ describeOrSkip('i18n API - GET /api/i18n', () => {
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should list all translations', async () => {
@@ -81,15 +92,26 @@ describeOrSkip('i18n API - GET /api/i18n', () => {
     })
 })
 
-describeOrSkip('i18n API - POST /api/i18n (Create)', () => {
+describe('i18n API - POST /api/i18n (Create)', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should create new translation', async () => {
@@ -195,11 +217,20 @@ describeOrSkip('i18n API - POST /api/i18n (Create)', () => {
     })
 })
 
-describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
+describe('i18n API - PUT /api/i18n/:id (Update)', () => {
     let db: DatabaseAdapter
     let testId: number
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
 
         await db.run(`
@@ -213,7 +244,9 @@ describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should update translation text', async () => {
@@ -286,11 +319,20 @@ describeOrSkip('i18n API - PUT /api/i18n/:id (Update)', () => {
     })
 })
 
-describeOrSkip('i18n API - DELETE /api/i18n/:id', () => {
+describe('i18n API - DELETE /api/i18n/:id', () => {
     let db: DatabaseAdapter
     let testId: number
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
 
         await db.run(`
@@ -304,7 +346,9 @@ describeOrSkip('i18n API - DELETE /api/i18n/:id', () => {
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should delete translation', async () => {
@@ -332,15 +376,26 @@ describeOrSkip('i18n API - DELETE /api/i18n/:id', () => {
     })
 })
 
-describeOrSkip('i18n API - POST /api/i18n/get-or-create', () => {
+describe('i18n API - POST /api/i18n/get-or-create', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should return existing translation', async () => {
@@ -402,15 +457,26 @@ describeOrSkip('i18n API - POST /api/i18n/get-or-create', () => {
     })
 })
 
-describeOrSkip('i18n API - Data Validation', () => {
+describe('i18n API - Data Validation', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should enforce type constraint', async () => {
@@ -449,15 +515,26 @@ describeOrSkip('i18n API - Data Validation', () => {
     })
 })
 
-describeOrSkip('i18n API - Indexes', () => {
+describe('i18n API - Indexes', () => {
     let db: DatabaseAdapter
+    let dbAccessible = false
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        dbAccessible = await isDatabaseAccessible()
+    })
+
+    beforeEach(async (ctx) => {
+        if (!dbAccessible) {
+            ctx.skip()
+            return
+        }
         db = await createTestDatabase()
     })
 
     afterEach(async () => {
-        await cleanupTestDatabase(db)
+        if (db) {
+            await cleanupTestDatabase(db)
+        }
     })
 
     it('should have index on name', async () => {

@@ -124,4 +124,23 @@ function handleEditorSave(value: number) {
 .tag-families.layout-vertical {
     flex-direction: column;
 }
+
+/* Tablet: 900px */
+@media (max-width: 900px) {
+    .tag-families {
+        gap: 0.75rem;
+    }
+}
+
+/* Mobile: 640px */
+@media (max-width: 640px) {
+    .tag-families {
+        gap: 0.5rem;
+    }
+
+    .tag-families.layout-row,
+    .tag-families.layout-wrap {
+        flex-direction: column;
+    }
+}
 </style>

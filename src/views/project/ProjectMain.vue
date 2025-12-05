@@ -184,8 +184,10 @@
                         <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
-                            :is-locked="isLocked" @prev="currentStep > 0 ? prevStep : undefined"
-                            @complete="completeProject" />
+                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                        <ProjectStepActivate v-else-if="currentStepKey === 'activate'" :project-id="projectId"
+                            :project-name="projectName" :is-locked="isLocked"
+                            @prev="currentStep > 0 ? prevStep : undefined" @activate="handleActivateProject" />
                     </template>
 
                     <!-- Navigation Mode Panels -->
@@ -233,6 +235,7 @@ import ProjectStepUsers from './ProjectStepUsers.vue'
 import ProjectStepTheme from './ProjectStepTheme.vue'
 import ProjectStepPages from './ProjectStepPages.vue'
 import ProjectStepImages from './ProjectStepImages.vue'
+import ProjectStepActivate from './ProjectStepActivate.vue'
 import EventsConfigPanel from '@/components/EventsConfigPanel.vue'
 import RegioConfigPanel from '@/components/RegioConfigPanel.vue'
 import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
@@ -255,7 +258,7 @@ const projectId = computed(() => {
 
 // Project state
 const projectData = ref<any>(null)
-const projectStatusId = ref<number | null>(null) // status_id from DB
+const projectStatus = ref<number | null>(null) // status field from DB
 const projectType = computed(() => projectData.value?.type || 'project')
 const projectMembers = ref<any[]>([])
 
@@ -293,12 +296,17 @@ const currentStep = ref(0)
 // Current tab for navigation mode
 const currentNavTab = ref('events')
 
+// Status values from Migration 040
+const STATUS_NEW = 1        // bits 0-2
+const STATUS_DEMO = 8       // bits 3-5
+const STATUS_DRAFT = 64     // bits 6-8
+
 // Computed props based on project status
-// Stepper mode: status 'new' (18) or 'demo' (19)
-// Navigation mode: all other statuses
+// Stepper mode: status 'new' (1) or 'demo' (8)
+// Navigation mode: all other statuses (draft and above)
 const isStepper = computed(() => {
-    if (projectStatusId.value === null) return true // Default to stepper while loading
-    return projectStatusId.value === 18 || projectStatusId.value === 19
+    if (projectStatus.value === null) return true // Default to stepper while loading
+    return projectStatus.value === STATUS_NEW || projectStatus.value === STATUS_DEMO
 })
 const isLocked = computed(() => {
     // TODO: Define when project should be locked (e.g., status 'released' or higher)
@@ -306,10 +314,16 @@ const isLocked = computed(() => {
 })
 
 // Check if current user is the project owner
+// Uses _userRole from API (populated by server based on session + project_members lookup)
 const isProjectOwner = computed(() => {
-    if (!user.value?.id || !projectData.value?.owner_id) return false
-    return user.value.id === projectData.value.owner_id
+    return projectData.value?._userRole === 'owner'
 })
+
+// User's role in this project (owner, member, partner, participant, or null)
+const userRole = computed(() => projectData.value?._userRole ?? null)
+const userConfigrole = computed(() => projectData.value?._userConfigrole ?? null)
+// Custom display label for user's role (e.g., "Dramaturgie", "Regie", "Eigentümer")
+const userRoleLabel = computed(() => projectData.value?._userRoleLabel ?? null)
 
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
@@ -367,7 +381,8 @@ const stepKeys = computed(() => {
         return baseSteps.filter(key => key !== 'users' && key !== 'theme')
     }
 
-    return baseSteps
+    // Owners get the 'activate' step at the end
+    return [...baseSteps, 'activate']
 })
 
 const currentStepKey = computed(() => stepKeys.value[currentStep.value])
@@ -412,8 +427,8 @@ async function loadProjectData() {
         const response = await fetch(`/api/projects/${projectId.value}`)
         if (response.ok) {
             projectData.value = await response.json()
-            // Use status_id (new field after migration 020)
-            projectStatusId.value = projectData.value.status_id ?? null
+            // Use status field (integer, Migration 040 values)
+            projectStatus.value = projectData.value.status ?? null
 
             // Load project members
             await loadProjectMembers()
@@ -469,22 +484,22 @@ function completeProject() {
 // Handle project activation: change status to 'draft' and switch to navigation mode
 async function handleActivateProject() {
     try {
-        // Status 'draft' has status_id = 2 (from sysreg_statuses)
+        // Status 'draft' = 64 (from Migration 040: bits 6-8)
         const response = await fetch(`/api/projects/${projectId.value}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status_id: 2 })
+            body: JSON.stringify({ status: STATUS_DRAFT })
         })
 
         if (response.ok) {
             // Update local state
-            projectStatusId.value = 2
+            projectStatus.value = STATUS_DRAFT
             if (projectData.value) {
-                projectData.value.status_id = 2
+                projectData.value.status = STATUS_DRAFT
             }
             // Reset to first navigation tab
             currentNavTab.value = 'homepage'
-            console.log('Project activated - status changed to draft')
+            console.log('Project activated - status changed to draft (64)')
         } else {
             const error = await response.json()
             console.error('Failed to activate project:', error)
