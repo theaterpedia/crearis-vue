@@ -114,8 +114,8 @@ import {
     Eye,
     EyeOff
 } from 'lucide-vue-next'
-import { usePostStatus, STATUS } from '@/composables/usePostStatus'
-import type { PostData, ProjectData, MembershipData } from '@/composables/usePostPermissions'
+import { usePostStatusV2 as usePostStatus, STATUS } from '@/composables/usePostStatusV2'
+import type { PostData, ProjectData, MembershipData } from '@/composables/usePostStatusV2'
 
 // ============================================================
 // PROPS & EMITS
