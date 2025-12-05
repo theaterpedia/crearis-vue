@@ -308,12 +308,14 @@ const BITS = {
     CAP_LIST: 1 << 23,
     CAP_SHARE: 1 << 24,
 
-    // Roles
+    // Roles (bits 25-31)
     ROLE_ANONYM: 1 << 25,
     ROLE_PARTNER: 1 << 26,
     ROLE_PARTICIPANT: 1 << 27,
     ROLE_MEMBER: 1 << 28,
     ROLE_CREATOR: 1 << 29,
+    ROLE_OWNER: 1 << 30,           // bit 30: project owner (p_owner)
+    ROLE_ADMIN: (1 << 31) >>> 0,   // bit 31: system admin (sign bit, use >>> 0 for unsigned)
 }
 
 // Options arrays for dropdowns
@@ -382,6 +384,8 @@ const ROLES = [
     { bit: BITS.ROLE_PARTICIPANT, name: 'participant' },
     { bit: BITS.ROLE_MEMBER, name: 'member' },
     { bit: BITS.ROLE_CREATOR, name: 'creator' },
+    { bit: BITS.ROLE_OWNER, name: 'owner' },
+    { bit: BITS.ROLE_ADMIN, name: 'admin' },
 ]
 
 // State
