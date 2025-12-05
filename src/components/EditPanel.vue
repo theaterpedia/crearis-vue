@@ -34,20 +34,12 @@
                         </option>
                     </select>
                 </div>
-                
+
                 <div class="form-group form-group-flex">
                     <label class="form-label">Cover Image</label>
-                    <DropdownList 
-                        entity="images"
-                        title="Select Cover Image"
-                        :project="projectDomaincode"
-                        size="small"
-                        width="medium"
-                        :dataMode="true"
-                        :multiSelect="false"
-                        v-model:selectedIds="formData.img_id"
-                        :displayXml="true"
-                    />
+                    <DropdownList entity="images" title="Select Cover Image" :project="projectDomaincode" size="small"
+                        width="medium" :dataMode="true" :multiSelect="false" v-model:selectedIds="formData.img_id"
+                        :displayXml="true" />
                 </div>
             </div>
 
@@ -195,7 +187,7 @@ async function loadStatuses() {
 // Handle save
 function handleSave() {
     isSaving.value = true
-    
+
     // Sanitize data to prevent NULL bytes and ensure proper types
     const saveData: any = {
         ...formData.value,
@@ -203,15 +195,15 @@ function handleSave() {
         ctags: String.fromCharCode(configVisibility.value | (ageGroup.value << 2) | (subjectType.value << 4)),
         dtags: domains.value
     }
-    
+
     // Ensure img_id is a valid number or null (not undefined or 0)
     if (saveData.img_id === undefined || saveData.img_id === 0) {
         saveData.img_id = null
     }
-    
+
     // Properly sanitize status_val to prevent Buffer stringification
     saveData.status = sanitizeStatusVal(saveData.status)
-    
+
     emit('save', saveData)
 }
 

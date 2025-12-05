@@ -36,7 +36,7 @@ export const migration = {
         // CHAPTER 1: Fix images trigger
         // ===================================================================
         console.log('\n📖 Chapter 1: Fix trigger_images_visibility()')
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_images_visibility()
             RETURNS trigger AS $$
@@ -59,7 +59,7 @@ export const migration = {
         // CHAPTER 2: Fix projects trigger
         // ===================================================================
         console.log('\n📖 Chapter 2: Fix trigger_projects_visibility()')
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_projects_visibility()
             RETURNS trigger AS $$
@@ -82,7 +82,7 @@ export const migration = {
         // CHAPTER 3: Verify posts trigger (should already be correct)
         // ===================================================================
         console.log('\n📖 Chapter 3: Verify trigger_posts_visibility()')
-        
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION trigger_posts_visibility()
             RETURNS trigger AS $$
@@ -105,7 +105,7 @@ export const migration = {
         // CHAPTER 4: Verify compute_role_visibility returns r_creator
         // ===================================================================
         console.log('\n📖 Chapter 4: Verify compute_role_visibility() returns r_creator')
-        
+
         // The function should already return r_creator from migration 050
         // Just log confirmation
         const result = await db.get(`
@@ -113,7 +113,7 @@ export const migration = {
             FROM information_schema.columns 
             WHERE table_name = 'posts' AND column_name = 'r_creator'
         `)
-        
+
         if (result) {
             console.log('    ✓ r_creator column exists in posts table')
         } else {

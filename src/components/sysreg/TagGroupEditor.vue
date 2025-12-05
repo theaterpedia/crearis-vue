@@ -142,7 +142,6 @@ const subcategories = computed(() => {
     return groupTags.value.filter((tag: any) =>
         tag.taglogic === 'subcategory'
     )
-    return subs
 })
 
 const toggles = computed(() => {

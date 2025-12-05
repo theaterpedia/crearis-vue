@@ -166,11 +166,11 @@ export function usePostStatusV2(
     })
 
     // Separate primary and alternative transitions for UI
-    const primaryTransitionActions = computed((): TransitionAction[] => 
+    const primaryTransitionActions = computed((): TransitionAction[] =>
         transitionActions.value.filter((a: TransitionAction) => a.isPrimary)
     )
 
-    const alternativeTransitionActions = computed((): TransitionAction[] => 
+    const alternativeTransitionActions = computed((): TransitionAction[] =>
         transitionActions.value.filter((a: TransitionAction) => !a.isPrimary)
     )
 
