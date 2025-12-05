@@ -48,18 +48,15 @@
                         <span class="detail-label">Project:</span>
                         <span class="detail-value">{{ image.project }}</span>
                     </div>
-                    <div v-if="sysregTag" class="detail-row">
-                        <span class="detail-label">Sysreg:</span>
-                        <span class="tag">{{ sysregTag }}</span>
-                    </div>
                     <div v-if="image?.alt_text" class="detail-row">
                         <span class="detail-label">Alt Text:</span>
                         <span class="detail-value">{{ image.alt_text }}</span>
                     </div>
-                    <div class="detail-row detail-row-full">
-                        <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
-                            v-model:age-group="ageGroup" v-model:subject-type="subjectType"
-                            v-model:core-themes="coreThemes" v-model:domains="domains" />
+                    <!-- Tag Families Display -->
+                    <div class="detail-row detail-row-tags">
+                        <span class="detail-label">Tags:</span>
+                        <TagFamilies :ttags="imageTtags" :ctags="imageCtags" :dtags="imageDtags" :rtags="imageRtags"
+                            layout="wrap" />
                     </div>
                 </div>
             </div>
@@ -70,7 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useTheme } from '@/composables/useTheme'
-import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
+import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 
 interface ImageData {
     id: number
@@ -79,7 +76,10 @@ interface ImageData {
     project?: string
     author?: any
     alt_text?: string
-    sysreg?: number
+    ttags?: number
+    ctags?: number
+    dtags?: number
+    rtags?: number
     url?: string
     img_source?: any
     img_wide?: any
@@ -104,12 +104,12 @@ const emit = defineEmits<{
 const { cardWidth } = useTheme()
 const isFullResolution = ref(props.fullResolution)
 const imageKey = ref(0)
-const allTags = ref(false)
-const configVisibility = ref(0)
-const ageGroup = ref(0)
-const subjectType = ref(0)
-const coreThemes = ref('\\x00')
-const domains = ref('\\x00')
+
+// Computed tag values from image data
+const imageTtags = computed(() => props.image?.ttags ?? 0)
+const imageCtags = computed(() => props.image?.ctags ?? 0)
+const imageDtags = computed(() => props.image?.dtags ?? 0)
+const imageRtags = computed(() => props.image?.rtags ?? 0)
 
 // Transform URL: Show full resolution from images.url if fullResolution=true, otherwise use img_wide or fallback shapes
 const transformUrl = computed(() => {
@@ -145,21 +145,6 @@ const transformUrl = computed(() => {
     }
 
     return null
-})
-
-// Parse sysreg tag
-const sysregTag = computed(() => {
-    if (!props.image?.sysreg) return null
-
-    // Decode sysreg byte (bits 0-3 for now)
-    const byte = props.image.sysreg
-    const ageGroup = byte & 0x03
-    const subjectType = (byte >> 2) & 0x03
-
-    const ageLabels = ['Other', 'Child', 'Teen', 'Adult']
-    const subjectLabels = ['Other', 'Group', 'Person', 'Portrait']
-
-    return `${ageLabels[ageGroup]} / ${subjectLabels[subjectType]}`
 })
 
 const handleClose = () => {
@@ -233,7 +218,7 @@ watch(() => props.fullResolution, (newVal) => {
     margin: 0;
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -247,14 +232,14 @@ watch(() => props.fullResolution, (newVal) => {
     cursor: pointer;
     border-radius: var(--radius-small);
     transition: background 0.2s ease;
-    color: var(--color-text);
+    color: var(--color-contrast);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .btn-toggle:hover {
-    background: var(--color-border);
+    background: var(--color-muted-bg);
 }
 
 .btn-close {
@@ -267,11 +252,11 @@ watch(() => props.fullResolution, (newVal) => {
     cursor: pointer;
     border-radius: var(--radius-small);
     transition: background 0.2s ease;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .btn-close:hover {
-    background: var(--color-border);
+    background: var(--color-muted-bg);
 }
 
 .modal-body {
@@ -348,14 +333,16 @@ watch(() => props.fullResolution, (newVal) => {
     font-size: 0.875rem;
 }
 
-.detail-row-full {
+.detail-row-tags {
     flex-direction: column;
     gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
 }
 
 .detail-label {
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
     min-width: 100px;
 }
 
@@ -374,9 +361,50 @@ watch(() => props.fullResolution, (newVal) => {
     font-size: 0.75rem;
 }
 
-@media (max-width: 768px) {
+/* Tablet: 900px */
+@media (max-width: 900px) {
+    .image-preview-modal {
+        max-width: 95vw;
+    }
+
     .modal-body {
         padding: 1rem;
+    }
+
+    .image-container {
+        min-height: 300px;
+    }
+}
+
+/* Mobile: 640px */
+@media (max-width: 640px) {
+    .image-preview-modal-overlay {
+        padding: 0.5rem;
+    }
+
+    .image-preview-modal {
+        max-height: 95vh;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-header h3 {
+        font-size: 0.875rem;
+    }
+
+    .modal-body {
+        padding: 0.75rem;
+        gap: 1rem;
+    }
+
+    .image-container {
+        min-height: 200px;
+    }
+
+    .image-details {
+        padding: 0.75rem;
     }
 
     .detail-row {

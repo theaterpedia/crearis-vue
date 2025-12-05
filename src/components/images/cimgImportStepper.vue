@@ -206,7 +206,7 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                }}</span>
+                    }}</span>
             </button>
         </div>
     </div>
@@ -439,9 +439,15 @@ const handleImport = async () => {
             formData.append('author_uri', img.author.uri)
             formData.append('author_adapter', 'local')
             formData.append('alt_text', img.altText)
-            formData.append('ttags', String(img.ttags))
-            formData.append('ctags', String(img.ctags))
-            formData.append('dtags', String(img.dtags))
+            // Tags must be comma-separated byte values (0-255)
+            // Convert number to string, ensure it's a valid byte value
+            const formatTag = (tag: number | undefined): string => {
+                const val = typeof tag === 'number' ? tag : 0
+                return String(Math.max(0, Math.min(255, val)))
+            }
+            formData.append('ttags', formatTag(img.ttags))
+            formData.append('ctags', formatTag(img.ctags))
+            formData.append('dtags', formatTag(img.dtags))
 
             const response = await fetch('/api/images/upload', {
                 method: 'POST',
@@ -500,7 +506,7 @@ onMounted(async () => {
 .owner-label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .owner-hint {
@@ -527,19 +533,20 @@ onMounted(async () => {
     align-items: center;
     gap: 0.25rem;
     padding: 0.75rem 1rem;
-    border: none;
-    background: transparent;
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
     border-radius: var(--radius-small);
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: var(--color-text);
+    color: var(--color-contrast);
     position: relative;
 }
 
 .adapter-tab:hover {
-    background: var(--color-card-bg);
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
 }
 
 .adapter-tab.active {
@@ -612,7 +619,7 @@ onMounted(async () => {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .drop-zone-content p {
@@ -622,8 +629,8 @@ onMounted(async () => {
 
 .btn-browse {
     padding: 0.75rem 2rem;
-    background: var(--color-primary-bg);
-    color: var(--color-primary-contrast);
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
     border: none;
     border-radius: var(--radius-medium);
     font-weight: 600;
@@ -632,7 +639,8 @@ onMounted(async () => {
 }
 
 .btn-browse:hover {
-    opacity: 0.9;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
     transform: translateY(-1px);
 }
 
@@ -663,7 +671,7 @@ onMounted(async () => {
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .adapter-stub p {
@@ -698,7 +706,7 @@ onMounted(async () => {
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .preview-actions {
@@ -733,9 +741,9 @@ onMounted(async () => {
 }
 
 .btn-clear-all:hover {
-    background: var(--color-danger-bg);
-    border-color: var(--color-danger);
-    color: var(--color-danger-contrast);
+    background: var(--color-negative-bg);
+    border-color: var(--color-negative-bg);
+    color: var(--color-negative-contrast);
 }
 
 /* Preview Grid */
@@ -809,7 +817,7 @@ onMounted(async () => {
 .preview-xmlid {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -839,13 +847,14 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: oklch(100% 0 0 / 0.9);
+    background: var(--color-popover-bg);
     border: 1px solid var(--color-border);
     border-radius: 50%;
     cursor: pointer;
     opacity: 0;
     transition: all 0.2s ease;
     z-index: 10;
+    color: var(--color-popover-contrast);
 }
 
 .preview-card:hover .btn-remove {
@@ -853,9 +862,9 @@ onMounted(async () => {
 }
 
 .btn-remove:hover {
-    background: var(--color-danger-bg);
-    border-color: var(--color-danger);
-    color: var(--color-danger-contrast);
+    background: var(--color-negative-bg);
+    border-color: var(--color-negative-bg);
+    color: var(--color-negative-contrast);
     transform: scale(1.1);
 }
 
@@ -875,9 +884,10 @@ onMounted(async () => {
     width: 90vw;
     max-width: 800px;
     max-height: 90vh;
-    background: var(--color-card-bg);
+    background: var(--color-popover-bg);
     border-radius: var(--radius-large);
-    box-shadow: 0 8px 32px oklch(0 0 0 / 0.2);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 32px oklch(0% 0 0 / 0.2);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -948,7 +958,7 @@ onMounted(async () => {
 .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .form-input,
@@ -956,8 +966,8 @@ onMounted(async () => {
     padding: 0.625rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: var(--color-muted-bg);
-    color: var(--color-text);
+    background: var(--color-card-bg);
+    color: var(--color-card-contrast);
     font-size: 0.875rem;
     font-family: inherit;
 }
@@ -1004,7 +1014,7 @@ onMounted(async () => {
 .batch-tags-label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .modal-footer {
@@ -1040,7 +1050,7 @@ onMounted(async () => {
 .btn-cancel {
     background: transparent;
     border: 1px solid var(--color-border);
-    color: var(--color-text);
+    color: var(--color-contrast);
 }
 
 .btn-cancel:hover {
@@ -1052,14 +1062,15 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--color-success);
-    color: white;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
     border: none;
 }
 
 .btn-save:hover:not(:disabled),
 .btn-import:hover:not(:disabled) {
-    opacity: 0.9;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
 }
 
 .btn-import:disabled {
@@ -1070,7 +1081,7 @@ onMounted(async () => {
 .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid white;
+    border: 2px solid var(--color-accent-contrast);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
@@ -1082,17 +1093,126 @@ onMounted(async () => {
     }
 }
 
-@media (max-width: 768px) {
+/* Tablet: 900px */
+@media (max-width: 900px) {
     .modal-body {
         grid-template-columns: 1fr;
     }
 
     .preview-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
     }
 
     .form-row {
         grid-template-columns: 1fr;
+    }
+
+    .drop-zone {
+        min-height: 300px;
+        padding: 2rem 1.5rem;
+    }
+
+    .adapter-stub {
+        min-height: 300px;
+        padding: 2rem 1.5rem;
+    }
+}
+
+/* Mobile: 640px */
+@media (max-width: 640px) {
+    .cimg-import-stepper {
+        gap: 1rem;
+    }
+
+    .owner-selection-bar {
+        padding: 0.75rem;
+    }
+
+    .adapter-tabs {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .adapter-tab {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .adapter-icon {
+        font-size: 1.25rem;
+    }
+
+    .drop-zone {
+        min-height: 250px;
+        padding: 1.5rem 1rem;
+    }
+
+    .drop-zone-content h3 {
+        font-size: 1.25rem;
+    }
+
+    .btn-browse {
+        padding: 0.625rem 1.5rem;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .preview-actions {
+        justify-content: flex-end;
+    }
+
+    .preview-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .preview-info {
+        padding: 0.5rem;
+    }
+
+    .preview-xmlid {
+        font-size: 0.65rem;
+    }
+
+    .refine-modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .modal-footer {
+        padding: 1rem;
+    }
+
+    .batch-tags-section {
+        padding: 0.75rem;
+    }
+
+    .action-bar {
+        padding: 0.75rem;
+        flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-save,
+    .btn-import {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>

@@ -289,16 +289,25 @@ onMounted(async () => {
 
 .step-content-container {
     display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
+    grid-template-columns: 1fr minmax(250px, 400px);
+    gap: 1.5rem;
     flex: 1;
     min-height: 500px;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 900px) {
+    .step-content-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Left: Images Gallery */
 .images-gallery {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Prevent overflow */
 }
 
 .empty-state {

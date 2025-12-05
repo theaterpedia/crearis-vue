@@ -190,6 +190,8 @@ const handleApply = async () => {
         const newXmlId = `_${props.projectId}.${postSuffix}`
 
         // Construct the new post object with only valid table fields
+        // Note: public_user references instructors table, so we don't set it here
+        // owner_id is the user who owns/created the post (Migration 046)
         const newPost = {
             id: newXmlId,
             name: customName.value,
@@ -200,8 +202,8 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            owner_id: selectedOwner.value,  // Record owner (Migration 046)
-            public_user: selectedOwner.value  // Also set as display author for now
+            owner_id: selectedOwner.value  // Record owner (Migration 046)
+            // public_user: references instructors, set separately if needed
         }
 
         // Call API to create the post

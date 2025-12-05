@@ -309,16 +309,25 @@ onMounted(async () => {
 
 .step-content-container {
     display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
+    grid-template-columns: 1fr minmax(250px, 400px);
+    gap: 1.5rem;
     flex: 1;
     min-height: 500px;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 900px) {
+    .step-content-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Left: Events Gallery */
 .events-gallery {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Prevent overflow */
 }
 
 .empty-state {
@@ -356,8 +365,8 @@ onMounted(async () => {
 
 .events-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
 }
 
 @media (min-width: 1024px) {

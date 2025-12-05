@@ -26,6 +26,13 @@ app.use(FloatingVue, {
             distance: 0,
             triggers: [],
             autoHide: false,
+        },
+        'status-editor': {
+            $extend: 'dropdown',
+            placement: 'bottom-start',
+            distance: 4,
+            triggers: ['click'],
+            autoHide: true,
         }
     }
 })

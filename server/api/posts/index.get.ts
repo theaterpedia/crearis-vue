@@ -1,5 +1,6 @@
-import { defineEventHandler, getQuery, createError } from 'h3'
+import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
+import { sessions } from '../auth/login.post'
 
 // GET /api/posts - List posts with optional filters
 // After Migration 019 Chapter 3B:
@@ -8,6 +9,9 @@ import { db } from '../../database/init'
 // - posts.project_id stores INTEGER FK to projects.id
 // - query.project accepts domaincode (TEXT) for filtering
 // - response includes domaincode from joined projects table
+// After v0.2final:
+// - Optional visibility filtering based on user role (r_anonym, r_member, etc.)
+// - Pass ?visibility=true to enable role-based filtering
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
@@ -21,6 +25,44 @@ export default defineEventHandler(async (event) => {
             WHERE 1=1
         `
         const params: any[] = []
+
+        // Visibility filtering (optional - enabled with ?visibility=true)
+        if (query.visibility === 'true') {
+            // Get current user's session
+            const sessionId = getCookie(event, 'sessionId')
+            const session = sessionId ? sessions.get(sessionId) : null
+
+            if (!session || session.expiresAt < Date.now()) {
+                // Anonymous user - only see r_anonym=true posts
+                sql += ` AND p.r_anonym = true`
+            } else {
+                // Authenticated user - check role-based visibility
+                const userId = session.userId
+
+                // Build visibility condition based on user's relationship to the post/project
+                // User can see post if:
+                // 1. r_anonym = true (anyone can see)
+                // 2. User is the post owner (r_owner = true and owner_id matches)
+                // 3. User is project owner
+                // 4. User is project member with appropriate role flag
+                sql += ` AND (
+                    p.r_anonym = true
+                    OR (p.r_owner = true AND p.owner_id = ?)
+                    OR pr.owner_id = ?
+                    OR EXISTS (
+                        SELECT 1 FROM project_members pm 
+                        WHERE pm.project_id = p.project_id 
+                        AND pm.user_id = ?
+                        AND (
+                            (p.r_member = true AND pm.configrole = 8)
+                            OR (p.r_participant = true AND pm.configrole = 4)
+                            OR (p.r_partner = true AND pm.configrole = 2)
+                        )
+                    )
+                )`
+                params.push(userId, userId, userId)
+            }
+        }
 
         // Filter by isbase (if this field exists)
         if (query.isbase !== undefined) {

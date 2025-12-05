@@ -26,6 +26,7 @@ interface ProjectRecord {
 
 interface User {
     id: string
+    sysmail?: string  // Added for permission checks (owner comparison)
     username: string
     role?: 'admin' | 'base' | 'project' | 'user'  // Kept for backward compatibility
     availableRoles: string[]

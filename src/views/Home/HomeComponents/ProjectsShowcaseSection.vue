@@ -12,9 +12,14 @@
             <Columns>
                 <Column width="auto">
                     <Prose>
-                        <Heading overline="Projekte starten und vernetzen" is="h2"
-                            headline="Websites in der Pipeline"></Heading>
-                        <p>Die Digitalisierung stellt die Demokratie auf die Probe. Viele Theaterpädagog:innen möchten sich einsetzen für die Sache eine nachhaltige Gesellschaftsform im 21. Jahrhundert. Es braucht dafür ein offenes Internet. Wenn Theaterpädagogik sich einbringen möchte dann braucht dies einen souveränen Webauftritt. Dies ist das Kernanliegen von Theaterpedia. Eine transparente und wirksame Vernetzung soll entstehen - einzig und allein entlang der inhaltlichen Linien. </p>
+                        <Heading overline="Projekte starten und vernetzen" is="h2" headline="Websites in der Pipeline">
+                        </Heading>
+                        <p>Die Digitalisierung stellt die Demokratie auf die Probe. Viele Theaterpädagog:innen möchten
+                            sich einsetzen für die Sache eine nachhaltige Gesellschaftsform im 21. Jahrhundert. Es
+                            braucht dafür ein offenes Internet. Wenn Theaterpädagogik sich einbringen möchte dann
+                            braucht dies einen souveränen Webauftritt. Dies ist das Kernanliegen von Theaterpedia. Eine
+                            transparente und wirksame Vernetzung soll entstehen - einzig und allein entlang der
+                            inhaltlichen Linien. </p>
 
                     </Prose>
                     <button style="background-color: var(--color-secondary-bg)" data-fpostlink data-hlogic="default">
@@ -36,9 +41,9 @@
         anatomy="heroimage"
         :entity="{ xmlid: selectedProject?.xmlid, status_id: selectedProject?.status_id, table: 'projects' }"
         @close="closeModal">
-        <!-- Corner banner for demo projects (status 19) -->
+        <!-- Corner banner for demo projects (status 8 from Migration 040) -->
         <template #corner-banner>
-            <CornerBanner v-if="selectedProject?.status_id === 19" size="medium" />
+            <CornerBanner v-if="selectedProject?.status_id === 8" size="medium" />
         </template>
 
         <!-- Project info -->
@@ -57,9 +62,9 @@
             </div>
         </div>
 
-        <!-- Footer with action button for published projects (status 68) -->
+        <!-- Footer with action button for released projects (status 4096 from Migration 040) -->
         <template #footer>
-            <button v-if="selectedProject?.status_id === 68" @click="navigateToSite" class="website-button">
+            <button v-if="selectedProject?.status_id === 4096" @click="navigateToSite" class="website-button">
                 Open Website →
             </button>
         </template>
@@ -116,14 +121,20 @@ async function fetchProjects() {
             const draftStatusId = getStatusIdByName('draft', 'projects')
             const publishStatusId = getStatusIdByName('publish', 'projects')
 
-            // Filter projects: show draft (67), demo (19), and published (68) projects
+            // Status values from Migration 040:
+            // demo = 8, draft = 64, released = 4096
+            const STATUS_DEMO = 8
+            const STATUS_DRAFT = 64
+            const STATUS_RELEASED = 4096
+
+            // Filter projects: show draft, demo, and released projects
             const filteredProjects = projectsArray.filter((p: any) => {
-                // Show if draft, demo, or publish status
+                // Show if draft or publish status (from useStatus)
                 if (p.status_id === draftStatusId || p.status_id === publishStatusId) {
                     return true
                 }
-                // Also show specific status_id values (fallback)
-                if (p.status_id === 67 || p.status_id === 19 || p.status_id === 68) {
+                // Also show specific status_id values (fallback to Migration 040 values)
+                if (p.status_id === STATUS_DRAFT || p.status_id === STATUS_DEMO || p.status_id === STATUS_RELEASED) {
                     return true
                 }
                 return false
@@ -251,7 +262,7 @@ function setupVisibilityRefresh() {
         }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    
+
     // Return cleanup function
     cleanupVisibility = () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -260,7 +271,7 @@ function setupVisibilityRefresh() {
 
 onMounted(async () => {
     await fetchProjects()
-    
+
     // Set up auto-refresh on page visibility change
     setupVisibilityRefresh()
 })
