@@ -106,6 +106,7 @@ interface ConfigEntry {
     value: number
     name: string
     description: string
+    taglogic: 'category' | 'subcategory' | 'toggle'
 }
 
 export const migration = {
@@ -139,7 +140,8 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_RELEASED |
                     BITS.CAP_READ | BITS.CAP_LIST | REL_ALL,
                 name: 'post_released_read_all',
-                description: 'Released posts readable by anyone'
+                description: 'Released posts readable by anyone',
+                taglogic: 'category'
             },
 
             // Rule 2: POST_CREATOR_FULL (record creator has full access)
@@ -148,7 +150,8 @@ export const migration = {
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_MANAGE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_CREATOR,
                 name: 'post_creator_manage',
-                description: 'Record creator can fully manage their posts'
+                description: 'Record creator can fully manage their posts',
+                taglogic: 'category'
             },
 
             // Rule 4: POST_READ_P_MEMBER_DRAFT (members read draft+)
@@ -156,7 +159,8 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_DRAFT |
                     BITS.CAP_READ | BITS.CAP_LIST | BITS.REL_MEMBER,
                 name: 'post_draft_read_member',
-                description: 'Members can read draft posts'
+                description: 'Members can read draft posts',
+                taglogic: 'category'
             },
 
             // Rule 5: POST_READ_P_PARTICIPANT_REVIEW
@@ -164,7 +168,8 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_REVIEW |
                     BITS.CAP_READ | BITS.CAP_LIST | BITS.REL_PARTICIPANT,
                 name: 'post_review_read_participant',
-                description: 'Participants can read posts in review'
+                description: 'Participants can read posts in review',
+                taglogic: 'category'
             },
 
             // Rule 6: POST_READ_P_PARTNER_CONFIRMED
@@ -172,7 +177,8 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_RELEASED |
                     BITS.CAP_READ | BITS.CAP_LIST | BITS.REL_PARTNER,
                 name: 'post_released_read_partner',
-                description: 'Partners can read released posts'
+                description: 'Partners can read released posts',
+                taglogic: 'category'
             },
 
             // Rule 10: POST_WRITE_P_MEMBER_EDITOR (member edit in draft+)
@@ -181,7 +187,8 @@ export const migration = {
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_MEMBER,
                 name: 'post_draft_update_member',
-                description: 'Members can update draft posts'
+                description: 'Members can update draft posts',
+                taglogic: 'category'
             },
         ]
 
@@ -191,56 +198,62 @@ export const migration = {
         console.log('\n📖 Chapter 3: Seed POST transitions')
 
         const postTransitions: ConfigEntry[] = [
-            // Rule 12a: Creator new→draft
+            // Rule 12a: Creator new→draft (PRIMARY - happy path)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_NEW |
                     BITS.TO_STATE_DRAFT | BITS.CAP_MANAGE_STATUS | BITS.REL_CREATOR,
                 name: 'post_transition_new_draft_creator',
-                description: 'Creator can advance post from new to draft'
+                description: 'Creator can advance post from new to draft',
+                taglogic: 'category'  // PRIMARY transition
             },
 
-            // Rule 12b: Creator draft→review
+            // Rule 12b: Creator draft→review (PRIMARY - happy path)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_DRAFT |
                     BITS.TO_STATE_REVIEW | BITS.CAP_MANAGE_STATUS | BITS.REL_CREATOR,
                 name: 'post_transition_draft_review_creator',
-                description: 'Creator can submit post for review'
+                description: 'Creator can submit post for review',
+                taglogic: 'category'  // PRIMARY transition
             },
 
             // Rules 13-15: P_OWNER transitions (project owner via FK lookup)
             // Note: These need special handling - P_OWNER prefix indicates runtime FK check
             // For now, we grant to member as proxy (project owner has member relation)
 
-            // Rule 13: review→released (was confirmed, simplified)
+            // Rule 13: review→released (PRIMARY - approval)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_REVIEW |
                     BITS.TO_STATE_RELEASED | BITS.CAP_MANAGE_STATUS | BITS.REL_MEMBER,
                 name: 'post_transition_review_released_P_owner',
-                description: 'Project owner can approve post (release)'
+                description: 'Project owner can approve post (release)',
+                taglogic: 'category'  // PRIMARY transition
             },
 
-            // Rule 14: review→draft (reject/send-back)
+            // Rule 14: review→draft (ALTERNATIVE - reject/send-back)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_REVIEW |
                     BITS.TO_STATE_DRAFT | BITS.CAP_MANAGE_STATUS | BITS.REL_MEMBER,
-                name: 'post_transition_review_draft_P_owner',
-                description: 'Project owner can send post back to draft'
+                name: 'post_alt_transition_review_draft_P_owner',
+                description: 'Project owner can send post back to draft',
+                taglogic: 'subcategory'  // ALTERNATIVE transition
             },
 
-            // Trash transitions (creator or P_owner)
+            // Trash transitions (ALTERNATIVE - destructive action)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_ALL |
                     BITS.TO_STATE_TRASH | BITS.CAP_MANAGE_DELETE | BITS.REL_CREATOR | BITS.REL_MEMBER,
-                name: 'post_transition_any_trash',
-                description: 'Creator or project owner can trash posts'
+                name: 'post_alt_transition_any_trash',
+                description: 'Creator or project owner can trash posts',
+                taglogic: 'subcategory'  // ALTERNATIVE transition
             },
 
-            // Restore from trash
+            // Restore from trash (PRIMARY - only action available in trash)
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_POST | BITS.STATE_TRASH |
                     BITS.TO_STATE_DRAFT | BITS.CAP_MANAGE_STATUS | BITS.REL_CREATOR | BITS.REL_MEMBER,
                 name: 'post_transition_trash_draft',
-                description: 'Creator or project owner can restore from trash'
+                description: 'Creator or project owner can restore from trash',
+                taglogic: 'category'  // PRIMARY transition
             },
         ]
 
@@ -254,14 +267,16 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_PROJECT | BITS.STATE_RELEASED |
                     BITS.CAP_READ | BITS.CAP_LIST | REL_ALL,
                 name: 'project_released_read_all',
-                description: 'Released projects readable by anyone'
+                description: 'Released projects readable by anyone',
+                taglogic: 'category'
             },
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_PROJECT | BITS.STATE_DRAFT |
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_MEMBER,
                 name: 'project_draft_update_member',
-                description: 'Members can update draft projects'
+                description: 'Members can update draft projects',
+                taglogic: 'category'
             },
             // Project owner (via FK) has full manage - marked with P_owner in name
             {
@@ -269,7 +284,8 @@ export const migration = {
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_MANAGE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_MEMBER,
                 name: 'project_all_manage_P_owner',
-                description: 'Project owner can fully manage project'
+                description: 'Project owner can fully manage project',
+                taglogic: 'category'
             },
         ]
 
@@ -283,20 +299,23 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_IMAGE | BITS.STATE_RELEASED |
                     BITS.CAP_READ | BITS.CAP_LIST | BITS.CAP_SHARE | REL_ALL,
                 name: 'image_released_read_all',
-                description: 'Released images readable and shareable'
+                description: 'Released images readable and shareable',
+                taglogic: 'category'
             },
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_IMAGE | BITS.STATE_ALL |
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_MANAGE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_CREATOR,
                 name: 'image_creator_manage',
-                description: 'Image creator can fully manage their images'
+                description: 'Image creator can fully manage their images',
+                taglogic: 'category'
             },
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_IMAGE | BITS.STATE_DRAFT |
                     BITS.CAP_READ | BITS.CAP_LIST | BITS.REL_MEMBER,
                 name: 'image_draft_read_member',
-                description: 'Members can see draft images'
+                description: 'Members can see draft images',
+                taglogic: 'category'
             },
         ]
 
@@ -310,20 +329,23 @@ export const migration = {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_EVENT | BITS.STATE_RELEASED |
                     BITS.CAP_READ | BITS.CAP_LIST | REL_ALL,
                 name: 'event_released_read_all',
-                description: 'Released events readable by anyone'
+                description: 'Released events readable by anyone',
+                taglogic: 'category'
             },
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_EVENT | BITS.STATE_ALL |
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_MANAGE | BITS.CAP_LIST | BITS.CAP_SHARE |
                     BITS.REL_CREATOR,
                 name: 'event_creator_manage',
-                description: 'Event creator can fully manage their events'
+                description: 'Event creator can fully manage their events',
+                taglogic: 'category'
             },
             {
                 value: BITS.PROJECT_ALL | BITS.ENTITY_EVENT | BITS.STATE_DRAFT |
                     BITS.CAP_READ | BITS.CAP_UPDATE | BITS.CAP_LIST | BITS.REL_MEMBER,
                 name: 'event_draft_update_member',
-                description: 'Members can update draft events'
+                description: 'Members can update draft events',
+                taglogic: 'category'
             },
         ]
 
@@ -343,9 +365,9 @@ export const migration = {
         for (const entry of allEntries) {
             await db.exec(`
                 INSERT INTO sysreg_config (value, name, tagfamily, taglogic, description, is_default)
-                VALUES (${entry.value}, '${entry.name}', 'config', 'option', '${entry.description}', false)
+                VALUES (${entry.value}, '${entry.name}', 'config', '${entry.taglogic}', '${entry.description}', false)
             `)
-            console.log(`    ✓ ${entry.name}`)
+            console.log(`    ✓ ${entry.name} (${entry.taglogic})`)
         }
 
         console.log(`\nMigration 051 complete: ${allEntries.length} config entries seeded`)

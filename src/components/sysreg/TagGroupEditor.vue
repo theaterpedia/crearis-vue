@@ -103,13 +103,7 @@ const displayIcon = computed(() => {
 
 // Get all tags for this family
 const allTags = computed(() => {
-    const tags = getOptionsByFamily(props.familyName)
-    console.log('[TagGroupEditor] All tags for', props.familyName, ':', tags.length)
-    console.log('[TagGroupEditor] Group bits:', props.group.bits)
-    // Debug: show all subcategories with parent_bit
-    const subs = tags.filter((t: any) => t.taglogic === 'subcategory')
-    console.log('[TagGroupEditor] All subcategories:', subs.map((s: any) => ({ name: s.name, parent_bit: s.parent_bit, value: s.value })))
-    return tags
+    return getOptionsByFamily(props.familyName)
 })
 
 // Filter tags by group bits
@@ -122,44 +116,32 @@ const groupTags = computed(() => {
 
         // For subcategories: check if parent_bit is in group's bit range
         if (tag.taglogic === 'subcategory' && tag.parent_bit !== null && tag.parent_bit !== undefined) {
-            const matches = props.group.bits.includes(tag.parent_bit)
-            if (matches) {
-                console.log('[TagGroupEditor] Matched subcategory:', tag.name, 'parent_bit:', tag.parent_bit)
-            }
-            return matches
+            return props.group.bits.includes(tag.parent_bit)
         }
 
         // For categories: check if bit position (log2 of value) is in group's bit range
         const bitPos = Math.log2(tag.value)
         // Only valid if bitPos is an integer (power-of-2 value)
         if (!Number.isInteger(bitPos)) {
-            console.log('[TagGroupEditor] Skipping non-power-of-2 value:', tag.name, 'value:', tag.value)
             return false
         }
 
-        const matches = props.group.bits.includes(bitPos)
-        if (matches) {
-            console.log('[TagGroupEditor] Matched category:', tag.name, 'value:', tag.value, 'bit:', bitPos)
-        }
-
-        return matches
+        return props.group.bits.includes(bitPos)
     })
-    console.log('[TagGroupEditor] Filtered group tags:', filtered.length)
     return filtered
-})// Separate categories and subcategories
+})
+
+// Separate categories and subcategories
 const categories = computed(() => {
-    const cats = groupTags.value.filter((tag: any) =>
+    return groupTags.value.filter((tag: any) =>
         tag.taglogic === 'category' && !tag.name.includes('>')
     )
-    console.log('[TagGroupEditor] Categories found:', cats.length, 'for group:', props.group.name)
-    return cats
 })
 
 const subcategories = computed(() => {
-    const subs = groupTags.value.filter((tag: any) =>
+    return groupTags.value.filter((tag: any) =>
         tag.taglogic === 'subcategory'
     )
-    console.log('[TagGroupEditor] Subcategories found:', subs.length, subs.map((s: any) => s.name))
     return subs
 })
 
@@ -250,22 +232,11 @@ const selectedSubcategory = computed(() => {
 // Get filtered subcategories for the selected category
 const availableSubcategories = computed(() => {
     if (!selectedCategory.value) {
-        console.log('[TagGroupEditor] No category selected')
         return []
     }
 
     const parentBit = Math.log2(selectedCategory.value)
-    console.log('[TagGroupEditor] Selected category value:', selectedCategory.value, 'parent bit:', parentBit)
-    console.log('[TagGroupEditor] All subcategories in groupTags:', subcategories.value.length, subcategories.value.map((s: any) => ({ name: s.name, parent_bit: s.parent_bit })))
-
-    const filtered = subcategories.value.filter((s: any) => {
-        const matches = s.parent_bit === parentBit
-        console.log('[TagGroupEditor] Checking subcategory:', s.name, 'parent_bit:', s.parent_bit, 'expected:', parentBit, 'matches:', matches, 'type match:', typeof s.parent_bit, typeof parentBit)
-        return matches
-    })
-
-    console.log('[TagGroupEditor] Filtered subcategories:', filtered.length, filtered.map((s: any) => s.name))
-    return filtered
+    return subcategories.value.filter((s: any) => s.parent_bit === parentBit)
 })
 
 // Helper functions
@@ -344,7 +315,6 @@ function selectCategory(absoluteValue: number) {
         const relativeValue = toRelativeValue(absoluteValue)
         let newValue = clearGroupBits()
         newValue |= relativeValue
-        console.log('[TagGroupEditor] selectCategory:', absoluteValue, '-> relative:', relativeValue, 'newValue:', newValue)
         emit('update:modelValue', newValue)
     }
 }
@@ -356,7 +326,7 @@ function selectSubcategory(absoluteValue: number) {
     const relativeValue = toRelativeValue(absoluteValue)
     let newValue = clearGroupBits()
     newValue |= relativeValue
-    console.log('[TagGroupEditor] selectSubcategory:', absoluteValue, '-> relative:', relativeValue, 'newValue:', newValue)
+    emit('update:modelValue', newValue)
     emit('update:modelValue', newValue)
 }
 

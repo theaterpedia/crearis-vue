@@ -51,8 +51,9 @@
                         <!-- StatusBadge / StatusEditor -->
                         <div v-if="post && project" class="post-status-editor">
                             <PostStatusBadge :post="postDataForPermissions" :project="projectDataForPermissions"
-                                :membership="null" @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
-                                @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                :membership="null" @status-changed="handleStatusChange"
+                                @scope-changed="handleStatusChange" @trash="handleTrash" @restore="handleRestore"
+                                @error="handleStatusError" />
                         </div>
 
                         <!-- Admin/Owner Controls -->

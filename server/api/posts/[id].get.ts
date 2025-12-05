@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
         if (error.statusCode) {
             throw error
         }
-        
+
         console.error('Error fetching post:', error)
         throw createError({
             statusCode: 500,

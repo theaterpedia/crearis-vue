@@ -260,7 +260,7 @@ vDescribe({ version: '0.3' })('config.capabilities', () => {
         v({ version: '0.3' })('should handle transition with manage_status', () => {
             // Typical transition entry: to_status + manage_status
             const transitionEntry = CAP_VALUES.to_status_review | CAP_VALUES.manage_status
-            
+
             expect(isTransitionEntry(transitionEntry)).toBe(true)
             expect(getToStatus(transitionEntry)).toBe('review')
             expect(getCapabilityValue(transitionEntry, 'manage')).toBe(2) // status
@@ -269,7 +269,7 @@ vDescribe({ version: '0.3' })('config.capabilities', () => {
         v({ version: '0.3' })('should handle trash transition with manage_delete', () => {
             // Trash transition uses manage_delete
             const trashEntry = CAP_VALUES.to_status_trash | CAP_VALUES.manage_delete
-            
+
             expect(isTransitionEntry(trashEntry)).toBe(true)
             expect(getToStatus(trashEntry)).toBe('trash')
             expect(getCapabilityValue(trashEntry, 'manage')).toBe(4) // delete

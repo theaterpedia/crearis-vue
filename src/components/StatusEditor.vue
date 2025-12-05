@@ -1,29 +1,15 @@
 <template>
     <div class="status-editor">
-        <!-- Header -->
+        <!-- Header with current status -->
         <div class="status-header">
-            <component :is="headerIcon" class="header-icon" :size="24" />
-            <div class="header-info">
-                <h3 class="header-label">Status ändern</h3>
-                <p class="header-description">
-                    Aktuell: <strong>{{ currentStatusLabel }}</strong>
-                </p>
-            </div>
-            <button v-if="canTrash && !isTrashed" class="trash-button" @click="handleTrash"
-                title="In Papierkorb verschieben">
-                <Trash2 :size="18" />
-            </button>
-        </div>
-
-        <!-- Current Status Badge -->
-        <div class="current-status">
             <span :class="['status-badge', `status-${currentStatusColor}`]">
                 <span class="status-icon">{{ currentStatusIcon }}</span>
                 <span class="status-label">{{ currentStatusLabel }}</span>
             </span>
-            <span v-if="currentStatusMeta.description" class="status-description">
-                {{ currentStatusMeta.description }}
-            </span>
+            <button v-if="canTrash && !isTrashed" class="trash-button" @click="handleTrash"
+                title="In Papierkorb verschieben">
+                <Trash2 :size="18" />
+            </button>
         </div>
 
         <!-- Transition Controls -->
@@ -104,7 +90,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-    GitPullRequestDraft,
     Check,
     Trash2,
     RotateCcw,
@@ -148,7 +133,6 @@ const {
     currentStatusLabel,
     currentStatusColor,
     currentStatusIcon,
-    currentStatusMeta,
     transitionActions,
     canTrash,
     isTransitioning,
@@ -164,7 +148,6 @@ const {
 // ============================================================
 
 const selectedTransition = ref<number | null>(null)
-const headerIcon = GitPullRequestDraft
 
 // ============================================================
 // COMPUTED
@@ -180,8 +163,6 @@ const canRestore = computed(() => {
 // ============================================================
 
 async function handleTransition(targetStatus: number) {
-    console.log('[StatusEditor] handleTransition:', currentStatus.value, '->', targetStatus)
-
     const newStatus = await transitionTo(targetStatus)
 
     if (newStatus !== null) {
@@ -200,7 +181,6 @@ async function handleApply() {
 }
 
 async function handleTrash() {
-    console.log('[StatusEditor] handleTrash')
     const newStatus = await transitionTo(STATUS.TRASH)
 
     if (newStatus !== null) {
@@ -211,8 +191,6 @@ async function handleTrash() {
 }
 
 async function handleRestore() {
-    console.log('[StatusEditor] handleRestore')
-    // Restore to DRAFT status
     const newStatus = await transitionTo(STATUS.DRAFT)
 
     if (newStatus !== null) {
@@ -223,9 +201,7 @@ async function handleRestore() {
 }
 
 async function handleScopeToggle(scopeBit: number) {
-    console.log('[StatusEditor] handleScopeToggle:', scopeBit)
     const newStatus = await toggleScope(scopeBit)
-    console.log('[StatusEditor] toggleScope returned:', newStatus, typeof newStatus)
     if (newStatus !== null) {
         // Emit scope-changed with actual new status (keeps modal open)
         emit('scope-changed', newStatus)
@@ -248,35 +224,13 @@ async function handleScopeToggle(scopeBit: number) {
     position: relative;
 }
 
-/* --- Header --- */
+/* --- Header with Status Badge --- */
 
 .status-header {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
-    align-items: flex-start;
-}
-
-.header-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--color-primary);
-    flex-shrink: 0;
-}
-
-.header-info {
-    flex: 1;
-}
-
-.header-label {
-    margin: 0 0 0.25rem 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.header-description {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
 }
 
 .trash-button {
@@ -300,13 +254,7 @@ async function handleScopeToggle(scopeBit: number) {
     color: var(--color-negative-contrast);
 }
 
-/* --- Current Status Badge --- */
-
-.current-status {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
+/* --- Status Badge --- */
 
 .status-badge {
     display: inline-flex;
@@ -326,12 +274,6 @@ async function handleScopeToggle(scopeBit: number) {
 .status-label {
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
-
-.status-description {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-    padding-left: 0.25rem;
 }
 
 /* --- Status Color Variants --- */

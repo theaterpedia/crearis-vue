@@ -106,7 +106,7 @@ const TO_STATUS_REVERSE: Record<number, string> = {
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
-    
+
     const entity = (query.entity as string)?.toLowerCase()
     const status = (query.status as string)?.toLowerCase()
     const relation = (query.relation as string)?.toLowerCase()

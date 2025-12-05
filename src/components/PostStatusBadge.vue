@@ -11,7 +11,8 @@
         <!-- Popper: Status Editor -->
         <template #popper>
             <StatusEditor :post="post" :project="project" :membership="membership" @status-changed="handleStatusChanged"
-                @scope-changed="handleScopeChanged" @trash="handleTrash" @restore="handleRestore" @error="handleError" />
+                @scope-changed="handleScopeChanged" @trash="handleTrash" @restore="handleRestore"
+                @error="handleError" />
         </template>
     </VDropdown>
 </template>
@@ -72,14 +73,14 @@ const canEdit = computed(() => permissions.canEdit.value)
 function handleStatusChanged(newStatus: number) {
     // Update props.post.status directly for immediate UI feedback
     // (Parent will also update, but this ensures badge shows new status immediately)
-    ;(props.post as any).status = newStatus
+    ; (props.post as any).status = newStatus
     isOpen.value = false
     emit('status-changed', newStatus)
 }
 
 function handleScopeChanged(newStatus: number) {
     // Update props.post.status directly for immediate UI feedback
-    ;(props.post as any).status = newStatus
+    ; (props.post as any).status = newStatus
     // Keep modal open for scope toggles
     emit('scope-changed', newStatus)
 }
