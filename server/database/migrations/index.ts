@@ -64,6 +64,7 @@ import { migration as migration051 } from './051_capabilities_matrix_v2'
 import { migration as migration052 } from './052_trigger_creator_rename'
 import { migration as migration053 } from './053_fix_image_trigger_creator_id'
 import { migration as migration054 } from './054_fix_compute_role_visibility'
+import { migration as migration059 } from './059_image_workitems'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -132,6 +133,8 @@ const migrations: Migration[] = [
     { run: migration052.up, down: migration052.down, metadata: { id: migration052.id, description: migration052.description, version: '0.3.2', date: '2025-12-05' }, reversible: true },
     { run: migration053.up, down: migration053.down, metadata: { id: migration053.id, description: migration053.description, version: '0.3.3', date: '2025-12-05' }, reversible: true },
     { run: migration054.up, down: migration054.down, metadata: { id: migration054.id, description: migration054.description, version: '0.3.4', date: '2025-12-05' }, reversible: true },
+    // Package G (059+) - Image Processing & Workitems (v0.5)
+    { run: migration059.up, down: migration059.down, metadata: { id: migration059.id, description: migration059.description, version: '0.5.0', date: '2025-12-08' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
