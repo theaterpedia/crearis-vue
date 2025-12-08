@@ -258,3 +258,80 @@ The `verified` user tier provides the basis for participant access:
 ---
 
 *This document defines boundaries. When in doubt: "Can Odoo do this?" If yes, let Odoo do it.*
+
+---
+
+## Stubs to Implement NOW (Dec 8-10)
+
+> **Goal:** Inform/guard remaining sprint implementation without blocking.
+
+### Priority 1: Migration Reordering
+
+| Migration | Status | Action |
+|-----------|--------|--------|
+| 057_create_comments_tables | ✅ In index | Keep - supports PostIT comments |
+| 058_workitems_stub | ❌ STUB only | Keep as stub - v0.5 |
+| 059_image_workitems | ✅ In index | Keep - ready but not urgently needed |
+
+**No reordering needed** - current order is correct.
+
+### Priority 2: Stub Composables (Edge Components)
+
+These composables already exist and should be surfaced as "edge" for the remaining days:
+
+| Composable | Status | Use As Edge For |
+|------------|--------|-----------------|
+| `usePostITComments.ts` | ✅ 487 lines | Comments UI (FloatingPostIt) |
+| `useAlphaFlags.ts` | ✅ Working | Feature gating (v0.5 stubs) |
+| `useImageStatus.ts` | ✅ Working | Image workflow states |
+| `useCapabilities.ts` | ✅ Working | Role-based permissions |
+
+### Priority 3: Event Stub Fields
+
+**Small migration needed (060):** Add stub fields to events table for v0.6 preparation:
+
+```sql
+-- Events table stub fields for Odoo sync
+ALTER TABLE events ADD COLUMN IF NOT EXISTS odoo_xmlid TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS odoo_stats JSONB;  -- Cron-synced stats
+ALTER TABLE events ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;  -- One-way door timestamp
+```
+
+### Priority 4: PostIT as "Edge" Pattern
+
+The Friday-night PostIT components should be surfaced:
+
+| Component | Path | Edge Use |
+|-----------|------|----------|
+| `FloatingPostIt.vue` | `src/fpostit/` | Comments display |
+| `FpostitRenderer.vue` | `src/fpostit/` | Global renderer |
+| `usePostITComments.ts` | `src/composables/` | CRUD operations |
+| `pPostit.vue` | `src/components/page/` | Aside/footer postits |
+
+**Action:** These are already working - just need to be wired to the comments table (migration 057).
+
+### Priority 5: Interactions Stub for Events
+
+Extend `fieldListUtility.ts` with test project forms:
+
+```typescript
+// Add to formRegistry
+'opus1_registration': { ... },
+'opus2_registration': { ... },
+'opus3_registration': { ... },
+```
+
+**Deferred to v0.6:** Full config table migration.
+
+---
+
+## Summary: What to Do Now vs Later
+
+| Now (Dec 8-10) | v0.5 (Jan) | v0.6 (Feb) |
+|----------------|-----------|-----------|
+| Wire PostIT → comments table | image_workitems full | Events confirmed barrier |
+| Add odoo_xmlid to events | Kanban production | Hero.vue integration |
+| Test opus1/2/3 forms | Consent workflow UI | Participant login path |
+| useAlphaFlags for feature gates | | fieldListUtility → config |
+
+---
