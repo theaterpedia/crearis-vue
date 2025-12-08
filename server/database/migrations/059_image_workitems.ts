@@ -46,7 +46,7 @@ export const migration = {
                 CREATE TABLE IF NOT EXISTS image_workitems (
                     -- Identity
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    image_id UUID NOT NULL REFERENCES images(id) ON DELETE CASCADE,
+                    image_id INTEGER NOT NULL REFERENCES images(id) ON DELETE CASCADE,
                     
                     -- Type discriminator
                     workitem_type TEXT NOT NULL CHECK (workitem_type IN (
@@ -90,7 +90,7 @@ export const migration = {
                     
                     -- Creator tracking (who initiated this workitem)
                     -- REQUIRED: Use system users (like Odoo 'bot') instead of NULL
-                    created_by UUID NOT NULL REFERENCES users(id),
+                    created_by INTEGER NOT NULL REFERENCES users(id),
                     
                     -- Odoo partner reference (for odoo_partner targets)
                     -- NOTE: v0.8 will refactor to use xmlid only

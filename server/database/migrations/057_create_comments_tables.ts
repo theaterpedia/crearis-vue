@@ -12,31 +12,33 @@
 import type { DatabaseAdapter } from '../adapter'
 
 export const migration = {
-    id: '057_create_comments_tables',
-    description: 'Create comments and comment_reactions tables for Post-IT system',
+  id: '057_create_comments_tables',
+  description: 'Create comments and comment_reactions tables for Post-IT system',
 
-    async up(db: DatabaseAdapter): Promise<void> {
-        const isPostgres = db.type === 'postgresql'
-        console.log('📝 Running migration 057: Creating comments tables...')
+  async up(db: DatabaseAdapter): Promise<void> {
+    const isPostgres = db.type === 'postgresql'
+    console.log('📝 Running migration 057: Creating comments tables...')
 
-        // Comments table
-        if (isPostgres) {
-            await db.exec(`
+    // Comments table
+    // Note: project_id and author_id are INTEGER (matching projects.id and users.id)
+    // entity_id is TEXT (can reference different entity types with different ID formats)
+    if (isPostgres) {
+      await db.exec(`
         CREATE TABLE IF NOT EXISTS comments (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           entity_type TEXT NOT NULL CHECK (entity_type IN ('post', 'project', 'event', 'image')),
-          entity_id UUID NOT NULL,
-          project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          entity_id TEXT NOT NULL,
+          project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
-          author_id UUID NOT NULL REFERENCES users(id),
+          author_id INTEGER NOT NULL REFERENCES users(id),
           content TEXT NOT NULL,
           is_pinned BOOLEAN DEFAULT false,
           created_at TIMESTAMPTZ DEFAULT NOW(),
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
       `)
-        } else {
-            await db.exec(`
+    } else {
+      await db.exec(`
         CREATE TABLE IF NOT EXISTS comments (
           id TEXT PRIMARY KEY,
           entity_type TEXT NOT NULL CHECK (entity_type IN ('post', 'project', 'event', 'image')),
@@ -50,50 +52,50 @@ export const migration = {
           updated_at TEXT DEFAULT (datetime('now'))
         )
       `)
-        }
+    }
 
-        // Indexes for efficient querying
-        await db.exec(`
+    // Indexes for efficient querying
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_comments_entity 
       ON comments(entity_type, entity_id, project_id)
     `)
 
-        await db.exec(`
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_comments_parent 
       ON comments(parent_id)
     `)
 
-        await db.exec(`
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_comments_author 
       ON comments(author_id)
     `)
 
-        if (isPostgres) {
-            await db.exec(`
+    if (isPostgres) {
+      await db.exec(`
         CREATE INDEX IF NOT EXISTS idx_comments_pinned 
         ON comments(is_pinned) WHERE is_pinned = true
       `)
-        } else {
-            await db.exec(`
+    } else {
+      await db.exec(`
         CREATE INDEX IF NOT EXISTS idx_comments_pinned 
         ON comments(is_pinned) WHERE is_pinned = 1
       `)
-        }
+    }
 
-        // Comment reactions table
-        if (isPostgres) {
-            await db.exec(`
+    // Comment reactions table
+    if (isPostgres) {
+      await db.exec(`
         CREATE TABLE IF NOT EXISTS comment_reactions (
           id SERIAL PRIMARY KEY,
           comment_id UUID NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
-          user_id UUID NOT NULL REFERENCES users(id),
+          user_id INTEGER NOT NULL REFERENCES users(id),
           emoji TEXT NOT NULL,
           created_at TIMESTAMPTZ DEFAULT NOW(),
           UNIQUE(comment_id, user_id, emoji)
         )
       `)
-        } else {
-            await db.exec(`
+    } else {
+      await db.exec(`
         CREATE TABLE IF NOT EXISTS comment_reactions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           comment_id TEXT NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
@@ -103,23 +105,22 @@ export const migration = {
           UNIQUE(comment_id, user_id, emoji)
         )
       `)
-        }
+    }
 
-        await db.exec(`
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_comment_reactions_comment 
       ON comment_reactions(comment_id)
     `)
 
-        console.log('✅ Migration 057 completed: Comments tables created')
-    },
+    console.log('✅ Migration 057 completed: Comments tables created')
+  },
 
-    async down(db: DatabaseAdapter): Promise<void> {
-        console.log('🗑️ Rolling back migration 057: Dropping comments tables...')
+  async down(db: DatabaseAdapter): Promise<void> {
+    console.log('🗑️ Rolling back migration 057: Dropping comments tables...')
 
-        await db.exec('DROP TABLE IF EXISTS comment_reactions')
-        await db.exec('DROP TABLE IF EXISTS comments')
+    await db.exec('DROP TABLE IF EXISTS comment_reactions')
+    await db.exec('DROP TABLE IF EXISTS comments')
 
-        console.log('✅ Migration 057 rolled back')
-    }
-}
+    console.log('✅ Migration 057 rolled back')
+  }
 }
