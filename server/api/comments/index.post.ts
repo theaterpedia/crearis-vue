@@ -45,14 +45,14 @@ const CONFIGROLE = {
  * Get user's relation to project
  */
 async function getUserRelation(
-    userId: string,
-    projectId: string,
-    projectOwnerId: string
+    userId: number | string,
+    projectId: number | string,
+    projectOwnerId: number | string
 ): Promise<string> {
-    if (userId === projectOwnerId) return 'p_owner'
+    if (String(userId) === String(projectOwnerId)) return 'p_owner'
 
     const membership = await db.get(
-        'SELECT configrole FROM project_members WHERE project_id = ? AND user_id = ?',
+        'SELECT configrole FROM project_members WHERE project_id = $1 AND user_id = $2',
         [projectId, userId]
     ) as { configrole: number } | undefined
 
@@ -129,11 +129,14 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Get project
+    // Get project (handle both numeric ID and domaincode)
+    const isNumericId = /^\d+$/.test(projectId)
     const project = await db.get(
-        'SELECT id, owner_id, status_id FROM projects WHERE id = ? OR domaincode = ?',
-        [projectId, projectId]
-    ) as { id: string; owner_id: string; status_id: number } | undefined
+        isNumericId
+            ? 'SELECT id, owner_id, status FROM projects WHERE id = $1'
+            : 'SELECT id, owner_id, status FROM projects WHERE domaincode = $1',
+        [isNumericId ? parseInt(projectId, 10) : projectId]
+    ) as { id: number; owner_id: number; status: number } | undefined
 
     if (!project) {
         throw createError({
@@ -157,7 +160,7 @@ export default defineEventHandler(async (event) => {
     // If this is a reply, verify parent exists
     if (parentId) {
         const parent = await db.get(
-            'SELECT id FROM comments WHERE id = ? AND project_id = ?',
+            'SELECT id FROM comments WHERE id = $1 AND project_id = $2',
             [parentId, project.id]
         )
 
@@ -171,9 +174,9 @@ export default defineEventHandler(async (event) => {
 
     // Get user info
     const user = await db.get(
-        'SELECT id, name, sysmail FROM users WHERE id = ?',
+        'SELECT id, username, sysmail FROM users WHERE id = $1',
         [session.userId]
-    ) as { id: string; name: string; sysmail: string } | undefined
+    ) as { id: number; username: string; sysmail: string } | undefined
 
     if (!user) {
         throw createError({
@@ -182,15 +185,16 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Create comment
-    const commentId = generateId()
+    // Create comment (let PostgreSQL generate UUID)
     const now = new Date().toISOString()
 
-    await db.run(`
-    INSERT INTO comments (id, entity_type, entity_id, project_id, parent_id, author_id, content, is_pinned, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, false, ?, ?)
-  `, [commentId, entityType, entityId, project.id, parentId, session.userId, content, now, now])
+    const result = await db.run(`
+    INSERT INTO comments (entity_type, entity_id, project_id, parent_id, author_id, content, is_pinned, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8)
+    RETURNING id
+  `, [entityType, entityId, project.id, parentId, session.userId, content, now, now]) as { id: string }
 
+    const commentId = result.id
     const color = ROLE_COLORS[relation as keyof typeof ROLE_COLORS] || 'yellow'
 
     return {
@@ -203,7 +207,7 @@ export default defineEventHandler(async (event) => {
             parentId,
             author: {
                 id: user.id,
-                name: user.name,
+                name: user.username,
                 sysmail: user.sysmail,
                 relation,
             },

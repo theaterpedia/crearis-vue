@@ -7,12 +7,26 @@
 
         <!-- Project Members List -->
         <div class="members-container">
-            <div v-if="usernames.length === 0" class="empty-state">
+            <div v-if="projectMembers.length === 0" class="empty-state">
                 <p>No project members found.</p>
             </div>
-            <div v-else class="members-list">
-                <p><strong>Project Members:</strong></p>
-                <p class="usernames">{{ usernames }}</p>
+            <div v-else class="members-grid">
+                <div v-for="member in projectMembers" :key="member.user_id || member.id" class="member-card">
+                    <div class="member-avatar">
+                        {{ getInitials(member.username || member.id) }}
+                    </div>
+                    <div class="member-info">
+                        <span class="member-name">{{ member.username || `User ${member.user_id}` }}</span>
+                        <RoleBadge 
+                            :relation="getMemberRelation(member)"
+                            :status="projectStatus"
+                            variant="pill"
+                            :show-tooltip="true"
+                            :show-permissions="true"
+                        />
+                    </div>
+                    <span v-if="member.configrole" class="member-configrole">{{ member.configrole }}</span>
+                </div>
             </div>
         </div>
 
@@ -41,10 +55,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import RoleBadge from '@/components/badges/RoleBadge.vue'
+import type { ProjectRelation } from '@/composables/useProjectActivation'
+import { PROJECT_STATUS } from '@/composables/useProjectActivation'
 
 interface Props {
     projectId: string
     projectMembers?: any[]
+    projectStatus?: number
     isLocked?: boolean
 }
 
@@ -55,11 +73,30 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
     projectMembers: () => [],
+    projectStatus: PROJECT_STATUS.DRAFT,
     isLocked: false
 })
 const emit = defineEmits<Emits>()
 
-// Compute comma-separated usernames from project members
+// Get member's relation/role for RoleBadge
+function getMemberRelation(member: any): ProjectRelation {
+    // Map from project_members.configrole or role field
+    const role = member.relation || member.configrole || member.role
+    if (role === 'owner' || role === 'p_owner') return 'p_owner'
+    if (role === 'creator' || role === 'p_creator') return 'p_creator'
+    if (role === 'member') return 'member'
+    if (role === 'participant') return 'participant'
+    if (role === 'partner') return 'partner'
+    // Default to member
+    return 'member'
+}
+
+// Get initials for avatar
+function getInitials(name: string): string {
+    return name.slice(0, 2).toUpperCase()
+}
+
+// Compute comma-separated usernames from project members (kept for backwards compatibility)
 const usernames = computed(() => {
     if (!props.projectMembers || props.projectMembers.length === 0) {
         return ''
@@ -114,14 +151,63 @@ function handlePrev() {
     padding: 2rem;
 }
 
-.members-list p {
-    margin: 0 0 0.5rem 0;
-    line-height: 1.6;
+/* ===== MEMBERS GRID ===== */
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
 }
 
-.usernames {
-    color: var(--color-text);
-    font-size: 0.95rem;
+.member-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.member-card:hover {
+    border-color: var(--color-primary-bg);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.1);
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-weight: 500;
+    color: var(--color-contrast);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-configrole {
+    font-size: 0.75rem;
+    color: var(--color-dimmed);
+    font-style: italic;
 }
 
 /* ===== STEP ACTIONS ===== */

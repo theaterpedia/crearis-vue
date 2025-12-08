@@ -109,6 +109,17 @@
                         </div>
 
                         <div class="divider" v-if="isPOwner" />
+
+                        <!-- Transition Summary (shown when target selected) -->
+                        <div v-if="transitionSummaryData" class="transition-section">
+                            <TransitionSummary
+                                :summary="transitionSummaryData"
+                                :compact="false"
+                                :initially-expanded="true"
+                            />
+                        </div>
+
+                        <div class="divider" v-if="transitionSummaryData" />
                     </div>
 
                     <!-- Footer -->
@@ -133,6 +144,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import TransitionSummary from '@/components/workflow/TransitionSummary.vue'
 import {
     useProjectActivation,
     PROJECT_STATUS,
@@ -141,6 +153,7 @@ import {
     type EntityCounts,
     type MembershipData
 } from '@/composables/useProjectActivation'
+import { calculateTransitionSummary } from '@/composables/useTransitionSummary'
 
 // Target info type
 interface TargetInfo {
@@ -192,6 +205,12 @@ const {
 
 // Selected target state
 const selectedTarget = ref<number | null>(null)
+
+// Transition summary computed from current → target
+const transitionSummaryData = computed(() => {
+    if (selectedTarget.value === null) return null
+    return calculateTransitionSummary(currentStatus.value, selectedTarget.value)
+})
 
 // Available targets with info
 const availableTargets = computed<TargetInfo[]>(() => {
@@ -516,6 +535,11 @@ watch(() => props.isOpen, (isOpen: boolean) => {
     font-size: 0.75rem;
     color: var(--color-muted);
     margin-top: 0.5rem;
+}
+
+/* Transition Section */
+.transition-section {
+    padding: 0.5rem 0;
 }
 
 /* Footer */

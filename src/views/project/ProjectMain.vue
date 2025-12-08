@@ -153,6 +153,19 @@
             </template>
         </Navbar>
 
+        <!-- Workflow Timeline Header (visible in dashboard mode) -->
+        <div v-if="!isStepper && projectStatus !== null" class="workflow-header">
+            <StateFlowTimeline
+                :current-status="projectStatus"
+                :allowed-targets="workflowAllowedTargets"
+                :selected-target="selectedWorkflowTarget"
+                :compact="false"
+                :interactive="isProjectOwner"
+                :show-layout-badge="true"
+                @select="handleWorkflowSelect"
+            />
+        </div>
+
         <!-- Main Content: 2-Column Layout -->
         <div class="main-content">
             <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
@@ -179,7 +192,7 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :is-locked="isLocked" @next="nextStep"
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked" @next="nextStep"
                             @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
@@ -201,7 +214,7 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             hide-actions />
                         <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :is-locked="isLocked" hide-actions />
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked" hide-actions />
                         <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" />
                         <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
@@ -242,6 +255,8 @@ import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
 import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
+import StateFlowTimeline from '@/components/workflow/StateFlowTimeline.vue'
+import { PROJECT_STATUS as WORKFLOW_STATUS } from '@/composables/useProjectActivation'
 
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
@@ -295,6 +310,39 @@ const currentStep = ref(0)
 
 // Current tab for navigation mode
 const currentNavTab = ref('events')
+
+// Workflow state for StateFlowTimeline
+const selectedWorkflowTarget = ref<number | null>(null)
+
+// Allowed workflow targets based on project status (simplified for now)
+const workflowAllowedTargets = computed(() => {
+    if (!projectStatus.value) return []
+    // Use WORKFLOW_STATUS from useProjectActivation for proper state machine
+    const current = projectStatus.value
+    const targets: number[] = []
+    
+    // Allow forward transitions based on current status
+    if (current === WORKFLOW_STATUS.DRAFT) {
+        targets.push(WORKFLOW_STATUS.REVIEW, WORKFLOW_STATUS.CONFIRMED)
+    } else if (current === WORKFLOW_STATUS.REVIEW) {
+        targets.push(WORKFLOW_STATUS.DRAFT, WORKFLOW_STATUS.CONFIRMED)
+    } else if (current === WORKFLOW_STATUS.CONFIRMED) {
+        targets.push(WORKFLOW_STATUS.REVIEW, WORKFLOW_STATUS.PUBLISHED)
+    } else if (current === WORKFLOW_STATUS.PUBLISHED) {
+        targets.push(WORKFLOW_STATUS.CONFIRMED, WORKFLOW_STATUS.ARCHIVED)
+    } else if (current === WORKFLOW_STATUS.ARCHIVED) {
+        targets.push(WORKFLOW_STATUS.PUBLISHED)
+    }
+    
+    return targets
+})
+
+// Handle workflow state selection
+function handleWorkflowSelect(status: number) {
+    selectedWorkflowTarget.value = status
+    // TODO: Open ProjectActivationPanel or handle transition directly
+    console.log('Workflow target selected:', status)
+}
 
 // Status values from Migration 040
 const STATUS_NEW = 1        // bits 0-2
@@ -573,6 +621,15 @@ onUnmounted(() => {
     flex-direction: column;
     height: 100vh;
     background: var(--color-bg-soft);
+}
+
+/* ===== WORKFLOW HEADER ===== */
+.workflow-header {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-card-bg);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: center;
 }
 
 /* ===== NAVBAR ===== */

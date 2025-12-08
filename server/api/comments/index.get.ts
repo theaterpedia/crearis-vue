@@ -45,18 +45,18 @@ const CONFIGROLE = {
  * Get user's relation to project
  */
 async function getUserRelation(
-    userId: string | null,
-    projectId: string,
-    projectOwnerId: string
+    userId: number | string | null,
+    projectId: number | string,
+    projectOwnerId: number | string
 ): Promise<string> {
     if (!userId) return 'anonym'
 
-    // Check if owner
-    if (userId === projectOwnerId) return 'p_owner'
+    // Check if owner (compare as strings for safety)
+    if (String(userId) === String(projectOwnerId)) return 'p_owner'
 
     // Check membership
     const membership = await db.get(
-        'SELECT configrole FROM project_members WHERE project_id = ? AND user_id = ?',
+        'SELECT configrole FROM project_members WHERE project_id = $1 AND user_id = $2',
         [projectId, userId]
     ) as { configrole: number } | undefined
 
@@ -107,11 +107,14 @@ export default defineEventHandler(async (event) => {
         }
     }
 
-    // Get project for authorization
+    // Get project for authorization (handle both numeric ID and domaincode)
+    const isNumericId = /^\d+$/.test(projectId)
     const project = await db.get(
-        'SELECT id, owner_id, status_id FROM projects WHERE id = ? OR domaincode = ?',
-        [projectId, projectId]
-    ) as { id: string; owner_id: string; status_id: number } | undefined
+        isNumericId 
+            ? 'SELECT id, owner_id, status FROM projects WHERE id = $1'
+            : 'SELECT id, owner_id, status FROM projects WHERE domaincode = $1',
+        [isNumericId ? parseInt(projectId, 10) : projectId]
+    ) as { id: number; owner_id: number; status: number } | undefined
 
     if (!project) {
         throw createError({
@@ -133,14 +136,14 @@ export default defineEventHandler(async (event) => {
       c.is_pinned,
       c.created_at,
       c.updated_at,
-      u.name as author_name,
+      u.username as author_name,
       u.sysmail as author_sysmail,
       (SELECT COUNT(*) FROM comments r WHERE r.parent_id = c.id) as reply_count
     FROM comments c
     LEFT JOIN users u ON c.author_id = u.id
-    WHERE c.entity_type = ? AND c.entity_id = ? AND c.project_id = ?
+    WHERE c.entity_type = $1 AND c.entity_id = $2 AND c.project_id = $3
     ORDER BY c.is_pinned DESC, c.created_at DESC
-    LIMIT ? OFFSET ?
+    LIMIT $4 OFFSET $5
   `, [entityType, entityId, project.id, limit + 1, offset]) as any[]
 
     // Check if there are more
@@ -151,7 +154,7 @@ export default defineEventHandler(async (event) => {
 
     // Get total count
     const countResult = await db.get(
-        'SELECT COUNT(*) as total FROM comments WHERE entity_type = ? AND entity_id = ? AND project_id = ?',
+        'SELECT COUNT(*) as total FROM comments WHERE entity_type = $1 AND entity_id = $2 AND project_id = $3',
         [entityType, entityId, project.id]
     ) as { total: number }
 
@@ -160,14 +163,16 @@ export default defineEventHandler(async (event) => {
     let reactionsMap: Record<string, { emoji: string; count: number; hasReacted: boolean }[]> = {}
 
     if (commentIds.length > 0) {
+        // Build parameterized query for PostgreSQL
+        const placeholders = commentIds.map((_, i) => `$${i + 2}`).join(',')
         const reactions = await db.all(`
       SELECT 
         comment_id,
         emoji,
         COUNT(*) as count,
-        MAX(CASE WHEN user_id = ? THEN 1 ELSE 0 END) as has_reacted
+        MAX(CASE WHEN user_id = $1 THEN 1 ELSE 0 END) as has_reacted
       FROM comment_reactions
-      WHERE comment_id IN (${commentIds.map(() => '?').join(',')})
+      WHERE comment_id IN (${placeholders})
       GROUP BY comment_id, emoji
     `, [currentUserId, ...commentIds]) as any[]
 
