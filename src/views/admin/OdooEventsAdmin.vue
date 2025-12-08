@@ -72,7 +72,7 @@ function handleCreateEvent() {
     margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-text-primary, #1a1a1a);
+    color: var(--color-contrast);
 }
 
 .title-icon {
@@ -81,7 +81,7 @@ function handleCreateEvent() {
 
 .page-subtitle {
     margin: 0.5rem 0 0 0;
-    color: var(--color-text-muted, #718096);
+    color: var(--color-dimmed);
     font-size: 0.9375rem;
 }
 
@@ -99,9 +99,9 @@ function handleCreateEvent() {
     display: flex;
     gap: 1rem;
     padding: 1rem 1.25rem;
-    background: oklch(95% 0.02 250);
-    border: 1px solid oklch(85% 0.1 250);
-    border-radius: var(--radius-button, 8px);
+    background: var(--color-secondary-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
 }
 
 .banner-icon {
@@ -115,14 +115,14 @@ function handleCreateEvent() {
 
 .banner-content strong {
     display: block;
-    color: oklch(40% 0.15 250);
+    color: var(--color-secondary-contrast);
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .banner-content p {
     margin: 0;
-    color: var(--color-text-secondary, #4a5568);
+    color: var(--color-dimmed);
     font-size: 0.875rem;
     line-height: 1.5;
 }
