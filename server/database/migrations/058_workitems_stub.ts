@@ -126,7 +126,7 @@ export const migration = {
 
         // Indexes
         console.log('📋 Creating workitems indexes...')
-        
+
         await db.exec(`
             CREATE INDEX IF NOT EXISTS idx_workitems_type 
             ON workitems(type)
@@ -214,15 +214,15 @@ export const migration = {
 
     async down(db: DatabaseAdapter): Promise<void> {
         console.log('⬇️  Rolling back migration 058...')
-        
+
         // Drop views first
         await db.exec('DROP VIEW IF EXISTS v_activities')
         await db.exec('DROP VIEW IF EXISTS v_todos')
         await db.exec('DROP VIEW IF EXISTS v_comments')
-        
+
         // Drop table
         await db.exec('DROP TABLE IF EXISTS workitems')
-        
+
         console.log('✅ Migration 058 rolled back')
     }
 }
