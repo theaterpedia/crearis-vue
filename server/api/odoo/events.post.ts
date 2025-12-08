@@ -123,14 +123,13 @@ export default defineEventHandler(async (event) => {
             return date.toISOString().slice(0, 19).replace('T', ' ')
         }
 
-        // Build Odoo values
+        // Build Odoo values (standard fields only)
         const values: Record<string, any> = {
             name: body.name.trim(),
             date_begin: formatOdooDate(dateBegin),
             date_end: formatOdooDate(dateEnd),
             date_tz: body.timezone || 'Europe/Berlin',
-            // Custom field for event type
-            x_studio_event_type: eventType,
+            // Note: event_type is tracked in our system, not stored in Odoo
         }
 
         // Optional fields
@@ -144,7 +143,8 @@ export default defineEventHandler(async (event) => {
         }
 
         if (body.project_id) {
-            values.x_studio_project_id = body.project_id
+            // Project linking would require custom Odoo module
+            console.log('[/api/odoo/events POST] Project ID provided but not linked in Odoo:', body.project_id)
         }
 
         // Create in Odoo
@@ -153,7 +153,7 @@ export default defineEventHandler(async (event) => {
         // Read back the created event
         const [created] = await odoo.read('event.event', [odooId], [
             'id', 'name', 'date_begin', 'date_end', 'date_tz', 'state',
-            'seats_max', 'seats_available', 'x_studio_event_type'
+            'seats_max', 'seats_available'
         ])
 
         return {
@@ -168,7 +168,7 @@ export default defineEventHandler(async (event) => {
                 state: created.state,
                 seats_max: created.seats_max,
                 seats_available: created.seats_available,
-                event_type: created.x_studio_event_type || eventType,
+                event_type: eventType, // From our input, not stored in Odoo
             },
             message: `Event "${body.name}" created in Odoo with ID ${odooId}`
         }

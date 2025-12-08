@@ -19,7 +19,7 @@
  */
 
 // ============================================================================
-// XML-RPC Helpers
+// XML-RPC Helpers (Pure regex-based parsing, no dependencies)
 // ============================================================================
 
 type XmlRpcValue = string | number | boolean | null | XmlRpcValue[] | { [key: string]: XmlRpcValue }
@@ -69,77 +69,185 @@ function buildMethodCall(method: string, params: XmlRpcValue[]): string {
 }
 
 /**
- * Parse XML-RPC response value
+ * Parse XML-RPC response value from XML string (regex-based)
  */
-function parseValue(node: Element): XmlRpcValue {
-    const valueNode = node.tagName === 'value' ? node.firstElementChild : node
-    if (!valueNode) {
-        // Text content directly in value
-        return node.textContent || ''
+function parseXmlValue(xml: string): XmlRpcValue {
+    xml = xml.trim()
+
+    // Check first tag to determine type
+    // Arrays start with <array>
+    if (xml.startsWith('<array>')) {
+        return parseXmlArray(xml)
     }
 
-    const tag = valueNode.tagName
-    const text = valueNode.textContent || ''
-
-    switch (tag) {
-        case 'int':
-        case 'i4':
-        case 'i8':
-            return parseInt(text, 10)
-        case 'double':
-            return parseFloat(text)
-        case 'boolean':
-            return text === '1' || text === 'true'
-        case 'string':
-            return text
-        case 'nil':
-            return null
-        case 'array': {
-            const data = valueNode.querySelector('data')
-            if (!data) return []
-            return Array.from(data.querySelectorAll(':scope > value')).map(parseValue)
-        }
-        case 'struct': {
-            const result: { [key: string]: XmlRpcValue } = {}
-            const members = valueNode.querySelectorAll(':scope > member')
-            members.forEach(member => {
-                const name = member.querySelector('name')?.textContent || ''
-                const value = member.querySelector('value')
-                if (value) {
-                    result[name] = parseValue(value)
-                }
-            })
-            return result
-        }
-        default:
-            return text
+    // Structs start with <struct>
+    if (xml.startsWith('<struct>')) {
+        return parseXmlStruct(xml)
     }
+
+    // Simple types - match from start
+    const intMatch = xml.match(/^<(int|i4|i8)>([-\d]+)<\/\1>/)
+    if (intMatch) return parseInt(intMatch[2], 10)
+
+    const doubleMatch = xml.match(/^<double>([-\d.e+]+)<\/double>/i)
+    if (doubleMatch) return parseFloat(doubleMatch[1])
+
+    const boolMatch = xml.match(/^<boolean>(\d|true|false)<\/boolean>/i)
+    if (boolMatch) return boolMatch[1] === '1' || boolMatch[1].toLowerCase() === 'true'
+
+    const stringMatch = xml.match(/^<string>([\s\S]*?)<\/string>/)
+    if (stringMatch) {
+        return stringMatch[1]
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+    }
+
+    if (xml.startsWith('<nil')) return null
+
+    // Plain text fallback (strings without <string> tag)
+    return xml
 }
 
 /**
- * Parse XML-RPC response
+ * Parse XML-RPC array - handles nested structures
+ */
+function parseXmlArray(xml: string): XmlRpcValue[] {
+    const values: XmlRpcValue[] = []
+
+    // Find <data>...</data> content
+    const dataStart = xml.indexOf('<data>') + 6
+    const dataEnd = xml.lastIndexOf('</data>')
+    if (dataStart === 5 || dataEnd === -1) return values
+
+    const dataContent = xml.substring(dataStart, dataEnd)
+
+    // Parse each <value>...</value> element (handling nesting properly)
+    let depth = 0
+    let valueStart = -1
+    let i = 0
+
+    while (i < dataContent.length) {
+        if (dataContent.substring(i, i + 7) === '<value>') {
+            if (depth === 0) valueStart = i + 7
+            depth++
+            i += 7
+        } else if (dataContent.substring(i, i + 8) === '</value>') {
+            depth--
+            if (depth === 0 && valueStart !== -1) {
+                const valueContent = dataContent.substring(valueStart, i).trim()
+                values.push(parseXmlValue(valueContent))
+                valueStart = -1
+            }
+            i += 8
+        } else {
+            i++
+        }
+    }
+
+    return values
+}
+
+/**
+ * Parse XML-RPC struct - handles nested structures
+ */
+function parseXmlStruct(xml: string): { [key: string]: XmlRpcValue } {
+    const result: { [key: string]: XmlRpcValue } = {}
+
+    // Find content between <struct> and </struct>
+    const structStart = xml.indexOf('<struct>') + 8
+    const structEnd = xml.lastIndexOf('</struct>')
+    if (structStart === 7 || structEnd === -1) return result
+
+    const content = xml.substring(structStart, structEnd)
+
+    // Parse each <member>...</member>
+    let depth = 0
+    let memberStart = -1
+    let i = 0
+
+    while (i < content.length) {
+        if (content.substring(i, i + 8) === '<member>') {
+            if (depth === 0) memberStart = i + 8
+            depth++
+            i += 8
+        } else if (content.substring(i, i + 9) === '</member>') {
+            depth--
+            if (depth === 0 && memberStart !== -1) {
+                const memberContent = content.substring(memberStart, i)
+
+                // Extract name
+                const nameMatch = memberContent.match(/<name>([^<]+)<\/name>/)
+                if (nameMatch) {
+                    const name = nameMatch[1]
+                    // Find value content
+                    const valueStartIdx = memberContent.indexOf('<value>') + 7
+                    const valueEndIdx = memberContent.lastIndexOf('</value>')
+                    if (valueStartIdx > 6 && valueEndIdx > -1) {
+                        const valueContent = memberContent.substring(valueStartIdx, valueEndIdx).trim()
+                        result[name] = parseXmlValue(valueContent)
+                    }
+                }
+                memberStart = -1
+            }
+            i += 9
+        } else {
+            i++
+        }
+    }
+
+    return result
+}
+
+/**
+ * Parse XML-RPC response (regex-based, no DOM dependencies)
  */
 function parseResponse(xml: string): XmlRpcValue {
-    // Use linkedom for server-side XML parsing
-    const { DOMParser } = require('linkedom')
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(xml, 'text/xml')
+    // Check for fault - need to handle nested struct properly
+    if (xml.includes('<fault>')) {
+        // Extract the full fault section
+        const faultStart = xml.indexOf('<fault>')
+        const faultEnd = xml.indexOf('</fault>') + 8
+        const faultXml = xml.substring(faultStart, faultEnd)
 
-    // Check for fault
-    const fault = doc.querySelector('fault')
-    if (fault) {
-        const faultValue = fault.querySelector('value')
-        const faultObj = faultValue ? parseValue(faultValue) : { faultString: 'Unknown error' }
-        throw new Error(`XML-RPC Fault: ${JSON.stringify(faultObj)}`)
+        // Try to extract faultCode and faultString
+        const faultCodeMatch = faultXml.match(/<name>faultCode<\/name>\s*<value><int>(\d+)<\/int><\/value>/)
+        const faultStringMatch = faultXml.match(/<name>faultString<\/name>\s*<value><string>([\s\S]*?)<\/string><\/value>/)
+
+        const faultCode = faultCodeMatch ? parseInt(faultCodeMatch[1], 10) : 0
+        const faultString = faultStringMatch ? faultStringMatch[1] : 'Unknown error'
+
+        console.error('[OdooRpc] XML-RPC Fault:', { faultCode, faultString: faultString.substring(0, 500) })
+        throw new Error(`XML-RPC Fault ${faultCode}: ${faultString}`)
     }
 
-    // Get response value
-    const valueNode = doc.querySelector('params > param > value')
-    if (!valueNode) {
-        throw new Error('Invalid XML-RPC response: no value found')
+    // Get response value - extract content between <params><param><value> and </value></param></params>
+    // Use greedy matching since the response can contain nested <value> tags
+    const startMarker = '<params><param><value>'
+    const endMarker = '</value></param></params>'
+
+    // Find the markers (with possible whitespace)
+    const startRegex = /<params>\s*<param>\s*<value>/
+    const endRegex = /<\/value>\s*<\/param>\s*<\/params>/
+
+    const startMatch = startRegex.exec(xml)
+    if (!startMatch) {
+        console.error('[OdooRpc] Invalid response - no start marker (first 500 chars):', xml.substring(0, 500))
+        throw new Error('Invalid XML-RPC response: no start value marker found')
     }
 
-    return parseValue(valueNode)
+    const startIndex = startMatch.index + startMatch[0].length
+
+    // Find the last occurrence of the end marker
+    const endMatch = endRegex.exec(xml.substring(startIndex))
+    if (!endMatch) {
+        console.error('[OdooRpc] Invalid response - no end marker')
+        throw new Error('Invalid XML-RPC response: no end value marker found')
+    }
+
+    const valueContent = xml.substring(startIndex, startIndex + endMatch.index)
+
+    return parseXmlValue(valueContent)
 }
 
 // ============================================================================

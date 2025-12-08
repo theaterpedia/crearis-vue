@@ -84,6 +84,7 @@
     "blurhash": "^2.0.5",
     "floating-vue": "^5.2.2",
     "focus-trap": "^7",
+    "linkedom": "^0.18.12",
     "lucide-vue-next": "^0.555.0",
     "marked": "^16.4.1",
     "nanoid": "^5.0.7",
