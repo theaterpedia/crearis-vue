@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
     // Get project for authorization (handle both numeric ID and domaincode)
     const isNumericId = /^\d+$/.test(projectId)
     const project = await db.get(
-        isNumericId 
+        isNumericId
             ? 'SELECT id, owner_id, status FROM projects WHERE id = $1'
             : 'SELECT id, owner_id, status FROM projects WHERE domaincode = $1',
         [isNumericId ? parseInt(projectId, 10) : projectId]

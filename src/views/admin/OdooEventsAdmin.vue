@@ -40,7 +40,7 @@ function handleCreateEvent() {
         <div class="admin-events-container">
             <!-- Admin Review Widget - Shows pending project reviews -->
             <AdminReviewWidget class="review-widget" />
-            
+
             <!-- Info Banner -->
             <div class="info-banner">
                 <div class="banner-icon">ℹ️</div>

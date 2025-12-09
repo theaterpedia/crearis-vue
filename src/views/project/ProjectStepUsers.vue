@@ -17,13 +17,8 @@
                     </div>
                     <div class="member-info">
                         <span class="member-name">{{ member.username || `User ${member.user_id}` }}</span>
-                        <RoleBadge 
-                            :relation="getMemberRelation(member)"
-                            :status="projectStatus"
-                            variant="pill"
-                            :show-tooltip="true"
-                            :show-permissions="true"
-                        />
+                        <RoleBadge :relation="getMemberRelation(member)" :status="projectStatus" variant="pill"
+                            :show-tooltip="true" :show-permissions="true" />
                     </div>
                     <span v-if="member.configrole" class="member-configrole">{{ member.configrole }}</span>
                 </div>

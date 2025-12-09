@@ -57,13 +57,8 @@
         <!-- Interactions Summary (Events only) -->
         <div v-if="entityType === 'events'" class="interactions-summary">
             <h4 class="section-title">Recent Registrations</h4>
-            <InteractionsPanel
-                mode="dashboard-panel"
-                :project-id="projectId"
-                :event-id="entity?.id"
-                :use-stub-data="true"
-                @open-full-panel="$emit('open-interactions')"
-            />
+            <InteractionsPanel mode="dashboard-panel" :project-id="projectId" :event-id="entity?.id"
+                :use-stub-data="true" @open-full-panel="$emit('open-interactions')" />
         </div>
 
         <!-- Workflow Status (stub for v0.6-v0.8 features) -->
@@ -141,12 +136,12 @@ const viewCount = computed(() => {
 })
 
 const formattedDate = computed(() => {
-    const dateField = props.entityType === 'events' 
+    const dateField = props.entityType === 'events'
         ? props.entity?.event_date || props.entity?.start_date
         : props.entity?.updated_at || props.entity?.created_at
-    
+
     if (!dateField) return '-'
-    
+
     try {
         return new Date(dateField).toLocaleDateString('de-DE', {
             day: '2-digit',
@@ -161,7 +156,7 @@ const formattedDate = computed(() => {
 const externalUrl = computed(() => {
     const domaincode = props.entity?.domaincode || props.projectId
     const entityId = props.entity?.id || props.entity?.xmlid
-    
+
     if (props.entityType === 'posts') {
         return `/sites/${domaincode}/posts/${entityId}`
     }

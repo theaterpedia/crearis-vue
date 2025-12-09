@@ -30,22 +30,17 @@
                         <div class="target-section">
                             <h3 class="section-title">Choose target state:</h3>
                             <div class="state-options">
-                                <button
-                                    v-for="target in availableTargets"
-                                    :key="target.status"
-                                    class="state-option"
+                                <button v-for="target in availableTargets" :key="target.status" class="state-option"
                                     :class="{
                                         'selected': selectedTarget === target.status,
                                         'disabled': !target.isAllowed,
                                         'backward': target.isBackward,
                                         'forward': target.isForward && !target.isSkip,
                                         'skip': target.isSkip
-                                    }"
-                                    :disabled="!target.isAllowed"
-                                    :title="target.reason || target.label"
-                                    @click="selectTarget(target.status)"
-                                >
-                                    <span class="option-indicator">{{ selectedTarget === target.status ? '●' : '○' }}</span>
+                                    }" :disabled="!target.isAllowed" :title="target.reason || target.label"
+                                    @click="selectTarget(target.status)">
+                                    <span class="option-indicator">{{ selectedTarget === target.status ? '●' : '○'
+                                        }}</span>
                                     <span class="option-label">{{ target.label }}</span>
                                     <span class="option-hint" v-if="target.isBackward">(zurück)</span>
                                     <span class="option-hint" v-else-if="target.isSkip">(überspr.)</span>
@@ -60,22 +55,16 @@
                         <div class="checklist-section">
                             <h3 class="section-title">Readiness Checklist:</h3>
                             <ul class="checklist">
-                                <li
-                                    v-for="result in ruleResults"
-                                    :key="result.rule.id"
-                                    class="checklist-item"
-                                    :class="{ 'passed': result.passed, 'failed': !result.passed && result.applicable, 'na': !result.applicable }"
-                                >
+                                <li v-for="result in ruleResults" :key="result.rule.id" class="checklist-item"
+                                    :class="{ 'passed': result.passed, 'failed': !result.passed && result.applicable, 'na': !result.applicable }">
                                     <span class="check-icon">
                                         {{ result.passed ? '✅' : (result.applicable ? '❌' : '➖') }}
                                     </span>
                                     <span class="check-label">{{ result.rule.labelDe }}</span>
                                 </li>
                                 <!-- Skip rule -->
-                                <li
-                                    class="checklist-item skip-rule"
-                                    :class="{ 'passed': skipRuleResult.passed, 'failed': !skipRuleResult.passed }"
-                                >
+                                <li class="checklist-item skip-rule"
+                                    :class="{ 'passed': skipRuleResult.passed, 'failed': !skipRuleResult.passed }">
                                     <span class="check-icon">
                                         {{ skipRuleResult.passed ? '✅' : '⚠️' }}
                                     </span>
@@ -90,18 +79,10 @@
                         <div class="options-section" v-if="isPOwner">
                             <h3 class="section-title">Weitere Optionen:</h3>
                             <div class="option-buttons">
-                                <button
-                                    v-if="canGoBack"
-                                    class="option-btn backward"
-                                    @click="selectBackwardTarget"
-                                >
+                                <button v-if="canGoBack" class="option-btn backward" @click="selectBackwardTarget">
                                     ← {{ backwardTargetLabel }}
                                 </button>
-                                <button
-                                    v-if="canTrash"
-                                    class="option-btn trash"
-                                    @click="selectTrash"
-                                >
+                                <button v-if="canTrash" class="option-btn trash" @click="selectTrash">
                                     🗑 Trash
                                 </button>
                             </div>
@@ -112,11 +93,8 @@
 
                         <!-- Transition Summary (shown when target selected) -->
                         <div v-if="transitionSummaryData" class="transition-section">
-                            <TransitionSummary
-                                :summary="transitionSummaryData"
-                                :compact="false"
-                                :initially-expanded="true"
-                            />
+                            <TransitionSummary :summary="transitionSummaryData" :compact="false"
+                                :initially-expanded="true" />
                         </div>
 
                         <div class="divider" v-if="transitionSummaryData" />
@@ -127,11 +105,7 @@
                         <div class="error-message" v-if="error">
                             {{ error }}
                         </div>
-                        <button
-                            class="activate-btn"
-                            :disabled="!canActivate || isLoading"
-                            @click="handleActivate"
-                        >
+                        <button class="activate-btn" :disabled="!canActivate || isLoading" @click="handleActivate">
                             <span v-if="isLoading">Processing...</span>
                             <span v-else>Activate to {{ selectedTargetLabel }}</span>
                         </button>
@@ -392,13 +366,40 @@ watch(() => props.isOpen, (isOpen: boolean) => {
     font-size: 0.875rem;
 }
 
-.state-badge.state-new { background: var(--color-info-bg); color: var(--color-info-base); }
-.state-badge.state-demo { background: var(--color-warning-bg); color: var(--color-warning-base); }
-.state-badge.state-draft { background: var(--color-info-bg); color: var(--color-info-base); }
-.state-badge.state-confirmed { background: var(--color-positive-bg); color: var(--color-positive-base); }
-.state-badge.state-released { background: var(--color-positive-bg); color: var(--color-positive-base); }
-.state-badge.state-archived { background: var(--color-muted-bg); color: var(--color-muted); }
-.state-badge.state-trash { background: var(--color-negative-bg); color: var(--color-negative-base); }
+.state-badge.state-new {
+    background: var(--color-info-bg);
+    color: var(--color-info-base);
+}
+
+.state-badge.state-demo {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-base);
+}
+
+.state-badge.state-draft {
+    background: var(--color-info-bg);
+    color: var(--color-info-base);
+}
+
+.state-badge.state-confirmed {
+    background: var(--color-positive-bg);
+    color: var(--color-positive-base);
+}
+
+.state-badge.state-released {
+    background: var(--color-positive-bg);
+    color: var(--color-positive-base);
+}
+
+.state-badge.state-archived {
+    background: var(--color-muted-bg);
+    color: var(--color-muted);
+}
+
+.state-badge.state-trash {
+    background: var(--color-negative-bg);
+    color: var(--color-negative-base);
+}
 
 /* Divider */
 .divider {
@@ -450,9 +451,17 @@ watch(() => props.isOpen, (isOpen: boolean) => {
     cursor: not-allowed;
 }
 
-.state-option.backward .option-label { color: var(--color-warning-base); }
-.state-option.forward .option-label { color: var(--color-positive-base); }
-.state-option.skip .option-label { color: var(--color-info-base); }
+.state-option.backward .option-label {
+    color: var(--color-warning-base);
+}
+
+.state-option.forward .option-label {
+    color: var(--color-positive-base);
+}
+
+.state-option.skip .option-label {
+    color: var(--color-info-base);
+}
 
 .option-indicator {
     font-weight: bold;
@@ -482,9 +491,18 @@ watch(() => props.isOpen, (isOpen: boolean) => {
     padding: 0.5rem 0;
 }
 
-.checklist-item.passed .check-label { color: var(--color-positive-base); }
-.checklist-item.failed .check-label { color: var(--color-negative-base); font-weight: 500; }
-.checklist-item.na .check-label { color: var(--color-muted); }
+.checklist-item.passed .check-label {
+    color: var(--color-positive-base);
+}
+
+.checklist-item.failed .check-label {
+    color: var(--color-negative-base);
+    font-weight: 500;
+}
+
+.checklist-item.na .check-label {
+    color: var(--color-muted);
+}
 
 .checklist-item.skip-rule {
     margin-top: 0.5rem;

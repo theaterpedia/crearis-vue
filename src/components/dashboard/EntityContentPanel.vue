@@ -5,12 +5,12 @@
             <!-- Basic Fields (always visible) -->
             <div class="content-section">
                 <h4 class="section-title">📝 Basic Info</h4>
-                
+
                 <div class="field-group">
                     <label class="field-label">Heading</label>
                     <div class="field-value">{{ entity?.heading || entity?.name || '-' }}</div>
                 </div>
-                
+
                 <div class="field-group">
                     <label class="field-label">Teaser</label>
                     <div class="field-value teaser-text">{{ entity?.teaser || '-' }}</div>
@@ -58,27 +58,15 @@
                     <label class="form-label" for="content-heading">
                         Heading <span class="required">*</span>
                     </label>
-                    <input 
-                        id="content-heading" 
-                        v-model="formData.heading" 
-                        type="text" 
-                        class="form-input"
-                        placeholder="Enter heading..."
-                        :disabled="!canEditHeading"
-                    />
+                    <input id="content-heading" v-model="formData.heading" type="text" class="form-input"
+                        placeholder="Enter heading..." :disabled="!canEditHeading" />
                 </div>
 
                 <!-- Teaser -->
                 <div class="form-group">
                     <label class="form-label" for="content-teaser">Teaser</label>
-                    <textarea 
-                        id="content-teaser" 
-                        v-model="formData.teaser" 
-                        class="form-textarea" 
-                        rows="3"
-                        placeholder="Brief description..."
-                        :disabled="!canEditTeaser"
-                    ></textarea>
+                    <textarea id="content-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
+                        placeholder="Brief description..." :disabled="!canEditTeaser"></textarea>
                 </div>
 
                 <!-- Markdown Content (visible in sidebar mode, respects permissions) -->
@@ -87,14 +75,8 @@
                         Content (Markdown)
                         <span class="field-hint">Supports **bold**, *italic*, and basic markdown</span>
                     </label>
-                    <textarea 
-                        id="content-md" 
-                        v-model="formData.md" 
-                        class="form-textarea form-textarea-large" 
-                        rows="16"
-                        placeholder="# Your content here..."
-                        :disabled="!canEditMd"
-                    ></textarea>
+                    <textarea id="content-md" v-model="formData.md" class="form-textarea form-textarea-large" rows="16"
+                        placeholder="# Your content here..." :disabled="!canEditMd"></textarea>
                 </div>
                 <div v-else class="permission-notice">
                     <span class="notice-icon">🔒</span>
@@ -234,7 +216,7 @@ function handleCancel() {
 
 async function handleSave() {
     if (!hasChanges.value) return
-    
+
     isSaving.value = true
     try {
         // Emit save with form data (html is NOT included - server generates it)
@@ -548,6 +530,8 @@ watch(() => props.entity, () => {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

@@ -113,17 +113,17 @@ const pendingCount = computed(() => pendingProjects.value.length)
 
 async function fetchPendingProjects() {
     isLoading.value = true
-    
+
     try {
         // Fetch projects in REVIEW status (256)
         const response = await fetch(`/api/projects?status=${STATUS.REVIEW}&limit=20`)
-        
+
         if (!response.ok) {
             throw new Error('Failed to fetch projects')
         }
-        
+
         const data = await response.json()
-        
+
         // Transform to our format
         pendingProjects.value = (data.items || data || []).map((p: any) => ({
             id: p.id,
@@ -136,7 +136,7 @@ async function fetchPendingProjects() {
             updatedAt: p.updated_at || p.updatedAt,
             status: p.status
         }))
-        
+
     } catch (error) {
         console.error('[AdminReviewWidget] Error fetching projects:', error)
         pendingProjects.value = []
@@ -147,9 +147,9 @@ async function fetchPendingProjects() {
 
 async function approveProject(project: PendingProject) {
     if (isProcessing.value) return
-    
+
     isProcessing.value = true
-    
+
     try {
         const response = await fetch(`/api/projects/${project.id}/activate`, {
             method: 'PATCH',
@@ -160,16 +160,16 @@ async function approveProject(project: PendingProject) {
                 targetStatus: STATUS.CONFIRMED
             })
         })
-        
+
         if (!response.ok) {
             const data = await response.json()
             throw new Error(data.message || 'Fehler beim Freigeben')
         }
-        
+
         // Remove from list
         pendingProjects.value = pendingProjects.value.filter((p: PendingProject) => p.id !== project.id)
         emit('project-approved', project.id)
-        
+
     } catch (error) {
         console.error('[AdminReviewWidget] Error approving project:', error)
         alert(`Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`)
@@ -180,12 +180,12 @@ async function approveProject(project: PendingProject) {
 
 async function rejectProject(project: PendingProject) {
     if (isProcessing.value) return
-    
+
     const reason = prompt('Grund für Ablehnung (optional):')
     if (reason === null) return // User cancelled
-    
+
     isProcessing.value = true
-    
+
     try {
         const response = await fetch(`/api/projects/${project.id}/activate`, {
             method: 'PATCH',
@@ -197,16 +197,16 @@ async function rejectProject(project: PendingProject) {
                 reason: reason || undefined
             })
         })
-        
+
         if (!response.ok) {
             const data = await response.json()
             throw new Error(data.message || 'Fehler beim Zurückweisen')
         }
-        
+
         // Remove from list
         pendingProjects.value = pendingProjects.value.filter((p: PendingProject) => p.id !== project.id)
         emit('project-rejected', project.id)
-        
+
     } catch (error) {
         console.error('[AdminReviewWidget] Error rejecting project:', error)
         alert(`Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`)
@@ -308,7 +308,9 @@ defineExpose({
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Empty state */

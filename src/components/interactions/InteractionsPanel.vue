@@ -206,11 +206,11 @@ const totalCount = computed(() => interactions.value.length)
 // Group interactions by event
 const groupedInteractions = computed<EventGroup[]>(() => {
     const groups = new Map<number | string, EventGroup>()
-    
+
     for (const interaction of interactions.value) {
         const eventId = interaction.eventId || 'unknown'
         const eventName = interaction.eventName || 'Unbekanntes Event'
-        
+
         if (!groups.has(eventId)) {
             groups.set(eventId, {
                 eventId,
@@ -218,12 +218,12 @@ const groupedInteractions = computed<EventGroup[]>(() => {
                 interactions: []
             })
         }
-        
+
         groups.get(eventId)!.interactions.push(interaction)
     }
-    
+
     // Sort by event name
-    return Array.from(groups.values()).sort((a, b) => 
+    return Array.from(groups.values()).sort((a, b) =>
         a.eventName.localeCompare(b.eventName)
     )
 })
@@ -258,42 +258,42 @@ const wrapperProps = computed(() => {
 
 async function fetchInteractions() {
     isLoading.value = true
-    
+
     try {
         if (props.useStubData) {
             // Use stub data
             await new Promise(resolve => setTimeout(resolve, 300)) // Simulate loading
-            interactions.value = props.eventId 
+            interactions.value = props.eventId
                 ? stubInteractions.filter(i => i.eventId === props.eventId)
                 : stubInteractions
         } else {
             // Fetch from API
             const params = new URLSearchParams()
-            
+
             if (typeof props.projectId === 'string') {
                 params.set('project', props.projectId)
             } else {
                 // Need to handle numeric project_id differently
                 // For now, we'll need to look up the domaincode or pass project_id directly
             }
-            
+
             if (props.eventId) {
                 // Would need event filtering support in API
                 // params.set('event_id', String(props.eventId))
             }
-            
+
             params.set('limit', '50')
             params.set('sort_by', 'timestamp')
             params.set('sort_order', 'desc')
-            
+
             const response = await fetch(`/api/interactions?${params}`)
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch interactions')
             }
-            
+
             const data = await response.json()
-            
+
             // Transform API response to our format
             interactions.value = (data.items || []).map((item: any) => ({
                 id: item.id,
@@ -308,7 +308,7 @@ async function fetchInteractions() {
                 fields: item.fields
             }))
         }
-        
+
         // Auto-expand first group
         if (groupedInteractions.value.length > 0) {
             expandedGroups.value.add(groupedInteractions.value[0].eventId)
@@ -480,7 +480,9 @@ defineExpose({
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Empty state */

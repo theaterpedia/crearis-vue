@@ -2,12 +2,7 @@
     <div class="entity-browser">
         <!-- CardHero Header (fixed, doesn't scroll) -->
         <div class="entity-hero">
-            <CardHero 
-                :height-tmp="'mini'" 
-                :img-tmp="entityImage"
-                content-align-y="bottom"
-                content-width="full"
-            >
+            <CardHero :height-tmp="'mini'" :img-tmp="entityImage" content-align-y="bottom" content-width="full">
                 <div class="hero-content">
                     <h2 class="entity-title">{{ entityTitle }}</h2>
                     <p v-if="entityTeaser" class="entity-teaser">{{ entityTeaser }}</p>
@@ -17,13 +12,8 @@
 
         <!-- Tab Navigation -->
         <div class="browser-tabs">
-            <button 
-                v-for="tab in availableTabs" 
-                :key="tab.id"
-                class="browser-tab"
-                :class="{ 'is-active': activeTab === tab.id }"
-                @click="selectTab(tab.id)"
-            >
+            <button v-for="tab in availableTabs" :key="tab.id" class="browser-tab"
+                :class="{ 'is-active': activeTab === tab.id }" @click="selectTab(tab.id)">
                 <span class="tab-icon">{{ tab.icon }}</span>
                 <span class="tab-label">{{ tab.label }}</span>
             </button>
@@ -32,47 +22,30 @@
         <!-- Tab Content -->
         <div class="browser-content">
             <!-- Overview Tab -->
-            <EntityOverview 
-                v-if="activeTab === 'overview'"
-                :entity="entity"
-                :entity-type="entityType"
-                :project-id="projectId"
-                @open-external="handleOpenExternal"
-            />
+            <EntityOverview v-if="activeTab === 'overview'" :entity="entity" :entity-type="entityType"
+                :project-id="projectId" @open-external="handleOpenExternal" />
 
             <!-- Content/Edit Tab -->
             <div v-else-if="activeTab === 'content'" class="tab-panel">
                 <slot name="content">
-                    <EntityContentPanel
-                        :entity="entity"
-                        :entity-type="entityType"
-                        mode="dashboard"
-                        @open-full-editor="openPostIts"
-                    />
+                    <EntityContentPanel :entity="entity" :entity-type="entityType" mode="dashboard"
+                        @open-full-editor="openPostIts" />
                 </slot>
             </div>
 
             <!-- Config Tab -->
             <div v-else-if="activeTab === 'config'" class="tab-panel">
                 <slot name="config">
-                    <ConfigPanelStub 
-                        :entity="entity"
-                        :entity-type="entityType"
-                        :project-id="projectId"
-                        :alpha="alpha"
-                    />
+                    <ConfigPanelStub :entity="entity" :entity-type="entityType" :project-id="projectId"
+                        :alpha="alpha" />
                 </slot>
             </div>
 
             <!-- Interactions Tab (Events only) -->
             <div v-else-if="activeTab === 'interactions'" class="tab-panel">
                 <slot name="interactions">
-                    <InteractionsPanel
-                        mode="base-panel"
-                        :project-id="projectId"
-                        :event-id="entity?.id"
-                        :use-stub-data="alpha"
-                    />
+                    <InteractionsPanel mode="base-panel" :project-id="projectId" :event-id="entity?.id"
+                        :use-stub-data="alpha" />
                 </slot>
             </div>
         </div>
@@ -135,9 +108,9 @@ const entityTeaser = computed(() => {
 })
 
 const entityImage = computed(() => {
-    return props.entity?.img_wide?.url 
-        || props.entity?.cimg 
-        || props.entity?.image_url 
+    return props.entity?.img_wide?.url
+        || props.entity?.cimg
+        || props.entity?.image_url
         || 'https://picsum.photos/800/400?random=' + (props.entity?.id || 1)
 })
 
@@ -148,12 +121,12 @@ const availableTabs = computed((): BrowserTab[] => {
         { id: 'content', label: 'Content', icon: '📝' },
         { id: 'config', label: 'Config', icon: '⚙️' }
     ]
-    
+
     // Add interactions tab for events
     if (props.entityType === 'events') {
         baseTabs.push({ id: 'interactions', label: 'Interactions', icon: '👥' })
     }
-    
+
     return baseTabs
 })
 

@@ -1,13 +1,8 @@
 <template>
     <div class="dashboard-layout">
         <!-- Left Column: Collapsible Tabs -->
-        <CollapsibleTabs
-            :tabs="navigationTabs"
-            v-model="activeSection"
-            :default-collapsed="defaultTabsCollapsed"
-            @tab-change="handleSectionChange"
-            @collapse-change="handleCollapseChange"
-        />
+        <CollapsibleTabs :tabs="navigationTabs" v-model="activeSection" :default-collapsed="defaultTabsCollapsed"
+            @tab-change="handleSectionChange" @collapse-change="handleCollapseChange" />
 
         <!-- Middle Column: Entity List (pList) -->
         <div class="entity-list-column">
@@ -16,17 +11,9 @@
                 <span v-if="entityCount > 0" class="list-count">{{ entityCount }}</span>
             </div>
             <div class="list-content">
-                <pList
-                    v-if="showEntityList"
-                    :entity="currentEntityType"
-                    :project="projectId"
-                    :status-gt="0"
-                    size="small"
-                    variant="default"
-                    :anatomy="false"
-                    on-activate="route"
-                    @item-click="handleEntitySelect"
-                />
+                <pList v-if="showEntityList" :entity="currentEntityType" :project="projectId" :status-gt="0"
+                    size="small" variant="default" :anatomy="false" on-activate="route"
+                    @item-click="handleEntitySelect" />
                 <!-- Fallback for non-entity sections -->
                 <div v-else class="section-placeholder">
                     <p>{{ placeholderText }}</p>
@@ -36,16 +23,9 @@
 
         <!-- Right Column: Entity Browser -->
         <div class="entity-browser-column">
-            <EntityBrowser
-                v-if="selectedEntity"
-                :entity="selectedEntity"
-                :entity-type="currentEntityType"
-                :project-id="projectId"
-                :alpha="alpha"
-                @open-external="handleOpenExternal"
-                @open-postits="handleOpenPostIts"
-                @tab-change="handleBrowserTabChange"
-            />
+            <EntityBrowser v-if="selectedEntity" :entity="selectedEntity" :entity-type="currentEntityType"
+                :project-id="projectId" :alpha="alpha" @open-external="handleOpenExternal"
+                @open-postits="handleOpenPostIts" @tab-change="handleBrowserTabChange" />
             <!-- Empty State -->
             <div v-else class="empty-browser">
                 <div class="empty-content">

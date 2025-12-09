@@ -1,16 +1,12 @@
 <template>
     <div v-if="canRequestReview" class="request-review-container">
-        <button 
-            class="request-review-btn"
-            :class="{ 'is-loading': isSubmitting }"
-            :disabled="isSubmitting"
-            @click="handleRequestReview"
-        >
+        <button class="request-review-btn" :class="{ 'is-loading': isSubmitting }" :disabled="isSubmitting"
+            @click="handleRequestReview">
             <span v-if="isSubmitting" class="spinner"></span>
             <span v-else class="btn-icon">📤</span>
             <span class="btn-text">{{ buttonLabel }}</span>
         </button>
-        
+
         <!-- Success message -->
         <Transition name="fade">
             <div v-if="showSuccess" class="success-message">
@@ -18,7 +14,7 @@
                 <span>Prüfungsanfrage gesendet!</span>
             </div>
         </Transition>
-        
+
         <!-- Error message -->
         <Transition name="fade">
             <div v-if="errorMessage" class="error-message">
@@ -95,10 +91,10 @@ const buttonLabel = computed(() => {
 
 async function handleRequestReview() {
     if (isSubmitting.value) return
-    
+
     isSubmitting.value = true
     errorMessage.value = ''
-    
+
     try {
         const response = await fetch(`/api/projects/${props.projectId}/activate`, {
             method: 'PATCH',
@@ -109,27 +105,27 @@ async function handleRequestReview() {
                 targetStatus: props.targetStatus
             })
         })
-        
+
         if (!response.ok) {
             const data = await response.json()
             throw new Error(data.message || 'Fehler beim Einreichen')
         }
-        
+
         const data = await response.json()
-        
+
         // Show success
         showSuccess.value = true
         setTimeout(() => {
             showSuccess.value = false
         }, 3000)
-        
+
         emit('review-requested', data.newStatus || props.targetStatus)
-        
+
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
         errorMessage.value = message
         emit('error', message)
-        
+
         setTimeout(() => {
             errorMessage.value = ''
         }, 5000)
@@ -200,7 +196,9 @@ async function handleRequestReview() {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Success message */

@@ -7,14 +7,8 @@
 
         <!-- Tabs Container -->
         <div class="tabs-container">
-            <button 
-                v-for="tab in tabs" 
-                :key="tab.id" 
-                class="tab-item"
-                :class="{ 'is-active': activeTab === tab.id }"
-                @click="selectTab(tab.id)"
-                :title="tab.label"
-            >
+            <button v-for="tab in tabs" :key="tab.id" class="tab-item" :class="{ 'is-active': activeTab === tab.id }"
+                @click="selectTab(tab.id)" :title="tab.label">
                 <span class="tab-icon" v-html="tab.icon"></span>
                 <span v-if="!isCollapsed" class="tab-label">{{ tab.label }}</span>
                 <span v-if="tab.badge" class="tab-badge">{{ tab.badge }}</span>

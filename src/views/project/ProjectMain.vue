@@ -155,36 +155,19 @@
 
         <!-- Workflow Timeline Header (visible in dashboard mode) -->
         <div v-if="!isStepper && projectStatus !== null" class="workflow-header">
-            <StateFlowTimeline
-                :current-status="projectStatus"
-                :allowed-targets="workflowAllowedTargets"
-                :selected-target="selectedWorkflowTarget"
-                :compact="false"
-                :interactive="isProjectOwner"
-                :show-layout-badge="true"
-                @select="handleWorkflowSelect"
-            />
-            
+            <StateFlowTimeline :current-status="projectStatus" :allowed-targets="workflowAllowedTargets"
+                :selected-target="selectedWorkflowTarget" :compact="false" :interactive="isProjectOwner"
+                :show-layout-badge="true" @select="handleWorkflowSelect" />
+
             <!-- Request Review Button (visible for owner in draft status) -->
-            <RequestReviewButton
-                v-if="projectStatus === 64"
-                :project-id="projectId"
-                :current-status="projectStatus"
-                :is-owner="isProjectOwner"
-                @review-requested="handleReviewRequested"
-            />
+            <RequestReviewButton v-if="projectStatus === 64" :project-id="projectId" :current-status="projectStatus"
+                :is-owner="isProjectOwner" @review-requested="handleReviewRequested" />
         </div>
 
         <!-- NEW: 3-Column Dashboard Layout (alpha/dashboard branch) -->
-        <DashboardLayout
-            v-if="showNewDashboard"
-            :project-id="projectId"
-            :project-name="projectName"
-            :alpha="true"
-            @section-change="handleDashboardSectionChange"
-            @entity-select="handleDashboardEntitySelect"
-            @open-external="handleDashboardOpenExternal"
-        />
+        <DashboardLayout v-if="showNewDashboard" :project-id="projectId" :project-name="projectName" :alpha="true"
+            @section-change="handleDashboardSectionChange" @entity-select="handleDashboardEntitySelect"
+            @open-external="handleDashboardOpenExternal" />
 
         <!-- OLD: 2-Column Layout (kept for stepper mode and fallback) -->
         <div v-else class="main-content">
@@ -212,8 +195,8 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked" @next="nextStep"
-                            @prev="currentStep > 0 ? prevStep : undefined" />
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
@@ -234,7 +217,8 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             hide-actions />
                         <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked" hide-actions />
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                            hide-actions />
                         <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" />
                         <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
@@ -247,10 +231,8 @@
                             :is-locked="isLocked" />
                         <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
                             :is-locked="isLocked" />
-                        <InteractionsPanel v-else-if="currentNavTab === 'registrations'" 
-                            mode="dashboard-panel"
-                            :project-id="projectId"
-                            :use-stub-data="true" />
+                        <InteractionsPanel v-else-if="currentNavTab === 'registrations'" mode="dashboard-panel"
+                            :project-id="projectId" :use-stub-data="true" />
                     </template>
                 </div>
             </div>
@@ -347,7 +329,7 @@ const workflowAllowedTargets = computed(() => {
     // Use WORKFLOW_STATUS from useProjectActivation for proper state machine
     const current = projectStatus.value
     const targets: number[] = []
-    
+
     // Allow forward transitions based on current status
     if (current === WORKFLOW_STATUS.DRAFT) {
         targets.push(WORKFLOW_STATUS.REVIEW, WORKFLOW_STATUS.CONFIRMED)
@@ -360,7 +342,7 @@ const workflowAllowedTargets = computed(() => {
     } else if (current === WORKFLOW_STATUS.ARCHIVED) {
         targets.push(WORKFLOW_STATUS.PUBLISHED)
     }
-    
+
     return targets
 })
 
