@@ -164,6 +164,15 @@
                 :show-layout-badge="true"
                 @select="handleWorkflowSelect"
             />
+            
+            <!-- Request Review Button (visible for owner in draft status) -->
+            <RequestReviewButton
+                v-if="projectStatus === 64"
+                :project-id="projectId"
+                :current-status="projectStatus"
+                :is-owner="isProjectOwner"
+                @review-requested="handleReviewRequested"
+            />
         </div>
 
         <!-- Main Content: 2-Column Layout -->
@@ -227,6 +236,10 @@
                             :is-locked="isLocked" />
                         <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
                             :is-locked="isLocked" />
+                        <InteractionsPanel v-else-if="currentNavTab === 'registrations'" 
+                            mode="dashboard-panel"
+                            :project-id="projectId"
+                            :use-stub-data="true" />
                     </template>
                 </div>
             </div>
@@ -256,6 +269,8 @@ import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import StateFlowTimeline from '@/components/workflow/StateFlowTimeline.vue'
+import RequestReviewButton from '@/components/workflow/RequestReviewButton.vue'
+import InteractionsPanel from '@/components/interactions/InteractionsPanel.vue'
 import { PROJECT_STATUS as WORKFLOW_STATUS } from '@/composables/useProjectActivation'
 
 const router = useRouter()
@@ -375,7 +390,7 @@ const userRoleLabel = computed(() => projectData.value?._userRoleLabel ?? null)
 
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
-    const tabs: string[] = ['homepage', 'events', 'posts', 'images', 'users', 'theme', 'layout', 'navigation', 'pages']
+    const tabs: string[] = ['homepage', 'events', 'posts', 'images', 'users', 'theme', 'layout', 'navigation', 'pages', 'registrations']
 
     // Add conditional tabs based on project settings
     if (projectData.value) {
@@ -556,6 +571,15 @@ async function handleActivateProject() {
     } catch (error) {
         console.error('Failed to activate project:', error)
         alert('Fehler beim Aktivieren des Projekts')
+    }
+}
+
+// Handle review request: update local state after successful API call
+function handleReviewRequested(newStatus: number) {
+    console.log('Review requested - new status:', newStatus)
+    projectStatus.value = newStatus
+    if (projectData.value) {
+        projectData.value.status = newStatus
     }
 }
 

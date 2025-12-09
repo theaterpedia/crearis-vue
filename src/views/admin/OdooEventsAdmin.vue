@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import PageLayout from '@/components/PageLayout.vue'
 import OdooEventsList from '@/components/events/OdooEventsList.vue'
 import CreateEventForm from '@/components/events/CreateEventForm.vue'
+import AdminReviewWidget from '@/components/admin/AdminReviewWidget.vue'
 
 // State
 const showCreateForm = ref(false)
@@ -37,6 +38,9 @@ function handleCreateEvent() {
         </template>
 
         <div class="admin-events-container">
+            <!-- Admin Review Widget - Shows pending project reviews -->
+            <AdminReviewWidget class="review-widget" />
+            
             <!-- Info Banner -->
             <div class="info-banner">
                 <div class="banner-icon">ℹ️</div>
@@ -151,6 +155,11 @@ function handleCreateEvent() {
     opacity: 1;
     max-height: 800px;
     transform: translateY(0);
+}
+
+/* Review Widget */
+.review-widget {
+    margin-bottom: 1.5rem;
 }
 
 /* Responsive */
