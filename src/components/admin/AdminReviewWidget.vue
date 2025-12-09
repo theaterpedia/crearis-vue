@@ -243,8 +243,8 @@ defineExpose({
 <style scoped>
 .admin-review-widget {
     background: var(--color-card-bg, #fff);
-    border: 1px solid var(--color-border, #e5e7eb);
-    border-radius: 0.75rem;
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-large);
     overflow: hidden;
 }
 
@@ -254,7 +254,7 @@ defineExpose({
     align-items: center;
     gap: 0.5rem;
     padding: 1rem;
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    border-bottom: var(--border-small) solid var(--color-border, #e5e7eb);
     background: var(--color-muted-bg, #f9fafb);
 }
 
@@ -339,8 +339,8 @@ defineExpose({
 
 .pending-item {
     padding: 1rem;
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
-    transition: background 0.15s;
+    border-bottom: var(--border-small) solid var(--color-border, #e5e7eb);
+    transition: var(--transition);
 }
 
 .pending-item:last-child {
@@ -396,16 +396,16 @@ defineExpose({
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
     font-weight: 500;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-small);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: var(--transition);
     text-decoration: none;
 }
 
 .approve-btn {
     background: oklch(85% 0.12 145);
     color: oklch(30% 0.10 145);
-    border: 1px solid oklch(75% 0.12 145);
+    border: var(--border-small) solid oklch(75% 0.12 145);
 }
 
 .approve-btn:hover:not(:disabled) {
@@ -415,7 +415,7 @@ defineExpose({
 .reject-btn {
     background: oklch(92% 0.08 25);
     color: oklch(40% 0.15 25);
-    border: 1px solid oklch(85% 0.08 25);
+    border: var(--border-small) solid oklch(85% 0.08 25);
 }
 
 .reject-btn:hover:not(:disabled) {
@@ -425,7 +425,7 @@ defineExpose({
 .view-btn {
     background: var(--color-muted-bg, #f3f4f6);
     color: var(--color-contrast, #1f2937);
-    border: 1px solid var(--color-border, #e5e7eb);
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
 }
 
 .view-btn:hover {
@@ -440,7 +440,7 @@ defineExpose({
 /* Footer */
 .widget-footer {
     padding: 0.75rem 1rem;
-    border-top: 1px solid var(--color-border, #e5e7eb);
+    border-top: var(--border-small) solid var(--color-border, #e5e7eb);
     background: var(--color-muted-bg, #f9fafb);
 }
 
@@ -448,13 +448,13 @@ defineExpose({
     width: 100%;
     padding: 0.5rem 1rem;
     background: transparent;
-    border: 1px solid var(--color-border, #e5e7eb);
-    border-radius: 0.375rem;
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-small);
     color: var(--color-dimmed, #6b7280);
     font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: var(--transition);
 }
 
 .refresh-btn:hover:not(:disabled) {

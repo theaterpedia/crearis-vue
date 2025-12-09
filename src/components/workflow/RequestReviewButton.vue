@@ -155,11 +155,11 @@ async function handleRequestReview() {
     background: linear-gradient(135deg, oklch(75% 0.15 280), oklch(65% 0.18 300));
     color: white;
     border: none;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-medium);
     font-size: 0.9375rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     box-shadow: 0 2px 8px oklch(65% 0.18 300 / 0.3);
 }
 
@@ -211,7 +211,7 @@ async function handleRequestReview() {
     padding: 0.75rem 1rem;
     background: oklch(92% 0.08 145);
     color: oklch(35% 0.12 145);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-small);
     font-size: 0.875rem;
     font-weight: 500;
 }
@@ -228,7 +228,7 @@ async function handleRequestReview() {
     padding: 0.75rem 1rem;
     background: oklch(92% 0.08 25);
     color: oklch(40% 0.15 25);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-small);
     font-size: 0.875rem;
     font-weight: 500;
 }
@@ -240,7 +240,7 @@ async function handleRequestReview() {
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.3s ease;
+    transition: var(--transition);
 }
 
 .fade-enter-from,

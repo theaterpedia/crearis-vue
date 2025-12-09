@@ -397,8 +397,8 @@ defineExpose({
 /* Dashboard wrapper */
 .dashboard-wrapper {
     background: var(--color-card-bg, #fff);
-    border: 1px solid var(--color-border, #e5e7eb);
-    border-radius: 0.75rem;
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-large);
     overflow: hidden;
 }
 
@@ -426,7 +426,7 @@ defineExpose({
     align-items: center;
     gap: 0.5rem;
     padding: 1rem;
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    border-bottom: var(--border-small) solid var(--color-border, #e5e7eb);
     background: var(--color-muted-bg, #f9fafb);
 }
 
@@ -520,8 +520,8 @@ defineExpose({
 /* Event group */
 .event-group {
     margin-bottom: 0.5rem;
-    border: 1px solid var(--color-border, #e5e7eb);
-    border-radius: 0.5rem;
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-medium);
     overflow: hidden;
 }
 
@@ -532,7 +532,7 @@ defineExpose({
     padding: 0.75rem 1rem;
     background: var(--color-muted-bg, #f9fafb);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: var(--transition);
 }
 
 .event-header:hover {
@@ -570,7 +570,7 @@ defineExpose({
 .chevron {
     font-size: 0.625rem;
     color: var(--color-dimmed, #6b7280);
-    transition: transform 0.2s;
+    transition: var(--transition);
 }
 
 .chevron.expanded {
@@ -579,7 +579,7 @@ defineExpose({
 
 /* Interactions list */
 .interactions-list {
-    border-top: 1px solid var(--color-border, #e5e7eb);
+    border-top: var(--border-small) solid var(--color-border, #e5e7eb);
 }
 
 .interaction-item {
@@ -587,9 +587,9 @@ defineExpose({
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    border-bottom: var(--border-small) solid var(--color-border, #e5e7eb);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: var(--transition);
 }
 
 .interaction-item:last-child {
@@ -659,7 +659,7 @@ defineExpose({
 /* Footer (dashboard mode) */
 .panel-footer {
     padding: 0.75rem 1rem;
-    border-top: 1px solid var(--color-border, #e5e7eb);
+    border-top: var(--border-small) solid var(--color-border, #e5e7eb);
     background: var(--color-muted-bg, #f9fafb);
 }
 
@@ -667,13 +667,13 @@ defineExpose({
     width: 100%;
     padding: 0.5rem 1rem;
     background: transparent;
-    border: 1px solid var(--color-border, #e5e7eb);
-    border-radius: 0.375rem;
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-small);
     color: var(--color-primary-bg, #3b82f6);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: var(--transition);
 }
 
 .view-all-btn:hover {
@@ -694,14 +694,14 @@ defineExpose({
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 500;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-small);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: var(--transition);
 }
 
 .btn-secondary {
     background: var(--color-muted-bg, #f3f4f6);
-    border: 1px solid var(--color-border, #e5e7eb);
+    border: var(--border-small) solid var(--color-border, #e5e7eb);
     color: var(--color-contrast, #1f2937);
 }
 
@@ -711,7 +711,7 @@ defineExpose({
 
 .btn-primary {
     background: var(--color-primary-bg, #3b82f6);
-    border: 1px solid var(--color-primary-bg, #3b82f6);
+    border: var(--border-small) solid var(--color-primary-bg, #3b82f6);
     color: var(--color-primary-contrast, #fff);
 }
 
