@@ -46,30 +46,24 @@ export default defineEventHandler(async (event) => {
             params.push(query.is_public === 'true' || query.is_public === '1')
         }
 
-        // Filter by status value (0-6)
-        // status_lt: less than (e.g., status_lt=3 returns status.value < 3)
-        // status_eq: equal (e.g., status_eq=2 returns status.value = 2)
-        // status_gt: greater than (e.g., status_gt=4 returns status.value > 4)
+        // Filter by status value (bitmask: 1=NEW, 8=DEMO, 64=DRAFT, 256=REVIEW, 512=CONFIRMED, etc.)
+        // status_lt: less than (e.g., status_lt=64 returns status < 64)
+        // status_eq: equal (e.g., status_eq=64 returns status = 64)
+        // status_gt: greater than (e.g., status_gt=64 returns status > 64)
         if (query.status_lt !== undefined) {
             const statusValue = Number(query.status_lt)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value < ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND i.status < ?`
+            params.push(statusValue)
         }
         if (query.status_eq !== undefined) {
             const statusValue = Number(query.status_eq)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value = ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND i.status = ?`
+            params.push(statusValue)
         }
         if (query.status_gt !== undefined) {
             const statusValue = Number(query.status_gt)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND i.status_id IN (SELECT id FROM status WHERE "table" = 'images' AND value > ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND i.status > ?`
+            params.push(statusValue)
         }
 
         // Filter by visibility (is_public, is_private, is_internal)
