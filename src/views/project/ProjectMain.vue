@@ -175,15 +175,26 @@
             />
         </div>
 
-        <!-- Main Content: 2-Column Layout -->
-        <div class="main-content">
+        <!-- NEW: 3-Column Dashboard Layout (alpha/dashboard branch) -->
+        <DashboardLayout
+            v-if="showNewDashboard"
+            :project-id="projectId"
+            :project-name="projectName"
+            :alpha="true"
+            @section-change="handleDashboardSectionChange"
+            @entity-select="handleDashboardEntitySelect"
+            @open-external="handleDashboardOpenExternal"
+        />
+
+        <!-- OLD: 2-Column Layout (kept for stepper mode and fallback) -->
+        <div v-else class="main-content">
             <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
             <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType"
                     :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
 
-                <!-- Navigation Mode: status >= 2 -->
+                <!-- Navigation Mode: status >= 2 (legacy, use new dashboard instead) -->
                 <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
                     :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
             </div>
@@ -212,7 +223,7 @@
                             @prev="currentStep > 0 ? prevStep : undefined" @activate="handleActivateProject" />
                     </template>
 
-                    <!-- Navigation Mode Panels -->
+                    <!-- Navigation Mode Panels (legacy fallback) -->
                     <template v-else>
                         <PageConfigController v-if="currentNavTab === 'homepage'" :project="projectId" mode="project" />
                         <ProjectStepEvents v-else-if="currentNavTab === 'events'" :project-id="projectId"
@@ -271,6 +282,7 @@ import PageConfigController from '@/components/PageConfigController.vue'
 import StateFlowTimeline from '@/components/workflow/StateFlowTimeline.vue'
 import RequestReviewButton from '@/components/workflow/RequestReviewButton.vue'
 import InteractionsPanel from '@/components/interactions/InteractionsPanel.vue'
+import { DashboardLayout } from '@/components/dashboard'
 import { PROJECT_STATUS as WORKFLOW_STATUS } from '@/composables/useProjectActivation'
 
 const router = useRouter()
@@ -364,6 +376,9 @@ const STATUS_NEW = 1        // bits 0-2
 const STATUS_DEMO = 8       // bits 3-5
 const STATUS_DRAFT = 64     // bits 6-8
 
+// Feature flag for new 3-column dashboard layout (alpha/dashboard branch)
+const useNewDashboard = ref(true) // Toggle to switch between old/new dashboard
+
 // Computed props based on project status
 // Stepper mode: status 'new' (1) or 'demo' (8)
 // Navigation mode: all other statuses (draft and above)
@@ -371,6 +386,12 @@ const isStepper = computed(() => {
     if (projectStatus.value === null) return true // Default to stepper while loading
     return projectStatus.value === STATUS_NEW || projectStatus.value === STATUS_DEMO
 })
+
+// Use new dashboard layout when not in stepper mode and feature flag is on
+const showNewDashboard = computed(() => {
+    return !isStepper.value && useNewDashboard.value
+})
+
 const isLocked = computed(() => {
     // TODO: Define when project should be locked (e.g., status 'released' or higher)
     return false
@@ -613,6 +634,23 @@ function handleClickOutside(event: MouseEvent) {
     if (configDropdownRef.value && !configDropdownRef.value.contains(event.target as Node)) {
         closeConfigDropdown()
     }
+}
+
+// ============================================================
+// NEW DASHBOARD HANDLERS (alpha/dashboard branch)
+// ============================================================
+
+function handleDashboardSectionChange(sectionId: string) {
+    console.log('[ProjectMain] Dashboard section changed:', sectionId)
+}
+
+function handleDashboardEntitySelect(entity: any) {
+    console.log('[ProjectMain] Dashboard entity selected:', entity)
+}
+
+function handleDashboardOpenExternal(url: string) {
+    console.log('[ProjectMain] Opening external URL:', url)
+    window.open(url, '_blank')
 }
 
 // Initialize theme system
