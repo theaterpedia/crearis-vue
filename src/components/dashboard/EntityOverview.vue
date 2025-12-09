@@ -303,10 +303,8 @@ function handlePreview() {
     background: var(--color-border);
 }
 
-/* Interactions Summary */
-.interactions-summary {
-    /* Inherits from InteractionsPanel */
-}
+/* Interactions Summary - inherits from InteractionsPanel */
+/* .interactions-summary {} */
 
 /* Workflow Stub */
 .workflow-stub {

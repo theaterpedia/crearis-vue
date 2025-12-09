@@ -43,14 +43,12 @@
             <!-- Content/Edit Tab -->
             <div v-else-if="activeTab === 'content'" class="tab-panel">
                 <slot name="content">
-                    <div class="placeholder-panel">
-                        <p class="placeholder-title">📝 Content Editor</p>
-                        <p class="placeholder-text">EditPanel will be integrated here</p>
-                        <!-- Post-its Comments Placeholder -->
-                        <button class="postits-btn" @click="openPostIts">
-                            💬 Open Post-its Dialog
-                        </button>
-                    </div>
+                    <EntityContentPanel
+                        :entity="entity"
+                        :entity-type="entityType"
+                        mode="dashboard"
+                        @open-full-editor="openPostIts"
+                    />
                 </slot>
             </div>
 
@@ -85,6 +83,7 @@
 import { ref, computed, watch } from 'vue'
 import CardHero from '@/components/CardHero.vue'
 import EntityOverview from './EntityOverview.vue'
+import EntityContentPanel from './EntityContentPanel.vue'
 import ConfigPanelStub from './ConfigPanelStub.vue'
 import InteractionsPanel from '@/components/interactions/InteractionsPanel.vue'
 

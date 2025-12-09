@@ -81,7 +81,7 @@ function selectTab(tabId: string) {
 // WATCHERS
 // ============================================================
 
-watch(() => props.modelValue, (newVal) => {
+watch(() => props.modelValue, (newVal: string | undefined) => {
     if (newVal && newVal !== activeTab.value) {
         activeTab.value = newVal
     }
