@@ -47,9 +47,9 @@
             <div class="section-label">Anpassen</div>
 
             <div class="form-group">
-                <label class="form-label">Owner</label>
+                <label class="form-label">Creator</label>
                 <select v-model="selectedOwner" class="form-select">
-                    <option value="">Owner wählen</option>
+                    <option value="">Creator wählen</option>
                     <option v-for="user in projectUsers" :key="user.id" :value="user.id">
                         {{ user.username }}
                     </option>

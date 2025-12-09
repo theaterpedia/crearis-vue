@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
 .theme-dropdown {
     position: absolute;
     top: calc(100% + 0.5rem);
-    right: 0;
+    left: 0;
     min-width: 320px;
     max-width: 400px;
     background: white;

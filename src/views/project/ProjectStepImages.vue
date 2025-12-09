@@ -79,7 +79,12 @@
         </div>
 
         <!-- Image Preview Modal -->
-        <ImagePreviewModal v-model:is-open="previewModalOpen" :image="selectedImage" />
+        <ImagePreviewModal 
+            v-model:is-open="previewModalOpen" 
+            :image="selectedImage"
+            :editable="true"
+            @save="handleImageSave"
+        />
     </div>
 </template>
 
@@ -142,6 +147,13 @@ async function loadProjectImages() {
 async function handleImagesImported(imageIds: string[]) {
     console.log('✅ Images imported:', imageIds)
     // Reload project images
+    await loadProjectImages()
+}
+
+// Handle image save from modal
+async function handleImageSave(imageData: any) {
+    console.log('✅ Image saved:', imageData)
+    // Reload images to get updated data
     await loadProjectImages()
 }
 
