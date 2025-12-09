@@ -49,9 +49,9 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check authorization
-        // Allow: post owner, project owner, or project member (configrole=8)
+        // Allow: post creator, project owner, or project member (configrole=8)
         // Partners (configrole=2) and participants (configrole=4) can only edit their own posts
-        const isPostOwner = post.owner_id === session.userId
+        const isPostCreator = post.creator_id === session.userId
         const isProjectOwner = post.project_owner_id === session.userId
 
         // Check if user is a project member with edit rights (configrole=8)
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
             isProjectMemberWithEditRights = membership?.configrole === 8
         }
 
-        if (!isPostOwner && !isProjectOwner && !isProjectMemberWithEditRights) {
+        if (!isPostCreator && !isProjectOwner && !isProjectMemberWithEditRights) {
             throw createError({
                 statusCode: 403,
                 message: 'Not authorized to update this post'

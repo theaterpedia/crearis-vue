@@ -18,10 +18,12 @@ The Project Stepper provides a guided workflow for setting up new projects.
 
 ## Stepper vs Dashboard Mode
 
-| Mode | Condition | Navigation |
-|------|-----------|------------|
-| Stepper | `status_id` = 18 or 19 | Sequential steps |
-| Dashboard | `status_id` >= 2 | Tab navigation |
+| Mode | Condition | Navigation | Documentation |
+|------|-----------|------------|---------------|
+| Stepper | `status_id` = 18 or 19 | Sequential steps | This page |
+| Dashboard | `status_id` >= 2 | 3-column layout | [Dashboard Layout](/docs/dev/features/dashboard-layout) |
+
+The transition from Stepper to Dashboard happens when the project is activated (status changes from NEW to DRAFT).
 
 ## Steps by Project Type
 
@@ -93,3 +95,5 @@ async function handleActivateProject() {
 ---
 
 *Full documentation: v0.3*
+
+*See also: [Dashboard Layout](/docs/dev/features/dashboard-layout)*

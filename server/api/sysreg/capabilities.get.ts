@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
     // 2. Status matches (or is ALL - bits 8-10 = 0)
     // 3. Relation is included
     const results = await db.all(`
-        SELECT value, name FROM sysreg_config
+        SELECT value, name, taglogic FROM sysreg_config
         WHERE (value & $1) = $2        -- exact entity match
         AND (
             (value & $3) = $4 OR       -- exact status match
@@ -161,9 +161,10 @@ export default defineEventHandler(async (event) => {
         share: false,
     }
 
-    const transitions = new Set<string>()
+    const transitions: { name: string; taglogic: string }[] = []
+    const seenTransitions = new Set<string>()
 
-    for (const row of results as { value: number; name: string }[]) {
+    for (const row of results as { value: number; name: string; taglogic: string }[]) {
         const v = row.value
 
         // Check capabilities
@@ -178,8 +179,12 @@ export default defineEventHandler(async (event) => {
         // A transition entry has either CAP_MANAGE_STATUS or CAP_MANAGE_DELETE
         if (toStatusBits && (v & (BITS.CAP_MANAGE_STATUS | BITS.CAP_MANAGE_DELETE))) {
             const toStatus = TO_STATUS_REVERSE[toStatusBits]
-            if (toStatus) {
-                transitions.add(toStatus)
+            if (toStatus && !seenTransitions.has(toStatus)) {
+                seenTransitions.add(toStatus)
+                transitions.push({
+                    name: toStatus,
+                    taglogic: row.taglogic || 'category'
+                })
             }
         }
     }
@@ -189,7 +194,7 @@ export default defineEventHandler(async (event) => {
         status,
         relation,
         capabilities,
-        transitions: Array.from(transitions),
+        transitions,
         _debug: {
             matchingEntries: (results as { name: string }[]).map(r => r.name)
         }

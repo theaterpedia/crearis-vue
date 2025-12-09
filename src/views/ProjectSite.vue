@@ -14,6 +14,18 @@
             :projectDomaincode="project.domaincode" :projectId="project.id" :navItems="navigationItems">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
+                <!-- Project Editor Link (for owners/admins) -->
+                <RouterLink v-if="canEdit" :to="`/projects/${project.domaincode}/main`" class="editor-link"
+                    title="Projekt-Editor öffnen">
+                    <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z">
+                        </path>
+                    </svg>
+                    <span class="editor-link-text">Editor</span>
+                </RouterLink>
+
                 <!-- Edit Panel Button -->
                 <EditPanelButton :is-authenticated="!!user" :is-admin="user?.activeRole === 'admin'"
                     :is-owner="isProjectOwner" @open="openEditPanel" />
@@ -462,6 +474,44 @@ onMounted(async () => {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* Editor Link - project main editor access */
+.editor-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--color-contrast);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    transition-property: background-color, color, border-color;
+}
+
+.editor-link:hover {
+    background-color: var(--color-primary-bg);
+    border-color: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+}
+
+.editor-link svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.editor-link-text {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .editor-link-text {
+        display: inline;
+    }
 }
 
 /* Config Button - matches navbar button style */

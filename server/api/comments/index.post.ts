@@ -1,0 +1,223 @@
+/**
+ * POST /api/comments
+ * 
+ * Create a new comment on an entity.
+ * 
+ * Body:
+ * - entity_type: 'post' | 'project' | 'event' | 'image'
+ * - entity_id: ID of the entity
+ * - project_id: Project ID
+ * - parent_id: (optional) Parent comment ID for replies
+ * - content: Comment text (Markdown supported)
+ * 
+ * Requires authentication.
+ * 
+ * December 2025
+ */
+
+import { defineEventHandler, readBody, createError, getCookie } from 'h3'
+import { db } from '../../database/init'
+import { sessions } from '../auth/login.post'
+
+/**
+ * Role color mapping
+ */
+const ROLE_COLORS = {
+    p_owner: 'orange',
+    p_creator: 'purple',
+    member: 'yellow',
+    participant: 'blue',
+    partner: 'green',
+    anonym: 'yellow',
+} as const
+
+/**
+ * Configrole bit values
+ */
+const CONFIGROLE = {
+    PARTNER: 2,
+    PARTICIPANT: 4,
+    MEMBER: 8,
+    CREATOR: 16,
+} as const
+
+/**
+ * Get user's relation to project
+ */
+async function getUserRelation(
+    userId: number | string,
+    projectId: number | string,
+    projectOwnerId: number | string
+): Promise<string> {
+    if (String(userId) === String(projectOwnerId)) return 'p_owner'
+
+    const membership = await db.get(
+        'SELECT configrole FROM project_members WHERE project_id = $1 AND user_id = $2',
+        [projectId, userId]
+    ) as { configrole: number } | undefined
+
+    if (!membership) return 'anonym'
+
+    const cr = membership.configrole
+    if (cr & CONFIGROLE.CREATOR) return 'p_creator'
+    if (cr & CONFIGROLE.MEMBER) return 'member'
+    if (cr & CONFIGROLE.PARTICIPANT) return 'participant'
+    if (cr & CONFIGROLE.PARTNER) return 'partner'
+
+    return 'anonym'
+}
+
+/**
+ * Generate UUID
+ */
+function generateId(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+    })
+}
+
+export default defineEventHandler(async (event) => {
+    // Verify authentication
+    const sessionId = getCookie(event, 'sessionId')
+    if (!sessionId) {
+        throw createError({
+            statusCode: 401,
+            message: 'Authentication required',
+        })
+    }
+
+    const session = sessions.get(sessionId)
+    if (!session || session.expiresAt < Date.now()) {
+        throw createError({
+            statusCode: 401,
+            message: 'Session expired',
+        })
+    }
+
+    const body = await readBody(event)
+
+    const entityType = String(body.entity_type || '')
+    const entityId = String(body.entity_id || '')
+    const projectId = String(body.project_id || '')
+    const parentId = body.parent_id ? String(body.parent_id) : null
+    const content = String(body.content || '').trim()
+
+    // Validate required fields
+    if (!entityType || !entityId || !projectId || !content) {
+        throw createError({
+            statusCode: 400,
+            message: 'Missing required fields: entity_type, entity_id, project_id, content',
+        })
+    }
+
+    // Validate entity_type
+    const validTypes = ['post', 'project', 'event', 'image']
+    if (!validTypes.includes(entityType)) {
+        throw createError({
+            statusCode: 400,
+            message: `Invalid entity_type. Must be one of: ${validTypes.join(', ')}`,
+        })
+    }
+
+    // Validate content length
+    if (content.length > 10000) {
+        throw createError({
+            statusCode: 400,
+            message: 'Content too long (max 10000 characters)',
+        })
+    }
+
+    // Get project (handle both numeric ID and domaincode)
+    const isNumericId = /^\d+$/.test(projectId)
+    const project = await db.get(
+        isNumericId
+            ? 'SELECT id, owner_id, status FROM projects WHERE id = $1'
+            : 'SELECT id, owner_id, status FROM projects WHERE domaincode = $1',
+        [isNumericId ? parseInt(projectId, 10) : projectId]
+    ) as { id: number; owner_id: number; status: number } | undefined
+
+    if (!project) {
+        throw createError({
+            statusCode: 404,
+            message: 'Project not found',
+        })
+    }
+
+    // Get user's relation to check if they can comment
+    const relation = await getUserRelation(session.userId, project.id, project.owner_id)
+
+    // Only allow commenting if user has at least participant role or better
+    const canComment = ['p_owner', 'p_creator', 'member', 'participant'].includes(relation)
+    if (!canComment) {
+        throw createError({
+            statusCode: 403,
+            message: 'You do not have permission to comment on this project',
+        })
+    }
+
+    // If this is a reply, verify parent exists
+    if (parentId) {
+        const parent = await db.get(
+            'SELECT id FROM comments WHERE id = $1 AND project_id = $2',
+            [parentId, project.id]
+        )
+
+        if (!parent) {
+            throw createError({
+                statusCode: 404,
+                message: 'Parent comment not found',
+            })
+        }
+    }
+
+    // Get user info
+    const user = await db.get(
+        'SELECT id, username, sysmail FROM users WHERE id = $1',
+        [session.userId]
+    ) as { id: number; username: string; sysmail: string } | undefined
+
+    if (!user) {
+        throw createError({
+            statusCode: 500,
+            message: 'User not found',
+        })
+    }
+
+    // Create comment (let PostgreSQL generate UUID)
+    const now = new Date().toISOString()
+
+    const result = await db.run(`
+    INSERT INTO comments (entity_type, entity_id, project_id, parent_id, author_id, content, is_pinned, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8)
+    RETURNING id
+  `, [entityType, entityId, project.id, parentId, session.userId, content, now, now]) as { id: string }
+
+    const commentId = result.id
+    const color = ROLE_COLORS[relation as keyof typeof ROLE_COLORS] || 'yellow'
+
+    return {
+        success: true,
+        comment: {
+            id: commentId,
+            entityType,
+            entityId,
+            projectId: project.id,
+            parentId,
+            author: {
+                id: user.id,
+                name: user.username,
+                sysmail: user.sysmail,
+                relation,
+            },
+            content,
+            color,
+            isPinned: false,
+            reactions: [],
+            replyCount: 0,
+            createdAt: now,
+            updatedAt: now,
+        },
+    }
+})

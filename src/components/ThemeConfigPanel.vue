@@ -1,8 +1,8 @@
 <template>
     <div class="config-panel">
         <h4>Theme</h4>
-        <p class="panel-description">Wählen Sie ein Theme für Ihr Projekt (wird in config gespeichert, nicht aktiv
-            geschaltet)</p>
+        <p class="panel-description">Wähle ein Theme für Dein Projekt
+        </p>
 
         <div class="config-content">
             <div class="form-group">
@@ -10,8 +10,7 @@
                 <div class="theme-selector">
                     <ThemeDropdown />
                     <p class="form-hint">
-                        Hinweis: Das Theme wird im Projekt-Config gespeichert, aber nicht aktiv geschaltet.
-                        Besucher sehen das Theme erst nach Veröffentlichung des Projekts.
+                        Hinweis: Das Theme schaltet zu Demo-Zwecken direkt DAS GANZE DASHBOARD UM (Theaterpedia Alpha). Dies wird bald abgestellt. Im Moment solltest du das Theme wieder zurückstellen auf 'Site'. Ab 15. JAN 2026 schaltest du mit dem Theme das Design deiner Projekt-Website um.
                     </p>
                 </div>
             </div>

@@ -153,15 +153,31 @@
             </template>
         </Navbar>
 
-        <!-- Main Content: 2-Column Layout -->
-        <div class="main-content">
+        <!-- Workflow Timeline Header (visible in dashboard mode) -->
+        <div v-if="!isStepper && projectStatus !== null" class="workflow-header">
+            <StateFlowTimeline :current-status="projectStatus" :allowed-targets="workflowAllowedTargets"
+                :selected-target="selectedWorkflowTarget" :compact="false" :interactive="isProjectOwner"
+                :show-layout-badge="true" @select="handleWorkflowSelect" />
+
+            <!-- Request Review Button (visible for owner in draft status) -->
+            <RequestReviewButton v-if="projectStatus === 64" :project-id="projectId" :current-status="projectStatus"
+                :is-owner="isProjectOwner" @review-requested="handleReviewRequested" />
+        </div>
+
+        <!-- NEW: 3-Column Dashboard Layout (alpha/dashboard branch) -->
+        <DashboardLayout v-if="showNewDashboard" :project-id="projectId" :project-name="projectName" :alpha="true"
+            @section-change="handleDashboardSectionChange" @entity-select="handleDashboardEntitySelect"
+            @open-external="handleDashboardOpenExternal" />
+
+        <!-- OLD: 2-Column Layout (kept for stepper mode and fallback) -->
+        <div v-else class="main-content">
             <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
             <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType"
                     :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
 
-                <!-- Navigation Mode: status >= 2 -->
+                <!-- Navigation Mode: status >= 2 (legacy, use new dashboard instead) -->
                 <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
                     :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
             </div>
@@ -179,8 +195,8 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :is-locked="isLocked" @next="nextStep"
-                            @prev="currentStep > 0 ? prevStep : undefined" />
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
                         <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
@@ -190,7 +206,7 @@
                             @prev="currentStep > 0 ? prevStep : undefined" @activate="handleActivateProject" />
                     </template>
 
-                    <!-- Navigation Mode Panels -->
+                    <!-- Navigation Mode Panels (legacy fallback) -->
                     <template v-else>
                         <PageConfigController v-if="currentNavTab === 'homepage'" :project="projectId" mode="project" />
                         <ProjectStepEvents v-else-if="currentNavTab === 'events'" :project-id="projectId"
@@ -201,7 +217,8 @@
                             :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
                             hide-actions />
                         <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :is-locked="isLocked" hide-actions />
+                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                            hide-actions />
                         <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
                             :is-locked="isLocked" />
                         <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
@@ -214,6 +231,8 @@
                             :is-locked="isLocked" />
                         <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
                             :is-locked="isLocked" />
+                        <InteractionsPanel v-else-if="currentNavTab === 'registrations'" mode="dashboard-panel"
+                            :project-id="projectId" :use-stub-data="true" />
                     </template>
                 </div>
             </div>
@@ -242,6 +261,11 @@ import ThemeConfigPanel from '@/components/ThemeConfigPanel.vue'
 import LayoutConfigPanel from '@/components/LayoutConfigPanel.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
+import StateFlowTimeline from '@/components/workflow/StateFlowTimeline.vue'
+import RequestReviewButton from '@/components/workflow/RequestReviewButton.vue'
+import InteractionsPanel from '@/components/interactions/InteractionsPanel.vue'
+import { DashboardLayout } from '@/components/dashboard'
+import { PROJECT_STATUS as WORKFLOW_STATUS } from '@/composables/useProjectActivation'
 
 const router = useRouter()
 const { user, requireAuth, logout } = useAuth()
@@ -296,10 +320,46 @@ const currentStep = ref(0)
 // Current tab for navigation mode
 const currentNavTab = ref('events')
 
+// Workflow state for StateFlowTimeline
+const selectedWorkflowTarget = ref<number | null>(null)
+
+// Allowed workflow targets based on project status (simplified for now)
+const workflowAllowedTargets = computed(() => {
+    if (!projectStatus.value) return []
+    // Use WORKFLOW_STATUS from useProjectActivation for proper state machine
+    const current = projectStatus.value
+    const targets: number[] = []
+
+    // Allow forward transitions based on current status
+    if (current === WORKFLOW_STATUS.DRAFT) {
+        targets.push(WORKFLOW_STATUS.REVIEW, WORKFLOW_STATUS.CONFIRMED)
+    } else if (current === WORKFLOW_STATUS.REVIEW) {
+        targets.push(WORKFLOW_STATUS.DRAFT, WORKFLOW_STATUS.CONFIRMED)
+    } else if (current === WORKFLOW_STATUS.CONFIRMED) {
+        targets.push(WORKFLOW_STATUS.REVIEW, WORKFLOW_STATUS.PUBLISHED)
+    } else if (current === WORKFLOW_STATUS.PUBLISHED) {
+        targets.push(WORKFLOW_STATUS.CONFIRMED, WORKFLOW_STATUS.ARCHIVED)
+    } else if (current === WORKFLOW_STATUS.ARCHIVED) {
+        targets.push(WORKFLOW_STATUS.PUBLISHED)
+    }
+
+    return targets
+})
+
+// Handle workflow state selection
+function handleWorkflowSelect(status: number) {
+    selectedWorkflowTarget.value = status
+    // TODO: Open ProjectActivationPanel or handle transition directly
+    console.log('Workflow target selected:', status)
+}
+
 // Status values from Migration 040
 const STATUS_NEW = 1        // bits 0-2
 const STATUS_DEMO = 8       // bits 3-5
 const STATUS_DRAFT = 64     // bits 6-8
+
+// Feature flag for new 3-column dashboard layout (alpha/dashboard branch)
+const useNewDashboard = ref(true) // Toggle to switch between old/new dashboard
 
 // Computed props based on project status
 // Stepper mode: status 'new' (1) or 'demo' (8)
@@ -308,6 +368,12 @@ const isStepper = computed(() => {
     if (projectStatus.value === null) return true // Default to stepper while loading
     return projectStatus.value === STATUS_NEW || projectStatus.value === STATUS_DEMO
 })
+
+// Use new dashboard layout when not in stepper mode and feature flag is on
+const showNewDashboard = computed(() => {
+    return !isStepper.value && useNewDashboard.value
+})
+
 const isLocked = computed(() => {
     // TODO: Define when project should be locked (e.g., status 'released' or higher)
     return false
@@ -327,7 +393,7 @@ const userRoleLabel = computed(() => projectData.value?._userRoleLabel ?? null)
 
 // Visible tabs for navigation mode (computed based on project settings)
 const visibleNavigationTabs = computed(() => {
-    const tabs: string[] = ['homepage', 'events', 'posts', 'images', 'users', 'theme', 'layout', 'navigation', 'pages']
+    const tabs: string[] = ['homepage', 'events', 'posts', 'images', 'users', 'theme', 'layout', 'navigation', 'pages', 'registrations']
 
     // Add conditional tabs based on project settings
     if (projectData.value) {
@@ -511,6 +577,15 @@ async function handleActivateProject() {
     }
 }
 
+// Handle review request: update local state after successful API call
+function handleReviewRequested(newStatus: number) {
+    console.log('Review requested - new status:', newStatus)
+    projectStatus.value = newStatus
+    if (projectData.value) {
+        projectData.value.status = newStatus
+    }
+}
+
 // Config dropdown functions
 function toggleConfigDropdown() {
     isConfigOpen.value = !isConfigOpen.value
@@ -543,6 +618,23 @@ function handleClickOutside(event: MouseEvent) {
     }
 }
 
+// ============================================================
+// NEW DASHBOARD HANDLERS (alpha/dashboard branch)
+// ============================================================
+
+function handleDashboardSectionChange(sectionId: string) {
+    console.log('[ProjectMain] Dashboard section changed:', sectionId)
+}
+
+function handleDashboardEntitySelect(entity: any) {
+    console.log('[ProjectMain] Dashboard entity selected:', entity)
+}
+
+function handleDashboardOpenExternal(url: string) {
+    console.log('[ProjectMain] Opening external URL:', url)
+    window.open(url, '_blank')
+}
+
 // Initialize theme system
 const { init: initTheme } = useTheme()
 
@@ -573,6 +665,15 @@ onUnmounted(() => {
     flex-direction: column;
     height: 100vh;
     background: var(--color-bg-soft);
+}
+
+/* ===== WORKFLOW HEADER ===== */
+.workflow-header {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-card-bg);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: center;
 }
 
 /* ===== NAVBAR ===== */

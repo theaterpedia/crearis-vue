@@ -91,6 +91,14 @@ export const CONFIGROLE = {
 } as const
 
 /**
+ * Transition with taglogic
+ */
+export interface TransitionInfo {
+    name: string
+    taglogic: 'category' | 'subcategory'
+}
+
+/**
  * API response type
  */
 interface CapabilitiesResponse {
@@ -104,7 +112,7 @@ interface CapabilitiesResponse {
         list: boolean
         share: boolean
     }
-    transitions: string[]
+    transitions: TransitionInfo[]
 }
 
 /**
@@ -206,7 +214,7 @@ export function useCapabilities(
         list: false,
         share: false,
     })
-    const transitions = ref<string[]>([])
+    const transitions = ref<TransitionInfo[]>([])
 
     // Computed relation
     const userSysmail = computed(() => user.value?.sysmail || null)
@@ -266,17 +274,40 @@ export function useCapabilities(
     const canList = computed(() => capabilities.value.list)
     const canShare = computed(() => capabilities.value.share)
 
-    // Available transitions as status values
+    // Available transitions as status values (for backward compatibility)
     const availableTransitions = computed(() => {
         return transitions.value
-            .map(name => NAME_TO_STATUS[name])
-            .filter((v): v is number => v !== undefined)
+            .map((t: TransitionInfo) => NAME_TO_STATUS[t.name])
+            .filter((v: number | undefined): v is number => v !== undefined)
+    })
+
+    // Primary transitions (category)
+    const primaryTransitions = computed(() => {
+        return transitions.value
+            .filter((t: TransitionInfo) => t.taglogic === 'category')
+            .map((t: TransitionInfo) => NAME_TO_STATUS[t.name])
+            .filter((v: number | undefined): v is number => v !== undefined)
+    })
+
+    // Alternative transitions (subcategory)
+    const alternativeTransitions = computed(() => {
+        return transitions.value
+            .filter((t: TransitionInfo) => t.taglogic === 'subcategory')
+            .map((t: TransitionInfo) => NAME_TO_STATUS[t.name])
+            .filter((v: number | undefined): v is number => v !== undefined)
     })
 
     // Can transition to specific status?
     function canTransitionTo(targetStatus: number): boolean {
         const targetName = STATUS_TO_NAME[targetStatus]
-        return targetName ? transitions.value.includes(targetName) : false
+        return targetName ? transitions.value.some((t: TransitionInfo) => t.name === targetName) : false
+    }
+
+    // Is transition primary?
+    function isPrimaryTransition(targetStatus: number): boolean {
+        const targetName = STATUS_TO_NAME[targetStatus]
+        const t = transitions.value.find((ti: TransitionInfo) => ti.name === targetName)
+        return t?.taglogic === 'category'
     }
 
     // Check if user is record creator
@@ -303,7 +334,10 @@ export function useCapabilities(
         canList,
         canShare,
         availableTransitions,
+        primaryTransitions,
+        alternativeTransitions,
         canTransitionTo,
+        isPrimaryTransition,
 
         // Role checks
         isCreator,
