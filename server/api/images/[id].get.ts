@@ -18,9 +18,9 @@ export default defineEventHandler(async (event) => {
         const image = await db.get(`
             SELECT 
                 i.*,
-                u.username as owner_username
+                u.username as creator_username
             FROM images i
-            LEFT JOIN users u ON i.owner_id = u.id
+            LEFT JOIN users u ON i.creator_id = u.id
             WHERE i.id = ?
         `, [id])
 

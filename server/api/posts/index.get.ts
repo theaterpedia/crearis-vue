@@ -42,12 +42,12 @@ export default defineEventHandler(async (event) => {
                 // Build visibility condition based on user's relationship to the post/project
                 // User can see post if:
                 // 1. r_anonym = true (anyone can see)
-                // 2. User is the post owner (r_owner = true and owner_id matches)
+                // 2. User is the post creator (r_creator = true and creator_id matches)
                 // 3. User is project owner
                 // 4. User is project member with appropriate role flag
                 sql += ` AND (
                     p.r_anonym = true
-                    OR (p.r_owner = true AND p.owner_id = ?)
+                    OR (p.r_creator = true AND p.creator_id = ?)
                     OR pr.owner_id = ?
                     OR EXISTS (
                         SELECT 1 FROM project_members pm 
@@ -83,30 +83,24 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Filter by status value (0-6)
-        // status_lt: less than (e.g., status_lt=3 returns status.value < 3)
-        // status_eq: equal (e.g., status_eq=2 returns status.value = 2)
-        // status_gt: greater than (e.g., status_gt=4 returns status.value > 4)
+        // Filter by status value (bitmask: 1=NEW, 8=DEMO, 64=DRAFT, 256=REVIEW, 512=CONFIRMED, etc.)
+        // status_lt: less than (e.g., status_lt=64 returns status < 64)
+        // status_eq: equal (e.g., status_eq=64 returns status = 64)
+        // status_gt: greater than (e.g., status_gt=64 returns status > 64)
         if (query.status_lt !== undefined) {
             const statusValue = Number(query.status_lt)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND p.status_id IN (SELECT id FROM status WHERE "table" = 'posts' AND value < ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND p.status < ?`
+            params.push(statusValue)
         }
         if (query.status_eq !== undefined) {
             const statusValue = Number(query.status_eq)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND p.status_id IN (SELECT id FROM status WHERE "table" = 'posts' AND value = ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND p.status = ?`
+            params.push(statusValue)
         }
         if (query.status_gt !== undefined) {
             const statusValue = Number(query.status_gt)
-            if (statusValue >= 0 && statusValue <= 6) {
-                sql += ` AND p.status_id IN (SELECT id FROM status WHERE "table" = 'posts' AND value > ?)`
-                params.push(statusValue)
-            }
+            sql += ` AND p.status > ?`
+            params.push(statusValue)
         }
 
         sql += ' ORDER BY p.id'

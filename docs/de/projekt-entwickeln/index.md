@@ -1,50 +1,59 @@
 # Ein Projekt entwickeln
 
-::: warning In Arbeit <span class="beta-badge">v0.4</span>
-Diese Dokumentation wird nach v0.4 vervollständigt.
+::: info Neu in v0.3 <span class="beta-badge">Beta</span>
+Das Dashboard wurde grundlegend überarbeitet.
 :::
 
 ## Das Project Dashboard
 
 Nach der Aktivierung deines Projekts wechselst du vom **Stepper** zum **Dashboard-Modus**.
 
-<div class="screenshot-placeholder">
-Screenshot: Project Dashboard mit Navigation
-</div>
+Das neue 3-spaltige Layout bietet einen besseren Überblick:
 
-## Navigation
+```
+┌──────────────────────────────────────────────────────┐
+│                    DASHBOARD                          │
+├──────────┬────────────────┬──────────────────────────┤
+│          │                │                          │
+│  Tabs    │  Liste         │     Entity Browser       │
+│          │                │  ┌────────────────────┐  │
+│ ⚡ Events│  Event 1    ──▶│  │    Bild + Titel    │  │
+│          │  Event 2       │  ├────────────────────┤  │
+│ 📝 Posts │  Event 3       │  │ Übersicht │ Inhalt │  │
+│          │                │  │ Config │ Teilnehmer│  │
+│ 🖼 Bilder│                │  ├────────────────────┤  │
+│          │                │  │                    │  │
+│   <>     │                │  │  [Aktiver Bereich] │  │
+│          │                │  │                    │  │
+└──────────┴────────────────┴──────────────────────────┘
+```
 
-Das Dashboard bietet folgende Bereiche:
+## Die drei Spalten
 
-| Tab | Beschreibung |
-|-----|-------------|
-| Homepage | Startseiten-Konfiguration |
-| Events | Veranstaltungen verwalten |
-| Posts | Beiträge verwalten |
-| Images | Bilder verwalten |
-| Users | Team verwalten |
-| Theme | Design anpassen |
-| Layout | Seitenlayout konfigurieren |
-| Navigation | Menüs konfigurieren |
-| Pages | Seiten verwalten |
+### Spalte 1: Tabs
 
-## Funktionen (Vorschau)
+Wechsle schnell zwischen den Bereichen deines Projekts:
+- **Events** - Alle Veranstaltungen
+- **Posts** - Alle Beiträge  
+- **Bilder** - Alle Medien
 
-### Homepage konfigurieren
-- Hero-Bereich anpassen
-- Feature-Boxen hinzufügen
-- Call-to-Action Buttons
+Mit dem `<>` Button kannst du die Tabs auf Symbole reduzieren.
 
-### Events verwalten
-- Kalender-Ansicht
-- Buchungen verwalten
-- Wartelisten
+### Spalte 2: Liste
 
-### Content erstellen
-- Page-Editor für Seiten
-- Post-Editor für Beiträge
-- Markdown-Unterstützung
+Zeigt alle Einträge des gewählten Bereichs. Klicke auf einen Eintrag, um ihn im Browser anzuzeigen.
+
+### Spalte 3: Entity Browser
+
+Der Hauptbereich zeigt das ausgewählte Element mit:
+- **Bild & Titel** - Visuelle Vorschau
+- **Tabs** - Verschiedene Aspekte bearbeiten
+
+## Weitere Seiten
+
+- [Events bearbeiten](/de/projekt-entwickeln/events-bearbeiten)
+- [Posts bearbeiten](/de/projekt-entwickeln/posts-bearbeiten)
 
 ---
 
-*Weitere Dokumentation folgt in v0.4*
+*Zurück zu [Projekt starten](/de/projekt-starten/)*

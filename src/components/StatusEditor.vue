@@ -14,32 +14,29 @@
 
         <!-- Transition Controls -->
         <div v-if="transitionActions.length > 0" class="transition-controls">
-            <p class="transition-label">Verfügbare Aktionen:</p>
-
-            <!-- Horizontal buttons for ≤4 transitions -->
-            <div v-if="transitionActions.length <= 4" class="transition-buttons">
-                <button v-for="action in transitionActions" :key="action.value" :class="[
-                    'transition-button',
-                    `status-${action.color}`,
-                    { 'is-primary': action.isPrimary }
+            <!-- Primary transitions (category) - prominent -->
+            <div v-if="primaryTransitionActions.length > 0" class="primary-transitions">
+                <button v-for="action in primaryTransitionActions" :key="action.value" :class="[
+                    'primary-transition-button',
+                    `status-${action.color}`
                 ]" :disabled="isTransitioning" @click="handleTransition(action.value)">
                     <span class="action-icon">{{ action.icon }}</span>
                     <span class="action-label">{{ action.label }}</span>
                 </button>
             </div>
 
-            <!-- Dropdown for >4 transitions -->
-            <div v-else class="transition-dropdown">
-                <select v-model="selectedTransition" class="transition-select" :disabled="isTransitioning">
-                    <option :value="null">Aktion wählen...</option>
-                    <option v-for="action in transitionActions" :key="action.value" :value="action.value">
-                        {{ action.icon }} {{ action.label }}
-                    </option>
-                </select>
-                <button class="apply-button" :disabled="!selectedTransition || isTransitioning" @click="handleApply">
-                    <Check :size="16" />
-                    Anwenden
-                </button>
+            <!-- Alternative transitions (subcategory) - smaller -->
+            <div v-if="alternativeTransitionActions.length > 0" class="alternative-transitions">
+                <p class="alternatives-label">Weitere Optionen:</p>
+                <div class="alternative-buttons">
+                    <button v-for="action in alternativeTransitionActions" :key="action.value" :class="[
+                        'alternative-transition-button',
+                        `status-${action.color}`
+                    ]" :disabled="isTransitioning" @click="handleTransition(action.value)">
+                        <span class="action-icon">{{ action.icon }}</span>
+                        <span class="action-label">{{ action.label }}</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -134,6 +131,8 @@ const {
     currentStatusColor,
     currentStatusIcon,
     transitionActions,
+    primaryTransitionActions,
+    alternativeTransitionActions,
     canTrash,
     isTransitioning,
     transitionError,
@@ -324,8 +323,99 @@ async function handleScopeToggle(scopeBit: number) {
 .transition-controls {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* --- Primary Transitions (category) --- */
+
+.primary-transitions {
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
 }
+
+.primary-transition-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-primary);
+    border-radius: 0.5rem;
+    background: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.primary-transition-button:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.primary-transition-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.primary-transition-button .action-icon {
+    font-size: 1.25rem;
+}
+
+/* --- Alternative Transitions (subcategory) --- */
+
+.alternative-transitions {
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.75rem;
+}
+
+.alternatives-label {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.alternative-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.alternative-transition-button {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.25rem;
+    background: var(--color-background);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.alternative-transition-button:hover:not(:disabled) {
+    border-color: var(--color-text-muted);
+    background: var(--color-background-soft);
+}
+
+.alternative-transition-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.alternative-transition-button .action-icon {
+    font-size: 0.9rem;
+}
+
+.alternative-transition-button .action-label {
+    font-weight: 500;
+}
+
+/* --- Legacy Transition Styles (keep for fallback) --- */
 
 .transition-label {
     margin: 0;

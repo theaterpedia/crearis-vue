@@ -113,12 +113,65 @@ This sprint delivers the core project workflow system, enabling consistent login
 | Dec 2 | 🟡 | **DB triggers implemented** (mig 045-048), owner_id in posts/AddPostPanel, alpha-prod testing |
 | Dec 3 | 🟢 | **VitePress docs setup**, 3-audience structure, oklch theming |
 | Dec 4 | 🟢 | **StatusEditor + PostStatusBadge** complete (38 tests), scope toggles, migration 049 (draft_review + i18n), CAPABILITIES_REFACTORING_PLAN.md |
-| Dec 5 | ⬜ | **v0.3 deadline**, Sunrise talk: sysreg_config as single source of truth |
-| Dec 8 | ⬜ | Sprint work |
-| Dec 9 | ⬜ | **v0.4 deadline** |
-| Dec 10 | ⬜ | **after-v0.4:** Day-long DevDocs session |
+| Dec 5 AM | 🟢 | **Sunrise: capabilities foundation**, 5 design reports, POSTIT demo threads |
+| Dec 5 PM | 🟢 | **Phase 1+2 components**: 4 composables, 5 API endpoints, 12 Vue components, migration 057 |
+| Dec 8 | ⬜ | Sprint work - **MONDAY KEY DAY** |
+| Dec 9 | ⬜ | **v0.4 deadline** - Tuesday practitioner presentation |
+| Dec 10 | ⬜ | **after-v0.4:** CSS convention refinement + UI finish |
 
 Legend: 🟢 Complete | 🟡 In Progress | 🔴 Blocked | ⬜ Not Started
+
+---
+
+## December 5th Evening Session Summary
+
+### Completed This Evening (23:00)
+
+**1. CapabilitiesEditor Update**
+- Added bit 30 (ROLE_OWNER) and bit 31 (ROLE_ADMIN) to CapabilitiesEditor.vue
+- Full role spectrum now: anonym(25) → partner(26) → participant(27) → member(28) → creator(29) → owner(30) → admin(31)
+
+**2. Phase 1+2 Implementation (6,669 lines)**
+
+| Category | Files | Status |
+|----------|-------|--------|
+| Composables | useTransitionSummary, usePermissionTooltip, useResponsive, usePostITComments | ✅ |
+| API Endpoints | transition-summary.get, comments CRUD (4 files) | ✅ |
+| Workflow Components | StateFlowTimeline, TransitionSummary, RoleBadge, BottomSheet | ✅ |
+| Comment Components | PostITNote, PostITBoard, PostITComposer, PostITThread, PostITSidebar, MobileCommentsSheet | ✅ |
+| Database | Migration 057: comments + comment_reactions tables | ✅ |
+
+**3. Reports Created**
+- `2025-12-07_dataflow_consultation.md` - Database→Endpoint→Composable→Component gaps
+- `2025-12-07_projects_ui_interactions.md` - Stepper/Dashboard unclear areas
+
+### Key Gaps Identified
+
+1. **Comments not wired** - Components built, need integration into views
+2. **TransitionSummary not integrated** - Should show in ProjectActivationPanel
+3. **Owner detection inconsistent** - Should use useProjectActivation everywhere
+4. **Missing link ProjectSite → ProjectMain** - Editorial flow broken
+
+---
+
+## Monday December 8th Tasks
+
+### Morning (Sunrise Session)
+- [ ] Review evening session reports
+- [ ] Event workflow prompt preparation
+- [ ] Priority decisions for remaining 3 days
+
+### Afternoon/Evening
+- [ ] Wire usePostITComments to actual API endpoints
+- [ ] Integrate TransitionSummary into ProjectActivationPanel
+- [ ] Add StateFlowTimeline to ProjectMain
+- [ ] Fix ProjectSite → ProjectMain navigation link
+- [ ] Add activation criteria display to ProjectStepper
+
+### Key Decisions Needed
+1. What is the scope of event-workflow (core of the project)?
+2. Which components need to be demo-ready for Tuesday?
+3. CSS convention - what level for Wednesday?
 
 ---
 

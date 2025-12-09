@@ -61,6 +61,12 @@ import { migration as migration048 } from './048_capabilities_recompute'
 import { migration as migration049 } from './049_status_review_scopes_i18n'
 import { migration as migration050 } from './050_creator_relations_rename'
 import { migration as migration051 } from './051_capabilities_matrix_v2'
+import { migration as migration052 } from './052_trigger_creator_rename'
+import { migration as migration053 } from './053_fix_image_trigger_creator_id'
+import { migration as migration054 } from './054_fix_compute_role_visibility'
+import { migration as migration057 } from './057_create_comments_tables'
+import { migration as migration059 } from './059_image_workitems'
+import { migration as migration060 } from './060_event_odoo_stub_fields'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -126,6 +132,15 @@ const migrations: Migration[] = [
     { run: migration049.up, down: migration049.down, metadata: { id: migration049.id, description: migration049.description, version: '0.2.13', date: '2025-12-04' }, reversible: true },
     { run: migration050.up, down: migration050.down, metadata: { id: migration050.id, description: migration050.description, version: '0.3.0', date: '2025-12-05' }, reversible: true },
     { run: migration051.up, down: migration051.down, metadata: { id: migration051.id, description: migration051.description, version: '0.3.1', date: '2025-12-05' }, reversible: true },
+    { run: migration052.up, down: migration052.down, metadata: { id: migration052.id, description: migration052.description, version: '0.3.2', date: '2025-12-05' }, reversible: true },
+    { run: migration053.up, down: migration053.down, metadata: { id: migration053.id, description: migration053.description, version: '0.3.3', date: '2025-12-05' }, reversible: true },
+    { run: migration054.up, down: migration054.down, metadata: { id: migration054.id, description: migration054.description, version: '0.3.4', date: '2025-12-05' }, reversible: true },
+    // Package F (057+) - Comments & PostIT System (v0.4)
+    { run: migration057.up, down: migration057.down, metadata: { id: migration057.id, description: migration057.description, version: '0.4.0', date: '2025-12-05' }, reversible: true },
+    // Package G (059+) - Image Processing & Workitems (v0.5)
+    { run: migration059.up, down: migration059.down, metadata: { id: migration059.id, description: migration059.description, version: '0.5.0', date: '2025-12-08' }, reversible: true },
+    // Package H (060+) - Events Odoo Integration (v0.6 prep)
+    { run: migration060.up, down: migration060.down, metadata: { id: migration060.id, description: migration060.description, version: '0.4.0', date: '2025-12-08' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

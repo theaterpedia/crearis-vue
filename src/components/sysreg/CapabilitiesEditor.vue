@@ -49,10 +49,11 @@
                         <th>State</th>
                         <th>Read</th>
                         <th>Update</th>
-                        <th>Create</th>
+                        <th>Transition</th>
                         <th>Manage</th>
                         <th>List</th>
                         <th>Share</th>
+                        <th>Type</th>
                         <th>Roles</th>
                         <th>Actions</th>
                     </tr>
@@ -72,8 +73,8 @@
                         <td :class="getCapabilityClass('update', entry.value)">
                             {{ getCapabilityLabel('update', entry.value) }}
                         </td>
-                        <td :class="getCapabilityClass('create', entry.value)">
-                            {{ getCapabilityLabel('create', entry.value) }}
+                        <td :class="getToStateClass(entry.value)">
+                            {{ getToStateLabel(entry.value) }}
                         </td>
                         <td :class="getCapabilityClass('manage', entry.value)">
                             {{ getCapabilityLabel('manage', entry.value) }}
@@ -83,6 +84,9 @@
                         </td>
                         <td :class="{ active: hasSimpleCap(entry.value, 'share') }">
                             {{ hasSimpleCap(entry.value, 'share') ? '✓' : '-' }}
+                        </td>
+                        <td class="type-cell" :class="'type-' + entry.taglogic">
+                            {{ getTaglogicLabel(entry) }}
                         </td>
                         <td class="roles-cell">
                             <span v-for="role in getRoles(entry.value)" :key="role" class="role-badge"
@@ -146,7 +150,7 @@
 
                 <!-- State -->
                 <div class="form-group">
-                    <label>Record State:</label>
+                    <label>From State:</label>
                     <select v-model="editForm.state" class="form-select">
                         <option v-for="state in STATES" :key="state.value" :value="state.value">
                             {{ state.name }}
@@ -154,9 +158,36 @@
                     </select>
                 </div>
 
+                <!-- Taglogic Type -->
+                <div class="form-group">
+                    <label>Entry Type:</label>
+                    <select v-model="editForm.taglogic" class="form-select">
+                        <option v-for="opt in TAGLOGIC_OPTIONS" :key="opt.value" :value="opt.value">
+                            {{ opt.name }}
+                        </option>
+                    </select>
+                    <small class="help-text">
+                        Toggle = simple capability, Category/Subcategory = transition button
+                    </small>
+                </div>
+
+                <!-- Parent Category (only for subcategories) -->
+                <div v-if="editForm.taglogic === 'subcategory'" class="form-group">
+                    <label>Parent Category:</label>
+                    <select v-model="editForm.parentBit" class="form-select">
+                        <option :value="null">Select primary transition...</option>
+                        <option v-for="cat in availableParentCategories" :key="cat.id" :value="cat.id">
+                            {{ cat.name }} ({{ getToStateLabel(cat.value) }})
+                        </option>
+                    </select>
+                    <small v-if="availableParentCategories.length === 0" class="help-text warning">
+                        ⚠️ No category entries found for this FROM state. Create a primary transition first.
+                    </small>
+                </div>
+
                 <!-- Complex Capabilities -->
                 <div class="form-group capabilities-group">
-                    <label>Complex Capabilities:</label>
+                    <label>Capabilities:</label>
                     <div class="capability-selects">
                         <div class="cap-item">
                             <span>Read:</span>
@@ -175,10 +206,10 @@
                             </select>
                         </div>
                         <div class="cap-item">
-                            <span>Create:</span>
-                            <select v-model="editForm.create" class="form-select">
-                                <option v-for="opt in CREATE_OPTIONS" :key="opt.value" :value="opt.value">
-                                    {{ opt.name }}
+                            <span>→ To-State:</span>
+                            <select v-model="editForm.toState" class="form-select">
+                                <option v-for="state in STATES" :key="state.value" :value="state.value">
+                                    {{ state.value === 0 ? '(none)' : state.name }}
                                 </option>
                             </select>
                         </div>
@@ -277,12 +308,14 @@ const BITS = {
     CAP_LIST: 1 << 23,
     CAP_SHARE: 1 << 24,
 
-    // Roles
+    // Roles (bits 25-31)
     ROLE_ANONYM: 1 << 25,
     ROLE_PARTNER: 1 << 26,
     ROLE_PARTICIPANT: 1 << 27,
     ROLE_MEMBER: 1 << 28,
-    ROLE_OWNER: 1 << 29,
+    ROLE_CREATOR: 1 << 29,
+    ROLE_OWNER: 1 << 30,           // bit 30: project owner (p_owner)
+    ROLE_ADMIN: (1 << 31) >>> 0,   // bit 31: system admin (sign bit, use >>> 0 for unsigned)
 }
 
 // Options arrays for dropdowns
@@ -334,12 +367,7 @@ const UPDATE_OPTIONS = [
     { value: 5, name: 'update > shift' },
 ]
 
-const CREATE_OPTIONS = [
-    { value: 0, name: '(none)' },
-    { value: 1, name: 'create (full)' },
-    { value: 2, name: 'create > draft' },
-    { value: 3, name: 'create > template' },
-]
+// Note: CREATE_OPTIONS removed - bits 17-19 are now used for TO_STATE (transition target)
 
 const MANAGE_OPTIONS = [
     { value: 0, name: '(none)' },
@@ -355,7 +383,9 @@ const ROLES = [
     { bit: BITS.ROLE_PARTNER, name: 'partner' },
     { bit: BITS.ROLE_PARTICIPANT, name: 'participant' },
     { bit: BITS.ROLE_MEMBER, name: 'member' },
+    { bit: BITS.ROLE_CREATOR, name: 'creator' },
     { bit: BITS.ROLE_OWNER, name: 'owner' },
+    { bit: BITS.ROLE_ADMIN, name: 'admin' },
 ]
 
 // State
@@ -367,6 +397,7 @@ interface ConfigEntry {
     tagfamily: string
     taglogic: string
     is_default: boolean
+    parent_bit: number | null  // id of parent category entry (for subcategories)
 }
 
 const loading = ref(true)
@@ -380,6 +411,13 @@ const selectedEntity = ref<number | string>('')
 const selectedState = ref<number | string>('')
 const selectedProjectType = ref<number | string>('')
 
+// Taglogic options
+const TAGLOGIC_OPTIONS = [
+    { value: 'toggle', name: 'Toggle (simple capability)' },
+    { value: 'category', name: 'Category (primary transition)' },
+    { value: 'subcategory', name: 'Subcategory (alternative transition)' },
+]
+
 // Edit form
 const editForm = ref({
     name: '',
@@ -387,13 +425,25 @@ const editForm = ref({
     projectType: BITS.PROJECT_ALL,
     entity: BITS.ENTITY_ALL,
     state: BITS.STATE_ALL,
+    taglogic: 'toggle' as 'toggle' | 'category' | 'subcategory',
+    parentBit: null as number | null,  // id of parent category (for subcategories)
     read: 0,
     update: 0,
-    create: 0,
+    toState: 0,  // Transition target state (bits 17-19)
     manage: 0,
     list: false,
     share: false,
     roles: [] as number[],
+})
+
+// Available parent categories for subcategory selection
+// Shows category entries with the same FROM state
+const availableParentCategories = computed(() => {
+    if (editForm.value.taglogic !== 'subcategory') return []
+    return entries.value.filter(e =>
+        e.taglogic === 'category' &&
+        getStateValue(e.value) === editForm.value.state
+    )
 })
 
 // Computed value from form
@@ -406,7 +456,7 @@ const computedValue = computed(() => {
     // Entity (bits 3-7)
     value |= editForm.value.entity << 3
 
-    // State (bits 8-10)
+    // State (bits 8-10) - FROM state
     value |= editForm.value.state << 8
 
     // Read (bits 11-13)
@@ -415,8 +465,8 @@ const computedValue = computed(() => {
     // Update (bits 14-16)
     value |= editForm.value.update << 14
 
-    // Create (bits 17-19)
-    value |= editForm.value.create << 17
+    // To-State (bits 17-19) - Transition target state
+    value |= editForm.value.toState << 17
 
     // Manage (bits 20-22)
     value |= editForm.value.manage << 20
@@ -465,8 +515,8 @@ function getStateValue(value: number): number {
     return (value >> 8) & 0b111 // bits 8-10
 }
 
-function getCapabilityValue(value: number, cap: 'read' | 'update' | 'create' | 'manage'): number {
-    const offsets = { read: 11, update: 14, create: 17, manage: 20 }
+function getCapabilityValue(value: number, cap: 'read' | 'update' | 'toState' | 'manage'): number {
+    const offsets = { read: 11, update: 14, toState: 17, manage: 20 }
     return (value >> offsets[cap]) & 0b111
 }
 
@@ -496,19 +546,53 @@ function getStateName(value: number): string {
     return state?.name || '?'
 }
 
-function getCapabilityLabel(cap: 'read' | 'update' | 'create' | 'manage', value: number): string {
+function getCapabilityLabel(cap: 'read' | 'update' | 'manage', value: number): string {
     const capVal = getCapabilityValue(value, cap)
     if (capVal === 0) return '-'
-    const options = { read: READ_OPTIONS, update: UPDATE_OPTIONS, create: CREATE_OPTIONS, manage: MANAGE_OPTIONS }
+    const options: Record<string, typeof READ_OPTIONS> = { read: READ_OPTIONS, update: UPDATE_OPTIONS, manage: MANAGE_OPTIONS }
     const opt = options[cap].find(o => o.value === capVal)
     return opt?.name.replace(/.*> /, '') || String(capVal)
 }
 
-function getCapabilityClass(cap: 'read' | 'update' | 'create' | 'manage', value: number): string {
+// Get transition target state label
+function getToStateLabel(value: number): string {
+    const toStateVal = getCapabilityValue(value, 'toState')
+    if (toStateVal === 0) return '-'
+    const state = STATES.find(s => s.value === toStateVal)
+    return state?.name ? `→ ${state.name}` : '-'
+}
+
+function getCapabilityClass(cap: 'read' | 'update' | 'manage', value: number): string {
     const capVal = getCapabilityValue(value, cap)
     if (capVal === 0) return 'inactive'
     if (capVal === 1) return 'active full'
     return 'active partial'
+}
+
+// Get transition target state class
+function getToStateClass(value: number): string {
+    const toStateVal = getCapabilityValue(value, 'toState')
+    if (toStateVal === 0) return 'inactive'
+    return 'active transition'
+}
+
+// Get taglogic display label (with parent name for subcategories)
+function getTaglogicLabel(entry: ConfigEntry): string {
+    switch (entry.taglogic) {
+        case 'category': return '🔵 Primary'
+        case 'subcategory': {
+            if (entry.parent_bit) {
+                const parent = entries.value.find(e => e.id === entry.parent_bit)
+                if (parent) {
+                    const toState = getToStateLabel(parent.value)
+                    return `🔹 Alt (${toState})`
+                }
+            }
+            return '🔹 Alt'
+        }
+        case 'toggle': return '⚪ Toggle'
+        default: return entry.taglogic || '?'
+    }
 }
 
 function getRoles(value: number): string[] {
@@ -528,9 +612,11 @@ function startNewEntry() {
         projectType: BITS.PROJECT_ALL,
         entity: BITS.ENTITY_ALL,
         state: BITS.STATE_ALL,
+        taglogic: 'toggle',
+        parentBit: null,
         read: 0,
         update: 0,
-        create: 0,
+        toState: 0,
         manage: 0,
         list: false,
         share: false,
@@ -547,9 +633,11 @@ function startEdit(entry: ConfigEntry) {
         projectType: getProjectTypeValue(entry.value),
         entity: getEntityValue(entry.value),
         state: getStateValue(entry.value),
+        taglogic: (entry.taglogic as 'toggle' | 'category' | 'subcategory') || 'toggle',
+        parentBit: entry.parent_bit,
         read: getCapabilityValue(entry.value, 'read'),
         update: getCapabilityValue(entry.value, 'update'),
-        create: getCapabilityValue(entry.value, 'create'),
+        toState: getCapabilityValue(entry.value, 'toState'),
         manage: getCapabilityValue(entry.value, 'manage'),
         list: hasSimpleCap(entry.value, 'list'),
         share: hasSimpleCap(entry.value, 'share'),
@@ -569,7 +657,8 @@ async function saveEntry() {
         name: editForm.value.name?.trim() || '',
         description: editForm.value.description?.trim() || '',
         tagfamily: 'config',
-        taglogic: 'toggle',
+        taglogic: editForm.value.taglogic,
+        parent_bit: editForm.value.taglogic === 'subcategory' ? editForm.value.parentBit : null,
         is_default: false,
     }
 
@@ -1020,5 +1109,48 @@ onMounted(() => {
 
 .modal-actions .btn {
     padding: 0.5rem 1rem;
+}
+
+/**
+ * Type column styling
+ */
+.type-cell {
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.type-cell.type-category {
+    color: var(--color-primary-bg);
+    font-weight: 600;
+}
+
+.type-cell.type-subcategory {
+    color: var(--color-accent-bg);
+}
+
+.type-cell.type-toggle {
+    color: var(--color-dimmed);
+}
+
+/**
+ * Transition column styling
+ */
+td.active.transition {
+    color: var(--color-positive-bg);
+    font-weight: 500;
+}
+
+/**
+ * Help text
+ */
+.help-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8em;
+    color: var(--color-dimmed);
+}
+
+.help-text.warning {
+    color: var(--color-warning-bg, #f0ad4e);
 }
 </style>

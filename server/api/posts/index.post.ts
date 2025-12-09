@@ -8,9 +8,9 @@ import type { PostsTableFields } from '../../types/database'
 // - posts.xmlid can optionally store old TEXT id
 // - posts.project_id stores INTEGER FK to projects.id
 // - body.project accepts domaincode (TEXT) for lookup
-// After Migration 046:
-// - posts.owner_id stores INTEGER FK to users.id (record owner)
-// - owner_id is set from body.owner_id (user who creates/owns the post)
+// After Migration 050:
+// - posts.creator_id stores INTEGER FK to users.id (record creator)
+// - creator_id is set from body.creator_id (user who creates the post)
 // After v0.2final:
 // - Added support for tag fields: status, dtags, ctags, ttags, rtags
 export default defineEventHandler(async (event) => {
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
             template: body.template || null,
             public_user: body.public_user || null,
             img_id: body.img_id || null,
-            owner_id: body.owner_id || null,  // Record owner (user who creates the post)
+            creator_id: body.creator_id || null,  // Record creator (user who creates the post)
             // Tag fields (integer bitmasks)
             status: body.status ?? null,
             dtags: body.dtags ?? null,
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
         const sql = `
             INSERT INTO posts (
                 xmlid, name, subtitle, teaser, cimg, post_date,
-                isbase, project_id, template, public_user, img_id, owner_id,
+                isbase, project_id, template, public_user, img_id, creator_id,
                 status, dtags, ctags, ttags, rtags
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
             postData.template,
             postData.public_user,
             postData.img_id,
-            postData.owner_id,
+            postData.creator_id,
             postData.status,
             postData.dtags,
             postData.ctags,
