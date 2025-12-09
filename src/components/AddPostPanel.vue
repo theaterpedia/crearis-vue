@@ -38,8 +38,17 @@
 
         <!-- Preview Card (disabled by default) -->
         <div v-if="selectedPost" class="preview-section">
-            <div class="section-label">Vorschau</div>
-            <PostCard :post="previewPost" :instructors="allInstructors" />
+            <div class="section-header">
+                <div class="section-label">Vorschau</div>
+                <button class="delete-btn" @click="handleClearSelection" title="Auswahl aufheben">
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                    </svg>
+                </button>
+            </div>
+            <pGallery entity="posts" :project="projectId" size="medium" 
+                :filter-ids="selectedPost ? [selectedPost.id] : []" 
+                item-type="card" :anatomy="'topimage'" />
         </div>
 
         <!-- Action Area (disabled by default) -->
@@ -68,6 +77,15 @@
                     placeholder="Post-Beschreibung"></textarea>
             </div>
 
+            <div class="form-group">
+                <label class="form-label">Cover Image</label>
+                <DropdownList entity="images" title="Select Cover Image" :project="projectId" size="small"
+                    width="medium" :dataMode="true" :multiSelect="false" v-model:selectedIds="selectedImageId"
+                    :displayXml="true" />
+            </div>
+
+            <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
+
             <div class="action-buttons">
                 <button class="cancel-btn" @click="handleCancel" :disabled="isSubmitting">
                     Abbrechen
@@ -84,7 +102,9 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import PostCard from '@/components/PostCard.vue'
+import pGallery from '@/components/page/pGallery.vue'
+import TagFamilies from '@/components/sysreg/TagFamilies.vue'
+import { DropdownList } from '@/components/clist'
 import type { Post, Instructor } from '@/types'
 
 interface ProjectUser {
@@ -107,6 +127,9 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
 const selectedPost = ref<Post | null>(null)
 const selectedOwner = ref<number | ''>('')
+const selectedImageId = ref<string[] | string | null>(null)
+const ttags = ref(0)
+const ctags = ref(0)
 const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
@@ -174,6 +197,9 @@ const handleCancel = () => {
     customTeaser.value = ''
 }
 
+// Clear selection (same as cancel but clearer intent for delete button)
+const handleClearSelection = () => handleCancel()
+
 const handleApply = async () => {
     if (!canApply.value || !selectedPost.value || isSubmitting.value) return
 
@@ -197,12 +223,14 @@ const handleApply = async () => {
             name: customName.value,
             subtitle: selectedPost.value.subtitle || null,
             teaser: customTeaser.value,
-            cimg: selectedPost.value.cimg || null,
+            img_id: Array.isArray(selectedImageId.value) ? selectedImageId.value[0] : selectedImageId.value,
             post_date: selectedPost.value.post_date || null,
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            owner_id: selectedOwner.value  // Record owner (Migration 046)
+            owner_id: selectedOwner.value,  // Record owner (Migration 046)
+            ttags: ttags.value,
+            ctags: ctags.value
             // public_user: references instructors, set separately if needed
         }
 
@@ -384,6 +412,32 @@ onBeforeUnmount(() => {
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--color-dimmed);
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: var(--color-negative-bg);
+    border-color: var(--color-negative-contrast);
+    color: var(--color-negative-contrast);
 }
 
 /* Action Section */

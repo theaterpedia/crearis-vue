@@ -256,12 +256,12 @@ async function createInstructor() {
             name: newInstructor.name,
             xmlid: generatedXmlid.value,
             img_id: newInstructor.img_id,
-            status_id: 64, // DRAFT status
+            status: 64, // DRAFT status
             isbase: 0
         }
         
-        // Create instructor
-        const response = await fetch('/api/instructors', {
+        // Create instructor via public-users endpoint
+        const response = await fetch('/api/public-users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(instructorData)

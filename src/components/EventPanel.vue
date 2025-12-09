@@ -21,8 +21,17 @@
 
         <!-- Preview Card (disabled by default) -->
         <div v-if="selectedEvent" class="preview-section">
-            <div class="section-label">Vorschau</div>
-            <EventCard :event="previewEvent" :instructors="allInstructors" />
+            <div class="section-header">
+                <div class="section-label">Vorschau</div>
+                <button class="delete-btn" @click="handleClearSelection" title="Auswahl aufheben">
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                    </svg>
+                </button>
+            </div>
+            <pGallery entity="events" :project="projectId" size="medium" 
+                :filter-ids="selectedEvent ? [selectedEvent.id] : []" 
+                item-type="card" :anatomy="'topimage'" />
         </div>
 
         <!-- Action Area (disabled by default) -->
@@ -87,9 +96,14 @@
                     placeholder="Event-Beschreibung"></textarea>
             </div>
 
-            <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
-                v-model:age-group="ageGroup" v-model:subject-type="subjectType" v-model:core-themes="coreThemes"
-                v-model:domains="domains" />
+            <div class="form-group">
+                <label class="form-label">Cover Image</label>
+                <DropdownList entity="images" title="Select Cover Image" :project="projectId" size="small"
+                    width="medium" :dataMode="true" :multiSelect="false" v-model:selectedIds="selectedImageId"
+                    :displayXml="true" />
+            </div>
+
+            <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
 
             <div class="action-buttons">
                 <button class="cancel-btn" @click="handleCancel" :disabled="isSubmitting">
@@ -107,11 +121,12 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import EventCard from '@/components/EventCard.vue'
+import pGallery from '@/components/page/pGallery.vue'
 import EventsDropdown from '@/components/EventsDropdown.vue'
 import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
-import SysregTagDisplay from '@/components/sysreg/SysregTagDisplay.vue'
+import TagFamilies from '@/components/sysreg/TagFamilies.vue'
+import { DropdownList } from '@/components/clist'
 import type { Event, Instructor } from '@/types'
 
 interface Props {
@@ -153,12 +168,9 @@ const dateEnd = ref('')
 const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
-const allTags = ref(false)
-const configVisibility = ref(0)
-const ageGroup = ref(0)
-const subjectType = ref(0)
-const coreThemes = ref('\\x00')
-const domains = ref('\\x00')
+const selectedImageId = ref<string[] | string | null>(null)
+const ttags = ref(0)
+const ctags = ref(0)
 
 const previewEvent = computed(() => {
     if (!selectedEvent.value) return null
@@ -248,6 +260,9 @@ const handleCancel = () => {
     customTeaser.value = ''
 }
 
+// Clear selection (same as cancel but clearer intent for delete button)
+const handleClearSelection = () => handleCancel()
+
 const handleApply = async () => {
     if (!canApply.value || !selectedEvent.value || isSubmitting.value) return
 
@@ -321,12 +336,15 @@ const handleApply = async () => {
             template: templateXmlId,  // Use xmlid as template reference
             public_user: selectedInstructor.value,
             location: selectedLocation.value,
-            // Copy other fields from template
-            cimg: selectedEvent.value.cimg || '',
+            // Image from dropdown (img_id FK)
+            img_id: Array.isArray(selectedImageId.value) ? selectedImageId.value[0] : selectedImageId.value,
             // Use dates from input fields (not template)
             date_begin: dateBegin.value,
             date_end: dateEnd.value,
-            event_type: selectedEventType.value
+            event_type: selectedEventType.value,
+            // Tag families
+            ttags: ttags.value,
+            ctags: ctags.value
         }
 
         // Debug logging - see what we're sending
@@ -517,6 +535,32 @@ onBeforeUnmount(() => {
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--color-dimmed);
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: var(--color-negative-bg);
+    border-color: var(--color-negative-contrast);
+    color: var(--color-negative-contrast);
 }
 
 /* Action Section */
