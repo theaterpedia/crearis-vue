@@ -119,7 +119,7 @@ export async function up(db: DatabaseAdapter) {
 
     // 2.1: Migrate instructors (partner_types = 1)
     console.log('\n  🎓 Migrating instructors...')
-    
+
     // Check if instructors table exists and has data
     const instructorsExist = await db.get(`
         SELECT EXISTS (
@@ -127,7 +127,7 @@ export async function up(db: DatabaseAdapter) {
             WHERE table_name = 'instructors'
         ) as exists
     `, [])
-    
+
     if ((instructorsExist as any)?.exists) {
         await db.exec(`
             INSERT INTO partners (
@@ -164,14 +164,14 @@ export async function up(db: DatabaseAdapter) {
 
     // 2.2: Migrate locations (partner_types = 2)
     console.log('\n  📍 Migrating locations...')
-    
+
     const locationsExist = await db.get(`
         SELECT EXISTS (
             SELECT FROM information_schema.tables 
             WHERE table_name = 'locations'
         ) as exists
     `, [])
-    
+
     if ((locationsExist as any)?.exists) {
         await db.exec(`
             INSERT INTO partners (
@@ -211,14 +211,14 @@ export async function up(db: DatabaseAdapter) {
 
     // 2.3: Migrate participants (partner_types = 4)
     console.log('\n  👥 Migrating participants...')
-    
+
     const participantsExist = await db.get(`
         SELECT EXISTS (
             SELECT FROM information_schema.tables 
             WHERE table_name = 'participants'
         ) as exists
     `, [])
-    
+
     if ((participantsExist as any)?.exists) {
         await db.exec(`
             INSERT INTO partners (
@@ -407,7 +407,7 @@ export async function up(db: DatabaseAdapter) {
         await db.exec(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS partner_id INTEGER REFERENCES partners(id) ON DELETE SET NULL
         `)
-        
+
         // Migrate instructor_id to partner_id
         await db.exec(`
             UPDATE users u

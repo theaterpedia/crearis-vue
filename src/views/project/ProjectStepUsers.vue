@@ -15,13 +15,8 @@
                     :class="{ 'is-current-user': isCurrentUser(member) }">
                     <!-- Avatar: Instructor image or initials fallback -->
                     <div class="member-avatar" @click="handleAvatarClick(member)">
-                        <ImgShape 
-                            v-if="getInstructorImage(member)"
-                            :data="getInstructorImage(member)!"
-                            shape="thumb"
-                            :avatar="true"
-                            class="avatar-image"
-                        />
+                        <ImgShape v-if="getInstructorImage(member)" :data="getInstructorImage(member)!" shape="thumb"
+                            :avatar="true" class="avatar-image" />
                         <span v-else class="avatar-initials">
                             {{ getInitials(member.username || member.id) }}
                         </span>
@@ -31,11 +26,8 @@
                         <RoleBadge :relation="getMemberRelation(member)" :status="projectStatus" variant="pill"
                             :show-tooltip="true" :show-permissions="true" />
                         <!-- Create Instructor hint for current user without instructor -->
-                        <button 
-                            v-if="isCurrentUser(member) && !hasInstructor(member)"
-                            class="create-instructor-btn"
-                            @click="openCreateInstructorModal(member)"
-                        >
+                        <button v-if="isCurrentUser(member) && !hasInstructor(member)" class="create-instructor-btn"
+                            @click="openCreateInstructorModal(member)">
                             + Instructor erstellen
                         </button>
                     </div>
@@ -75,25 +67,17 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">Name</label>
-                        <input v-model="newInstructor.name" type="text" class="form-input" 
+                        <input v-model="newInstructor.name" type="text" class="form-input"
                             :placeholder="selectedMember?.username || 'Instructor Name'" />
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label">Profilbild</label>
-                        <DropdownList 
-                            entity="images" 
-                            title="Select Profile Image" 
-                            :project="projectDomaincode"
-                            size="small"
-                            width="medium"
-                            :dataMode="true"
-                            :multiSelect="false"
-                            v-model:selectedIds="newInstructor.img_id"
-                            :displayXml="true"
-                        />
+                        <DropdownList entity="images" title="Select Profile Image" :project="projectDomaincode"
+                            size="small" width="medium" :dataMode="true" :multiSelect="false"
+                            v-model:selectedIds="newInstructor.img_id" :displayXml="true" />
                     </div>
-                    
+
                     <div class="form-info">
                         <p class="info-text">
                             <strong>XMLID:</strong> <code>{{ generatedXmlid }}</code>
@@ -107,7 +91,8 @@
                     <button class="btn-cancel" @click="closeCreateInstructorModal" :disabled="isCreatingInstructor">
                         Abbrechen
                     </button>
-                    <button class="btn-save" @click="createInstructor" :disabled="!canCreateInstructor || isCreatingInstructor">
+                    <button class="btn-save" @click="createInstructor"
+                        :disabled="!canCreateInstructor || isCreatingInstructor">
                         <span v-if="isCreatingInstructor" class="btn-spinner"></span>
                         {{ isCreatingInstructor ? 'Erstellen...' : 'Instructor erstellen' }}
                     </button>
@@ -176,11 +161,11 @@ function getInstructorImage(member: any): ImgShapeData | null {
     // Check if member has instructor with image
     const instructor = member.instructor
     if (!instructor) return null
-    
+
     // Try img_thumb or img_square from instructor
     const imgField = instructor.img_thumb || instructor.img_square
     if (!imgField) return null
-    
+
     try {
         const imgData = typeof imgField === 'string' ? JSON.parse(imgField) : imgField
         return {
@@ -248,9 +233,9 @@ function closeCreateInstructorModal() {
 // TODO v0.5: Refactor entire 'create instructor' process
 async function createInstructor() {
     if (!selectedMember.value || !canCreateInstructor.value) return
-    
+
     isCreatingInstructor.value = true
-    
+
     try {
         const instructorData = {
             name: newInstructor.name,
@@ -259,21 +244,21 @@ async function createInstructor() {
             status: 64, // DRAFT status
             isbase: 0
         }
-        
+
         // Create instructor via public-users endpoint
         const response = await fetch('/api/public-users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(instructorData)
         })
-        
+
         if (!response.ok) {
             throw new Error('Failed to create instructor')
         }
-        
+
         const result = await response.json()
         const instructorId = result.id
-        
+
         // Link instructor to user
         const userId = selectedMember.value.user_id || selectedMember.value.id
         await fetch(`/api/users/${userId}`, {
@@ -281,7 +266,7 @@ async function createInstructor() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instructor_id: instructorId })
         })
-        
+
         console.log('✅ Instructor created and linked:', instructorId)
         closeCreateInstructorModal()
         emit('refresh-members')

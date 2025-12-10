@@ -1,40 +1,76 @@
 <template>
-    <div class="dashboard-layout">
-        <!-- Left Column: Collapsible Tabs -->
-        <CollapsibleTabs :tabs="navigationTabs" v-model="activeSection" :default-collapsed="defaultTabsCollapsed"
-            @tab-change="handleSectionChange" @collapse-change="handleCollapseChange" />
+    <div class="dashboard-layout" :class="{ 'dashboard-layout--list-mode': isListMode }">
+        <!-- ListHead Navigation (5 NavStops) -->
+        <ListHead v-model="activeNavStop" :mode="listHeadMode" :project-name="projectName" :show-overline="showOverline"
+            :show-subline="showFilters" :tabs="navStopTabs" @tab-change="handleNavStopChange" @search="handleSearch">
+            <template #filters>
+                <FilterChip v-for="filter in activeFilters" :key="filter.id" :label="filter.label"
+                    :active="filter.active" :clearable="filter.clearable" @click="toggleFilter(filter.id)"
+                    @clear="clearFilter(filter.id)" />
+            </template>
+        </ListHead>
 
-        <!-- Middle Column: Entity List (pList) -->
-        <div class="entity-list-column">
-            <div class="list-header">
-                <h3 class="list-title">{{ currentSectionLabel }}</h3>
-                <span v-if="entityCount > 0" class="list-count">{{ entityCount }}</span>
-            </div>
-            <div class="list-content">
-                <pList v-if="showEntityList" :entity="currentEntityType" :project="projectId" :status-gt="0"
-                    size="small" variant="default" :anatomy="false" on-activate="route"
-                    @item-click="handleEntitySelect" />
-                <!-- Fallback for non-entity sections -->
-                <div v-else class="section-placeholder">
-                    <p>{{ placeholderText }}</p>
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+            <!-- Home View (overview with pGallery + lists) -->
+            <div v-if="activeNavStop === 'home'" class="home-view">
+                <div class="home-welcome">
+                    <h2>{{ projectName || 'Projekt' }}</h2>
+                    <p class="home-subtitle">Willkommen im Dashboard</p>
                 </div>
+                <!-- Placeholder for home content -->
+                <div class="home-sections">
+                    <div class="home-section">
+                        <h3>Neueste Events</h3>
+                        <pList entity="events" :project="projectId" :limit="3" size="small" />
+                    </div>
+                    <div class="home-section">
+                        <h3>Neueste Posts</h3>
+                        <pList entity="posts" :project="projectId" :limit="3" size="small" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entity List View (AGENDA, THEMEN, AKTEURE) -->
+            <div v-else-if="isEntityView" class="entity-view">
+                <!-- 2-column: list + browser -->
+                <div class="entity-list-column">
+                    <div class="list-header">
+                        <h3 class="list-title">{{ currentNavLabel }}</h3>
+                        <span v-if="entityCount > 0" class="list-count">{{ entityCount }}</span>
+                    </div>
+                    <div class="list-content">
+                        <pList :entity="currentEntityType" :project="projectId" :status-gt="0" size="small"
+                            variant="default" :anatomy="false" on-activate="route" @item-click="handleEntitySelect" />
+                    </div>
+                </div>
+
+                <div class="entity-browser-column">
+                    <EntityBrowser v-if="selectedEntity" :entity="selectedEntity" :entity-type="currentEntityType"
+                        :project-id="projectId" :alpha="alpha" @open-external="handleOpenExternal"
+                        @open-postits="handleOpenPostIts" @tab-change="handleBrowserTabChange" />
+                    <div v-else class="empty-browser">
+                        <div class="empty-content">
+                            <span class="empty-icon">📋</span>
+                            <p class="empty-title">Element auswählen</p>
+                            <p class="empty-text">Wähle ein Element aus der Liste</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View (COG) -->
+            <div v-else-if="activeNavStop === 'settings'" class="settings-view">
+                <h2>Einstellungen</h2>
+                <p>Projekt-Konfiguration kommt hier...</p>
+                <!-- Future: ProjectStepTheme, ProjectStepLayout, etc. -->
             </div>
         </div>
 
-        <!-- Right Column: Entity Browser -->
-        <div class="entity-browser-column">
-            <EntityBrowser v-if="selectedEntity" :entity="selectedEntity" :entity-type="currentEntityType"
-                :project-id="projectId" :alpha="alpha" @open-external="handleOpenExternal"
-                @open-postits="handleOpenPostIts" @tab-change="handleBrowserTabChange" />
-            <!-- Empty State -->
-            <div v-else class="empty-browser">
-                <div class="empty-content">
-                    <span class="empty-icon">📋</span>
-                    <p class="empty-title">Select an item</p>
-                    <p class="empty-text">Choose an item from the list to view details</p>
-                </div>
-            </div>
-        </div>
+        <!-- Legacy: CollapsibleTabs for backwards compatibility (hidden by default) -->
+        <CollapsibleTabs v-if="showLegacyTabs" :tabs="navigationTabs" v-model="legacyActiveSection"
+            :default-collapsed="defaultTabsCollapsed" @tab-change="handleSectionChange"
+            @collapse-change="handleCollapseChange" />
     </div>
 </template>
 
@@ -43,7 +79,10 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import CollapsibleTabs from './CollapsibleTabs.vue'
 import EntityBrowser from './EntityBrowser.vue'
 import pList from '@/components/page/pList.vue'
+import ListHead from '@/components/nav/ListHead.vue'
+import FilterChip from '@/components/nav/FilterChip.vue'
 import { useTheme } from '@/composables/useTheme'
+import type { ListHeadTab } from '@/components/nav/ListHead.vue'
 
 // ============================================================
 // INTERNAL THEME CONTEXT
@@ -51,7 +90,6 @@ import { useTheme } from '@/composables/useTheme'
 
 const { setInternalContext } = useTheme()
 
-// Enable internal context (opus theme) on mount, disable on unmount
 onMounted(() => {
     setInternalContext(true, 'default')
 })
@@ -68,8 +106,15 @@ interface NavigationTab {
     id: string
     label: string
     icon: string
-    entityType?: 'posts' | 'events' | 'pages' | 'images'
+    entityType?: 'posts' | 'events' | 'pages' | 'images' | 'partners'
     badge?: number
+}
+
+interface FilterItem {
+    id: string
+    label: string
+    active: boolean
+    clearable?: boolean
 }
 
 // ============================================================
@@ -82,10 +127,19 @@ const props = withDefaults(defineProps<{
     initialSection?: string
     defaultTabsCollapsed?: boolean
     alpha?: boolean
+    /** ListHead mode: 'tabs' (inline) or 'hamburger' (dropdown) */
+    listHeadMode?: 'tabs' | 'hamburger'
+    /** Show overline with project name and search */
+    showOverline?: boolean
+    /** Show legacy CollapsibleTabs (for migration) */
+    showLegacyTabs?: boolean
 }>(), {
-    initialSection: 'events',
+    initialSection: 'home',
     defaultTabsCollapsed: false,
-    alpha: true
+    alpha: true,
+    listHeadMode: 'tabs',
+    showOverline: false,
+    showLegacyTabs: false
 })
 
 const emit = defineEmits<{
@@ -93,82 +147,72 @@ const emit = defineEmits<{
     'entity-select': [entity: any]
     'open-external': [url: string]
     'open-postits': []
+    'search': []
 }>()
 
 // ============================================================
 // STATE
 // ============================================================
 
-const activeSection = ref(props.initialSection)
+// New 5-NavStops state
+const activeNavStop = ref(props.initialSection)
 const selectedEntity = ref<any>(null)
+const showFilters = ref(false)
+const activeFilters = ref<FilterItem[]>([])
+
+// Legacy state (for backwards compatibility)
+const legacyActiveSection = ref(props.initialSection)
 const isTabsCollapsed = ref(props.defaultTabsCollapsed)
 
 // ============================================================
-// NAVIGATION TABS CONFIG
+// 5 NAVSTOPS CONFIGURATION
 // ============================================================
 
-const navigationTabs = computed((): NavigationTab[] => [
-    {
-        id: 'events',
-        label: 'Events',
-        icon: '📅',
-        entityType: 'events',
-        badge: props.alpha ? 3 : undefined
-    },
-    {
-        id: 'posts',
-        label: 'Posts',
-        icon: '📝',
-        entityType: 'posts'
-    },
-    {
-        id: 'pages',
-        label: 'Pages',
-        icon: '📄',
-        entityType: 'pages'
-    },
-    {
-        id: 'images',
-        label: 'Images',
-        icon: '🖼️',
-        entityType: 'images'
-    },
-    {
-        id: 'users',
-        label: 'Team',
-        icon: '👥'
-    },
-    {
-        id: 'settings',
-        label: 'Settings',
-        icon: '⚙️'
-    }
+/** 
+ * The 5 NavStops: HOME | AGENDA | TOPICS | PARTNERS | COG (settings via icon)
+ * Route segments: /projects/:id/agenda, /projects/:id/topics, /projects/:id/partners
+ * 
+ * TODO v0.5: Clarify AGENDA scope - can contain more than just events.
+ * Agenda is about dates, timeline, tasking, and workflow.
+ */
+const navStopTabs = computed((): ListHeadTab[] => [
+    { id: 'agenda', label: 'AGENDA' },
+    { id: 'topics', label: 'TOPICS' },
+    { id: 'partners', label: 'PARTNERS' }
 ])
+
+/** Map NavStop IDs to entity types */
+const navStopEntityMap: Record<string, 'events' | 'posts' | 'partners'> = {
+    'agenda': 'events',
+    'topics': 'posts',
+    'partners': 'partners'
+}
 
 // ============================================================
 // COMPUTED
 // ============================================================
 
-const currentTab = computed(() => {
-    return navigationTabs.value.find((t: NavigationTab) => t.id === activeSection.value)
+const isListMode = computed(() => {
+    return activeNavStop.value !== 'home' && activeNavStop.value !== 'settings'
 })
 
-const currentSectionLabel = computed(() => {
-    return currentTab.value?.label || 'Items'
+const isEntityView = computed(() => {
+    return ['agenda', 'topics', 'partners'].includes(activeNavStop.value)
 })
 
-const currentEntityType = computed((): 'posts' | 'events' | 'pages' | 'images' => {
-    return currentTab.value?.entityType || 'posts'
+const currentNavLabel = computed(() => {
+    const labels: Record<string, string> = {
+        'home': 'Übersicht',
+        'agenda': 'Agenda & Events',
+        'topics': 'Themen & Posts',
+        'partners': 'Akteure & Partner',
+        'settings': 'Einstellungen'
+    }
+    return labels[activeNavStop.value] || 'Items'
 })
 
-const showEntityList = computed(() => {
-    return !!currentTab.value?.entityType
-})
-
-const placeholderText = computed(() => {
-    if (activeSection.value === 'users') return 'Team management coming soon'
-    if (activeSection.value === 'settings') return 'Project settings panel'
-    return 'Select a section'
+const currentEntityType = computed((): 'posts' | 'events' | 'partners' => {
+    return navStopEntityMap[activeNavStop.value] || 'posts'
 })
 
 const entityCount = computed(() => {
@@ -176,18 +220,42 @@ const entityCount = computed(() => {
     return props.alpha ? 12 : 0
 })
 
+// Legacy navigation tabs (for backwards compatibility)
+const navigationTabs = computed((): NavigationTab[] => [
+    { id: 'events', label: 'Events', icon: '📅', entityType: 'events' },
+    { id: 'posts', label: 'Posts', icon: '📝', entityType: 'posts' },
+    { id: 'images', label: 'Images', icon: '🖼️', entityType: 'images' },
+    { id: 'users', label: 'Team', icon: '👥' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' }
+])
+
 // ============================================================
-// METHODS
+// METHODS - NavStop handlers
 // ============================================================
 
-function handleSectionChange(sectionId: string) {
-    activeSection.value = sectionId
-    selectedEntity.value = null // Clear selection when changing sections
-    emit('section-change', sectionId)
+function handleNavStopChange(navStopId: string) {
+    activeNavStop.value = navStopId
+    selectedEntity.value = null
+    emit('section-change', navStopId)
 }
 
-function handleCollapseChange(collapsed: boolean) {
-    isTabsCollapsed.value = collapsed
+function handleSearch() {
+    emit('search')
+    // Future: Open search modal/panel
+}
+
+function toggleFilter(filterId: string) {
+    const filter = activeFilters.value.find(f => f.id === filterId)
+    if (filter) {
+        filter.active = !filter.active
+    }
+}
+
+function clearFilter(filterId: string) {
+    const filter = activeFilters.value.find(f => f.id === filterId)
+    if (filter) {
+        filter.active = false
+    }
 }
 
 function handleEntitySelect(entity: any) {
@@ -209,31 +277,95 @@ function handleBrowserTabChange(tabId: string) {
 }
 
 // ============================================================
+// METHODS - Legacy handlers (backwards compatibility)
+// ============================================================
+
+function handleSectionChange(sectionId: string) {
+    legacyActiveSection.value = sectionId
+    selectedEntity.value = null
+    emit('section-change', sectionId)
+}
+
+function handleCollapseChange(collapsed: boolean) {
+    isTabsCollapsed.value = collapsed
+}
+
+// ============================================================
 // WATCHERS
 // ============================================================
 
+// Watch for route-based section changes (from ProjectDashboard)
 watch(() => props.initialSection, (newVal: string | undefined) => {
-    if (newVal) {
-        activeSection.value = newVal
+    if (newVal && newVal !== activeNavStop.value) {
+        activeNavStop.value = newVal
+        legacyActiveSection.value = newVal
+        selectedEntity.value = null // Clear selection on section change
     }
-})
+}, { immediate: true })
 </script>
 
 <style scoped>
 .dashboard-layout {
-    display: grid;
-    grid-template-columns: auto 300px 1fr;
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    background: var(--color-muted-bg);
+    background: hsl(var(--color-bg));
+}
+
+/* Main content area */
+.dashboard-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Home View */
+.home-view {
+    padding: 1.5rem;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.home-welcome {
+    margin-bottom: 2rem;
+}
+
+.home-welcome h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: hsl(var(--color-contrast));
+}
+
+.home-subtitle {
+    margin: 0;
+    color: hsl(var(--color-muted-contrast));
+}
+
+.home-sections {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.home-section h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--color-contrast));
+}
+
+/* Entity View (2-column) */
+.entity-view {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100%;
     gap: 0;
 }
 
-/* Entity List Column */
 .entity-list-column {
     display: flex;
     flex-direction: column;
-    background: var(--color-card-bg);
-    border-right: var(--border-small) solid var(--color-border);
+    background: hsl(var(--color-card-bg));
+    border-right: 1px solid hsl(var(--color-border));
     height: 100%;
     overflow: hidden;
 }
@@ -242,28 +374,28 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
-    border-bottom: var(--border-small) solid var(--color-border);
-    background: var(--color-muted-bg);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid hsl(var(--color-border));
+    background: hsl(var(--color-muted-bg));
 }
 
 .list-title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-contrast);
+    color: hsl(var(--color-contrast));
 }
 
 .list-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 1.5rem;
-    height: 1.5rem;
-    padding: 0 0.5rem;
-    background: var(--color-primary-bg);
-    color: var(--color-primary-contrast, #fff);
-    font-size: 0.75rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.375rem;
+    background: hsl(var(--color-primary-base));
+    color: hsl(var(--color-primary-contrast));
+    font-size: 0.6875rem;
     font-weight: 600;
     border-radius: 9999px;
 }
@@ -272,16 +404,6 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem;
-}
-
-.section-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 2rem;
-    text-align: center;
-    color: var(--color-dimmed);
 }
 
 /* Entity Browser Column */
@@ -299,9 +421,9 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    background: var(--color-card-bg);
+    background: hsl(var(--color-card-bg));
     border-radius: var(--radius-large);
-    border: 2px dashed var(--color-border);
+    border: 2px dashed hsl(var(--color-border));
 }
 
 .empty-content {
@@ -313,41 +435,64 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
 }
 
 .empty-icon {
-    font-size: 3rem;
+    font-size: 2.5rem;
     opacity: 0.5;
 }
 
 .empty-title {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--color-contrast);
+    color: hsl(var(--color-contrast));
 }
 
 .empty-text {
     margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-dimmed);
+    font-size: 0.8125rem;
+    color: hsl(var(--color-dimmed));
+}
+
+/* Settings View */
+.settings-view {
+    padding: 1.5rem;
+}
+
+.settings-view h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* List Mode modifier (when entity list is visible) */
+.dashboard-layout--list-mode .dashboard-content {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-    .dashboard-layout {
-        grid-template-columns: auto 250px 1fr;
+    .entity-view {
+        grid-template-columns: 280px 1fr;
     }
 }
 
 @media (max-width: 768px) {
-    .dashboard-layout {
+    .entity-view {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
     }
 
-    .entity-list-column,
     .entity-browser-column {
         display: none;
     }
+}
 
-    /* Show only tabs on mobile - user would tap to see content */
+@media (max-width: 400px) {
+    .home-view {
+        padding: 1rem;
+    }
+
+    .home-welcome h2 {
+        font-size: 1.25rem;
+    }
 }
 </style>

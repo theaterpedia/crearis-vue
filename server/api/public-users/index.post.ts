@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
         return instructor
     } catch (error: any) {
         console.error('Error creating instructor:', error)
-        
+
         if (error.statusCode) {
             throw error
         }

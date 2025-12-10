@@ -15,29 +15,34 @@
 
 /* Dense mode custom properties (always available, dense values activate in breakpoints) */
 :root {
-  --dense: 0; /* 0 = normal, 1 = dense (for JS checks if needed) */
-  --dense-spacing: 1; /* multiplier for optional dense spacing */
-  --dense-font-scale: 1; /* 1 = 100%, 0.875 = 87.5% */
+    --dense: 0;
+    /* 0 = normal, 1 = dense (for JS checks if needed) */
+    --dense-spacing: 1;
+    /* multiplier for optional dense spacing */
+    --dense-font-scale: 1;
+    /* 1 = 100%, 0.875 = 87.5% */
 }
 
 /* Very small phones */
 @media (max-width: 379px) {
-  :root {
-    --dense: 1;
-    --dense-spacing: 0.875;
-    --dense-font-scale: 0.875;
-    font-size: 87.5%; /* 14px base */
-  }
+    :root {
+        --dense: 1;
+        --dense-spacing: 0.875;
+        --dense-font-scale: 0.875;
+        font-size: 87.5%;
+        /* 14px base */
+    }
 }
 
 /* Tablet gap (awkward middle zone) */
 @media (min-width: 660px) and (max-width: 800px) {
-  :root {
-    --dense: 1;
-    --dense-spacing: 0.875;
-    --dense-font-scale: 0.875;
-    font-size: 87.5%; /* 14px base */
-  }
+    :root {
+        --dense: 1;
+        --dense-spacing: 0.875;
+        --dense-font-scale: 0.875;
+        font-size: 87.5%;
+        /* 14px base */
+    }
 }
 
 /* ==========================================================================
@@ -46,23 +51,23 @@
 
 /* Apply dense spacing to a container */
 .dense-spacing {
-  --gap: calc(var(--gap, 1rem) * var(--dense-spacing));
-  --padding: calc(var(--padding, 1rem) * var(--dense-spacing));
-  --margin: calc(var(--margin, 1rem) * var(--dense-spacing));
+    --gap: calc(var(--gap, 1rem) * var(--dense-spacing));
+    --padding: calc(var(--padding, 1rem) * var(--dense-spacing));
+    --margin: calc(var(--margin, 1rem) * var(--dense-spacing));
 }
 
 /* Force dense mode regardless of viewport (for testing or specific components) */
 .force-dense {
-  font-size: 87.5%;
-  --dense: 1;
-  --dense-spacing: 0.875;
-  --dense-font-scale: 0.875;
+    font-size: 87.5%;
+    --dense: 1;
+    --dense-spacing: 0.875;
+    --dense-font-scale: 0.875;
 }
 
 /* Force normal mode regardless of viewport */
 .force-normal {
-  font-size: 100%;
-  --dense: 0;
-  --dense-spacing: 1;
-  --dense-font-scale: 1;
+    font-size: 100%;
+    --dense: 0;
+    --dense-spacing: 1;
+    --dense-font-scale: 1;
 }

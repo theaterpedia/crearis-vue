@@ -523,7 +523,7 @@ export function useTheme() {
         if (enabled) {
             // Set internal context - CSS takes over via [data-context="internal"]
             root.setAttribute('data-context', 'internal')
-            
+
             if (variant !== 'default') {
                 root.setAttribute('data-internal-variant', variant)
             } else {
@@ -532,7 +532,7 @@ export function useTheme() {
 
             // Remove any dynamic theme vars (internal uses CSS-defined vars)
             removeVarsFromDocument()
-            
+
             // Internal is always light mode
             isInverted.value = false
             root.removeAttribute('data-inverted')

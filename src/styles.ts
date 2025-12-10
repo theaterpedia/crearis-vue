@@ -9,4 +9,4 @@ import './assets/css/03-base.css'
 import './assets/css/04-dense.css'
 import './assets/css/05-internal-theme.css'
 
-export {}
+export { }
