@@ -35,6 +35,13 @@ const themesCache = ref<any[]>([])
 const themeVarsCache = ref<Map<number, { vars: Record<string, string>, inverted: boolean }>>(new Map())
 const isInverted = ref<boolean>(false)
 
+// Internal context state
+const isInternalContext = ref<boolean>(false)
+const internalVariant = ref<'default' | 'warm' | 'cool'>('default')
+
+// Internal theme variants (opus baseline)
+export type InternalVariant = 'default' | 'warm' | 'cool'
+
 // Image dimension state (extracted from CSS variables)
 const imageDimensions = ref<{
     cardWidth: number | null
@@ -495,6 +502,97 @@ export function useTheme() {
         }
     }
 
+    // =========================================================================
+    // Internal Context Management (Opus theme system)
+    // =========================================================================
+
+    /**
+     * Set internal context mode
+     * When true, uses the fixed "opus" internal theme from CSS
+     * External themes are bypassed
+     * @param enabled Enable internal context
+     * @param variant Optional variant: 'default' | 'warm' | 'cool'
+     */
+    const setInternalContext = (enabled: boolean, variant: InternalVariant = 'default'): void => {
+        if (typeof document === 'undefined') return
+
+        const root = document.documentElement
+        isInternalContext.value = enabled
+        internalVariant.value = variant
+
+        if (enabled) {
+            // Set internal context - CSS takes over via [data-context="internal"]
+            root.setAttribute('data-context', 'internal')
+            
+            if (variant !== 'default') {
+                root.setAttribute('data-internal-variant', variant)
+            } else {
+                root.removeAttribute('data-internal-variant')
+            }
+
+            // Remove any dynamic theme vars (internal uses CSS-defined vars)
+            removeVarsFromDocument()
+            
+            // Internal is always light mode
+            isInverted.value = false
+            root.removeAttribute('data-inverted')
+
+            debug('Internal context enabled', { variant })
+        } else {
+            // Remove internal context - allow external themes
+            root.removeAttribute('data-context')
+            root.removeAttribute('data-internal-variant')
+
+            // Reapply initial theme if set
+            if (initialThemeId.value !== null) {
+                const cached = themeVarsCache.value.get(initialThemeId.value)
+                if (cached) {
+                    applyVarsToDocument(cached.vars)
+                    setInverted(cached.inverted)
+                }
+            }
+
+            debug('Internal context disabled')
+        }
+    }
+
+    /**
+     * Check if currently in internal context
+     */
+    const getInternalContext = (): boolean => {
+        return isInternalContext.value
+    }
+
+    /**
+     * Get current internal variant
+     */
+    const getInternalVariant = (): InternalVariant => {
+        return internalVariant.value
+    }
+
+    /**
+     * Set internal variant (only works when in internal context)
+     */
+    const setInternalVariant = (variant: InternalVariant): void => {
+        if (!isInternalContext.value) {
+            debug('Cannot set variant: not in internal context')
+            return
+        }
+
+        if (typeof document === 'undefined') return
+
+        internalVariant.value = variant
+        const root = document.documentElement
+
+        if (variant !== 'default') {
+            root.setAttribute('data-internal-variant', variant)
+        } else {
+            root.removeAttribute('data-internal-variant')
+        }
+
+        debug('Internal variant changed', { variant })
+    }
+
     /**
      * Setup route watcher for local scope auto-reset
      * Call this in components that use router (e.g., in App.vue or layout)
@@ -560,6 +658,14 @@ export function useTheme() {
         // Helpers
         getVarsAsStyleString,
         applyVarsToDocument,
-        init
+        init,
+
+        // Internal context (opus theme system)
+        setInternalContext,
+        getInternalContext,
+        getInternalVariant,
+        setInternalVariant,
+        isInternalContext: computed(() => isInternalContext.value),
+        internalVariant: computed(() => internalVariant.value)
     }
 }

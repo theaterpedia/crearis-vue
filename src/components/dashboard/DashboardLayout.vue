@@ -39,10 +39,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import CollapsibleTabs from './CollapsibleTabs.vue'
 import EntityBrowser from './EntityBrowser.vue'
 import pList from '@/components/page/pList.vue'
+import { useTheme } from '@/composables/useTheme'
+
+// ============================================================
+// INTERNAL THEME CONTEXT
+// ============================================================
+
+const { setInternalContext } = useTheme()
+
+// Enable internal context (opus theme) on mount, disable on unmount
+onMounted(() => {
+    setInternalContext(true, 'default')
+})
+
+onUnmounted(() => {
+    setInternalContext(false)
+})
 
 // ============================================================
 // TYPES
