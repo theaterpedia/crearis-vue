@@ -115,16 +115,7 @@ You will analyze it, analyze the dashboard and stepper, then make proposals and 
 Yesterday we started refactoring the projects-dashboard and introduced a 3-cols-idea for the dashboard.
 We refactor that again and get rid of the 3 cols again. The basic idea is to put the leftside-icon bar on top and have the list below. But as you may have understood there are some navigation-targes like pages, theme, settings and project-activation that do not have any items/entities to list out. I call those steps/navtargets 'specialSteps' here
 So instead of moving around the leftside-icons to the top you first implement the ListHead and subcomponents. Then you split the stepper: The specialSteps are presented in the known way: This presentation is activated by click on the Settings-COG on The ListHeadTabs. Clicking on one of the EntityTabs (AGENDA|THEMEN|AKTEURE) instead loads the ItemList for those. Clicking on Home loads the internal Homepage (for the project / or for the userpage) it is a scrollview with pGallery + 2-3 pLists
-pGallery on projectHome holds:
-- project-type 'topic': posts-cards
-- project-type 'project': events-cards
-- project-type 'regio': partner-cards (instructors, locations)
-
-pGallery on userHome holds: the project-cards
-
-pLists hold: the other entities
-
-Now important: Reduce the stepper to align to that: all content from the other steps then events, posts, users, project-activation are consolidated into one step 'settings' (just mount the contents in sections vertically stacked -> we will reduce this). This Step/Panel does not exist on the dashboard -> the existing steps like design only will be loaded on the dashboard.
+great
 
 ### Home-Route
 We need to create a new Home-route. After login we always redirect here.

@@ -61,9 +61,13 @@
 
             <!-- Settings View (COG) -->
             <div v-else-if="activeNavStop === 'settings'" class="settings-view">
-                <h2>Einstellungen</h2>
-                <p>Projekt-Konfiguration kommt hier...</p>
-                <!-- Future: ProjectStepTheme, ProjectStepLayout, etc. -->
+                <ProjectSettingsPanel 
+                    :project-id="projectId" 
+                    :is-owner="isOwner"
+                    :is-locked="isLocked"
+                    :show-activation="showActivation"
+                    @activate-project="handleActivateProject"
+                />
             </div>
         </div>
 
@@ -78,6 +82,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import CollapsibleTabs from './CollapsibleTabs.vue'
 import EntityBrowser from './EntityBrowser.vue'
+import ProjectSettingsPanel from './ProjectSettingsPanel.vue'
 import pList from '@/components/page/pList.vue'
 import ListHead from '@/components/nav/ListHead.vue'
 import FilterChip from '@/components/nav/FilterChip.vue'
@@ -133,13 +138,22 @@ const props = withDefaults(defineProps<{
     showOverline?: boolean
     /** Show legacy CollapsibleTabs (for migration) */
     showLegacyTabs?: boolean
+    /** Is current user the project owner (for settings panel) */
+    isOwner?: boolean
+    /** Is project locked for editing */
+    isLocked?: boolean
+    /** Show activation section in settings (stepper mode) */
+    showActivation?: boolean
 }>(), {
     initialSection: 'home',
     defaultTabsCollapsed: false,
     alpha: true,
     listHeadMode: 'tabs',
     showOverline: false,
-    showLegacyTabs: false
+    showLegacyTabs: false,
+    isOwner: false,
+    isLocked: false,
+    showActivation: false
 })
 
 const emit = defineEmits<{
@@ -148,6 +162,7 @@ const emit = defineEmits<{
     'open-external': [url: string]
     'open-postits': []
     'search': []
+    'activate-project': []
 }>()
 
 // ============================================================
@@ -274,6 +289,10 @@ function handleOpenPostIts() {
 
 function handleBrowserTabChange(tabId: string) {
     console.log('[DashboardLayout] Browser tab changed:', tabId)
+}
+
+function handleActivateProject() {
+    emit('activate-project')
 }
 
 // ============================================================

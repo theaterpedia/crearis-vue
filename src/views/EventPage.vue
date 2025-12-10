@@ -1,72 +1,85 @@
 <!--
-  PostPage.vue - Single post view with page configuration
+  EventPage.vue - Single event view with page configuration
   
   TODO v0.5 (Odoo Integration):
   - Implement slug-from-xmlid for SEO-friendly URLs
-  - Current implementation uses numeric IDs: /sites/:domaincode/posts/:id
-  - Target URL pattern: /sites/:domaincode/posts/:slug
-  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.post-workshop-recap" → "post-workshop-recap"
+  - Current implementation uses numeric IDs: /sites/:domaincode/events/:id
+  - Target URL pattern: /sites/:domaincode/events/:slug
+  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.event-workshop-2024" → "event-workshop-2024"
 -->
 <template>
-    <div class="post-page">
+    <div class="event-page">
         <!-- Edit Panel -->
-        <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
-            subtitle="Update post information" :data="editPanelData" entity-type="posts"
-            :projectDomaincode="post.domaincode" @close="closeEditPanel" @save="handleSavePost" />
+        <EditPanel v-if="event" :is-open="isEditPanelOpen" :title="`Edit ${event.name || 'Event'}`"
+            subtitle="Update event information" :data="editPanelData" entity-type="events"
+            :projectDomaincode="event.domaincode" @close="closeEditPanel" @save="handleSaveEvent" />
 
         <!-- Page Config Panel (for admins/owners) -->
         <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
             <div class="config-panel-container">
                 <button class="close-panel-btn" @click="closeConfigPanel">&times;</button>
-                <PageConfigController :project="projectId" type="posts" mode="pages" />
+                <PageConfigController :project="projectId" type="events" mode="pages" />
             </div>
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
+        <PageLayout v-if="event" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
             :navItems="navigationItems">
             <template #header>
-                <PageHeading :heading="post.name || String(post.id)"
-                    :imgTmp="post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post'"
-                    :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
+                <PageHeading :heading="event.name || String(event.id)"
+                    :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
+                    :headerType="event.header_type || 'banner'" :headerSize="'prominent'" />
             </template>
 
             <!-- Tag Families Row -->
-            <Section v-if="post.ttags || post.ctags || post.dtags" background="muted" spacing="compact">
+            <Section v-if="event.ttags || event.ctags || event.dtags" background="muted" spacing="compact">
                 <Container>
-                    <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags" v-model:dtags="post.dtags"
-                        :status="post.status" :config="post.config" :enable-edit="canEdit" group-selection="core"
+                    <TagFamilies v-model:ttags="event.ttags" v-model:ctags="event.ctags" v-model:dtags="event.dtags"
+                        :status="event.status" :config="event.config" :enable-edit="canEdit" group-selection="core"
                         layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
                         @update:ctags="handleUpdateTags('ctags', $event)"
                         @update:dtags="handleUpdateTags('dtags', $event)" />
                 </Container>
             </Section>
 
-            <!-- Post Content Section -->
+            <!-- Event Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Post metadata -->
-                        <div class="post-meta">
-                            <div v-if="post.status" class="post-status">
+                        <!-- Event metadata -->
+                        <div class="event-meta">
+                            <div v-if="event.status" class="event-status">
                                 <StatusBadge :value="statusValueString" :label="statusLabel" variant="soft"
                                     size="medium" />
                             </div>
-                            <p v-if="post.post_date"><strong>Published:</strong> {{ formatDate(post.post_date) }}</p>
-                            <p v-if="post.author_id"><strong>Author:</strong> {{ post.author_id }}</p>
+                            
+                            <!-- Event-specific: Date & Time -->
+                            <div v-if="event.date_begin || event.date_end" class="event-datetime">
+                                <p><strong>📅 Datum:</strong> {{ formatEventDate() }}</p>
+                                <p v-if="eventTime"><strong>🕐 Zeit:</strong> {{ eventTime }}</p>
+                            </div>
+                            
+                            <!-- Event-specific: Location -->
+                            <p v-if="event.location_name || event.location"><strong>📍 Ort:</strong> {{ event.location_name || event.location }}</p>
+                            
+                            <!-- Event-specific: Instructor -->
+                            <p v-if="event.instructor_name"><strong>👤 Leitung:</strong> {{ event.instructor_name }}</p>
+                            
+                            <!-- Event Type -->
+                            <p v-if="event.event_type"><strong>Typ:</strong> {{ event.event_type }}</p>
                         </div>
 
                         <!-- StatusBadge / StatusEditor -->
-                        <div v-if="post && project" class="post-status-editor">
-                            <PostStatusBadge :post="postDataForPermissions" :project="projectDataForPermissions"
+                        <div v-if="event && project" class="event-status-editor">
+                            <PostStatusBadge :post="eventDataForPermissions" :project="projectDataForPermissions"
                                 :membership="null" @status-changed="handleStatusChange"
                                 @scope-changed="handleStatusChange" @trash="handleTrash" @restore="handleRestore"
                                 @error="handleStatusError" />
                         </div>
 
                         <!-- Admin/Owner Controls -->
-                        <div v-if="canEdit" class="post-controls">
-                            <button class="icon-btn" @click="openEditPanel" title="Edit Post">
+                        <div v-if="canEdit" class="event-controls">
+                            <button class="icon-btn" @click="openEditPanel" title="Edit Event">
                                 <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path
@@ -83,25 +96,40 @@
                                 </svg>
                             </button>
                         </div>
-                        <p v-if="post.teaser">{{ post.teaser }}</p>
+                        
+                        <!-- Teaser -->
+                        <p v-if="event.teaser" class="event-teaser">{{ event.teaser }}</p>
 
-                        <!-- Post HTML or Markdown content -->
-                        <div v-if="post.html" v-html="post.html" class="post-html-content"></div>
-                        <div v-else-if="post.md" class="post-markdown-content">{{ post.md }}</div>
-                        <p v-else><em>No content available for this post.</em></p>
+                        <!-- Event HTML or Markdown content -->
+                        <div v-if="event.html" v-html="event.html" class="event-html-content"></div>
+                        <div v-else-if="event.md" class="event-markdown-content">{{ event.md }}</div>
+                        <p v-else><em>No description available for this event.</em></p>
+                        
+                        <!-- Registration CTA (if event allows registration) -->
+                        <div v-if="event.seats_max && event.seats_max > 0" class="event-registration">
+                            <div class="registration-info">
+                                <span v-if="event.seats_available > 0">
+                                    {{ event.seats_available }} von {{ event.seats_max }} Plätzen verfügbar
+                                </span>
+                                <span v-else class="sold-out">Ausgebucht</span>
+                            </div>
+                            <button v-if="event.seats_available > 0" class="register-btn">
+                                Jetzt anmelden
+                            </button>
+                        </div>
                     </Prose>
                 </Container>
             </Section>
         </PageLayout>
 
-        <!-- Fallback for when post is not loaded -->
+        <!-- Fallback for when event is not loaded -->
         <PageLayout v-else>
             <template #header>
                 <Section>
                     <Container>
                         <Prose>
-                            <h1>Post Not Found</h1>
-                            <p>The requested post could not be loaded.</p>
+                            <h1>Event Not Found</h1>
+                            <p>The requested event could not be loaded.</p>
                         </Prose>
                     </Container>
                 </Section>
@@ -134,13 +162,14 @@ import Container from '@/components/Container.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { formatDateTime } from '@/plugins/dateTimeFormat'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
 
 // State
-const post = ref<any>(null)
+const event = ref<any>(null)
 const project = ref<any>(null)
 const projectId = ref<number | null>(null)
 const domaincode = ref<string>('')
@@ -150,11 +179,8 @@ const showConfigPanel = ref(false)
 // Computed
 const canEdit = computed(() => {
     if (!user.value) return false
-    // Admin can always edit
     if (user.value.role === 'admin') return true
-    // Project owner can edit
     if (user.value.activeRole === 'project' && projectId.value) {
-        // Check if user is owner of this project
         return true // Simplified - should check ownership
     }
     return false
@@ -169,78 +195,84 @@ const navigationItems = computed(() => {
         }
     ]
 
-    // Add Back button for project role users
     if (user?.value?.activeRole === 'project') {
         items.unshift({
             label: 'Back to Dashboard',
-            link: '/projects'
+            link: `/projects/${domaincode.value}/agenda`
         })
     }
 
     return items
 })
 
-// Parse options for PageLayout from post data
+// Parse options for PageLayout from event data
 const asideOptions = computed<AsideOptions>(() => {
-    if (!post.value) return {}
-    // Posts table uses JSONB fields for options
+    if (!event.value) return {}
     return parseAsideOptions({
-        aside_postit: post.value.aside_options,
-        aside_toc: post.value.aside_toc,
-        aside_list: post.value.aside_list,
-        aside_context: post.value.aside_context
+        aside_postit: event.value.aside_options,
+        aside_toc: event.value.aside_toc,
+        aside_list: event.value.aside_list,
+        aside_context: event.value.aside_context
     })
 })
 
 const footerOptions = computed<FooterOptions>(() => {
-    if (!post.value) return {}
-    // Posts table uses JSONB fields for options
+    if (!event.value) return {}
     return parseFooterOptions({
-        footer_gallery: post.value.footer_gallery,
-        footer_postit: post.value.footer_options,
-        footer_slider: post.value.footer_slider,
-        footer_repeat: post.value.footer_repeat
+        footer_gallery: event.value.footer_gallery,
+        footer_postit: event.value.footer_options,
+        footer_slider: event.value.footer_slider,
+        footer_repeat: event.value.footer_repeat
     })
 })
 
-// Convert status_val to hex string and get label (synchronous with unified composable)
+// Convert status_val to hex string and get label
 const statusValueString = computed(() => {
-    if (!post.value?.status) return null
-    return bufferToHex(post.value.status)
+    if (!event.value?.status) return null
+    return bufferToHex(event.value.status)
 })
 
 const statusLabel = computed(() => {
     const hex = statusValueString.value
     if (!hex) return ''
-    // getStatusLabel auto-uses current i18n language
-    return getStatusLabel(hex, 'posts')
+    return getStatusLabel(hex, 'events')
 })
 
-const editPanelData = computed((): EditPanelData => {
-    if (!post.value) return { heading: '', teaser: '', md: '' }
-    return {
-        heading: post.value.name || '',
-        teaser: post.value.teaser || '',
-        md: post.value.md || '',
-        img_id: post.value.img_id || null,
-        header_type: post.value.header_type || 'banner',
-        header_size: post.value.header_size || null,
-        status: post.value.status || null  // Pass raw value to match dropdown
+// Event-specific: formatted time
+const eventTime = computed(() => {
+    if (!event.value?.date_begin) return ''
+    try {
+        const date = new Date(event.value.date_begin)
+        return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+    } catch {
+        return ''
     }
 })
 
-// Computed data for PostStatusBadge
-const postDataForPermissions = computed(() => {
-    if (!post.value) return { id: 0, owner_id: 0, status: 1, project_id: 0 }
-    // Treat NULL/0 status as NEW (1)
-    const status = post.value.status || 1
+const editPanelData = computed((): EditPanelData => {
+    if (!event.value) return { heading: '', teaser: '', md: '' }
     return {
-        id: post.value.id,
-        owner_id: post.value.owner_id || 0,
-        creator_id: post.value.creator_id || 0,
-        creator_sysmail: post.value.creator_sysmail || '',
+        heading: event.value.name || '',
+        teaser: event.value.teaser || '',
+        md: event.value.md || '',
+        img_id: event.value.img_id || null,
+        header_type: event.value.header_type || 'banner',
+        header_size: event.value.header_size || null,
+        status: event.value.status || null
+    }
+})
+
+// Computed data for StatusBadge (reusing PostStatusBadge pattern)
+const eventDataForPermissions = computed(() => {
+    if (!event.value) return { id: 0, owner_id: 0, status: 1, project_id: 0 }
+    const status = event.value.status || 1
+    return {
+        id: event.value.id,
+        owner_id: event.value.owner_id || 0,
+        creator_id: event.value.creator_id || 0,
+        creator_sysmail: event.value.creator_sysmail || '',
         status: status,
-        project_id: post.value.project_id || projectId.value || 0
+        project_id: event.value.project_id || projectId.value || 0
     }
 })
 
@@ -249,57 +281,47 @@ const projectDataForPermissions = computed(() => {
     return {
         id: project.value.id,
         owner_sysmail: project.value.owner_sysmail || '',
-        owner_id: project.value.owner_id || 0,  // Deprecated fallback
+        owner_id: project.value.owner_id || 0,
         status: project.value.status || 0,
         team_size: project.value.team_size
     }
 })
 
 // Methods
-async function loadPost() {
-    const postId = route.params.id
+async function loadEvent() {
+    const eventId = route.params.id
     domaincode.value = route.params.domaincode as string
 
-    console.log('[PostPage] Loading post:', { postId, domaincode: domaincode.value })
+    console.log('[EventPage] Loading event:', { eventId, domaincode: domaincode.value })
 
     try {
         // First, get project by domaincode to get project_id
-        console.log('[PostPage] Fetching project:', `/api/projects/${domaincode.value}`)
         const projectRes = await fetch(`/api/projects/${domaincode.value}`)
-        console.log('[PostPage] Project response:', { ok: projectRes.ok, status: projectRes.status })
-
         if (!projectRes.ok) throw new Error('Project not found')
         const projectData = await projectRes.json()
-        console.log('[PostPage] Project data:', projectData)
         project.value = projectData
         projectId.value = projectData.id
 
-        // Load post
-        console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)
-        const response = await fetch(`/api/posts/${postId}`)
-        console.log('[PostPage] Post response:', { ok: response.ok, status: response.status })
-
-        if (!response.ok) throw new Error('Failed to load post')
+        // Load event
+        const response = await fetch(`/api/events/${eventId}`)
+        if (!response.ok) throw new Error('Failed to load event')
         const data = await response.json()
-        console.log('[PostPage] Post data:', data)
-        post.value = data.post
-        console.log('[PostPage] Post loaded successfully!')
+        event.value = data.event || data
+        console.log('[EventPage] Event loaded successfully!')
     } catch (error) {
-        console.error('[PostPage] Error loading post:', error)
+        console.error('[EventPage] Error loading event:', error)
     }
 }
 
-function formatDate(date: string): string {
-    if (!date) return ''
-    try {
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })
-    } catch {
-        return date
-    }
+function formatEventDate(): string {
+    if (!event.value?.date_begin) return ''
+    return formatDateTime({
+        start: event.value.date_begin,
+        end: event.value.date_end,
+        format: 'standard',
+        rows: '1or2',
+        showTime: false
+    })
 }
 
 function openEditPanel() {
@@ -318,85 +340,60 @@ function closeConfigPanel() {
     showConfigPanel.value = false
 }
 
-// Status Editor Handlers
-// Note: StatusEditor already saves to API via usePostStatus
-// This handler just updates local state to keep UI in sync
 function handleStatusChange(newStatus: number) {
-    console.log('[PostPage] Status changed to:', newStatus, typeof newStatus)
-    // Guard against invalid values
+    console.log('[EventPage] Status changed to:', newStatus)
     if (typeof newStatus !== 'number') {
-        console.error('[PostPage] Invalid status type:', typeof newStatus, newStatus)
+        console.error('[EventPage] Invalid status type:', typeof newStatus)
         return
     }
-    // Update local state (API was already called by StatusEditor)
-    if (post.value) {
-        post.value.status = newStatus
+    if (event.value) {
+        event.value.status = newStatus
     }
 }
 
 async function handleTrash() {
-    console.log('[PostPage] Trash requested')
-    // Move to trash (status = 65536)
+    console.log('[EventPage] Trash requested')
     await handleStatusChange(65536)
 }
 
 async function handleRestore() {
-    console.log('[PostPage] Restore requested')
-    // Restore from trash to draft (status = 64)
+    console.log('[EventPage] Restore requested')
     await handleStatusChange(64)
 }
 
 function handleStatusError(error: string) {
-    console.error('[PostPage] Status Editor error:', error)
-    // TODO: Show error toast/notification
+    console.error('[EventPage] Status Editor error:', error)
 }
 
 async function handleUpdateTags(family: string, value: number) {
     try {
-        console.log(`[PostPage] Updating ${family} to ${value}`)
-
-        const response = await fetch(`/api/posts/${post.value.id}`, {
+        console.log(`[EventPage] Updating ${family} to ${value}`)
+        const response = await fetch(`/api/events/${event.value.id}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ [family]: value })
         })
 
-        if (!response.ok) {
-            throw new Error(`Failed to update ${family}`)
+        if (!response.ok) throw new Error(`Failed to update ${family}`)
+        if (event.value) {
+            event.value[family] = value
         }
-
-        // Update local state
-        if (post.value) {
-            post.value[family] = value
-        }
-
-        console.log(`[PostPage] Successfully updated ${family}`)
+        console.log(`[EventPage] Successfully updated ${family}`)
     } catch (error) {
-        console.error(`[PostPage] Error updating ${family}:`, error)
-        // Optionally show error toast/notification
+        console.error(`[EventPage] Error updating ${family}:`, error)
     }
 }
 
-async function handleSavePost(data: Record<string, any>) {
-    console.log('[PostPage] ========================================')
-    console.log('[PostPage] handleSavePost CALLED')
-    console.log('[PostPage] Call stack:', new Error().stack)
-    console.log('[PostPage] Data received:', data)
-    console.log('[PostPage] ========================================')
+async function handleSaveEvent(data: Record<string, any>) {
+    console.log('[EventPage] handleSaveEvent called:', data)
 
     try {
-        console.log('[PostPage] Saving post with data:', data)
-
-        // Render markdown to HTML using marked
         let html = ''
         if (data.md) {
             const { marked } = await import('marked')
             html = marked(data.md)
         }
 
-        // Prepare payload with proper field names and sanitize data
         const payload = {
             name: data.heading || '',
             teaser: data.teaser || '',
@@ -406,75 +403,69 @@ async function handleSavePost(data: Record<string, any>) {
             header_type: data.header_type || 'banner',
             header_size: data.header_size || null,
             status: sanitizeStatusVal(data.status),
-            // Include sysreg tags (sanitize to prevent NULL bytes)
             ttags: data.ttags || '\\x00',
             ctags: data.ctags || '\\x00',
             dtags: data.dtags || '\\x00'
         }
 
-        console.log('[PostPage] Sending payload:', payload)
-        console.log('[PostPage] POST URL:', `/api/demo/posts/${post.value.id}`)
-
-        const response = await fetch(`/api/demo/posts/${post.value.id}`, {
+        const response = await fetch(`/api/events/${event.value.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
 
-        console.log('[PostPage] Response status:', response.status)
-        console.log('[PostPage] Response ok:', response.ok)
-
         if (!response.ok) {
-            const errorText = await response.text()
-            let errorData
-            try {
-                errorData = JSON.parse(errorText)
-            } catch {
-                errorData = errorText
-            }
-            console.error('[PostPage] Error response:', errorData)
-            const errorMessage = errorData?.message || 'Failed to save post'
-            throw new Error(errorMessage)
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData?.message || 'Failed to save event')
         }
 
-        const result = await response.json()
-        console.log('[PostPage] Save successful, result:', result)
-
-        // Reload post
-        await loadPost()
+        await loadEvent()
         closeEditPanel()
     } catch (error: any) {
-        console.error('[PostPage] Error saving post:', error)
-        const errorMessage = error?.message || 'Failed to save post'
-        alert(`Failed to save post: ${errorMessage}`)
+        console.error('[EventPage] Error saving event:', error)
+        alert(`Failed to save event: ${error?.message || 'Unknown error'}`)
     }
 }
 
 onMounted(async () => {
-    // Ensure auth session is loaded before loading post (fixes direct URL navigation)
     await checkSession()
-    loadPost()
+    loadEvent()
 })
 </script>
 
 <style scoped>
-.post-page {
+.event-page {
     min-height: 100vh;
     background: var(--color-neutral-bg);
 }
 
-.post-meta {
+.event-meta {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--color-border);
     font-family: var(--headings);
 }
 
-.post-status {
+.event-status {
     margin-bottom: 1rem;
 }
 
-.post-controls {
+.event-datetime {
+    margin: 1rem 0;
+}
+
+.event-datetime p {
+    margin: 0.25rem 0;
+}
+
+.event-teaser {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: hsl(var(--color-dimmed));
+    margin-bottom: 1.5rem;
+}
+
+.event-controls {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 2rem;
@@ -497,13 +488,49 @@ onMounted(async () => {
     opacity: 0.9;
 }
 
-.post-html-content {
+.event-html-content {
     line-height: 1.7;
 }
 
-.post-markdown-content {
+.event-markdown-content {
     white-space: pre-wrap;
     line-height: 1.7;
+}
+
+/* Registration Section */
+.event-registration {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: hsl(var(--color-primary-bg));
+    border-radius: var(--radius-medium);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.registration-info {
+    font-weight: 500;
+    color: hsl(var(--color-primary-contrast));
+}
+
+.sold-out {
+    color: hsl(var(--color-negative-base));
+}
+
+.register-btn {
+    padding: 0.75rem 1.5rem;
+    background: hsl(var(--color-primary-base));
+    color: hsl(var(--color-primary-contrast));
+    border: none;
+    border-radius: var(--radius-medium);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.register-btn:hover {
+    background: hsl(var(--color-primary-hover));
 }
 
 .config-panel-overlay {

@@ -15,6 +15,7 @@ const router = createRouter({
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
     { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
+    { path: '/sites/:domaincode/events/:id', component: () => import('../views/EventPage.vue') },
 
     // Protected routes - User Home (cross-project overview)
     { path: '/home', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
