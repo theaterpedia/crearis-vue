@@ -1,16 +1,48 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 
+// Configrole bit values
+const CONFIGROLE = {
+    PARTNER: 2,
+    PARTICIPANT: 4,
+    MEMBER: 8,
+    CREATOR: 16  // p_creator bit
+} as const
+
+// Map role name to configrole bit
+function roleToConfigrole(role: string): number {
+    switch (role) {
+        case 'creator':
+        case 'p_creator':
+            return CONFIGROLE.CREATOR | CONFIGROLE.MEMBER  // Creator is also a member
+        case 'member':
+            return CONFIGROLE.MEMBER
+        case 'participant':
+            return CONFIGROLE.PARTICIPANT
+        case 'partner':
+            return CONFIGROLE.PARTNER
+        default:
+            return CONFIGROLE.MEMBER
+    }
+}
+
 /**
  * POST /api/projects/add-member
  * Add a user to a project's members list using project_members table
- * After Migration 019 Chapter 5:
- * - projectId parameter is the domaincode (TEXT)
- * - project_members table uses numeric project id (INTEGER FK)
+ * 
+ * Body: { userId, projectId, role?, configrole? }
+ * - role: 'member' | 'participant' | 'partner' | 'creator' (default: 'member')
+ * - configrole: number (overrides role if provided)
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event) as { userId?: string | number; projectId?: string }
-    const { userId, projectId } = body
+    const body = await readBody(event) as {
+        userId?: string | number
+        projectId?: string
+        role?: string
+        configrole?: number
+        roleLabel?: string
+    }
+    const { userId, projectId, role = 'member', configrole, roleLabel } = body
 
     if (!userId || !projectId) {
         throw createError({
@@ -69,16 +101,26 @@ export default defineEventHandler(async (event) => {
             }
         }
 
+        // Determine configrole to set
+        const finalConfigrole = typeof configrole === 'number' ? configrole : roleToConfigrole(role)
+        const displayRole = roleLabel || role
+
         // Add user to project_members table (using numeric ids)
         await db.run(
-            'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
-            [numericProjectId, numericUserId, 'member']
+            'INSERT INTO project_members (project_id, user_id, role, configrole) VALUES (?, ?, ?, ?)',
+            [numericProjectId, numericUserId, displayRole, finalConfigrole]
         )
 
         return {
             success: true,
             message: 'User added to project successfully',
-            data: { userId: numericUserId, projectId, projectDbId: numericProjectId, role: 'member' }
+            data: {
+                userId: numericUserId,
+                projectId,
+                projectDbId: numericProjectId,
+                role: displayRole,
+                configrole: finalConfigrole
+            }
         }
     } catch (error) {
         console.error('Error adding user to project:', error)

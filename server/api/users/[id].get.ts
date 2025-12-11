@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
                 id,
                 username,
                 role,
-                instructor_id,
+                partner_id,
                 img_id,
                 img_show,
                 img_thumb,

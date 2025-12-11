@@ -44,6 +44,16 @@
                 </svg>
             </div>
 
+            <!-- Trash icon (bottom-right of avatar) -->
+            <div v-if="showTrash" class="trash-icon" @click.stop="emit('trash')" title="Remove item">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                        d="M5.5 5.5v6M8 5.5v6M10.5 5.5v6M3 3.5h10M6 3.5V2.5A.5.5 0 016.5 2h3a.5.5 0 01.5.5v1M4.5 3.5l.5 10a1 1 0 001 1h4a1 1 0 001-1l.5-10"
+                        stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
+                        fill="none" />
+                </svg>
+            </div>
+
             <!-- Image with data mode -->
             <ImgShape v-if="dataMode && data" :data="data" :shape="shape || 'thumb'" :avatar="shouldUseAvatar"
                 class="image-box" />
@@ -97,6 +107,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     click: [event: MouseEvent]
+    trash: []
 }>()
 
 const dataMode = computed(() => props.data !== undefined)
@@ -111,6 +122,7 @@ const showBadge = computed(() => props.options?.badge === true)
 const showCounter = computed(() => props.options?.counter === true)
 const showSelectable = computed(() => props.options?.selectable === true)
 const showMarker = computed(() => props.options?.marker === true)
+const showTrash = computed(() => props.options?.trash === true)
 
 // Get model values with defaults
 const isSelected = computed(() => props.models?.selected === true)
@@ -384,6 +396,31 @@ const computedHeading = computed(() => {
     background: var(--color-primary-bg);
     border-color: var(--color-primary-bg);
     color: white;
+}
+
+/* Trash icon (bottom-right of avatar) */
+.trash-icon {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    background: var(--color-card-bg);
+    border: 2px solid var(--color-border);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    color: var(--color-muted);
+}
+
+.trash-icon:hover {
+    border-color: var(--color-negative-bg);
+    background: var(--color-negative-lighter, #fef2f2);
+    color: var(--color-negative-bg);
 }
 
 /* Deprecated warning icon overlay */

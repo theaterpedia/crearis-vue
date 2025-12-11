@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
         const params: any[] = []
 
         // Fields that can be updated
-        const allowedFields = ['username', 'password', 'role', 'instructor_id', 'status_id', 'img_id']
+        const allowedFields = ['username', 'password', 'role', 'partner_id', 'status_val', 'img_id']
 
         for (const field of allowedFields) {
             if (body[field] !== undefined && body[field] !== null && body[field] !== '') {
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
                 id,
                 username,
                 role,
-                instructor_id,
+                partner_id,
                 img_id,
                 img_show,
                 img_thumb,

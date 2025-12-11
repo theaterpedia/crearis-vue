@@ -27,11 +27,12 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import HeadingParser from './HeadingParser.vue'
-import type { Post, Instructor } from '@/types'
+import type { Post, Instructor, Partner } from '@/types'
 
 const props = defineProps<{
     post: Post
-    instructors?: Instructor[]
+    instructors?: Instructor[]  // Legacy support
+    partners?: Partner[]  // New unified type
 }>()
 
 const emit = defineEmits<{
@@ -39,8 +40,15 @@ const emit = defineEmits<{
 }>()
 
 const instructor = computed(() => {
-    if (!props.post.public_user || !props.instructors) return null
-    return props.instructors.find((i: Instructor) => i.id === props.post.public_user)
+    if (!props.post.public_user) return null
+    // Try partners first, then fall back to instructors
+    if (props.partners) {
+        return props.partners.find((p: Partner) => p.id === props.post.public_user)
+    }
+    if (props.instructors) {
+        return props.instructors.find((i: Instructor) => i.id === props.post.public_user)
+    }
+    return null
 })
 
 const handleDelete = () => {

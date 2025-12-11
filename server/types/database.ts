@@ -626,9 +626,8 @@ export interface UsersTableFields {
     img_thumb?: Record<string, any> | null
     img_vert?: Record<string, any> | null
     img_wide?: Record<string, any> | null
-    instructor_id?: number | null
+    partner_id?: number | null // Link to partners table (replaces instructor_id and participant_id)
     lang: string // default: 'de'::text
-    participant_id?: number | null
     password: string
     role: string
     status_display?: string | null // GENERATED COLUMN (read-only)
@@ -848,7 +847,7 @@ export function isValidTldsField(key: string): key is keyof TldsTableFields {
 
 export function isValidUsersField(key: string): key is keyof UsersTableFields {
     const validFields: (keyof UsersTableFields)[] = [
-        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_id', 'instructor_id', 'participant_id', 'lang', 'created_at', 'updated_at', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_display'
+        'id', 'sysmail', 'extmail', 'username', 'password', 'role', 'status_val', 'partner_id', 'lang', 'created_at', 'updated_at', 'img_id', 'img_show', 'img_thumb', 'img_square', 'img_wide', 'img_vert', 'status_display'
     ]
     return validFields.includes(key as keyof UsersTableFields)
 }

@@ -1,5 +1,5 @@
 :root {
-  --theme-shadow: 0.2rem 0.2rem 0.6rem hsla(110, 10%, 0%, 0.65);
+  --theme-shadow: 0.2rem 0.2rem 0.6rem oklch(0% 0.02 110 / 0.65);
   --radius-none: 0rem;
   --radius-small: 0.25rem;
   --radius-medium: 0.5rem;
@@ -31,12 +31,16 @@
   /* 224px */
 
   /* tile is the basis for dense image components */
-  --tile-width: 8rem; /* 128px  */
-  --tile-height: 4rem; /* 64px */
-  --tile-height-square: 8rem; /* 128px */
+  --tile-width: 8rem;
+  /* 128px  */
+  --tile-height: 4rem;
+  /* 64px */
+  --tile-height-square: 8rem;
+  /* 128px */
 
   /* avatar is the basis for small image components */
-  --avatar: 4rem; /* 64px */
+  --avatar: 4rem;
+  /* 64px */
   /* 64px */
 
   --tagline-small-height: 1.1rem;

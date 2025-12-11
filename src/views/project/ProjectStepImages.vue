@@ -79,12 +79,8 @@
         </div>
 
         <!-- Image Preview Modal -->
-        <ImagePreviewModal 
-            v-model:is-open="previewModalOpen" 
-            :image="selectedImage"
-            :editable="true"
-            @save="handleImageSave"
-        />
+        <ImagePreviewModal v-model:is-open="previewModalOpen" :image="selectedImage" :editable="true"
+            @save="handleImageSave" />
     </div>
 </template>
 

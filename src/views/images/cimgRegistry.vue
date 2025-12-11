@@ -204,7 +204,7 @@ onMounted(() => {
 .images-logo {
     font-weight: 600;
     font-size: 1.25rem;
-    color: hsl(var(--color-primary-base));
+    color: var(--color-primary-base);
 }
 
 /* Settings Preview in heading */
@@ -223,12 +223,12 @@ onMounted(() => {
 
 .settings-preview.simple {
     min-height: 8rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .settings-preview-content {
     width: 100%;
-    background: hsla(var(--color-card-bg), 0.9);
+    background: oklch(from var(--color-card-bg) l c h / 0.9);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-medium);
     padding: 1.5rem;
@@ -236,7 +236,7 @@ onMounted(() => {
 
 .no-selection {
     text-align: center;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 /* Image Gallery */
@@ -258,8 +258,8 @@ onMounted(() => {
 
 .btn-toggle-sidebar {
     padding: 0.5rem 1rem;
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: var(--radius-small);
     cursor: pointer;
@@ -277,7 +277,7 @@ onMounted(() => {
     overflow: hidden;
     cursor: pointer;
     transition: transform var(--duration) var(--ease);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
 }
 
 .gallery-item:hover {
@@ -292,13 +292,13 @@ onMounted(() => {
 
 .gallery-item-info {
     padding: 0.75rem;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
 }
 
 /* Filters Sidebar */
 .filters-sidebar {
     padding: 1.5rem;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -317,7 +317,7 @@ onMounted(() => {
     font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .filter-section ul {
@@ -342,7 +342,7 @@ onMounted(() => {
 }
 
 .filter-section button:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .tag-list {
@@ -353,7 +353,7 @@ onMounted(() => {
 
 .tag {
     padding: 0.25rem 0.75rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border-radius: 999px;
     font-size: 0.875rem;
     cursor: pointer;
@@ -361,6 +361,6 @@ onMounted(() => {
 }
 
 .tag:hover {
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
 }
 </style>

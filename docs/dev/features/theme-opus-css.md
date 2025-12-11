@@ -82,6 +82,21 @@ src/assets/css/
 
 The "Opus CSS" conventions ensure consistent styling across components:
 
+> ⚠️ **CRITICAL FOR CODE AUTOMATION**
+> 
+> **NO HSL, RGB, HEX OR OTHER COLOR FUNCTIONS ALLOWED!**
+> 
+> This project uses **oklch exclusively**. Never generate:
+> - ❌ `hsl(...)` or `hsla(...)`
+> - ❌ `rgb(...)` or `rgba(...)`
+> - ❌ `#hex` colors
+> - ❌ `hsl(var(--color-*))` wrapper patterns
+> 
+> Always use:
+> - ✅ `var(--color-*)` for theme variables
+> - ✅ `oklch(L C H)` for custom colors
+> - ✅ `oklch(L C H / alpha)` for transparency
+
 ### 1. Always Use rem
 
 ```css

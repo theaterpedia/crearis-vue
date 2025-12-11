@@ -11,7 +11,7 @@ const props = defineProps({
   hideLogo: { type: Boolean, default: false, required: false },
 })
 
-const textShadow = 'text-shadow: 0.2rem 0.2rem 0.3rem hsla(110, 10%, 0%, 0.8);'
+const textShadow = 'text-shadow: 0.2rem 0.2rem 0.3rem oklch(0% 0.02 110 / 0.8);'
 
 // Computed classes based on props
 const containerClasses = computed(() => {
