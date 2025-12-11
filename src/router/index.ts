@@ -22,11 +22,12 @@ const router = createRouter({
     { path: '/home', component: () => import('../views/HomeLayoutHack.vue'), meta: { requiresAuth: true } },
     { path: '/home-clean', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
 
-    // Protected routes - Project Dashboard (route-based 5 NavStops)
+    // Protected routes - Project Dashboard (route-based 5 NavStops + images for stepper)
     // Base route redirects to home section
     { path: '/projects/:projectId', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/projects/:projectId/agenda', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/projects/:projectId/topics', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/images', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/projects/:projectId/partners', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/projects/:projectId/settings', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
 
