@@ -39,7 +39,7 @@ defineProps<{
     display: flex;
     gap: 1.5rem;
     padding: 1.5rem;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-medium);
     overflow-x: auto;
 }
@@ -55,7 +55,7 @@ defineProps<{
 .shape-image {
     border-radius: var(--radius-small);
     overflow: hidden;
-    box-shadow: 0 2px 8px hsla(0, 0%, 0%, 0.1);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.1);
     transition: transform var(--duration) var(--ease);
 }
 
@@ -89,7 +89,7 @@ defineProps<{
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 @media (max-width: 768px) {

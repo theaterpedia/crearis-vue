@@ -1,0 +1,127 @@
+/**
+ * Internal Theme System - "Opus" Baseline
+ * 
+ * This file defines the internal/dashboard theme that:
+ * - Uses the same CSS variable names as external themes
+ * - Stays fixed, stable, and professional (no switching)
+ * - Provides 3 subtle variants: opus (default), opus-warm, opus-cool
+ * 
+ * Components auto-work because they use the same variable names.
+ * Internal context is detected via [data-context="internal"] on html/body.
+ * 
+ * Usage:
+ * - Set data-context="internal" on root element for dashboard/admin
+ * - Optionally add data-internal-variant="warm|cool" for variants
+ * - External pages don't set data-context, so they use useTheme's dynamic system
+ */
+
+/* ==========================================================================
+   Base Colors - "Opus" Internal Theme
+   ========================================================================== */
+
+:root[data-context="internal"] {
+    /* Inverted flag - always light mode for internal */
+    --color-inverted: 0;
+
+    /* Base colors - calm, professional, neutral-blue tint */
+    --color-primary-base: oklch(55% 0.12 250);
+    /* calm blue */
+    --color-secondary-base: oklch(60% 0.08 220);
+    /* muted slate-blue */
+    --color-warning-base: oklch(75% 0.15 85);
+    /* amber */
+    --color-positive-base: oklch(65% 0.18 145);
+    /* green */
+    --color-negative-base: oklch(55% 0.20 25);
+    /* red */
+    --color-neutral-base: oklch(50% 0.015 250);
+    /* blue-tinted gray */
+    --color-gray-base: oklch(50% 0 0);
+    /* pure gray */
+
+    /* Derived colors - using same formulas as external themes */
+    --color-bg: oklch(from var(--color-neutral-base) calc(l + 1 * (1 - var(--color-inverted) - l)) calc(c / 4.5) h);
+    --color-contrast: oklch(from var(--color-neutral-base) calc(l + 1 * (var(--color-inverted) - l)) calc(c / 4.5) h);
+    --color-black: oklch(from var(--color-gray-base) calc(l + 1 * (0 - l)) calc(c / 4.5) h);
+    --color-white: oklch(from var(--color-gray-base) calc(l + 1 * (1 - 0 - l)) calc(c / 4.5) h);
+
+    /* Component backgrounds */
+    --color-primary-bg: var(--color-primary-base);
+    --color-secondary-bg: var(--color-secondary-base);
+    --color-warning-bg: var(--color-warning-base);
+    --color-positive-bg: var(--color-positive-base);
+    --color-negative-bg: var(--color-negative-base);
+
+    /* Muted - for subtle backgrounds */
+    --color-muted-bg: oklch(from var(--color-neutral-base) calc(l + 0.78 * (1 - var(--color-inverted) - l)) calc(c / 2) h);
+    --color-muted-contrast: oklch(from var(--color-neutral-base) calc(l + 0.3 * (var(--color-inverted) - l)) calc(c / 1.25) h);
+
+    /* Accent - for hover states, highlights */
+    --color-accent-bg: oklch(from var(--color-neutral-base) calc(l + 0.4 * (1 - var(--color-inverted) - l)) calc(c / 2) h);
+    --color-accent-contrast: oklch(from var(--color-neutral-base) calc(l + 0.8 * (1 - var(--color-inverted) - l)) calc(c / 3) h);
+
+    /* Card - for elevated surfaces */
+    --color-card-bg: oklch(from var(--color-neutral-base) calc(l + 0.96 * (1 - var(--color-inverted) - l)) calc(c / 3) h);
+    --color-card-contrast: oklch(from var(--color-neutral-base) calc(l + 0.8 * (var(--color-inverted) - l)) calc(c / 3) h);
+
+    /* Popover - for dropdowns, tooltips */
+    --color-popover-bg: oklch(from var(--color-neutral-base) calc(l + 0.48 * (1 - var(--color-inverted) - l)) calc(c / 2) h);
+    --color-popover-contrast: oklch(from var(--color-neutral-base) calc(l + 0.8 * (var(--color-inverted) - l)) calc(c / 3) h);
+
+    /* Contrast colors for base colors */
+    --color-primary-contrast: oklch(from var(--color-gray-base) calc(l + 1 * (1 - l)) calc(c / 4.5) h);
+    --color-secondary-contrast: oklch(from var(--color-gray-base) calc(l + 1 * (1 - l)) calc(c / 4.5) h);
+    --color-positive-contrast: oklch(from var(--color-gray-base) calc(l + 1 * (1 - l)) calc(c / 4.5) h);
+    --color-negative-contrast: oklch(from var(--color-gray-base) calc(l + 1 * (1 - l)) calc(c / 4.5) h);
+    --color-warning-contrast: oklch(from var(--color-gray-base) calc(l + 1 * (0 - l)) calc(c / 4.5) h);
+
+    /* Utility colors */
+    --color-dimmed: oklch(from var(--color-neutral-base) calc(l + 0.2 * (var(--color-inverted) - l)) calc(c / 1.25) h);
+    --color-border: oklch(from var(--color-neutral-base) calc(l + 0.38 * (1 - var(--color-inverted) - l)) calc(c / 3) h);
+    --color-input: oklch(from var(--color-neutral-base) calc(l + 0.45 * (1 - var(--color-inverted) - l)) calc(c / 2) h);
+    --color-ring: oklch(from var(--color-neutral-base) calc(l + 0.8 * (var(--color-inverted) - l)) calc(c / 3) h);
+}
+
+/* ==========================================================================
+   Variant: Opus Warm - slightly warmer tint
+   ========================================================================== */
+
+:root[data-context="internal"][data-internal-variant="warm"] {
+    --color-primary-base: oklch(55% 0.12 45);
+    /* warm amber-brown */
+    --color-secondary-base: oklch(60% 0.08 35);
+    /* warm taupe */
+    --color-neutral-base: oklch(50% 0.015 45);
+    /* warm-tinted gray */
+}
+
+/* ==========================================================================
+   Variant: Opus Cool - cooler, more clinical
+   ========================================================================== */
+
+:root[data-context="internal"][data-internal-variant="cool"] {
+    --color-primary-base: oklch(55% 0.10 220);
+    /* cool slate */
+    --color-secondary-base: oklch(60% 0.06 200);
+    /* cool gray-blue */
+    --color-neutral-base: oklch(50% 0.01 220);
+    /* cool-tinted gray */
+}
+
+/* ==========================================================================
+   Internal-specific overrides
+   ========================================================================== */
+
+:root[data-context="internal"] {
+    /* Tighter, more professional spacing for dashboard */
+    --internal-spacing-tight: 0.75;
+
+    /* Ensure consistent font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Internal context never uses inverted mode button styles */
+:root[data-context="internal"] .btn-inverted {
+    display: none;
+}

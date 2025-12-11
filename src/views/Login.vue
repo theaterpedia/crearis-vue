@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import Container from '@/components/Container.vue'
@@ -41,7 +41,14 @@ import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
 
 const router = useRouter()
-const { login, isLoading } = useAuth()
+const { login, isLoading, isAuthenticated } = useAuth()
+
+// Redirect if already logged in
+onMounted(() => {
+    if (isAuthenticated.value) {
+        router.replace('/home')
+    }
+})
 
 const userId = ref('')
 const password = ref('')
@@ -53,18 +60,9 @@ const handleLogin = async () => {
     const result = await login(userId.value, password.value)
 
     if (result.success) {
-        // Redirect based on activeRole
-        const { user } = useAuth()
-
-        if (user.value?.activeRole === 'admin') {
-            router.push('/')
-        } else if (user.value?.activeRole === 'base') {
-            router.push('/base')
-        } else if (user.value?.activeRole === 'project') {
-            router.push('/projects')
-        } else {
-            router.push('/')
-        }
+        // Always redirect to /home after login
+        // User selects project from there (onboarding flow)
+        router.push('/home')
     } else {
         error.value = result.error || 'Login failed. Please check your credentials.'
     }

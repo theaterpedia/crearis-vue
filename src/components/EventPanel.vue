@@ -24,14 +24,16 @@
             <div class="section-header">
                 <div class="section-label">Vorschau</div>
                 <button class="delete-btn" @click="handleClearSelection" title="Auswahl aufheben">
-                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z">
+                        </path>
                     </svg>
                 </button>
             </div>
-            <pGallery entity="events" :project="projectId" size="medium" 
-                :filter-ids="selectedEvent ? [selectedEvent.id] : []" 
-                item-type="card" :anatomy="'topimage'" />
+            <pGallery entity="events" :project="projectId" size="medium"
+                :filter-ids="selectedEvent ? [selectedEvent.id] : []" item-type="card" :anatomy="'topimage'" />
         </div>
 
         <!-- Action Area (disabled by default) -->
@@ -127,13 +129,15 @@ import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
-import type { Event, Instructor } from '@/types'
+import type { Event, Instructor, Partner } from '@/types'
 
 interface Props {
     projectId: string
     baseEvents: Event[]
-    allInstructors: Instructor[]
-    allLocations: Location[]
+    allInstructors?: Instructor[]  // Legacy support
+    allPartners?: Partner[]  // New unified type (instructors)
+    allLocations?: Location[]  // Legacy support
+    locationPartners?: Partner[]  // New unified type (locations)
     addOnly?: boolean
 }
 
@@ -154,6 +158,23 @@ interface Location {
     zip?: string
     [key: string]: any
 }
+
+// Unified access - prefer partners, fall back to legacy types
+const allInstructors = computed(() => {
+    if (props.allPartners && props.allPartners.length > 0) {
+        // Filter partners with instructor bit set (partner_types & 1 = 1)
+        return props.allPartners.filter(p => (p.partner_types & 1) === 1)
+    }
+    return props.allInstructors || []
+})
+
+const allLocations = computed(() => {
+    if (props.locationPartners && props.locationPartners.length > 0) {
+        // Filter partners with location bit set (partner_types & 2 = 2)
+        return props.locationPartners.filter(p => (p.partner_types & 2) === 2)
+    }
+    return props.allLocations || []
+})
 
 const dropdownRef = ref<HTMLElement | null>(null)
 const locationDropdownRef = ref<HTMLElement | null>(null)

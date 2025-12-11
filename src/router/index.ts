@@ -15,11 +15,29 @@ const router = createRouter({
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
     { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
+    { path: '/sites/:domaincode/events/:id', component: () => import('../views/EventPage.vue') },
 
-    // Protected routes
+    // Protected routes - User Home (cross-project overview)
+    // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)
+    { path: '/home', component: () => import('../views/HomeLayoutHack.vue'), meta: { requiresAuth: true } },
+    { path: '/home-clean', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
+
+    // Protected routes - Project Dashboard (route-based 5 NavStops + images for stepper)
+    // Base route redirects to home section
+    { path: '/projects/:projectId', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/agenda', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/topics', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/images', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/partners', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    { path: '/projects/:projectId/settings', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+
+    // Legacy route - keep for backwards compatibility during transition
+    // TODO v0.5: Remove this once all users migrated to /projects/:projectId routes
+    { path: '/projects', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
+
+    // Other protected routes
     { path: '/tasks', component: () => import('../views/TaskDashboard.vue'), meta: { requiresAuth: true } },
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
-    { path: '/projects', component: () => import('../views/project/ProjectMain.vue'), meta: { requiresAuth: true, role: 'project' } },
 
     // Admin routes
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
@@ -43,8 +61,8 @@ const router = createRouter({
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
     { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },
 
-    // Other routes
-    { path: '/home', component: () => import('../views/index.vue') },
+    // Other routes (demos, legacy)
+    { path: '/legacy-home', component: () => import('../views/index.vue') }, // Renamed from /home
     { path: '/catalog', component: () => import('../views/catalog.vue') },
     { path: '/demo', component: () => import('../views/demo.vue') },
     { path: '/heading', component: () => import('../views/heading.vue') },
@@ -72,19 +90,22 @@ router.beforeEach(async (to, from, next) => {
         return
       }
 
-      // Special handling for /projects route - requires projectId to be set
+      // Legacy /projects route handling - requires projectId in session
+      // New routes: /projects/:projectId/* handle auth via projectId in URL
       if (to.path === '/projects') {
         if (data.user.activeRole !== 'project') {
-          // Must be in project role
-          next('/')
+          next('/home') // Redirect to user home
           return
         }
         if (!data.user.projectId) {
-          // Must have a project selected
-          next('/')
+          next('/home') // Redirect to user home to select project
           return
         }
       }
+
+      // Project-scoped routes: /projects/:projectId/*
+      // Auth check is done in ProjectDashboard.vue via API call
+      // Route guard just ensures user is authenticated
 
       // Check role if specified
       if (to.meta.role && data.user.activeRole !== to.meta.role && data.user.activeRole !== 'admin') {
@@ -92,14 +113,10 @@ router.beforeEach(async (to, from, next) => {
         if (data.user.activeRole === 'base') {
           next('/base')
         } else if (data.user.activeRole === 'project') {
-          // Only go to /projects if projectId is set
-          if (data.user.projectId) {
-            next('/projects')
-          } else {
-            next('/')
-          }
+          // Redirect to user home where they can select a project
+          next('/home')
         } else {
-          next('/')
+          next('/home')
         }
         return
       }

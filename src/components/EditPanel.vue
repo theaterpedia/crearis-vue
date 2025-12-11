@@ -103,7 +103,7 @@ import { sanitizeStatusVal } from '@/composables/useSysreg'
 export interface EditPanelData {
     heading: string
     teaser?: string
-    cimg?: string
+    img_id?: number | null
     header_type?: string
     header_size?: string
     md?: string
@@ -123,7 +123,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     sidebarMode: 'none',
-    availableFields: () => ['heading', 'teaser', 'cimg', 'header_type', 'md'],
+    availableFields: () => ['heading', 'teaser', 'img_id', 'header_type', 'md'],
     entityType: 'posts' // Default to posts
 })
 

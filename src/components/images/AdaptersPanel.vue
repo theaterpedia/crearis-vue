@@ -125,8 +125,8 @@ const adapters = ref([
     right: -400px;
     width: 400px;
     height: 100vh;
-    background: hsl(var(--color-card-bg));
-    box-shadow: -4px 0 12px hsla(0, 0%, 0%, 0.15);
+    background: var(--color-card-bg);
+    box-shadow: -4px 0 12px oklch(0% 0 0 / 0.15);
     transition: right var(--duration) var(--ease);
     z-index: 1000;
     display: flex;
@@ -147,7 +147,7 @@ const adapters = ref([
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    border-bottom: 1px solid hsl(var(--color-border));
+    border-bottom: 1px solid var(--color-border);
 }
 
 .panel-header h3 {
@@ -168,7 +168,7 @@ const adapters = ref([
 }
 
 .btn-close:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .panel-content {
@@ -182,7 +182,7 @@ const adapters = ref([
 
 .info-card {
     padding: 1rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -190,7 +190,7 @@ const adapters = ref([
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: 1px solid hsl(var(--color-border));
+    border-bottom: 1px solid var(--color-border);
 }
 
 .info-row:last-child {
@@ -200,7 +200,7 @@ const adapters = ref([
 .info-row .label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .info-row .value {
@@ -214,14 +214,14 @@ const adapters = ref([
 }
 
 .adapter-slot {
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
     overflow: hidden;
     transition: all var(--duration) var(--ease);
 }
 
 .adapter-slot.active {
-    border-color: hsl(var(--color-success));
+    border-color: var(--color-success);
 }
 
 .adapter-slot.inactive {
@@ -243,7 +243,7 @@ const adapters = ref([
 }
 
 .adapter-header:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .adapter-info {
@@ -256,7 +256,7 @@ const adapters = ref([
     font-size: 0.625rem;
     text-transform: uppercase;
     font-weight: 600;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .adapter-info h4 {
@@ -267,7 +267,7 @@ const adapters = ref([
 
 .adapter-version {
     font-size: 0.75rem;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .adapter-actions {
@@ -278,16 +278,16 @@ const adapters = ref([
 .btn-action {
     width: 2rem;
     height: 2rem;
-    border: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-card-bg));
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
     border-radius: var(--radius-small);
     cursor: pointer;
     transition: all var(--duration) var(--ease);
 }
 
 .btn-action:hover:not(.dimmed) {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 .btn-action.dimmed {
@@ -297,7 +297,7 @@ const adapters = ref([
 
 .adapter-content {
     padding: 1rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -324,8 +324,8 @@ const adapters = ref([
 .btn-control {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-card-bg));
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
     border-radius: var(--radius-small);
     cursor: pointer;
     font-size: 0.875rem;
@@ -333,7 +333,7 @@ const adapters = ref([
 }
 
 .btn-control:hover {
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
 }
 
 .panel-actions {
@@ -341,7 +341,7 @@ const adapters = ref([
     flex-direction: column;
     gap: 0.75rem;
     padding-top: 1rem;
-    border-top: 1px solid hsl(var(--color-border));
+    border-top: 1px solid var(--color-border);
 }
 
 .btn-action-primary,
@@ -355,8 +355,8 @@ const adapters = ref([
 }
 
 .btn-action-primary {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 .btn-action-primary:hover {
@@ -365,10 +365,10 @@ const adapters = ref([
 
 .btn-action-secondary {
     background: transparent;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
 }
 
 .btn-action-secondary:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 </style>

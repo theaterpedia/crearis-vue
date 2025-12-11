@@ -20,7 +20,8 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
                 :anatomy="props.anatomy" :options="getItemOptions(item)" :models="getItemModels(item)"
-                v-bind="item.props || {}" @click="(e: MouseEvent) => handleItemClick(item, e)">
+                v-bind="item.props || {}" @click="(e: MouseEvent) => handleItemClick(item, e)"
+                @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -40,7 +41,7 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
                 :anatomy="props.anatomy" :options="getItemOptions(item)" :models="getItemModels(item)"
-                v-bind="item.props || {}" @click="() => openPreviewModal(item)">
+                v-bind="item.props || {}" @click="() => openPreviewModal(item)" @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -158,6 +159,8 @@ interface Props {
     dataMode?: boolean // True = uses entity data and emits selections, False = static display only
     multiSelect?: boolean // Allow multiple selections
     selectedIds?: number | number[] // v-model for selected item IDs
+    // Trash action
+    showTrash?: boolean // Show trash icon on items for delete action
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -179,6 +182,7 @@ const emit = defineEmits<{
     'selected': [value: EntityItem | EntityItem[]]
     close: []
     'item-click': [item: any, event: MouseEvent]
+    'item-trash': [item: any]
 }>()
 
 const isOpen = computed({
@@ -618,7 +622,8 @@ const getItemOptions = (item: any): ItemOptions => {
         entityIcon: false,
         badge: false,
         counter: false,
-        marker: false
+        marker: false,
+        trash: props.showTrash === true // Show trash icon when enabled
     }
 }
 
@@ -635,6 +640,13 @@ const getItemModels = (item: any): ItemModels => {
         entityType: undefined,
         badgeColor: undefined
     }
+}
+
+/**
+ * Handle trash icon click - emit item-trash event
+ */
+const handleTrash = (item: any) => {
+    emit('item-trash', item)
 }
 
 /**

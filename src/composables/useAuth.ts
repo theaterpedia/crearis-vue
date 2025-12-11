@@ -28,6 +28,9 @@ interface User {
     id: string
     sysmail?: string  // Added for permission checks (owner comparison)
     username: string
+    status?: number | null  // User status for onboarding flow
+    partner_id?: number | null  // Linked partner for onboarding
+    img_id?: number | null  // Avatar image for onboarding
     role?: 'admin' | 'base' | 'project' | 'user'  // Kept for backward compatibility
     availableRoles: string[]
     activeRole: string
@@ -86,7 +89,9 @@ export function useAuth() {
     const checkSession = async () => {
         isLoading.value = true
         try {
-            const response = await fetch('/api/auth/session')
+            const response = await fetch('/api/auth/session', {
+                credentials: 'include'
+            })
             const data = await response.json()
 
             if (data.authenticated && data.user) {
@@ -152,7 +157,7 @@ export function useAuth() {
 
             user.value = null
             isAuthenticated.value = false
-            router?.push('/login')
+            // Don't auto-redirect here - let caller decide
         } catch (error) {
             console.error('Logout error:', error)
         } finally {

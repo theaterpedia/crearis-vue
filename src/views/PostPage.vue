@@ -1,4 +1,12 @@
-<!-- PostPage.vue - Single post view with page configuration -->
+<!--
+  PostPage.vue - Single post view with page configuration
+  
+  TODO v0.5 (Odoo Integration):
+  - Implement slug-from-xmlid for SEO-friendly URLs
+  - Current implementation uses numeric IDs: /sites/:domaincode/posts/:id
+  - Target URL pattern: /sites/:domaincode/posts/:slug
+  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.post-workshop-recap" → "post-workshop-recap"
+-->
 <template>
     <div class="post-page">
         <!-- Edit Panel -->
@@ -385,7 +393,7 @@ async function handleSavePost(data: Record<string, any>) {
         let html = ''
         if (data.md) {
             const { marked } = await import('marked')
-            html = marked(data.md)
+            html = await marked(data.md) as string
         }
 
         // Prepare payload with proper field names and sanitize data

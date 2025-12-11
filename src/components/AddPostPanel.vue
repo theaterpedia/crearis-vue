@@ -41,14 +41,16 @@
             <div class="section-header">
                 <div class="section-label">Vorschau</div>
                 <button class="delete-btn" @click="handleClearSelection" title="Auswahl aufheben">
-                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z">
+                        </path>
                     </svg>
                 </button>
             </div>
-            <pGallery entity="posts" :project="projectId" size="medium" 
-                :filter-ids="selectedPost ? [selectedPost.id] : []" 
-                item-type="card" :anatomy="'topimage'" />
+            <pGallery entity="posts" :project="projectId" size="medium"
+                :filter-ids="selectedPost ? [selectedPost.id] : []" item-type="card" :anatomy="'topimage'" />
         </div>
 
         <!-- Action Area (disabled by default) -->
@@ -105,7 +107,7 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
-import type { Post, Instructor } from '@/types'
+import type { Post, Instructor, Partner } from '@/types'
 
 interface ProjectUser {
     id: number
@@ -116,7 +118,8 @@ interface ProjectUser {
 const props = defineProps<{
     projectId: string
     basePosts: Post[]
-    allInstructors: Instructor[]
+    allInstructors?: Instructor[]  // Legacy support
+    allPartners?: Partner[]  // New unified type
 }>()
 
 const emit = defineEmits<{

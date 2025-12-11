@@ -81,6 +81,65 @@ export interface Instructor {
     updated_at?: string
 }
 
+/**
+ * Partner - Unified entity for instructors, locations, participants (Migration 061)
+ * Uses partner_types bitmask: 1=instructor, 2=location, 4=participant, 8=organisation
+ */
+export interface Partner {
+    id: number
+    xmlid?: string
+    name: string
+    partner_types: number  // Bitmask: 1=instructor, 2=location, 4=participant, 8=organisation
+
+    // Contact info
+    email?: string
+    phone?: string
+
+    // Address info (primarily for locations)
+    street?: string
+    city?: string
+    zip?: string
+    country_id?: string
+
+    // Content fields
+    description?: string
+    teaser?: string
+    cimg?: string
+    header_type?: string
+    md?: string
+    html?: string
+
+    // Location-specific
+    is_company?: boolean
+    is_location_provider?: boolean
+
+    // Participant-specific
+    age?: number
+    participant_type?: string
+
+    // Relations
+    project_id?: number
+    img_id?: number
+
+    // Status and sysreg
+    status?: number
+    config?: number
+    rtags?: number
+    ttags?: number
+    ctags?: number
+    dtags?: number
+
+    isbase?: number
+    created_at?: string
+    updated_at?: string
+}
+
+// Helper type guards for Partner
+export const isInstructor = (p: Partner) => (p.partner_types & 1) === 1
+export const isLocation = (p: Partner) => (p.partner_types & 2) === 2
+export const isParticipant = (p: Partner) => (p.partner_types & 4) === 4
+export const isOrganisation = (p: Partner) => (p.partner_types & 8) === 8
+
 export interface Participant {
     id: number  // Auto-increment INTEGER (Migration 019)
     name: string

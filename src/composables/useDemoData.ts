@@ -59,6 +59,19 @@ interface Participant {
   'event_id/id': string
 }
 
+// Partner unifies Instructor, Location, Participant via partner_types bitmask
+// bit 0 (1) = instructor, bit 1 (2) = location, bit 2 (4) = participant
+interface Partner {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  city?: string
+  cimg?: string
+  description?: string
+  partner_types: number  // Bitmask: 1=instructor, 2=location, 4=participant, 8=organisation
+}
+
 
 
 export const useDemoData = () => {

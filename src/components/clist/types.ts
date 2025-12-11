@@ -46,6 +46,9 @@ export interface ItemOptions {
 
     /** Show colored marker bar (left side accent) */
     marker?: boolean
+
+    /** Show trash icon for delete action */
+    trash?: boolean
 }
 
 /**

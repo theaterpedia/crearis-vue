@@ -6,9 +6,11 @@ import { sessions } from '../auth/login.post'
 const CONFIGROLE_PARTNER = 2
 const CONFIGROLE_PARTICIPANT = 4
 const CONFIGROLE_MEMBER = 8
+const CONFIGROLE_CREATOR = 16  // p_creator bit
 
-// Map configrole bits to role name
+// Map configrole bits to role name (check creator first as it takes precedence)
 function configroleToName(configrole: number): string | null {
+    if (configrole & CONFIGROLE_CREATOR) return 'p_creator'
     if (configrole & CONFIGROLE_MEMBER) return 'member'
     if (configrole & CONFIGROLE_PARTICIPANT) return 'participant'
     if (configrole & CONFIGROLE_PARTNER) return 'partner'
