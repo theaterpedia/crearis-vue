@@ -59,10 +59,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role, instructor_id, status
+    SELECT id, sysmail, extmail, username, password, role, partner_id, status
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status'> | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'partner_id' | 'status'> | undefined
 
     if (!user) {
         throw createError({
@@ -164,21 +164,23 @@ export default defineEventHandler(async (event) => {
     }
 
     // 3. Find projects where user is instructor (via events)
-    // Note: Check if user has instructor_id set, then find events taught by that instructor
-    // Skip this query if user has no instructor_id or if there are no instructors yet
+    // Note: Check if user has partner_id set, then find events taught by that partner (as instructor)
+    // Skip this query if user has no partner_id or if there are no instructors yet
     console.log('[LOGIN] Finding instructor projects')
     let instructorProjects: Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>> = []
 
-    if (user.instructor_id && typeof user.instructor_id === 'number') {
+    if (user.partner_id && typeof user.partner_id === 'number') {
         try {
+            // Join through partners table - partner must have instructor flag (partner_types & 1 = 1)
             instructorProjects = await db.all(`
                 SELECT DISTINCT p.domaincode, p.heading, p.owner_id
                 FROM projects p
                 INNER JOIN events e ON p.id = e.project_id
                 INNER JOIN event_instructors ei ON e.id = ei.event_id
-                WHERE ei.instructor_id = $1
+                INNER JOIN partners pa ON ei.instructor_id = pa.id
+                WHERE pa.id = $1 AND (pa.partner_types & 1) = 1
                 ORDER BY p.heading ASC
-            `, [user.instructor_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
+            `, [user.partner_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
         } catch (error) {
             console.error('[LOGIN] Error finding instructor projects:', error)
             // Continue without instructor projects if query fails

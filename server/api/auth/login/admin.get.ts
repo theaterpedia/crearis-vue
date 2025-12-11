@@ -25,10 +25,10 @@ export default defineEventHandler(async (event) => {
 
     // Find admin user
     const user = await db.get(`
-        SELECT id, sysmail, extmail, username, password, role, instructor_id, status
+        SELECT id, sysmail, extmail, username, password, role, partner_id, status
         FROM users
         WHERE sysmail = ? OR extmail = ?
-    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'instructor_id' | 'status'> | undefined
+    `, [adminEmail, adminEmail]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'partner_id' | 'status'> | undefined
 
     if (!user) {
         throw createError({
@@ -79,7 +79,13 @@ export default defineEventHandler(async (event) => {
     // Determine available roles
     const availableRoles: string[] = ['user']
     if (user.role === 'admin') availableRoles.push('admin')
-    if (user.instructor_id) availableRoles.push('instructor')
+    // Check if user has partner_id linked to an instructor partner
+    if (user.partner_id) {
+        const partner = await db.get(`SELECT partner_types FROM partners WHERE id = ?`, [user.partner_id])
+        if (partner && (partner.partner_types & 1) === 1) {
+            availableRoles.push('instructor')
+        }
+    }
 
     // Default active role - prefer admin, then instructor, then user
     const activeRole = availableRoles.includes('admin')

@@ -203,30 +203,31 @@ export async function processUserPassword(
 }
 
 /**
- * Create or link instructor for user
- * Returns instructor_id or null
+ * Create or link partner for user
+ * Returns partner_id or null
+ * Note: After migration 061, instructors are stored in the partners table with partner_types & 1 = 1
  */
-export async function processUserInstructor(
+export async function processUserPartner(
     user: { username: string, sysmail: string, extmail?: string },
-    instructorXmlId: string | null,
+    partnerXmlId: string | null,
     db: DatabaseAdapter
 ): Promise<number | null> {
-    if (!instructorXmlId || !instructorXmlId.trim()) {
+    if (!partnerXmlId || !partnerXmlId.trim()) {
         return null
     }
 
-    // Check if instructor exists by xmlid
-    const existingInstructor = await db.get(
-        'SELECT id FROM instructors WHERE xmlid = ?',
-        [instructorXmlId]
+    // Check if partner exists by xmlid (using instructors_v view for backwards compatibility)
+    const existingPartner = await db.get(
+        'SELECT id FROM partners WHERE xmlid = ?',
+        [partnerXmlId]
     )
 
-    if (existingInstructor) {
-        return existingInstructor.id
+    if (existingPartner) {
+        return existingPartner.id
     }
 
-    // Create new instructor from user data
-    const firstSlug = instructorXmlId.split('.')[0]
+    // Create new partner from user data (as instructor type)
+    const firstSlug = partnerXmlId.split('.')[0]
     let regioId: number | null = null
 
     // Check if first slug matches a project with is_regio = true
@@ -240,25 +241,25 @@ export async function processUserInstructor(
     }
 
     // Use extmail if available, fallback to sysmail
-    const instructorEmail = user.extmail && user.extmail.trim() ? user.extmail : user.sysmail
+    const partnerEmail = user.extmail && user.extmail.trim() ? user.extmail : user.sysmail
 
     if (db.type === 'postgresql') {
-        const newInstructor = await db.get(`
-            INSERT INTO instructors (xmlid, name, email, regio_id, isbase)
-            VALUES ($1, $2, $3, $4, 0)
+        const newPartner = await db.get(`
+            INSERT INTO partners (xmlid, name, email, regio_id, partner_types, isbase, status)
+            VALUES ($1, $2, $3, $4, 1, 0, 64)
             RETURNING id
-        `, [instructorXmlId, user.username, instructorEmail, regioId])
-        return newInstructor?.id || null
+        `, [partnerXmlId, user.username, partnerEmail, regioId])
+        return newPartner?.id || null
     } else {
         await db.run(`
-            INSERT INTO instructors (xmlid, name, email, regio_id, isbase)
-            VALUES (?, ?, ?, ?, 0)
-        `, [instructorXmlId, user.username, instructorEmail, regioId])
-        const newInstructor = await db.get(
-            'SELECT id FROM instructors WHERE xmlid = ?',
-            [instructorXmlId]
+            INSERT INTO partners (xmlid, name, email, regio_id, partner_types, isbase, status)
+            VALUES (?, ?, ?, ?, 1, 0, 64)
+        `, [partnerXmlId, user.username, partnerEmail, regioId])
+        const newPartner = await db.get(
+            'SELECT id FROM partners WHERE xmlid = ?',
+            [partnerXmlId]
         )
-        return newInstructor?.id || null
+        return newPartner?.id || null
     }
 }
 
@@ -269,13 +270,13 @@ export async function processUserInstructor(
 export async function importUser(
     user: any,
     hashedPassword: string,
-    instructorId: number | null,
+    partnerId: number | null,
     db: DatabaseAdapter
 ): Promise<boolean> {
     if (db.type === 'postgresql') {
         const result = await db.run(`
             INSERT INTO users 
-            (sysmail, extmail, username, password, role, lang, instructor_id, created_at)
+            (sysmail, extmail, username, password, role, lang, partner_id, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
             ON CONFLICT(sysmail) DO NOTHING
         `, [
@@ -285,14 +286,14 @@ export async function importUser(
             hashedPassword,
             user.role || 'user',
             user.lang || 'de',
-            instructorId
+            partnerId
         ])
         // PostgreSQL returns rowCount for INSERT ... ON CONFLICT DO NOTHING
         return true // Assume success if no error
     } else {
         await db.run(`
             INSERT OR IGNORE INTO users 
-            (sysmail, extmail, username, password, role, lang, instructor_id, created_at)
+            (sysmail, extmail, username, password, role, lang, partner_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
         `, [
             user.sysmail,
@@ -301,7 +302,7 @@ export async function importUser(
             hashedPassword,
             user.role || 'user',
             user.lang || 'de',
-            instructorId
+            partnerId
         ])
         return true
     }

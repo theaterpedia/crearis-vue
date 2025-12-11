@@ -14,7 +14,7 @@
  * - Appends passwords to PASSWORDS.csv
  * - Renames processed file with date prefix
  * - Validates CSV data before import
- * - Creates instructors if needed
+ * - Creates partners if needed (for instructor/location/participant roles)
  * - Uses ON CONFLICT DO NOTHING for idempotency
  */
 
@@ -62,7 +62,7 @@ async function main() {
         loadExistingPasswords,
         savePasswords,
         processUserPassword,
-        processUserInstructor,
+        processUserPartner,
         importUser,
         validateUserRow
     } = await import('../utils/user-import-utils.js')
@@ -90,10 +90,10 @@ async function main() {
         console.error(`\n❌ Import file not found: ${importFilePath}`)
         console.log('\n📝 To import users:')
         console.log(`   1. Create file: ${importFilePath}`)
-        console.log('   2. Add CSV data with headers: sysmail,extmail,username,password,role,lang,instructor_id/xmlid')
+        console.log('   2. Add CSV data with headers: sysmail,extmail,username,password,role,lang,partner_xmlid')
         console.log('   3. Run this script again')
         console.log('\n💡 Example CSV:')
-        console.log('   sysmail,extmail,username,password,role,lang,instructor_id/xmlid')
+        console.log('   sysmail,extmail,username,password,role,lang,partner_xmlid')
         console.log('   "john.doe@example.com","","John Doe","","user","de",""')
         console.log('   "jane.smith@example.com","jane@company.com","Jane Smith","","user","en","project.partner.jane_smith"')
         process.exit(1)
@@ -179,19 +179,19 @@ async function main() {
             // Add to password entries
             passwordEntries.push(passwordResult.passwordEntry)
 
-            // Process instructor
-            const instructorXmlId = user['instructor_id/xmlid'] || user.instructor_id
-            let instructorId: number | null = null
+            // Process partner
+            const partnerXmlId = user['partner_xmlid'] || user['instructor_id/xmlid'] || user.instructor_id
+            let partnerId: number | null = null
 
-            if (instructorXmlId && instructorXmlId.trim()) {
-                instructorId = await processUserInstructor(user, instructorXmlId, database)
-                if (instructorId) {
-                    console.log(`      ✓ Linked to instructor: ${instructorXmlId}`)
+            if (partnerXmlId && partnerXmlId.trim()) {
+                partnerId = await processUserPartner(user, partnerXmlId, database)
+                if (partnerId) {
+                    console.log(`      ✓ Linked to partner: ${partnerXmlId}`)
                 }
             }
 
             // Import user
-            const created = await importUser(user, passwordResult.hashedPassword, instructorId, database)
+            const created = await importUser(user, passwordResult.hashedPassword, partnerId, database)
             if (created) {
                 console.log(`   ✅ Created user: ${user.username} (${user.sysmail})`)
                 stats.newUsers++
