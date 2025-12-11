@@ -152,7 +152,7 @@ export function useAuth() {
 
             user.value = null
             isAuthenticated.value = false
-            router?.push('/login')
+            // Don't auto-redirect here - let caller decide
         } catch (error) {
             console.error('Logout error:', error)
         } finally {

@@ -19,14 +19,15 @@
         <main class="home-layout__main">
             <!-- Welcome Section -->
             <section class="home-layout__welcome">
-                <h1>Willkommen, {{ user?.username || 'User' }}!</h1>
-                <p class="home-layout__welcome-sub">Wähle ein Projekt oder erstelle ein neues.</p>
+                <h1>Hallo {{ userFirstName }}!</h1>
+                <p class="home-layout__welcome-sub">{{ userStatusText }}</p>
             </section>
 
             <!-- Projects Grid -->
             <section class="home-layout__projects">
                 <div class="home-layout__section-header">
-                    <h2>Deine Projekte</h2>
+                    <h2>{{ projects.length > 0 ? 'Deine Projekte' : 'Du bist noch in keinem Projekt registriert :(' }}
+                    </h2>
                     <button class="btn btn--primary btn--sm" @click="createProject">
                         <Plus :size="16" />
                         Neues Projekt
@@ -38,10 +39,7 @@
                 </div>
 
                 <div v-else-if="projects.length === 0" class="home-layout__empty">
-                    <p>Du hast noch keine Projekte.</p>
-                    <button class="btn btn--primary" @click="createProject">
-                        Erstes Projekt erstellen
-                    </button>
+                    <p>Warte auf Einladung oder beantrage ein neues Projekt.</p>
                 </div>
 
                 <div v-else class="home-layout__grid">
@@ -129,6 +127,26 @@ const recentActivity = ref<any[]>([]) // Placeholder for future
 const isDense = ref(false)
 
 // ============================================================
+// COMPUTED
+// ============================================================
+
+const userFirstName = computed(() => {
+    const username = user.value?.username || 'Gast'
+    // Extract firstname (first word before space)
+    return username.split(' ')[0]
+})
+
+const userStatusText = computed(() => {
+    const status = user.value?.status
+    if (!status || status === 1) return 'Status: Neu – E-Mail noch nicht verifiziert'
+    if (status === 8) return 'Status: Demo – bitte E-Mail verifizieren für vollen Zugang'
+    if (status === 64) return 'Status: Entwurf – Profil unvollständig'
+    if (status === 512 || status === 1024) return 'Status: Verifiziert ✓'
+    if (status >= 4096) return 'Status: Aktiv ✓'
+    return 'Wähle ein Projekt oder erstelle ein neues.'
+})
+
+// ============================================================
 // METHODS
 // ============================================================
 
@@ -158,14 +176,14 @@ function openProject(project: any) {
 }
 
 function createProject() {
-    // TODO: Open create project dialog or navigate to wizard
-    console.log('Create new project')
-    router.push('/getstarted')
+    // Alpha status - direct request to Hans
+    alert('Das System ist im Alpha-Status, bitte beantrage ein neues Projekt direkt bei Hans :)')
 }
 
-function handleLogout() {
-    logout()
-    router.push('/login')
+async function handleLogout() {
+    await logout()
+    // Force full page navigation to clear component state
+    window.location.href = '/'
 }
 
 function getRoleLabel(role: string | null): string {

@@ -50,7 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     close: []
-})
+}>()
 
 // Auto-adjust placement based on sidebar mode
 const placementClass = computed(() => {

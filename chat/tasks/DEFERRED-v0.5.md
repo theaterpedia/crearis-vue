@@ -51,6 +51,30 @@ Clarify ambiguous usage of 'home' and 'home'-routes in file-system and the meani
 
 ---
 
+## User/Partner Name Fields
+
+### Add firstname/lastname Support
+
+Currently `/home` route uses `username` and splits on space to get firstname. This is a workaround.
+
+**Task:** Update users/partners tables to support proper name fields:
+
+- [ ] Add `firstname`, `lastname` columns to `users` table
+- [ ] Add `firstname`, `lastname` columns to `partners` table (if not already from Odoo)
+- [ ] Update `/api/auth/login.post.ts` to return firstname in session
+- [ ] Update `HomeLayout.vue` to use `user.firstname` instead of split hack
+- [ ] Consider: sync with Odoo `res.partner` name fields
+
+**Current Workaround (HomeLayout.vue):**
+```ts
+const userFirstName = computed(() => {
+    const username = user.value?.username || 'Gast'
+    return username.split(' ')[0]
+})
+```
+
+---
+
 ## Core v0.5 Scope
 
 ### Comments/PostIT Polymorphic Routing

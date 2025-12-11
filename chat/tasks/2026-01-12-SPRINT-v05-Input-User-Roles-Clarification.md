@@ -87,6 +87,53 @@ WHERE ei.event_id = ?;
 
 ---
 
+## Schema Cleanup: Partners Table (v0.5)
+
+### Fields to Review/Refactor
+
+| Field | Issue | Recommendation |
+|-------|-------|----------------|
+| `participant_type` | Duplicates `partner_types` bitmask logic | **DROP** - use bitmask instead |
+| `is_location_provider` | Redundant with `partner_types & 2` | **DROP** - use bitmask |
+| `is_company` | Redundant with `partner_types & 8` | **DROP** - use bitmask |
+| `project_id` | Oversimplifies - partners can be in multiple projects | **DROP** - use `project_members` relation |
+| `age` | Oversimplified - should be birth date | **RENAME** to `date_of_birth` (DATE type) |
+
+### Instructor Flag: Users vs Partners?
+
+**Question:** Should `is_instructor` be on `users` table instead of `partners.partner_types`?
+
+**Arguments for `users.is_instructor`:**
+- Instructor is a **user capability**, not a partner entity type
+- Login flow checks user credentials first, then partner data
+- Simpler query: `SELECT * FROM users WHERE is_instructor = true`
+
+**Arguments against (keep in `partners`):**
+- Partners without user accounts could still be instructors (external instructors)
+- Consistent bitmask approach for all role types
+- Already implemented in migration 061
+
+**Recommendation:** Keep in `partners.partner_types` for now, but add `users.is_instructor` BOOLEAN as a **cached/denormalized** flag set by trigger when `partners.partner_types & 1 = 1` and user links to that partner.
+
+### Migration 063 Tasks
+
+```sql
+-- Drop redundant columns
+ALTER TABLE partners DROP COLUMN IF EXISTS participant_type;
+ALTER TABLE partners DROP COLUMN IF EXISTS is_location_provider;
+ALTER TABLE partners DROP COLUMN IF EXISTS is_company;
+ALTER TABLE partners DROP COLUMN IF EXISTS project_id;
+
+-- Refactor age to date_of_birth
+ALTER TABLE partners RENAME COLUMN age TO date_of_birth;
+ALTER TABLE partners ALTER COLUMN date_of_birth TYPE DATE USING NULL;
+
+-- Optional: Add cached is_instructor to users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_instructor BOOLEAN DEFAULT FALSE;
+```
+
+---
+
 ## Related Files
 
 - `server/database/migrations/061_partners_refactor.ts`
