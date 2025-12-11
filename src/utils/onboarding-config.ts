@@ -131,7 +131,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
  */
 export function getCurrentOnboardingStep(user: any): OnboardingStep | null {
     if (!user || user.status === undefined) return ONBOARDING_STEPS[0] ?? null
-    
+
     // Find step where fromStatus matches user status
     const step = ONBOARDING_STEPS.find(step => step.fromStatus === user.status)
     return step ?? null
@@ -142,7 +142,7 @@ export function getCurrentOnboardingStep(user: any): OnboardingStep | null {
  */
 export function getCompletedSteps(user: any): OnboardingStep[] {
     if (!user) return []
-    
+
     return ONBOARDING_STEPS.filter(step => user.status > step.toStatus)
 }
 
@@ -152,7 +152,7 @@ export function getCompletedSteps(user: any): OnboardingStep[] {
 export function canAdvanceToNextStep(user: any): boolean {
     const currentStep = getCurrentOnboardingStep(user)
     if (!currentStep) return false
-    
+
     return currentStep.requirements.every(req => req.check(user))
 }
 
@@ -162,6 +162,6 @@ export function canAdvanceToNextStep(user: any): boolean {
 export function getIncompleteRequirements(user: any): OnboardingRequirement[] {
     const currentStep = getCurrentOnboardingStep(user)
     if (!currentStep) return []
-    
+
     return currentStep.requirements.filter(req => !req.check(user))
 }

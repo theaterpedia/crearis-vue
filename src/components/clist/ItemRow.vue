@@ -47,8 +47,10 @@
             <!-- Trash icon (bottom-right of avatar) -->
             <div v-if="showTrash" class="trash-icon" @click.stop="emit('trash')" title="Remove item">
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.5 5.5v6M8 5.5v6M10.5 5.5v6M3 3.5h10M6 3.5V2.5A.5.5 0 016.5 2h3a.5.5 0 01.5.5v1M4.5 3.5l.5 10a1 1 0 001 1h4a1 1 0 001-1l.5-10" 
-                        stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    <path
+                        d="M5.5 5.5v6M8 5.5v6M10.5 5.5v6M3 3.5h10M6 3.5V2.5A.5.5 0 016.5 2h3a.5.5 0 01.5.5v1M4.5 3.5l.5 10a1 1 0 001 1h4a1 1 0 001-1l.5-10"
+                        stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
+                        fill="none" />
                 </svg>
             </div>
 

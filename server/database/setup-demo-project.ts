@@ -70,18 +70,18 @@ const DEMO_INSTRUCTORS = [
 
 async function createDemoProject(db: DbClient): Promise<number> {
     console.log('📦 Creating demo project...')
-    
+
     // Check if already exists
     const existing = await db.get<{ id: number }>(
         'SELECT id FROM projects WHERE domaincode = $1',
         [DEMO_PROJECT.domaincode]
     )
-    
+
     if (existing) {
         console.log(`  ✓ Demo project already exists (id: ${existing.id})`)
         return existing.id
     }
-    
+
     // Create new project
     const result = await db.get<{ id: number }>(
         `INSERT INTO projects (domaincode, title, type, status, owner_id, description, created_at, updated_at)
@@ -96,21 +96,21 @@ async function createDemoProject(db: DbClient): Promise<number> {
             DEMO_PROJECT.description
         ]
     )
-    
+
     console.log(`  ✓ Created demo project (id: ${result?.id})`)
     return result?.id || 0
 }
 
 async function createDemoEntities(db: DbClient, projectId: number): Promise<void> {
     console.log('\n🎭 Creating demo entities...')
-    
+
     // Create events
     for (const event of DEMO_EVENTS) {
         const existing = await db.get<{ id: number }>(
             'SELECT id FROM events WHERE xmlid = $1',
             [event.xmlid]
         )
-        
+
         if (!existing) {
             await db.run(
                 `INSERT INTO events (xmlid, title, teaser, status, project_id, created_at, updated_at)
@@ -122,14 +122,14 @@ async function createDemoEntities(db: DbClient, projectId: number): Promise<void
             console.log(`  - Event exists: ${event.xmlid}`)
         }
     }
-    
+
     // Create posts
     for (const post of DEMO_POSTS) {
         const existing = await db.get<{ id: number }>(
             'SELECT id FROM posts WHERE xmlid = $1',
             [post.xmlid]
         )
-        
+
         if (!existing) {
             await db.run(
                 `INSERT INTO posts (xmlid, title, teaser, status, project_id, created_at, updated_at)
@@ -141,14 +141,14 @@ async function createDemoEntities(db: DbClient, projectId: number): Promise<void
             console.log(`  - Post exists: ${post.xmlid}`)
         }
     }
-    
+
     // Create instructors
     for (const instructor of DEMO_INSTRUCTORS) {
         const existing = await db.get<{ id: number }>(
             'SELECT id FROM instructors WHERE xmlid = $1',
             [instructor.xmlid]
         )
-        
+
         if (!existing) {
             await db.run(
                 `INSERT INTO instructors (xmlid, entityname, status, project_id, created_at, updated_at)
@@ -164,66 +164,66 @@ async function createDemoEntities(db: DbClient, projectId: number): Promise<void
 
 async function resetDemoProject(db: DbClient): Promise<void> {
     console.log('🔄 Resetting demo project...')
-    
+
     // Get project ID
     const project = await db.get<{ id: number }>(
         'SELECT id FROM projects WHERE domaincode = $1',
         [DEMO_PROJECT.domaincode]
     )
-    
+
     if (!project) {
         console.log('  ⚠ Demo project not found, creating new...')
         const projectId = await createDemoProject(db)
         await createDemoEntities(db, projectId)
         return
     }
-    
+
     const projectId = project.id
-    
+
     // Delete all project members except owner
     await db.run(
         'DELETE FROM projects_members WHERE project_id = $1',
         [projectId]
     )
     console.log('  ✓ Cleared project members')
-    
+
     // Reset events to initial state
     await db.run(
         'DELETE FROM events WHERE project_id = $1',
         [projectId]
     )
     console.log('  ✓ Cleared events')
-    
+
     // Reset posts
     await db.run(
         'DELETE FROM posts WHERE project_id = $1',
         [projectId]
     )
     console.log('  ✓ Cleared posts')
-    
+
     // Reset instructors
     await db.run(
         'DELETE FROM instructors WHERE project_id = $1',
         [projectId]
     )
     console.log('  ✓ Cleared instructors')
-    
+
     // Re-create demo entities
     await createDemoEntities(db, projectId)
-    
+
     console.log('\n✅ Demo project reset complete!')
 }
 
 async function main() {
     const command = process.argv[2] || 'create'
-    
+
     console.log('='.repeat(50))
     console.log('Demo Project Setup')
     console.log('='.repeat(50))
-    
+
     // Use the imported db instance directly
     const dbClient: DbClient = db
-    
+
     try {
         if (command === 'reset') {
             await resetDemoProject(dbClient)

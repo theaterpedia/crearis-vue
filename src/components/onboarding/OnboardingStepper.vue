@@ -14,16 +14,16 @@
 
         <!-- Steps -->
         <div class="stepper-steps">
-            <div v-for="(step, index) in visibleSteps" :key="step.id" class="stepper-item"
-                :class="{ 
-                    'active': isCurrentStep(step), 
-                    'completed': isStepCompleted(step),
-                    'upcoming': isStepUpcoming(step)
-                }" @click="goToStep(step)">
+            <div v-for="(step, index) in visibleSteps" :key="step.id" class="stepper-item" :class="{
+                'active': isCurrentStep(step),
+                'completed': isStepCompleted(step),
+                'upcoming': isStepUpcoming(step)
+            }" @click="goToStep(step)">
                 <!-- Step Circle -->
                 <div class="step-circle">
                     <svg v-if="isStepCompleted(step)" fill="currentColor" height="16" viewBox="0 0 256 256" width="16">
-                        <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/>
+                        <path
+                            d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
                     </svg>
                     <span v-else>{{ index + 1 }}</span>
                 </div>
@@ -44,11 +44,12 @@
             <div v-if="currentStep" class="requirements-list">
                 <h3>Was ist zu tun:</h3>
                 <ul>
-                    <li v-for="req in currentStep.requirements" :key="req.id"
-                        :class="{ completed: req.check(user) }">
+                    <li v-for="req in currentStep.requirements" :key="req.id" :class="{ completed: req.check(user) }">
                         <span class="req-icon">
-                            <svg v-if="req.check(user)" fill="currentColor" height="16" viewBox="0 0 256 256" width="16">
-                                <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/>
+                            <svg v-if="req.check(user)" fill="currentColor" height="16" viewBox="0 0 256 256"
+                                width="16">
+                                <path
+                                    d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
                             </svg>
                             <span v-else class="req-bullet">○</span>
                         </span>
@@ -65,7 +66,8 @@
                 <button class="btn-primary" @click="advanceStep">
                     Weiter
                     <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16">
-                        <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
+                        <path
+                            d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z" />
                     </svg>
                 </button>
             </div>
@@ -75,12 +77,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { 
-    ONBOARDING_STEPS, 
-    getCurrentOnboardingStep, 
+import {
+    ONBOARDING_STEPS,
+    getCurrentOnboardingStep,
     canAdvanceToNextStep,
     type OnboardingStep,
-    type OnboardingRequirement 
+    type OnboardingRequirement
 } from '@/utils/onboarding-config'
 import { STATUS } from '@/utils/status-constants'
 
@@ -105,7 +107,7 @@ const currentStep = computed(() => getCurrentOnboardingStep(props.user))
 // Visible steps (filtered if needed)
 const visibleSteps = computed(() => {
     if (!props.filterByRole) return ONBOARDING_STEPS.filter(s => !s.optional)
-    
+
     // Filter based on user roles
     const hasProjectRole = props.user?.hasProjectRole
     return ONBOARDING_STEPS.filter(step => {

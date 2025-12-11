@@ -10,25 +10,25 @@
 export const STATUS = {
     /** Newly created, needs verification */
     NEW: 1,        // bits 0-2
-    
+
     /** Demo/testing mode */
     DEMO: 8,       // bits 3-5
-    
+
     /** Draft/unverified */
     DRAFT: 64,     // bits 6-8
-    
+
     /** Confirmed (generic) */
     CONFIRMED: 512, // bits 9-11
-    
+
     /** Confirmed user subcategory */
     CONFIRMED_USER: 1024,
-    
+
     /** Released/published */
     RELEASED: 4096, // bits 12-14
-    
+
     /** Archived/inactive */
     ARCHIVED: 32768, // bit 15
-    
+
     /** Marked for deletion */
     TRASH: 65536   // bit 16
 } as const

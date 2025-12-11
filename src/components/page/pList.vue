@@ -16,7 +16,7 @@
             :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt"
             :status-eq="statusEq" :status-gt="statusGt" :size="size" :width="width" :columns="columns"
             :heading-level="headingLevel" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
-            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick" 
+            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick"
             @item-trash="handleItemTrash" />
 
         <!-- Route Navigation Modal (if using route-modal mode) -->
@@ -73,7 +73,7 @@ interface Props {
     onActivate?: 'modal' | 'route' | 'route-modal'
     routePath?: string // e.g., '/sites/:project/posts/:id' where :id will be replaced
     routeButtonText?: string
-    
+
     // Trash functionality
     showTrash?: boolean
 
@@ -123,7 +123,7 @@ function buildRoutePath(item: any): string {
             .replace(':project', props.project || item.domaincode || '')
             .replace(':domaincode', props.project || item.domaincode || '')
     }
-    
+
     // Auto-generate route based on entity type
     const domaincode = props.project || item.domaincode || ''
     switch (props.entity) {
@@ -139,7 +139,7 @@ function buildRoutePath(item: any): string {
 // Handle item click
 const handleItemClick = (item: any) => {
     emit('item-click', item)
-    
+
     if (props.onActivate === 'route') {
         // Navigate directly
         const path = buildRoutePath(item)

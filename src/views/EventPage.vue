@@ -52,19 +52,21 @@
                                 <StatusBadge :value="statusValueString" :label="statusLabel" variant="soft"
                                     size="medium" />
                             </div>
-                            
+
                             <!-- Event-specific: Date & Time -->
                             <div v-if="event.date_begin || event.date_end" class="event-datetime">
                                 <p><strong>📅 Datum:</strong> {{ formatEventDate() }}</p>
                                 <p v-if="eventTime"><strong>🕐 Zeit:</strong> {{ eventTime }}</p>
                             </div>
-                            
+
                             <!-- Event-specific: Location -->
-                            <p v-if="event.location_name || event.location"><strong>📍 Ort:</strong> {{ event.location_name || event.location }}</p>
-                            
+                            <p v-if="event.location_name || event.location"><strong>📍 Ort:</strong> {{
+                                event.location_name ||
+                                event.location }}</p>
+
                             <!-- Event-specific: Instructor -->
                             <p v-if="event.instructor_name"><strong>👤 Leitung:</strong> {{ event.instructor_name }}</p>
-                            
+
                             <!-- Event Type -->
                             <p v-if="event.event_type"><strong>Typ:</strong> {{ event.event_type }}</p>
                         </div>
@@ -96,7 +98,7 @@
                                 </svg>
                             </button>
                         </div>
-                        
+
                         <!-- Teaser -->
                         <p v-if="event.teaser" class="event-teaser">{{ event.teaser }}</p>
 
@@ -104,7 +106,7 @@
                         <div v-if="event.html" v-html="event.html" class="event-html-content"></div>
                         <div v-else-if="event.md" class="event-markdown-content">{{ event.md }}</div>
                         <p v-else><em>No description available for this event.</em></p>
-                        
+
                         <!-- Registration CTA (if event allows registration) -->
                         <div v-if="event.seats_max && event.seats_max > 0" class="event-registration">
                             <div class="registration-info">

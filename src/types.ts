@@ -90,17 +90,17 @@ export interface Partner {
     xmlid?: string
     name: string
     partner_types: number  // Bitmask: 1=instructor, 2=location, 4=participant, 8=organisation
-    
+
     // Contact info
     email?: string
     phone?: string
-    
+
     // Address info (primarily for locations)
     street?: string
     city?: string
     zip?: string
     country_id?: string
-    
+
     // Content fields
     description?: string
     teaser?: string
@@ -108,19 +108,19 @@ export interface Partner {
     header_type?: string
     md?: string
     html?: string
-    
+
     // Location-specific
     is_company?: boolean
     is_location_provider?: boolean
-    
+
     // Participant-specific
     age?: number
     participant_type?: string
-    
+
     // Relations
     project_id?: number
     img_id?: number
-    
+
     // Status and sysreg
     status?: number
     config?: number
@@ -128,7 +128,7 @@ export interface Partner {
     ttags?: number
     ctags?: number
     dtags?: number
-    
+
     isbase?: number
     created_at?: string
     updated_at?: string

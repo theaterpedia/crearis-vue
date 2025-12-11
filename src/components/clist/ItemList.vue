@@ -41,8 +41,7 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :style-compact="styleCompact" :heading-level="headingLevel"
                 :anatomy="props.anatomy" :options="getItemOptions(item)" :models="getItemModels(item)"
-                v-bind="item.props || {}" @click="() => openPreviewModal(item)"
-                @trash="() => handleTrash(item)">
+                v-bind="item.props || {}" @click="() => openPreviewModal(item)" @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>

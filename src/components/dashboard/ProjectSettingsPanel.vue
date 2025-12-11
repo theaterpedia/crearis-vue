@@ -20,23 +20,24 @@
                 </h3>
                 <span class="toggle-icon" :class="{ expanded: expandedSections.theme }">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" />
                     </svg>
                 </span>
             </div>
             <div v-if="expandedSections.theme" class="section-content">
                 <!-- Theme subtabs -->
                 <div class="subtabs">
-                    <button v-for="tab in themeTabs" :key="tab.id" 
-                        class="subtab-button" :class="{ active: activeThemeTab === tab.id }"
-                        @click="activeThemeTab = tab.id">
+                    <button v-for="tab in themeTabs" :key="tab.id" class="subtab-button"
+                        :class="{ active: activeThemeTab === tab.id }" @click="activeThemeTab = tab.id">
                         {{ tab.label }}
                     </button>
                 </div>
                 <div class="subtab-content">
                     <ThemeConfigPanel v-if="activeThemeTab === 'theme'" :project-id="projectId" :is-locked="isLocked" />
-                    <LayoutConfigPanel v-else-if="activeThemeTab === 'layout'" :project-id="projectId" :is-locked="isLocked" />
-                    <NavigationConfigPanel v-else-if="activeThemeTab === 'navigation'" :project-id="projectId" :is-locked="isLocked" />
+                    <LayoutConfigPanel v-else-if="activeThemeTab === 'layout'" :project-id="projectId"
+                        :is-locked="isLocked" />
+                    <NavigationConfigPanel v-else-if="activeThemeTab === 'navigation'" :project-id="projectId"
+                        :is-locked="isLocked" />
                 </div>
             </div>
         </section>
@@ -50,14 +51,15 @@
                 </h3>
                 <span class="toggle-icon" :class="{ expanded: expandedSections.pages }">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" />
                     </svg>
                 </span>
             </div>
             <div v-if="expandedSections.pages" class="section-content">
                 <div class="placeholder-box">
                     <svg fill="currentColor" height="32" viewBox="0 0 256 256" width="32">
-                        <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V96H40V56ZM40,200V112H216v88Z"/>
+                        <path
+                            d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V96H40V56ZM40,200V112H216v88Z" />
                     </svg>
                     <p class="placeholder-title">Pages Configuration</p>
                     <p class="placeholder-text">Page management coming soon...</p>
@@ -74,14 +76,15 @@
                 </h3>
                 <span class="toggle-icon" :class="{ expanded: expandedSections.images }">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" />
                     </svg>
                 </span>
             </div>
             <div v-if="expandedSections.images" class="section-content">
                 <div class="placeholder-box">
                     <svg fill="currentColor" height="32" viewBox="0 0 256 256" width="32">
-                        <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216v94.34l-36.69-36.69a8,8,0,0,0-11.32,0L62.34,219.31A8,8,0,0,1,40,200V56ZM216,200H91.31l98.35-98.34,26.34,26.34Z"/>
+                        <path
+                            d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216v94.34l-36.69-36.69a8,8,0,0,0-11.32,0L62.34,219.31A8,8,0,0,1,40,200V56ZM216,200H91.31l98.35-98.34,26.34,26.34Z" />
                     </svg>
                     <p class="placeholder-title">Image Library</p>
                     <p class="placeholder-text">Image management coming soon...</p>
@@ -98,7 +101,7 @@
                 </h3>
                 <span class="toggle-icon" :class="{ expanded: expandedSections.activate }">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" />
                     </svg>
                 </span>
             </div>
@@ -110,25 +113,28 @@
                             You can make further adjustments and publish later.
                         </p>
                     </div>
-                    
+
                     <div class="checklist">
                         <h4>Before activation:</h4>
                         <ul class="check-items">
                             <li class="check-item">
                                 <svg fill="currentColor" height="18" viewBox="0 0 256 256" width="18">
-                                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>
+                                    <path
+                                        d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z" />
                                 </svg>
                                 <span>Project information complete</span>
                             </li>
                             <li class="check-item">
                                 <svg fill="currentColor" height="18" viewBox="0 0 256 256" width="18">
-                                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>
+                                    <path
+                                        d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z" />
                                 </svg>
                                 <span>Users and roles configured</span>
                             </li>
                             <li class="check-item">
                                 <svg fill="currentColor" height="18" viewBox="0 0 256 256" width="18">
-                                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>
+                                    <path
+                                        d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z" />
                                 </svg>
                                 <span>Theme and layout customized</span>
                             </li>
@@ -137,7 +143,8 @@
 
                     <button class="btn-activate" @click="handleActivate">
                         <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20">
-                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/>
+                            <path
+                                d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z" />
                         </svg>
                         Activate Project
                     </button>
