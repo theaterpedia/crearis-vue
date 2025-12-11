@@ -61,13 +61,8 @@
 
             <!-- Settings View (COG) -->
             <div v-else-if="activeNavStop === 'settings'" class="settings-view">
-                <ProjectSettingsPanel 
-                    :project-id="projectId" 
-                    :is-owner="isOwner"
-                    :is-locked="isLocked"
-                    :show-activation="showActivation"
-                    @activate-project="handleActivateProject"
-                />
+                <ProjectSettingsPanel :project-id="projectId" :is-owner="isOwner" :is-locked="isLocked"
+                    :show-activation="showActivation" @activate-project="handleActivateProject" />
             </div>
         </div>
 

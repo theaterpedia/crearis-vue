@@ -5,6 +5,31 @@
 
 ---
 
+## Test Suite Updates (Migration 061)
+
+### Fix Tests for Partners Table Refactor
+
+Migration 061 unified `instructors`, `locations`, and `participants` into a single `partners` table with `partner_types` bitmask. This breaks tests that reference the old schema.
+
+**Affected Areas:**
+- [ ] Tests querying `users.instructor_id` (now `users.partner_id`)
+- [ ] Tests querying `instructors` table directly (use `instructors_v` view or `partners`)
+- [ ] Tests querying `locations` table directly (use `locations_v` view or `partners`)
+- [ ] Tests querying `participants` table directly (use `participants_v` view or `partners`)
+- [ ] Auth tests expecting `instructor_id` in user response
+
+**Breaking Changes from Migration 061:**
+- `users.instructor_id` → `users.partner_id`
+- `users.participant_id` → `users.partner_id` (single link to partners table)
+- Direct table access: use views (`instructors_v`, `locations_v`, `participants_v`) for backwards compatibility
+- `partner_types` bitmask: 1=instructor, 2=location, 4=participant, 8=organisation
+
+**Related Commits:**
+- Migration 061: `9218ce7` (partners table creation)
+- Auth refactor: `a047ee9` (API updates for partner_id)
+
+---
+
 ## ⭕ Terminology and Routes for External Websites
 
 Clarify ambiguous usage of 'home' and 'home'-routes in file-system and the meaning of the terminology:

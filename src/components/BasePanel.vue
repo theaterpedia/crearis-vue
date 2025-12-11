@@ -1,8 +1,9 @@
 <template>
     <Teleport to="body">
         <Transition name="slide-panel">
+            <!-- data-context="internal" forces internal theming regardless of page theme -->
             <div v-if="isOpen" class="base-panel" :class="[`base-panel-${panelSize}`, placementClass]"
-                :style="panelStyles" @keydown.esc="handleClose">
+                data-context="internal" @keydown.esc="handleClose">
                 <!-- Header -->
                 <div class="base-panel-header">
                     <div class="header-content">
@@ -35,7 +36,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useTheme } from '@/composables/useTheme'
 
 interface Props {
     isOpen: boolean
@@ -50,10 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     close: []
-}>()
-
-// Get theme composable (not used for styling, but available if needed)
-const { currentVars, isInverted } = useTheme()
+})
 
 // Auto-adjust placement based on sidebar mode
 const placementClass = computed(() => {
@@ -67,22 +64,6 @@ const panelSize = computed(() => {
     if (width < 768) return 'fullscreen'
     if (width < 1440) return 'medium'
     return 'large'
-})
-
-// Apply system theme styles to panel (override page theme)
-// Always use default system theme with inverted: false
-const panelStyles = computed(() => {
-    return {
-        '--color-bg': 'var(--system-bg, #ffffff)',
-        '--color-card-bg': 'var(--system-card-bg, #ffffff)',
-        '--color-border': 'var(--system-border, #e5e7eb)',
-        '--color-contrast': 'var(--system-contrast, #1f2937)',
-        '--color-dimmed': 'var(--system-dimmed, #6b7280)',
-        '--color-primary-bg': 'var(--system-primary, #3b82f6)',
-        '--color-primary-contrast': 'var(--system-primary-contrast, #ffffff)',
-        '--font': 'var(--system-font, system-ui, -apple-system, sans-serif)',
-        '--color-inverted': '0' // Always use non-inverted in panels
-    }
 })
 
 // Handle close
