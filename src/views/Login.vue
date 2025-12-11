@@ -60,18 +60,9 @@ const handleLogin = async () => {
     const result = await login(userId.value, password.value)
 
     if (result.success) {
-        // Redirect based on activeRole
-        const { user } = useAuth()
-
-        if (user.value?.activeRole === 'admin') {
-            router.push('/home')
-        } else if (user.value?.activeRole === 'base') {
-            router.push('/home')
-        } else if (user.value?.activeRole === 'project') {
-            router.push('/projects')
-        } else {
-            router.push('/home')
-        }
+        // Always redirect to /home after login
+        // User selects project from there (onboarding flow)
+        router.push('/home')
     } else {
         error.value = result.error || 'Login failed. Please check your credentials.'
     }

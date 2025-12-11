@@ -5,6 +5,54 @@
 
 ---
 
+## Session & useAuth Cleanup
+
+### Remove Deprecated/Ambiguous Fields
+
+**Created:** 2025-12-11  
+**Context:** Session and useAuth contain legacy fields from various iterations that may mislead future development.
+
+**Current Issues:**
+
+1. **ProjectRecord interface has redundant fields:**
+   - `id` (contains domaincode, NOT integer id - misleading!)
+   - `domaincode` (correct field)
+   - `name` (sometimes domaincode, sometimes project name)
+   - `heading` (legacy, now called `name` in DB)
+   - `username` (unclear purpose - seems to be domaincode fallback?)
+
+2. **Session stores `projectId` as string (domaincode):**
+   - But `projects[].id` is also domaincode
+   - Real database `projects.id` is INTEGER, never exposed
+   - This creates confusion about what "id" means
+
+3. **User interface has overlapping role fields:**
+   - `role` (base role from users table)
+   - `activeRole` (current active role)
+   - `availableRoles` (array of possible roles)
+   - Logic spread across multiple places
+
+4. **Capabilities stored inconsistently:**
+   - Session stores as `Map<string, Set<string>>`
+   - Response converts to `Record<string, string[]>`
+   - Frontend has to handle both formats
+
+**Tasks:**
+- [ ] Rename `ProjectRecord.id` → `ProjectRecord.domaincode` (breaking change, grep all usages)
+- [ ] Remove `ProjectRecord.username` (unused or replace with clear field)
+- [ ] Clarify `ProjectRecord.name` vs `ProjectRecord.heading` (pick one!)
+- [ ] Add clear JSDoc comments to all session/auth interfaces
+- [ ] Consider: single `UserSession` interface shared between server and client
+- [ ] Document: which fields come from DB vs computed at login
+
+**Files to Audit:**
+- `server/api/auth/login.post.ts` - SessionData interface, response building
+- `server/api/auth/session.get.ts` - Response transformation
+- `src/composables/useAuth.ts` - User interface, ProjectRecord interface
+- All components using `user.value?.projectId` or `project.id`
+
+---
+
 ## Test Suite Updates (Migration 061)
 
 ### Fix Tests for Partners Table Refactor
@@ -72,6 +120,37 @@ const userFirstName = computed(() => {
     return username.split(' ')[0]
 })
 ```
+
+---
+
+## Onboarding Flow Cleanup
+
+### HomeLayoutHack.vue → OnboardingStepper Migration
+
+**Created:** 2025-12-11  
+**Context:** Quick iteration on user onboarding states without polluting clean architecture
+
+**Current State:**
+- `/home` route uses `HomeLayoutHack.vue` (temporary hack)
+- `/home-clean` route uses original `HomeLayout.vue` (preserved)
+- `OnboardingStepper.vue` + `onboarding-config.ts` are ready but not integrated
+
+**Tasks:**
+- [ ] Validate business logic in HomeLayoutHack.vue through testing
+- [ ] Extract validated partner-linking logic into `ProfileSetupPartner.vue` component
+- [ ] Extract validated avatar-upload logic into `ProfileSetupAvatar.vue` component
+- [ ] Create API endpoints: `/api/users/me/partner`, `/api/users/me/avatar`, `/api/users/me/activate`
+- [ ] Integrate new components with `OnboardingStepper.vue`
+- [ ] Revert `/home` route to use clean `HomeLayout.vue` with stepper
+- [ ] Delete `HomeLayoutHack.vue`
+
+**State Flow Validated:**
+| Status | Value | Onboarding Step |
+|--------|-------|----------------|
+| NEW | 1 | E-Mail verification required |
+| DEMO | 8 | Partner linking + Avatar upload |
+| DRAFT | 64 | Profile activation + public profile option |
+| CONFIRMED | 1024 | Full project access with stepper |
 
 ---
 

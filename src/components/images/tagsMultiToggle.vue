@@ -157,8 +157,8 @@ const handleClickOutside = () => {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem;
-    background: hsl(var(--color-card-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     cursor: text;
     min-height: 2.5rem;
@@ -208,7 +208,7 @@ const handleClickOutside = () => {
 }
 
 .tags-input:focus-within {
-    border-color: hsl(var(--color-primary-base));
+    border-color: var(--color-primary-base);
 }
 
 .tags-pills {
@@ -223,8 +223,8 @@ const handleClickOutside = () => {
     align-items: center;
     gap: 0.5rem;
     padding: 0.25rem 0.75rem;
-    background: hsl(var(--color-accent-bg));
-    color: hsl(var(--color-accent-contrast));
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
     border-radius: 999px;
     font-size: 0.875rem;
     white-space: nowrap;
@@ -247,7 +247,7 @@ const handleClickOutside = () => {
 }
 
 .tag-remove:hover {
-    background: hsla(var(--color-danger), 0.2);
+    background: oklch(from var(--color-danger) l c h / 0.2);
 }
 
 .tag-search-input {
@@ -260,24 +260,24 @@ const handleClickOutside = () => {
 }
 
 .tag-search-input::placeholder {
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 /* Dropdown */
 .tags-dropdown {
     min-width: 250px;
     max-width: 400px;
-    background: hsl(var(--color-card-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
-    box-shadow: 0 4px 12px hsla(0, 0%, 0%, 0.15);
+    box-shadow: 0 4px 12px oklch(0% 0 0 / 0.15);
     overflow: hidden;
 }
 
 .tags-empty {
     padding: 2rem;
     text-align: center;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .tags-list {
@@ -298,11 +298,11 @@ const handleClickOutside = () => {
 }
 
 .tag-option:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .tag-option.selected {
-    background: hsla(var(--color-primary-base), 0.1);
+    background: oklch(from var(--color-primary-base) l c h / 0.1);
 }
 
 .tag-label {
@@ -312,12 +312,12 @@ const handleClickOutside = () => {
 
 .tag-value {
     font-size: 0.75rem;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     font-family: monospace;
 }
 
 .tag-check {
-    color: hsl(var(--color-success));
+    color: var(--color-success);
     font-size: 1rem;
 }
 
@@ -326,19 +326,19 @@ const handleClickOutside = () => {
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    border-top: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-muted-bg));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-muted-bg);
 }
 
 .tags-count {
     font-size: 0.75rem;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .btn-clear {
     padding: 0.25rem 0.75rem;
     background: transparent;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     font-size: 0.75rem;
     cursor: pointer;
@@ -346,8 +346,8 @@ const handleClickOutside = () => {
 }
 
 .btn-clear:hover {
-    background: hsl(var(--color-danger-bg));
-    color: hsl(var(--color-danger-contrast));
-    border-color: hsl(var(--color-danger));
+    background: var(--color-danger-bg);
+    color: var(--color-danger-contrast);
+    border-color: var(--color-danger);
 }
 </style>

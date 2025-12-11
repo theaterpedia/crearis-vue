@@ -18,7 +18,9 @@ const router = createRouter({
     { path: '/sites/:domaincode/events/:id', component: () => import('../views/EventPage.vue') },
 
     // Protected routes - User Home (cross-project overview)
-    { path: '/home', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
+    // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)
+    { path: '/home', component: () => import('../views/HomeLayoutHack.vue'), meta: { requiresAuth: true } },
+    { path: '/home-clean', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
 
     // Protected routes - Project Dashboard (route-based 5 NavStops)
     // Base route redirects to home section

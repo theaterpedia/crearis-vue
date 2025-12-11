@@ -1,5 +1,5 @@
 :root {
-  --theme-shadow: 0.2rem 0.2rem 0.6rem hsla(110, 10%, 0%, 0.65);
+  --theme-shadow: 0.2rem 0.2rem 0.6rem oklch(0% 0.02 110 / 0.65);
   --radius-none: 0rem;
   --radius-small: 0.25rem;
   --radius-medium: 0.5rem;

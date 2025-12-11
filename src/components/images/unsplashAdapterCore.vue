@@ -121,8 +121,8 @@ const copyUrl = async () => {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    background: hsl(var(--color-card-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
     padding: 1rem;
 }
@@ -133,7 +133,7 @@ const copyUrl = async () => {
     aspect-ratio: 4 / 3;
     border-radius: var(--radius-small);
     overflow: hidden;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .preview-image {
@@ -149,7 +149,7 @@ const copyUrl = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: hsla(var(--color-card-bg), 0.8);
+    background: oklch(from var(--color-card-bg) l c h / 0.8);
     backdrop-filter: blur(4px);
     z-index: 1;
 }
@@ -157,8 +157,8 @@ const copyUrl = async () => {
 .loading-spinner {
     width: 2rem;
     height: 2rem;
-    border: 3px solid hsl(var(--color-muted-bg));
-    border-top-color: hsl(var(--color-primary-base));
+    border: 3px solid var(--color-muted-bg);
+    border-top-color: var(--color-primary-base);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -191,21 +191,21 @@ const copyUrl = async () => {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .control-input {
     padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     font-size: 0.875rem;
     font-family: monospace;
 }
 
 .control-input:focus {
     outline: none;
-    border-color: hsl(var(--color-primary-base));
+    border-color: var(--color-primary-base);
 }
 
 .adapter-actions {
@@ -216,8 +216,8 @@ const copyUrl = async () => {
 .btn-action {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-card-bg));
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
     border-radius: var(--radius-small);
     font-size: 0.875rem;
     font-weight: 600;
@@ -226,13 +226,13 @@ const copyUrl = async () => {
 }
 
 .btn-action:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .btn-action.primary {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
-    border-color: hsl(var(--color-primary-base));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-base);
 }
 
 .btn-action.primary:hover {
@@ -246,12 +246,12 @@ const copyUrl = async () => {
 .url-field {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     font-size: 0.75rem;
     font-family: monospace;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 @media (max-width: 768px) {

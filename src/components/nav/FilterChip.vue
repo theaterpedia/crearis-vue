@@ -52,30 +52,30 @@ function handleClick() {
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.5rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border: 1px solid transparent;
     border-radius: 9999px;
     font-size: 0.6875rem;
     font-weight: 500;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     cursor: pointer;
     transition: var(--transition);
     white-space: nowrap;
 }
 
 .filter-chip:hover {
-    background: hsl(var(--color-accent-bg));
-    color: hsl(var(--color-accent-contrast));
+    background: var(--color-accent-bg);
+    color: var(--color-accent-contrast);
 }
 
 .filter-chip--active {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
-    border-color: hsl(var(--color-primary-base));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary-base);
 }
 
 .filter-chip--active:hover {
-    background: hsl(var(--color-primary-base) / 0.9);
+    background: oklch(from var(--color-primary-base) l c h / 0.9);
 }
 
 .filter-chip__icon {

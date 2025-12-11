@@ -81,13 +81,13 @@ const toggleExpand = () => {
     gap: 1rem;
     cursor: pointer;
     padding: 1rem;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-medium);
     transition: background var(--duration) var(--ease);
 }
 
 .preview-card:hover {
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .preview-image-wrapper {
@@ -113,7 +113,7 @@ const toggleExpand = () => {
 
 .fit-badge {
     padding: 0.25rem 0.5rem;
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
     border-radius: var(--radius-small);
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -124,7 +124,7 @@ const toggleExpand = () => {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     padding: 1rem;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -138,15 +138,15 @@ const toggleExpand = () => {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .control-group input,
 .control-group select {
     padding: 0.5rem;
-    border: 1px solid hsl(var(--color-border));
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     font-size: 0.875rem;
 }
 

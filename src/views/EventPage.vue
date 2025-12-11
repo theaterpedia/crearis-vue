@@ -463,7 +463,7 @@ onMounted(async () => {
 .event-teaser {
     font-size: 1.125rem;
     font-weight: 500;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
     margin-bottom: 1.5rem;
 }
 
@@ -503,7 +503,7 @@ onMounted(async () => {
 .event-registration {
     margin-top: 2rem;
     padding: 1.5rem;
-    background: hsl(var(--color-primary-bg));
+    background: var(--color-primary-bg);
     border-radius: var(--radius-medium);
     display: flex;
     align-items: center;
@@ -513,17 +513,17 @@ onMounted(async () => {
 
 .registration-info {
     font-weight: 500;
-    color: hsl(var(--color-primary-contrast));
+    color: var(--color-primary-contrast);
 }
 
 .sold-out {
-    color: hsl(var(--color-negative-base));
+    color: var(--color-negative-base);
 }
 
 .register-btn {
     padding: 0.75rem 1.5rem;
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: var(--radius-medium);
     font-weight: 600;
@@ -532,7 +532,7 @@ onMounted(async () => {
 }
 
 .register-btn:hover {
-    background: hsl(var(--color-primary-hover));
+    background: var(--color-primary-hover);
 }
 
 .config-panel-overlay {

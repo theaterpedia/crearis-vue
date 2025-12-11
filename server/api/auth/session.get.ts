@@ -29,6 +29,9 @@ export default defineEventHandler(async (event) => {
             id: session.userId,
             sysmail: session.sysmail,  // Added for permission checks
             username: session.username,
+            status: session.status,  // For onboarding flow
+            partner_id: session.partner_id,  // For onboarding flow
+            img_id: session.img_id,  // For onboarding flow
             availableRoles: session.availableRoles,
             activeRole: session.activeRole,
             projectId: session.projectId,

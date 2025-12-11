@@ -323,7 +323,7 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: hsl(var(--color-bg));
+    background: var(--color-bg);
 }
 
 /* Main content area */
@@ -347,12 +347,12 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     margin: 0 0 0.25rem;
     font-size: 1.5rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .home-subtitle {
     margin: 0;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
 }
 
 .home-sections {
@@ -364,7 +364,7 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     margin: 0 0 0.75rem;
     font-size: 1rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 /* Entity View (2-column) */
@@ -378,8 +378,8 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
 .entity-list-column {
     display: flex;
     flex-direction: column;
-    background: hsl(var(--color-card-bg));
-    border-right: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border-right: 1px solid var(--color-border);
     height: 100%;
     overflow: hidden;
 }
@@ -389,15 +389,15 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid hsl(var(--color-border));
-    background: hsl(var(--color-muted-bg));
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-muted-bg);
 }
 
 .list-title {
     margin: 0;
     font-size: 0.875rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .list-count {
@@ -407,8 +407,8 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     min-width: 1.25rem;
     height: 1.25rem;
     padding: 0 0.375rem;
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
     font-size: 0.6875rem;
     font-weight: 600;
     border-radius: 9999px;
@@ -435,9 +435,9 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-large);
-    border: 2px dashed hsl(var(--color-border));
+    border: 2px dashed var(--color-border);
 }
 
 .empty-content {
@@ -457,13 +457,13 @@ watch(() => props.initialSection, (newVal: string | undefined) => {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .empty-text {
     margin: 0;
     font-size: 0.8125rem;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 /* Settings View */

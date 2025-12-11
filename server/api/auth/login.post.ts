@@ -21,6 +21,9 @@ interface SessionData {
     userId: number
     sysmail: string  // Added for permission checks
     username: string
+    status: number | null  // User status for onboarding flow
+    partner_id: number | null  // Linked partner for onboarding
+    img_id: number | null  // Avatar image for onboarding
     availableRoles: string[]
     activeRole: string
     projectId: string | null
@@ -59,10 +62,10 @@ export default defineEventHandler(async (event) => {
 
     // Find user from users table by sysmail or extmail
     const user = await db.get(`
-    SELECT id, sysmail, extmail, username, password, role, partner_id, status
+    SELECT id, sysmail, extmail, username, password, role, partner_id, img_id, status
     FROM users
     WHERE sysmail = ? OR extmail = ?
-  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'partner_id' | 'status'> | undefined
+  `, [userIdentifier, userIdentifier]) as Pick<UsersTableFields, 'id' | 'sysmail' | 'extmail' | 'username' | 'password' | 'role' | 'partner_id' | 'status'> & { img_id?: number } | undefined
 
     if (!user) {
         throw createError({
@@ -283,6 +286,9 @@ export default defineEventHandler(async (event) => {
         userId: user.id,
         sysmail: user.sysmail,  // Added for permission checks
         username: user.username,
+        status: user.status || null,  // For onboarding flow
+        partner_id: user.partner_id || null,  // For onboarding flow
+        img_id: (user as any).img_id || null,  // For onboarding flow
         availableRoles,
         activeRole,
         projectId: initialProjectId,
@@ -308,6 +314,9 @@ export default defineEventHandler(async (event) => {
         id: user.id,
         sysmail: user.sysmail,  // Added for permission checks
         username: user.username,
+        status: user.status || null,  // For onboarding flow
+        partner_id: user.partner_id || null,  // For onboarding flow
+        img_id: (user as any).img_id || null,  // For onboarding flow
         availableRoles,
         activeRole,
         projectId: initialProjectId,

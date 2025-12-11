@@ -194,8 +194,8 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.5rem;
-    background: hsl(var(--color-bg));
-    border-bottom: 1px solid hsl(var(--color-border));
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
     max-width: 400px;
 }
 
@@ -216,7 +216,7 @@ onUnmounted(() => {
 .list-head__project-name {
     font-weight: 600;
     font-size: 0.875rem;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .list-head__search-btn {
@@ -229,14 +229,14 @@ onUnmounted(() => {
     background: transparent;
     border: none;
     border-radius: var(--radius-small);
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     cursor: pointer;
     transition: var(--transition);
 }
 
 .list-head__search-btn:hover {
-    background: hsl(var(--color-accent-bg));
-    color: hsl(var(--color-contrast));
+    background: var(--color-accent-bg);
+    color: var(--color-contrast);
 }
 
 /* Main Navigation */
@@ -259,20 +259,20 @@ onUnmounted(() => {
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.025em;
-    color: hsl(var(--color-muted-contrast));
+    color: var(--color-muted-contrast);
     cursor: pointer;
     transition: var(--transition);
     white-space: nowrap;
 }
 
 .list-head__tab:hover {
-    background: hsl(var(--color-accent-bg));
-    color: hsl(var(--color-contrast));
+    background: var(--color-accent-bg);
+    color: var(--color-contrast);
 }
 
 .list-head__tab--active {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 .list-head__tab--icon {
@@ -292,19 +292,19 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 0.75rem;
-    background: hsl(var(--color-secondary-base));
+    background: var(--color-secondary-base);
     border: none;
     border-radius: var(--radius-small);
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.025em;
-    color: hsl(var(--color-secondary-contrast));
+    color: var(--color-secondary-contrast);
     cursor: pointer;
     transition: var(--transition);
 }
 
 .list-head__dropdown-trigger:hover {
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
 }
 
 .list-head__dropdown-label {
@@ -318,8 +318,8 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     margin-top: 0.25rem;
-    background: hsl(var(--color-popover-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-popover-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-small);
     box-shadow: var(--theme-shadow);
     z-index: 50;
@@ -335,19 +335,19 @@ onUnmounted(() => {
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.025em;
-    color: hsl(var(--color-popover-contrast));
+    color: var(--color-popover-contrast);
     text-align: left;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .list-head__dropdown-item:hover {
-    background: hsl(var(--color-accent-bg));
+    background: var(--color-accent-bg);
 }
 
 .list-head__dropdown-item--active {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 /* Subline: Filters */

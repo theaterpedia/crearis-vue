@@ -23,8 +23,52 @@
                 <p class="home-layout__welcome-sub">{{ userStatusText }}</p>
             </section>
 
-            <!-- Projects Grid -->
-            <section class="home-layout__projects">
+            <!-- Demo State (status=8): Show onboarding instructions -->
+            <section v-if="isDemoState" class="home-layout__onboarding">
+                <div v-if="projects.length > 0" class="onboarding-instructions">
+                    <h2>Wie geht es jetzt weiter?</h2>
+                    <div class="instructions-content">
+                        <p>Im <strong>Projekt-Stepper</strong> kannst du dein Projekt Schritt für Schritt einrichten:
+                        </p>
+                        <ul>
+                            <li>📅 <strong>Events anlegen</strong> – Erstelle Veranstaltungen aus Vorlagen oder von
+                                Grund auf</li>
+                            <li>📝 <strong>Themen/Posts erstellen</strong> – Beschreibe dein Projekt mit Beiträgen</li>
+                            <li>🖼️ <strong>Bilder hochladen</strong> – Füge Bilder zu Events und Posts hinzu</li>
+                            <li>🏷️ <strong>Taxonomie testen</strong> – Ordne Inhalte mit Tags und Kategorien</li>
+                            <li>🎨 <strong>Theme wählen</strong> – Passe das Erscheinungsbild deines Projekts an</li>
+                        </ul>
+                        <p class="instructions-hint">Klicke auf dein Projekt um den Stepper zu starten:</p>
+                    </div>
+
+                    <!-- Project Cards for Demo State -->
+                    <div class="home-layout__grid">
+                        <article v-for="project in projects" :key="project.id" class="project-card"
+                            @click="openProject(project)">
+                            <div class="project-card__image">
+                                <img v-if="project.cimg" :src="project.cimg" :alt="project.heading || project.name" />
+                                <div v-else class="project-card__placeholder">
+                                    {{ (project.heading || project.name || 'P').charAt(0).toUpperCase() }}
+                                </div>
+                            </div>
+                            <div class="project-card__content">
+                                <h3 class="project-card__title">
+                                    {{ project.heading || project.name || project.domaincode }}
+                                </h3>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <div v-else class="onboarding-no-project">
+                    <p>Bevor du auf Theaterpedia arbeiten kannst, musst du in einem Projekt registriert sein.</p>
+                    <p class="contact-hint">Bitte informiere den Admin, damit du einem Projekt zugewiesen werden kannst.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Projects Grid - Only show if user is verified (status >= 64) -->
+            <section v-else-if="isUserVerified" class="home-layout__projects">
                 <div class="home-layout__section-header">
                     <h2>{{ projects.length > 0 ? 'Deine Projekte' : 'Du bist noch in keinem Projekt registriert :(' }}
                     </h2>
@@ -136,10 +180,33 @@ const userFirstName = computed(() => {
     return username.split(' ')[0]
 })
 
+// User is in demo state (status = 8)
+const isDemoState = computed(() => {
+    const status = user.value?.status
+    return status === 8
+})
+
+// User is verified if status >= 64 (draft or higher)
+const isUserVerified = computed(() => {
+    const status = user.value?.status
+    return status && status >= 64
+})
+
+// Project names for display
+const projectNames = computed(() => {
+    if (projects.value.length === 0) return ''
+    return projects.value.map(p => p.heading || p.name || p.domaincode).join(', ')
+})
+
 const userStatusText = computed(() => {
     const status = user.value?.status
-    if (!status || status === 1) return 'Status: Neu – E-Mail noch nicht verifiziert'
-    if (status === 8) return 'Status: Demo – bitte E-Mail verifizieren für vollen Zugang'
+    if (!status || status === 1) return 'Deine E-Mail muss verifiziert sein bevor du Zugriff auf Projekte bekommst.'
+    if (status === 8) {
+        if (projects.value.length > 0) {
+            return `Deine E-Mail ist verifiziert ✓ Du hast Zugriff auf: ${projectNames.value}`
+        }
+        return 'Deine E-Mail ist verifiziert ✓'
+    }
     if (status === 64) return 'Status: Entwurf – Profil unvollständig'
     if (status === 512 || status === 1024) return 'Status: Verifiziert ✓'
     if (status >= 4096) return 'Status: Aktiv ✓'
@@ -236,7 +303,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: hsl(var(--color-bg));
+    background: var(--color-bg);
 }
 
 /* Header */
@@ -245,8 +312,8 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    background: hsl(var(--color-card-bg));
-    border-bottom: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .home-layout__brand {
@@ -262,7 +329,7 @@ onUnmounted(() => {
 .home-layout__title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .home-layout__user {
@@ -273,7 +340,7 @@ onUnmounted(() => {
 
 .home-layout__username {
     font-size: 0.875rem;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 .home-layout__logout {
@@ -284,14 +351,14 @@ onUnmounted(() => {
     background: transparent;
     border: none;
     border-radius: var(--radius-small);
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .home-layout__logout:hover {
-    background: hsl(var(--color-muted-bg));
-    color: hsl(var(--color-contrast));
+    background: var(--color-muted-bg);
+    color: var(--color-contrast);
 }
 
 /* Main */
@@ -312,12 +379,12 @@ onUnmounted(() => {
     margin: 0 0 0.25rem;
     font-size: 1.75rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .home-layout__welcome-sub {
     margin: 0;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 /* Section Headers */
@@ -332,7 +399,7 @@ onUnmounted(() => {
     margin: 0;
     font-size: 1.125rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 /* Loading */
@@ -345,8 +412,8 @@ onUnmounted(() => {
 .loading-spinner {
     width: 2rem;
     height: 2rem;
-    border: 3px solid hsl(var(--color-border));
-    border-top-color: hsl(var(--color-primary-base));
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary-base);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -364,15 +431,15 @@ onUnmounted(() => {
     align-items: center;
     gap: 1rem;
     padding: 3rem;
-    background: hsl(var(--color-card-bg));
-    border: 2px dashed hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border: 2px dashed var(--color-border);
     border-radius: var(--radius-large);
     text-align: center;
 }
 
 .home-layout__empty p {
     margin: 0;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 /* Projects Grid */
@@ -386,8 +453,8 @@ onUnmounted(() => {
 .project-card {
     display: flex;
     flex-direction: column;
-    background: hsl(var(--color-card-bg));
-    border: 1px solid hsl(var(--color-border));
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-large);
     overflow: hidden;
     cursor: pointer;
@@ -395,15 +462,15 @@ onUnmounted(() => {
 }
 
 .project-card:hover {
-    border-color: hsl(var(--color-primary-base));
-    box-shadow: 0 4px 12px hsla(var(--color-contrast), 0.1);
+    border-color: var(--color-primary-base);
+    box-shadow: 0 4px 12px oklch(from var(--color-contrast) l c h / 0.1);
     transform: translateY(-2px);
 }
 
 .project-card__image {
     position: relative;
     height: 140px;
-    background: hsl(var(--color-muted-bg));
+    background: var(--color-muted-bg);
 }
 
 .project-card__image img {
@@ -419,7 +486,7 @@ onUnmounted(() => {
     height: 100%;
     font-size: 3rem;
     font-weight: 600;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 .project-card__content {
@@ -433,13 +500,13 @@ onUnmounted(() => {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .project-card__teaser {
     margin: 0;
     font-size: 0.8125rem;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
     line-height: 1.4;
 }
 
@@ -459,13 +526,13 @@ onUnmounted(() => {
 }
 
 .project-card__role {
-    background: hsl(var(--color-primary-bg));
-    color: hsl(var(--color-primary-base));
+    background: var(--color-primary-bg);
+    color: var(--color-primary-base);
 }
 
 .project-card__status {
-    background: hsl(var(--color-muted-bg));
-    color: hsl(var(--color-dimmed));
+    background: var(--color-muted-bg);
+    color: var(--color-dimmed);
 }
 
 /* Activity Section */
@@ -477,7 +544,7 @@ onUnmounted(() => {
     margin: 0 0 1rem;
     font-size: 1.125rem;
     font-weight: 600;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .activity-list {
@@ -494,7 +561,7 @@ onUnmounted(() => {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: hsl(var(--color-card-bg));
+    background: var(--color-card-bg);
     border-radius: var(--radius-medium);
 }
 
@@ -505,29 +572,94 @@ onUnmounted(() => {
 .activity-text {
     flex: 1;
     font-size: 0.875rem;
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
 }
 
 .activity-time {
     font-size: 0.75rem;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 /* Footer */
 .home-layout__footer {
     padding: 1.5rem;
     text-align: center;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
     font-size: 0.8125rem;
 }
 
 .home-layout__footer a {
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
     text-decoration: underline;
 }
 
 .home-layout__footer a:hover {
-    color: hsl(var(--color-contrast));
+    color: var(--color-contrast);
+}
+
+/* Onboarding Section */
+.home-layout__onboarding {
+    margin-top: 2rem;
+}
+
+.onboarding-instructions {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-large);
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+}
+
+.onboarding-instructions h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--color-contrast);
+}
+
+.instructions-content {
+    color: var(--color-dimmed);
+    line-height: 1.6;
+}
+
+.instructions-content p {
+    margin-bottom: 1rem;
+}
+
+.instructions-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.instructions-content li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.instructions-content li:last-child {
+    border-bottom: none;
+}
+
+.instructions-hint {
+    font-weight: 500;
+    color: var(--color-contrast);
+    margin-top: 1.5rem;
+}
+
+.onboarding-no-project {
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-large);
+    padding: 2rem;
+    text-align: center;
+}
+
+.onboarding-no-project p {
+    margin-bottom: 0.5rem;
+    color: var(--color-contrast);
+}
+
+.contact-hint {
+    color: var(--color-dimmed);
+    font-size: 0.875rem;
 }
 
 /* Buttons */
@@ -550,12 +682,12 @@ onUnmounted(() => {
 }
 
 .btn--primary {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 .btn--primary:hover {
-    background: hsl(var(--color-primary-hover));
+    background: var(--color-primary-hover);
 }
 
 /* Dense Mode */

@@ -537,7 +537,7 @@ export function useTheme() {
             isInverted.value = false
             root.removeAttribute('data-inverted')
 
-            debug('Internal context enabled', { variant })
+            debug.log('Internal context enabled', { variant })
         } else {
             // Remove internal context - allow external themes
             root.removeAttribute('data-context')
@@ -552,7 +552,7 @@ export function useTheme() {
                 }
             }
 
-            debug('Internal context disabled')
+            debug.log('Internal context disabled')
         }
     }
 
@@ -575,7 +575,7 @@ export function useTheme() {
      */
     const setInternalVariant = (variant: InternalVariant): void => {
         if (!isInternalContext.value) {
-            debug('Cannot set variant: not in internal context')
+            debug.warn('Cannot set variant: not in internal context')
             return
         }
 
@@ -590,7 +590,7 @@ export function useTheme() {
             root.removeAttribute('data-internal-variant')
         }
 
-        debug('Internal variant changed', { variant })
+        debug.log('Internal variant changed', { variant })
     }
 
     /**

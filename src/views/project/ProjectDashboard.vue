@@ -174,7 +174,7 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: hsl(var(--color-bg));
+    background: var(--color-bg);
 }
 
 /* Loading State */
@@ -190,8 +190,8 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
 .loading-spinner {
     width: 2.5rem;
     height: 2.5rem;
-    border: 3px solid hsl(var(--color-border));
-    border-top-color: hsl(var(--color-primary-base));
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary-base);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -217,12 +217,12 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
 .project-dashboard__error h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: hsl(var(--color-negative-base));
+    color: var(--color-negative-base);
 }
 
 .project-dashboard__error p {
     margin: 0;
-    color: hsl(var(--color-dimmed));
+    color: var(--color-dimmed);
 }
 
 .btn {
@@ -236,11 +236,11 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
 }
 
 .btn--primary {
-    background: hsl(var(--color-primary-base));
-    color: hsl(var(--color-primary-contrast));
+    background: var(--color-primary-base);
+    color: var(--color-primary-contrast);
 }
 
 .btn--primary:hover {
-    background: hsl(var(--color-primary-hover));
+    background: var(--color-primary-hover);
 }
 </style>
