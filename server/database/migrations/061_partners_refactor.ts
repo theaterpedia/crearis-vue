@@ -196,7 +196,7 @@ export async function up(db: DatabaseAdapter) {
                 header_size,
                 md,
                 COALESCE(is_location_provider, 'false')::text = 'true',
-                COALESCE(status, 0),
+                COALESCE(status_id, 0),
                 COALESCE(isbase, 0),
                 created_at,
                 updated_at
@@ -237,7 +237,7 @@ export async function up(db: DatabaseAdapter) {
                 age,
                 type,
                 COALESCE(status, 0),
-                COALESCE(isbase, 0),
+                0,  -- participants table has no isbase column
                 created_at,
                 updated_at
             FROM participants
@@ -432,31 +432,11 @@ export async function up(db: DatabaseAdapter) {
     console.log('     (Requires careful handling of existing constraints)')
 
     // ===================================================================
-    // CHAPTER 6: Register in sysreg_config
+    // CHAPTER 6: Register in sysreg_config (SKIPPED - sysreg schema differs)
     // ===================================================================
     console.log('\n📖 Chapter 6: Register partner_types in sysreg configuration')
-
-    // Add partner_types to sysreg_config taggroup
-    const partnerTypesExists = await db.get(`
-        SELECT EXISTS (
-            SELECT 1 FROM sysreg_config WHERE taggroup = 'partner_types'
-        ) as exists
-    `, [])
-
-    if (!(partnerTypesExists as any)?.exists) {
-        await db.exec(`
-            INSERT INTO sysreg_config (taggroup, tagtype, raw_value, display_name, display_name_en, bit_position)
-            VALUES 
-                ('partner_types', 'category', 1, 'Instructor', 'Instructor', 0),
-                ('partner_types', 'category', 2, 'Location', 'Location', 1),
-                ('partner_types', 'category', 4, 'Participant', 'Participant', 2),
-                ('partner_types', 'category', 8, 'Organisation', 'Organisation', 3)
-            ON CONFLICT DO NOTHING
-        `)
-        console.log('  ✓ Registered partner_types in sysreg_config')
-    } else {
-        console.log('  ⏭️  partner_types already exists in sysreg_config')
-    }
+    console.log('  ⏭️  Skipped - partner_types sysreg registration deferred')
+    console.log('     (sysreg_config schema uses tagfamily/name/value, not taggroup/tagtype/raw_value)')
 
     console.log('\n✅ Migration 061 completed successfully')
     console.log('   Note: Old tables (instructors, locations, participants) preserved for safety')
@@ -477,9 +457,6 @@ export async function down(db: DatabaseAdapter) {
 
     // Remove partner_id from users
     await db.exec('ALTER TABLE users DROP COLUMN IF EXISTS partner_id')
-
-    // Remove sysreg entries
-    await db.exec("DELETE FROM sysreg_config WHERE taggroup = 'partner_types'")
 
     // Drop partners table
     await db.exec('DROP TABLE IF EXISTS partners CASCADE')
