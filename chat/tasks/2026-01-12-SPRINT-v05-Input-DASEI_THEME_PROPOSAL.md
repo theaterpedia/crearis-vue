@@ -13,6 +13,14 @@ The existing internal theme system uses:
 - Minimal design with medium rounded corners
 - Uses oklch color system
 
+## Hans adds in these things
+### questions
+We added the 'dasei'-theme on 2025-12-10. It was supposed to be used as internal_theme. Is it enabled? If yes: which are the questions, issues, ambiguities that might need refactoring? You added 3 variants 'warm', 'cold' ... to internal as well - they are variants on the 'opus'-theme right? Could they be applied to the 'dasei' internal theme as well? Or are they 'internal themes' on their own?
+
+### tasks
+Add a 3-states-toggle opus|dasei|theme for the internal theme to the user-dashboard, add a field 'settings' (jsonb) to table users and add a key 'theme_internal', make auth and useTheme read from it. If I understood well yesterday 
+
+
 ## DASEI Theme Concept
 
 Based on the InitialPrompt specification:

@@ -107,7 +107,7 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
-import type { Post, Instructor } from '@/types'
+import type { Post, Instructor, Partner } from '@/types'
 
 interface ProjectUser {
     id: number
@@ -118,7 +118,8 @@ interface ProjectUser {
 const props = defineProps<{
     projectId: string
     basePosts: Post[]
-    allInstructors: Instructor[]
+    allInstructors?: Instructor[]  // Legacy support
+    allPartners?: Partner[]  // New unified type
 }>()
 
 const emit = defineEmits<{

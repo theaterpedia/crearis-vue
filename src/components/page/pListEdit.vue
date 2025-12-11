@@ -17,7 +17,7 @@ import { ItemList } from '@/components/clist'
 import Heading from '@/components/Heading.vue'
 
 interface Props {
-    type: 'posts' | 'events' | 'instructors' | 'projects'
+    type: 'posts' | 'events' | 'partners' | 'projects'
     isAside?: boolean
     isFooter?: boolean
     header?: string
@@ -63,14 +63,14 @@ const headingLevel = computed(() => {
 })
 
 // Map component type to ItemList entity type
-const entityType = computed<'posts' | 'events' | 'instructors' | undefined>(() => {
-    // ItemList currently supports: 'posts', 'events', 'instructors'
+const entityType = computed<'posts' | 'events' | 'partners' | undefined>(() => {
+    // ItemList currently supports: 'posts', 'events', 'partners'
     // 'projects' not yet supported - would need API endpoint
     if (props.type === 'projects') {
         console.warn('[pList] CL2: projects entity not yet supported by ItemList, showing posts instead')
         return 'posts'
     }
-    return props.type as 'posts' | 'events' | 'instructors'
+    return props.type as 'posts' | 'events' | 'partners'
 })
 </script>
 

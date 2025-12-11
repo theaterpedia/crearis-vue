@@ -67,6 +67,7 @@ import { migration as migration054 } from './054_fix_compute_role_visibility'
 import { migration as migration057 } from './057_create_comments_tables'
 import { migration as migration059 } from './059_image_workitems'
 import { migration as migration060 } from './060_event_odoo_stub_fields'
+import { up as migration061Up, down as migration061Down } from './061_partners_refactor'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -141,6 +142,8 @@ const migrations: Migration[] = [
     { run: migration059.up, down: migration059.down, metadata: { id: migration059.id, description: migration059.description, version: '0.5.0', date: '2025-12-08' }, reversible: true },
     // Package H (060+) - Events Odoo Integration (v0.6 prep)
     { run: migration060.up, down: migration060.down, metadata: { id: migration060.id, description: migration060.description, version: '0.4.0', date: '2025-12-08' }, reversible: true },
+    // Package I (061+) - Partners Refactor
+    { run: migration061Up, down: migration061Down, metadata: { id: '061_partners_refactor', description: 'Unify instructors, locations, participants into partners table', version: '0.4.1', date: '2025-12-11' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

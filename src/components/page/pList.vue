@@ -44,7 +44,7 @@ import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
     // Entity fetching
-    entity: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'partners'
+    entity: 'posts' | 'events' | 'partners' | 'projects' | 'images'
     project?: string
 
     // Filter options (passed as props, no UI controls)

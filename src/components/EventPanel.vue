@@ -129,13 +129,15 @@ import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
-import type { Event, Instructor } from '@/types'
+import type { Event, Instructor, Partner } from '@/types'
 
 interface Props {
     projectId: string
     baseEvents: Event[]
-    allInstructors: Instructor[]
-    allLocations: Location[]
+    allInstructors?: Instructor[]  // Legacy support
+    allPartners?: Partner[]  // New unified type (instructors)
+    allLocations?: Location[]  // Legacy support
+    locationPartners?: Partner[]  // New unified type (locations)
     addOnly?: boolean
 }
 
@@ -156,6 +158,23 @@ interface Location {
     zip?: string
     [key: string]: any
 }
+
+// Unified access - prefer partners, fall back to legacy types
+const allInstructors = computed(() => {
+    if (props.allPartners && props.allPartners.length > 0) {
+        // Filter partners with instructor bit set (partner_types & 1 = 1)
+        return props.allPartners.filter(p => (p.partner_types & 1) === 1)
+    }
+    return props.allInstructors || []
+})
+
+const allLocations = computed(() => {
+    if (props.locationPartners && props.locationPartners.length > 0) {
+        // Filter partners with location bit set (partner_types & 2 = 2)
+        return props.locationPartners.filter(p => (p.partner_types & 2) === 2)
+    }
+    return props.allLocations || []
+})
 
 const dropdownRef = ref<HTMLElement | null>(null)
 const locationDropdownRef = ref<HTMLElement | null>(null)

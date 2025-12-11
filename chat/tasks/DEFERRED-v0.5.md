@@ -5,6 +5,27 @@
 
 ---
 
+## ⭕ Terminology and Routes for External Websites
+
+Clarify ambiguous usage of 'home' and 'home'-routes in file-system and the meaning of the terminology:
+
+**Current Ambiguity:**
+- In the current implementation 'home' addresses routes on the root (`/home`) as well as beyond `/sites`
+- We have distinct functionality at route `/start` (external project-login)
+
+**Questions to Resolve:**
+1. Is `/start` for events or just a special view on selected events that are in the phase where 'registering is open'?
+2. What is the difference from route `/sites/[domaincode]/events` to `/sites/[domaincode]/start`?
+3. Legal pages: where do imprint, privacy policy, terms live? Root or per-site?
+
+**Tasks:**
+- [ ] Document route terminology: `/home` vs `/sites/:domaincode/home`
+- [ ] Clarify `/start` route purpose and relationship to events
+- [ ] Define legal pages location strategy
+- [ ] Update BETA_ARCHITECTURE_GUIDE with clarified routes
+
+---
+
 ## Core v0.5 Scope
 
 ### Comments/PostIT Polymorphic Routing

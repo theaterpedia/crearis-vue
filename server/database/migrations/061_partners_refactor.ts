@@ -417,6 +417,13 @@ export async function up(db: DatabaseAdapter) {
             AND u.instructor_id IS NOT NULL
         `)
         console.log('  ✓ Added partner_id to users and migrated from instructor_id')
+
+        // Drop old FK columns from users (after data migration)
+        await db.exec(`
+            ALTER TABLE users DROP COLUMN IF EXISTS instructor_id;
+            ALTER TABLE users DROP COLUMN IF EXISTS participant_id;
+        `)
+        console.log('  ✓ Removed instructor_id and participant_id columns from users')
     }
 
     // Update events.public_user and events.location to use partner IDs
