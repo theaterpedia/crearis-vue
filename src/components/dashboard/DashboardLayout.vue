@@ -260,14 +260,14 @@ function handleSearch() {
 }
 
 function toggleFilter(filterId: string) {
-    const filter = activeFilters.value.find(f => f.id === filterId)
+    const filter = activeFilters.value.find((f: { id: string }) => f.id === filterId)
     if (filter) {
         filter.active = !filter.active
     }
 }
 
 function clearFilter(filterId: string) {
-    const filter = activeFilters.value.find(f => f.id === filterId)
+    const filter = activeFilters.value.find((f: { id: string }) => f.id === filterId)
     if (filter) {
         filter.active = false
     }

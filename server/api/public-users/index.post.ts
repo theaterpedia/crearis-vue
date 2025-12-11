@@ -1,10 +1,28 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 
+// Body type for creating an instructor
+interface CreateInstructorBody {
+    xmlid: string
+    name: string
+    cimg?: string | null
+    img_id?: number | null
+    isbase?: number
+    status?: number
+}
+
 // POST /api/public-users - Create a new instructor
 export default defineEventHandler(async (event) => {
     try {
-        const body = await readBody(event)
+        const body = await readBody<CreateInstructorBody>(event)
+
+        // Validate body exists
+        if (!body) {
+            throw createError({
+                statusCode: 400,
+                message: 'Request body is required'
+            })
+        }
 
         // Validate required fields
         if (!body.xmlid) {

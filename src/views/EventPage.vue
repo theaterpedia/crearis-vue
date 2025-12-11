@@ -391,7 +391,7 @@ async function handleSaveEvent(data: Record<string, any>) {
         let html = ''
         if (data.md) {
             const { marked } = await import('marked')
-            html = marked(data.md)
+            html = await marked(data.md) as string
         }
 
         const payload = {

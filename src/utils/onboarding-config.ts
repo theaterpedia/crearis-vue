@@ -130,10 +130,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
  * Get the current onboarding step for a user
  */
 export function getCurrentOnboardingStep(user: any): OnboardingStep | null {
-    if (!user || user.status === undefined) return ONBOARDING_STEPS[0]
+    if (!user || user.status === undefined) return ONBOARDING_STEPS[0] ?? null
     
     // Find step where fromStatus matches user status
-    return ONBOARDING_STEPS.find(step => step.fromStatus === user.status) || null
+    const step = ONBOARDING_STEPS.find(step => step.fromStatus === user.status)
+    return step ?? null
 }
 
 /**

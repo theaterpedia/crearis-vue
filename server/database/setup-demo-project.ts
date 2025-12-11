@@ -12,7 +12,11 @@
  *   npx tsx server/database/setup-demo-project.ts [create|reset]
  */
 
-import { getDatabaseClient, type DbClient } from './client'
+import { db } from './db-new'
+import type { DatabaseAdapter } from './adapter'
+
+// Type alias for database client (using DatabaseAdapter interface)
+type DbClient = DatabaseAdapter
 
 // Demo project configuration
 const DEMO_PROJECT = {
@@ -217,14 +221,15 @@ async function main() {
     console.log('Demo Project Setup')
     console.log('='.repeat(50))
     
-    const db = await getDatabaseClient()
+    // Use the imported db instance directly
+    const dbClient: DbClient = db
     
     try {
         if (command === 'reset') {
-            await resetDemoProject(db)
+            await resetDemoProject(dbClient)
         } else {
-            const projectId = await createDemoProject(db)
-            await createDemoEntities(db, projectId)
+            const projectId = await createDemoProject(dbClient)
+            await createDemoEntities(dbClient, projectId)
             console.log('\n✅ Demo project setup complete!')
         }
     } catch (error) {
