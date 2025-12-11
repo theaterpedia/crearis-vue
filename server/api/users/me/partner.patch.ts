@@ -58,7 +58,15 @@ export default defineEventHandler(async (event) => {
         // Update session with new partner_id so UI reflects change immediately
         session.partner_id = body.partner_id
 
-        return { success: true, partner_id: body.partner_id, partner_name: partner.name }
+        // Check if user should advance from DEMO (8) to DRAFT (64)
+        // This happens when both partner_id AND img_id are set
+        if (session.status === 8 && session.img_id) {
+            await db.run('UPDATE users SET status = 64, updated_at = NOW() WHERE id = $1', [session.userId])
+            session.status = 64
+            console.log(`[Partner] User ${session.userId} advanced from DEMO (8) to DRAFT (64)`)
+        }
+
+        return { success: true, partner_id: body.partner_id, partner_name: partner.name, status: session.status }
     } catch (error: any) {
         if (error.statusCode) throw error
         console.error('Error linking partner:', error)

@@ -31,12 +31,16 @@
   /* 224px */
 
   /* tile is the basis for dense image components */
-  --tile-width: 8rem; /* 128px  */
-  --tile-height: 4rem; /* 64px */
-  --tile-height-square: 8rem; /* 128px */
+  --tile-width: 8rem;
+  /* 128px  */
+  --tile-height: 4rem;
+  /* 64px */
+  --tile-height-square: 8rem;
+  /* 128px */
 
   /* avatar is the basis for small image components */
-  --avatar: 4rem; /* 64px */
+  --avatar: 4rem;
+  /* 64px */
   /* 64px */
 
   --tagline-small-height: 1.1rem;

@@ -123,6 +123,36 @@ const userFirstName = computed(() => {
 
 ---
 
+## Full Profile Editor
+
+### Edit User & Partner Profile Fields
+
+**Created:** 2025-12-11  
+**Context:** After basic onboarding (partner link + avatar), users need ability to edit full profile
+
+**User Fields to Edit:**
+- [ ] Email (sysmail vs display email?)
+- [ ] Username / Display name
+- [ ] Password change
+
+**Partner Fields to Edit:**
+- [ ] Name (firstname, lastname)
+- [ ] Email (contact email)
+- [ ] Phone
+- [ ] Address (street, city, zip, country_id)
+- [ ] Description / Bio
+- [ ] Avatar (already implemented in onboarding)
+
+**Tasks:**
+- [ ] Create `ProfileEditor.vue` component
+- [ ] Create `/api/users/me` PATCH endpoint for user fields
+- [ ] Extend `/api/partners/[id].patch` for all editable fields
+- [ ] Add profile edit button/link to `/home` header
+- [ ] Validation: email format, required fields
+- [ ] Consider: Odoo sync for partner fields
+
+---
+
 ## Onboarding Flow Cleanup
 
 ### HomeLayoutHack.vue → OnboardingStepper Migration
@@ -136,10 +166,11 @@ const userFirstName = computed(() => {
 - `OnboardingStepper.vue` + `onboarding-config.ts` are ready but not integrated
 
 **Tasks:**
-- [ ] Validate business logic in HomeLayoutHack.vue through testing
+- [x] Validate business logic in HomeLayoutHack.vue through testing (2025-12-11)
+- [x] Create API endpoints: `/api/users/me/partner`, `/api/users/me/avatar`, `/api/users/me/activate` (2025-12-11)
+- [x] Create API endpoint: `/api/partners/[id].patch` for avatar sync to partner (2025-12-11)
 - [ ] Extract validated partner-linking logic into `ProfileSetupPartner.vue` component
 - [ ] Extract validated avatar-upload logic into `ProfileSetupAvatar.vue` component
-- [ ] Create API endpoints: `/api/users/me/partner`, `/api/users/me/avatar`, `/api/users/me/activate`
 - [ ] Integrate new components with `OnboardingStepper.vue`
 - [ ] Revert `/home` route to use clean `HomeLayout.vue` with stepper
 - [ ] Delete `HomeLayoutHack.vue`
@@ -151,6 +182,34 @@ const userFirstName = computed(() => {
 | DEMO | 8 | Partner linking + Avatar upload |
 | DRAFT | 64 | Profile activation + public profile option |
 | CONFIRMED | 1024 | Full project access with stepper |
+
+---
+
+## Theme System Review
+
+### Systematize CSS Color Variables with Theme-Builder
+
+**Created:** 2025-12-11  
+**Context:** Current theme variables in `00-theme.css` were set manually without a systematic approach. Need to use theme-builder tool to establish coherent variable relationships.
+
+**Current Issues:**
+- `--color-card-bg` was pure white (100%), too stark against page background
+- Relationship between `--color-bg`, `--color-card-bg`, `--color-muted-bg` unclear
+- No documented rationale for lightness/chroma values
+- `05-internal-theme.css` has computed values that may conflict
+
+**Tasks:**
+- [ ] Review all color variables in `00-theme.css` with theme-builder tool
+- [ ] Establish systematic lightness scale (e.g., bg=96%, card=98%, muted=88%)
+- [ ] Document color variable relationships in `theme-opus-css.md`
+- [ ] Verify dark mode variables follow same relationships
+- [ ] Consider: derive computed vars from base vars (like `05-internal-theme.css`)
+- [ ] Test all UI states (cards, forms, hover, disabled) with new values
+
+**Files:**
+- `src/assets/css/00-theme.css` - base theme variables
+- `src/assets/css/05-internal-theme.css` - computed/derived variables
+- `docs/dev/features/theme-opus-css.md` - documentation
 
 ---
 
@@ -220,3 +279,38 @@ Determine which entity_types should route to specialized tables:
 - API endpoints (`/api/comments/*`) already complete
 - Just needed table (057) to exist
 - Polymorphic routing is backend-only change, no frontend updates needed
+
+---
+
+## Remove SQLite Adapter
+
+### Pure PostgreSQL Project
+
+**Created:** 2025-12-11  
+**Context:** This is a pure PostgreSQL project. SQLite adapter code is deprecated since Migration 019 but still present in codebase.
+
+**Files to Remove/Clean:**
+- [ ] `server/database/adapters/sqlite.ts` - SQLite adapter implementation
+- [ ] `server/database/adapters/sqlite-statements.ts` - SQLite prepared statements (if exists)
+- [ ] SQLite fallback logic in `server/database/db-new.ts`
+- [ ] SQLite-specific syntax in any migrations (use PostgreSQL-only)
+- [ ] `demo-data.db` and any `.db` files in gitignore cleanup
+- [ ] Test utilities referencing SQLite (`tests/utils/db-test-utils.ts`)
+
+**Config Cleanup:**
+- [ ] Remove `dbConfig.sqlite` option from `server/database/config.ts`
+- [ ] Remove `DATABASE_TYPE=sqlite` env var documentation
+- [ ] Update README/docs to state PostgreSQL-only requirement
+
+**Code Patterns to Find & Remove:**
+```ts
+// Remove these patterns:
+if (dbConfig.type === 'sqlite') { ... }
+datetime('now')  // SQLite syntax
+? placeholders converted to $1  // Keep this, it's useful
+```
+
+**Validation:**
+- [ ] Grep for `sqlite` (case-insensitive) across codebase
+- [ ] Ensure all migrations use PostgreSQL syntax only
+- [ ] Run full test suite after removal

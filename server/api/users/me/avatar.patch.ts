@@ -44,7 +44,18 @@ export default defineEventHandler(async (event) => {
         // Update user's img_id
         await db.run('UPDATE users SET img_id = ?, updated_at = NOW() WHERE id = ?', [body.img_id, session.userId])
 
-        return { success: true, img_id: body.img_id }
+        // Update session with new img_id
+        session.img_id = body.img_id
+
+        // Check if user should advance from DEMO (8) to DRAFT (64)
+        // This happens when both partner_id AND img_id are set
+        if (session.status === 8 && session.partner_id) {
+            await db.run('UPDATE users SET status = 64, updated_at = NOW() WHERE id = ?', [session.userId])
+            session.status = 64
+            console.log(`[Avatar] User ${session.userId} advanced from DEMO (8) to DRAFT (64)`)
+        }
+
+        return { success: true, img_id: body.img_id, status: session.status }
     } catch (error: any) {
         if (error.statusCode) throw error
         console.error('Error setting avatar:', error)

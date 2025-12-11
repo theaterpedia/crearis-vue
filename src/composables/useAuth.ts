@@ -89,7 +89,9 @@ export function useAuth() {
     const checkSession = async () => {
         isLoading.value = true
         try {
-            const response = await fetch('/api/auth/session')
+            const response = await fetch('/api/auth/session', {
+                credentials: 'include'
+            })
             const data = await response.json()
 
             if (data.authenticated && data.user) {

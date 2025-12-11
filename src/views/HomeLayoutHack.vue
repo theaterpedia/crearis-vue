@@ -5,6 +5,7 @@
     Purpose: Quick iteration on onboarding states without polluting clean HomeLayout.vue
     
     TODO v0.5: Merge validated logic back into OnboardingStepper.vue and clean HomeLayout.vue
+               (see chat/tasks/DEFERRED-v0.5.md for full task list)
     
     State Flow:
     - Status 1 (NEW): E-Mail verification required
@@ -358,7 +359,7 @@ onUnmounted(() => {
 // ============================================================
 
 const router = useRouter()
-const { user, logout } = useAuth()
+const { user, logout, checkSession } = useAuth()
 
 // ============================================================
 // STATE
@@ -594,26 +595,48 @@ async function handleAvatarUpload(event: Event) {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('xmlid', xmlid)
+        formData.append('owner_id', String(user.value?.id || 0))
         formData.append('context', selectedImageContext.value)
         formData.append('is_avatar', 'true')
 
         const response = await fetch('/api/images/upload', {
             method: 'POST',
+            credentials: 'include',
             body: formData
         })
 
         if (response.ok) {
             const result = await response.json()
+            const imageId = result.image_id  // upload returns image_id, not id
 
             // Link image to user
-            await fetch('/api/users/me/avatar', {
+            const avatarResponse = await fetch('/api/users/me/avatar', {
                 method: 'PATCH',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ img_id: result.id })
+                body: JSON.stringify({ img_id: imageId })
             })
 
+            if (!avatarResponse.ok) {
+                console.error('Failed to link avatar to user:', await avatarResponse.text())
+            }
+
+            // Also update partner's img_id if user has linked partner
+            if (user.value?.partner_id) {
+                const partnerResponse = await fetch(`/api/partners/${user.value.partner_id}`, {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ img_id: imageId })
+                })
+                if (!partnerResponse.ok) {
+                    console.error('Failed to link avatar to partner:', await partnerResponse.text())
+                }
+            }
+
             uploadProgress.value = 'Erfolgreich hochgeladen!'
-            setTimeout(() => window.location.reload(), 1000)
+            // Refresh session to get updated img_id
+            await checkSession()
         } else {
             const error = await response.json()
             uploadProgress.value = `Fehler: ${error.message}`
@@ -707,7 +730,10 @@ function checkDenseMode() {
 // LIFECYCLE
 // ============================================================
 
-onMounted(() => {
+onMounted(async () => {
+    // First restore session state from cookie
+    await checkSession()
+    // Then load user's projects
     loadProjects()
     checkDenseMode()
     window.addEventListener('resize', checkDenseMode)
