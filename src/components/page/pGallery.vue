@@ -1,22 +1,29 @@
 <!--
-  pGallerySimple.vue - Simple page-level gallery wrapper for external websites
+  pGallery.vue - Simple page-level gallery wrapper for external websites
   
   A lightweight wrapper around ItemGallery for display-only scenarios.
   No interactive controls (search, filter inputs, selection UI).
   Supports filter/search as props and modal preview or route navigation.
+  
+  Interaction Modes:
+  - 'modal': Show preview modal on click (default)
+  - 'route': Navigate directly to entity page on click
+  - 'route-modal': Show modal with navigation button
 -->
 <template>
-    <div class="p-gallery-simple">
-        <ItemGallery :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
-            :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :item-type="itemType"
-            :size="size" :variant="variant" :anatomy="anatomy" :interaction="interactionMode" :data-mode="true"
-            :multi-select="false" @item-click="handleItemClick" />
+    <div class="p-gallery">
+        <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
+            :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
+            :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
+            :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
+            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick"
+            @item-trash="handleItemTrash" />
 
-        <!-- Route Navigation Modal (if using route mode) -->
+        <!-- Route Navigation Modal (if using route-modal mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
             :heading="selectedItem?.title || selectedItem?.name || selectedItem?.entityname || ''"
             :teaser="selectedItem?.teaser" :data="parseImageData(selectedItem)" :shape="variant"
-            :anatomy="modalOptionsWithDefaults.anatomy"
+            :anatomy="modalOptions?.anatomy ?? 'heroimage'"
             :entity="{ xmlid: selectedItem?.xmlID || selectedItem?.xmlid, status_display: selectedItem?.status_display, table: entity }"
             @close="closeRouteModal">
             <template #footer>
@@ -46,73 +53,116 @@ interface Props {
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
 
+    // Status value filtering
+    statusLt?: number  // Less than
+    statusEq?: number  // Equal
+    statusGt?: number  // Greater than
+
     // Display options
     itemType?: 'tile' | 'card'
-    size?: 'small' | 'medium'
-    variant?: 'default' | 'square' | 'wide' | 'vertical'
-
-    // Interaction mode
-    onActivate?: 'modal' | 'route'
-    routePath?: string // e.g., '/events/:id' where :id will be replaced
-    routeButtonText?: string
-}
-
-const props = withDefaults(defineProps<{
-    entity: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
-    project?: string
-
-    // Filter options (passed as props, no UI controls)
-    filterIds?: number[]
-    filterXmlPrefix?: string
-    filterXmlPrefixes?: string[]
-    filterXmlPattern?: RegExp
-
-    // Display options
-    itemType?: 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
-    variant?: 'square' | 'wide' | 'thumb' | 'vertical'
+    variant?: 'default' | 'square' | 'wide' | 'vertical'
     anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
 
     // Interaction mode
-    onActivate?: 'modal' | 'route'
-    routePath?: string
+    // 'modal' - Show preview modal (default)
+    // 'route' - Navigate directly to entity page
+    // 'route-modal' - Show modal with navigation button
+    onActivate?: 'modal' | 'route' | 'route-modal'
+    routePath?: string // e.g., '/sites/:project/posts/:id' where placeholders will be replaced
     routeButtonText?: string
+
+    // Trash functionality
+    showTrash?: boolean
 
     // Modal display options
     modalOptions?: {
         anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     }
+}
 
-    header?: string
-    isFooter?: boolean
-}>(), {
-    anatomy: 'bottomimage'
+const props = withDefaults(defineProps<Props>(), {
+    itemType: 'card',
+    size: 'medium',
+    variant: 'default',
+    anatomy: 'bottomimage',
+    onActivate: 'modal',
+    routeButtonText: 'View Details',
+    showTrash: false,
+    modalOptions: () => ({ anatomy: 'heroimage' })
 })
+
+const emit = defineEmits<{
+    'item-click': [item: any]
+    'item-trash': [item: any]
+}>()
 
 const router = useRouter()
 const selectedItem = ref<any>(null)
 const showRouteModal = ref(false)
+const itemGalleryRef = ref<InstanceType<typeof ItemGallery> | null>(null)
 
-// Modal options with defaults
-const modalOptionsWithDefaults = computed(() => ({
-    anatomy: props.modalOptions?.anatomy ?? 'heroimage'
-}))
+// Expose refresh method
+const refresh = () => {
+    if (itemGalleryRef.value?.refresh) {
+        itemGalleryRef.value.refresh()
+    }
+}
+
+defineExpose({ refresh })
 
 // Determine interaction mode for ItemGallery
 const interactionMode = computed(() => {
     if (props.onActivate === 'modal') {
         return 'previewmodal'
     }
+    // For 'route' and 'route-modal', we handle clicks ourselves
     return 'static'
 })
 
+// Build route path for item
+function buildRoutePath(item: any): string {
+    if (props.routePath) {
+        // Replace placeholders: :id, :project, :domaincode
+        return props.routePath
+            .replace(':id', String(item.id))
+            .replace(':project', props.project || item.domaincode || '')
+            .replace(':domaincode', props.project || item.domaincode || '')
+    }
+
+    // Auto-generate route based on entity type
+    const domaincode = props.project || item.domaincode || ''
+    switch (props.entity) {
+        case 'posts':
+            return `/sites/${domaincode}/posts/${item.id}`
+        case 'events':
+            return `/sites/${domaincode}/events/${item.id}`
+        default:
+            return ''
+    }
+}
+
 // Handle item click
 const handleItemClick = (item: any) => {
+    emit('item-click', item)
+
     if (props.onActivate === 'route') {
+        // Navigate directly
+        const path = buildRoutePath(item)
+        if (path) {
+            router.push(path)
+        }
+    } else if (props.onActivate === 'route-modal') {
+        // Show modal with navigation option
         selectedItem.value = item
         showRouteModal.value = true
     }
     // If onActivate === 'modal', ItemGallery handles it with previewmodal mode
+}
+
+// Handle trash click
+const handleItemTrash = (item: any) => {
+    emit('item-trash', item)
 }
 
 // Parse image data for modal
@@ -145,13 +195,13 @@ const parseImageData = (item: any): ImgShapeData | undefined => {
     }
 }
 
-// Navigate to route
+// Navigate to route (for route-modal mode)
 const navigateToRoute = () => {
-    if (!props.routePath || !selectedItem.value) return
-
-    // Replace :id with actual item id
-    const path = props.routePath.replace(':id', String(selectedItem.value.id))
-    router.push(path)
+    if (!selectedItem.value) return
+    const path = buildRoutePath(selectedItem.value)
+    if (path) {
+        router.push(path)
+    }
     closeRouteModal()
 }
 
@@ -162,7 +212,7 @@ const closeRouteModal = () => {
 </script>
 
 <style scoped>
-.p-gallery-simple {
+.p-gallery {
     width: 100%;
 }
 

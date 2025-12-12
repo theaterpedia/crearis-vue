@@ -133,7 +133,7 @@ interface EntityItem {
 
 interface Props {
     items?: ListItem[] // Now optional
-    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
+    entity?: 'posts' | 'events' | 'instructors' | 'locations' | 'projects' | 'images' | 'all'
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
     filterIds?: number[] // Filter fetched entities by these IDs
@@ -367,6 +367,8 @@ const fetchEntityData = async () => {
             url = '/api/events'
         } else if (props.entity === 'instructors') {
             url = '/api/public-users'
+        } else if (props.entity === 'locations') {
+            url = '/api/locations'
         } else if (props.entity === 'projects') {
             url = '/api/projects'
         } else if (props.entity === 'images') {

@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 /**
  * PATCH /api/partners/:id

@@ -1,85 +1,125 @@
 <template>
-    <BasePanel :is-open="isOpen" :title="title" :subtitle="subtitle" :sidebar-mode="sidebarMode" @close="handleClose">
+    <BasePanel :is-open="isOpen" :title="title" :subtitle="subtitle" :sidebar-mode="sidebarMode" @close="handleClose"
+        v-slot="{ activeTab, showTabs }">
         <form @submit.prevent="handleSave" class="edit-form">
-            <!-- Heading + Header Type Row -->
-            <div class="form-row">
-                <div class="form-group form-group-flex">
-                    <label class="form-label" for="edit-heading">
-                        Heading
-                        <span class="required">*</span>
+            <!-- CORE TAB CONTENT (shown when no tabs OR activeTab === 'core') -->
+            <template v-if="!showTabs || activeTab === 'core'">
+                <!-- Heading + Header Type Row -->
+                <div class="form-row">
+                    <div class="form-group form-group-flex">
+                        <label class="form-label" for="edit-heading">
+                            Heading
+                            <span class="required">*</span>
+                        </label>
+                        <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
+                            placeholder="Enter heading..." required />
+                    </div>
+                    <!-- Header Type disabled
+                    <div class="form-group form-group-fixed">
+                        <label class="form-label" for="edit-header-type">Header Type</label>
+                        <select id="edit-header-type" v-model="formData.header_type" class="form-select">
+                            <option value="">Default</option>
+                            <option value="hero">Hero</option>
+                            <option value="banner">Banner</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div> -->
+                </div>
+
+                <!-- Status Badge and Image Selection Row -->
+                <div class="form-row">
+                    <div class="form-group form-group-flex">
+                        <label class="form-label">Status</label>
+                        <div class="status-badge-wrapper">
+                            <PostStatusBadge v-if="postDataForBadge && projectDataForBadge" :post="postDataForBadge"
+                                :project="projectDataForBadge" :membership="null" @status-changed="handleStatusChanged"
+                                @scope-changed="handleStatusChanged" @trash="handleTrash" @restore="handleRestore"
+                                @error="handleStatusError" />
+                            <span v-else class="status-placeholder">--</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-flex">
+                        <label class="form-label">Cover Image</label>
+                        <DropdownList entity="images" title="Select Cover Image" :project="projectDomaincode"
+                            size="small" width="medium" :dataMode="true" :multiSelect="false"
+                            v-model:selectedIds="formData.img_id" :displayXml="true" />
+                    </div>
+                </div>
+
+                <!-- Tags Row (ttags, ctags, dtags) -->
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <TagFamilies v-model:ttags="formData.ttags" v-model:ctags="formData.ctags"
+                        v-model:dtags="formData.dtags" :enable-edit="true" group-selection="core" layout="wrap" />
+                </div>
+
+                <!-- Event-Specific Fields (only shown for events) -->
+                <template v-if="entityType === 'events'">
+                    <!-- Date Range -->
+                    <div class="form-group">
+                        <label class="form-label">Datum & Zeit</label>
+                        <DateRangeEdit start-label="Beginn" end-label="Ende" type="datetime" :stacked="false"
+                            size="medium" v-model:start="formData.date_begin" v-model:end="formData.date_end" />
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <DropdownList entity="locations" title="Ort wählen" size="small" width="medium" :dataMode="true"
+                            :multiSelect="false" v-model:selectedIds="formData.location" />
+                    </div>
+
+                    <!-- Event Type -->
+                    <div class="form-group">
+                        <label class="form-label" for="edit-event-type">Event Type</label>
+                        <select id="edit-event-type" v-model="formData.event_type" class="form-select">
+                            <option value="workshop">Workshop</option>
+                            <option value="project">Project</option>
+                            <option value="course">Course</option>
+                            <option value="conference">Conference</option>
+                            <option value="online">Online</option>
+                            <option value="meeting">Meeting</option>
+                        </select>
+                    </div>
+                </template>
+
+                <!-- Header Size (if available) -->
+                <div v-if="hasField('header_size')" class="form-group">
+                    <label class="form-label" for="edit-header-size">Header Size</label>
+                    <select id="edit-header-size" v-model="formData.header_size" class="form-select">
+                        <option :value="null">Default</option>
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+
+                <!-- Extension Fields Slot (shown in core tab) -->
+                <slot name="extension-fields" :formData="formData" />
+            </template>
+
+            <!-- CONTENT TAB (shown when no tabs OR activeTab === 'content') -->
+            <template v-if="!showTabs || activeTab === 'content'">
+                <!-- Teaser -->
+                <div class="form-group">
+                    <label class="form-label" for="edit-teaser">Teaser</label>
+                    <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
+                        placeholder="Brief description..."></textarea>
+                </div>
+
+                <!-- Markdown Content -->
+                <div class="form-group">
+                    <label class="form-label" for="edit-md">
+                        Content (Markdown)
+                        <span class="field-hint">Supports **bold**, *italic*, and basic markdown</span>
                     </label>
-                    <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
-                        placeholder="Enter heading..." required />
+                    <textarea id="edit-md" v-model="formData.md" class="form-textarea form-textarea-large" rows="12"
+                        placeholder="# Your content here..."></textarea>
                 </div>
-                <!-- Header Type disabled
-                <div class="form-group form-group-fixed">
-                    <label class="form-label" for="edit-header-type">Header Type</label>
-                    <select id="edit-header-type" v-model="formData.header_type" class="form-select">
-                        <option value="">Default</option>
-                        <option value="hero">Hero</option>
-                        <option value="banner">Banner</option>
-                        <option value="minimal">Minimal</option>
-                    </select>
-                </div> -->
-            </div>
+            </template>
 
-            <!-- Status and Image Selection Row -->
-            <div class="form-row">
-                <div class="form-group form-group-flex">
-                    <label class="form-label" for="edit-status">Status</label>
-                    <select id="edit-status" v-model="formData.status" class="form-input">
-                        <option :value="null">-- Select status --</option>
-                        <option v-for="status in availableStatuses" :key="status.hex_value" :value="status.raw_value">
-                            {{ status.display_name }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-group form-group-flex">
-                    <label class="form-label">Cover Image</label>
-                    <DropdownList entity="images" title="Select Cover Image" :project="projectDomaincode" size="small"
-                        width="medium" :dataMode="true" :multiSelect="false" v-model:selectedIds="formData.img_id"
-                        :displayXml="true" />
-                </div>
-            </div>
-
-            <!-- Teaser -->
-            <div class="form-group">
-                <label class="form-label" for="edit-teaser">Teaser</label>
-                <textarea id="edit-teaser" v-model="formData.teaser" class="form-textarea" rows="3"
-                    placeholder="Brief description..."></textarea>
-            </div>
-
-            <!-- Header Size (if available) -->
-            <div v-if="hasField('header_size')" class="form-group">
-                <label class="form-label" for="edit-header-size">Header Size</label>
-                <select id="edit-header-size" v-model="formData.header_size" class="form-select">
-                    <option :value="null">Default</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                </select>
-            </div>
-
-            <!-- Markdown Content -->
-            <div class="form-group">
-                <label class="form-label" for="edit-md">
-                    Content (Markdown)
-                    <span class="field-hint">Supports **bold**, *italic*, and basic markdown</span>
-                </label>
-                <textarea id="edit-md" v-model="formData.md" class="form-textarea form-textarea-large" rows="12"
-                    placeholder="# Your content here..."></textarea>
-            </div>
-
-            <!-- Extension Fields Slot -->
-            <slot name="extension-fields" :formData="formData" />
-
-            <!-- Sysreg Tags -->
-            <SysregTagDisplay v-model:all-tags="allTags" v-model:config-visibility="configVisibility"
-                v-model:age-group="ageGroup" v-model:subject-type="subjectType" v-model:core-themes="coreThemes"
-                v-model:domains="domains" />
-
-            <!-- Action Buttons -->
+            <!-- Action Buttons (always visible) -->
             <div class="form-actions">
                 <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSaving">
                     Cancel
@@ -96,7 +136,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import BasePanel from './BasePanel.vue'
-import SysregTagDisplay from './sysreg/SysregTagDisplay.vue'
+import PostStatusBadge from './PostStatusBadge.vue'
+import TagFamilies from './sysreg/TagFamilies.vue'
+import DateRangeEdit from './DateRangeEdit.vue'
 import { DropdownList } from '@/components/clist'
 import { sanitizeStatusVal } from '@/composables/useSysreg'
 
@@ -107,6 +149,11 @@ export interface EditPanelData {
     header_type?: string
     header_size?: string
     md?: string
+    // Event-specific fields
+    date_begin?: string
+    date_end?: string
+    location?: number | null
+    event_type?: string
     [key: string]: any // Allow extension fields
 }
 
@@ -119,12 +166,30 @@ interface Props {
     availableFields?: string[] // Optional list of available fields
     entityType?: string // Entity table name (e.g., 'posts', 'events', 'projects')
     projectDomaincode?: string // Project domaincode for filtering images
+    /** Entity ID for status badge */
+    entityId?: number
+    /** Project ID for status badge permissions */
+    projectId?: number
+    /** Owner ID for status badge permissions */
+    ownerId?: number
+    /** Creator ID for status badge */
+    creatorId?: number
+    /** Project owner sysmail for permissions */
+    projectOwnerSysmail?: string
+    /** Project status for permissions */
+    projectStatus?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
     sidebarMode: 'none',
-    availableFields: () => ['heading', 'teaser', 'img_id', 'header_type', 'md'],
-    entityType: 'posts' // Default to posts
+    availableFields: () => ['heading', 'teaser', 'img_id', 'header_type', 'md', 'date_begin', 'date_end', 'location', 'event_type'],
+    entityType: 'posts',
+    entityId: 0,
+    projectId: 0,
+    ownerId: 0,
+    creatorId: 0,
+    projectOwnerSysmail: '',
+    projectStatus: 0
 })
 
 const emit = defineEmits<{
@@ -138,12 +203,47 @@ const isSaving = ref(false)
 const imageError = ref(false)
 const isInitializing = ref(false)
 const availableStatuses = ref<Array<{ hex_value: string; raw_value: any; display_name: string; name: string }>>([])
-const allTags = ref(false)
-const configVisibility = ref(0)
-const ageGroup = ref(0)
-const subjectType = ref(0)
-const coreThemes = ref('\\x00')
-const domains = ref('\\x00')
+
+// Computed data for PostStatusBadge
+const postDataForBadge = computed(() => {
+    if (!props.entityId) return null
+    return {
+        id: props.entityId,
+        owner_id: props.ownerId,
+        creator_id: props.creatorId,
+        status: formData.value.status || 1,
+        project_id: props.projectId
+    }
+})
+
+const projectDataForBadge = computed(() => {
+    if (!props.projectId) return null
+    return {
+        id: props.projectId,
+        owner_sysmail: props.projectOwnerSysmail,
+        status: props.projectStatus
+    }
+})
+
+// Status handlers for PostStatusBadge
+function handleStatusChanged(newStatus: number) {
+    console.log('[EditPanel] Status changed to:', newStatus)
+    formData.value.status = newStatus
+}
+
+function handleTrash() {
+    console.log('[EditPanel] Trash requested')
+    formData.value.status = 65536 // Trash status
+}
+
+function handleRestore() {
+    console.log('[EditPanel] Restore requested')
+    formData.value.status = 64 // Draft status
+}
+
+function handleStatusError(error: string) {
+    console.error('[EditPanel] Status error:', error)
+}
 
 // Check if screen height is small (hide image preview if < 900px)
 const isSmallHeight = computed(() => {
@@ -190,10 +290,7 @@ function handleSave() {
 
     // Sanitize data to prevent NULL bytes and ensure proper types
     const saveData: any = {
-        ...formData.value,
-        ttags: coreThemes.value,
-        ctags: String.fromCharCode(configVisibility.value | (ageGroup.value << 2) | (subjectType.value << 4)),
-        dtags: domains.value
+        ...formData.value
     }
 
     // Ensure img_id is a valid number or null (not undefined or 0)

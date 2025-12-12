@@ -4,47 +4,10 @@ import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
 import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
 import { getStatusByName } from '../../utils/status-helpers'
+import { sessions } from '../../utils/session-store'
 
-interface ProjectRecord {
-    id: string  // Legacy: stores domaincode for backward compatibility
-    domaincode: string  // NEW: explicit domaincode field (same as id for now)
-    name: string  // domaincode
-    heading?: string  // heading from database
-    username: string
-    isOwner: boolean
-    isMember: boolean
-    isInstructor: boolean
-    isAuthor: boolean
-}
-
-interface SessionData {
-    userId: number
-    sysmail: string  // Added for permission checks
-    username: string
-    status: number | null  // User status for onboarding flow
-    partner_id: number | null  // Linked partner for onboarding
-    img_id: number | null  // Avatar image for onboarding
-    availableRoles: string[]
-    activeRole: string
-    projectId: string | null
-    projectName?: string
-    projects?: ProjectRecord[]
-    capabilities?: Record<string, Set<string>>
-    expiresAt: number
-}
-
-// In-memory session store (for development - use Redis in production)
-export const sessions = new Map<string, SessionData>()
-
-// Clean up expired sessions every 5 minutes
-setInterval(() => {
-    const now = Date.now()
-    for (const [sessionId, session] of sessions.entries()) {
-        if (session.expiresAt < now) {
-            sessions.delete(sessionId)
-        }
-    }
-}, 5 * 60 * 1000)
+// Re-export sessions for backward compatibility (deprecated - use session-store directly)
+export { sessions }
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event) as { username?: string; userId?: string; password?: string }

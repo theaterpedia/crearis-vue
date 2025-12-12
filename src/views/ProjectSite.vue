@@ -258,7 +258,7 @@ const navigationItems = computed(() => {
     if (user.value?.activeRole === 'project') {
         items.unshift({
             label: 'Back to Dashboard',
-            link: '/projects'
+            link: `/projects/${domaincode.value}/topics`
         })
     }
 

@@ -1,7 +1,7 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { db } from '../../database/init'
 
-// GET /api/posts/:id - Get a single post by ID
+// GET /api/events/:id - Get a single event by ID
 export default defineEventHandler(async (event) => {
     try {
         const id = getRouterParam(event, 'id')
@@ -9,42 +9,44 @@ export default defineEventHandler(async (event) => {
         if (!id) {
             throw createError({
                 statusCode: 400,
-                message: 'Post ID is required'
+                message: 'Event ID is required'
             })
         }
 
         const sql = `
             SELECT 
-                p.*,
+                e.*,
+                e.user_id AS creator_id,
                 pr.domaincode AS domaincode,
-                u.sysmail AS creator_sysmail,
-                u.username AS creator_name
-            FROM posts p
-            LEFT JOIN projects pr ON p.project_id = pr.id
-            LEFT JOIN users u ON p.creator_id = u.id
-            WHERE p.id = ?
+                loc.name AS location_name,
+                creator.username AS creator_name
+            FROM events e
+            LEFT JOIN projects pr ON e.project_id = pr.id
+            LEFT JOIN partners loc ON e.location = loc.id
+            LEFT JOIN users creator ON e.user_id = creator.id
+            WHERE e.id = ?
         `
 
-        const post = await db.get(sql, [id])
+        const eventData = await db.get(sql, [id])
 
-        if (!post) {
+        if (!eventData) {
             throw createError({
                 statusCode: 404,
-                message: 'Post not found'
+                message: 'Event not found'
             })
         }
 
-        return { post }
+        return { event: eventData }
     } catch (error: any) {
         // Re-throw if already a createError
         if (error.statusCode) {
             throw error
         }
 
-        console.error('Error fetching post:', error)
+        console.error('Error fetching event:', error)
         throw createError({
             statusCode: 500,
-            message: 'Failed to fetch post'
+            message: 'Failed to fetch event'
         })
     }
 })

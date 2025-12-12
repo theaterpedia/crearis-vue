@@ -55,10 +55,10 @@
             <!-- STATUS 8 (DEMO): Partner linking + Avatar upload -->
             <!-- ================================================================== -->
             <section v-else-if="isDemoState" class="home-layout__onboarding">
-                <div v-if="projects.length > 0" class="onboarding-demo">
+                <div class="onboarding-demo">
                     <h2>Profil einrichten</h2>
 
-                    <!-- Step 1: Partner Linking -->
+                    <!-- Step 1: Partner Linking (always available) -->
                     <div class="onboarding-step" :class="{ completed: hasPartner }">
                         <div class="step-header">
                             <span class="step-number">1</span>
@@ -103,12 +103,14 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: Avatar Upload -->
-                    <div class="onboarding-step" :class="{ completed: hasAvatar, disabled: !hasPartner }">
+                    <!-- Step 2: Avatar Upload (only if projects available) -->
+                    <div v-if="projects.length > 0" class="onboarding-step"
+                        :class="{ completed: hasAvatar, disabled: !hasPartner }">
                         <div class="step-header">
                             <span class="step-number">2</span>
                             <span class="step-title">Avatar-Bild hochladen</span>
                             <span v-if="hasAvatar" class="step-check">✓</span>
+                            <span v-else class="step-optional">(optional)</span>
                         </div>
                         <div v-if="hasPartner && !hasAvatar" class="step-content">
                             <div class="form-box">
@@ -153,17 +155,29 @@
                         </div>
                     </div>
 
-                    <!-- Next Step Hint -->
-                    <div v-if="hasPartner && hasAvatar" class="onboarding-complete">
-                        <p>🎉 Super! Dein Profil ist eingerichtet. Der nächste Schritt ist die Aktivierung.</p>
-                        <p class="activation-hint">Nach der Aktivierung hast du Zugriff auf deine Projekte.</p>
+                    <!-- No projects hint for avatar -->
+                    <div v-else-if="hasPartner" class="onboarding-step disabled">
+                        <div class="step-header">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Avatar-Bild hochladen</span>
+                            <span class="step-optional">(später möglich)</span>
+                        </div>
+                        <div class="step-content">
+                            <p class="no-project-hint">Ein Avatar-Bild kann hochgeladen werden, sobald du einem Projekt
+                                zugewiesen wurdest.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div v-else class="onboarding-no-project">
-                    <p>Bevor du auf Theaterpedia arbeiten kannst, musst du in einem Projekt registriert sein.</p>
-                    <p class="contact-hint">Bitte informiere den Admin, damit du einem Projekt zugewiesen werden kannst.
-                    </p>
+                    <!-- Continue Button (shows after partner is set) -->
+                    <div v-if="hasPartner" class="onboarding-continue">
+                        <p v-if="hasAvatar">🎉 Super! Dein Profil ist eingerichtet.</p>
+                        <p v-else-if="projects.length > 0">Du kannst das Avatar-Bild auch später hochladen.</p>
+                        <p v-else>Du kannst ein Avatar-Bild später hochladen, sobald du einem Projekt zugewiesen
+                            wurdest.</p>
+                        <button class="btn btn--primary btn--lg" @click="advanceToDraft">
+                            Weiter zur Aktivierung →
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -648,18 +662,50 @@ async function handleAvatarUpload(event: Event) {
 }
 
 // ============================================================
+// METHODS: Profile Advancement (DEMO → DRAFT)
+// ============================================================
+
+async function advanceToDraft() {
+    try {
+        const response = await fetch('/api/users/me/advance', {
+            method: 'POST'
+        })
+
+        if (response.ok) {
+            // Refresh session to get updated status
+            await checkSession()
+        } else {
+            const error = await response.json()
+            alert(`Fehler: ${error.message}`)
+        }
+    } catch (err) {
+        console.error('Advancement failed:', err)
+        alert('Weiter-Schritt fehlgeschlagen')
+    }
+}
+
+// ============================================================
 // METHODS: Profile Activation
 // ============================================================
 
 async function activateProfile() {
     try {
+        console.log('[Activation] Starting activation, current user status:', user.value?.status)
+
         const response = await fetch('/api/users/me/activate', {
             method: 'POST'
         })
 
         if (response.ok) {
-            alert('Profil erfolgreich aktiviert!')
-            window.location.reload()
+            const result = await response.json()
+            console.log('[Activation] API response:', result)
+
+            // Refresh session to get updated status - this will trigger isConfirmedState
+            await checkSession()
+
+            console.log('[Activation] After checkSession, user status:', user.value?.status)
+            console.log('[Activation] isConfirmedState should be:', user.value?.status === 512 || user.value?.status === 1024)
+            // No alert needed - UI will automatically show project cards
         } else {
             const error = await response.json()
             alert(`Fehler: ${error.message}`)
@@ -937,6 +983,12 @@ onUnmounted(() => {
     font-weight: 600;
 }
 
+.step-optional {
+    color: var(--color-dimmed);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
 .step-content {
     padding: 1rem;
 }
@@ -1076,6 +1128,24 @@ onUnmounted(() => {
 .onboarding-complete p {
     margin: 0;
     color: var(--color-positive-base);
+}
+
+.onboarding-continue {
+    background: var(--color-muted-bg);
+    border-radius: var(--radius-medium);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.onboarding-continue p {
+    margin: 0 0 1rem;
+    color: var(--color-contrast);
+}
+
+.no-project-hint {
+    color: var(--color-dimmed);
+    font-style: italic;
 }
 
 .onboarding-no-project {

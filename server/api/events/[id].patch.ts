@@ -2,9 +2,9 @@ import { defineEventHandler, getRouterParam, createError, readBody, getCookie } 
 import { db } from '../../database/init'
 import { sessions } from '../../utils/session-store'
 
-// PATCH /api/posts/:id - Update post fields
-// Supports updating: name, subtitle, teaser, status, dtags, ctags, ttags, rtags, etc.
-// Authorization: Must be post owner, project owner, or project member
+// PATCH /api/events/:id - Update event fields
+// Supports updating: name, teaser, status, dtags, ctags, ttags, date_begin, date_end, etc.
+// Authorization: Must be event owner, project owner, or project member
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, 'id')
 
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
         if (!id) {
             throw createError({
                 statusCode: 400,
-                message: 'Post ID is required'
+                message: 'Event ID is required'
             })
         }
 
@@ -33,55 +33,62 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Get post with project info
-        const post = await db.get(`
-            SELECT p.*, pr.owner_id as project_owner_id
-            FROM posts p
-            LEFT JOIN projects pr ON p.project_id = pr.id
-            WHERE p.id = ?
+        // Get event with project info
+        const eventData = await db.get(`
+            SELECT e.*, pr.owner_id as project_owner_id
+            FROM events e
+            LEFT JOIN projects pr ON e.project_id = pr.id
+            WHERE e.id = ?
         `, [id]) as any
 
-        if (!post) {
+        if (!eventData) {
             throw createError({
                 statusCode: 404,
-                message: 'Post not found'
+                message: 'Event not found'
             })
         }
 
         // Check authorization
-        // Allow: post creator, project owner, or project member (configrole=8)
-        // Partners (configrole=2) and participants (configrole=4) can only edit their own posts
-        const isPostCreator = post.creator_id === session.userId
-        const isProjectOwner = post.project_owner_id === session.userId
+        // Allow: event creator, project owner, or project member (configrole=8)
+        const isEventCreator = eventData.user_id === session.userId
+        const isProjectOwner = eventData.project_owner_id === session.userId
 
         // Check if user is a project member with edit rights (configrole=8)
         let isProjectMemberWithEditRights = false
-        if (post.project_id) {
+        if (eventData.project_id) {
             const membership = await db.get(
                 'SELECT configrole FROM project_members WHERE project_id = ? AND user_id = ?',
-                [post.project_id, session.userId]
+                [eventData.project_id, session.userId]
             ) as { configrole: number } | undefined
-            // Only full members (configrole=8) can edit any post
-            // Partners (2) and participants (4) can only edit their own posts
+            // Only full members (configrole=8) can edit any event
             isProjectMemberWithEditRights = membership?.configrole === 8
         }
 
-        if (!isPostCreator && !isProjectOwner && !isProjectMemberWithEditRights) {
+        if (!isEventCreator && !isProjectOwner && !isProjectMemberWithEditRights) {
             throw createError({
                 statusCode: 403,
-                message: 'Not authorized to update this post'
+                message: 'Not authorized to update this event'
             })
         }
 
         // Read update body
         const body = await readBody(event) as Record<string, any>
 
+        // Map creator_id to user_id (database column)
+        if (body.creator_id !== undefined) {
+            body.user_id = body.creator_id
+            delete body.creator_id
+        }
+
         // Build update query dynamically
         // Content fields
         const allowedFields = [
-            'name', 'subtitle', 'teaser', 'md', 'html',
-            'post_date', 'template', 'header_type', 'lang',
+            'name', 'teaser', 'md', 'html',
+            'date_begin', 'date_end', 'event_type',
+            'template', 'header_type', 'header_size', 'lang',
+            'location', 'user_id',
             'cimg', 'img_id', 'img_show',
+            'seats_max', 'seats_available',
             // Tag fields (integer bitmasks)
             'status', 'dtags', 'ctags', 'ttags', 'rtags',
             // Visibility (usually set by triggers, but allow manual override)
@@ -107,28 +114,32 @@ export default defineEventHandler(async (event) => {
         // Add updated_at
         updates.push('updated_at = CURRENT_TIMESTAMP')
 
-        // Add post id for WHERE clause
-        values.push(post.id)
+        // Add event id for WHERE clause
+        values.push(eventData.id)
 
         // Execute update
         await db.run(
-            `UPDATE posts SET ${updates.join(', ')} WHERE id = ?`,
+            `UPDATE events SET ${updates.join(', ')} WHERE id = ?`,
             values
         )
 
-        // Return updated post with domaincode
-        const updatedPost = await db.get(`
-            SELECT p.*, pr.domaincode
-            FROM posts p
-            LEFT JOIN projects pr ON p.project_id = pr.id
-            WHERE p.id = ?
-        `, [post.id])
+        // Return updated event with domaincode and related names
+        const updatedEvent = await db.get(`
+            SELECT e.*, e.user_id AS creator_id, pr.domaincode,
+                   loc.name AS location_name,
+                   creator.username AS creator_name
+            FROM events e
+            LEFT JOIN projects pr ON e.project_id = pr.id
+            LEFT JOIN partners loc ON e.location = loc.id
+            LEFT JOIN users creator ON e.user_id = creator.id
+            WHERE e.id = ?
+        `, [eventData.id])
 
-        console.log(`[PATCH /api/posts/${id}] Updated by user ${session.userId}:`, Object.keys(body))
+        console.log(`[PATCH /api/events/${id}] Updated by user ${session.userId}:`, Object.keys(body))
 
-        return updatedPost
+        return updatedEvent
     } catch (error) {
-        console.error('Error updating post:', error)
+        console.error('Error updating event:', error)
 
         // Re-throw if already a H3 error
         if (error && typeof error === 'object' && 'statusCode' in error) {
@@ -137,7 +148,7 @@ export default defineEventHandler(async (event) => {
 
         throw createError({
             statusCode: 500,
-            message: 'Failed to update post'
+            message: 'Failed to update event'
         })
     }
 })
