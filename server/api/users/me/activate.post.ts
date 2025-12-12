@@ -43,6 +43,9 @@ export default defineEventHandler(async (event) => {
         // Transition to CONFIRMED_USER (1024)
         await db.run('UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?', [1024, session.userId])
 
+        // Update session with new status so subsequent requests see the change
+        session.status = 1024
+
         return {
             success: true,
             message: 'Profile activated successfully',

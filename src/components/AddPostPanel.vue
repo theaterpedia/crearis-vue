@@ -198,6 +198,10 @@ const handleCancel = () => {
     selectedOwner.value = ''
     customName.value = ''
     customTeaser.value = ''
+    selectedImageId.value = null
+    // Reset tags to initial state
+    ttags.value = 0
+    ctags.value = 0
 }
 
 // Clear selection (same as cancel but clearer intent for delete button)

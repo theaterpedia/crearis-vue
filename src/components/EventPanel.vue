@@ -41,13 +41,14 @@
             <div class="section-label">Anpassen</div>
 
             <div class="form-group">
-                <label class="form-label">Instructor</label>
-                <select v-model="selectedInstructor" class="form-select">
-                    <option value="">Instructor wählen</option>
-                    <option v-for="instructor in allInstructors" :key="instructor.id" :value="instructor.id">
-                        {{ instructor.name }}
+                <label class="form-label">Creator</label>
+                <select v-model="selectedOwner" class="form-select">
+                    <option value="">Creator wählen</option>
+                    <option v-for="user in projectUsers" :key="user.id" :value="user.id">
+                        {{ user.username }}
                     </option>
                 </select>
+                <small v-if="projectUsersLoading" class="form-hint">Lade Projekt-Mitglieder...</small>
             </div>
 
             <div class="form-group">
@@ -121,7 +122,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import EventsDropdown from '@/components/EventsDropdown.vue'
@@ -131,10 +132,16 @@ import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
 import type { Event, Instructor, Partner } from '@/types'
 
+interface ProjectUser {
+    id: number
+    username: string
+    role?: string
+}
+
 interface Props {
     projectId: string
     baseEvents: Event[]
-    allInstructors?: Instructor[]  // Legacy support
+    allInstructors?: Instructor[]  // Legacy support (kept for backward compatibility)
     allPartners?: Partner[]  // New unified type (instructors)
     allLocations?: Location[]  // Legacy support
     locationPartners?: Partner[]  // New unified type (locations)
@@ -181,8 +188,36 @@ const locationDropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
 const isLocationDropdownOpen = ref(false)
 const selectedEvent = ref<Event | null>(null)
-const selectedInstructor = ref('')
+const selectedOwner = ref<number | ''>('')
 const selectedEventType = ref('workshop')
+
+// Project users state (like AddPostPanel)
+const projectUsers = ref<ProjectUser[]>([])
+const projectUsersLoading = ref(false)
+
+// Fetch project users when component mounts or projectId changes
+async function loadProjectUsers() {
+    if (!props.projectId) return
+
+    projectUsersLoading.value = true
+    try {
+        const response = await fetch(`/api/users?project_id=${props.projectId}`)
+        if (!response.ok) {
+            throw new Error(`Failed to load project users: ${response.statusText}`)
+        }
+        projectUsers.value = await response.json()
+    } catch (err) {
+        console.error('Error loading project users:', err)
+        projectUsers.value = []
+    } finally {
+        projectUsersLoading.value = false
+    }
+}
+
+// Watch for projectId changes
+watch(() => props.projectId, () => {
+    loadProjectUsers()
+}, { immediate: true })
 const selectedLocation = ref('')
 const dateBegin = ref('')
 const dateEnd = ref('')
@@ -200,13 +235,13 @@ const previewEvent = computed(() => {
         ...selectedEvent.value,
         name: customName.value || selectedEvent.value.name,
         teaser: customTeaser.value || selectedEvent.value.teaser,
-        public_user: selectedInstructor.value || selectedEvent.value.public_user,
+        public_user: selectedOwner.value || selectedEvent.value.public_user,
         location: selectedLocation.value || selectedEvent.value.location
     }
 })
 
 const canApply = computed(() => {
-    return selectedEvent.value && selectedInstructor.value && selectedLocation.value && dateBegin.value && dateEnd.value && customName.value
+    return selectedEvent.value && selectedOwner.value && selectedLocation.value && dateBegin.value && dateEnd.value && customName.value
 })
 
 const toggleDropdown = () => {
@@ -221,7 +256,8 @@ const selectBaseEvent = (event: Event) => {
     selectedEvent.value = event
     customName.value = event.name
     customTeaser.value = event.teaser || ''
-    selectedInstructor.value = event.public_user || ''
+    // Don't pre-select owner - let user choose from project members
+    selectedOwner.value = ''
     selectedEventType.value = event.event_type || 'workshop'
     selectedLocation.value = event.location || ''
 
@@ -272,13 +308,17 @@ const selectLocation = (location: Location) => {
 
 const handleCancel = () => {
     selectedEvent.value = null
-    selectedInstructor.value = ''
+    selectedOwner.value = ''
     selectedEventType.value = 'workshop'
     selectedLocation.value = ''
     dateBegin.value = ''
     dateEnd.value = ''
     customName.value = ''
     customTeaser.value = ''
+    selectedImageId.value = null
+    // Reset tags to initial state
+    ttags.value = 0
+    ctags.value = 0
 }
 
 // Clear selection (same as cancel but clearer intent for delete button)
@@ -294,8 +334,8 @@ const handleApply = async () => {
         validationErrors.push('Bitte wählen Sie eine Basis-Veranstaltung aus')
     }
 
-    if (!selectedInstructor.value) {
-        validationErrors.push('Bitte wählen Sie einen Instructor aus')
+    if (!selectedOwner.value) {
+        validationErrors.push('Bitte wählen Sie einen Creator aus')
     }
 
     if (!selectedLocation.value) {
@@ -355,7 +395,7 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            public_user: selectedInstructor.value,
+            owner_id: selectedOwner.value,  // Use owner_id (user FK) instead of public_user (partner reference)
             location: selectedLocation.value,
             // Image from dropdown (img_id FK)
             img_id: Array.isArray(selectedImageId.value) ? selectedImageId.value[0] : selectedImageId.value,
@@ -373,7 +413,7 @@ const handleApply = async () => {
             newEvent,
             selectedEvent: selectedEvent.value,
             projectId: props.projectId,
-            selectedInstructor: selectedInstructor.value,
+            selectedOwner: selectedOwner.value,
             selectedLocation: selectedLocation.value,
             customName: customName.value,
             customTeaser: customTeaser.value

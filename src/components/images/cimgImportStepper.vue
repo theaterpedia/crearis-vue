@@ -236,7 +236,7 @@ interface ImageItem {
 
 interface Props {
     projectId: string
-    eligibleOwners?: number[]
+    eligibleOwners?: number[]  // Deprecated: now loads from project_members
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -259,24 +259,25 @@ function validateXmlid(xmlid: string): boolean {
     return pattern.test(xmlid) && !xmlid.includes('-')
 }
 
-// Owner selection - initialize from props or fallback to current user
-const selectedOwnerId = ref<number | null>(props.defaultOwnerId || user.value?.id || null)
+// Owner selection - initialize from current user
+const selectedOwnerId = ref<number | null>(user.value?.id || null)
 const eligibleUsers = ref<Array<{ id: number; name: string; description?: string }>>([])
 
-// Load eligible users for owner dropdown
+// Load eligible users from project members (like AddPostPanel does)
 async function loadEligibleUsers() {
-    if (props.eligibleOwners.length === 0) {
-        // No filter, load all users (fallback)
+    if (!props.projectId) {
+        // Fallback to current user only
         eligibleUsers.value = user.value ? [{ id: user.value.id, name: user.value.username || `User ${user.value.id}` }] : []
         return
     }
 
     try {
-        // Load full user details for eligible owner IDs
-        const userPromises = props.eligibleOwners.map(userId =>
-            fetch(`/api/users/${userId}`).then(r => r.ok ? r.json() : null)
-        )
-        const users = await Promise.all(userPromises)
+        // Load project members via /api/users?project_id=...
+        const response = await fetch(`/api/users?project_id=${props.projectId}`)
+        if (!response.ok) {
+            throw new Error(`Failed to load project users: ${response.statusText}`)
+        }
+        const users = await response.json()
         eligibleUsers.value = users
             .filter(u => u !== null)
             .map(u => ({
@@ -466,6 +467,11 @@ const handleImport = async () => {
         // Success: clear images and emit
         images.value.forEach(img => URL.revokeObjectURL(img.previewUrl))
         images.value = []
+        
+        // Reset tags to initial state for next import
+        defaultTtags.value = 0
+        defaultCtags.value = 0
+        defaultDtags.value = 0
 
         emit('images-imported', importedIds)
         alert(`Successfully imported ${importedIds.length} image(s)!`)

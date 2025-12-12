@@ -69,6 +69,7 @@ import { migration as migration059 } from './059_image_workitems'
 import { migration as migration060 } from './060_event_odoo_stub_fields'
 import { up as migration061Up, down as migration061Down } from './061_partners_refactor'
 import { up as migration062Up, down as migration062Down } from './062_drop_instructor_trigger'
+import { migration as migration063 } from './063_fix_shape_to_img_propagation'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -146,6 +147,8 @@ const migrations: Migration[] = [
     // Package I (061+) - Partners Refactor
     { run: migration061Up, down: migration061Down, metadata: { id: '061_partners_refactor', description: 'Unify instructors, locations, participants into partners table', version: '0.4.1', date: '2025-12-11' }, reversible: true },
     { run: migration062Up, down: migration062Down, metadata: { id: '062_drop_instructor_trigger', description: 'Drop legacy instructor_id trigger on users', version: '0.4.1', date: '2025-12-11' }, reversible: false },
+    // Package F (060-069) - Bug fixes
+    { run: migration063.up, down: migration063.down, metadata: { id: migration063.id, description: migration063.description, version: '0.4.2', date: '2025-12-12' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
