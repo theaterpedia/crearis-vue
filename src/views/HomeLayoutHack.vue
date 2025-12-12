@@ -687,13 +687,22 @@ async function advanceToDraft() {
 
 async function activateProfile() {
     try {
+        console.log('[Activation] Starting activation, current user status:', user.value?.status)
+        
         const response = await fetch('/api/users/me/activate', {
             method: 'POST'
         })
 
         if (response.ok) {
-            alert('Profil erfolgreich aktiviert!')
-            window.location.reload()
+            const result = await response.json()
+            console.log('[Activation] API response:', result)
+            
+            // Refresh session to get updated status - this will trigger isConfirmedState
+            await checkSession()
+            
+            console.log('[Activation] After checkSession, user status:', user.value?.status)
+            console.log('[Activation] isConfirmedState should be:', user.value?.status === 512 || user.value?.status === 1024)
+            // No alert needed - UI will automatically show project cards
         } else {
             const error = await response.json()
             alert(`Fehler: ${error.message}`)
