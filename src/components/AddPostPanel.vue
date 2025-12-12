@@ -257,7 +257,7 @@ const handleApply = async () => {
 
         // Construct the new post object with only valid table fields
         // Note: public_user references instructors table, so we don't set it here
-        // owner_id is the user who owns/created the post (Migration 046)
+        // creator_id is the user who created the post (FK → users.id)
         const newPost = {
             id: newXmlId,
             name: customName.value,
@@ -268,7 +268,7 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            owner_id: selectedOwner.value,  // Record owner (Migration 046)
+            creator_id: selectedOwner.value,  // Record creator (FK → users.id)
             ttags: ttags.value,
             ctags: ctags.value,
             status: postStatus  // Status: NEW (1) or DEMO (8) if edits made

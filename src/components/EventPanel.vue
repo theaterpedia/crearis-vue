@@ -412,7 +412,7 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            user_id: selectedOwner.value,  // User FK (events.user_id -> users.id)
+            creator_id: selectedOwner.value,  // User FK (events.user_id -> users.id)
             location: selectedLocation.value,
             // Image from dropdown (img_id FK)
             img_id: Array.isArray(selectedImageId.value) ? selectedImageId.value[0] : selectedImageId.value,

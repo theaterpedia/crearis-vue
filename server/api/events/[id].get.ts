@@ -16,15 +16,14 @@ export default defineEventHandler(async (event) => {
         const sql = `
             SELECT 
                 e.*,
+                e.user_id AS creator_id,
                 pr.domaincode AS domaincode,
-                u.sysmail AS creator_sysmail,
                 loc.name AS location_name,
-                owner.username AS owner_name
+                creator.username AS creator_name
             FROM events e
             LEFT JOIN projects pr ON e.project_id = pr.id
-            LEFT JOIN users u ON e.creator_id = u.id
             LEFT JOIN partners loc ON e.location = loc.id
-            LEFT JOIN users owner ON e.user_id = owner.id
+            LEFT JOIN users creator ON e.user_id = creator.id
             WHERE e.id = ?
         `
 

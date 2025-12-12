@@ -1,6 +1,6 @@
 import { defineEventHandler, getRouterParam, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 // Configrole bit flags (from Migration 045)
 const CONFIGROLE_PARTNER = 2

@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
             isbase: body.isbase || 0,
             project_id: projectId,
             template: body.template || null,
-            user_id: body.user_id || null,  // User FK (events.user_id -> users.id)
+            user_id: body.creator_id || body.user_id || null,  // Accept creator_id, write to user_id column
             location: body.location || null,
             img_id: body.img_id || null,
             // Tag families (integer bitmasks)

@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
             template: body.template || null,
             public_user: body.public_user || null,
             img_id: body.img_id || null,
-            creator_id: body.creator_id || null,  // Record creator (user who creates the post)
+            creator_id: body.creator_id || body.owner_id || null,  // Accept both creator_id and legacy owner_id
             // Tag fields (integer bitmasks)
             // Status defaults to NEW (1) - entities must never have NULL status
             status: body.status ?? 1,  // Default to NEW (1) if not provided

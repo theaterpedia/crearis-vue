@@ -5,6 +5,31 @@
 
 ---
 
+## creator_id Alignment in clist-group Components
+
+**Created:** 2025-12-12  
+**Context:** Events and Posts APIs now consistently use `creator_id` for the record creator field. The clist-group components (card lists, galleries, etc.) may still reference `owner_id` or inconsistent field names.
+
+**Completed:**
+- ✅ Events API: `user_id` column, API uses `creator_id` + `creator_name`
+- ✅ Posts API: `creator_id` column, API uses `creator_id` + `creator_name`  
+- ✅ AddPostPanel: sends `creator_id`
+- ✅ EventPanel: sends `creator_id`
+- ✅ EditPanel: props accept both `ownerId` and `creatorId`
+
+**Tasks:**
+- [ ] Audit `src/components/clist-group-*` components for owner_id/creator_id usage
+- [ ] Check if card components display creator info correctly
+- [ ] Verify gallery/list views use consistent field names
+- [ ] Update any remaining `owner_id` references to `creator_id`
+
+**Files to Check:**
+- `src/components/clist-group-*.vue` - Card list components
+- `src/components/cards/*.vue` - Individual card components
+- Views using `owner_name` vs `creator_name` in display
+
+---
+
 ## Session & useAuth Cleanup
 
 ### Remove Deprecated/Ambiguous Fields

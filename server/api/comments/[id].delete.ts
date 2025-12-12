@@ -12,7 +12,7 @@
 
 import { defineEventHandler, getRouterParam, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 export default defineEventHandler(async (event) => {
     const commentId = getRouterParam(event, 'id')

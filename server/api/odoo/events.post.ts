@@ -19,7 +19,7 @@
 
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import { getOdooRpc } from '../../utils/odooRpc'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 // Event types we support
 const VALID_EVENT_TYPES = ['simple_oneday', 'multiple_days', 'course'] as const

@@ -1,8 +1,6 @@
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-
-// Import sessions from login (in production, use Redis)
-import { sessions } from './login.post'
+import { sessions } from '../../utils/session-store'
 
 // Helper function to calculate capabilities based on project record
 function calculateCapabilities(project: {

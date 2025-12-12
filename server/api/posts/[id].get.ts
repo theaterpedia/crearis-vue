@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
             SELECT 
                 p.*,
                 pr.domaincode AS domaincode,
-                u.sysmail AS creator_sysmail
+                u.sysmail AS creator_sysmail,
+                u.username AS creator_name
             FROM posts p
             LEFT JOIN projects pr ON p.project_id = pr.id
             LEFT JOIN users u ON p.creator_id = u.id

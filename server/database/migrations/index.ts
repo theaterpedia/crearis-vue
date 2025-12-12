@@ -71,6 +71,7 @@ import { up as migration061Up, down as migration061Down } from './061_partners_r
 import { up as migration062Up, down as migration062Down } from './062_drop_instructor_trigger'
 import { migration as migration063 } from './063_fix_shape_to_img_propagation'
 import { migration as migration064 } from './064_events_location_to_partners'
+import { up as migration065Up, down as migration065Down } from './065_events_header_size'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -152,6 +153,8 @@ const migrations: Migration[] = [
     { run: migration063.up, down: migration063.down, metadata: { id: migration063.id, description: migration063.description, version: '0.4.2', date: '2025-12-12' }, reversible: true },
     // Migration 064 - Events location FK remap to partners
     { run: migration064.up, down: migration064.down, metadata: { id: '064_events_location_to_partners', description: 'Remap events.location FK from locations to partners', version: '0.4.3', date: '2025-12-12' }, reversible: true },
+    // Migration 065 - Add header_size to events
+    { run: migration065Up, down: migration065Down, metadata: { id: '065_events_header_size', description: 'Add header_size column to events table', version: '0.4.4', date: '2025-12-12' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

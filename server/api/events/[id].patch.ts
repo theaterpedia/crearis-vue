@@ -1,6 +1,6 @@
 import { defineEventHandler, getRouterParam, createError, readBody, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 // PATCH /api/events/:id - Update event fields
 // Supports updating: name, teaser, status, dtags, ctags, ttags, date_begin, date_end, etc.
@@ -49,9 +49,8 @@ export default defineEventHandler(async (event) => {
         }
 
         // Check authorization
-        // Allow: event creator/owner, project owner, or project member (configrole=8)
-        const isEventCreator = eventData.creator_id === session.userId
-        const isEventOwner = eventData.owner_id === session.userId
+        // Allow: event creator, project owner, or project member (configrole=8)
+        const isEventCreator = eventData.user_id === session.userId
         const isProjectOwner = eventData.project_owner_id === session.userId
 
         // Check if user is a project member with edit rights (configrole=8)
@@ -65,7 +64,7 @@ export default defineEventHandler(async (event) => {
             isProjectMemberWithEditRights = membership?.configrole === 8
         }
 
-        if (!isEventCreator && !isEventOwner && !isProjectOwner && !isProjectMemberWithEditRights) {
+        if (!isEventCreator && !isProjectOwner && !isProjectMemberWithEditRights) {
             throw createError({
                 statusCode: 403,
                 message: 'Not authorized to update this event'
@@ -74,6 +73,12 @@ export default defineEventHandler(async (event) => {
 
         // Read update body
         const body = await readBody(event) as Record<string, any>
+
+        // Map creator_id to user_id (database column)
+        if (body.creator_id !== undefined) {
+            body.user_id = body.creator_id
+            delete body.creator_id
+        }
 
         // Build update query dynamically
         // Content fields
@@ -120,13 +125,13 @@ export default defineEventHandler(async (event) => {
 
         // Return updated event with domaincode and related names
         const updatedEvent = await db.get(`
-            SELECT e.*, pr.domaincode,
+            SELECT e.*, e.user_id AS creator_id, pr.domaincode,
                    loc.name AS location_name,
-                   u.username AS owner_name
+                   creator.username AS creator_name
             FROM events e
             LEFT JOIN projects pr ON e.project_id = pr.id
             LEFT JOIN partners loc ON e.location = loc.id
-            LEFT JOIN users u ON e.user_id = u.id
+            LEFT JOIN users creator ON e.user_id = creator.id
             WHERE e.id = ?
         `, [eventData.id])
 

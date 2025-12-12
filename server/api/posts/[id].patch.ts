@@ -1,6 +1,6 @@
 import { defineEventHandler, getRouterParam, createError, readBody, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 // PATCH /api/posts/:id - Update post fields
 // Supports updating: name, subtitle, teaser, status, dtags, ctags, ttags, rtags, etc.
