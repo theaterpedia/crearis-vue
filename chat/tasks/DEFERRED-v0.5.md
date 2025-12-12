@@ -282,6 +282,38 @@ Determine which entity_types should route to specialized tables:
 
 ---
 
+## Need Migration: Entities Must Never Have NULL Status
+
+### Status Column NOT NULL Constraint
+
+**Created:** 2025-12-12  
+**Context:** AddPostPanel creates posts with NULL status, causing them to not appear in filtered queries. Status column must have NOT NULL constraint with default.
+
+**Affected Tables:**
+- [ ] `posts` - status column should be NOT NULL DEFAULT 1 (NEW)
+- [ ] `events` - status column should be NOT NULL DEFAULT 1 (NEW)
+- [ ] `images` - status column should be NOT NULL DEFAULT 1 (NEW)
+- [ ] `projects` - status column should be NOT NULL DEFAULT 1 (NEW)
+- [ ] `users` - status column should be NOT NULL DEFAULT 1 (NEW)
+- [ ] `partners` - status column should be NOT NULL DEFAULT 1 (NEW)
+
+**Migration Tasks:**
+- [ ] Update existing NULL status values to 1 (NEW)
+- [ ] Add NOT NULL constraint with DEFAULT 1
+- [ ] Verify all API endpoints set proper status on INSERT
+
+**Status Values Reference:**
+| Status | Value | Description |
+|--------|-------|-------------|
+| NEW | 1 | Just created, needs setup |
+| DEMO | 8 | In demo/editing phase |
+| DRAFT | 64 | Draft, not published |
+| REVIEW | 256 | Pending review |
+| CONFIRMED | 512 | Approved |
+| PUBLISHED | 1024 | Live/public |
+
+---
+
 ## Remove SQLite Adapter
 
 ### Pure PostgreSQL Project

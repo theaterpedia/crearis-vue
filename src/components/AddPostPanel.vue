@@ -249,6 +249,12 @@ const handleApply = async () => {
         const titleSlug = generateSlug(customName.value || selectedPost.value.name || 'untitled')
         const newXmlId = `${props.projectId}.post_demo.${titleSlug}`
 
+        // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
+        // If customName or customTeaser differ from template values, user made edits
+        const hasEdits = (customName.value && customName.value !== selectedPost.value.name) ||
+                         (customTeaser.value && customTeaser.value !== selectedPost.value.teaser)
+        const postStatus = hasEdits ? 8 : 1  // 8 = DEMO, 1 = NEW
+
         // Construct the new post object with only valid table fields
         // Note: public_user references instructors table, so we don't set it here
         // owner_id is the user who owns/created the post (Migration 046)
@@ -264,7 +270,8 @@ const handleApply = async () => {
             template: templateXmlId,  // Use xmlid as template reference
             owner_id: selectedOwner.value,  // Record owner (Migration 046)
             ttags: ttags.value,
-            ctags: ctags.value
+            ctags: ctags.value,
+            status: postStatus  // Status: NEW (1) or DEMO (8) if edits made
             // public_user: references instructors, set separately if needed
         }
 

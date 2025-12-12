@@ -136,12 +136,8 @@ async function loadInstructors() {
 // Handle post added - refresh the gallery
 async function handlePostAdded(postId: string) {
     console.log('Post added:', postId)
-    // Trigger pGallery to refresh by incrementing a key or calling refresh method
-    if (postsGalleryRef.value) {
-        // pGallery/ItemGallery should expose a refresh method or we can force re-render
-        await postsGalleryRef.value.$forceUpdate?.()
-    }
-    // Alternative: Force re-fetch by toggling a key (if needed)
+    // Refresh pGallery to show newly added post
+    postsGalleryRef.value?.refresh()
 }
 
 // Handle post delete (from pGallery item-trash event)
