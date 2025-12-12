@@ -206,7 +206,7 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                    }}</span>
+                }}</span>
             </button>
         </div>
     </div>
@@ -467,7 +467,7 @@ const handleImport = async () => {
         // Success: clear images and emit
         images.value.forEach(img => URL.revokeObjectURL(img.previewUrl))
         images.value = []
-        
+
         // Reset tags to initial state for next import
         defaultTtags.value = 0
         defaultCtags.value = 0

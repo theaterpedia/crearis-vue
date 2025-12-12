@@ -12,7 +12,10 @@
         <!-- Edit Panel -->
         <EditPanel v-if="event" :is-open="isEditPanelOpen" :title="`Edit ${event.name || 'Event'}`"
             subtitle="Update event information" :data="editPanelData" entity-type="events"
-            :projectDomaincode="event.domaincode" @close="closeEditPanel" @save="handleSaveEvent" />
+            :projectDomaincode="event.domaincode" :entity-id="event.id" :project-id="event.project_id || projectId"
+            :owner-id="event.owner_id" :creator-id="event.creator_id"
+            :project-owner-sysmail="project?.owner_sysmail || ''" :project-status="project?.status || 0"
+            @close="closeEditPanel" @save="handleSaveEvent" />
 
         <!-- Page Config Panel (for admins/owners) -->
         <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
@@ -46,58 +49,55 @@
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Event metadata -->
-                        <div class="event-meta">
-                            <div v-if="event.status" class="event-status">
-                                <StatusBadge :value="statusValueString" :label="statusLabel" variant="soft"
-                                    size="medium" />
+                        <!-- Event metadata row: Status + Updated date + Controls (right-aligned) -->
+                        <div class="event-meta-row">
+                            <div class="event-meta-left">
+                                <PostStatusBadge v-if="event && project" :post="eventDataForPermissions"
+                                    :project="projectDataForPermissions" :membership="null"
+                                    @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
+                                    @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                <span v-if="event.updated_at" class="event-updated">
+                                    Updated: {{ formatDate(event.updated_at) }}
+                                </span>
                             </div>
-
-                            <!-- Event-specific: Date & Time -->
-                            <div v-if="event.date_begin || event.date_end" class="event-datetime">
-                                <p><strong>📅 Datum:</strong> {{ formatEventDate() }}</p>
-                                <p v-if="eventTime"><strong>🕐 Zeit:</strong> {{ eventTime }}</p>
+                            <div v-if="canEdit" class="event-meta-right">
+                                <button class="icon-btn" @click="openEditPanel" title="Edit Event">
+                                    <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z">
+                                        </path>
+                                    </svg>
+                                </button>
+                                <button class="icon-btn" @click="openConfigPanel" title="Configure Page Layout">
+                                    <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8.06,8.06,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8.06,8.06,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z">
+                                        </path>
+                                    </svg>
+                                </button>
                             </div>
+                        </div>
 
-                            <!-- Event-specific: Location -->
-                            <p v-if="event.location_name || event.location"><strong>📍 Ort:</strong> {{
+                        <!-- Event-specific: Date & Time -->
+                        <div v-if="event.date_begin || event.date_end" class="event-datetime">
+                            <p><strong>📅 Datum:</strong> {{ formatEventDate() }}</p>
+                            <p v-if="eventTime"><strong>🕐 Zeit:</strong> {{ eventTime }}</p>
+                        </div>
+
+                        <!-- Event-specific: Location -->
+                        <p v-if="event.location_name || event.location" class="event-location"><strong>📍 Ort:</strong>
+                            {{
                                 event.location_name ||
                                 event.location }}</p>
 
-                            <!-- Event-specific: Instructor -->
-                            <p v-if="event.instructor_name"><strong>👤 Leitung:</strong> {{ event.instructor_name }}</p>
+                        <!-- Event-specific: Instructor -->
+                        <p v-if="event.instructor_name" class="event-instructor"><strong>👤 Leitung:</strong> {{
+                            event.instructor_name }}</p>
 
-                            <!-- Event Type -->
-                            <p v-if="event.event_type"><strong>Typ:</strong> {{ event.event_type }}</p>
-                        </div>
-
-                        <!-- StatusBadge / StatusEditor -->
-                        <div v-if="event && project" class="event-status-editor">
-                            <PostStatusBadge :post="eventDataForPermissions" :project="projectDataForPermissions"
-                                :membership="null" @status-changed="handleStatusChange"
-                                @scope-changed="handleStatusChange" @trash="handleTrash" @restore="handleRestore"
-                                @error="handleStatusError" />
-                        </div>
-
-                        <!-- Admin/Owner Controls -->
-                        <div v-if="canEdit" class="event-controls">
-                            <button class="icon-btn" @click="openEditPanel" title="Edit Event">
-                                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z">
-                                    </path>
-                                </svg>
-                            </button>
-                            <button class="icon-btn" @click="openConfigPanel" title="Configure Page Layout">
-                                <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8.06,8.06,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8.06,8.06,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z">
-                                    </path>
-                                </svg>
-                            </button>
-                        </div>
+                        <!-- Event Type -->
+                        <p v-if="event.event_type" class="event-type"><strong>Typ:</strong> {{ event.event_type }}</p>
 
                         <!-- Teaser -->
                         <p v-if="event.teaser" class="event-teaser">{{ event.teaser }}</p>
@@ -155,7 +155,6 @@ import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
-import StatusBadge from '@/components/sysreg/StatusBadge.vue'
 import PostStatusBadge from '@/components/PostStatusBadge.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
@@ -260,7 +259,10 @@ const editPanelData = computed((): EditPanelData => {
         img_id: event.value.img_id || null,
         header_type: event.value.header_type || 'banner',
         header_size: event.value.header_size || null,
-        status: event.value.status || null
+        status: event.value.status || null,
+        ttags: event.value.ttags || '',
+        ctags: event.value.ctags || '',
+        dtags: event.value.dtags || ''
     }
 })
 
@@ -324,6 +326,19 @@ function formatEventDate(): string {
         rows: '1or2',
         showTime: false
     })
+}
+
+function formatDate(date: string): string {
+    if (!date) return ''
+    try {
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+    } catch {
+        return date
+    }
 }
 
 function openEditPanel() {
@@ -441,15 +456,32 @@ onMounted(async () => {
     background: var(--color-neutral-bg);
 }
 
-.event-meta {
-    margin-bottom: 2rem;
+.event-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--color-border);
-    font-family: var(--headings);
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
-.event-status {
-    margin-bottom: 1rem;
+.event-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.event-meta-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.event-updated {
+    font-size: 0.875rem;
+    color: var(--color-dimmed);
 }
 
 .event-datetime {
@@ -465,12 +497,6 @@ onMounted(async () => {
     font-weight: 500;
     color: var(--color-dimmed);
     margin-bottom: 1.5rem;
-}
-
-.event-controls {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
 }
 
 .icon-btn {

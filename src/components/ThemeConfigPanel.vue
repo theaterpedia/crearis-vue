@@ -8,10 +8,7 @@
             <div class="form-group">
                 <label class="form-label">Theme auswählen</label>
                 <div class="theme-selector">
-                    <ThemeDropdown />
-                    <p class="form-hint">
-                        Hinweis: Das Theme schaltet zu Demo-Zwecken direkt DAS GANZE DASHBOARD UM (Theaterpedia Alpha). Dies wird bald abgestellt. Im Moment solltest du das Theme wieder zurückstellen auf 'Site'. Ab 15. JAN 2026 schaltest du mit dem Theme das Design deiner Projekt-Website um.
-                    </p>
+                    <ProjectThemeSelector :project-id="projectId" v-model="projectThemeId" />
                 </div>
             </div>
         </div>
@@ -19,7 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import ThemeDropdown from '@/components/ThemeDropdown.vue'
+import { ref, onMounted } from 'vue'
+import ProjectThemeSelector from '@/components/dashboard/ProjectThemeSelector.vue'
 
 interface Props {
     projectId: string
@@ -28,6 +26,21 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     isLocked: false
+})
+
+const projectThemeId = ref<number | null>(null)
+
+// Load current project theme on mount
+onMounted(async () => {
+    try {
+        const response = await fetch(`/api/projects/${props.projectId}`)
+        if (response.ok) {
+            const project = await response.json()
+            projectThemeId.value = project.theme_id ?? null
+        }
+    } catch (e) {
+        console.error('Failed to load project theme:', e)
+    }
 })
 </script>
 
@@ -71,15 +84,5 @@ const props = withDefaults(defineProps<Props>(), {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-
-.form-hint {
-    font-size: 0.75rem;
-    color: var(--color-dimmed);
-    margin: 0;
-    padding: 0.75rem;
-    background: var(--color-bg-soft);
-    border-radius: var(--radius-button);
-    border-left: 3px solid var(--color-warning-bg);
 }
 </style>

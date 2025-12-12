@@ -105,14 +105,19 @@ export default defineEventHandler(async (event) => {
         `, [newId])
 
         return created
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating post:', error)
 
-        // Check for unique constraint violation
-        if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+        // Check for unique constraint violation (SQLite and PostgreSQL)
+        const isDuplicateKey =
+            (error instanceof Error && error.message.includes('UNIQUE constraint failed')) ||
+            (error?.code === '23505') || // PostgreSQL unique violation
+            (error?.constraint === 'posts_xmlid_key')
+
+        if (isDuplicateKey) {
             throw createError({
                 statusCode: 409,
-                message: 'Post with this xmlid already exists'
+                message: 'duplicate key value violates unique constraint'
             })
         }
 

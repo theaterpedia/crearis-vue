@@ -16,23 +16,11 @@
 
         <!-- Main Content Grid (Left: Gallery, Right: Add Panel) -->
         <div v-else class="posts-layout">
-            <!-- Left Column: Posts Gallery -->
+            <!-- Left Column: Posts Gallery (using clist pGallery) -->
             <div class="posts-gallery">
-                <div v-if="projectPosts.length === 0" class="empty-state">
-                    <svg fill="currentColor" height="48" viewBox="0 0 256 256" width="48"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z">
-                        </path>
-                    </svg>
-                    <p class="empty-title" v-html="i18nEmptyTitle"></p>
-                    <p class="empty-text" v-html="i18nEmptyText"></p>
-                </div>
-
-                <div v-else class="posts-grid">
-                    <PostCard v-for="post in projectPosts" :key="post.id" :post="post" :instructors="allInstructors"
-                        @delete="handlePostDelete" />
-                </div>
+                <pGallery ref="postsGalleryRef" entity="posts" :project="projectId" :status-gt="0" size="medium"
+                    item-type="card" :anatomy="'topimage'" on-activate="route" show-trash
+                    @item-trash="handlePostDelete" />
             </div>
 
             <!-- Right Column: Add Post Panel -->
@@ -67,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import PostCard from '@/components/PostCard.vue'
+import pGallery from '@/components/page/pGallery.vue'
 import AddPostPanel from '@/components/AddPostPanel.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import { useI18n } from '@/composables/useI18n'
@@ -108,10 +96,10 @@ const i18nErrorDelete = ref('')
 
 // State
 const basePosts = ref<Post[]>([])
-const projectPosts = ref<Post[]>([])
 const allInstructors = ref<Instructor[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
+const postsGalleryRef = ref<InstanceType<typeof pGallery> | null>(null)
 
 // Load base posts (isbase=1)
 async function loadBasePosts() {
@@ -128,21 +116,7 @@ async function loadBasePosts() {
     }
 }
 
-// Load project posts (project=X, isbase=0)
-async function loadProjectPosts() {
-    try {
-        error.value = null
-        const response = await fetch(`/api/posts?project=${props.projectId}&isbase=0`)
-        if (!response.ok) {
-            throw new Error(`Failed to load project posts: ${response.statusText}`)
-        }
-        projectPosts.value = await response.json()
-    } catch (err) {
-        console.error('Error loading project posts:', err)
-        error.value = i18nErrorPosts.value
-        throw err
-    }
-}
+// Note: Project posts are now loaded by pGallery component automatically
 
 // Load instructors
 async function loadInstructors() {
@@ -159,14 +133,20 @@ async function loadInstructors() {
     }
 }
 
-// Handle post added
+// Handle post added - refresh the gallery
 async function handlePostAdded(postId: string) {
     console.log('Post added:', postId)
-    await loadProjectPosts()
+    // Trigger pGallery to refresh by incrementing a key or calling refresh method
+    if (postsGalleryRef.value) {
+        // pGallery/ItemGallery should expose a refresh method or we can force re-render
+        await postsGalleryRef.value.$forceUpdate?.()
+    }
+    // Alternative: Force re-fetch by toggling a key (if needed)
 }
 
-// Handle post delete
-async function handlePostDelete(postId: string) {
+// Handle post delete (from pGallery item-trash event)
+async function handlePostDelete(item: any) {
+    const postId = item?.id || item
     try {
         const response = await fetch(`/api/posts/${postId}`, {
             method: 'DELETE'
@@ -177,7 +157,8 @@ async function handlePostDelete(postId: string) {
         }
 
         console.log('Post deleted:', postId)
-        await loadProjectPosts()
+        // Refresh the gallery after delete
+        postsGalleryRef.value?.refresh()
     } catch (err) {
         console.error('Error deleting post:', err)
         error.value = i18nErrorDelete.value
@@ -230,7 +211,8 @@ onMounted(async () => {
 
     isLoading.value = true
     try {
-        await Promise.all([loadBasePosts(), loadProjectPosts(), loadInstructors()])
+        // Load base posts and instructors (pGallery handles project posts)
+        await Promise.all([loadBasePosts(), loadInstructors()])
     } catch (err) {
         console.error('Error loading data:', err)
         error.value = i18nErrorPosts.value

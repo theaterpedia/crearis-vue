@@ -292,7 +292,7 @@ const isPartner = computed(() => userRole.value === 'partner')
  *            │ new    │ demo   │ draft  │ confirmed │ released │
  * ───────────┼────────┼────────┼────────┼───────────┼──────────┤
  * p_owner    │ CONFIG │ CONFIG │ CONFIG │ CONFIG    │ CONFIG   │
- * p_creator  │ CONFIG │ read   │ CONFIG │ draft     │ read     │
+ * p_creator  │ CONFIG │ CONFIG │ CONFIG │ draft     │ read     │
  * member     │ -      │ read   │ WRITE  │ WRITE     │ WRITE    │
  * participant│ -      │ -      │ summary│ read      │ read     │
  * partner    │ -      │ -      │ -      │ read      │ read     │
@@ -308,9 +308,9 @@ const accessLevel = computed((): AccessLevel => {
     // p_owner: CONFIG everywhere
     if (role === 'p_owner') return 'config'
 
-    // p_creator: CONFIG in new/draft, read in demo/confirmed+/released
+    // p_creator: CONFIG in new/demo/draft, read in confirmed+/released
     if (role === 'p_creator') {
-        if (status <= PROJECT_STATUS.NEW || status === PROJECT_STATUS.DRAFT) return 'config'
+        if (status <= PROJECT_STATUS.DEMO || status === PROJECT_STATUS.DRAFT) return 'config'
         return 'read'
     }
 
