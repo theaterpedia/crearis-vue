@@ -59,6 +59,16 @@
         <div v-else-if="canSeeStepper && projectData" class="project-dashboard__stepper">
             <!-- Left Column: Stepper Navigation -->
             <div class="stepper-nav">
+                <!-- Overline Navigation (back + domaincode) -->
+                <div class="stepper-overline">
+                    <button class="overline-back" @click="goToHome" title="Zurück zur Startseite">
+                        <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+                        </svg>
+                    </button>
+                    <span class="overline-domaincode">{{ projectId }}</span>
+                </div>
+
                 <div class="stepper-header">
                     <h2>Schritt {{ currentStepIndex + 1 }}: {{ currentStepLabel }}</h2>
                 </div>
@@ -124,8 +134,8 @@
                         ✓ Projekt aktivieren
                     </button>
                 </div>
-            </div>
-        </div>
+            </div><!-- /stepper-content -->
+        </div><!-- /project-dashboard__stepper -->
 
         <!-- DashboardLayout: status >= 64 (DRAFT, CONFIRMED, RELEASED) -->
         <DashboardLayout v-else-if="projectData" :project-id="projectId" :project-name="projectName"
@@ -587,6 +597,26 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
         loadProject()
     }
 })
+
+// Route synchronization: ensure route matches current step in stepper mode
+// When landing on base route /projects/:id, redirect to first step
+watch([() => projectData.value, () => canSeeStepper.value], ([data, showStepper]: [any, boolean]) => {
+    if (!data || !showStepper) return
+    
+    // Get current route segment
+    const path = route.path
+    const parts = path.split('/')
+    const lastPart = parts[parts.length - 1] || ''
+    
+    // If at base route (lastPart === projectId), redirect to first step
+    if (lastPart === projectId.value) {
+        const firstStep = stepperSteps.value[0]
+        if (firstStep) {
+            // Use replace to avoid adding to history
+            router.replace(`/projects/${projectId.value}/${firstStep.route}`)
+        }
+    }
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -791,12 +821,43 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
     font-size: 1.25rem;
 }
 
-/* Stepper Layout - 2 Column */
+/* Stepper Layout - 2 Column Grid */
 .project-dashboard__stepper {
     display: grid;
     grid-template-columns: 280px 1fr;
     height: 100vh;
     overflow: hidden;
+}
+
+/* Stepper Overline Navigation - Inside stepper-nav */
+.stepper-overline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.overline-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    background: transparent;
+    border: none;
+    color: var(--color-dimmed);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: color 0.2s, background 0.2s;
+}
+
+.overline-back:hover {
+    color: var(--color-text);
+    background: var(--color-muted-bg);
+}
+
+.overline-domaincode {
+    font-size: 0.875rem;
+    color: var(--color-dimmed);
 }
 
 .stepper-nav {
