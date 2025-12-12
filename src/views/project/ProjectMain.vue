@@ -170,9 +170,21 @@
             @open-external="handleDashboardOpenExternal" />
 
         <!-- OLD: 2-Column Layout (kept for stepper mode and fallback) -->
-        <div v-else class="main-content">
-            <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
-            <div class="navigation">
+        <div v-else class="main-content" :class="{ 'main-content--stepper': isStepper }">
+            <!-- Stepper Overline Navigation -->
+            <div v-if="isStepper" class="stepper-overline">
+                <button class="overline-back" @click="navigateToHome" title="Zurück zur Startseite">
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+                    </svg>
+                </button>
+                <span class="overline-domaincode">{{ projectId }}</span>
+            </div>
+
+            <!-- Columns Container -->
+            <div class="main-columns">
+                <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
+                <div class="navigation">
                 <!-- Stepper Mode: status < 2 -->
                 <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType"
                     :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
@@ -236,6 +248,7 @@
                     </template>
                 </div>
             </div>
+            </div><!-- /main-columns -->
         </div>
     </div>
 </template>
@@ -539,6 +552,11 @@ function handleTabChange(tabId: string) {
 
 function goBack() {
     router.push('/')
+}
+
+// Navigate to /home from stepper overline
+function navigateToHome() {
+    router.push('/home')
 }
 
 function completeProject() {
@@ -920,6 +938,51 @@ onUnmounted(() => {
     gap: 1rem;
     padding: 2rem;
     max-width: 100%;
+    overflow: hidden;
+}
+
+/* Stepper mode: column layout for overline + columns */
+.main-content--stepper {
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Stepper Overline Navigation */
+.stepper-overline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0 1rem 0;
+}
+
+.overline-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    background: transparent;
+    border: none;
+    color: var(--color-dimmed);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: color 0.2s, background 0.2s;
+}
+
+.overline-back:hover {
+    color: var(--color-text);
+    background: var(--color-muted-bg);
+}
+
+.overline-domaincode {
+    font-size: 0.875rem;
+    color: var(--color-dimmed);
+}
+
+/* Columns Container */
+.main-columns {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
     overflow: hidden;
 }
 
