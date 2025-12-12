@@ -137,6 +137,33 @@ const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
 
+/**
+ * Generate a URL-safe slug from a title string
+ * Used for xmlid format: {domaincode}.{entity}.{slug}
+ * 
+ * Convention reminder for events: {domaincode}.event_demo.{slug}
+ */
+function generateSlug(title: string): string {
+    return title
+        .toLowerCase()
+        .trim()
+        // Replace German umlauts
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        // Replace spaces and special characters with underscores
+        .replace(/[\s\-]+/g, '_')
+        // Remove any remaining non-alphanumeric characters except underscores
+        .replace(/[^a-z0-9_]/g, '')
+        // Remove consecutive underscores
+        .replace(/_+/g, '_')
+        // Remove leading/trailing underscores
+        .replace(/^_|_$/g, '')
+        // Limit length to keep xmlid manageable
+        .substring(0, 50)
+}
+
 // Project users state
 const projectUsers = ref<ProjectUser[]>([])
 const projectUsersLoading = ref(false)
@@ -212,19 +239,25 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Construct XML-ID based on template xmlid
-        // Base posts have xmlid like "_demo.post1" or "base_post.article1"
-        // We need to extract the suffix and create a new xmlid for this project
+        // Build XML-ID with format: {domaincode}.{entity}.{slug}
+        // domaincode: projectId (e.g., "theaterpedia")
+        // entity: "post_demo" for demo posts
+        // slug: Generated from the post title
         const templateXmlId = selectedPost.value.xmlid || `base_post.${selectedPost.value.id}`
 
-        // Split xmlid by '.' to get suffix (e.g., "post1" from "_demo.post1")
-        const parts = templateXmlId.split('.')
-        const postSuffix = parts.length > 1 ? parts[parts.length - 1] : `post${selectedPost.value.id}`
-        const newXmlId = `_${props.projectId}.${postSuffix}`
+        // Generate slug from title - convert to lowercase, replace spaces/special chars with underscores
+        const titleSlug = generateSlug(customName.value || selectedPost.value.name || 'untitled')
+        const newXmlId = `${props.projectId}.post_demo.${titleSlug}`
+
+        // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
+        // If customName or customTeaser differ from template values, user made edits
+        const hasEdits = (customName.value && customName.value !== selectedPost.value.name) ||
+            (customTeaser.value && customTeaser.value !== selectedPost.value.teaser)
+        const postStatus = hasEdits ? 8 : 1  // 8 = DEMO, 1 = NEW
 
         // Construct the new post object with only valid table fields
         // Note: public_user references instructors table, so we don't set it here
-        // owner_id is the user who owns/created the post (Migration 046)
+        // creator_id is the user who created the post (FK → users.id)
         const newPost = {
             id: newXmlId,
             name: customName.value,
@@ -235,9 +268,10 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            owner_id: selectedOwner.value,  // Record owner (Migration 046)
+            creator_id: selectedOwner.value,  // Record creator (FK → users.id)
             ttags: ttags.value,
-            ctags: ctags.value
+            ctags: ctags.value,
+            status: postStatus  // Status: NEW (1) or DEMO (8) if edits made
             // public_user: references instructors, set separately if needed
         }
 
@@ -252,7 +286,13 @@ const handleApply = async () => {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+            const errorMsg = errorData.error || `HTTP ${response.status}: ${response.statusText}`
+
+            // Check for duplicate key constraint violation
+            if (errorMsg.includes('duplicate key') || errorMsg.includes('posts_xmlid_key') || errorMsg.includes('23505')) {
+                throw new Error('DUPLICATE_TEMPLATE')
+            }
+            throw new Error(errorMsg)
         }
 
         const createdPost = await response.json()
@@ -268,7 +308,13 @@ const handleApply = async () => {
     } catch (error) {
         console.error('Error creating post:', error)
         const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
-        alert(`Fehler beim Erstellen des Beitrags:\n${errorMessage}`)
+
+        // Show specific message for duplicate template error
+        if (errorMessage === 'DUPLICATE_TEMPLATE') {
+            alert('Du hast versucht, dieselbe Vorlage ein zweites Mal anzuwenden, dies geht nicht (ggf. später einmal). Bitte clicke "Abbrechen" und versuche es erneut mit einer anderen Vorlage.')
+        } else {
+            alert(`Fehler beim Erstellen des Beitrags:\n${errorMessage}`)
+        }
     } finally {
         isSubmitting.value = false
     }
@@ -558,6 +604,27 @@ onBeforeUnmount(() => {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Responsive: narrower panel on smaller screens */
+@media (max-width: 1400px) {
+    .add-post-panel {
+        padding: 1rem;
+    }
+
+    .add-post-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .add-post-btn span {
+        display: none;
+    }
+
+    .add-post-btn svg {
+        width: 24px;
+        height: 24px;
     }
 }
 </style>

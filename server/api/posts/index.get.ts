@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 // GET /api/posts - List posts with optional filters
 // After Migration 019 Chapter 3B:

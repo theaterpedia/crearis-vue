@@ -17,7 +17,7 @@
 
 import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
-import { sessions } from '../auth/login.post'
+import { sessions } from '../../utils/session-store'
 
 /**
  * Role color mapping

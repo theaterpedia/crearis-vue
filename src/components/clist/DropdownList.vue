@@ -21,12 +21,14 @@
                 </div>
 
                 <!-- Single selection: Show ItemRow -->
-                <div v-else-if="!multiSelect && selectedIdsArray.length === 1 && selectedItems.length > 0" class="trigger-single-selection">
+                <div v-else-if="!multiSelect && selectedIdsArray.length === 1 && selectedItems.length > 0"
+                    class="trigger-single-selection">
                     <ItemRow v-bind="formatSelectedItem(selectedItems[0])" :size="size" />
                 </div>
 
                 <!-- Multi-selection: Show stacked avatars -->
-                <div v-else-if="multiSelect && selectedIdsArray.length > 0 && selectedItems.length > 0" class="trigger-multi-selection">
+                <div v-else-if="multiSelect && selectedIdsArray.length > 0 && selectedItems.length > 0"
+                    class="trigger-multi-selection">
                     <div class="stacked-avatars">
                         <div v-for="(item, index) in displayedItems" :key="item.id" class="stacked-avatar"
                             :style="{ zIndex: displayedItems.length - index, marginLeft: index > 0 ? '-20px' : '0' }">
@@ -57,7 +59,7 @@
             <div class="dropdown-content" :style="{ ...systemTheme, maxWidth: contentMaxWidth }">
                 <div class="dropdown-header">
                     <h4>{{ title || `Select ${entity}` }}</h4>
-                    <button class="close-btn" @click="hide" aria-label="Close">×</button>
+                    <button type="button" class="close-btn" @click="hide" aria-label="Close">×</button>
                 </div>
 
                 <!-- CL2: Use ItemList with entity fetching -->
@@ -92,7 +94,7 @@ import { useTheme } from '@/composables/useTheme'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
-    entity: 'posts' | 'events' | 'instructors' | 'projects' | 'images'
+    entity: 'posts' | 'events' | 'instructors' | 'locations' | 'projects' | 'images'
     project?: string
     title?: string
     size?: 'small' | 'medium'

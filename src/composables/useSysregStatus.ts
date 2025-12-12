@@ -28,23 +28,23 @@ import { getSysregCache, type SysregStatusEntry } from '@/plugins/sysreg'
  */
 export function bufferToHex(buffer: any): string | null {
     if (!buffer) return null
-    
+
     // If it's already a string (hex), return it
     if (typeof buffer === 'string') {
         // Remove '0x' or '\x' prefix if present
         return buffer.replace(/^(0x|\\x)/, '')
     }
-    
+
     // If it's a Buffer object from Node.js
     if (buffer.type === 'Buffer' && Array.isArray(buffer.data)) {
         return buffer.data.map((b: number) => b.toString(16).padStart(2, '0')).join('')
     }
-    
+
     // If it's an actual Buffer instance (shouldn't happen in browser, but just in case)
     if (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(buffer)) {
         return buffer.toString('hex')
     }
-    
+
     return null
 }
 
@@ -54,16 +54,16 @@ export function bufferToHex(buffer: any): string | null {
  */
 export function hexToBuffer(hex: string | null): string | null {
     if (!hex) return null
-    
+
     // Remove '0x' or '\x' prefix if present
     const cleanHex = hex.replace(/^(0x|\\x)/, '')
-    
+
     // Validate hex string (only 0-9, a-f, A-F)
     if (!/^[0-9a-fA-F]+$/.test(cleanHex)) {
         console.warn('[useSysregStatus] Invalid hex string:', hex)
         return null
     }
-    
+
     // Ensure even length (each byte is 2 hex chars)
     return cleanHex.length % 2 === 0 ? cleanHex : '0' + cleanHex
 }
@@ -76,12 +76,12 @@ export function hexToBuffer(hex: string | null): string | null {
  */
 export function getStatusInfo(hexValue: string | null, table: string): SysregStatusEntry | null {
     if (!hexValue) return null
-    
+
     const cache = getSysregCache()
     const cleanHex = hexValue.replace(/^(0x|\\x)/, '').toLowerCase()
-    
-    return cache.find(entry => 
-        entry.hex_value.toLowerCase() === cleanHex && 
+
+    return cache.find(entry =>
+        entry.hex_value.toLowerCase() === cleanHex &&
         entry.table === table
     ) || null
 }
@@ -96,7 +96,7 @@ export function getStatusInfo(hexValue: string | null, table: string): SysregSta
 export function getStatusLabel(hexValue: string | null, table: string, lang: 'de' | 'en' | 'cz' = 'de'): string {
     const info = getStatusInfo(hexValue, table)
     if (!info) return ''
-    
+
     switch (lang) {
         case 'en':
             return info.name_en
@@ -114,7 +114,7 @@ export function getStatusLabel(hexValue: string | null, table: string, lang: 'de
 export function getStatusDescription(hexValue: string | null, table: string, lang: 'de' | 'en' | 'cz' = 'de'): string | null {
     const info = getStatusInfo(hexValue, table)
     if (!info) return null
-    
+
     switch (lang) {
         case 'en':
             return info.desc_en || null
@@ -167,31 +167,31 @@ export function useSysregStatus(data: Ref<any>, fieldName: string = 'status') {
             data.value[fieldName] = newHex
         }
     })
-    
+
     /**
      * Update status with hex value
      */
     function updateStatus(hex: string | null) {
         data.value[fieldName] = hex
     }
-    
+
     /**
      * Prepare value for saving to database
      * Ensures proper format (hex string without prefix)
      */
     function prepareForSave(): string | null {
         const current = data.value[fieldName]
-        
+
         // If it's already been converted to hex string
         if (typeof current === 'string') {
             return hexToBuffer(current)
         }
-        
+
         // If it's still a Buffer object
         const hex = bufferToHex(current)
         return hexToBuffer(hex)
     }
-    
+
     return {
         statusHex,
         updateStatus,
@@ -203,15 +203,41 @@ export function useSysregStatus(data: Ref<any>, fieldName: string = 'status') {
  * Sanitize status_val for API payload
  * Use this in save handlers to ensure proper format
  * 
- * @param value - The status_val from form data (could be Buffer, hex string, or null)
- * @returns Properly formatted hex string or null
+ * Post-Migration 036: status is now INTEGER, not BYTEA.
+ * This function now returns the numeric value directly.
+ * 
+ * @param value - The status from form data (number, Buffer, hex string, or null)
+ * @returns Numeric status value or null
  */
-export function sanitizeStatusVal(value: any): string | null {
-    if (value === undefined || value === '') {
+export function sanitizeStatusVal(value: any): number | null {
+    if (value === undefined || value === '' || value === null) {
         return null
     }
-    
+
+    // If it's already a number, return it directly
+    if (typeof value === 'number') {
+        return value
+    }
+
+    // If it's a hex string, parse it
+    if (typeof value === 'string') {
+        const cleanHex = value.replace(/^(0x|\\x)/, '')
+        if (/^[0-9a-fA-F]+$/.test(cleanHex)) {
+            return parseInt(cleanHex, 16)
+        }
+        // Try parsing as decimal
+        const num = parseInt(value, 10)
+        if (!isNaN(num)) {
+            return num
+        }
+    }
+
+    // Legacy: Handle Buffer objects (pre-Migration 036)
     const hex = bufferToHex(value)
-    return hexToBuffer(hex)
+    if (hex) {
+        return parseInt(hex, 16)
+    }
+
+    return null
 }
 

@@ -41,17 +41,24 @@ export default defineEventHandler(async (event) => {
             isbase: body.isbase || 0,
             project_id: projectId,
             template: body.template || null,
-            public_user: body.public_user || null,
+            user_id: body.creator_id || body.user_id || null,  // Accept creator_id, write to user_id column
             location: body.location || null,
-            img_id: body.img_id || null
+            img_id: body.img_id || null,
+            // Tag families (integer bitmasks)
+            status: body.status || 1,  // Default to NEW (1)
+            ttags: body.ttags || 0,
+            ctags: body.ctags || 0,
+            // Header type
+            header_type: body.header_type || 'cover'
         }
 
         // Insert event (id is auto-generated)
         const sql = `
             INSERT INTO events (
                 xmlid, name, teaser, cimg, date_begin, date_end,
-                event_type, isbase, project_id, template, public_user, location, img_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                event_type, isbase, project_id, template, user_id, location, img_id,
+                status, ttags, ctags, header_type
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -66,9 +73,13 @@ export default defineEventHandler(async (event) => {
             eventData.isbase,
             eventData.project_id,
             eventData.template,
-            eventData.public_user,
+            eventData.user_id,
             eventData.location,
-            eventData.img_id
+            eventData.img_id,
+            eventData.status,
+            eventData.ttags,
+            eventData.ctags,
+            eventData.header_type
         ])
 
         // Extract the new event ID from the result

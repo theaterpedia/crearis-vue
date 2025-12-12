@@ -104,7 +104,8 @@
                     </div>
 
                     <!-- Step 2: Avatar Upload (only if projects available) -->
-                    <div v-if="projects.length > 0" class="onboarding-step" :class="{ completed: hasAvatar, disabled: !hasPartner }">
+                    <div v-if="projects.length > 0" class="onboarding-step"
+                        :class="{ completed: hasAvatar, disabled: !hasPartner }">
                         <div class="step-header">
                             <span class="step-number">2</span>
                             <span class="step-title">Avatar-Bild hochladen</span>
@@ -162,7 +163,8 @@
                             <span class="step-optional">(später möglich)</span>
                         </div>
                         <div class="step-content">
-                            <p class="no-project-hint">Ein Avatar-Bild kann hochgeladen werden, sobald du einem Projekt zugewiesen wurdest.</p>
+                            <p class="no-project-hint">Ein Avatar-Bild kann hochgeladen werden, sobald du einem Projekt
+                                zugewiesen wurdest.</p>
                         </div>
                     </div>
 
@@ -170,7 +172,8 @@
                     <div v-if="hasPartner" class="onboarding-continue">
                         <p v-if="hasAvatar">🎉 Super! Dein Profil ist eingerichtet.</p>
                         <p v-else-if="projects.length > 0">Du kannst das Avatar-Bild auch später hochladen.</p>
-                        <p v-else>Du kannst ein Avatar-Bild später hochladen, sobald du einem Projekt zugewiesen wurdest.</p>
+                        <p v-else>Du kannst ein Avatar-Bild später hochladen, sobald du einem Projekt zugewiesen
+                            wurdest.</p>
                         <button class="btn btn--primary btn--lg" @click="advanceToDraft">
                             Weiter zur Aktivierung →
                         </button>
@@ -687,13 +690,22 @@ async function advanceToDraft() {
 
 async function activateProfile() {
     try {
+        console.log('[Activation] Starting activation, current user status:', user.value?.status)
+
         const response = await fetch('/api/users/me/activate', {
             method: 'POST'
         })
 
         if (response.ok) {
-            alert('Profil erfolgreich aktiviert!')
-            window.location.reload()
+            const result = await response.json()
+            console.log('[Activation] API response:', result)
+
+            // Refresh session to get updated status - this will trigger isConfirmedState
+            await checkSession()
+
+            console.log('[Activation] After checkSession, user status:', user.value?.status)
+            console.log('[Activation] isConfirmedState should be:', user.value?.status === 512 || user.value?.status === 1024)
+            // No alert needed - UI will automatically show project cards
         } else {
             const error = await response.json()
             alert(`Fehler: ${error.message}`)

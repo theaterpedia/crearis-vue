@@ -170,72 +170,89 @@
             @open-external="handleDashboardOpenExternal" />
 
         <!-- OLD: 2-Column Layout (kept for stepper mode and fallback) -->
-        <div v-else class="main-content">
-            <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
-            <div class="navigation">
-                <!-- Stepper Mode: status < 2 -->
-                <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId" :type="projectType"
-                    :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
-
-                <!-- Navigation Mode: status >= 2 (legacy, use new dashboard instead) -->
-                <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
-                    :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
+        <div v-else class="main-content" :class="{ 'main-content--stepper': isStepper }">
+            <!-- Stepper Overline Navigation -->
+            <div v-if="isStepper" class="stepper-overline">
+                <button class="overline-back" @click="navigateToHome" title="Zurück zur Startseite">
+                    <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z">
+                        </path>
+                    </svg>
+                </button>
+                <span class="overline-domaincode">{{ projectId }}</span>
             </div>
 
-            <!-- Right Column: Editor (60%) -->
-            <div class="editor">
-                <div class="editor-content">
-                    <!-- Stepper Mode Components -->
-                    <template v-if="isStepper">
-                        <ProjectStepEvents v-if="currentStepKey === 'events'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepPosts v-else-if="currentStepKey === 'posts'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepImages v-else-if="currentStepKey === 'images'" :project-id="projectId"
-                            :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
-                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
-                            @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
-                            :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
-                        <ProjectStepActivate v-else-if="currentStepKey === 'activate'" :project-id="projectId"
-                            :project-name="projectName" :is-locked="isLocked"
-                            @prev="currentStep > 0 ? prevStep : undefined" @activate="handleActivateProject" />
-                    </template>
+            <!-- Columns Container -->
+            <div class="main-columns">
+                <!-- Left Column: Navigation (40%) - Stepper or Tabs based on project status -->
+                <div class="navigation">
+                    <!-- Stepper Mode: status < 2 -->
+                    <ProjectStepper v-if="isStepper" v-model:step="currentStep" :project-id="projectId"
+                        :type="projectType" :is-owner="isProjectOwner" @activate-project="handleActivateProject" />
 
-                    <!-- Navigation Mode Panels (legacy fallback) -->
-                    <template v-else>
-                        <PageConfigController v-if="currentNavTab === 'homepage'" :project="projectId" mode="project" />
-                        <ProjectStepEvents v-else-if="currentNavTab === 'events'" :project-id="projectId"
-                            :is-locked="isLocked" hide-actions />
-                        <ProjectStepPosts v-else-if="currentNavTab === 'posts'" :project-id="projectId"
-                            :is-locked="isLocked" hide-actions />
-                        <ProjectStepImages v-else-if="currentNavTab === 'images'" :project-id="projectId"
-                            :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId" :is-locked="isLocked"
-                            hide-actions />
-                        <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
-                            :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
-                            hide-actions />
-                        <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
-                            :is-locked="isLocked" />
-                        <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
-                            :is-locked="isLocked" />
-                        <NavigationConfigPanel v-else-if="currentNavTab === 'navigation'" :project-id="projectId"
-                            :is-locked="isLocked" />
-                        <ProjectStepPages v-else-if="currentNavTab === 'pages'" :project-id="projectId"
-                            :is-locked="isLocked" hide-actions />
-                        <EventsConfigPanel v-else-if="currentNavTab === 'events-config'" :project-id="projectId"
-                            :is-locked="isLocked" />
-                        <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
-                            :is-locked="isLocked" />
-                        <InteractionsPanel v-else-if="currentNavTab === 'registrations'" mode="dashboard-panel"
-                            :project-id="projectId" :use-stub-data="true" />
-                    </template>
+                    <!-- Navigation Mode: status >= 2 (legacy, use new dashboard instead) -->
+                    <ProjectNavigation v-else :project-id="projectId" :project-name="projectName"
+                        :visible-tabs="visibleNavigationTabs" @tab-change="handleTabChange" />
                 </div>
-            </div>
+
+                <!-- Right Column: Editor (60%) -->
+                <div class="editor">
+                    <div class="editor-content">
+                        <!-- Stepper Mode Components -->
+                        <template v-if="isStepper">
+                            <ProjectStepEvents v-if="currentStepKey === 'events'" :project-id="projectId"
+                                :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepPosts v-else-if="currentStepKey === 'posts'" :project-id="projectId"
+                                :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepImages v-else-if="currentStepKey === 'images'" :project-id="projectId"
+                                :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId"
+                                :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepUsers v-else-if="currentStepKey === 'users'" :project-id="projectId"
+                                :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                                @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepTheme v-else-if="currentStepKey === 'theme'" :project-id="projectId"
+                                :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepPages v-else-if="currentStepKey === 'pages'" :project-id="projectId"
+                                :is-locked="isLocked" @next="nextStep" @prev="currentStep > 0 ? prevStep : undefined" />
+                            <ProjectStepActivate v-else-if="currentStepKey === 'activate'" :project-id="projectId"
+                                :project-name="projectName" :is-locked="isLocked"
+                                @prev="currentStep > 0 ? prevStep : undefined" @activate="handleActivateProject" />
+                        </template>
+
+                        <!-- Navigation Mode Panels (legacy fallback) -->
+                        <template v-else>
+                            <PageConfigController v-if="currentNavTab === 'homepage'" :project="projectId"
+                                mode="project" />
+                            <ProjectStepEvents v-else-if="currentNavTab === 'events'" :project-id="projectId"
+                                :is-locked="isLocked" hide-actions />
+                            <ProjectStepPosts v-else-if="currentNavTab === 'posts'" :project-id="projectId"
+                                :is-locked="isLocked" hide-actions />
+                            <ProjectStepImages v-else-if="currentNavTab === 'images'" :project-id="projectId"
+                                :eligible-owners="eligibleOwners" :default-owner-id="defaultOwnerId"
+                                :is-locked="isLocked" hide-actions />
+                            <ProjectStepUsers v-else-if="currentNavTab === 'users'" :project-id="projectId"
+                                :project-members="projectMembers" :project-status="projectStatus" :is-locked="isLocked"
+                                hide-actions />
+                            <ThemeConfigPanel v-else-if="currentNavTab === 'theme'" :project-id="projectId"
+                                :is-locked="isLocked" />
+                            <LayoutConfigPanel v-else-if="currentNavTab === 'layout'" :project-id="projectId"
+                                :is-locked="isLocked" />
+                            <NavigationConfigPanel v-else-if="currentNavTab === 'navigation'" :project-id="projectId"
+                                :is-locked="isLocked" />
+                            <ProjectStepPages v-else-if="currentNavTab === 'pages'" :project-id="projectId"
+                                :is-locked="isLocked" hide-actions />
+                            <EventsConfigPanel v-else-if="currentNavTab === 'events-config'" :project-id="projectId"
+                                :is-locked="isLocked" />
+                            <RegioConfigPanel v-else-if="currentNavTab === 'regio-config'" :project-id="projectId"
+                                :is-locked="isLocked" />
+                            <InteractionsPanel v-else-if="currentNavTab === 'registrations'" mode="dashboard-panel"
+                                :project-id="projectId" :use-stub-data="true" />
+                        </template>
+                    </div>
+                </div>
+            </div><!-- /main-columns -->
         </div>
     </div>
 </template>
@@ -539,6 +556,11 @@ function handleTabChange(tabId: string) {
 
 function goBack() {
     router.push('/')
+}
+
+// Navigate to /home from stepper overline
+function navigateToHome() {
+    router.push('/home')
 }
 
 function completeProject() {
@@ -920,6 +942,51 @@ onUnmounted(() => {
     gap: 1rem;
     padding: 2rem;
     max-width: 100%;
+    overflow: hidden;
+}
+
+/* Stepper mode: column layout for overline + columns */
+.main-content--stepper {
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Stepper Overline Navigation */
+.stepper-overline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0 1rem 0;
+}
+
+.overline-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    background: transparent;
+    border: none;
+    color: var(--color-dimmed);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: color 0.2s, background 0.2s;
+}
+
+.overline-back:hover {
+    color: var(--color-text);
+    background: var(--color-muted-bg);
+}
+
+.overline-domaincode {
+    font-size: 0.875rem;
+    color: var(--color-dimmed);
+}
+
+/* Columns Container */
+.main-columns {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
     overflow: hidden;
 }
 

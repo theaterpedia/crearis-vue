@@ -68,24 +68,8 @@
 
             <div class="form-group">
                 <label class="form-label">Location</label>
-                <div class="location-dropdown-wrapper" ref="locationDropdownRef">
-                    <button class="location-select-btn" @click="toggleLocationDropdown" type="button">
-                        <span v-if="selectedLocation">
-                            {{allLocations.find((l: Location) => l.id === selectedLocation)?.name || 'Ort wählen'}}
-                        </span>
-                        <span v-else class="placeholder">Ort wählen</span>
-                        <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z">
-                            </path>
-                        </svg>
-                    </button>
-
-                    <LocationsDropdown v-if="isLocationDropdownOpen" :locations="allLocations"
-                        :selected-location-id="selectedLocation" header-text="Ort wählen" :show-check-mark="true"
-                        @select="selectLocation" />
-                </div>
+                <DropdownList entity="locations" title="Ort wählen" size="small" width="medium" :dataMode="true"
+                    :multiSelect="false" v-model:selectedIds="selectedLocation" />
             </div>
 
             <div class="form-group">
@@ -126,7 +110,6 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import EventsDropdown from '@/components/EventsDropdown.vue'
-import LocationsDropdown from '@/components/LocationsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
@@ -156,14 +139,56 @@ const emit = defineEmits<{
     eventAdded: [eventId: string]
 }>()
 
-interface Location {
-    id: string
-    name: string
-    cimg?: string
-    street?: string
-    city?: string
-    zip?: string
-    [key: string]: any
+/**
+ * Generate a URL-safe slug from a title string
+ * Used for xmlid format: {domaincode}.{entity}.{slug}
+ */
+function generateSlug(title: string): string {
+    return title
+        .toLowerCase()
+        .trim()
+        // Replace German umlauts
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        // Replace spaces and special characters with underscores
+        .replace(/[\s\-]+/g, '_')
+        // Remove any remaining non-alphanumeric characters except underscores
+        .replace(/[^a-z0-9_]/g, '')
+        // Remove consecutive underscores
+        .replace(/_+/g, '_')
+        // Remove leading/trailing underscores
+        .replace(/^_|_$/g, '')
+        // Limit length to keep xmlid manageable
+        .substring(0, 50)
+}
+
+/**
+ * Determine entity qualifier from ctags bitmask
+ * Priority: Realisierung (online/hybrid) > Format (kurs/projekt/konferenz)
+ * 
+ * CTAGS bit allocation (from migration 038):
+ * - Realisierung (bits 0-4): präsenz=1, online=2, hybrid=4|8|12
+ * - Format (bits 5-15): workshop=32, kurs=256, projekt=2048, konferenz=16384
+ */
+function getEventEntityFromCtags(ctagsValue: number): string {
+    // Step 1: Check Realisierung first (priority)
+    // online: bit 1 (value 2)
+    if ((ctagsValue & 2) === 2) return 'event_online'
+    // hybrid: bits 2-4 (values 4, 8, 12)
+    if ((ctagsValue & 4) === 4) return 'event_hybrid'
+
+    // Step 2: Check Format (fallback)
+    // kurs: bit 8 (value 256)
+    if ((ctagsValue & 256) === 256) return 'event_kurs'
+    // projekt: bit 11 (value 2048)
+    if ((ctagsValue & 2048) === 2048) return 'event_projekt'
+    // konferenz: bit 14 (value 16384)
+    if ((ctagsValue & 16384) === 16384) return 'event_konferenz'
+
+    // Default: plain event
+    return 'event'
 }
 
 // Unified access - prefer partners, fall back to legacy types
@@ -175,18 +200,8 @@ const allInstructors = computed(() => {
     return props.allInstructors || []
 })
 
-const allLocations = computed(() => {
-    if (props.locationPartners && props.locationPartners.length > 0) {
-        // Filter partners with location bit set (partner_types & 2 = 2)
-        return props.locationPartners.filter(p => (p.partner_types & 2) === 2)
-    }
-    return props.allLocations || []
-})
-
 const dropdownRef = ref<HTMLElement | null>(null)
-const locationDropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
-const isLocationDropdownOpen = ref(false)
 const selectedEvent = ref<Event | null>(null)
 const selectedOwner = ref<number | ''>('')
 const selectedEventType = ref('workshop')
@@ -218,7 +233,7 @@ async function loadProjectUsers() {
 watch(() => props.projectId, () => {
     loadProjectUsers()
 }, { immediate: true })
-const selectedLocation = ref('')
+const selectedLocation = ref<number | null>(null)
 const dateBegin = ref('')
 const dateEnd = ref('')
 const customName = ref('')
@@ -248,10 +263,6 @@ const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const toggleLocationDropdown = () => {
-    isLocationDropdownOpen.value = !isLocationDropdownOpen.value
-}
-
 const selectBaseEvent = (event: Event) => {
     selectedEvent.value = event
     customName.value = event.name
@@ -259,7 +270,8 @@ const selectBaseEvent = (event: Event) => {
     // Don't pre-select owner - let user choose from project members
     selectedOwner.value = ''
     selectedEventType.value = event.event_type || 'workshop'
-    selectedLocation.value = event.location || ''
+    // Location is stored as partner ID (number)
+    selectedLocation.value = event.location ? Number(event.location) : null
 
     // Populate dates from template - convert to datetime-local format if needed
     dateBegin.value = formatDateForInput(event.date_begin || '')
@@ -301,16 +313,11 @@ const formatDateForInput = (dateString: string): string => {
     return ''
 }
 
-const selectLocation = (location: Location) => {
-    selectedLocation.value = location.id
-    isLocationDropdownOpen.value = false
-}
-
 const handleCancel = () => {
     selectedEvent.value = null
     selectedOwner.value = ''
     selectedEventType.value = 'workshop'
-    selectedLocation.value = ''
+    selectedLocation.value = null
     dateBegin.value = ''
     dateEnd.value = ''
     customName.value = ''
@@ -377,15 +384,25 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Construct XML-ID based on template xmlid
-        // Base events have xmlid like "_demo.event1" or "base_event.workshop1"
-        // We need to extract the suffix and create a new xmlid for this project
+        // Build XML-ID with format: {domaincode}.{entity}.{slug}
+        // domaincode: projectId (e.g., "theaterpedia")
+        // entity: determined by ctags (event_online, event_kurs, etc.)
+        // slug: Generated from the event title
         const templateXmlId = selectedEvent.value.xmlid || `base_event.${selectedEvent.value.id}`
 
-        // Split xmlid by '.' to get suffix (e.g., "event1" from "_demo.event1")
-        const parts = templateXmlId.split('.')
-        const eventSuffix = parts.length > 1 ? parts[parts.length - 1] : `event${selectedEvent.value.id}`
-        const newXmlId = `_${props.projectId}.${eventSuffix}`
+        // Generate slug from title
+        const titleSlug = generateSlug(customName.value.trim() || 'untitled')
+
+        // Determine entity qualifier from ctags
+        const entityQualifier = getEventEntityFromCtags(ctags.value)
+
+        // Build the new xmlid: {domaincode}.{entity}.{slug}
+        const newXmlId = `${props.projectId}.${entityQualifier}.${titleSlug}`
+
+        // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
+        const hasEdits = (customName.value && customName.value !== selectedEvent.value.name) ||
+            (customTeaser.value && customTeaser.value !== selectedEvent.value.teaser)
+        const eventStatus = hasEdits ? 8 : 1  // 8 = DEMO, 1 = NEW
 
         // Construct the new event object with all required fields
         const newEvent = {
@@ -395,7 +412,7 @@ const handleApply = async () => {
             isbase: 0,
             project: props.projectId,
             template: templateXmlId,  // Use xmlid as template reference
-            owner_id: selectedOwner.value,  // Use owner_id (user FK) instead of public_user (partner reference)
+            creator_id: selectedOwner.value,  // User FK (events.user_id -> users.id)
             location: selectedLocation.value,
             // Image from dropdown (img_id FK)
             img_id: Array.isArray(selectedImageId.value) ? selectedImageId.value[0] : selectedImageId.value,
@@ -405,7 +422,11 @@ const handleApply = async () => {
             event_type: selectedEventType.value,
             // Tag families
             ttags: ttags.value,
-            ctags: ctags.value
+            ctags: ctags.value,
+            // Status: NEW (1) or DEMO (8) if edits made
+            status: eventStatus,
+            // Header type: cover for events
+            header_type: 'cover'
         }
 
         // Debug logging - see what we're sending
@@ -443,8 +464,8 @@ const handleApply = async () => {
             console.error('❌ Error message:', errorMessage)
 
             // Check for common constraint violations
-            if (errorMessage.includes('UNIQUE') || errorMessage.includes('duplicate')) {
-                alert('Fehler: Ein Event mit dieser ID existiert bereits.\n\nBitte wählen Sie eine andere Basis-Veranstaltung oder wenden Sie sich an einen Administrator.')
+            if (errorMessage.includes('duplicate key') || errorMessage.includes('events_xmlid_key') || errorMessage.includes('23505')) {
+                alert('Du hast versucht, dieselbe Vorlage ein zweites Mal anzuwenden, dies geht nicht (ggf. später einmal). Bitte clicke "Abbrechen" und versuche es erneut mit einer anderen Vorlage.')
             } else if (errorMessage.includes('NOT NULL') || errorMessage.includes('constraint')) {
                 alert(`Fehler: Pflichtfelder fehlen oder sind ungültig.\n\n${errorMessage}\n\nBitte überprüfen Sie alle Felder.`)
             } else {
@@ -478,9 +499,6 @@ const handleApply = async () => {
 const handleClickOutside = (event: MouseEvent) => {
     if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
         isDropdownOpen.value = false
-    }
-    if (locationDropdownRef.value && !locationDropdownRef.value.contains(event.target as Node)) {
-        isLocationDropdownOpen.value = false
     }
 }
 
@@ -750,6 +768,27 @@ onBeforeUnmount(() => {
     .form-row {
         flex-direction: column;
         gap: 0.75rem;
+    }
+}
+
+/* Responsive: narrower panel on smaller screens */
+@media (max-width: 1400px) {
+    .event-panel {
+        padding: 1rem;
+    }
+
+    .add-event-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .add-event-btn span {
+        display: none;
+    }
+
+    .add-event-btn svg {
+        width: 24px;
+        height: 24px;
     }
 }
 </style>

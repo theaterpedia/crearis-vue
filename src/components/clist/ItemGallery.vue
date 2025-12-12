@@ -11,7 +11,8 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
                 :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => handleItemClick(item, e)">
+                @click="(e: MouseEvent) => handleItemClick(item, e)"
+                @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -31,7 +32,8 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
                 :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="() => openPreviewModal(item)">
+                @click="() => openPreviewModal(item)"
+                @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -129,6 +131,10 @@ interface Props {
     filterXmlPrefix?: string
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
+    // Status value filtering
+    statusLt?: number  // Less than
+    statusEq?: number  // Equal
+    statusGt?: number  // Greater than
     itemType?: 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
     variant?: 'square' | 'wide' | 'thumb' | 'vertical'
@@ -140,6 +146,7 @@ interface Props {
     selectedIds?: number | number[]
     title?: string
     modelValue?: boolean
+    showTrash?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -159,6 +166,7 @@ const emit = defineEmits<{
     'selected': [value: EntityItem | EntityItem[]]
     close: []
     'item-click': [item: any, event: MouseEvent]
+    'item-trash': [item: any]
 }>()
 
 const isOpen = computed({
@@ -234,8 +242,27 @@ const fetchEntityData = async () => {
             return
         }
 
+        // Build query parameters
+        const params = new URLSearchParams()
+        
         if (props.project) {
-            url += `?project=${encodeURIComponent(props.project)}`
+            params.append('project', props.project)
+        }
+        
+        // Status filtering
+        if (props.statusLt !== undefined) {
+            params.append('status_lt', String(props.statusLt))
+        }
+        if (props.statusEq !== undefined) {
+            params.append('status_eq', String(props.statusEq))
+        }
+        if (props.statusGt !== undefined) {
+            params.append('status_gt', String(props.statusGt))
+        }
+        
+        const queryString = params.toString()
+        if (queryString) {
+            url += `?${queryString}`
         }
 
         const response = await fetch(url)
@@ -380,8 +407,16 @@ function getItemOptions(item: any): ItemOptions {
         badge: false, // Can be enabled in future
         counter: false, // Can be enabled in future
         selectable: dataModeActive.value && props.multiSelect === true, // Show checkbox ONLY in multi-select mode
-        marker: false // Can be enabled in future
+        marker: false, // Can be enabled in future
+        trash: props.showTrash === true // Show trash icon when enabled
     }
+}
+
+/**
+ * Handle trash icon click - emit item-trash event
+ */
+const handleTrash = (item: any) => {
+    emit('item-trash', item)
 }
 
 /**

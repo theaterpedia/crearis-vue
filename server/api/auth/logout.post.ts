@@ -1,5 +1,5 @@
 import { defineEventHandler, getCookie, deleteCookie } from 'h3'
-import { sessions } from './login.post'
+import { sessions } from '../../utils/session-store'
 
 export default defineEventHandler(async (event) => {
     const sessionId = getCookie(event, 'sessionId')

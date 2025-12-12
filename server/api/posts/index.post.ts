@@ -47,9 +47,10 @@ export default defineEventHandler(async (event) => {
             template: body.template || null,
             public_user: body.public_user || null,
             img_id: body.img_id || null,
-            creator_id: body.creator_id || null,  // Record creator (user who creates the post)
+            creator_id: body.creator_id || body.owner_id || null,  // Accept both creator_id and legacy owner_id
             // Tag fields (integer bitmasks)
-            status: body.status ?? null,
+            // Status defaults to NEW (1) - entities must never have NULL status
+            status: body.status ?? 1,  // Default to NEW (1) if not provided
             dtags: body.dtags ?? null,
             ctags: body.ctags ?? null,
             ttags: body.ttags ?? null,
@@ -105,14 +106,19 @@ export default defineEventHandler(async (event) => {
         `, [newId])
 
         return created
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating post:', error)
 
-        // Check for unique constraint violation
-        if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+        // Check for unique constraint violation (SQLite and PostgreSQL)
+        const isDuplicateKey =
+            (error instanceof Error && error.message.includes('UNIQUE constraint failed')) ||
+            (error?.code === '23505') || // PostgreSQL unique violation
+            (error?.constraint === 'posts_xmlid_key')
+
+        if (isDuplicateKey) {
             throw createError({
                 statusCode: 409,
-                message: 'Post with this xmlid already exists'
+                message: 'duplicate key value violates unique constraint'
             })
         }
 

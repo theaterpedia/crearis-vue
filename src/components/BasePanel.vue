@@ -20,9 +20,21 @@
                     </button>
                 </div>
 
+                <!-- Tabs (only shown when viewport height < 900px) -->
+                <div v-if="showTabs" class="base-panel-tabs">
+                    <button class="tab-btn" :class="{ 'tab-active': activeTab === 'core' }" @click="activeTab = 'core'"
+                        type="button">
+                        Core
+                    </button>
+                    <button class="tab-btn" :class="{ 'tab-active': activeTab === 'content' }"
+                        @click="activeTab = 'content'" type="button">
+                        Content
+                    </button>
+                </div>
+
                 <!-- Body (scrollable content area) -->
                 <div class="base-panel-body">
-                    <slot></slot>
+                    <slot :active-tab="activeTab" :show-tabs="showTabs"></slot>
                 </div>
 
                 <!-- Footer (optional actions) -->
@@ -35,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 interface Props {
     isOpen: boolean
@@ -51,6 +63,27 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     close: []
 }>()
+
+// Tab state
+const activeTab = ref<'core' | 'content'>('core')
+const viewportHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 1000)
+
+// Show tabs when viewport height < 900px
+const showTabs = computed(() => viewportHeight.value < 900)
+
+// Update viewport height on resize
+function handleResize() {
+    viewportHeight.value = window.innerHeight
+}
+
+onMounted(() => {
+    window.addEventListener('resize', handleResize)
+    handleResize()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', handleResize)
+})
 
 // Auto-adjust placement based on sidebar mode
 const placementClass = computed(() => {
@@ -183,6 +216,36 @@ function handleClose() {
 .close-btn:focus {
     outline: 2px solid var(--color-primary-bg);
     outline-offset: 2px;
+}
+
+/* Tabs */
+.base-panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--color-dimmed);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font);
+}
+
+.tab-btn:hover {
+    color: var(--color-contrast);
+}
+
+.tab-btn.tab-active {
+    background: var(--color-bg);
+    color: var(--color-contrast);
 }
 
 /* Body */

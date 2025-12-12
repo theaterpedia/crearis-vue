@@ -40,19 +40,20 @@
             </div>
 
             <div v-if="enableEdit" class="zoomed-footer">
-                <button class="edit-button" @click.stop="handleEditClick">
+                <button type="button" class="edit-button" @click.stop="handleEditClick">
                     Edit
                 </button>
             </div>
         </div>
 
         <!-- Zoom Toggle Button (compact mode only) -->
-        <button v-if="!zoomed && !isEmpty" class="zoom-button" @click.stop="toggleZoom" aria-label="Expand tile">
+        <button type="button" v-if="!zoomed && !isEmpty" class="zoom-button" @click.stop="toggleZoom"
+            aria-label="Expand tile">
             ⤢
         </button>
 
         <!-- Edit Button (compact mode) -->
-        <button v-if="!zoomed && enableEdit" class="edit-button-compact" @click.stop="handleEditClick"
+        <button type="button" v-if="!zoomed && enableEdit" class="edit-button-compact" @click.stop="handleEditClick"
             aria-label="Edit">
             ✎
         </button>
