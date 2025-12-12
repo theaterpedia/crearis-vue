@@ -467,6 +467,11 @@ const handleImport = async () => {
         // Success: clear images and emit
         images.value.forEach(img => URL.revokeObjectURL(img.previewUrl))
         images.value = []
+        
+        // Reset tags to initial state for next import
+        defaultTtags.value = 0
+        defaultCtags.value = 0
+        defaultDtags.value = 0
 
         emit('images-imported', importedIds)
         alert(`Successfully imported ${importedIds.length} image(s)!`)
