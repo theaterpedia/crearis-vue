@@ -37,7 +37,7 @@
                             <div v-else class="avatar-placeholder"></div>
                         </div>
                         <span v-if="selectedItems.length > 8" class="avatar-count">+{{ selectedItems.length - 8
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
 
@@ -59,7 +59,7 @@
             <div class="dropdown-content" :style="{ ...systemTheme, maxWidth: contentMaxWidth }">
                 <div class="dropdown-header">
                     <h4>{{ title || `Select ${entity}` }}</h4>
-                    <button class="close-btn" @click="hide" aria-label="Close">×</button>
+                    <button type="button" class="close-btn" @click="hide" aria-label="Close">×</button>
                 </div>
 
                 <!-- CL2: Use ItemList with entity fetching -->

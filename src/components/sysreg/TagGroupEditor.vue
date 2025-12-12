@@ -9,7 +9,8 @@
                 </p>
             </div>
             <!-- Clear button (x) to deselect all -->
-            <button v-if="hasSelection" class="clear-button" @click="clearSelection" title="Clear selection">
+            <button type="button" v-if="hasSelection" class="clear-button" @click="clearSelection"
+                title="Clear selection">
                 <XIcon :size="16" />
             </button>
         </div>
@@ -19,7 +20,7 @@
             <div v-if="categories.length > 0" class="category-controls">
                 <!-- Horizontal buttons for ≤4 categories -->
                 <div v-if="categories.length <= 4" class="category-buttons">
-                    <button v-for="cat in categories" :key="cat.value" class="category-button"
+                    <button type="button" v-for="cat in categories" :key="cat.value" class="category-button"
                         :class="{ active: selectedCategory === cat.value }" @click="selectCategory(cat.value)">
                         {{ getTagLabel(cat) }}
                     </button>
@@ -38,8 +39,8 @@
                 <div v-if="selectedCategory && availableSubcategories.length > 0" class="subcategory-controls">
                     <span class="subcategory-separator">&gt;</span>
                     <div v-if="availableSubcategories.length <= 4" class="subcategory-buttons">
-                        <button v-for="sub in availableSubcategories" :key="sub.value" class="subcategory-button"
-                            :class="{ active: selectedSubcategory === sub.value }"
+                        <button type="button" v-for="sub in availableSubcategories" :key="sub.value"
+                            class="subcategory-button" :class="{ active: selectedSubcategory === sub.value }"
                             @click="selectSubcategory(sub.value)">
                             {{ getSubcategoryLabel(sub) }}
                         </button>
@@ -56,7 +57,7 @@
 
             <!-- Toggle controls (for multiselect groups) -->
             <div v-else-if="toggles.length > 0" class="toggle-controls">
-                <button v-for="toggle in toggles" :key="toggle.value" class="toggle-button"
+                <button type="button" v-for="toggle in toggles" :key="toggle.value" class="toggle-button"
                     :class="{ active: hasToggle(toggle.value) }" @click="toggleOption(toggle.value)">
                     {{ getTagLabel(toggle) }}
                 </button>
