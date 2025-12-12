@@ -56,14 +56,18 @@
         </div>
 
         <!-- Stepper Mode for Owner/Creator: status < 64 (NEW or DEMO) - 2 Column Layout -->
-        <div v-else-if="canSeeStepper && projectData" class="project-dashboard__stepper">
-            <!-- Left Column: Stepper Navigation -->
-            <div class="stepper-nav">
+        <div v-else-if="canSeeStepper && projectData" class="project-dashboard__stepper"
+            :class="{ 'settings-mode': isSettingsStep }">
+            <!-- Left Column: Stepper Navigation (hidden in settings mode) -->
+            <div v-if="!isSettingsStep" class="stepper-nav">
                 <!-- Overline Navigation (back + domaincode) -->
                 <div class="stepper-overline">
                     <button class="overline-back" @click="goToHome" title="Zurück zur Startseite">
-                        <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+                        <svg fill="currentColor" height="16" viewBox="0 0 256 256" width="16"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z">
+                            </path>
                         </svg>
                     </button>
                     <span class="overline-domaincode">{{ projectId }}</span>
@@ -92,8 +96,21 @@
                 </div>
             </div>
 
-            <!-- Right Column: Step Content -->
+            <!-- Right Column: Step Content (full-width in settings mode) -->
             <div class="stepper-content">
+                <!-- Settings Header with Back Button (only in settings mode) -->
+                <div v-if="isSettingsStep" class="settings-header">
+                    <button class="settings-back-btn" @click="navigateToPrevStep" title="Zurück zum vorherigen Schritt">
+                        <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z">
+                            </path>
+                        </svg>
+                    </button>
+                    <h2>Schritt {{ currentStepIndex + 1 }}: {{ currentStepLabel }}</h2>
+                </div>
+
                 <!-- Events Step -->
                 <ProjectStepEvents v-if="currentStepKey === 'agenda'" :project-id="projectId" :is-locked="false"
                     hide-actions @next="navigateToNextStep" @prev="navigateToPrevStep" />
@@ -111,9 +128,10 @@
                     :project-status="projectStatus" :is-locked="false" @next="navigateToNextStep"
                     @prev="navigateToPrevStep" />
 
-                <!-- Settings Step (Owner only) -->
-                <ProjectSettingsPanel v-else-if="currentStepKey === 'settings'" :project-id="projectId"
-                    :is-owner="isProjectOwner" :show-activation="true" />
+                <!-- Settings Step (Owner only) - uses full DashboardLayout-style settings -->
+                <div v-else-if="currentStepKey === 'settings'" class="settings-view">
+                    <ProjectSettingsPanel :project-id="projectId" :is-owner="isProjectOwner" :show-activation="true" />
+                </div>
 
                 <!-- Default: Home/Overview -->
                 <div v-else class="stepper-home">
@@ -121,8 +139,8 @@
                     <p>Willkommen im Projekt-Setup. Klicke auf einen Schritt links, um zu beginnen.</p>
                 </div>
 
-                <!-- Step Navigation Buttons -->
-                <div class="step-actions">
+                <!-- Step Navigation Buttons (hidden in settings mode) -->
+                <div v-if="!isSettingsStep" class="step-actions">
                     <button v-if="currentStepIndex > 0" class="btn btn--secondary" @click="navigateToPrevStep">
                         ← Zurück
                     </button>
@@ -461,6 +479,11 @@ const currentStepLabel = computed(() => {
     return stepperSteps.value[currentStepIndex.value]?.label || ''
 })
 
+/** Is current step the Settings step? (special full-width mode) */
+const isSettingsStep = computed(() => {
+    return currentStepKey.value === 'settings'
+})
+
 // ============================================================
 // METHODS
 // ============================================================
@@ -602,12 +625,12 @@ watch(() => route.params.projectId, (newId: string | string[], oldId: string | s
 // When landing on base route /projects/:id, redirect to first step
 watch([() => projectData.value, () => canSeeStepper.value], ([data, showStepper]: [any, boolean]) => {
     if (!data || !showStepper) return
-    
+
     // Get current route segment
     const path = route.path
     const parts = path.split('/')
     const lastPart = parts[parts.length - 1] || ''
-    
+
     // If at base route (lastPart === projectId), redirect to first step
     if (lastPart === projectId.value) {
         const firstStep = stepperSteps.value[0]
@@ -829,6 +852,57 @@ watch([() => projectData.value, () => canSeeStepper.value], ([data, showStepper]
     overflow: hidden;
 }
 
+/* Settings Mode: Single column, no left nav */
+.project-dashboard__stepper.settings-mode {
+    grid-template-columns: 1fr;
+}
+
+/* Settings Header (shown in settings mode) */
+.settings-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--color-card-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.settings-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.settings-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: transparent;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-back-btn:hover {
+    background: var(--color-muted-bg);
+    border-color: var(--color-primary-base);
+    color: var(--color-primary-base);
+}
+
+.settings-back-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Settings View (wraps ProjectSettingsPanel in stepper mode) */
+.settings-view {
+    flex: 1;
+    overflow-y: auto;
+}
+
 /* Stepper Overline Navigation - Inside stepper-nav */
 .stepper-overline {
     display: flex;
@@ -956,6 +1030,11 @@ watch([() => projectData.value, () => canSeeStepper.value], ([data, showStepper]
     flex-direction: column;
 }
 
+/* In settings mode, no padding on content, settings-view handles it */
+.settings-mode .stepper-content {
+    padding: 0;
+}
+
 .stepper-home {
     text-align: center;
     padding: 3rem 1rem;
@@ -975,8 +1054,12 @@ watch([() => projectData.value, () => canSeeStepper.value], ([data, showStepper]
     gap: 1rem;
     justify-content: flex-end;
     margin-top: auto;
-    padding-top: 1.5rem;
+    padding: 1rem 2rem;
     border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+    position: sticky;
+    bottom: 0;
+    flex-shrink: 0;
 }
 
 /* Responsive: Stack on mobile */

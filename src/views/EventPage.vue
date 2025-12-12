@@ -257,12 +257,17 @@ const editPanelData = computed((): EditPanelData => {
         teaser: event.value.teaser || '',
         md: event.value.md || '',
         img_id: event.value.img_id || null,
-        header_type: event.value.header_type || 'banner',
+        header_type: event.value.header_type || 'cover',
         header_size: event.value.header_size || null,
         status: event.value.status || null,
-        ttags: event.value.ttags || '',
-        ctags: event.value.ctags || '',
-        dtags: event.value.dtags || ''
+        ttags: event.value.ttags || 0,
+        ctags: event.value.ctags || 0,
+        dtags: event.value.dtags || 0,
+        // Event-specific fields
+        date_begin: event.value.date_begin || '',
+        date_end: event.value.date_end || '',
+        location: event.value.location || null,
+        event_type: event.value.event_type || 'workshop'
     }
 })
 
@@ -417,16 +422,22 @@ async function handleSaveEvent(data: Record<string, any>) {
             md: data.md || '',
             html: html || '',
             img_id: (data.img_id === undefined || data.img_id === 0) ? null : data.img_id,
-            header_type: data.header_type || 'banner',
+            header_type: data.header_type || 'cover',
             header_size: data.header_size || null,
             status: sanitizeStatusVal(data.status),
-            ttags: data.ttags || '\\x00',
-            ctags: data.ctags || '\\x00',
-            dtags: data.dtags || '\\x00'
+            // Tag fields are integers, not hex strings
+            ttags: typeof data.ttags === 'number' ? data.ttags : 0,
+            ctags: typeof data.ctags === 'number' ? data.ctags : 0,
+            dtags: typeof data.dtags === 'number' ? data.dtags : 0,
+            // Event-specific fields
+            date_begin: data.date_begin || null,
+            date_end: data.date_end || null,
+            location: data.location || null,
+            event_type: data.event_type || 'workshop'
         }
 
         const response = await fetch(`/api/events/${event.value.id}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })

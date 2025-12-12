@@ -346,3 +346,100 @@ datetime('now')  // SQLite syntax
 - [ ] Grep for `sqlite` (case-insensitive) across codebase
 - [ ] Ensure all migrations use PostgreSQL syntax only
 - [ ] Run full test suite after removal
+
+---
+
+## Unify Stepper & Dashboard Experience
+
+### DashboardLayout.vue Refactoring
+
+**Created:** 2025-12-12  
+**Context:** ProjectDashboard.vue currently has two separate code paths: Stepper (NEW/DEMO status) and Dashboard (DRAFT+ status). These should be unified to reduce code duplication and maintenance burden.
+
+**Current State:**
+- **Stepper Mode** (`status < 64`): Vertical step navigation in left column, content in right column
+- **Dashboard Mode** (`status >= 64`): DashboardLayout with entity lists, EntityBrowser, settings tab
+
+**Goal:** Single unified component with mode switching, not two separate implementations.
+
+**Key Observations:**
+1. Both modes use the same `ProjectSettingsPanel` component
+2. Both navigate the same entity types (posts, events, images, partners)
+3. Stepper is essentially Dashboard with:
+   - Vertical nav instead of horizontal tabs
+   - Hidden entity lists (pGallery only shows filtered items)
+   - No entity browser/detail view
+   - Step-by-step guidance flow
+
+**Proposed Unification:**
+- [ ] Extract common navigation structure (steps/tabs are same concept)
+- [ ] Add `stepper-mode` prop to DashboardLayout (or computed from project status)
+- [ ] Stepper mode: vertical nav, hide entity lists, show add-panels inline
+- [ ] Dashboard mode: horizontal tabs, show entity lists, EntityBrowser for details
+- [ ] Add "Home" step to stepper showing project summary/progress
+- [ ] Settings step works identically in both modes (already does!)
+
+**Navigation Model:**
+```
+Stepper Mode (vertical):
+├── Home (summary, progress indicators)
+├── Posts (pGallery + AddPostPanel)
+├── Events (pGallery + EventPanel)
+├── Images (pGallery + ImageImport)
+├── Partners (pGallery + InvitePanel)
+└── Settings (ProjectSettingsPanel - full width)
+
+Dashboard Mode (horizontal tabs):
+├── Posts (List + EntityBrowser)
+├── Events (List + EntityBrowser)
+├── Images (List + EntityBrowser)
+├── Partners (List + EntityBrowser)
+└── Settings (ProjectSettingsPanel - COG tab)
+```
+
+**Files to Consolidate:**
+- `src/views/project/ProjectDashboard.vue` - Current stepper implementation
+- `src/components/dashboard/DashboardLayout.vue` - Current dashboard implementation
+- `src/views/project/ProjectStepPosts.vue` → integrate into unified flow
+- `src/views/project/ProjectStepEvents.vue` → integrate into unified flow
+- `src/views/project/ProjectStepImages.vue` → integrate into unified flow
+- `src/views/project/ProjectStepUsers.vue` → integrate into unified flow
+
+**Benefits:**
+- Single source of truth for project navigation
+- Easier to maintain and extend
+- Consistent behavior across project states
+- Smoother transition from setup to active project
+
+---
+
+## Synchronize EventType with ctags:Format
+
+### Tag-Based Event Type Selection
+
+**Created:** 2025-12-12  
+**Context:** EventPanel and similar add/edit components have separate EventType selection that should be synchronized with the ctags (context tags) system, specifically the "Format" tag family.
+
+**Current State:**
+- EventPanel has standalone event type dropdown
+- ctags system has "Format" family for event formats (Workshop, Seminar, etc.)
+- These two systems are not connected
+- User may select conflicting values
+
+**Goal:** Event type selection should read from and write to ctags:Format, ensuring single source of truth.
+
+**Affected Components:**
+- [ ] `src/components/EventPanel.vue` - Add event panel in stepper
+- [ ] `src/components/EditPanel.vue` - Edit panel (events mode)
+- [ ] Any other event creation/editing forms
+
+**Implementation Approach:**
+- [ ] Replace event_type dropdown with ctags:Format tag selector
+- [ ] Or: Keep dropdown but sync value to ctags:Format on save
+- [ ] Ensure TagFamilies component can be used in "single-select" mode for Format
+- [ ] Migration: backfill existing events' ctags from event_type field
+
+**Related:**
+- TagFamilies.vue component
+- ctags field in events table
+- Format tag family in sysreg

@@ -252,7 +252,7 @@ const handleApply = async () => {
         // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
         // If customName or customTeaser differ from template values, user made edits
         const hasEdits = (customName.value && customName.value !== selectedPost.value.name) ||
-                         (customTeaser.value && customTeaser.value !== selectedPost.value.teaser)
+            (customTeaser.value && customTeaser.value !== selectedPost.value.teaser)
         const postStatus = hasEdits ? 8 : 1  // 8 = DEMO, 1 = NEW
 
         // Construct the new post object with only valid table fields
@@ -604,6 +604,27 @@ onBeforeUnmount(() => {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Responsive: narrower panel on smaller screens */
+@media (max-width: 1400px) {
+    .add-post-panel {
+        padding: 1rem;
+    }
+
+    .add-post-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .add-post-btn span {
+        display: none;
+    }
+
+    .add-post-btn svg {
+        width: 24px;
+        height: 24px;
     }
 }
 </style>
