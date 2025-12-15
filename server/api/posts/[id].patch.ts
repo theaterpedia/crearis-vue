@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
         // Content fields
         const allowedFields = [
             'name', 'subtitle', 'teaser', 'md', 'html',
-            'post_date', 'template', 'header_type', 'lang',
+            'post_date', 'template', 'header_type', 'header_size', 'lang',
             'cimg', 'img_id', 'img_show',
             // Tag fields (integer bitmasks)
             'status', 'dtags', 'ctags', 'ttags', 'rtags',

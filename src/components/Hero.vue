@@ -28,11 +28,9 @@
             : 'center',
         backgroundSize:
           target === 'page'
-            ? isBlurHashActive
-              ? 'cover'  // BlurHash placeholders always use cover
-              : imgTmpAlignX === 'cover' || imgTmpAlignY === 'cover'
-                ? 'cover'
-                : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
+            ? usesCoverSizing
+              ? 'cover'
+              : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
             : '500px',
       }">
         <div v-if="overlay" class="hero-cover-overlay" :style="{ background: overlay }"></div>
@@ -312,30 +310,36 @@ const currentShapeData = computed<ShapeData | null>(() => {
 
   const instance = selectedInstance.value
 
-  // Try to get the specific instance
+  // Try to get the specific instance (e.g., hero_wide_xl)
   const instanceData = (imageSource as any)[instance] as ShapeData | undefined
   if (instanceData?.url) {
     return instanceData
   }
 
-  // Fallback to template shape
-  const templateName = getHeroInstanceTemplate(instance)
-  const templateKey = `shape_${templateName}`
-  const templateData = (imageSource as any)[templateKey] as ShapeData | undefined
-
-  // Additional fallback: try img_wide for hero_wide instances
-  if (!templateData && instance.startsWith('hero_wide')) {
+  // Priority: Try img_* JSONB columns first (they have proper object structure)
+  // These are computed from shape_* by database triggers
+  if (instance.startsWith('hero_wide')) {
     const imgWide = (imageSource as any).img_wide as ShapeData | undefined
     if (imgWide?.url) return imgWide
   }
-
-  // Fallback: try img_square for hero_square instances
-  if (!templateData && instance.startsWith('hero_square')) {
+  if (instance.startsWith('hero_square')) {
     const imgSquare = (imageSource as any).img_square as ShapeData | undefined
     if (imgSquare?.url) return imgSquare
   }
+  if (instance.startsWith('hero_vert')) {
+    const imgVert = (imageSource as any).img_vert as ShapeData | undefined
+    if (imgVert?.url) return imgVert
+  }
 
-  return templateData || null
+  // Last resort: try shape_* composite types (less reliable - may be ROW strings)
+  const templateName = getHeroInstanceTemplate(instance)
+  const templateKey = `shape_${templateName}`
+  const templateData = (imageSource as any)[templateKey] as ShapeData | undefined
+  if (templateData && typeof templateData === 'object' && templateData.url) {
+    return templateData
+  }
+
+  return null
 })
 
 // =====================================================================
@@ -452,6 +456,27 @@ const isBlurHashActive = computed(() => {
   return backgroundImage.value?.startsWith('data:image/png;base64,') ?? false
 })
 
+// Determine if we should use cover sizing
+// True for: explicit cover alignment, blur hash placeholder, or new image system with cover config
+// Respects headerType's imgTmpAlignX/Y (e.g., banner uses center/top, cover uses cover/cover)
+const usesCoverSizing = computed(() => {
+  // Explicit cover alignment requested - always use cover
+  if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
+
+  // BlurHash placeholder uses cover (temporary loading state)
+  if (isBlurHashActive.value) return true
+
+  // New image system: respect configured alignment from headerType
+  // If imgTmpAlignX and imgTmpAlignY are both NOT 'cover', use their specific alignment
+  // This allows banner type (center/top) to work correctly instead of forcing cover
+  if (effectiveImageData.value) {
+    // Both alignments are specified and neither is 'cover' -> respect them
+    return false
+  }
+
+  return false
+})
+
 // =====================================================================
 // Background Image Loading
 // =====================================================================
@@ -461,10 +486,16 @@ const backgroundImage = ref('')
 const initializeBackgroundImage = () => {
   const imageSource = effectiveImageData.value
 
+  // DEBUG: Shape instance selection
+  console.log('[Hero DEBUG] initializeBackgroundImage called')
+  console.log('[Hero DEBUG] selectedInstance:', selectedInstance.value)
+  console.log('[Hero DEBUG] imageSource:', imageSource ? 'present' : 'null')
+
   if (!imageSource) {
     // Fallback to legacy imgTmp
     if (props.imgTmp) {
       backgroundImage.value = props.imgTmp
+      console.log('[Hero DEBUG] Using legacy imgTmp:', props.imgTmp)
     }
     return
   }
@@ -472,24 +503,32 @@ const initializeBackgroundImage = () => {
   // Start with BlurHash if available
   if (blurHashUrl.value) {
     backgroundImage.value = blurHashUrl.value
+    console.log('[Hero DEBUG] BlurHash set as placeholder')
   }
 
   // Load image for selected instance
   const shape = currentShapeData.value
+  console.log('[Hero DEBUG] currentShapeData:', shape)
+
   if (shape?.url) {
     const { width, height } = instanceDimensions.value
     const imageUrl = buildImageUrl(shape, width * 2, height * 2) // 2x for retina
+    console.log('[Hero DEBUG] Built imageUrl:', imageUrl)
+    console.log('[Hero DEBUG] instanceDimensions:', { width, height })
 
     // Preload and swap
     const img = new Image()
     img.onload = () => {
+      console.log('[Hero DEBUG] Image loaded successfully, swapping background')
       backgroundImage.value = imageUrl
     }
-    img.onerror = () => {
-      console.warn('[Hero] Failed to load image:', imageUrl)
+    img.onerror = (e) => {
+      console.warn('[Hero DEBUG] Failed to load image:', imageUrl, e)
       // Keep BlurHash as fallback
     }
     img.src = imageUrl
+  } else {
+    console.log('[Hero DEBUG] No shape URL available')
   }
 }
 

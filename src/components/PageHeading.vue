@@ -56,6 +56,7 @@ import Container from './Container.vue'
 import HeadingParser from './HeadingParser.vue'
 import Logo from './Logo.vue'
 import Button from './Button.vue'
+import { useHeaderConfig } from '@/composables/useHeaderConfig'
 
 const props = defineProps({
   /**
@@ -172,93 +173,35 @@ const props = defineProps({
   },
 })
 
-// Default header type configurations
-const headerTypes = [
-  {
-    id: 0,
-    name: 'simple',
-    description: `no header`,
-    headerSize: 'mini',
-    allowedSizes: [],
-    isFullWidth: false,
-    contentAlignY: 'center',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-  {
-    id: 1,
-    name: 'columns',
-    description: `2-cols header`,
-    headerSize: 'prominent',
-    allowedSizes: [],
-    isFullWidth: false,
-    contentAlignY: 'center',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-  {
-    id: 2,
-    name: 'banner',
-    description: `Banner`,
-    headerSize: 'medium',
-    allowedSizes: ['prominent', 'medium', 'mini'],
-    isFullWidth: false,
-    contentAlignY: 'top',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'top',
-    backgroundCorrection: 1,
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'left-bottom',
-    gradientDepth: 0.6,
-  },
-  {
-    id: 3,
-    name: 'cover',
-    description: `Cover`,
-    headerSize: 'prominent',
-    allowedSizes: ['prominent', 'full'],
-    isFullWidth: false,
-    contentAlignY: 'bottom',
-    imgTmpAlignX: 'cover',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 1,
-    phoneBanner: true,
-    contentInBanner: false,
-    gradientType: 'left-bottom',
-    gradientDepth: 0.6,
-  },
-  {
-    id: 4,
-    name: 'bauchbinde',
-    description: `Bauchbinde`,
-    headerSize: 'prominent',
-    allowedSizes: ['prominent', 'full'],
-    isFullWidth: true,
-    contentAlignY: 'bottom',
-    imgTmpAlignX: 'cover',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentType: 'left',
-    contentWidth: 'fixed',
-    contentInBanner: true,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-]
+// =====================================================================
+// Header Configuration Resolution (via useHeaderConfig composable)
+// =====================================================================
 
-// Check whether the headerConfigs contain an entry matching the headerType-prop
+// Parse formatOptions to extract headerSubtype (if specified)
+const parsedFormatOptions = computed(() => {
+  if (typeof props.formatOptions === 'string') {
+    if (props.formatOptions.trim() === '') return {}
+    try {
+      return JSON.parse(props.formatOptions)
+    } catch (e) {
+      console.warn('Failed to parse formatOptions JSON string:', props.formatOptions, e)
+      return {}
+    }
+  }
+  return props.formatOptions
+})
+
+// Use the header config composable for API-based resolution
+// This handles the three-layer merge: Base → Subcategory → Project Override
+const { resolvedConfig: apiResolvedConfig, isLoading: configLoading } = useHeaderConfig({
+  headerType: computed(() => props.headerType || 'simple'),
+  headerSubtype: computed(() => parsedFormatOptions.value?.headerSubtype),
+  // Project overrides only apply on /sites routes (auto-detected by composable)
+  useApi: true
+})
+
+// Legacy: Check whether the headerConfigs prop contains custom config
+// This allows sites to pass custom configs (backwards compatibility)
 const customSiteHeader = computed(() =>
   props.headerConfigs?.find((config: any) => config.name === props.headerType)
 )
@@ -274,42 +217,21 @@ const siteHeader = computed(() => {
   }
 })
 
-// Get default Header, if not found, take 'simple'
-const defaultHeader = computed(() =>
-  headerTypes.find((type) => type.name === props.headerType) || headerTypes[0]
-)
-
-// Parse formatOptions if it's a string (JSON string or empty string)
-const parsedFormatOptions = computed(() => {
-  if (typeof props.formatOptions === 'string') {
-    // Empty string means empty object
-    if (props.formatOptions.trim() === '') {
-      return {}
-    }
-    // Try to parse JSON string
-    try {
-      return JSON.parse(props.formatOptions)
-    } catch (e) {
-      console.warn('Failed to parse formatOptions JSON string:', props.formatOptions, e)
-      return {}
-    }
-  }
-  // Already an object
-  return props.formatOptions
-})
-
 // Merge all header configuration sources
+// Priority: API config → legacy headerConfigs → entity formatOptions → entity headerSize
 const headerprops = computed(() => {
   const merged = Object.assign(
     {},
-    defaultHeader.value,
-    siteHeader.value,
-    parsedFormatOptions.value
+    apiResolvedConfig.value,          // From API/composable (base → subcat → project)
+    siteHeader.value,                  // Legacy headerConfigs prop override
+    parsedFormatOptions.value,         // Entity-level formatOptions JSON
+    // Entity-level headerSize prop takes priority (from database field)
+    props.headerSize ? { headerSize: props.headerSize } : {}
   )
 
   // Validate headerSize is in allowedSizes
   if (merged.allowedSizes?.length > 0 && !merged.allowedSizes.includes(merged.headerSize)) {
-    merged.headerSize = defaultHeader.value.headerSize
+    merged.headerSize = apiResolvedConfig.value.headerSize
   }
 
   return merged

@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
 
         const {
             header_type,
+            header_size,
             page_options,
             header_options,
             aside_options,
@@ -39,6 +40,10 @@ export default defineEventHandler(async (event) => {
         if (header_type !== undefined) {
             updates.push('header_type = ?')
             values.push(header_type)
+        }
+        if (header_size !== undefined) {
+            updates.push('header_size = ?')
+            values.push(header_size)
         }
         if (page_options !== undefined) {
             updates.push('page_options = ?')

@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
             project_id,
             page_type,
             header_type,
+            header_size,
             page_options,
             header_options,
             aside_options,
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
             project: projectValue,
             page_type,
             header_type: header_type || 'simple',
+            header_size: header_size || 'mini',
             page_options: page_options || {},
             header_options: header_options || {},
             aside_options: aside_options || {},
@@ -64,18 +66,20 @@ export default defineEventHandler(async (event) => {
                 project, 
                 page_type, 
                 header_type,
+                header_size,
                 page_options,
                 header_options,
                 aside_options,
                 footer_options
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `)
 
         const result = stmt.run(
             pageData.project,
             pageData.page_type,
             pageData.header_type,
+            pageData.header_size,
             JSON.stringify(pageData.page_options),
             JSON.stringify(pageData.header_options),
             JSON.stringify(pageData.aside_options),

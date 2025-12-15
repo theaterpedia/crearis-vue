@@ -31,7 +31,8 @@
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
-                    :headerType="event.header_type || 'banner'" :headerSize="'prominent'" />
+                    :image_id="event.img_id || undefined" :image_blur="event.img_square?.blur || undefined"
+                    :headerType="event.header_type || 'banner'" :headerSize="event.header_size || 'prominent'" />
             </template>
 
             <!-- Tag Families Row -->

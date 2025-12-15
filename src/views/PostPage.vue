@@ -33,7 +33,7 @@
                 <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
                     :image_blur="post.img_square?.blur || undefined"
                     :imgTmp="!post.img_id ? (post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post') : undefined"
-                    :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
+                    :headerType="post.header_type || 'banner'" :headerSize="post.header_size || 'prominent'" />
             </template>
 
             <!-- Tag Families Row -->
