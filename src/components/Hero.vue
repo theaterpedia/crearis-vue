@@ -466,12 +466,12 @@ const usesCoverSizing = computed(() => {
   // New image system or blur hash - always use cover sizing
   if (effectiveImageData.value) return true
   if (isBlurHashActive.value) return true
-  
+
   // Legacy imgTmp: check if cover alignment explicitly requested
   // OR if we have an image and alignment is stretch (legacy full-width mode)
   if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
   if (props.imgTmpAlignX === 'stretch' && props.imgTmpAlignY === 'stretch') return true
-  
+
   return false
 })
 
@@ -484,16 +484,10 @@ const backgroundImage = ref('')
 const initializeBackgroundImage = () => {
   const imageSource = effectiveImageData.value
 
-  // DEBUG: Shape instance selection
-  console.log('[Hero DEBUG] initializeBackgroundImage called')
-  console.log('[Hero DEBUG] selectedInstance:', selectedInstance.value)
-  console.log('[Hero DEBUG] imageSource:', imageSource ? 'present' : 'null')
-
   if (!imageSource) {
     // Fallback to legacy imgTmp
     if (props.imgTmp) {
       backgroundImage.value = props.imgTmp
-      console.log('[Hero DEBUG] Using legacy imgTmp:', props.imgTmp)
     }
     return
   }
@@ -501,32 +495,25 @@ const initializeBackgroundImage = () => {
   // Start with BlurHash if available
   if (blurHashUrl.value) {
     backgroundImage.value = blurHashUrl.value
-    console.log('[Hero DEBUG] BlurHash set as placeholder')
   }
 
   // Load image for selected instance
   const shape = currentShapeData.value
-  console.log('[Hero DEBUG] currentShapeData:', shape)
 
   if (shape?.url) {
     const { width, height } = instanceDimensions.value
     const imageUrl = buildImageUrl(shape, width * 2, height * 2) // 2x for retina
-    console.log('[Hero DEBUG] Built imageUrl:', imageUrl)
-    console.log('[Hero DEBUG] instanceDimensions:', { width, height })
 
     // Preload and swap
     const img = new Image()
     img.onload = () => {
-      console.log('[Hero DEBUG] Image loaded successfully, swapping background')
       backgroundImage.value = imageUrl
     }
     img.onerror = (e) => {
-      console.warn('[Hero DEBUG] Failed to load image:', imageUrl, e)
+      console.warn('[Hero] Failed to load image:', imageUrl, e)
       // Keep BlurHash as fallback
     }
     img.src = imageUrl
-  } else {
-    console.log('[Hero DEBUG] No shape URL available')
   }
 }
 

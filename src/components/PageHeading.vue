@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Hero/Banner Header -->
+    <!-- Hero/Banner Header (cover, banner, bauchbinde) -->
     <Hero v-if="showHero" :contentAlignY="headerprops.contentAlignY"
       :contentType="headerprops.contentType ? headerprops.contentType : headerprops.phoneBanner ? 'banner' : 'text'"
       :contentWidth="headerprops.contentWidth ? headerprops.contentWidth : headerprops.isFullWidth ? 'full' : 'short'"
@@ -37,7 +37,26 @@
       </Component>
     </Hero>
 
-    <!-- Simple Header (no hero) - using Section + Container instead of SectionContainer -->
+    <!-- Columns Header (side-by-side text + image) -->
+    <TextImageHeader v-else-if="showTextImage" :headerSize="headerprops.headerSize" :imgTmp="imgTmp"
+      :imageData="columnImageData" :contentAlignY="headerprops.contentAlignY || 'center'">
+      <!-- Heading with HeadingParser for markdown support -->
+      <HeadingParser :content="heading" is="h1" />
+      <br v-if="heading && teaserText" />
+      <HeadingParser v-if="teaserText" :content="teaserText" is="h3" />
+
+      <!-- CTA Buttons -->
+      <div v-if="showCta" class="cta-group">
+        <Button :is="ctaComponent" v-bind="{ [ctaLinkProp]: cta.link }" size="medium" variant="plain">
+          {{ cta.title }}
+        </Button>
+        <component :is="linkComponent" v-if="showLink" v-bind="{ [linkLinkProp]: link.link }" class="cta-link">
+          {{ link.title }}
+        </component>
+      </div>
+    </TextImageHeader>
+
+    <!-- Simple Header (no image/hero) -->
     <Section v-else>
       <Container>
         <HeadingParser v-if="heading" :content="heading" is="h1" class="mt-14" />
@@ -48,15 +67,17 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type PropType } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
 import Hero from './Hero.vue'
 import Banner from './Banner.vue'
 import Section from './Section.vue'
 import Container from './Container.vue'
 import HeadingParser from './HeadingParser.vue'
+import TextImageHeader from './TextImageHeader.vue'
 import Logo from './Logo.vue'
 import Button from './Button.vue'
 import { useHeaderConfig } from '@/composables/useHeaderConfig'
+import type { ImageApiResponse } from '@/composables/useImageFetch'
 
 const props = defineProps({
   /**
@@ -238,14 +259,16 @@ const headerprops = computed(() => {
 })
 
 // Display logic
-const showHero = computed(() =>
-  headerprops.value.name !== 'simple' &&
-  headerprops.value.name !== 'columns' &&
-  (props.imgTmp || props.image_id || props.image_xmlid)
-)
+const showHero = computed(() => {
+  const name = headerprops.value.name
+  const hasImage = props.imgTmp || props.image_id || props.image_xmlid
+  // Hero is used for: banner, cover, bauchbinde (not simple or columns)
+  return name !== 'simple' && name !== 'columns' && hasImage
+})
 
 const showTextImage = computed(() =>
-  headerprops.value.name === 'columns' && props.imgTmp
+  headerprops.value.name === 'columns' &&
+  (props.imgTmp || props.image_id || props.image_xmlid)
 )
 
 const showCta = computed(() =>
@@ -255,6 +278,42 @@ const showCta = computed(() =>
 const showLink = computed(() =>
   headerprops.value.name !== 'simple' && props.link?.link
 )
+
+// =====================================================================
+// Image Data for Columns Layout (TextImageHeader)
+// =====================================================================
+const columnImageData = ref<ImageApiResponse | null>(null)
+
+// Fetch image data when columns layout needs it
+async function fetchColumnImageData() {
+  if (!showTextImage.value) return
+
+  // If we have image_id, fetch the image data
+  if (props.image_id) {
+    try {
+      const response = await fetch(`/api/images/${props.image_id}`)
+      if (response.ok) {
+        columnImageData.value = await response.json()
+      }
+    } catch (err) {
+      console.warn('[PageHeading] Failed to fetch column image data:', err)
+    }
+  } else if (props.image_xmlid) {
+    try {
+      const response = await fetch(`/api/images/xmlid/${props.image_xmlid}`)
+      if (response.ok) {
+        columnImageData.value = await response.json()
+      }
+    } catch (err) {
+      console.warn('[PageHeading] Failed to fetch column image by xmlid:', err)
+    }
+  }
+}
+
+// Watch for showTextImage becoming true
+watch(showTextImage, (show) => {
+  if (show) fetchColumnImageData()
+}, { immediate: true })
 
 // Helper to determine if link is internal (relative) or external (absolute)
 const isInternalLink = (url: string) => {

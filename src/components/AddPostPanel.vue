@@ -86,6 +86,29 @@
                     :displayXml="true" />
             </div>
 
+            <!-- Header Settings -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Header Type</label>
+                    <select v-model="headerType" class="form-select">
+                        <option value="banner">Banner (top-aligned)</option>
+                        <option value="cover">Cover (centered)</option>
+                        <option value="columns">Columns (side-by-side)</option>
+                        <option value="simple">Simple (no image)</option>
+                        <option value="bauchbinde">Bauchbinde</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Header Size</label>
+                    <select v-model="headerSize" class="form-select">
+                        <option value="mini">Mini (25%)</option>
+                        <option value="medium">Medium (50%)</option>
+                        <option value="prominent">Prominent (75%)</option>
+                        <option value="full">Full (100%)</option>
+                    </select>
+                </div>
+            </div>
+
             <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
 
             <div class="action-buttons">
@@ -136,6 +159,10 @@ const ctags = ref(0)
 const customName = ref('')
 const customTeaser = ref('')
 const isSubmitting = ref(false)
+
+// Header settings (for banner/cover/size selection)
+const headerType = ref<string>('banner')
+const headerSize = ref<string>('medium')
 
 /**
  * Generate a URL-safe slug from a title string
@@ -271,7 +298,10 @@ const handleApply = async () => {
             creator_id: selectedOwner.value,  // Record creator (FK → users.id)
             ttags: ttags.value,
             ctags: ctags.value,
-            status: postStatus  // Status: NEW (1) or DEMO (8) if edits made
+            status: postStatus,  // Status: NEW (1) or DEMO (8) if edits made
+            // Header settings (from form selection)
+            header_type: headerType.value || 'banner',
+            header_size: headerSize.value || 'medium'
             // public_user: references instructors, set separately if needed
         }
 

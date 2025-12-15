@@ -90,6 +90,29 @@
                     :displayXml="true" />
             </div>
 
+            <!-- Header Settings -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Header Type</label>
+                    <select v-model="selectedHeaderType" class="form-select">
+                        <option value="cover">Cover (centered)</option>
+                        <option value="banner">Banner (top-aligned)</option>
+                        <option value="columns">Columns (side-by-side)</option>
+                        <option value="simple">Simple (no image)</option>
+                        <option value="bauchbinde">Bauchbinde</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Header Size</label>
+                    <select v-model="selectedHeaderSize" class="form-select">
+                        <option value="mini">Mini (25%)</option>
+                        <option value="medium">Medium (50%)</option>
+                        <option value="prominent">Prominent (75%)</option>
+                        <option value="full">Full (100%)</option>
+                    </select>
+                </div>
+            </div>
+
             <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
 
             <div class="action-buttons">
@@ -242,6 +265,10 @@ const isSubmitting = ref(false)
 const selectedImageId = ref<string[] | string | null>(null)
 const ttags = ref(0)
 const ctags = ref(0)
+
+// Header settings (for cover/banner/size selection)
+const selectedHeaderType = ref<string>('cover')
+const selectedHeaderSize = ref<string>('prominent')
 
 const previewEvent = computed(() => {
     if (!selectedEvent.value) return null
@@ -425,8 +452,9 @@ const handleApply = async () => {
             ctags: ctags.value,
             // Status: NEW (1) or DEMO (8) if edits made
             status: eventStatus,
-            // Header type: cover for events
-            header_type: 'cover'
+            // Header settings (from form selection)
+            header_type: selectedHeaderType.value || 'cover',
+            header_size: selectedHeaderSize.value || 'prominent'
         }
 
         // Debug logging - see what we're sending

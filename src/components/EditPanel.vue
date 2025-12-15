@@ -14,16 +14,17 @@
                         <input id="edit-heading" v-model="formData.heading" type="text" class="form-input"
                             placeholder="Enter heading..." required />
                     </div>
-                    <!-- Header Type disabled
                     <div class="form-group form-group-fixed">
                         <label class="form-label" for="edit-header-type">Header Type</label>
                         <select id="edit-header-type" v-model="formData.header_type" class="form-select">
                             <option value="">Default</option>
-                            <option value="hero">Hero</option>
+                            <option value="simple">Simple</option>
+                            <option value="columns">Columns</option>
                             <option value="banner">Banner</option>
-                            <option value="minimal">Minimal</option>
+                            <option value="cover">Cover</option>
+                            <option value="bauchbinde">Bauchbinde</option>
                         </select>
-                    </div> -->
+                    </div>
                 </div>
 
                 <!-- Status Badge and Image Selection Row -->
@@ -84,14 +85,15 @@
                     </div>
                 </template>
 
-                <!-- Header Size (if available) -->
-                <div v-if="hasField('header_size')" class="form-group">
+                <!-- Header Size -->
+                <div class="form-group">
                     <label class="form-label" for="edit-header-size">Header Size</label>
                     <select id="edit-header-size" v-model="formData.header_size" class="form-select">
                         <option :value="null">Default</option>
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
+                        <option value="mini">Mini (25%)</option>
+                        <option value="medium">Medium (50%)</option>
+                        <option value="prominent">Prominent (75%)</option>
+                        <option value="full">Full (100%)</option>
                     </select>
                 </div>
 
