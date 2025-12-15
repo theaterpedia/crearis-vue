@@ -60,6 +60,7 @@ const router = createRouter({
     { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
     { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },
+    { path: '/demo/display-image', component: () => import('../views/Demo/DemoDisplayImage.vue') },
 
     // Other routes (demos, legacy)
     { path: '/legacy-home', component: () => import('../views/index.vue') }, // Renamed from /home

@@ -69,8 +69,8 @@ export default defineEventHandler(async (event) => {
 
         // Parse request body
         const body = await readBody(event).catch(() => ({}))
-        const options: RegenerateOptions = body as RegenerateOptions
-        const shapesToRegenerate: ShapeType[] = options.shapes || ['square', 'thumb', 'wide', 'vertical']
+        const options: RegenerateOptions = body || {}
+        const shapesToRegenerate: ShapeType[] = options?.shapes || ['square', 'thumb', 'wide', 'vertical']
 
         console.log(`[Regenerate] Image ${imageId} - Regenerating shapes:`, shapesToRegenerate)
 
@@ -84,7 +84,12 @@ export default defineEventHandler(async (event) => {
         // Determine xmlid from file_id
         const xmlid = (image as any).file_id || (image as any).name.split('.')[0]
 
-        // Regenerate shapes
+        console.log(`[Regenerate] Image ${imageId} - Source: ${sourceFilepath}, xmlid: ${xmlid}`)
+
+        // Generate all templates at once (more efficient than per-shape)
+        const allShapes = await adapter.generateShapes(sourceFilepath, xmlid)
+        
+        // Regenerate shapes (templates)
         const newUrls: Record<string, string> = {}
 
         for (const shape of shapesToRegenerate) {
@@ -105,14 +110,18 @@ export default defineEventHandler(async (event) => {
                 )
                 console.log(`[Regenerate] ${shape} with XYZ (${xyzParams.x},${xyzParams.y},${xyzParams.z})`)
             } else {
-                // Use standard generation (will use default strategy per shape)
-                const shapes = await adapter.generateShapes(sourceFilepath, xmlid)
-                shapeUrl = shapes[shape]
+                // Use pre-generated shape
+                shapeUrl = allShapes[shape]
                 console.log(`[Regenerate] ${shape} with default strategy`)
             }
 
             newUrls[shape] = shapeUrl
         }
+
+        // Also regenerate instances (display_*, hero_*)
+        console.log(`[Regenerate] Generating shape instances for ${xmlid}...`)
+        const instanceUrls = await adapter.generateInstances(sourceFilepath, xmlid)
+        console.log(`[Regenerate] Generated ${Object.keys(instanceUrls).length} instances`)
 
         // Update database with new shape URLs
         const updates: string[] = []
@@ -138,7 +147,8 @@ export default defineEventHandler(async (event) => {
             image_id: parseInt(imageId, 10),
             regenerated_shapes: shapesToRegenerate,
             urls: newUrls,
-            message: `Successfully regenerated ${shapesToRegenerate.length} shape(s)`
+            instances: instanceUrls,
+            message: `Successfully regenerated ${shapesToRegenerate.length} shape(s) and ${Object.keys(instanceUrls).length} instance(s)`
         }
     } catch (error: any) {
         console.error('[Regenerate] Error:', error)

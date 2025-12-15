@@ -29,8 +29,10 @@
         <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
             :navItems="navigationItems">
             <template #header>
-                <PageHeading :heading="post.name || String(post.id)"
-                    :imgTmp="post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post'"
+                <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
+                <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
+                    :image_blur="post.img_square?.blur || undefined"
+                    :imgTmp="!post.img_id ? (post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post') : undefined"
                     :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
             </template>
 

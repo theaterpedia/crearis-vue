@@ -6,7 +6,8 @@
       :contentWidth="headerprops.contentWidth ? headerprops.contentWidth : headerprops.isFullWidth ? 'full' : 'short'"
       :gradient_depth="headerprops.gradientDepth" :gradient_type="headerprops.gradientType"
       :heightTmp="headerprops.headerSize" :imgTmp="imgTmp" :imgTmpAlignX="headerprops.imgTmpAlignX"
-      :imgTmpAlignY="headerprops.imgTmpAlignY" :backgroundCorrection="headerprops.backgroundCorrection">
+      :imgTmpAlignY="headerprops.imgTmpAlignY" :backgroundCorrection="headerprops.backgroundCorrection"
+      :image_id="image_id" :image_xmlid="image_xmlid" :image_blur="image_blur">
       <!-- Banner wrapper component (optional) -->
       <Component :card="headerprops.phoneBanner && false" :is="headerprops.contentInBanner ? Banner : 'div'"
         themeColor="secondary" :option="headerprops.name === 'bauchbinde' ? 'bauchbinde' : ''" transparent>
@@ -108,6 +109,30 @@ const props = defineProps({
   imgTmp: {
     type: String,
     default: '',
+  },
+  /**
+   * Image ID for API-based loading in Hero.
+   * When provided, Hero will fetch image data from /api/images/:id
+   */
+  image_id: {
+    type: [Number, String] as PropType<number | string>,
+    default: undefined,
+  },
+  /**
+   * Image XMLID for API-based loading in Hero.
+   * When provided, Hero will fetch image data from /api/images/xmlid/:xmlid
+   */
+  image_xmlid: {
+    type: String,
+    default: undefined,
+  },
+  /**
+   * Pre-provided blur hash string for immediate placeholder display.
+   * Useful when entity already has img_square.blur available.
+   */
+  image_blur: {
+    type: String,
+    default: undefined,
   },
   /**
    * Call-to-action button configuration.
@@ -294,7 +319,7 @@ const headerprops = computed(() => {
 const showHero = computed(() =>
   headerprops.value.name !== 'simple' &&
   headerprops.value.name !== 'columns' &&
-  props.imgTmp
+  (props.imgTmp || props.image_id || props.image_xmlid)
 )
 
 const showTextImage = computed(() =>

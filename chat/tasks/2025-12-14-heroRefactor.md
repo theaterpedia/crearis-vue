@@ -44,26 +44,87 @@ Currently handled in:
 
 ---
 
-## 3. Open Questions
+## 3. Questions & Decisions
 
-### 3.1 Backend Implementation Questions
+### 3.1 Backend Implementation Decisions
 
-| # | Question | Impact |
-|---|----------|--------|
-| 1 | Should instances be stored as separate DB columns or in a JSONB field? | DB schema design |
-| 2 | Are XYZ values inherited from template to instances, or calculated independently? | Focal point logic |
-| 3 | How should `display_thumb_banner` handle y-axis focus when source aspect differs significantly? | Special case handling |
-| 4 | Should BlurHash be generated per-instance or shared from template? | Performance vs accuracy |
-| 5 | What fallback behavior when custom XYZ preset exists on template? | Warning implementation |
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Should instances be stored as separate DB columns or in a JSONB field? | **No DB storage** - Only file generation for local adapter. Cloudinary/Unsplash need no file generation. |
+| 2 | Are XYZ values inherited from template to instances, or calculated independently? | **Inherited from template** |
+| 3 | How should `display_thumb_banner` handle y-axis focus when source aspect differs significantly? | **Y-axis focus from thumb** indicates vertical center percentage + zoom level → translate to X-axis. X-axis center also from thumb, only X-axis pixel width needs custom handling. Known issues acceptable until 1.0. |
+| 4 | Should BlurHash be generated per-instance or shared from template? | **Use BlurHash from template** |
+| 5 | What fallback behavior when custom XYZ preset exists on template? | **Display warning in ImgShape.vue**: "Shape-instances do not support custom XYZ yet" |
 
-### 3.2 Frontend Component Questions
+> **📋 v0.8-DEFERRED TASK:** Define logic for persisting instance special handling via `turl`/`tpar` fields on images table.
 
-| # | Question | Impact |
-|---|----------|--------|
-| 6 | Should DisplayImage/DisplayBanner fetch by `xmlid` or receive full image data as prop? | API design |
-| 7 | How does DisplayImage detect it's inside Columns.vue vs Container.vue? | Parent detection |
-| 8 | For Hero.vue: what's the breakpoint threshold between hero instance selections? | Responsive breakpoints |
-| 9 | Should gradient overlays be part of Hero.vue or separate composable? | Code organization |
+### 3.2 Frontend Component Decisions
+
+| # | Question | Decision |
+|---|----------|----------|
+| 6 | Should DisplayImage/DisplayBanner fetch by `xmlid` or receive full image data as prop? | **Fetch by xmlid** - Enables importing images into pages without requiring the image on the entity record |
+| 7 | How does DisplayImage detect it's inside Columns.vue vs Container.vue? | **Explicit prop `isColumn`** (default=false) |
+| 8 | For Hero.vue: what's the breakpoint threshold between hero instance selections? | **See clarification below** |
+| 9 | Should gradient overlays be part of Hero.vue or separate composable? | **Keep in Hero.vue** - Already working well. See composable example below for future consideration. |
+
+### 3.3 Hero Instance Breakpoints (Resolved ✅)
+
+**Decision:** Breakpoints are viewport-based with `heightTmp` prop influence.
+
+```typescript
+function selectHeroInstance(
+  viewport: { width: number, height: number },
+  heightTmp: 'full' | 'prominent' | 'medium' | 'mini'
+): HeroInstance {
+  
+  // Mobile: ≤ 440px
+  if (viewport.width <= 440) {
+    // Use vertical for prominent/full (cover) heroes
+    if (heightTmp === 'prominent' || heightTmp === 'full') {
+      return 'hero_vertical'  // 440×880
+    }
+    return 'hero_square'      // 440×440
+  }
+  
+  // Tablet: 440px < viewport ≤ 768px
+  if (viewport.width <= 768) {
+    return 'hero_square'      // 440×440
+  }
+  
+  // Small desktop: 768px < viewport ≤ 1100px
+  if (viewport.width <= 1100) {
+    return 'hero_wide'        // 1100×620
+  }
+  
+  // Large desktop: 1100px < viewport ≤ 1440px
+  if (viewport.width <= 1440) {
+    return 'hero_wide_xl'     // 1440×820
+  }
+  
+  // Extra large: viewport > 1440px
+  // Use square_xl for full-cover heroes on tall screens
+  if (heightTmp === 'full' && viewport.height > 950) {
+    return 'hero_square_xl'   // 1440×1280
+  }
+  return 'hero_wide_xl'       // 1440×820
+}
+```
+
+**Instance Selection Summary:**
+
+| Viewport | Default | With `heightTmp='prominent'/'full'` |
+|----------|---------|-------------------------------------|
+| ≤ 440px | `hero_square` (440×440) | `hero_vertical` (440×880) |
+| 441-768px | `hero_square` (440×440) | `hero_square` (440×440) |
+| 769-1100px | `hero_wide` (1100×620) | `hero_wide` (1100×620) |
+| 1101-1440px | `hero_wide_xl` (1440×820) | `hero_wide_xl` (1440×820) |
+| >1440px | `hero_wide_xl` (1440×820) | `hero_square_xl` (1440×1280)* |
+
+*Only when `heightTmp='full'` AND `viewport.height > 950px`
+
+### 3.4 Gradient Composable (Deferred ✅)
+
+**Decision:** Keep gradient overlay in Hero.vue for now. Already working well.
 
 ---
 
@@ -90,174 +151,59 @@ Outer loop: [square, wide, vertical, thumb]
 
 ---
 
-## 5. Implementation Alternatives
+## 5. Implementation Plan: Alternative A (Chosen)
 
-### Alternative A: Extend ImgShape.vue (Recommended)
+### Architecture Decision
+**Extend ImgShape.vue** as single source of truth for all image display logic.
 
-**Approach:** Keep all image display logic in ImgShape.vue, extend with new shape types
+### Key Implementation Points
 
-```typescript
-// ImgShape.vue - Extended shape union
-type ShapeType = 
-  | 'square' | 'wide' | 'thumb' | 'vertical'  // Templates
-  | 'display_wide' | 'display_thumb_banner'     // Display instances
-  | 'hero_wide_xl' | 'hero_square_xl'           // Hero instances
-  | 'hero_wide' | 'hero_square' | 'hero_vertical'
-```
-
-**Pros:**
-- Single source of truth for image display
-- Consistent adapter handling
-- Shared BlurHash logic
-- Easier maintenance
-
-**Cons:**
-- ImgShape.vue becomes larger
-- More complex dimension calculation
-- Harder to tree-shake unused shapes
-
-**New Components:**
-
-```vue
-<!-- DisplayImage.vue -->
-<template>
-  <div class="display-image" :class="[placementClass, paddingClass, bgClass]">
-    <ImgShape :data="imageData" shape="display_wide" />
-    <div v-if="caption !== 'none'" class="display-caption">...</div>
-  </div>
-</template>
-```
-
-```vue
-<!-- DisplayBanner.vue -->
-<template>
-  <div class="display-banner">
-    <ImgShape :data="imageData" shape="display_thumb_banner" />
-  </div>
-</template>
-```
-
-**Estimated Effort:** 16-20 hours
-
----
-
-### Alternative B: Composable-Based Architecture
-
-**Approach:** Extract shared logic to composables, create independent components
-
-```
-src/composables/
-├── useImageAdapter.ts      # Adapter detection, URL building
-├── useResponsiveImage.ts   # Dimension calculation, srcset
-├── useImageFetch.ts        # API fetching by xmlid
-└── useBlurHash.ts          # (existing)
-```
-
-**New Components:**
-
-```vue
-<!-- DisplayImage.vue - Independent -->
-<script setup>
-import { useImageAdapter } from '@/composables/useImageAdapter'
-import { useImageFetch } from '@/composables/useImageFetch'
-import { useBlurHash } from '@/composables/useBlurHash'
-
-const props = defineProps<{
-  xmlid: string
-  padding: 'none' | 'small' | 'medium' | 'large'
-  background: 'inherit' | 'standard' | 'muted' | 'accent'
-  caption: 'none' | 'author' | 'description' | 'full'
-  placement: 'left' | 'lefttop' | 'leftbottom' | 'right' | 'righttop' | 'rightbottom'
-}>()
-
-const { imageData, loading, error } = useImageFetch(props.xmlid)
-const { buildUrl } = useImageAdapter()
-const { canvasRef, isDecoded } = useBlurHash({ hash: computed(() => imageData.value?.blur) })
-</script>
-```
-
-**Pros:**
-- Maximum code reuse
-- Independent component testing
-- Clear separation of concerns
-- Future-proof for more image components
-
-**Cons:**
-- More files to create
-- Higher initial complexity
-- Potential for composition overhead
-
-**Estimated Effort:** 20-24 hours
-
----
-
-### Alternative C: Wrapper Components
-
-**Approach:** Create thin wrapper components that configure ImgShape
-
-```vue
-<!-- DisplayImage.vue - Wrapper -->
-<template>
-  <div class="display-image-wrapper" :class="wrapperClasses">
-    <ImgShapeLoader :xmlid="xmlid" shape="display_wide">
-      <template #default="{ data, loading, error }">
-        <ImgShape v-if="data" :data="data" shape="display_wide" />
-        <div v-else-if="loading" class="loading-placeholder" />
-        <div v-else-if="error" class="error-state" />
-      </template>
-    </ImgShapeLoader>
-    <slot name="caption" />
-  </div>
-</template>
-```
-
-**New Helper Component:**
-
-```vue
-<!-- ImgShapeLoader.vue -->
-<script setup>
-// Handles API fetching for any shape by xmlid
-const { imageData, loading, error } = await useFetch(`/api/images/xmlid/${props.xmlid}`)
-</script>
-```
-
-**Pros:**
-- Minimal changes to ImgShape.vue
-- Clear separation: loader vs renderer
-- Slot-based flexibility
-
-**Cons:**
-- Additional component layer
-- Slightly more complex template usage
-- Two components required for one visual
-
-**Estimated Effort:** 14-18 hours
+1. **No DB storage for instances** - Files generated on-demand for local adapter only
+2. **XYZ inherited from templates** - Instances reuse template focal points
+3. **BlurHash from templates** - No separate BlurHash generation for instances
+4. **Custom XYZ warning** - Display "Shape-instances do not support custom XYZ yet" when detected
+5. **Fetch by xmlid** - DisplayImage/DisplayBanner autonomously query `/api/images/xmlid/:xmlid`
+6. **Explicit `isColumn` prop** - No parent detection magic
 
 ---
 
 ## 6. Hero.vue Refactoring Strategy
 
-### 6.1 Instance Selection Logic
+### 6.1 Instance Selection Logic (Resolved ✅)
 
 ```typescript
-// Hero instance selection based on viewport and content needs
-function selectHeroInstance(viewport: { width: number, height: number }, aspectPreference: 'wide' | 'square' | 'vertical') {
-  const isDesktop = viewport.width > 1024
-  const isTablet = viewport.width > 640 && viewport.width <= 1024
-  const isMobile = viewport.width <= 640
-  
-  if (isMobile) {
-    return aspectPreference === 'vertical' ? 'hero_vertical' : 'hero_square'
+type HeroInstance = 
+  | 'hero_vertical'   // 440×880 - Mobile portrait
+  | 'hero_square'     // 440×440 - Mobile/tablet
+  | 'hero_wide'       // 1100×620 - Small desktop
+  | 'hero_wide_xl'    // 1440×820 - Large desktop
+  | 'hero_square_xl'  // 1440×1280 - XL cover heroes
+
+function selectHeroInstance(
+  viewport: { width: number, height: number },
+  heightTmp: 'full' | 'prominent' | 'medium' | 'mini'
+): HeroInstance {
+  // Mobile ≤ 440px
+  if (viewport.width <= 440) {
+    return (heightTmp === 'prominent' || heightTmp === 'full') 
+      ? 'hero_vertical' 
+      : 'hero_square'
   }
   
-  if (isTablet) {
-    return 'hero_wide'
-  }
+  // Tablet 441-768px
+  if (viewport.width <= 768) return 'hero_square'
   
-  // Desktop
-  return viewport.width > 1280 
-    ? (aspectPreference === 'square' ? 'hero_square_xl' : 'hero_wide_xl')
-    : 'hero_wide'
+  // Small desktop 769-1100px
+  if (viewport.width <= 1100) return 'hero_wide'
+  
+  // Large desktop 1101-1440px
+  if (viewport.width <= 1440) return 'hero_wide_xl'
+  
+  // XL desktop > 1440px
+  if (heightTmp === 'full' && viewport.height > 950) {
+    return 'hero_square_xl'
+  }
+  return 'hero_wide_xl'
 }
 ```
 
@@ -281,53 +227,142 @@ interface HeroImageData {
 
 ---
 
-## 7. Recommended Implementation Plan
+## 7. Revised Implementation Plan (Alternative A)
 
-### Phase 1: Backend Shape Generation (8-10 hours)
-1. Extend adapter base class with instance definitions
-2. Implement 2-loop architecture for shape generation
-3. Add special handling for `display_thumb_banner`
-4. Add fallback warning for custom XYZ presets
+### Phase 1: Backend Shape Generation (6-8 hours)
+1. Extend local-adapter.ts with 2-loop architecture
+2. Implement instance generation using inherited XYZ
+3. Add special `display_thumb_banner` X-axis expansion logic
+4. Use template BlurHash for all instances
+5. No Cloudinary/Unsplash file generation needed
+6. **Test**: Extend `rebuildShapeUrlWithXYZ.test.ts` with XYZ inheritance tests
 
-### Phase 2: Composables (4-6 hours)
-1. Create `useImageAdapter.ts` - adapter detection, URL building
-2. Create `useImageFetch.ts` - API fetching by xmlid
-3. Optionally create `useResponsiveImage.ts`
+### Phase 2: API Endpoint (2-3 hours)
+1. Create `/api/images/xmlid/:xmlid` endpoint
+2. Return shape data including `display_wide` instance URL
+3. **Test**: Create `tests/integration/xmlid-endpoint.test.ts`
 
-### Phase 3: Display Components (6-8 hours)
-1. Create DisplayImage.vue with all props
+### Phase 3: ImgShape.vue Extension (4-6 hours)
+1. Add new shape types to union
+2. Add dimension calculations for instances
+3. ~~Add custom XYZ warning for shape-instances~~ (deferred - see recommendations)
+4. **Test with local adapter only** (crearis) - extend `ImgShape-CList-Integration.test.ts`
+
+### Phase 4: Display Components (6-8 hours)
+1. Create DisplayImage.vue with all props + `isColumn`
 2. Create DisplayBanner.vue
-3. Add parent detection for Columns.vue
-4. Implement responsive sizing
+3. Implement xmlid fetching
+4. Add responsive sizing with aspect-ratio preservation
+5. **Test**: Create `tests/component/DisplayImage.test.ts`
+6. **Test**: Create `tests/component/DisplayBanner.test.ts`
 
-### Phase 4: Hero.vue Refactoring (6-8 hours)
+### Phase 5: Hero.vue Refactoring (4-6 hours)
 1. Add hero instance props
-2. Implement intelligent instance selection
-3. Test responsive behavior across breakpoints
+2. Implement `selectHeroInstance()` function
+3. Test responsive behavior
+4. **Test**: Create `tests/unit/selectHeroInstance.test.ts`
 
-### Phase 5: Demo View & Testing (4-6 hours)
+### Phase 6: Demo View & Testing (3-4 hours)
 1. Create `/Demo/DemoDisplayImage.vue`
-2. Add usage examples
-3. Integration testing
+2. Show both Container and Columns usage
+3. Manual QA integration testing
 
-**Total Estimated Effort:** 28-38 hours
+**Total Estimated Effort:** 25-35 hours
 
 ---
 
-## 8. Decision Matrix
+## 8. Decision Matrix (Reference)
 
-| Criteria | Alt A (Extend) | Alt B (Composables) | Alt C (Wrapper) |
-|----------|----------------|---------------------|-----------------|
+| Criteria | Alt A (Extend) ✅ | Alt B (Composables) | Alt C (Wrapper) |
+|----------|-------------------|---------------------|-----------------|
 | Code reuse | ★★★★☆ | ★★★★★ | ★★★☆☆ |
 | Simplicity | ★★★★☆ | ★★★☆☆ | ★★★★★ |
 | Flexibility | ★★★☆☆ | ★★★★★ | ★★★★☆ |
 | Maintenance | ★★★★☆ | ★★★☆☆ | ★★★★☆ |
 | Performance | ★★★★★ | ★★★★☆ | ★★★☆☆ |
-| **Overall** | **Recommended** | Good | Acceptable |
+
+**Selected: Alternative A** - Extend ImgShape.vue
+
+## 9. Testing Cross-Check with Test Registry
+
+### 9.1 Existing Tests to Extend
+
+| Existing Test File | Current Coverage | Extension Needed |
+|--------------------|------------------|------------------|
+| `tests/component/ImgShape-CList-Integration.test.ts` (777 lines, 28 tests) | Tests `square`, `wide`, `thumb`, `vertical` shapes with CList components | **Add tests for new shape types**: `display_wide`, `display_thumb_banner`, `hero_*` |
+| `tests/unit/rebuildShapeUrlWithXYZ.test.ts` (355 lines) | XYZ URL building for Unsplash/Cloudinary | **Add tests for XYZ inheritance** from template to instances |
+| `tests/database/image-shape-reducer.test.ts` (593 lines, 22 tests) | JSONB computed fields for 4 shapes | **No change needed** - instances aren't DB-stored |
+
+> **Note:** ShapeEditor tests (`shape-editor.test.ts`, `v2-imagesCore-shapeEditor.test.ts`) are **out of scope**. See [2025-12-14-shapeEditor-recommendations.md](2025-12-14-shapeEditor-recommendations.md) for future considerations.
+
+### 9.2 New Test Files Required
+
+| New Test File | Phase | Purpose | Estimated Tests |
+|---------------|-------|---------|-----------------|
+| `tests/unit/selectHeroInstance.test.ts` | Phase 5 | Test `selectHeroInstance()` function with viewport/heightTmp combinations | ~15 tests |
+| `tests/component/DisplayImage.test.ts` | Phase 4 | DisplayImage props, xmlid fetching, responsive sizing, `isColumn` prop | ~20 tests |
+| `tests/component/DisplayBanner.test.ts` | Phase 4 | DisplayBanner props, xmlid fetching, aspect-ratio preservation | ~10 tests |
+| `tests/integration/xmlid-endpoint.test.ts` | Phase 2 | `/api/images/xmlid/:xmlid` endpoint testing | ~8 tests |
+
+### 9.3 Test Patterns to Follow
+
+Based on existing test structure:
+
+```typescript
+// Pattern from ImgShape-CList-Integration.test.ts
+// Use for DisplayImage/DisplayBanner tests
+
+import { mountCListComponent } from '../utils/mount-helpers'
+import { createMockImageData } from '../utils/clist-test-data'
+
+describe('DisplayImage + ImgShape', () => {
+  it('should render ImgShape with display_wide shape', async () => {
+    const imageData = createMockImageData('display_wide') // Extend clist-test-data
+    const { wrapper } = mountCListComponent(DisplayImage, {
+      props: { xmlid: 'test.image.001', isColumn: false }
+    })
+    // ... assertions
+  })
+})
+```
+
+### 9.4 Test Helper Extensions Needed
+
+| Helper File | Extension |
+|-------------|-----------|
+| `tests/utils/clist-test-data.ts` | Add `createMockImageData('display_wide')`, `createMockImageData('hero_wide_xl')` etc. |
+| `tests/utils/mount-helpers.ts` | May need fetch mock setup for xmlid endpoint |
+
+### 9.5 Testing Timeline Integration
+
+| Phase | Implementation | Testing |
+|-------|----------------|---------|
+| Phase 1: Backend Shape Generation | 6-8h | Extend `rebuildShapeUrlWithXYZ.test.ts` |
+| Phase 2: API Endpoint | 2-3h | **CREATE**: `xmlid-endpoint.test.ts` |
+| Phase 3: ImgShape Extension | 4-6h | Extend `ImgShape-CList-Integration.test.ts` (local adapter only) |
+| Phase 4: Display Components | 6-8h | **CREATE**: `DisplayImage.test.ts`, `DisplayBanner.test.ts` |
+| Phase 5: Hero.vue Refactor | 4-6h | **CREATE**: `selectHeroInstance.test.ts` |
+| Phase 6: Demo & Testing | 3-4h | Manual QA via Demo view |
+
+### 9.6 Test Registry Updates Required
+
+After implementation, add to `docs/devdocs/TEST_REGISTRY.md`:
+
+```markdown
+### Unit Tests (`tests/unit/`)
+| selectHeroInstance.test.ts | 2025-12-14-heroRefactor.md | ✅ ~15 tests |
+
+### Component Tests (`tests/component/`)
+| DisplayImage.test.ts | 2025-12-14-heroRefactor.md | ✅ ~20 tests |
+| DisplayBanner.test.ts | 2025-12-14-heroRefactor.md | ✅ ~10 tests |
+
+### Integration Tests (`tests/integration/`)
+| xmlid-endpoint.test.ts | 2025-12-14-heroRefactor.md | ✅ ~8 tests |
+```
 
 ---
 
-## 9. Appendix: Code Locations
+## 10. Appendix: Code Locations
 
 ### Key Files to Modify
 
@@ -350,10 +385,45 @@ interface HeroImageData {
 
 ---
 
-## 10. Next Steps
+## 11. Implementation Status
 
-1. **Clarify open questions** (Section 3) before implementation
-2. **Choose alternative** (recommend Alternative A)
-3. **Define exact breakpoints** for Hero instance selection
-4. **Database schema decision** for new instances
-5. **Begin Phase 1** backend implementation
+### ✅ Completed (December 14, 2025)
+
+| Phase | Component | Status | Files Created/Modified |
+|-------|-----------|--------|------------------------|
+| Test Stubs | TDD preparation | ✅ Done | `tests/unit/selectHeroInstance.test.ts`, `tests/component/DisplayImage.test.ts`, `tests/component/DisplayBanner.test.ts`, `tests/integration/xmlid-endpoint.test.ts` |
+| Phase 1 | Backend Shape Generation | ✅ Done | [server/adapters/local-adapter.ts](server/adapters/local-adapter.ts) - Added `INSTANCE_DIMENSIONS`, `generateInstances()`, `generateAllShapeVariants()` |
+| Phase 2 | API Endpoint | ✅ Done | [server/api/images/xmlid/[xmlid].get.ts](server/api/images/xmlid/[xmlid].get.ts) - New endpoint |
+| Phase 4 | Display Components | ✅ Done | [src/components/display/DisplayImage.vue](src/components/display/DisplayImage.vue), [src/components/display/DisplayBanner.vue](src/components/display/DisplayBanner.vue), [src/components/display/index.ts](src/components/display/index.ts) |
+| Phase 5 | Hero Instance Selection | ✅ Done | [src/utils/selectHeroInstance.ts](src/utils/selectHeroInstance.ts), [src/components/Hero.vue](src/components/Hero.vue) - Refactored with instance-based selection |
+
+### ⏳ Pending
+
+| Phase | Component | Notes |
+|-------|-----------|-------|
+| Phase 3 | ImgShape.vue Extension | Not required for MVP - Display components bypass ImgShape |
+| Phase 6 | Demo View | Create `DemoDisplayImage.vue` for testing |
+| Testing | Remove `.skip` from tests | Once components verified working |
+
+---
+
+## 12. Next Steps
+
+1. ✅ ~~Clarify open questions~~ - All answered
+2. ✅ ~~Choose alternative~~ - Alternative A selected
+3. ✅ ~~Define exact breakpoints~~ - Hero instance selection logic defined
+4. ✅ ~~Database schema decision~~ - No DB storage, files only
+5. ✅ ~~Cross-check with Test Registry~~ - Testing plan integrated
+6. ✅ ~~Phase 1-2, 4-5 implementation~~ - Core implementation complete
+7. **Next**: Create demo view for manual testing
+8. **Next**: Remove `.skip` from test files and verify all tests pass
+
+---
+
+## 12. Deferred Tasks
+
+### v0.8-DEFERRED
+- [ ] Define logic for persisting instance special handling via `turl`/`tpar` fields on images table
+
+### v1.0-DEFERRED  
+- [ ] Review `display_thumb_banner` edge cases where Y-axis to X-axis translation produces suboptimal results

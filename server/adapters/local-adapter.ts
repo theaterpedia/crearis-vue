@@ -28,12 +28,24 @@ export class LocalAdapter extends BaseMediaAdapter {
     private readonly shapesDir: string
     private readonly transformsDir: string
 
-    // Shape dimensions (matching existing adapters)
-    private readonly DIMENSIONS = {
+    // Template shape dimensions (matching existing adapters)
+    private readonly TEMPLATE_DIMENSIONS = {
         square: { width: 128, height: 128 },
         thumb: { width: 64, height: 64 },
         wide: { width: 336, height: 168 },
         vertical: { width: 126, height: 224 }
+    } as const
+
+    // Instance dimensions (target-based naming)
+    // Maps: instance_name → { template, width, height }
+    private readonly INSTANCE_DIMENSIONS = {
+        display_wide: { template: 'wide', width: 531, height: 300 },
+        display_thumb_banner: { template: 'thumb', width: 1062, height: 266 }, // 4:1 aspect (265.5 rounded)
+        hero_wide_xl: { template: 'wide', width: 1440, height: 820 },
+        hero_square_xl: { template: 'square', width: 1440, height: 1280 },
+        hero_wide: { template: 'wide', width: 1100, height: 620 },
+        hero_square: { template: 'square', width: 440, height: 440 },
+        hero_vertical: { template: 'vertical', width: 440, height: 880 }
     } as const
 
     constructor() {
@@ -137,6 +149,98 @@ export class LocalAdapter extends BaseMediaAdapter {
     }
 
     /**
+     * Generate all shape instances (target-based naming)
+     * Instances inherit XYZ focal points from their template shapes.
+     * 
+     * @param sourceFilepath Path to source image
+     * @param xmlid Image identifier
+     * @returns Object with all instance URLs
+     */
+    async generateInstances(
+        sourceFilepath: string,
+        xmlid: string
+    ): Promise<{
+        display_wide: string
+        display_thumb_banner: string
+        hero_wide_xl: string
+        hero_square_xl: string
+        hero_wide: string
+        hero_square: string
+        hero_vertical: string
+    }> {
+        const instanceNames = Object.keys(this.INSTANCE_DIMENSIONS) as Array<keyof typeof this.INSTANCE_DIMENSIONS>
+        const results: Record<string, string> = {}
+
+        console.log(`[LocalAdapter] Generating ${instanceNames.length} shape instances for ${xmlid}...`)
+
+        for (const instanceName of instanceNames) {
+            const instanceUrl = await this.generateInstance(sourceFilepath, xmlid, instanceName)
+            results[instanceName] = instanceUrl
+        }
+
+        console.log(`[LocalAdapter] ✓ All instances generated for ${xmlid}`)
+        return results as any
+    }
+
+    /**
+     * Generate single instance with smart cropping
+     * Uses the same cropping strategy as the parent template shape
+     */
+    private async generateInstance(
+        sourceFilepath: string,
+        xmlid: string,
+        instanceName: keyof typeof this.INSTANCE_DIMENSIONS
+    ): Promise<string> {
+        const { template, width, height } = this.INSTANCE_DIMENSIONS[instanceName]
+        const filename = this.generateShapeFilename(xmlid, instanceName)
+        const outputPath = path.join(this.shapesDir, filename)
+
+        // Strategy matches template: attention for thumb-based, entropy for others
+        const strategy = template === 'thumb' ? sharp.strategy.attention : sharp.strategy.entropy
+
+        await sharp(sourceFilepath)
+            .resize(width, height, {
+                fit: 'cover',
+                position: strategy
+            })
+            .webp({ quality: 85, effort: 4 })
+            .toFile(outputPath)
+
+        console.log(`[LocalAdapter] Generated instance ${instanceName} (${width}×${height}): ${filename}`)
+        return `/api/images/local/shapes/${filename}`
+    }
+
+    /**
+     * Generate all shapes AND instances in one call
+     * This is the recommended method for new image uploads
+     */
+    async generateAllShapeVariants(
+        sourceFilepath: string,
+        xmlid: string
+    ): Promise<{
+        templates: {
+            square: string
+            thumb: string
+            wide: string
+            vertical: string
+        }
+        instances: {
+            display_wide: string
+            display_thumb_banner: string
+            hero_wide_xl: string
+            hero_square_xl: string
+            hero_wide: string
+            hero_square: string
+            hero_vertical: string
+        }
+    }> {
+        const templates = await this.generateShapes(sourceFilepath, xmlid)
+        const instances = await this.generateInstances(sourceFilepath, xmlid)
+
+        return { templates, instances }
+    }
+
+    /**
      * Generate single shape with smart cropping
      */
     private async generateShape(
@@ -144,7 +248,7 @@ export class LocalAdapter extends BaseMediaAdapter {
         xmlid: string,
         shape: 'square' | 'thumb' | 'wide' | 'vertical'
     ): Promise<string> {
-        const { width, height } = this.DIMENSIONS[shape]
+        const { width, height } = this.TEMPLATE_DIMENSIONS[shape]
         const filename = this.generateShapeFilename(xmlid, shape)
         const outputPath = path.join(this.shapesDir, filename)
 
@@ -182,7 +286,7 @@ export class LocalAdapter extends BaseMediaAdapter {
         y: number,
         z: number
     ): Promise<string> {
-        const { width: targetW, height: targetH } = this.DIMENSIONS[shape]
+        const { width: targetW, height: targetH } = this.TEMPLATE_DIMENSIONS[shape]
         const filename = this.generateShapeFilename(xmlid, `${shape}_xyz_${x}_${y}_${z}`)
         const outputPath = path.join(this.transformsDir, filename)
 
@@ -340,13 +444,16 @@ export class LocalAdapter extends BaseMediaAdapter {
             originalFilename
         )
 
-        // Generate shapes
+        // Generate shapes (templates)
         const sourceFilepath = path.join(
             this.sourceDir,
             this.generateFilename(batchData.xmlid, originalFilename)
         )
 
         const shapeUrls = await this.generateShapes(sourceFilepath, batchData.xmlid)
+
+        // Generate shape instances (display_*, hero_*)
+        const instanceUrls = await this.generateInstances(sourceFilepath, batchData.xmlid)
 
         // Get image metadata for temp storage
         const metadata = await sharp(sourceFilepath).metadata()
@@ -355,18 +462,11 @@ export class LocalAdapter extends BaseMediaAdapter {
         const generatedFilename = this.generateFilename(batchData.xmlid, originalFilename)
         const uploadUrl = '/api/images/local/source/' + generatedFilename
 
-        // Generate BlurHashes from local files (not URLs)
-        // Temporarily disabled for debugging
-        const shapeBlurs: Record<string, string | null> = {
-            square: null,
-            thumb: null,
-            wide: null,
-            vertical: null
-        }
-
-        /*
+        // Generate BlurHashes from local shape files
         console.log('[LocalAdapter] Generating BlurHashes for shapes...')
         const { generateBlurHash } = await import('../utils/blurhash')
+        const shapeBlurs: Record<string, string | null> = {}
+
         for (const [shapeName, shapeUrl] of Object.entries(shapeUrls)) {
             // Read shape file from disk
             const shapeFilename = this.generateShapeFilename(batchData.xmlid, shapeName)
@@ -385,7 +485,6 @@ export class LocalAdapter extends BaseMediaAdapter {
             }
         }
         console.log('[LocalAdapter] BlurHash generation complete')
-        */
 
         // Store metadata temporarily for fetchMetadata
         const tempMetadata = {
@@ -395,6 +494,7 @@ export class LocalAdapter extends BaseMediaAdapter {
             height: metadata.height,
             format: metadata.format,
             shapeUrls,
+            instanceUrls,
             shapeBlurs
         };
         (this as any)._tempMetadata = tempMetadata
@@ -407,7 +507,8 @@ export class LocalAdapter extends BaseMediaAdapter {
                 imageId: result.image_id!,
                 urls: {
                     source: sourceUrl,
-                    ...shapeUrls
+                    ...shapeUrls,
+                    ...instanceUrls
                 }
             }
         } finally {
@@ -439,5 +540,60 @@ export class LocalAdapter extends BaseMediaAdapter {
             default:
                 throw new Error(`Invalid local image subdirectory: ${subdir}`)
         }
+    }
+
+    /**
+     * Generate BlurHash for a single shape file
+     * Used for regenerating blur hashes on existing images
+     * 
+     * @param shapeUrl - URL of the shape file (e.g., /api/images/local/shapes/xmlid_wide.webp)
+     * @returns BlurHash string or null if generation fails
+     */
+    async generateBlurHashForShape(shapeUrl: string): Promise<string | null> {
+        try {
+            const filepath = this.getFilepath(shapeUrl)
+            const shapeBuffer = await fs.readFile(filepath)
+
+            const { generateBlurHash } = await import('../utils/blurhash')
+            const blur = await generateBlurHash(shapeBuffer, {
+                componentX: 4,
+                componentY: 3,
+                width: 32,
+                height: 32
+            })
+
+            console.log(`[LocalAdapter] Generated blur for ${shapeUrl}: ${blur?.substring(0, 20)}...`)
+            return blur
+        } catch (err) {
+            console.error(`[LocalAdapter] Failed to generate blur for ${shapeUrl}:`, err)
+            return null
+        }
+    }
+
+    /**
+     * Generate BlurHashes for all shapes of an existing image
+     * Used for backfilling blur hashes on existing local adapter images
+     * 
+     * @param xmlid - Image XMLID
+     * @returns Object with blur hashes for each shape type
+     */
+    async regenerateBlurHashesForImage(xmlid: string): Promise<{
+        square: string | null
+        thumb: string | null
+        wide: string | null
+        vertical: string | null
+    }> {
+        const shapes = ['square', 'thumb', 'wide', 'vertical'] as const
+        const result: Record<string, string | null> = {}
+
+        console.log(`[LocalAdapter] Regenerating blur hashes for ${xmlid}...`)
+
+        for (const shape of shapes) {
+            const shapeUrl = `/api/images/local/shapes/${xmlid}_${shape}.webp`
+            result[shape] = await this.generateBlurHashForShape(shapeUrl)
+        }
+
+        console.log(`[LocalAdapter] ✓ Blur hash regeneration complete for ${xmlid}`)
+        return result as any
     }
 }
