@@ -456,24 +456,22 @@ const isBlurHashActive = computed(() => {
   return backgroundImage.value?.startsWith('data:image/png;base64,') ?? false
 })
 
-// Determine if we should use cover sizing
-// True for: explicit cover alignment, blur hash placeholder, or new image system with cover config
-// Respects headerType's imgTmpAlignX/Y (e.g., banner uses center/top, cover uses cover/cover)
+// Determine if we should use cover sizing (background-size: cover)
+// This is TRUE for ALL hero types with images - the image always fills the hero container
+// The DIFFERENCE between banner/cover is:
+//   - banner: shorter height (medium=50vh), image positioned at top (imgTmpAlignY='top')
+//   - cover: taller height (prominent/full), image centered (imgTmpAlignY='center')
+// Both use background-size: cover - imgTmpAlignX/Y controls background-position, not size!
 const usesCoverSizing = computed(() => {
-  // Explicit cover alignment requested - always use cover
-  if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
-
-  // BlurHash placeholder uses cover (temporary loading state)
+  // New image system or blur hash - always use cover sizing
+  if (effectiveImageData.value) return true
   if (isBlurHashActive.value) return true
-
-  // New image system: respect configured alignment from headerType
-  // If imgTmpAlignX and imgTmpAlignY are both NOT 'cover', use their specific alignment
-  // This allows banner type (center/top) to work correctly instead of forcing cover
-  if (effectiveImageData.value) {
-    // Both alignments are specified and neither is 'cover' -> respect them
-    return false
-  }
-
+  
+  // Legacy imgTmp: check if cover alignment explicitly requested
+  // OR if we have an image and alignment is stretch (legacy full-width mode)
+  if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
+  if (props.imgTmpAlignX === 'stretch' && props.imgTmpAlignY === 'stretch') return true
+  
   return false
 })
 

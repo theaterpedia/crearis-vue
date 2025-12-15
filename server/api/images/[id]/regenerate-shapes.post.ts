@@ -43,9 +43,8 @@ export default defineEventHandler(async (event) => {
 
         // Get image from database
         const image = await db.get(
-            `SELECT id, url, name, 
-                    (author).adapter as adapter,
-                    (author).file_id as file_id
+            `SELECT id, xmlid, url, name, 
+                    (author).adapter as adapter
              FROM images 
              WHERE id = ?`,
             [imageId]
@@ -58,12 +57,12 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Check if image is from local adapter
-        if ((image as any).adapter !== 'local') {
-            const adapter = (image as any).adapter
+        // Check if image is from local adapter (can be 'local' or 'crearis')
+        const adapterName = (image as any).adapter
+        if (adapterName !== 'local' && adapterName !== 'crearis') {
             throw createError({
                 statusCode: 400,
-                statusMessage: `Cannot regenerate shapes for ${adapter} images. Only local adapter images can be regenerated.`
+                statusMessage: `Cannot regenerate shapes for ${adapterName} images. Only local adapter images can be regenerated.`
             })
         }
 
@@ -81,8 +80,15 @@ export default defineEventHandler(async (event) => {
         const sourceUrl = (image as any).url
         const sourceFilepath = adapter.getFilepath(sourceUrl)
 
-        // Determine xmlid from file_id
-        const xmlid = (image as any).file_id || (image as any).name.split('.')[0]
+        // Get xmlid from the image record (it's a direct column, not nested in author)
+        const xmlid = (image as any).xmlid
+
+        if (!xmlid) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'Image is missing xmlid - cannot regenerate shapes'
+            })
+        }
 
         console.log(`[Regenerate] Image ${imageId} - Source: ${sourceFilepath}, xmlid: ${xmlid}`)
 
