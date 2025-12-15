@@ -94,7 +94,7 @@ export default defineEventHandler(async (event) => {
 
         // Generate all templates at once (more efficient than per-shape)
         const allShapes = await adapter.generateShapes(sourceFilepath, xmlid)
-        
+
         // Regenerate shapes (templates)
         const newUrls: Record<string, string> = {}
 

@@ -1,100 +1,136 @@
 # Hero.vue Image System - Full Implementation Plan
 
 **Date:** 2025-12-15  
-**Status:** In Progress  
-**Context:** BlurHash placeholder working, image loading working, sizing clarification needed
+**Status:** ✅ COMPLETE - Validated Working  
+**Last Updated:** 2025-12-15 12:15
 
 ---
 
 ## Current State
 
-### ✅ Completed
-1. **BlurHash decoding** - Canvas element added, `useBlurHash` composable working
-2. **Image loading** - `currentShapeData` now correctly uses `img_*` JSONB columns (not raw `shape_*` ROW strings)
-3. **Cover sizing for new system** - `usesCoverSizing` computed forces `cover` when `effectiveImageData` is present
-4. **Regenerate blur endpoint** - Updates `shape_*` columns, trigger propagates to `img_*`
+### ✅ All Core Items Complete
 
-### 🔄 In Progress
-1. **Background sizing semantics** - Currently hardcoded to `cover` for new image system
+1. **BlurHash decoding** - Canvas element, `useBlurHash` composable working
+2. **Image loading** - `currentShapeData` correctly uses `img_*` JSONB columns
+3. **Cover sizing resolved** - ALL hero types use `background-size: cover`
+4. **Hero instances** - API returns `hero_wide_xl`, `hero_wide`, etc. with correct URLs
+5. **Regenerate shapes** - Creates hero instance files (1440×820 for hero_wide_xl)
+6. **PageHeading integration** - Uses `useHeaderConfig` composable
+
+### Key Discovery (2025-12-15)
+**Banner vs Cover is NOT about `background-size`!**
+- Both use `background-size: cover` (full-width, scaled to fill)
+- The difference is `background-position-y`:
+  - **Banner**: `top` (shows top of image)
+  - **Cover**: `center` (shows center of image)
+- Height difference comes from `headerSize`:
+  - Banner typically uses `medium` (50vh)
+  - Cover typically uses `prominent` (75vh) or `full` (100vh)
+
+---
+
+## Test Post Validated ✅
+
+**Post ID 49** - Confirmed working:
+```json
+{
+  "id": 49,
+  "name": "**Forum-Theater verändert deine Nachbarschaft**",
+  "header_type": "banner",
+  "header_size": "medium",
+  "img_id": 107,
+  "domaincode": "opus1"
+}
+```
+
+**Test URL:** `/posts/49` - Sharp image, correct height, top-aligned ✅
 
 ---
 
 ## Architecture Overview
 
-### Data Flow
+### Data Flow (Final)
 ```
 PostPage.vue
-  └─ passes image_id, image_blur to PageHeading
-      └─ PageHeading passes to Hero.vue with headerType config
-          └─ Hero fetches image via useImageFetch
-              └─ effectiveImageData contains img_wide, img_square, etc. (JSONB)
-                  └─ currentShapeData selects based on selectedInstance
-                      └─ buildImageUrl constructs final URL
+  └─ passes header_type, header_size, image_id to PageHeading
+      └─ PageHeading uses useHeaderConfig(headerType, headerSubtype)
+          └─ Resolves config from API (base → subcat → project override)
+              └─ Passes to Hero.vue:
+                  - heightTmp = headerSize (mini|medium|prominent|full)
+                  - imgTmpAlignY = from config (banner='top', cover='center')
+                  - image_id = for API-based image loading
 ```
 
-### Header Types in PageHeading.vue
-| Type | imgTmpAlignX | imgTmpAlignY | Description |
-|------|-------------|--------------|-------------|
-| simple | center | center | No header |
-| columns | center | center | 2-column layout |
-| banner | center | top | Standard banner |
-| cover | **cover** | center | Full cover image |
-| bauchbinde | **cover** | center | Full-width with content band |
+### Header Type Behavior (Final)
+| Type | imgTmpAlignY | Default headerSize | Description |
+|------|-------------|-------------------|-------------|
+| simple | - | - | No hero (text only) |
+| columns | - | - | Side-by-side text/image |
+| banner | **top** | medium (50vh) | Image top-aligned |
+| cover | **center** | prominent (75vh) | Image centered |
+| bauchbinde | center | medium | Text band overlay |
 
-### Current Sizing Logic (Hero.vue)
-```javascript
-const usesCoverSizing = computed(() => {
-  if (effectiveImageData.value) return true  // ← Always cover for new system
-  if (isBlurHashActive.value) return true
-  if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
-  return false
+### Hero Heights
+| headerSize | CSS Height |
+|------------|------------|
+| mini | 25vh |
+| medium | 50vh |
+| prominent | 75vh |
+| full | 100vh |
 })
 ```
 
 ---
 
-## Open Questions / Ambiguities
+## Files Modified (Complete List)
 
-### 1. Should new image system respect imgTmpAlignX/Y?
-**Current:** No - hardcoded to `cover`  
-**Alternative:** Respect the headerType configuration  
-**Question:** Is `cover` always correct for shaped images, or should `banner` type with `center/top` be honored?
+### Core Components
+- `src/components/Hero.vue` - usesCoverSizing, shape selection, BlurHash
+- `src/components/PageHeading.vue` - useHeaderConfig integration
+- `src/composables/useHeaderConfig.ts` - Created (API resolution + caching)
 
-### 2. Bauchbinde semantics
-- Full-width content band at bottom
-- Image behind should be `cover` sized
-- **TODO:** Clarify if bauchbinde needs different image instance selection
+### API Endpoints
+- `server/api/images/[id].get.ts` - Added hero instance URL building
+- `server/api/images/[id]/regenerate-shapes.post.ts` - Fixed xmlid, adapter check
+- `server/api/header-configs/*.ts` - 8 endpoints for config CRUD
 
-### 3. Instance selection mapping
-Current `selectedInstance` (e.g., `hero_wide_xl`) falls back to:
-1. Direct instance data (e.g., `hero_wide_xl`)
-2. **New:** `img_wide` / `img_square` / `img_vert` (JSONB)
-3. Old: `shape_*` composite types (unreliable)
-
-**Question:** Should hero instances (`hero_wide_*`, `hero_square_*`) be pre-generated, or is fallback to `img_*` acceptable?
-
-### 4. Shape vs Instance terminology
-- **Shape:** Template (wide, square, thumb, vertical)
-- **Instance:** Sized version for specific use (hero_wide_xl, display_square_md)
-- **Current behavior:** Uses shape as fallback when instance unavailable
+### Database
+- Migration 066: `header_size` column on posts/pages
+- Migration 067: `header_configs` + `project_header_overrides` tables
 
 ---
 
-## Action Plan
+## Resolved Questions
 
-### Phase 1: Finalize Sizing Behavior
-- [ ] Decide: Always cover for new system OR respect headerType config
-- [ ] If respecting headerType: Map `imgTmpAlignX/Y` properly in `usesCoverSizing`
-- [ ] Test all header types: simple, columns, banner, cover, bauchbinde
+| Question | Resolution |
+|----------|------------|
+| Should new image system respect imgTmpAlignX/Y? | Yes - imgTmpAlignY controls vertical position (top/center) |
+| Is cover always correct for shaped images? | Yes for background-size, but position varies by type |
+| Should hero instances be pre-generated? | Yes - regenerate-shapes creates them at correct sizes |
+| Bauchbinde semantics? | Uses banner/cover sizing with Banner component overlay |
 
-### Phase 2: Clean Up Debug Logging
+---
+
+## Next Actions
+
+### Phase 4: HeaderOptionsPanel (NEXT)
+1. [ ] Create `HeaderOptionsPanel.vue` with header_type/size dropdowns
+2. [ ] Integrate into `EditPanel.vue`
+3. [ ] Integrate into `EventPanel.vue`
+4. [ ] Test saving header_type/size changes
+
+### Phase 5: TextImageHeader.vue
+1. [ ] Create for `columns` header type
+2. [ ] Support half_* shape instances
+3. [ ] Wire into PageHeading.vue
+
+### Phase 6: Admin Enhancements
+1. [ ] Add domaincode input to HeaderConfigsEditor
+2. [ ] Show project override preview
+
+### Cleanup
 - [ ] Remove `[Hero DEBUG]` console.logs from Hero.vue
 - [ ] Keep error logging for failed image loads
-
-### Phase 3: Instance Selection Refinement
-- [ ] Verify `hero_*` instance fallback chain is correct
-- [ ] Consider if `img_*` should be preferred over `shape_*` always (currently yes)
-- [ ] Document expected behavior for each instance type
 
 ### Phase 4: Integration Testing
 - [ ] Test PostPage with image_id
