@@ -36,28 +36,22 @@
                     :headerType="post.header_type || 'banner'" :headerSize="post.header_size || 'prominent'" />
             </template>
 
-            <!-- Tag Families Row -->
-            <Section v-if="post.ttags || post.ctags || post.dtags" background="muted" spacing="compact">
-                <Container>
-                    <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags" v-model:dtags="post.dtags"
-                        :status="post.status" :config="post.config" :enable-edit="canEdit" group-selection="core"
-                        layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
-                        @update:ctags="handleUpdateTags('ctags', $event)"
-                        @update:dtags="handleUpdateTags('dtags', $event)" />
-                </Container>
-            </Section>
-
             <!-- Post Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Post metadata row: Status + Updated date + Controls (right-aligned) -->
+                        <!-- Post metadata row: Status + Tags + Updated date + Controls (right-aligned) -->
                         <div class="post-meta-row">
                             <div class="post-meta-left">
                                 <PostStatusBadge v-if="post && project" :post="postDataForPermissions"
                                     :project="projectDataForPermissions" :membership="null"
                                     @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
                                     @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags"
+                                    v-model:dtags="post.dtags" :enable-edit="canEdit" group-selection="core"
+                                    layout="inline" @update:ttags="handleUpdateTags('ttags', $event)"
+                                    @update:ctags="handleUpdateTags('ctags', $event)"
+                                    @update:dtags="handleUpdateTags('dtags', $event)" />
                                 <span v-if="post.updated_at" class="post-updated">
                                     Updated: {{ formatDate(post.updated_at) }}
                                 </span>
@@ -408,10 +402,10 @@ async function handleSavePost(data: Record<string, any>) {
             header_type: data.header_type || 'banner',
             header_size: data.header_size || null,
             status: sanitizeStatusVal(data.status),
-            // Include sysreg tags (sanitize to prevent NULL bytes)
-            ttags: data.ttags || '\\x00',
-            ctags: data.ctags || '\\x00',
-            dtags: data.dtags || '\\x00'
+            // Tag fields are integers, not hex strings
+            ttags: typeof data.ttags === 'number' ? data.ttags : 0,
+            ctags: typeof data.ctags === 'number' ? data.ctags : 0,
+            dtags: typeof data.dtags === 'number' ? data.dtags : 0
         }
 
         console.log('[PostPage] Sending payload:', payload)

@@ -129,14 +129,10 @@ Until migration is complete, the frontend can resolve ownership by:
 
 ## xmlid Format Specification
 
-Format: `_<domaincode>.<entity><sequence>`
+Format: `<domaincode>.<entity>.<sequence>` OR `<domaincode>.<entity>-<template>.<sequence>`
 
 Examples:
-- `_opus1.post001` - First post in opus1
-- `_opus1.event042` - Event #42 in opus1
-- `_physicaltheatre.002` - Second item in physicaltheatre project
 
-The underscore prefix indicates a local xmlid (vs imported Odoo xmlid).
 
 ---
 

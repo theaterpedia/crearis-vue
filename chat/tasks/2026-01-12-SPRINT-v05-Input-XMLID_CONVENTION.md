@@ -6,6 +6,9 @@
 
 ---
 
+## Issues
+There is wrong/ambiguous XMLID-specs in the docs at dev/Entity_Index_Conventions
+
 ## XMLID Format
 
 ```

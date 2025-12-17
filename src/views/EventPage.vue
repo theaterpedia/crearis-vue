@@ -35,28 +35,22 @@
                     :headerType="event.header_type || 'banner'" :headerSize="event.header_size || 'prominent'" />
             </template>
 
-            <!-- Tag Families Row -->
-            <Section v-if="event.ttags || event.ctags || event.dtags" background="muted" spacing="compact">
-                <Container>
-                    <TagFamilies v-model:ttags="event.ttags" v-model:ctags="event.ctags" v-model:dtags="event.dtags"
-                        :status="event.status" :config="event.config" :enable-edit="canEdit" group-selection="core"
-                        layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
-                        @update:ctags="handleUpdateTags('ctags', $event)"
-                        @update:dtags="handleUpdateTags('dtags', $event)" />
-                </Container>
-            </Section>
-
             <!-- Event Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Event metadata row: Status + Updated date + Controls (right-aligned) -->
+                        <!-- Event metadata row: Status + Tags + Updated date + Controls (right-aligned) -->
                         <div class="event-meta-row">
                             <div class="event-meta-left">
                                 <PostStatusBadge v-if="event && project" :post="eventDataForPermissions"
                                     :project="projectDataForPermissions" :membership="null"
                                     @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
                                     @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                <TagFamilies v-model:ttags="event.ttags" v-model:ctags="event.ctags"
+                                    v-model:dtags="event.dtags" :enable-edit="canEdit" group-selection="core"
+                                    layout="inline" @update:ttags="handleUpdateTags('ttags', $event)"
+                                    @update:ctags="handleUpdateTags('ctags', $event)"
+                                    @update:dtags="handleUpdateTags('dtags', $event)" />
                                 <span v-if="event.updated_at" class="event-updated">
                                     Updated: {{ formatDate(event.updated_at) }}
                                 </span>

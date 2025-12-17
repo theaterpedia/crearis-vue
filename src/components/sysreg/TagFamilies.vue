@@ -50,7 +50,7 @@ const props = defineProps<{
     groupSelection?: 'core' | 'options' | 'all'
 
     // Layout
-    layout?: 'row' | 'wrap' | 'vertical'
+    layout?: 'row' | 'wrap' | 'vertical' | 'inline'
 }>()
 
 const emit = defineEmits<{
@@ -123,6 +123,12 @@ function handleEditorSave(value: number) {
 
 .tag-families.layout-vertical {
     flex-direction: column;
+}
+
+.tag-families.layout-inline {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 /* Tablet: 900px */
