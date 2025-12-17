@@ -1,11 +1,19 @@
 <template>
     <div class="cimg-import-stepper">
-        <!-- Owner Selection (Always Visible) -->
+        <!-- Owner & Template Selection (Always Visible) -->
         <div class="owner-selection-bar">
-            <label class="owner-label">Image Admin</label>
-            <sysDropDown v-model="selectedOwnerId" :items="eligibleUsers" placeholder="Select admin"
-                :disabled="isImporting" />
-            <p class="owner-hint">Admin muss nicht der Autor des Bildes sein</p>
+            <div class="selection-group">
+                <label class="owner-label">Image Admin</label>
+                <sysDropDown v-model="selectedOwnerId" :items="eligibleUsers" placeholder="Select admin"
+                    :disabled="isImporting" />
+                <p class="owner-hint">Admin muss nicht der Autor des Bildes sein</p>
+            </div>
+            <div class="selection-group">
+                <label class="owner-label">Default Template</label>
+                <sysDropDown v-model="selectedTemplate" :items="imageTemplateOptions" placeholder="Select category"
+                    :disabled="isImporting" />
+                <p class="owner-hint">Kategorie für neue Bilder</p>
+            </div>
         </div>
 
         <!-- Empty State: Drop Zone -->
@@ -206,7 +214,7 @@
             <button class="btn-import" @click="handleImport" :disabled="isImporting">
                 <span v-if="isImporting" class="spinner"></span>
                 <span>{{ isImporting ? 'Importing...' : `Import ${images.length} Image${images.length !== 1 ? 's' : ''}`
-                }}</span>
+                    }}</span>
             </button>
         </div>
     </div>
@@ -217,11 +225,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import sysDropDown from '@/components/sysDropDown.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
+import { generateSlug, buildXmlid, ENTITY_TEMPLATES } from '@/utils/xmlid'
 
 interface ImageItem {
     file: File
     previewUrl: string
     xmlid: string
+    template: string  // Image template (e.g., 'scene', 'adult', 'instructor')
     ownerId: number | null
     author: {
         name: string
@@ -249,15 +259,18 @@ const emit = defineEmits<{
 
 const { user } = useAuth()
 
-// Validate XMLID format (no hyphens, only underscores allowed, exactly 2 dots)
-function validateXmlid(xmlid: string): boolean {
-    // Check for exactly 2 dots
-    const dotCount = (xmlid.match(/\./g) || []).length
-    if (dotCount !== 2) return false
+// Image template options from ENTITY_TEMPLATES
+const imageTemplateOptions = computed(() => [
+    { id: '', name: 'None (generic)', description: 'No specific category' },
+    ...ENTITY_TEMPLATES.image.map(t => ({
+        id: t,
+        name: t.charAt(0).toUpperCase() + t.slice(1),
+        description: `Category: ${t}`
+    }))
+])
 
-    const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
-    return pattern.test(xmlid) && !xmlid.includes('-')
-}
+// Default template for new imports
+const selectedTemplate = ref<string>('scene')
 
 // Owner selection - initialize from current user
 const selectedOwnerId = ref<number | null>(user.value?.id || null)
@@ -357,16 +370,25 @@ const processFiles = (files: File[]) => {
         // Generate preview URL
         const previewUrl = URL.createObjectURL(file)
 
-        // Generate xmlid with timestamp (no hyphens, only underscores)
+        // Generate xmlid with Odoo-aligned format using selected template
+        // Format: {domaincode}.image__{slug} or {domaincode}.image-{template}__{slug}
         const timestamp = Date.now()
-        const basename = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9_]/g, '_')
-        const xmlid = `${props.projectId}.image_scene.${basename}_${timestamp}`
+        const basename = file.name.replace(/\.[^/.]+$/, '')
+        const slug = generateSlug(`${basename}_${timestamp}`)
+        const template = selectedTemplate.value || undefined
+        const xmlid = buildXmlid({
+            domaincode: props.projectId,
+            entity: 'image',
+            template,
+            slug
+        })
 
         // Create image item with defaults
         images.value.push({
             file,
             previewUrl,
             xmlid,
+            template: selectedTemplate.value,
             ownerId: selectedOwnerId.value,
             author: {
                 name: user.value?.username || 'Unknown',
@@ -501,12 +523,19 @@ onMounted(async () => {
 /* Owner Selection Bar */
 .owner-selection-bar {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 2rem;
     padding: 1rem;
     background: var(--color-muted-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-medium);
+}
+
+.selection-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
 }
 
 .owner-label {

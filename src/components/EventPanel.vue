@@ -151,6 +151,7 @@ import EventsDropdown from '@/components/EventsDropdown.vue'
 import DateRangeEdit from '@/components/DateRangeEdit.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
+import { generateSlug, buildXmlid } from '@/utils/xmlid'
 import type { Event, Instructor, Partner } from '@/types'
 
 interface ProjectUser {
@@ -178,55 +179,33 @@ const emit = defineEmits<{
 }>()
 
 /**
- * Generate a URL-safe slug from a title string
- * Used for xmlid format: {domaincode}.{entity}.{slug}
- */
-function generateSlug(title: string): string {
-    return title
-        .toLowerCase()
-        .trim()
-        // Replace German umlauts
-        .replace(/ä/g, 'ae')
-        .replace(/ö/g, 'oe')
-        .replace(/ü/g, 'ue')
-        .replace(/ß/g, 'ss')
-        // Replace spaces and special characters with underscores
-        .replace(/[\s\-]+/g, '_')
-        // Remove any remaining non-alphanumeric characters except underscores
-        .replace(/[^a-z0-9_]/g, '')
-        // Remove consecutive underscores
-        .replace(/_+/g, '_')
-        // Remove leading/trailing underscores
-        .replace(/^_|_$/g, '')
-        // Limit length to keep xmlid manageable
-        .substring(0, 50)
-}
-
-/**
- * Determine entity qualifier from ctags bitmask
+ * Determine entity qualifier from ctags bitmask (LEGACY - for fallback only)
  * Priority: Realisierung (online/hybrid) > Format (kurs/projekt/konferenz)
+ * 
+ * NOTE: New events should use explicit eventVariant input instead.
+ * This function provides backward compatibility for ctags-based derivation.
  * 
  * CTAGS bit allocation (from migration 038):
  * - Realisierung (bits 0-4): präsenz=1, online=2, hybrid=4|8|12
  * - Format (bits 5-15): workshop=32, kurs=256, projekt=2048, konferenz=16384
  */
-function getEventEntityFromCtags(ctagsValue: number): string {
+function getEventEntityFromCtags(ctagsValue: number): string | undefined {
     // Step 1: Check Realisierung first (priority)
     // online: bit 1 (value 2)
-    if ((ctagsValue & 2) === 2) return 'event_online'
+    if ((ctagsValue & 2) === 2) return 'online'
     // hybrid: bits 2-4 (values 4, 8, 12)
-    if ((ctagsValue & 4) === 4) return 'event_hybrid'
+    if ((ctagsValue & 4) === 4) return 'hybrid'
 
     // Step 2: Check Format (fallback)
     // kurs: bit 8 (value 256)
-    if ((ctagsValue & 256) === 256) return 'event_kurs'
+    if ((ctagsValue & 256) === 256) return 'kurs'
     // projekt: bit 11 (value 2048)
-    if ((ctagsValue & 2048) === 2048) return 'event_projekt'
+    if ((ctagsValue & 2048) === 2048) return 'projekt'
     // konferenz: bit 14 (value 16384)
-    if ((ctagsValue & 16384) === 16384) return 'event_konferenz'
+    if ((ctagsValue & 16384) === 16384) return 'konferenz'
 
-    // Default: plain event
-    return 'event'
+    // No template detected - use plain event
+    return undefined
 }
 
 // Unified access - prefer partners, fall back to legacy types
@@ -295,13 +274,11 @@ const selectedHeaderSize = ref<string>('prominent')
 // Variant for xmlid - determines page options (aside/footer/etc)
 const eventVariant = ref<string>('')
 
-// Sanitize variant input - only allow lowercase letters and hyphens
+// Sanitize variant input - only allow lowercase alphanumeric (no hyphens - they separate entity-template)
 function sanitizeVariant() {
     eventVariant.value = eventVariant.value
         .toLowerCase()
-        .replace(/[^a-z-]/g, '')
-        .replace(/--+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replace(/[^a-z0-9]/g, '')
 }
 
 // Available header configs from API
@@ -481,27 +458,27 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Build XML-ID with format: {domaincode}.{entity}.{slug}
+        // Build XML-ID with Odoo-aligned format: {domaincode}.{entity}-{template}__{slug}
         // domaincode: projectId (e.g., "theaterpedia")
-        // entity: "event" or "event-{variant}" for variants (determines page options)
+        // entity: "event"
+        // template: optional variant (e.g., "conference", "online")
         // slug: Generated from the event title
         const templateXmlId = selectedEvent.value.xmlid || `base_event.${selectedEvent.value.id}`
 
         // Generate slug from title
         const titleSlug = generateSlug(customName.value.trim() || 'untitled')
 
-        // Build entity qualifier: use variant input if provided, otherwise derive from ctags
-        // User-defined variant takes priority over ctags-derived qualifier
-        let entityQualifier: string
-        if (eventVariant.value) {
-            entityQualifier = `event-${eventVariant.value}`
-        } else {
-            // Fall back to ctags-derived qualifier (legacy behavior)
-            entityQualifier = getEventEntityFromCtags(ctags.value)
-        }
+        // Determine template: use variant input if provided, otherwise derive from ctags
+        // User-defined variant takes priority over ctags-derived template
+        const template = eventVariant.value || getEventEntityFromCtags(ctags.value)
 
-        // Build the new xmlid: {domaincode}.{entity}.{slug}
-        const newXmlId = `${props.projectId}.${entityQualifier}.${titleSlug}`
+        // Build the new xmlid using utility: {domaincode}.event-{template}__{slug} or {domaincode}.event__{slug}
+        const newXmlId = buildXmlid({
+            domaincode: props.projectId,
+            entity: 'event',
+            template,
+            slug: titleSlug
+        })
 
         // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
         const hasEdits = (customName.value && customName.value !== selectedEvent.value.name) ||

@@ -14,8 +14,12 @@ const router = createRouter({
     { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
-    { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
-    { path: '/sites/:domaincode/events/:id', component: () => import('../views/EventPage.vue') },
+    // Posts: Support both numeric ID and slug-based URLs
+    // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.post__{slug} or {domaincode}.post-{template}__{slug}
+    { path: '/sites/:domaincode/posts/:identifier', component: () => import('../views/PostPage.vue') },
+    // Events: Support both numeric ID and slug-based URLs
+    // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.event__{slug} or {domaincode}.event-{template}__{slug}
+    { path: '/sites/:domaincode/events/:identifier', component: () => import('../views/EventPage.vue') },
 
     // Protected routes - User Home (cross-project overview)
     // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)

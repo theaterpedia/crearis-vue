@@ -3,7 +3,7 @@
  * GET /api/pages/by-project?project_id=<id>
  */
 import { defineEventHandler, getQuery, createError } from 'h3'
-import { useDatabase } from '../../database'
+import { db } from '../../database/init'
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
@@ -15,8 +15,6 @@ export default defineEventHandler(async (event) => {
             message: 'project_id is required'
         })
     }
-
-    const db = useDatabase()
 
     // Support both numeric ID and domaincode
     let projectId: number

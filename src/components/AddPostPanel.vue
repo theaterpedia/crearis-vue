@@ -119,8 +119,8 @@
                 </div>
                 <small class="form-hint">
                     Bestimmt Aside/Footer-Optionen. Leer = Projekt-Defaults.
-                    <span v-if="postVariant" class="variant-preview">→ page_type:
-                        <code>post-{{ postVariant }}</code></span>
+                    <span v-if="postVariant" class="variant-preview">→ xmlid:
+                        <code>{{ projectId }}.post-{{ postVariant }}__...</code></span>
                 </small>
             </div>
 
@@ -145,6 +145,7 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import pGallery from '@/components/page/pGallery.vue'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import { DropdownList } from '@/components/clist'
+import { generateSlug, buildXmlid } from '@/utils/xmlid'
 import type { Post, Instructor, Partner } from '@/types'
 
 interface ProjectUser {
@@ -182,44 +183,15 @@ const headerSize = ref<string>('medium')
 // Variant for xmlid - determines page options (aside/footer/etc)
 const postVariant = ref<string>('')
 
-// Sanitize variant input - only allow lowercase letters and hyphens
+// Sanitize variant input - only allow lowercase letters (no hyphens in template)
 function sanitizeVariant() {
     postVariant.value = postVariant.value
         .toLowerCase()
-        .replace(/[^a-z-]/g, '')
-        .replace(/--+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replace(/[^a-z0-9]/g, '')
 }
 
 // Available header configs from API
 const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
-
-/**
- * Generate a URL-safe slug from a title string
- * Used for xmlid format: {domaincode}.{entity}.{slug}
- * 
- * Convention reminder for events: {domaincode}.event_demo.{slug}
- */
-function generateSlug(title: string): string {
-    return title
-        .toLowerCase()
-        .trim()
-        // Replace German umlauts
-        .replace(/ä/g, 'ae')
-        .replace(/ö/g, 'oe')
-        .replace(/ü/g, 'ue')
-        .replace(/ß/g, 'ss')
-        // Replace spaces and special characters with underscores
-        .replace(/[\s\-]+/g, '_')
-        // Remove any remaining non-alphanumeric characters except underscores
-        .replace(/[^a-z0-9_]/g, '')
-        // Remove consecutive underscores
-        .replace(/_+/g, '_')
-        // Remove leading/trailing underscores
-        .replace(/^_|_$/g, '')
-        // Limit length to keep xmlid manageable
-        .substring(0, 50)
-}
 
 // Project users state
 const projectUsers = ref<ProjectUser[]>([])
@@ -335,18 +307,23 @@ const handleApply = async () => {
 
     isSubmitting.value = true
     try {
-        // Build XML-ID with format: {domaincode}.{entity}.{slug}
+        // Build XML-ID with Odoo-aligned format: {domaincode}.{entity}-{template}__{slug}
         // domaincode: projectId (e.g., "theaterpedia")
-        // entity: "post" or "post-{variant}" for variants (determines page options)
+        // entity: "post"
+        // template: optional variant (e.g., "demo", "featured")
         // slug: Generated from the post title
         const templateXmlId = selectedPost.value.xmlid || `base_post.${selectedPost.value.id}`
 
-        // Generate slug from title - convert to lowercase, replace spaces/special chars with underscores
+        // Generate slug from title using Odoo-compliant function
         const titleSlug = generateSlug(customName.value || selectedPost.value.name || 'untitled')
 
-        // Build entity qualifier: "post" if no variant, "post-{variant}" otherwise
-        const entityQualifier = postVariant.value ? `post-${postVariant.value}` : 'post'
-        const newXmlId = `${props.projectId}.${entityQualifier}.${titleSlug}`
+        // Build xmlid using utility function
+        const newXmlId = buildXmlid({
+            domaincode: props.projectId,
+            entity: 'post',
+            template: postVariant.value || undefined,
+            slug: titleSlug
+        })
 
         // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
         // If customName or customTeaser differ from template values, user made edits

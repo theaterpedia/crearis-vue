@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import sysDropDown from '@/components/sysDropDown.vue'
+import { generateSlug, buildXmlid, ENTITY_TEMPLATES } from '@/utils/xmlid'
 
 interface ImportedImage {
     url: string
@@ -28,7 +29,7 @@ const importedImages = ref<ImportedImage[]>([])
 const selectedProject = ref<number | null>(null)
 const selectedOwner = ref<number | null>(null)
 const keepOpen = ref(false)
-const xmlSubject = ref('mixed')
+const xmlSubject = ref('')  // Empty = no template
 const altText = ref('')
 const license = ref('BY')
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -122,16 +123,14 @@ const licenseOptions = [
     { label: 'CC0 (Public Domain)', value: 'CC0' }
 ]
 
-const xmlSubjectOptions = [
-    { label: 'Mixed', value: 'mixed' },
-    { label: 'Child', value: 'child' },
-    { label: 'Teen', value: 'teen' },
-    { label: 'Adult', value: 'adult' },
-    { label: 'Instructor', value: 'instructor' },
-    { label: 'Post', value: 'post' },
-    { label: 'Event', value: 'event' },
-    { label: 'Location', value: 'location' }
-]
+// Image template options from ENTITY_TEMPLATES
+const xmlSubjectOptions = computed(() => [
+    { label: 'None (generic)', value: '' },
+    ...ENTITY_TEMPLATES.image.map(t => ({
+        label: t.charAt(0).toUpperCase() + t.slice(1),
+        value: t
+    }))
+])
 
 // Transform owners for dropdown (id, name, description)
 const ownersDropdownItems = computed(() => {
@@ -176,16 +175,6 @@ const isValidUrl = (url: string) => {
     } catch {
         return false
     }
-}
-
-// Validate XMLID format (no hyphens, only underscores allowed, exactly 2 dots)
-function validateXmlid(xmlid: string): boolean {
-    // Check for exactly 2 dots
-    const dotCount = (xmlid.match(/\./g) || []).length
-    if (dotCount !== 2) return false
-
-    const pattern = /^(_?[a-z0-9]+)\.(image|image_[a-z0-9]+)\.([a-z0-9_]+)$/i
-    return pattern.test(xmlid) && !xmlid.includes('-')
 }
 
 // Add URL to import list
@@ -344,18 +333,17 @@ const handleSave = async () => {
                 if (!img.file) continue
 
                 try {
-                    // Generate xmlid: domaincode.entity_type.identifier (no hyphens, only underscores)
-                    const fileBasename = img.file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9_]/gi, '_')
+                    // Generate xmlid using Odoo-aligned format
+                    // Format: {domaincode}.image__{slug} or {domaincode}.image-{template}__{slug}
+                    const fileBasename = img.file.name.replace(/\.[^/.]+$/, '')
                     const timestamp = Date.now()
-                    const entityType = xmlSubject.value ? `image_${xmlSubject.value}` : 'image'
-                    const xmlid = `${domaincode}.${entityType}.${fileBasename}_${timestamp}`
-
-                    // Validate xmlid
-                    if (!validateXmlid(xmlid)) {
-                        console.error(`[Local Upload] Invalid XMLID: ${xmlid}`)
-                        alert(`Invalid XMLID format: ${xmlid}\nNo hyphens allowed, only underscores.`)
-                        continue
-                    }
+                    const slug = generateSlug(`${fileBasename}_${timestamp}`)
+                    const xmlid = buildXmlid({
+                        domaincode,
+                        entity: 'image',
+                        template: xmlSubject.value || undefined,
+                        slug
+                    })
 
                     // Prepare form data
                     const formData = new FormData()
@@ -368,7 +356,7 @@ const handleSave = async () => {
                     if (altText.value) {
                         formData.append('alt_text', altText.value)
                     }
-                    formData.append('xml_subject', xmlSubject.value)
+                    formData.append('xml_subject', xmlSubject.value || '')
                     formData.append('license', license.value)
                     formData.append('ctags', ctagsBuffer.join(','))
 

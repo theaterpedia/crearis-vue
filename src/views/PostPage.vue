@@ -1,11 +1,14 @@
 <!--
   PostPage.vue - Single post view with page configuration
   
-  TODO v0.5 (Odoo Integration):
-  - Implement slug-from-xmlid for SEO-friendly URLs
-  - Current implementation uses numeric IDs: /sites/:domaincode/posts/:id
-  - Target URL pattern: /sites/:domaincode/posts/:slug
-  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.post-workshop-recap" → "post-workshop-recap"
+  URL Pattern: /sites/:domaincode/posts/:identifier
+  
+  Identifier can be:
+  - Numeric ID: 123 → fetches post by id=123
+  - Plain slug: my_post → resolves to xmlid: {domaincode}.post__my_post
+  - Template+slug: workshop__my_post → resolves to xmlid: {domaincode}.post-workshop__my_post
+  
+  SEO-friendly URLs: /sites/theaterpedia/posts/workshop__my_post
 -->
 <template>
     <div class="post-page">
@@ -114,6 +117,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
@@ -255,10 +259,10 @@ const projectDataForPermissions = computed(() => {
 
 // Methods
 async function loadPost() {
-    const postId = route.params.id
+    const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
 
-    console.log('[PostPage] Loading post:', { postId, domaincode: domaincode.value })
+    console.log('[PostPage] Loading post:', { identifier, domaincode: domaincode.value })
 
     try {
         // First, get project by domaincode to get project_id
@@ -278,9 +282,23 @@ async function loadPost() {
             await setTheme(projectData.theme, 'initial')
         }
 
+        // Determine if identifier is numeric ID or slug-based
+        // parseRouteIdentifier returns: { type: 'id' | 'slug', id?, xmlid?, template?, slug? }
+        const parsed = parseRouteIdentifier(identifier, domaincode.value, 'post')
+        console.log('[PostPage] Parsed identifier:', parsed)
+
+        let postApiUrl: string
+        if (parsed.type === 'id') {
+            // Numeric ID: fetch by ID
+            postApiUrl = `/api/posts/${parsed.id}`
+        } else {
+            // Slug-based: fetch by xmlid
+            postApiUrl = `/api/posts/${encodeURIComponent(parsed.xmlid!)}`
+        }
+
         // Load post
-        console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)
-        const response = await fetch(`/api/posts/${postId}`)
+        console.log('[PostPage] Fetching post:', postApiUrl)
+        const response = await fetch(postApiUrl)
         console.log('[PostPage] Post response:', { ok: response.ok, status: response.status })
 
         if (!response.ok) throw new Error('Failed to load post')

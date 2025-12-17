@@ -125,11 +125,21 @@ Batch import component for images:
 
 ### XMLID Format
 
+Odoo-aligned format: `{domaincode}.image__{slug}` or `{domaincode}.image-{template}__{slug}`
+
 ```
-{project}.image_{subject}.{name}
+# Simple (no template)
+walfische.image__gruppenarbeit_tag1
+
+# With template (subject category)
+walfische.image-scene__dance_performance
+theaterpedia.image-avatar__john_doe_1702834567
+_demo.image-portrait__sample_headshot
 ```
 
-Example: `walfische.image_workshop.gruppenarbeit-tag1`
+Template examples: `scene`, `avatar`, `portrait`, `panorama`, `logo`
+
+See `src/utils/xmlid.ts` for utilities.
 
 ## ImagesCoreAdmin
 

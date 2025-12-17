@@ -3,7 +3,7 @@
  * DELETE /api/pages/:id
  */
 import { defineEventHandler, createError } from 'h3'
-import { useDatabase } from '../../database'
+import { db } from '../../database/init'
 
 export default defineEventHandler(async (event) => {
     const id = event.context.params?.id
@@ -14,8 +14,6 @@ export default defineEventHandler(async (event) => {
             message: 'Page ID is required'
         })
     }
-
-    const db = useDatabase()
 
     // Check if page exists
     const existing = await db.get(

@@ -18,9 +18,10 @@ Instead, we use **semantic identifiers** (xmlid, sysmail, domaincode) that remai
 |--------|--------------|--------|--------|---------|
 | **Users** | `sysmail` | `users.sysmail` | Email | `nina.opus@theaterpedia.org` |
 | **Projects** | `domaincode` | `projects.domaincode` | Slug | `opus1` |
-| **Posts** | `xmlid` | `posts.xmlid` | `_domaincode.seq` | `_opus1.post001` |
-| **Events** | `xmlid` | `events.xmlid` | `_domaincode.seq` | `_opus1.event001` |
-| **Images** | `xmlid` | `images.xmlid` | `_domaincode.seq` | `_opus1.img001` |
+| **Posts** | `xmlid` | `posts.id` (is xmlid) | `{domaincode}.post__{slug}` | `theaterpedia.post__my_topic` |
+| **Events** | `xmlid` | `events.id` (is xmlid) | `{domaincode}.event__{slug}` | `theaterpedia.event__summer_2024` |
+| **Images** | `xmlid` | `images.xmlid` | `{domaincode}.image__{slug}` | `theaterpedia.image__photo_123` |
+| **Partners** | `xmlid` | `partners.xmlid` | `{domaincode}.partner__{slug}` | `theaterpedia.partner__john_doe` |
 
 ---
 
@@ -129,9 +130,76 @@ Until migration is complete, the frontend can resolve ownership by:
 
 ## xmlid Format Specification
 
-Format: `<domaincode>.<entity>.<sequence>` OR `<domaincode>.<entity>-<template>.<sequence>`
+**Odoo-aligned format**: `{domaincode}.{entity}__{slug}` or `{domaincode}.{entity}-{template}__{slug}`
 
-Examples:
+### Components
+
+| Component | Rules | Examples |
+|-----------|-------|----------|
+| **Domaincode** | Lowercase, may start with `_` (special projects), no hyphens | `theaterpedia`, `_demo`, `_start` |
+| **Entity** | Lowercase alphanumeric only | `post`, `event`, `image`, `partner` |
+| **Template** | Lowercase alphanumeric only (optional) | `workshop`, `conference`, `scene`, `avatar` |
+| **Slug** | Lowercase, underscores for word separation, no hyphens, no `__` | `my_summer_event`, `photo_123` |
+
+### Separator Rules
+
+- **Hyphen (`-`)**: ONLY between entity and template
+- **Double underscore (`__`)**: Separates entity(-template) from slug
+- **Single dot (`.`)**: Separates domaincode from entity
+
+### Examples
+
+```
+# Simple (no template)
+theaterpedia.post__my_topic
+theaterpedia.event__summer_2024
+theaterpedia.image__photo_123
+theaterpedia.partner__john_doe
+
+# With template
+theaterpedia.post-workshop__my_recap
+theaterpedia.event-conference__annual_meeting
+theaterpedia.image-scene__dance_performance
+theaterpedia.partner-instructor__maria_garcia
+
+# Special projects (domaincode starts with _)
+_demo.post__sample_content
+_start.event__onboarding_session
+```
+
+### URL Routing
+
+Posts and events use slug-based URLs:
+
+```
+/sites/{domaincode}/posts/{identifier}
+/sites/{domaincode}/events/{identifier}
+```
+
+Where `identifier` can be:
+- **Numeric ID**: `123` → fetches by database ID
+- **Plain slug**: `my_topic` → resolves to `{domaincode}.post__my_topic`
+- **Template+slug**: `workshop__my_recap` → resolves to `{domaincode}.post-workshop__my_recap`
+
+### Utilities
+
+See `src/utils/xmlid.ts` for parsing and building XMLIDs:
+
+```typescript
+import { parseXmlid, buildXmlid, parseRouteIdentifier } from '@/utils/xmlid'
+
+// Parse existing xmlid
+const parsed = parseXmlid('theaterpedia.post-workshop__my_recap')
+// { domaincode: 'theaterpedia', entity: 'post', template: 'workshop', slug: 'my_recap' }
+
+// Build new xmlid
+const xmlid = buildXmlid({ domaincode: 'theaterpedia', entity: 'post', template: 'workshop', slug: 'my_recap' })
+// 'theaterpedia.post-workshop__my_recap'
+
+// Parse route identifier
+const route = parseRouteIdentifier('workshop__my_recap', 'theaterpedia', 'post')
+// { type: 'slug', xmlid: 'theaterpedia.post-workshop__my_recap', template: 'workshop', slug: 'my_recap' }
+```
 
 
 ---

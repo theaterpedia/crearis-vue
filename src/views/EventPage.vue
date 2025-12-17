@@ -1,11 +1,14 @@
 <!--
   EventPage.vue - Single event view with page configuration
   
-  TODO v0.5 (Odoo Integration):
-  - Implement slug-from-xmlid for SEO-friendly URLs
-  - Current implementation uses numeric IDs: /sites/:domaincode/events/:id
-  - Target URL pattern: /sites/:domaincode/events/:slug
-  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.event-workshop-2024" → "event-workshop-2024"
+  URL Pattern: /sites/:domaincode/events/:identifier
+  
+  Identifier can be:
+  - Numeric ID: 123 → fetches event by id=123
+  - Plain slug: my_event → resolves to xmlid: {domaincode}.event__my_event
+  - Template+slug: conference__my_event → resolves to xmlid: {domaincode}.event-conference__my_event
+  
+  SEO-friendly URLs: /sites/theaterpedia/events/conference__my_event
 -->
 <template>
     <div class="event-page">
@@ -146,6 +149,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
@@ -295,10 +299,10 @@ const projectDataForPermissions = computed(() => {
 
 // Methods
 async function loadEvent() {
-    const eventId = route.params.id
+    const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
 
-    console.log('[EventPage] Loading event:', { eventId, domaincode: domaincode.value })
+    console.log('[EventPage] Loading event:', { identifier, domaincode: domaincode.value })
 
     try {
         // First, get project by domaincode to get project_id
@@ -314,8 +318,22 @@ async function loadEvent() {
             await setTheme(projectData.theme, 'initial')
         }
 
+        // Determine if identifier is numeric ID or slug-based
+        // parseRouteIdentifier returns: { type: 'id' | 'slug', id?, xmlid?, template?, slug? }
+        const parsed = parseRouteIdentifier(identifier, domaincode.value, 'event')
+        console.log('[EventPage] Parsed identifier:', parsed)
+
+        let eventApiUrl: string
+        if (parsed.type === 'id') {
+            // Numeric ID: fetch by ID
+            eventApiUrl = `/api/events/${parsed.id}`
+        } else {
+            // Slug-based: fetch by xmlid
+            eventApiUrl = `/api/events/${encodeURIComponent(parsed.xmlid!)}`
+        }
+
         // Load event
-        const response = await fetch(`/api/events/${eventId}`)
+        const response = await fetch(eventApiUrl)
         if (!response.ok) throw new Error('Failed to load event')
         const data = await response.json()
         event.value = data.event || data
