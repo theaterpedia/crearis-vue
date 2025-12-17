@@ -46,7 +46,7 @@ import FooterOptionsPanel from './FooterOptionsPanel.vue'
 
 interface Props {
     project: number | string  // project ID or domaincode
-    type?: 'posts' | 'events' | 'instructors'  // For pages table
+    type?: string  // For pages table - e.g. 'posts', 'events', 'landing', 'post-demo', 'event-conference'
     mode?: 'project' | 'pages'  // Mode: project uses projects table, pages uses pages table
 }
 

@@ -113,6 +113,21 @@
                 </div>
             </div>
 
+            <!-- Variant for xmlid (affects page options) -->
+            <div class="form-group">
+                <label class="form-label">Page-Variante</label>
+                <div class="variant-input-wrapper">
+                    <span class="variant-prefix">event</span>
+                    <input v-model="eventVariant" type="text" class="form-input variant-input"
+                        placeholder="z.B. conference, workshop" @input="sanitizeVariant" />
+                </div>
+                <small class="form-hint">
+                    Bestimmt Aside/Footer-Optionen. Leer = Projekt-Defaults.
+                    <span v-if="eventVariant" class="variant-preview">→ page_type:
+                        <code>event-{{ eventVariant }}</code></span>
+                </small>
+            </div>
+
             <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
 
             <div class="action-buttons">
@@ -277,6 +292,18 @@ const ctags = ref(0)
 const selectedHeaderType = ref<string>('cover')
 const selectedHeaderSize = ref<string>('prominent')
 
+// Variant for xmlid - determines page options (aside/footer/etc)
+const eventVariant = ref<string>('')
+
+// Sanitize variant input - only allow lowercase letters and hyphens
+function sanitizeVariant() {
+    eventVariant.value = eventVariant.value
+        .toLowerCase()
+        .replace(/[^a-z-]/g, '')
+        .replace(/--+/g, '-')
+        .replace(/^-|-$/g, '')
+}
+
 // Available header configs from API
 const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
 
@@ -392,6 +419,7 @@ const handleCancel = () => {
     customName.value = ''
     customTeaser.value = ''
     selectedImageId.value = null
+    eventVariant.value = ''
     // Reset tags to initial state
     ttags.value = 0
     ctags.value = 0
@@ -455,15 +483,22 @@ const handleApply = async () => {
     try {
         // Build XML-ID with format: {domaincode}.{entity}.{slug}
         // domaincode: projectId (e.g., "theaterpedia")
-        // entity: determined by ctags (event_online, event_kurs, etc.)
+        // entity: "event" or "event-{variant}" for variants (determines page options)
         // slug: Generated from the event title
         const templateXmlId = selectedEvent.value.xmlid || `base_event.${selectedEvent.value.id}`
 
         // Generate slug from title
         const titleSlug = generateSlug(customName.value.trim() || 'untitled')
 
-        // Determine entity qualifier from ctags
-        const entityQualifier = getEventEntityFromCtags(ctags.value)
+        // Build entity qualifier: use variant input if provided, otherwise derive from ctags
+        // User-defined variant takes priority over ctags-derived qualifier
+        let entityQualifier: string
+        if (eventVariant.value) {
+            entityQualifier = `event-${eventVariant.value}`
+        } else {
+            // Fall back to ctags-derived qualifier (legacy behavior)
+            entityQualifier = getEventEntityFromCtags(ctags.value)
+        }
 
         // Build the new xmlid: {domaincode}.{entity}.{slug}
         const newXmlId = `${props.projectId}.${entityQualifier}.${titleSlug}`
@@ -860,5 +895,54 @@ onBeforeUnmount(() => {
         width: 24px;
         height: 24px;
     }
+}
+
+/* Variant Input */
+.variant-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--color-background);
+}
+
+.variant-prefix {
+    padding: 0.75rem;
+    background: var(--color-background-soft);
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.875rem;
+    border-right: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.variant-prefix::after {
+    content: '-';
+    margin-left: 0.25rem;
+    color: var(--color-text-muted, #6b7280);
+}
+
+.variant-input {
+    flex: 1;
+    border: none !important;
+    border-radius: 0;
+}
+
+.variant-input:focus {
+    box-shadow: none;
+}
+
+.variant-preview {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: var(--color-primary, #3b82f6);
+}
+
+.variant-preview code {
+    background: var(--color-background-soft);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.75rem;
 }
 </style>

@@ -109,6 +109,21 @@
                 </div>
             </div>
 
+            <!-- Variant for xmlid (affects page options) -->
+            <div class="form-group">
+                <label class="form-label">Page-Variante</label>
+                <div class="variant-input-wrapper">
+                    <span class="variant-prefix">post</span>
+                    <input v-model="postVariant" type="text" class="form-input variant-input"
+                        placeholder="z.B. demo, featured" @input="sanitizeVariant" />
+                </div>
+                <small class="form-hint">
+                    Bestimmt Aside/Footer-Optionen. Leer = Projekt-Defaults.
+                    <span v-if="postVariant" class="variant-preview">→ page_type:
+                        <code>post-{{ postVariant }}</code></span>
+                </small>
+            </div>
+
             <TagFamilies v-model:ttags="ttags" v-model:ctags="ctags" :enable-edit="['ttags', 'ctags']" layout="row" />
 
             <div class="action-buttons">
@@ -163,6 +178,18 @@ const isSubmitting = ref(false)
 // Header settings (for banner/cover/size selection)
 const headerType = ref<string>('banner')
 const headerSize = ref<string>('medium')
+
+// Variant for xmlid - determines page options (aside/footer/etc)
+const postVariant = ref<string>('')
+
+// Sanitize variant input - only allow lowercase letters and hyphens
+function sanitizeVariant() {
+    postVariant.value = postVariant.value
+        .toLowerCase()
+        .replace(/[^a-z-]/g, '')
+        .replace(/--+/g, '-')
+        .replace(/^-|-$/g, '')
+}
 
 // Available header configs from API
 const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
@@ -294,6 +321,7 @@ const handleCancel = () => {
     customName.value = ''
     customTeaser.value = ''
     selectedImageId.value = null
+    postVariant.value = ''
     // Reset tags to initial state
     ttags.value = 0
     ctags.value = 0
@@ -309,13 +337,16 @@ const handleApply = async () => {
     try {
         // Build XML-ID with format: {domaincode}.{entity}.{slug}
         // domaincode: projectId (e.g., "theaterpedia")
-        // entity: "post_demo" for demo posts
+        // entity: "post" or "post-{variant}" for variants (determines page options)
         // slug: Generated from the post title
         const templateXmlId = selectedPost.value.xmlid || `base_post.${selectedPost.value.id}`
 
         // Generate slug from title - convert to lowercase, replace spaces/special chars with underscores
         const titleSlug = generateSlug(customName.value || selectedPost.value.name || 'untitled')
-        const newXmlId = `${props.projectId}.post_demo.${titleSlug}`
+
+        // Build entity qualifier: "post" if no variant, "post-{variant}" otherwise
+        const entityQualifier = postVariant.value ? `post-${postVariant.value}` : 'post'
+        const newXmlId = `${props.projectId}.${entityQualifier}.${titleSlug}`
 
         // Determine status: DEMO (8) if user edited name/teaser, otherwise NEW (1)
         // If customName or customTeaser differ from template values, user made edits
@@ -697,5 +728,54 @@ onBeforeUnmount(() => {
         width: 24px;
         height: 24px;
     }
+}
+
+/* Variant Input */
+.variant-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--color-background);
+}
+
+.variant-prefix {
+    padding: 0.75rem;
+    background: var(--color-background-soft);
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.875rem;
+    border-right: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.variant-prefix::after {
+    content: '-';
+    margin-left: 0.25rem;
+    color: var(--color-text-muted, #6b7280);
+}
+
+.variant-input {
+    flex: 1;
+    border: none !important;
+    border-radius: 0;
+}
+
+.variant-input:focus {
+    box-shadow: none;
+}
+
+.variant-preview {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: var(--color-primary, #3b82f6);
+}
+
+.variant-preview code {
+    background: var(--color-background-soft);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.75rem;
 }
 </style>
