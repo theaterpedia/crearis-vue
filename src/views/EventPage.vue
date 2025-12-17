@@ -159,10 +159,12 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { formatDateTime } from '@/plugins/dateTimeFormat'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
+const { setTheme, init: initTheme } = useTheme()
 
 // State
 const event = ref<any>(null)
@@ -305,6 +307,12 @@ async function loadEvent() {
         const projectData = await projectRes.json()
         project.value = projectData
         projectId.value = projectData.id
+
+        // Apply project theme if set
+        await initTheme()
+        if (projectData.theme !== null && projectData.theme !== undefined) {
+            await setTheme(projectData.theme, 'initial')
+        }
 
         // Load event
         const response = await fetch(`/api/events/${eventId}`)

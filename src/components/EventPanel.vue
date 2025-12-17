@@ -255,7 +255,14 @@ async function loadProjectUsers() {
 // Watch for projectId changes
 watch(() => props.projectId, () => {
     loadProjectUsers()
+    loadProjectDefaults()
 }, { immediate: true })
+
+// Load header configs on mount
+onMounted(() => {
+    loadHeaderConfigs()
+})
+
 const selectedLocation = ref<number | null>(null)
 const dateBegin = ref('')
 const dateEnd = ref('')
@@ -269,6 +276,41 @@ const ctags = ref(0)
 // Header settings (for cover/banner/size selection)
 const selectedHeaderType = ref<string>('cover')
 const selectedHeaderSize = ref<string>('prominent')
+
+// Available header configs from API
+const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
+
+// Load project defaults for header settings
+async function loadProjectDefaults() {
+    if (!props.projectId) return
+
+    try {
+        const response = await fetch(`/api/projects/${props.projectId}`)
+        if (response.ok) {
+            const project = await response.json()
+            // Use project defaults if available
+            selectedHeaderType.value = project.default_event_header_type || 'cover'
+            selectedHeaderSize.value = project.default_event_header_size || 'prominent'
+        }
+    } catch (err) {
+        console.error('Error loading project defaults:', err)
+    }
+}
+
+// Load available header configs
+async function loadHeaderConfigs() {
+    try {
+        const response = await fetch('/api/header-configs')
+        if (response.ok) {
+            const data = await response.json()
+            if (data.success && data.data) {
+                headerConfigs.value = data.data
+            }
+        }
+    } catch (err) {
+        console.error('Error loading header configs:', err)
+    }
+}
 
 const previewEvent = computed(() => {
     if (!selectedEvent.value) return null

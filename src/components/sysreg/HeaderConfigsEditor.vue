@@ -41,10 +41,13 @@
         <!-- Central Configs Mode -->
         <div v-else-if="mode === 'central'" class="configs-grid">
             <div v-for="config in filteredConfigs" :key="config.id" class="config-card"
-                :class="{ 'is-default': config.is_default }">
+                :class="{ 'is-default': config.is_default, 'has-theme': (config as any).theme_id != null }">
                 <div class="config-header">
                     <span class="config-name">{{ config.name }}</span>
                     <span v-if="config.is_default" class="badge badge-default">Default</span>
+                    <span v-if="(config as any).theme_id != null" class="badge badge-theme">
+                        🎨 {{ getThemeName((config as any).theme_id) }}
+                    </span>
                     <span class="parent-type-badge" :class="'type-' + config.parent_type">
                         {{ config.parent_type }}
                     </span>
@@ -151,6 +154,17 @@
                             <div class="form-group">
                                 <label>Description</label>
                                 <textarea v-model="formData.description" class="form-textarea" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Theme (optional)</label>
+                                <select v-model="formData.theme_id" class="form-select">
+                                    <option :value="null">— Global (no theme) —</option>
+                                    <option v-for="theme in themes" :key="theme.id" :value="theme.id">
+                                        {{ theme.name }}
+                                    </option>
+                                </select>
+                                <small class="form-hint">If set, this config applies only when the project uses this
+                                    theme.</small>
                             </div>
                         </div>
 
@@ -309,6 +323,9 @@ const typeLabels: Record<string, string> = {
     bauchbinde: 'Bauchbinde'
 }
 
+// Themes data
+const themes = ref<Array<{ id: number; name: string }>>([])
+
 // Form data
 const formData = ref({
     parent_type: 'cover',
@@ -316,6 +333,7 @@ const formData = ref({
     label_de: '',
     label_en: '',
     description: '',
+    theme_id: null as number | null,
     config: {
         headerSize: 'prominent',
         contentAlignY: 'bottom',
@@ -407,6 +425,11 @@ function getMergedConfig(config: HeaderConfig): Record<string, any> {
     return { ...config.config, ...override.config_overrides }
 }
 
+function getThemeName(themeId: number): string {
+    const theme = themes.value.find((t: { id: number; name: string }) => t.id === themeId)
+    return theme?.name ?? `Theme ${themeId}`
+}
+
 function editConfig(config: HeaderConfig) {
     editingConfig.value = config
     const [parentType, ...rest] = config.name.split('.')
@@ -416,6 +439,7 @@ function editConfig(config: HeaderConfig) {
         label_de: config.label_de,
         label_en: config.label_en,
         description: config.description,
+        theme_id: (config as any).theme_id ?? null,
         config: { ...config.config }
     }
 }
@@ -428,6 +452,7 @@ async function saveConfig() {
         label_de: formData.value.label_de || name,
         label_en: formData.value.label_en || name,
         description: formData.value.description,
+        theme_id: formData.value.theme_id,
         config: formData.value.config
     }
 
@@ -541,6 +566,7 @@ function closeDialog() {
         label_de: '',
         label_en: '',
         description: '',
+        theme_id: null,
         config: {
             headerSize: 'prominent',
             contentAlignY: 'bottom',
@@ -562,9 +588,22 @@ watch(selectedProjectId, () => {
     fetchProjectOverrides()
 })
 
+// Fetch themes
+async function fetchThemes() {
+    try {
+        const response = await fetch('/api/themes')
+        const data = await response.json()
+        if (data.success && Array.isArray(data.themes)) {
+            themes.value = data.themes.map((t: any) => ({ id: t.id, name: t.name }))
+        }
+    } catch (error) {
+        console.error('Failed to fetch themes:', error)
+    }
+}
+
 // Lifecycle
 onMounted(async () => {
-    await Promise.all([fetchConfigs(), fetchProjects()])
+    await Promise.all([fetchConfigs(), fetchProjects(), fetchThemes()])
 })
 </script>
 
@@ -684,6 +723,10 @@ onMounted(async () => {
     border-left: 4px solid var(--color-primary-bg);
 }
 
+.config-card.has-theme {
+    border-left: 4px solid #9c27b0;
+}
+
 .config-card.has-override {
     border-left: 4px solid var(--color-warning-bg);
 }
@@ -732,6 +775,11 @@ onMounted(async () => {
 .badge-default {
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
+}
+
+.badge-theme {
+    background: linear-gradient(135deg, #9c27b0, #673ab7);
+    color: white;
 }
 
 .badge-override {
@@ -830,6 +878,13 @@ onMounted(async () => {
     border-radius: var(--radius);
     background: var(--color-card-bg);
     color: var(--color-card-contrast);
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-dimmed);
 }
 
 .form-range {

@@ -74,6 +74,7 @@ import { migration as migration064 } from './064_events_location_to_partners'
 import { up as migration065Up, down as migration065Down } from './065_events_header_size'
 import { migration as migration066 } from './066_add_header_size_columns'
 import { migration as migration067 } from './067_header_configs_system'
+import { migration as migration068 } from './068_header_configs_theme_id'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -161,6 +162,8 @@ const migrations: Migration[] = [
     { run: migration066.up, down: migration066.down, metadata: { id: migration066.id, description: migration066.description, version: '0.4.5', date: '2025-12-15' }, reversible: true },
     // Migration 067 - Header Configs System (three-layer config)
     { run: migration067.up, down: migration067.down, metadata: { id: migration067.id, description: migration067.description, version: '0.4.6', date: '2025-12-15' }, reversible: true },
+    // Migration 068 - Header Configs Theme ID (themed page-headings)
+    { run: migration068.up, down: migration068.down, metadata: { id: migration068.id, description: migration068.description, version: '0.4.7', date: '2025-12-17' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

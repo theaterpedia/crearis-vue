@@ -66,12 +66,18 @@ Returns subcategories with their base type relationships.
 
 #### GET /api/header-configs/resolve
 
-Resolves configuration for a specific context.
+Resolves configuration for a specific context, with theme support.
 
 **Query Parameters:**
-- `headerType` (required): Base type name
+- `headerType` (required): Base type name (banner, cover, columns, simple, bauchbinde)
 - `headerSubtype` (optional): Subcategory name
-- `projectId` (optional): Project ID for override lookup
+- `projectId` (optional): Project ID for override lookup and theme auto-detection
+- `theme_id` (optional): Explicit theme ID (0-7). If not provided, auto-detected from project.
+
+**Resolution Priority:**
+1. Theme-specific config (e.g., `banner_theme2`) if theme_id available
+2. Base config (e.g., `banner`)
+3. Project overrides merged on top
 
 **Response:**
 ```json
@@ -83,7 +89,13 @@ Resolves configuration for a specific context.
   "gradientType": "dark",
   "gradientDepth": 0.4,
   "allowedSizes": ["medium", "prominent"],
-  "isActive": true
+  "isActive": true,
+  "theme_id": 2,
+  "_meta": {
+    "isProjectOverride": false,
+    "themeId": 2,
+    "themeSpecific": true
+  }
 }
 ```
 

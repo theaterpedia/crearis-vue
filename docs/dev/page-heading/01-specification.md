@@ -36,32 +36,41 @@ header_type VARCHAR(20) DEFAULT 'banner'
 ### Header Configs System (migration 067)
 
 ```sql
--- Base Types (system-level)
-CREATE TABLE header_base_types (
+-- Central header configurations
+CREATE TABLE header_configs (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,       -- simple, banner, cover, columns, bauchbinde
-    format_options JSONB DEFAULT '{}'::jsonb,
-    allowed_sizes TEXT[] DEFAULT ARRAY['mini','medium','prominent','full'],
-    is_active BOOLEAN DEFAULT true
+    name VARCHAR(100) NOT NULL UNIQUE,
+    parent_type VARCHAR(50) NOT NULL,
+    label_de VARCHAR(255),
+    label_en VARCHAR(255),
+    description TEXT,
+    config JSONB DEFAULT '{}'::jsonb,
+    is_default BOOLEAN DEFAULT false,
+    theme_id INTEGER,  -- Added by migration 068
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Central Subcategories (site-level customizations)
-CREATE TABLE header_subcategories (
-    id SERIAL PRIMARY KEY,
-    base_type_id INTEGER REFERENCES header_base_types(id),
-    name VARCHAR(100) NOT NULL,
-    format_options JSONB DEFAULT '{}'::jsonb,
-    allowed_sizes TEXT[]
-);
-
--- Project Overrides (per-project customizations)
+-- Project-level overrides
 CREATE TABLE header_project_overrides (
     id SERIAL PRIMARY KEY,
     project_id VARCHAR(50) NOT NULL,
-    subcategory_id INTEGER REFERENCES header_subcategories(id),
-    format_options JSONB DEFAULT '{}'::jsonb,
-    is_active BOOLEAN DEFAULT true
+    header_config_name VARCHAR(100) REFERENCES header_configs(name),
+    config_overrides JSONB DEFAULT '{}'::jsonb,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
+
+### Project Header Defaults (migration 068)
+
+```sql
+-- Added to projects table
+ALTER TABLE projects ADD COLUMN site_header_type VARCHAR(50);
+ALTER TABLE projects ADD COLUMN site_header_size VARCHAR(20);
+ALTER TABLE projects ADD COLUMN default_post_header_type VARCHAR(50);
+ALTER TABLE projects ADD COLUMN default_post_header_size VARCHAR(20);
+ALTER TABLE projects ADD COLUMN default_event_header_type VARCHAR(50);
+ALTER TABLE projects ADD COLUMN default_event_header_size VARCHAR(20);
 ```
 
 ## Three-Layer Configuration Merge
@@ -70,10 +79,9 @@ Configuration is resolved in priority order:
 
 ```
 1. Base Type (system defaults)
-   └─ 2. Subcategory (site customizations)
+   └─ 2. Theme-Specific Config (if project has theme)
         └─ 3. Project Override (per-project tweaks)
-             └─ 4. Entity formatOptions (individual entity)
-                  └─ 5. Entity headerSize prop (highest priority)
+             └─ 4. Entity-level fields (individual post/event)
 ```
 
 ### Example Merge Flow
@@ -82,26 +90,24 @@ Configuration is resolved in priority order:
 // Base Type: banner
 { name: 'banner', headerSize: 'medium', imgTmpAlignY: 'top' }
 
-// + Subcategory: banner_event
-{ headerSize: 'prominent', gradientType: 'dark' }
+// + Theme-Specific (banner_theme2): Project uses theme 2
+{ headerSize: 'prominent', gradientType: 'dark', gradientDepth: 0.4 }
 
-// + Project Override: project-X
+// + Project Override: project-X has custom override
 { gradientDepth: 0.6 }
 
-// + Entity formatOptions
-{ contentAlignY: 'bottom' }
-
-// + Entity headerSize prop
+// + Entity fields: post.header_size = 'full'
 { headerSize: 'full' }
 
 // = Final merged config:
 {
   name: 'banner',
-  headerSize: 'full',        // From entity prop (highest priority)
+{
+  name: 'banner',
+  headerSize: 'full',        // From entity (highest priority)
   imgTmpAlignY: 'top',       // From base type
-  gradientType: 'dark',      // From subcategory
-  gradientDepth: 0.6,        // From project override
-  contentAlignY: 'bottom'    // From entity formatOptions
+  gradientType: 'dark',      // From theme config
+  gradientDepth: 0.6         // From project override
 }
 ```
 

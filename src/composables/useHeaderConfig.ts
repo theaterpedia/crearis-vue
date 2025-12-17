@@ -111,6 +111,8 @@ export interface HeaderConfigOptions {
     headerSubtype?: Ref<string | undefined> | ComputedRef<string | undefined> | string
     /** Project ID for overrides (optional, auto-detected from route if on /sites) */
     projectId?: Ref<number | string | undefined> | ComputedRef<number | string | undefined> | number | string
+    /** Theme ID for theme-specific configs (optional, auto-detected from project if not provided) */
+    themeId?: Ref<number | undefined> | ComputedRef<number | undefined> | number
     /** Enable API resolution (default: true) */
     useApi?: boolean
 }
@@ -127,9 +129,11 @@ export interface HeaderConfigResult {
         headerType: string
         headerSubtype: string | null
         projectId: number | string | null
+        themeId: number | null
         layers: {
             base: boolean
             subcategory: boolean
+            themeSpecific: boolean
             projectOverride: boolean
         }
     } | null>
@@ -170,6 +174,17 @@ export function useHeaderConfig(options: HeaderConfigOptions): HeaderConfigResul
         return undefined
     })
 
+    const themeId = computed(() => {
+        // If explicitly provided, use it
+        if (options.themeId !== undefined) {
+            return typeof options.themeId === 'number'
+                ? options.themeId
+                : options.themeId.value
+        }
+        // Theme ID is auto-detected from project on the server side
+        return undefined
+    })
+
     const useApi = options.useApi ?? true
 
     // State
@@ -195,7 +210,8 @@ export function useHeaderConfig(options: HeaderConfigOptions): HeaderConfigResul
         const type = headerType.value || 'simple'
         const subtype = headerSubtype.value || `${type}.default`
         const project = projectId.value || 'none'
-        return `${type}:${subtype}:${project}`
+        const theme = themeId.value ?? 'auto'
+        return `${type}:${subtype}:${project}:${theme}`
     })
 
     // Fetch config from API
@@ -227,16 +243,31 @@ export function useHeaderConfig(options: HeaderConfigOptions): HeaderConfigResul
                 params.set('project_id', String(projectId.value))
             }
 
+            if (themeId.value !== undefined) {
+                params.set('theme_id', String(themeId.value))
+            }
+
             const response = await fetch(`/api/header-configs/resolve?${params}`)
             const data = await response.json()
 
             if (data.success) {
                 apiConfig.value = data.data
-                meta.value = data.meta
+                meta.value = {
+                    headerType: data.meta.header_type,
+                    headerSubtype: data.meta.header_subtype,
+                    projectId: data.meta.project_id,
+                    themeId: data.meta.theme_id,
+                    layers: {
+                        base: data.meta.layers.base,
+                        subcategory: data.meta.layers.subcategory,
+                        themeSpecific: data.meta.layers.theme_specific || false,
+                        projectOverride: data.meta.layers.project_override
+                    }
+                }
 
                 // Cache the result
                 configCache.set(cacheKey.value, {
-                    data: { data: data.data, meta: data.meta },
+                    data: { data: data.data, meta: meta.value },
                     timestamp: Date.now()
                 })
             } else {
@@ -253,7 +284,7 @@ export function useHeaderConfig(options: HeaderConfigOptions): HeaderConfigResul
     // Watch for changes and re-fetch
     if (useApi) {
         watch(
-            [headerType, headerSubtype, projectId],
+            [headerType, headerSubtype, projectId, themeId],
             () => {
                 fetchConfig()
             },

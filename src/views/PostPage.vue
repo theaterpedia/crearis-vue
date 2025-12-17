@@ -127,10 +127,12 @@ import Container from '@/components/Container.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
+const { setTheme, init: initTheme } = useTheme()
 
 // State
 const post = ref<any>(null)
@@ -269,6 +271,12 @@ async function loadPost() {
         console.log('[PostPage] Project data:', projectData)
         project.value = projectData
         projectId.value = projectData.id
+
+        // Apply project theme if set
+        await initTheme()
+        if (projectData.theme !== null && projectData.theme !== undefined) {
+            await setTheme(projectData.theme, 'initial')
+        }
 
         // Load post
         console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)

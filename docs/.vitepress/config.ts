@@ -52,6 +52,8 @@ export default defineConfig({
                         { text: 'Übersicht', link: '/de/projekt-entwickeln/' },
                         { text: 'Posts bearbeiten', link: '/de/projekt-entwickeln/posts-bearbeiten' },
                         { text: 'Events bearbeiten', link: '/de/projekt-entwickeln/events-bearbeiten' },
+                        { text: 'Themes, Layout & Page-Heading', link: '/de/projekt-entwickeln/themes-layout-page-heading' },
+                        { text: 'Page-Heading Details', link: '/de/projekt-entwickeln/page-heading-details' },
                     ]
                 }
             ],
@@ -62,6 +64,7 @@ export default defineConfig({
                     text: 'Admin Guide',
                     items: [
                         { text: 'Overview', link: '/admin/' },
+                        { text: 'Domain Management', link: '/admin/domains' },
                         { text: 'Sysreg Admin View', link: '/admin/sysreg' },
                         { text: 'i18n Configuration', link: '/admin/i18n' },
                     ]

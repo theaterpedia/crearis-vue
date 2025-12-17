@@ -40,6 +40,7 @@ const router = createRouter({
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
 
     // Admin routes
+    { path: '/admin/domains', component: () => import('../views/admin/DomainsAdmin.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/sysreg', component: () => import('../views/admin/SysregAdminView.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/sysreg-demo', component: () => import('../views/admin/SysregDemoView.vue'), meta: { requiresAuth: true, role: 'admin' } },

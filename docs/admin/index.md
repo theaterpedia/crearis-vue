@@ -5,12 +5,19 @@ Welcome to the Theaterpedia Admin documentation.
 ## Overview
 
 This section covers administrative tasks for Theaterpedia:
+- Domain management for project websites
 - System registry (sysreg) management
 - Internationalization (i18n) configuration
 - User management
 - Project oversight
 
 ## Admin Views
+
+### Domain Management
+
+Configure custom domains and subdomains for project websites:
+
+- [Domain Management](/admin/domains) - Subdomains & custom domains
 
 ### Sysreg Admin View
 
@@ -26,6 +33,7 @@ The **sysreg** (system registry) admin view provides access to configuration tab
 
 | Area | Description |
 |------|-------------|
+| Domains | Configure project domains |
 | Users | Verify users, manage roles |
 | Projects | Oversee all projects |
 | Regios | Manage regional groups |
@@ -39,4 +47,4 @@ To access admin features, you need:
 
 ---
 
-*See [Sysreg Admin View](/admin/sysreg) for detailed documentation.*
+*See [Domain Management](/admin/domains) to configure project websites.*

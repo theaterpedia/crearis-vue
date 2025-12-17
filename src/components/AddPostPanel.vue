@@ -164,6 +164,9 @@ const isSubmitting = ref(false)
 const headerType = ref<string>('banner')
 const headerSize = ref<string>('medium')
 
+// Available header configs from API
+const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
+
 /**
  * Generate a URL-safe slug from a title string
  * Used for xmlid format: {domaincode}.{entity}.{slug}
@@ -214,10 +217,48 @@ async function loadProjectUsers() {
     }
 }
 
+// Load project defaults for header settings
+async function loadProjectDefaults() {
+    if (!props.projectId) return
+
+    try {
+        const response = await fetch(`/api/projects/${props.projectId}`)
+        if (response.ok) {
+            const project = await response.json()
+            // Use project defaults if available
+            headerType.value = project.default_post_header_type || 'banner'
+            headerSize.value = project.default_post_header_size || 'medium'
+        }
+    } catch (err) {
+        console.error('Error loading project defaults:', err)
+    }
+}
+
+// Load available header configs
+async function loadHeaderConfigs() {
+    try {
+        const response = await fetch('/api/header-configs')
+        if (response.ok) {
+            const data = await response.json()
+            if (data.success && data.data) {
+                headerConfigs.value = data.data
+            }
+        }
+    } catch (err) {
+        console.error('Error loading header configs:', err)
+    }
+}
+
 // Watch for projectId changes
 watch(() => props.projectId, () => {
     loadProjectUsers()
+    loadProjectDefaults()
 }, { immediate: true })
+
+// Load header configs on mount
+onMounted(() => {
+    loadHeaderConfigs()
+})
 
 const previewPost = computed(() => {
     if (!selectedPost.value) return null

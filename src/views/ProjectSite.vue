@@ -46,7 +46,8 @@
                 <PageHeading :heading="project.heading || project.id"
                     :teaserText="project.teaser || project.md || 'Explore events, posts, and team members for this project.'"
                     :imgTmp="project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg'"
-                    :headerType="project.header_type || 'banner'" :headerSize="project.header_size || 'prominent'"
+                    :headerType="project.site_header_type || project.header_type || 'banner'"
+                    :headerSize="project.site_header_size || project.header_size || 'prominent'"
                     :cta="{ title: 'Get Involved', link: '/getstarted' }"
                     :link="{ title: 'Back to Home', link: '/' }" />
             </template>
@@ -185,9 +186,11 @@ import CardHero from '@/components/CardHero.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
+const { setTheme, init: initTheme } = useTheme()
 
 // State
 const user = ref<any>(null)
@@ -460,6 +463,13 @@ onMounted(async () => {
 
     if (domaincode.value) {
         await fetchProject(domaincode.value)
+
+        // Apply project theme if set
+        await initTheme()
+        if (project.value?.theme !== null && project.value?.theme !== undefined) {
+            await setTheme(project.value.theme, 'initial')
+        }
+
         // Set SEO meta tags after project is loaded
         setProjectSeoMeta()
         await fetchEvents(domaincode.value)
