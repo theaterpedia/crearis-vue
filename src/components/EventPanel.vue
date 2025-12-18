@@ -95,11 +95,9 @@
                 <div class="form-group">
                     <label class="form-label">Header Type</label>
                     <select v-model="selectedHeaderType" class="form-select">
-                        <option value="cover">Cover (centered)</option>
-                        <option value="banner">Banner (top-aligned)</option>
-                        <option value="columns">Columns (side-by-side)</option>
-                        <option value="simple">Simple (no image)</option>
-                        <option value="bauchbinde">Bauchbinde</option>
+                        <option v-for="opt in headerTypeOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -283,6 +281,30 @@ function sanitizeVariant() {
 
 // Available header configs from API
 const headerConfigs = ref<Array<{ name: string; parent_type: string; label_en: string; theme_id: number | null }>>([])
+const projectThemeId = ref<number | null>(null)
+
+// Computed: header type options with theme indicator
+const headerTypeOptions = computed(() => {
+    const baseTypes = [
+        { value: 'cover', label: 'Cover (centered)' },
+        { value: 'banner', label: 'Banner (top-aligned)' },
+        { value: 'columns', label: 'Columns (side-by-side)' },
+        { value: 'simple', label: 'Simple (no image)' },
+        { value: 'bauchbinde', label: 'Bauchbinde' }
+    ]
+
+    // Find which types have themed variants for current project's theme
+    const themedTypes = new Set(
+        headerConfigs.value
+            .filter(c => c.theme_id === projectThemeId.value)
+            .map(c => c.parent_type)
+    )
+
+    return baseTypes.map(type => ({
+        value: type.value,
+        label: themedTypes.has(type.value) ? `${type.label} ★` : type.label
+    }))
+})
 
 // Load project defaults for header settings
 async function loadProjectDefaults() {
@@ -295,6 +317,8 @@ async function loadProjectDefaults() {
             // Use project defaults if available
             selectedHeaderType.value = project.default_event_header_type || 'cover'
             selectedHeaderSize.value = project.default_event_header_size || 'prominent'
+            // Track project's theme for themed header indicators
+            projectThemeId.value = project.theme ?? null
         }
     } catch (err) {
         console.error('Error loading project defaults:', err)

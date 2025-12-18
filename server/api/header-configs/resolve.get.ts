@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
 
     const headerType = query.header_type as string
     const headerSubtype = query.header_subtype as string | undefined
-    const projectId = query.project_id as string | undefined
+    const projectIdParam = query.project_id as string | undefined
     let themeId = query.theme_id as string | undefined
 
     // Validate header_type
@@ -122,13 +122,22 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        // Layer 0: If project_id provided but no theme_id, look up project's theme
-        if (projectId && !themeId) {
-            const projectRow = await db.get(`
-                SELECT theme FROM projects WHERE id = $1 OR domaincode = $1
-            `, [projectId])
-            if (projectRow && (projectRow as any).theme !== null) {
-                themeId = String((projectRow as any).theme)
+        // Layer 0: Resolve project context (ID + theme) if project_id provided
+        let resolvedProjectId: number | null = null
+        if (projectIdParam) {
+            // project_id can be numeric ID or domaincode string
+            const isNumeric = /^\d+$/.test(projectIdParam)
+            const projectRow = await db.get(
+                isNumeric
+                    ? `SELECT id, theme FROM projects WHERE id = $1`
+                    : `SELECT id, theme FROM projects WHERE domaincode = $1`,
+                [isNumeric ? parseInt(projectIdParam) : projectIdParam]
+            )
+            if (projectRow) {
+                resolvedProjectId = (projectRow as any).id
+                if (!themeId && (projectRow as any).theme !== null) {
+                    themeId = String((projectRow as any).theme)
+                }
             }
         }
 
@@ -173,12 +182,12 @@ export default defineEventHandler(async (event) => {
 
         // Layer 3: Project override (if on /sites route)
         let projectOverride = {}
-        if (projectId) {
+        if (resolvedProjectId) {
             const subcatName = headerSubtype || `${headerType}.default`
             const overrideRow = await db.get(`
                 SELECT config_overrides FROM project_header_overrides
                 WHERE project_id = $1 AND header_config_name = $2
-            `, [projectId, subcatName])
+            `, [resolvedProjectId, subcatName])
 
             if (overrideRow) {
                 projectOverride = typeof (overrideRow as any).config_overrides === 'string'
@@ -196,7 +205,7 @@ export default defineEventHandler(async (event) => {
             meta: {
                 header_type: headerType,
                 header_subtype: headerSubtype || `${headerType}.default`,
-                project_id: projectId || null,
+                project_id: resolvedProjectId || null,
                 theme_id: themeId ? parseInt(themeId) : null,
                 layers: {
                     base: true,

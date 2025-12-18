@@ -170,7 +170,10 @@ export function useHeaderConfig(options: HeaderConfigOptions): HeaderConfigResul
                 : options.projectId.value
         }
         // Auto-detect from route on /sites/:domaincode/* routes
-        // Note: We'd need to look up project by domaincode, so for now return undefined
+        // The resolve API accepts domaincode as project_id and will look up the project
+        if (route.path.startsWith('/sites/') && route.params.domaincode) {
+            return route.params.domaincode as string
+        }
         return undefined
     })
 

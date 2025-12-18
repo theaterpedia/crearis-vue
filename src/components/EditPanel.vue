@@ -18,11 +18,18 @@
                         <label class="form-label" for="edit-header-type">Header Type</label>
                         <select id="edit-header-type" v-model="formData.header_type" class="form-select">
                             <option value="">Default</option>
-                            <option value="simple">Simple</option>
-                            <option value="columns">Columns</option>
-                            <option value="banner">Banner</option>
-                            <option value="cover">Cover</option>
-                            <option value="bauchbinde">Bauchbinde</option>
+                            <!-- Base types - highlight if themed variant exists -->
+                            <option v-for="opt in baseHeaderOptions" :key="opt.value" :value="opt.value"
+                                :class="{ 'has-theme': opt.hasTheme }">
+                                {{ opt.label }}
+                            </option>
+                            <!-- Separator and themed variants (if any) -->
+                            <template v-if="themedHeaderOptions.length > 0">
+                                <option disabled>───────────</option>
+                                <option v-for="opt in themedHeaderOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </template>
                         </select>
                     </div>
                 </div>
@@ -143,6 +150,14 @@ import TagFamilies from './sysreg/TagFamilies.vue'
 import DateRangeEdit from './DateRangeEdit.vue'
 import { DropdownList } from '@/components/clist'
 import { sanitizeStatusVal } from '@/composables/useSysreg'
+
+// Header config types
+interface HeaderConfigOption {
+    value: string
+    label: string
+    hasTheme?: boolean
+    themeId?: number | null
+}
 
 export interface EditPanelData {
     heading: string
@@ -286,6 +301,79 @@ async function loadStatuses() {
     }
 }
 
+// =====================================================================
+// Header Type Options (theme-aware)
+// =====================================================================
+const headerConfigs = ref<Array<{ name: string; parent_type: string; theme_id: number | null; label_de: string }>>([])
+const projectThemeId = ref<number | null>(null)
+
+// Base header types (always shown)
+const BASE_TYPES = [
+    { value: 'simple', label: 'Simple' },
+    { value: 'columns', label: 'Columns' },
+    { value: 'banner', label: 'Banner' },
+    { value: 'cover', label: 'Cover' },
+    { value: 'bauchbinde', label: 'Bauchbinde' }
+]
+
+// Computed: base options with highlighting for types that have themed variants
+const baseHeaderOptions = computed((): HeaderConfigOption[] => {
+    const themedTypes = new Set(
+        headerConfigs.value
+            .filter(c => c.theme_id === projectThemeId.value)
+            .map(c => c.parent_type)
+    )
+    
+    return BASE_TYPES.map(type => ({
+        value: type.value,
+        label: themedTypes.has(type.value) ? `${type.label} *` : type.label,
+        hasTheme: themedTypes.has(type.value)
+    }))
+})
+
+// Computed: themed variants for current project's theme
+const themedHeaderOptions = computed((): HeaderConfigOption[] => {
+    if (projectThemeId.value === null) return []
+    
+    return headerConfigs.value
+        .filter(c => c.theme_id === projectThemeId.value)
+        .map(c => ({
+            value: c.name,  // e.g., "cover_theme3"
+            label: c.label_de || c.name,
+            themeId: c.theme_id
+        }))
+})
+
+// Fetch header configs and project theme
+async function loadHeaderConfigs() {
+    try {
+        // Fetch project to get theme
+        if (props.projectId) {
+            const projResp = await fetch(`/api/projects/${props.projectId}`)
+            if (projResp.ok) {
+                const projData = await projResp.json()
+                projectThemeId.value = projData.theme ?? null
+            }
+        }
+        
+        // Fetch all header configs
+        const resp = await fetch('/api/header-configs')
+        if (resp.ok) {
+            const data = await resp.json()
+            if (data.success) {
+                headerConfigs.value = data.data.map((c: any) => ({
+                    name: c.name,
+                    parent_type: c.parent_type,
+                    theme_id: c.theme_id,
+                    label_de: c.label_de
+                }))
+            }
+        }
+    } catch (error) {
+        console.error('[EditPanel] Error loading header configs:', error)
+    }
+}
+
 // Handle save
 function handleSave() {
     isSaving.value = true
@@ -324,6 +412,7 @@ watch(() => props.isOpen, (isOpen) => {
         imageError.value = false
         isSaving.value = false
         loadStatuses()
+        loadHeaderConfigs()
         // Clear initialization flag after components have mounted
         setTimeout(() => {
             isInitializing.value = false
@@ -458,6 +547,11 @@ watch(() => props.isOpen, (isOpen) => {
 
 .form-select {
     cursor: pointer;
+}
+
+/* Header type option with theme highlight */
+.form-select option.has-theme {
+    font-weight: 700;
 }
 
 /* Image Preview */

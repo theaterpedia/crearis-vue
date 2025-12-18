@@ -41,12 +41,14 @@
         <!-- Central Configs Mode -->
         <div v-else-if="mode === 'central'" class="configs-grid">
             <div v-for="config in filteredConfigs" :key="config.id" class="config-card"
-                :class="{ 'is-default': config.is_default, 'has-theme': (config as any).theme_id != null }">
+                :class="{ 'is-default': config.is_default && !isThemeConfig(config), 'has-theme': isThemeConfig(config) }">
                 <div class="config-header">
                     <span class="config-name">{{ config.name }}</span>
-                    <span v-if="config.is_default" class="badge badge-default">Default</span>
-                    <span v-if="(config as any).theme_id != null" class="badge badge-theme">
-                        🎨 {{ getThemeName((config as any).theme_id) }}
+                    <!-- Show Default badge only for non-theme configs -->
+                    <span v-if="config.is_default && !isThemeConfig(config)" class="badge badge-default">Default</span>
+                    <!-- Show Theme badge for theme-specific configs -->
+                    <span v-if="isThemeConfig(config)" class="badge badge-theme">
+                        🎨 {{ getThemeName(config.theme_id!) }}
                     </span>
                     <span class="parent-type-badge" :class="'type-' + config.parent_type">
                         {{ config.parent_type }}
@@ -69,9 +71,15 @@
             </div>
 
             <!-- Add New Config -->
-            <div class="config-card add-card" @click="showAddDialog = true">
+            <div class="config-card add-card" @click="openAddSubcategory">
                 <div class="add-icon">➕</div>
                 <div class="add-text">Add Subcategory</div>
+            </div>
+
+            <!-- Add Theme-Header -->
+            <div class="config-card add-card add-theme-card" @click="openAddThemeHeader">
+                <div class="add-icon">🎨</div>
+                <div class="add-text">Add Theme-Header</div>
             </div>
         </div>
 
@@ -120,7 +128,7 @@
         <div v-if="showAddDialog || editingConfig" class="modal-overlay" @click.self="closeDialog">
             <div class="modal-dialog modal-lg">
                 <div class="modal-header">
-                    <h3>{{ editingConfig ? '✏️ Edit Config' : '➕ New Subcategory' }}</h3>
+                    <h3>{{ dialogTitle }}</h3>
                     <button class="btn-close" @click="closeDialog">✕</button>
                 </div>
                 <div class="modal-body">
@@ -136,11 +144,21 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Name <span class="required">*</span></label>
-                                <div class="name-input-group">
+                                <label>Name <span v-if="!editingConfig && formMode !== 'theme'"
+                                        class="required">*</span></label>
+                                <!-- When editing: show full name (read-only) -->
+                                <input v-if="editingConfig" :value="formData.original_name" type="text"
+                                    class="form-input" disabled />
+                                <!-- When creating theme header: name is auto-generated -->
+                                <div v-else-if="formMode === 'theme'" class="name-preview">
+                                    <code>{{ formData.parent_type }}_theme{{ formData.theme_id ?? '?' }}</code>
+                                    <small class="form-hint">Auto-generated from parent type + theme</small>
+                                </div>
+                                <!-- When creating subcategory: prefix with dot -->
+                                <div v-else class="name-input-group">
                                     <span class="name-prefix">{{ formData.parent_type }}.</span>
                                     <input v-model="formData.name_suffix" type="text" class="form-input"
-                                        placeholder="subcategory" :disabled="!!editingConfig" />
+                                        placeholder="subcategory" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -155,16 +173,22 @@
                                 <label>Description</label>
                                 <textarea v-model="formData.description" class="form-textarea" rows="2"></textarea>
                             </div>
-                            <div class="form-group">
-                                <label>Theme (optional)</label>
-                                <select v-model="formData.theme_id" class="form-select">
-                                    <option :value="null">— Global (no theme) —</option>
+                            <!-- Theme field: shown when editing theme configs OR for subcategories (optional) -->
+                            <div v-if="showThemeField && (editingConfig || formMode !== 'theme')" class="form-group">
+                                <label>Theme <span v-if="isThemeConfig(editingConfig!)" class="required">*</span><span
+                                        v-else>(optional)</span></label>
+                                <select v-model="formData.theme_id" class="form-select"
+                                    :disabled="editingConfig && isThemeConfig(editingConfig)">
+                                    <option v-if="!editingConfig || !isThemeConfig(editingConfig)" :value="null">—
+                                        Global (no theme) —</option>
                                     <option v-for="theme in themes" :key="theme.id" :value="theme.id">
                                         {{ theme.name }}
                                     </option>
                                 </select>
-                                <small class="form-hint">If set, this config applies only when the project uses this
-                                    theme.</small>
+                                <small v-if="editingConfig && isThemeConfig(editingConfig)" class="form-hint">Theme
+                                    cannot be changed for theme configs.</small>
+                                <small v-else class="form-hint">If set, this config applies only when the project uses
+                                    this theme.</small>
                             </div>
                         </div>
 
@@ -286,6 +310,7 @@ interface HeaderConfig {
     label_de: string
     label_en: string
     description: string
+    theme_id?: number | null
     has_project_override?: boolean
 }
 
@@ -311,6 +336,7 @@ const selectedProjectId = ref<string>('')
 const filterType = ref<string>('')
 
 const showAddDialog = ref(false)
+const formMode = ref<'subcategory' | 'theme'>('subcategory')  // Different form modes
 const editingConfig = ref<HeaderConfig | null>(null)
 const editingOverride = ref<HeaderConfig | null>(null)
 
@@ -330,6 +356,7 @@ const themes = ref<Array<{ id: number; name: string }>>([])
 const formData = ref({
     parent_type: 'cover',
     name_suffix: '',
+    original_name: '',  // Store original name when editing (preserves cover_theme1 format)
     label_de: '',
     label_en: '',
     description: '',
@@ -364,8 +391,38 @@ const filteredConfigs = computed(() => {
 })
 
 const isFormValid = computed(() => {
-    return formData.value.parent_type && formData.value.name_suffix
+    // When editing, original_name is set - just need parent_type
+    if (editingConfig.value) {
+        return !!formData.value.parent_type
+    }
+    // When creating theme header, need parent_type and theme_id (name is auto-generated)
+    if (formMode.value === 'theme') {
+        return !!formData.value.parent_type && formData.value.theme_id !== null
+    }
+    // When creating subcategory, need parent_type and name_suffix
+    return !!formData.value.parent_type && !!formData.value.name_suffix
 })
+
+// Dialog title based on mode
+const dialogTitle = computed(() => {
+    if (editingConfig.value) return '✏️ Edit Config'
+    if (formMode.value === 'theme') return '🎨 New Theme-Header'
+    return '➕ New Subcategory'
+})
+
+// Show theme field: hide for default configs (e.g., cover.default), show for others
+const showThemeField = computed(() => {
+    // When editing a default config, hide theme field
+    if (editingConfig.value?.is_default && !isThemeConfig(editingConfig.value)) {
+        return false
+    }
+    return true
+})
+
+// Check if a config is theme-specific (has theme_id set)
+function isThemeConfig(config: HeaderConfig): boolean {
+    return config.theme_id !== null && config.theme_id !== undefined
+}
 
 // Methods
 async function fetchConfigs() {
@@ -430,22 +487,51 @@ function getThemeName(themeId: number): string {
     return theme?.name ?? `Theme ${themeId}`
 }
 
+function openAddSubcategory() {
+    formMode.value = 'subcategory'
+    showAddDialog.value = true
+}
+
+function openAddThemeHeader() {
+    formMode.value = 'theme'
+    // Pre-select first theme if available
+    formData.value.theme_id = themes.value.length > 0 ? themes.value[0].id : null
+    showAddDialog.value = true
+}
+
 function editConfig(config: HeaderConfig) {
     editingConfig.value = config
-    const [parentType, ...rest] = config.name.split('.')
+
+    // Set form mode based on config type
+    formMode.value = isThemeConfig(config) ? 'theme' : 'subcategory'
+
+    // Store original name - don't try to reconstruct it on save
+    // This preserves names like 'cover_theme1' which use underscore, not dot
     formData.value = {
-        parent_type: parentType,
-        name_suffix: rest.join('.'),
+        parent_type: config.parent_type,
+        name_suffix: config.name,  // Display full name in edit mode
+        original_name: config.name,  // Preserve for save
         label_de: config.label_de,
         label_en: config.label_en,
         description: config.description,
-        theme_id: (config as any).theme_id ?? null,
+        theme_id: config.theme_id ?? null,
         config: { ...config.config }
     }
 }
 
 async function saveConfig() {
-    const name = `${formData.value.parent_type}.${formData.value.name_suffix}`
+    // When editing, use original name
+    // When creating theme mode: auto-generate from parent_type + theme_id
+    // When creating subcategory: construct from parent_type.suffix
+    let name: string
+    if (editingConfig.value) {
+        name = formData.value.original_name
+    } else if (formMode.value === 'theme') {
+        name = `${formData.value.parent_type}_theme${formData.value.theme_id}`
+    } else {
+        name = `${formData.value.parent_type}.${formData.value.name_suffix}`
+    }
+
     const payload = {
         name,
         parent_type: formData.value.parent_type,
@@ -560,9 +646,11 @@ async function removeOverride(configName: string) {
 function closeDialog() {
     showAddDialog.value = false
     editingConfig.value = null
+    formMode.value = 'subcategory'
     formData.value = {
         parent_type: 'cover',
         name_suffix: '',
+        original_name: '',
         label_de: '',
         label_en: '',
         description: '',
@@ -747,6 +835,14 @@ onMounted(async () => {
     color: var(--color-contrast);
 }
 
+.config-card.add-theme-card {
+    border-color: #9c27b0;
+}
+
+.config-card.add-theme-card:hover {
+    background: oklch(90% 0.05 300);
+}
+
 .add-icon {
     font-size: 2rem;
     margin-bottom: 0.5rem;
@@ -908,6 +1004,19 @@ onMounted(async () => {
 
 .name-input-group .form-input {
     border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.name-preview {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.name-preview code {
+    font-family: monospace;
+    color: var(--color-primary-bg);
+    font-weight: 600;
 }
 
 .checkbox-label {

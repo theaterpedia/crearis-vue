@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
         hc.id,
         hc.name,
         hc.parent_type,
+        hc.theme_id,
         hc.is_default,
         hc.config,
         hc.label_de,

@@ -291,6 +291,3 @@ async function saveHeaderSettings() {
     }
 }
 </style>
-gap: 0.75rem;
-}
-</style>
