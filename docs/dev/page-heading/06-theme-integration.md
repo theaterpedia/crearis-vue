@@ -32,13 +32,15 @@ ALTER TABLE projects ADD COLUMN default_event_header_size VARCHAR(20);
 The `/api/header-configs/resolve` endpoint handles theme-aware resolution:
 
 ```typescript
-// Query parameters
-GET /api/header-configs/resolve?headerType=banner&projectId=tp&theme_id=2
+// Query parameters - project_id can be numeric ID OR domaincode
+GET /api/header-configs/resolve?header_type=banner&project_id=opus1
+GET /api/header-configs/resolve?header_type=banner&project_id=9&theme_id=3
 
 // Resolution order:
-// 1. Look for theme-specific config: banner_theme2
-// 2. Fall back to base config: banner
-// 3. Merge with project overrides if any
+// 1. If project_id provided, resolve project and get theme_id from projects.theme
+// 2. Look for theme-specific config: banner_theme3
+// 3. Fall back to base/subcategory config: banner.default
+// 4. Merge with project overrides if any
 ```
 
 ### Auto-detection from Project
@@ -61,18 +63,17 @@ const themeConfig = await findConfig(`${headerType}_theme${themeId}`)
 ```typescript
 import { useHeaderConfig } from '@/composables/useHeaderConfig'
 
-// With explicit theme
-const { config, isLoading } = useHeaderConfig({
-  headerType: 'banner',
-  projectId: 'tp',
-  themeId: 2
+// On /sites/:domaincode/* routes - auto-detects project from route
+const { resolvedConfig, isLoading, meta } = useHeaderConfig({
+  headerType: computed(() => post.header_type || 'banner')
+  // projectId auto-detected from route.params.domaincode
+  // themeId auto-detected from project on server
 })
 
-// Auto-detect from project
-const { config } = useHeaderConfig({
+// With explicit project ID
+const { resolvedConfig } = useHeaderConfig({
   headerType: 'banner',
-  projectId: 'tp'
-  // themeId will be fetched from project
+  projectId: 9  // or 'opus1' domaincode
 })
 ```
 
@@ -184,12 +185,22 @@ The `theme` column in `projects` references the theme ID (0-7).
 
 To create a custom config for theme 3:
 
-1. Open HeaderConfigsEditor (admin panel)
-2. Click "Add Subcategory"
+1. Open HeaderConfigsEditor (sysreg admin panel)
+2. Click **"Add Theme-Header"** button (purple border)
 3. Select parent type (e.g., `banner`)
-4. Set name suffix (e.g., `theme3`)
-5. Select theme "Theme 3" from dropdown
-6. Configure format options (gradient, alignment, etc.)
+4. Select theme from dropdown (e.g., "Institut" = theme 3)
+5. Name auto-generates: `banner_theme3`
+6. Configure properties (gradient, alignment, size, etc.)
 7. Save
 
 The config will be automatically used when projects with theme 3 request a banner header.
+
+### Naming Convention
+
+- Subcategories use dot: `banner.compact`, `cover.dramatic`
+- Theme configs use underscore: `banner_theme3`, `cover_theme0`
+
+### Deleting Theme Configs
+
+Theme-specific configs CAN be deleted (they show Delete button).
+Global defaults like `banner.default` CANNOT be deleted.

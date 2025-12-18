@@ -69,32 +69,48 @@ Returns subcategories with their base type relationships.
 Resolves configuration for a specific context, with theme support.
 
 **Query Parameters:**
-- `headerType` (required): Base type name (banner, cover, columns, simple, bauchbinde)
-- `headerSubtype` (optional): Subcategory name
-- `projectId` (optional): Project ID for override lookup and theme auto-detection
+- `header_type` (required): Base type name (banner, cover, columns, simple, bauchbinde)
+- `header_subtype` (optional): Subcategory name (e.g., `banner.compact`)
+- `project_id` (optional): Project ID (numeric) OR domaincode (string) for override lookup and theme auto-detection
 - `theme_id` (optional): Explicit theme ID (0-7). If not provided, auto-detected from project.
 
 **Resolution Priority:**
-1. Theme-specific config (e.g., `banner_theme2`) if theme_id available
-2. Base config (e.g., `banner`)
-3. Project overrides merged on top
+1. Base config (hardcoded defaults)
+2. Theme-specific config (e.g., `banner_theme3`) if theme_id available
+3. Subcategory fallback if no theme config (e.g., `banner.default`)
+4. Project overrides merged on top
+
+**Example Request:**
+```
+GET /api/header-configs/resolve?header_type=banner&project_id=opus1
+```
 
 **Response:**
 ```json
 {
-  "name": "banner",
-  "headerSize": "medium",
-  "imgTmpAlignY": "top",
-  "contentAlignY": "center",
-  "gradientType": "dark",
-  "gradientDepth": 0.4,
-  "allowedSizes": ["medium", "prominent"],
-  "isActive": true,
-  "theme_id": 2,
-  "_meta": {
-    "isProjectOverride": false,
-    "themeId": 2,
-    "themeSpecific": true
+  "success": true,
+  "data": {
+    "id": 2,
+    "name": "banner",
+    "headerSize": "medium",
+    "contentAlignY": "bottom",
+    "gradientType": "left-bottom",
+    "gradientDepth": 0.3,
+    "allowedSizes": ["medium", "prominent", "mini"],
+    "isFullWidth": false,
+    "contentInBanner": true
+  },
+  "meta": {
+    "header_type": "banner",
+    "header_subtype": "banner.default",
+    "project_id": 9,
+    "theme_id": 3,
+    "layers": {
+      "base": true,
+      "subcategory": true,
+      "theme_specific": true,
+      "project_override": false
+    }
   }
 }
 ```
