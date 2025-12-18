@@ -64,7 +64,9 @@
                 </div>
                 <div class="config-actions">
                     <button class="btn btn-sm btn-secondary" @click="editConfig(config)">✏️ Edit</button>
-                    <button v-if="!config.is_default" class="btn btn-sm btn-danger" @click="deleteConfig(config)">
+                    <!-- Allow delete for: non-defaults OR theme-specific configs (even if is_default for that theme) -->
+                    <button v-if="!config.is_default || isThemeConfig(config)" class="btn btn-sm btn-danger"
+                        @click="deleteConfig(config)">
                         🗑️ Delete
                     </button>
                 </div>
@@ -173,13 +175,17 @@
                                 <label>Description</label>
                                 <textarea v-model="formData.description" class="form-textarea" rows="2"></textarea>
                             </div>
-                            <!-- Theme field: shown when editing theme configs OR for subcategories (optional) -->
-                            <div v-if="showThemeField && (editingConfig || formMode !== 'theme')" class="form-group">
-                                <label>Theme <span v-if="isThemeConfig(editingConfig!)" class="required">*</span><span
+                            <!-- Theme field: 
+                                 - For new theme-headers: required dropdown to select theme
+                                 - For editing theme configs: shown but disabled
+                                 - For subcategories: optional
+                            -->
+                            <div v-if="showThemeField || formMode === 'theme'" class="form-group">
+                                <label>Theme <span v-if="formMode === 'theme'" class="required">*</span><span
                                         v-else>(optional)</span></label>
                                 <select v-model="formData.theme_id" class="form-select"
                                     :disabled="editingConfig && isThemeConfig(editingConfig)">
-                                    <option v-if="!editingConfig || !isThemeConfig(editingConfig)" :value="null">—
+                                    <option v-if="formMode !== 'theme'" :value="null">—
                                         Global (no theme) —</option>
                                     <option v-for="theme in themes" :key="theme.id" :value="theme.id">
                                         {{ theme.name }}
@@ -187,6 +193,8 @@
                                 </select>
                                 <small v-if="editingConfig && isThemeConfig(editingConfig)" class="form-hint">Theme
                                     cannot be changed for theme configs.</small>
+                                <small v-else-if="formMode === 'theme'" class="form-hint">Select which theme this header
+                                    config applies to.</small>
                                 <small v-else class="form-hint">If set, this config applies only when the project uses
                                     this theme.</small>
                             </div>

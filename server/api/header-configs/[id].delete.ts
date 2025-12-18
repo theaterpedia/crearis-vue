@@ -2,7 +2,8 @@
  * DELETE /api/header-configs/:id
  * 
  * Delete a header configuration.
- * Cannot delete default configs (is_default = true).
+ * Cannot delete global default configs (is_default = true AND theme_id IS NULL).
+ * Theme-specific configs CAN be deleted even if is_default = true.
  */
 
 import { defineEventHandler, createError, getRouterParam } from 'h3'
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
     try {
         // Check if it's a default config
         const config = await db.get(`
-      SELECT id, name, is_default FROM header_configs WHERE id = $1
+      SELECT id, name, is_default, theme_id FROM header_configs WHERE id = $1
     `, [id])
 
         if (!config) {
@@ -31,10 +32,13 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        if ((config as any).is_default) {
+        // Only block deletion of GLOBAL defaults (is_default=true AND no theme_id)
+        // Theme-specific configs can be deleted even if is_default=true
+        const isGlobalDefault = (config as any).is_default && (config as any).theme_id === null
+        if (isGlobalDefault) {
             throw createError({
                 statusCode: 403,
-                message: 'Cannot delete default header configs'
+                message: 'Cannot delete global default header configs'
             })
         }
 

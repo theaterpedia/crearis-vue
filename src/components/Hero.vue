@@ -33,11 +33,11 @@
               : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
             : '500px',
       }">
-        <div v-if="overlay" class="hero-cover-overlay" :style="{ background: overlay }"></div>
+        <div v-if="computedOverlay" class="hero-cover-overlay" :style="{ background: computedOverlay }"></div>
       </div>
     </div>
 
-    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">
+    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">`
       <Container>
         <slot />
       </Container>
@@ -593,6 +593,29 @@ watch([() => props.image_id, () => props.image_xmlid], async ([newId, newXmlid]:
 // Computed background image (use new system if available, fallback to imgTmp)
 const computedBackgroundImage = computed(() => {
   return backgroundImage.value || props.imgTmp || ''
+})
+
+// Computed overlay from gradient_type/gradient_depth props OR direct overlay prop
+const computedOverlay = computed(() => {
+  // If direct overlay prop is provided, use it
+  if (props.overlay) {
+    return props.overlay
+  }
+
+  // Generate gradient based on gradient_type and gradient_depth
+  if (props.gradient_type === 'none' || !props.gradient_type) {
+    return null
+  }
+
+  const depth = props.gradient_depth ?? 0.6
+
+  if (props.gradient_type === 'left-bottom') {
+    // Gradient from bottom-left corner (dark) fading to transparent
+    return `linear-gradient(to top right, rgba(0, 0, 0, ${depth}) 0%, rgba(0, 0, 0, ${depth * 0.5}) 30%, transparent 70%)`
+  }
+
+  // Add more gradient types as needed
+  return null
 })
 </script>
 
