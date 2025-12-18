@@ -161,7 +161,7 @@ import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { formatDateTime } from '@/plugins/dateTimeFormat'
 import { useTheme } from '@/composables/useTheme'
 
@@ -169,6 +169,7 @@ const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
 const { setTheme, init: initTheme } = useTheme()
+const { loadForProject, getOptions, parseXmlid } = usePageOptions()
 
 // State
 const event = ref<any>(null)
@@ -207,25 +208,23 @@ const navigationItems = computed(() => {
     return items
 })
 
-// Parse options for PageLayout from event data
+// Parse options for PageLayout using usePageOptions composable
+// This applies: hardcoded defaults → project fields → pages table entry
+// Variant is extracted from xmlid (e.g., opus1.event-workshop__slug → variant='workshop')
 const asideOptions = computed<AsideOptions>(() => {
     if (!event.value) return {}
-    return parseAsideOptions({
-        aside_postit: event.value.aside_options,
-        aside_toc: event.value.aside_toc,
-        aside_list: event.value.aside_list,
-        aside_context: event.value.aside_context
-    })
+    const { variant } = parseXmlid(event.value.xmlid || '')
+    const options = getOptions('event', variant)
+    console.log('[EventPage] Aside options resolved:', { xmlid: event.value.xmlid, variant, options: options.aside, source: options.source })
+    return options.aside
 })
 
 const footerOptions = computed<FooterOptions>(() => {
     if (!event.value) return {}
-    return parseFooterOptions({
-        footer_gallery: event.value.footer_gallery,
-        footer_postit: event.value.footer_options,
-        footer_slider: event.value.footer_slider,
-        footer_repeat: event.value.footer_repeat
-    })
+    const { variant } = parseXmlid(event.value.xmlid || '')
+    const options = getOptions('event', variant)
+    console.log('[EventPage] Footer options resolved:', { xmlid: event.value.xmlid, variant, options: options.footer, source: options.source })
+    return options.footer
 })
 
 // Convert status_val to hex string and get label
@@ -317,6 +316,10 @@ async function loadEvent() {
         if (projectData.theme !== null && projectData.theme !== undefined) {
             await setTheme(projectData.theme, 'initial')
         }
+
+        // Load page options for this project (uses composable with caching)
+        await loadForProject(domaincode.value)
+        console.log('[EventPage] Page options loaded for project:', domaincode.value)
 
         // Determine if identifier is numeric ID or slug-based
         // parseRouteIdentifier returns: { type: 'id' | 'slug', id?, xmlid?, template?, slug? }

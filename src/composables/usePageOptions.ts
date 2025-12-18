@@ -330,9 +330,16 @@ export function parsePageFromProject(data: ProjectDefaults): PageOptions {
 }
 
 /**
- * Parse xmlid to extract entity type and variant
- * Format: {domaincode}.{entity}-{variant}.{slug} or {domaincode}.{entity}.{slug}
- * Returns: { entityType: 'post', variant: 'demo' } or { entityType: 'event', variant: undefined }
+ * Parse xmlid to extract entity type and template (variant)
+ * 
+ * Format per ENTITY_INDEX_CONVENTIONS.md:
+ * - {domaincode}.{entity}__{slug}              → no template
+ * - {domaincode}.{entity}-{template}__{slug}   → with template
+ * 
+ * Examples:
+ * - 'opus1.post__my_topic'                     → { entityType: 'post' }
+ * - 'opus1.post-workshop__my_recap'            → { entityType: 'post', variant: 'workshop' }
+ * - 'opus1.event-conference__annual_meeting'   → { entityType: 'event', variant: 'conference' }
  */
 export function parseXmlid(xmlid: string): { entityType: EntityType; variant?: string } {
     if (!xmlid) return { entityType: 'post' }
@@ -340,11 +347,7 @@ export function parseXmlid(xmlid: string): { entityType: EntityType; variant?: s
     const parts = xmlid.split('.')
     if (parts.length < 2) return { entityType: 'post' }
 
-    const secondSlug = parts[1] // e.g., 'post-demo' or 'post' or 'event-conference'
-
-    // Split by hyphen to get entity and variant
-    const [entity, ...variantParts] = secondSlug.split('-')
-    const variant = variantParts.length > 0 ? variantParts.join('-') : undefined
+    const secondPart = parts[1] // e.g., 'post-workshop__slug', 'post__slug', 'event-conference__slug'
 
     // Map entity string to EntityType
     const entityMap: Record<string, EntityType> = {
@@ -354,9 +357,28 @@ export function parseXmlid(xmlid: string): { entityType: EntityType; variant?: s
         'landing': 'landing'
     }
 
-    const entityType = entityMap[entity] || 'post'
+    // Check for hyphen (template separator): post-workshop__slug
+    if (secondPart.includes('-')) {
+        const hyphenIndex = secondPart.indexOf('-')
+        const entity = secondPart.substring(0, hyphenIndex)
+        // Get template (everything after hyphen until __ or end)
+        const afterHyphen = secondPart.substring(hyphenIndex + 1)
+        const template = afterHyphen.includes('__')
+            ? afterHyphen.substring(0, afterHyphen.indexOf('__'))
+            : afterHyphen
 
-    return { entityType, variant }
+        return {
+            entityType: entityMap[entity] || 'post',
+            variant: template || undefined
+        }
+    }
+
+    // No hyphen - extract entity from before __ or use whole part
+    const entity = secondPart.includes('__')
+        ? secondPart.substring(0, secondPart.indexOf('__'))
+        : secondPart
+
+    return { entityType: entityMap[entity] || 'post' }
 }
 
 /**

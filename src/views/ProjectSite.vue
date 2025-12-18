@@ -185,12 +185,13 @@ import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { setTheme, init: initTheme } = useTheme()
+const { loadForProject, getOptions } = usePageOptions()
 
 // State
 const user = ref<any>(null)
@@ -202,15 +203,21 @@ const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 
-// Parse options for PageLayout
+// Parse options for PageLayout using usePageOptions composable
+// This applies: hardcoded defaults → project fields → pages table entry
+// For landing page, entity type is 'landing' with no variant
 const asideOptions = computed<AsideOptions>(() => {
     if (!project.value) return {}
-    return parseAsideOptions(project.value)
+    const options = getOptions('landing')
+    console.log('[ProjectSite] Aside options resolved:', { options: options.aside, source: options.source })
+    return options.aside
 })
 
 const footerOptions = computed<FooterOptions>(() => {
     if (!project.value) return {}
-    return parseFooterOptions(project.value)
+    const options = getOptions('landing')
+    console.log('[ProjectSite] Footer options resolved:', { options: options.footer, source: options.source })
+    return options.footer
 })
 
 // Edit panel data computed from project
@@ -469,6 +476,10 @@ onMounted(async () => {
         if (project.value?.theme !== null && project.value?.theme !== undefined) {
             await setTheme(project.value.theme, 'initial')
         }
+
+        // Load page options for this project (uses composable with caching)
+        await loadForProject(domaincode.value)
+        console.log('[ProjectSite] Page options loaded for project:', domaincode.value)
 
         // Set SEO meta tags after project is loaded
         setProjectSeoMeta()
