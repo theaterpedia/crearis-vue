@@ -162,23 +162,6 @@
             <!-- Request Review Button (visible for owner in draft status) -->
             <RequestReviewButton v-if="projectStatus === 64" :project-id="projectId" :current-status="projectStatus"
                 :is-owner="isProjectOwner" @review-requested="handleReviewRequested" />
-
-            <!-- Alpha Mode: Publish Toggle (for project owners) -->
-            <div v-if="isAlphaMode() && isProjectOwner && projectStatus >= 64" class="alpha-publish-toggle">
-                <label class="alpha-toggle-label">
-                    <span class="alpha-toggle-text">
-                        {{ isAlphaPublished ? '🌐 Öffentlich' : '🔒 Nur Team' }}
-                    </span>
-                    <button class="alpha-toggle-btn" :class="{ 'is-published': isAlphaPublished }"
-                        :disabled="isAlphaUpdating" @click="toggleAlphaPublish">
-                        <span class="toggle-slider"></span>
-                    </button>
-                </label>
-                <span class="alpha-toggle-hint">
-                    {{ isAlphaPublished ? 'Projekt ist für alle sichtbar' : 'Projekt nur für Team-Mitglieder sichtbar'
-                    }}
-                </span>
-            </div>
         </div>
 
         <!-- NEW: 3-Column Dashboard Layout (alpha/dashboard branch) -->
@@ -199,6 +182,15 @@
                     </svg>
                 </button>
                 <span class="overline-domaincode">{{ projectId }}</span>
+
+                <!-- Alpha Mode: Publish Toggle (always visible for project owners in alpha) -->
+                <div v-if="isAlphaMode() && isProjectOwner" class="alpha-publish-toggle alpha-publish-toggle--inline">
+                    <button class="alpha-toggle-btn" :class="{ 'is-published': isAlphaPublished }"
+                        :disabled="isAlphaUpdating" @click="toggleAlphaPublish"
+                        :title="isAlphaPublished ? 'Öffentlich - Klicken zum Verbergen' : 'Nur Team - Klicken zum Veröffentlichen'">
+                        <span class="toggle-icon">{{ isAlphaPublished ? '🌐' : '🔒' }}</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Columns Container -->
@@ -766,72 +758,6 @@ onUnmounted(() => {
     flex-wrap: wrap;
 }
 
-/* ===== ALPHA PUBLISH TOGGLE ===== */
-.alpha-publish-toggle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem 1rem;
-    background: var(--color-bg-soft);
-    border-radius: var(--radius-card);
-    border: 1px solid var(--color-border);
-}
-
-.alpha-toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-}
-
-.alpha-toggle-text {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-contrast);
-}
-
-.alpha-toggle-btn {
-    position: relative;
-    width: 48px;
-    height: 26px;
-    background: var(--color-muted);
-    border: none;
-    border-radius: 13px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.alpha-toggle-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.alpha-toggle-btn.is-published {
-    background: var(--color-success, #22c55e);
-}
-
-.toggle-slider {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.alpha-toggle-btn.is-published .toggle-slider {
-    transform: translateX(22px);
-}
-
-.alpha-toggle-hint {
-    font-size: 0.75rem;
-    color: var(--color-muted-contrast);
-}
-
 /* ===== NAVBAR ===== */
 .navbar-item {
     display: flex;
@@ -1114,6 +1040,49 @@ onUnmounted(() => {
 .overline-domaincode {
     font-size: 0.875rem;
     color: var(--color-dimmed);
+}
+
+/* Alpha Publish Toggle - Inline variant for stepper overline */
+.alpha-publish-toggle--inline {
+    margin-left: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn:hover {
+    background: var(--color-bg);
+    border-color: var(--color-project);
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn.is-published {
+    background: var(--color-success, #22c55e);
+    border-color: var(--color-success, #22c55e);
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.alpha-publish-toggle--inline .toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
 }
 
 /* Columns Container */
