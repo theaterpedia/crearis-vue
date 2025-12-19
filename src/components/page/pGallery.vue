@@ -15,9 +15,9 @@
         <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
             :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
             :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
-            :alpha-preview="alphaPreview" :skip-alpha-filter="skipAlphaFilter" :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy"
-            :interaction="interactionMode" :data-mode="true" :multi-select="false" :show-trash="showTrash"
-            @item-click="handleItemClick" @item-trash="handleItemTrash" />
+            :alpha-preview="alphaPreview" :skip-alpha-filter="skipAlphaFilter" :item-type="itemType" :size="size"
+            :variant="variant" :anatomy="anatomy" :interaction="interactionMode" :data-mode="true" :multi-select="false"
+            :show-trash="showTrash" @item-click="handleItemClick" @item-trash="handleItemTrash" />
 
         <!-- Route Navigation Modal (if using route-modal mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"

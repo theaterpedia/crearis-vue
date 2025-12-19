@@ -19,8 +19,7 @@
             <!-- Left Column: Events Gallery (using clist pGallery) -->
             <div class="events-gallery">
                 <pGallery ref="eventsGalleryRef" entity="events" :project="projectId" :status-gt="0" size="medium"
-                    item-type="card" :anatomy="'topimage'" on-activate="route" show-trash
-                    :skip-alpha-filter="true"
+                    item-type="card" :anatomy="'topimage'" on-activate="route" show-trash :skip-alpha-filter="true"
                     @item-trash="handleEventDelete" />
             </div>
 
