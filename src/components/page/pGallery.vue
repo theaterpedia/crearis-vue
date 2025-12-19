@@ -212,22 +212,26 @@ const closeRouteModal = () => {
 </script>
 
 <style scoped>
+/* ===== pGallery - Page Gallery Component ===== */
+
 .p-gallery {
     width: 100%;
 }
 
+/* --- Route Navigation Button --- */
 .route-nav-button {
     padding: 0.75rem 1.5rem;
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-button);
+    font-family: var(--headings);
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: var(--transition);
 }
 
 .route-nav-button:hover {
-    background: var(--color-primary-bg-hover, var(--color-primary-bg));
+    opacity: 0.85;
 }
 </style>
