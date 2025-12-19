@@ -83,6 +83,7 @@ export default defineConfig({
                     text: 'Quick Reference',
                     items: [
                         { text: 'Overview', link: '/dev/' },
+                        { text: '🚨 Alpha Publishing System', link: '/dev/alpha-publishing' },
                         { text: 'Hack the Sysreg', link: '/dev/hack-sysreg' },
                         { text: 'Entity Index Conventions', link: '/dev/ENTITY_INDEX_CONVENTIONS' },
                         { text: 'Creators, Not Owners', link: '/dev/creators-not-owners' },
