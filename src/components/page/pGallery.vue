@@ -15,7 +15,7 @@
         <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
             :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
             :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
-            :alpha-preview="alphaPreview" :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy"
+            :alpha-preview="alphaPreview" :skip-alpha-filter="skipAlphaFilter" :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy"
             :interaction="interactionMode" :data-mode="true" :multi-select="false" :show-trash="showTrash"
             @item-click="handleItemClick" @item-trash="handleItemTrash" />
 
@@ -60,6 +60,8 @@ interface Props {
 
     // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
     alphaPreview?: boolean
+    // Skip alpha filtering entirely (for internal editing pages)
+    skipAlphaFilter?: boolean
 
     // Display options
     itemType?: 'tile' | 'card'

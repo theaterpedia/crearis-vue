@@ -560,6 +560,12 @@ async function loadProjectData() {
             // Use status field (integer, Migration 040 values)
             projectStatus.value = projectData.value.status ?? null
 
+            // Debug alpha mode after loading project
+            console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
+            console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
+            console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
+            console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
+
             // Load project members
             await loadProjectMembers()
         }
@@ -716,6 +722,16 @@ function handleDashboardOpenExternal(url: string) {
 
 // Initialize theme system
 const { init: initTheme } = useTheme()
+
+// Debug: Log alpha mode state
+const debugAlphaMode = () => {
+    console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
+    console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
+    console.log('[Alpha Debug] projectData:', projectData.value)
+    console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
+    console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
+    console.log('[Alpha Debug] isAlphaPublished:', isAlphaPublished.value)
+}
 
 // Auth check on mount
 onMounted(async () => {

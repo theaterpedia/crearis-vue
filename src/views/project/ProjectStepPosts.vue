@@ -20,6 +20,7 @@
             <div class="posts-gallery">
                 <pGallery ref="postsGalleryRef" entity="posts" :project="projectId" :status-gt="0" size="medium"
                     item-type="card" :anatomy="'topimage'" on-activate="route" show-trash
+                    :skip-alpha-filter="true"
                     @item-trash="handlePostDelete" />
             </div>
 

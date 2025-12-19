@@ -11,6 +11,7 @@ import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mo
 // - response includes domaincode from joined projects table
 // Alpha mode (v0.4):
 // - ?alpha_preview=true to include 'draft' projects (when in alpha mode)
+// - ?skip_alpha_filter=true to bypass alpha filtering entirely (for internal editing pages)
 // - Filters by projects.status_old instead of sysreg status
 export default defineEventHandler(async (event) => {
     try {
@@ -28,8 +29,10 @@ export default defineEventHandler(async (event) => {
         const params: any[] = []
 
         // Alpha mode: filter by projects.status_old
+        // skip_alpha_filter=true bypasses this entirely (for internal editing pages)
         // TODO v0.5: Remove this block when migrating to full sysreg status
-        if (isServerAlphaMode()) {
+        const skipAlphaFilter = query.skip_alpha_filter === 'true'
+        if (isServerAlphaMode() && !skipAlphaFilter) {
             const alphaPreview = query.alpha_preview === 'true'
             const validStatuses = getAlphaProjectStatuses(alphaPreview)
             // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
