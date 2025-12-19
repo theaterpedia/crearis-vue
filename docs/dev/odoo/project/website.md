@@ -265,3 +265,75 @@ const projects = await odoo.searchRead(
 2. **Use feature flags** to enable capabilities per project
 3. **Configure aggregation** via post/event_domain_ids for hubsites
 4. **Link company** to its primary website via domain_code
+
+## Crearis Admin Menu
+
+The Crearis module adds a dedicated admin menu with settings and system tables:
+
+```xml
+<!-- Main Crearis Menu -->
+<menuitem id="menu_crearis" name="Crearis" />
+
+<!-- Settings Submenu -->
+<menuitem id="menu_crearis_settings" 
+          name="Settings" 
+          parent="menu_crearis" />
+
+<!-- System Tables Submenu -->
+<menuitem id="menu_crearis_systables" 
+          name="System Tables" 
+          parent="menu_crearis" />
+```
+
+### Menu Structure
+
+```
+Crearis
+├── Settings
+│   ├── Domain Users     → crearis.domainuser
+│   ├── Locations        → event.track.location
+│   └── Config Templates → crearis.config.template
+└── System Tables
+    └── Versions         → crearis.version
+```
+
+### Menu Actions
+
+| Menu Item | Model | View Mode |
+|-----------|-------|-----------|
+| Domain Users | `crearis.domainuser` | tree, form |
+| Locations | `event.track.location` | tree, form |
+| Config Templates | `crearis.config.template` | tree, form |
+| Versions | `crearis.version` | tree, form |
+
+### Action Definitions
+
+```xml
+<!-- Domain Users -->
+<record id="action_crearis_domainuser" model="ir.actions.act_window">
+    <field name="name">Domain Users</field>
+    <field name="res_model">crearis.domainuser</field>
+    <field name="view_mode">tree,form</field>
+</record>
+
+<!-- Locations -->
+<record id="action_crearis_location" model="ir.actions.act_window">
+    <field name="name">Locations</field>
+    <field name="res_model">event.track.location</field>
+    <field name="view_mode">tree,form</field>
+</record>
+
+<!-- Config Templates -->
+<record id="action_crearis_config_template" model="ir.actions.act_window">
+    <field name="name">Config Templates</field>
+    <field name="res_model">crearis.config.template</field>
+    <field name="view_mode">tree,form</field>
+</record>
+```
+
+::: tip Vue.js Navigation
+This menu structure informs the Vue.js admin panel navigation:
+- **Settings section**: User management, location management, configuration
+- **System Tables**: Version tracking and system data
+- Actions map to API endpoints and list/detail views
+:::

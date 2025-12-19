@@ -11,6 +11,7 @@ Crearis extends standard Odoo models with custom fields and introduces new model
 ### A. Basic Concepts
 - [XML IDs & Versioning](./concepts/xmlid-versioning.md) - How Crearis tracks changes and generates unique IDs
 - [JSON Fields](./concepts/json-fields.md) - Heavy use of JSON fields for flexible configuration
+- [Web Options](./concepts/web-options.md) - Abstract mixin for page section configuration (page, aside, header, footer)
 - [Demo Data Detection](./concepts/demo-data.md) - Mixin for identifying demo/test records
 
 ### B. Project Architecture  
@@ -64,8 +65,8 @@ class Event(models.Model):
     _inherit = ['event.event', 'web.options.abstract', 'demo.data.mixin']
 ```
 
-- `web.options.abstract` - Provides JSON-based options/settings
-- `demo.data.mixin` - Adds `is_demo` computed field
+- `web.options.abstract` - Provides 4 JSON fields for page sections (page, aside, header, footer) with typed accessors. See [Web Options](./concepts/web-options.md)
+- `demo.data.mixin` - Adds `is_demo` computed field. See [Demo Data](./concepts/demo-data.md)
 
 ## API Access
 

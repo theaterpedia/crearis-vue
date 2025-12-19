@@ -200,6 +200,12 @@ cimg = fields.Text()
 md = fields.Text()
 cid = fields.Char(compute=...)
 version = fields.Integer()
+
+# Web Options (from web.options.abstract)
+page_options = fields.Json()
+aside_options = fields.Json()
+header_options = fields.Json()
+footer_options = fields.Json()
 ```
 
 ### Location (event.track.location)
@@ -350,3 +356,105 @@ const onlineSpaces = await odoo.searchRead(
 4. **Mark defaults** - Set `is_default=True` for primary spaces
 5. **Include MS Teams IDs** - For virtual spaces, configure site/list/drive IDs
 6. **Track versions** - Partners auto-increment version on write
+
+## Web Options (Inherited)
+
+Partners inherit the [web.options.abstract](../concepts/web-options.md) mixin, providing four JSON fields for page section configuration:
+
+| Field | Purpose | Example Content |
+|-------|---------|------------------|
+| `page_options` | Partner profile page settings | `{"background": "secondary", "navigation": "tabs"}` |
+| `aside_options` | Sidebar widgets | `{"list": "partners", "context": "related"}` |
+| `header_options` | Profile header options | `{"postit": "Official venue"}` |
+| `footer_options` | Footer widgets | `{"gallery": "events", "sitemap": "none"}` |
+
+See [Web Options](../concepts/web-options.md) for full field reference and accessor fields.
+
+## Odoo Backend UI
+
+The partner form view is extended via `res_partner.xml` to add Crearis-specific fields and the web options tab.
+
+### Form View Extensions
+
+```xml
+<!-- Header fields added before VAT -->
+<xpath expr="//field[@name='vat']" position="before">
+    <label string="Header Type+Size" for="header_type" />
+    <div class="o_row">
+        <field name="header_type" class="oe_inline" nolabel="1" />
+        <field name="header_size" class="oe_inline" nolabel="1" />
+    </div>
+    <field name="cimg"/>
+    <field name="md" />
+</xpath>
+```
+
+### Web Options Tab
+
+A "Website" tab is added to the partner notebook with the full web options UI:
+
+```xml
+<page string="Website" name="web_options">
+    <!-- Hidden state fields -->
+    <field name="page_options" invisible="1"/>
+    <field name="page_has_content" invisible="1"/>
+    <!-- ... other hidden fields ... -->
+    
+    <!-- Toggle buttons for each section -->
+    <group>
+        <group>
+            <button name="action_create_page_options" 
+                    type="object" 
+                    string="Create Page Options"
+                    class="btn-primary"
+                    icon="fa-plus"
+                    attrs="{'invisible': [('page_has_content', '=', True)]}"/>
+                    
+            <button name="action_delete_page_options" 
+                    type="object" 
+                    string="Delete Page Options"
+                    class="btn-danger"
+                    icon="fa-times"
+                    attrs="{'invisible': [('page_has_content', '=', False)]}"
+                    confirm="Are you sure?"/>
+        </group>
+        <!-- ... repeat for aside, header, footer ... -->
+    </group>
+    
+    <!-- Conditional section display -->
+    <div attrs="{'invisible': [('page_has_content', '=', False)]}">
+        <separator string="Page Options"/>
+        <group string="Page Configuration">
+            <field name="page_options" widget="text"/>
+        </group>
+    </div>
+</page>
+```
+
+### UI Pattern for Vue.js
+
+This Odoo UI pattern translates to Vue.js components:
+
+| Odoo Element | Vue.js Equivalent |
+|--------------|-------------------|
+| `attrs="{'invisible': [...]}"` | `v-if="condition"` |
+| `<button type="object">` | `@click="methodName()"` |
+| `class="btn-primary/btn-danger"` | Tailwind/CSS classes |
+| `icon="fa-plus/fa-times"` | Icon component (Lucide, etc.) |
+| `confirm="..."` | Confirmation modal/dialog |
+| `<group>` | Flex/grid container |
+| `widget="text"` | `<textarea>` component |
+
+## Related Entity Documentation
+
+The web options UI pattern is consistent across all entities that inherit from `web.options.abstract`:
+
+- **[Events](./events.md)** - Extended event form with demo banner, feature flags, and full web options
+- **[Episodes (Blog Posts)](./episodes.md)** - Extended blog post form with Format Options tab
+- **[Domain Users](../project/domainuser.md)** - Custom form with settings JSON and web options sections
+
+All these forms share:
+- Hidden computed state fields (`*_has_content`, `*_has_changes`)
+- Create/Delete toggle buttons for each section
+- Conditional display of option editors
+- Consistent button styling and confirm dialogs

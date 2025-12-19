@@ -306,3 +306,94 @@ class Company(models.Model):
 4. **JSON validation** - validate `json_config` structure
 5. **Sequence ordering** - use sequence for predictable ordering
 6. **Descriptive names** - use meaningful `name` codes
+
+## Odoo Backend UI
+
+### Config Settings View
+
+The website configuration extends Odoo's Settings with a "Crearis-Integration" section:
+
+```xml
+<h2>Crearis-Integration</h2>
+<div id="crearis_website_settings" attrs="{'invisible': [('website_id', '=', False)]}">
+    
+    <!-- Domain identification -->
+    <field name="domain_code" title="Shortcode for website-id"/>
+    <field name="is_company_domain" readonly="True"/>
+    
+    <!-- Site type -->
+    <field name="crearis_is_hubsite"/>
+    
+    <!-- Feature flags (readonly unless company domain) -->
+    <field name="crearis_use_msteams" 
+           attrs="{'readonly': [('is_company_domain', '=', False)]}"/>
+    <field name="crearis_use_jitsi" 
+           attrs="{'readonly': [('is_company_domain', '=', False)]}"/>
+    <!-- ... more flags ... -->
+    
+    <!-- Content aggregation -->
+    <field name="crearis_post_domain_ids"/>
+    <field name="crearis_event_domain_ids"/>
+</div>
+```
+
+### Feature Flag Descriptions
+
+| Setting | UI Description |
+|---------|---------------|
+| `is_company_domain` | Configure under Users and Companies if checked - serves as default company-domain |
+| `crearis_is_hubsite` | Website aggregates published events and posts from all websites |
+| `crearis_use_msteams` | Spaces for video/chat sessions, files and folders via MS Teams |
+| `crearis_use_jitsi` | Rooms for video/chat sessions via Odoo-Jitsi-Integration |
+| `crearis_use_template_codes` | Event templates with codes like A1, A2 with different settings/workflows |
+| `crearis_use_tracks` | Fine-grained event configuration for multi-day events, mixed online/in-person |
+| `crearis_use_products` | Deliver multiple events as combined solutions, addons, gadgets |
+| `crearis_use_overline` | Newspaper-style: no tagline, teasertext below headline |
+
+### Config Template Views
+
+Config templates use both form and inline tree views:
+
+```xml
+<!-- Form view -->
+<form string="Config Template">
+    <sheet>
+        <group>
+            <field name="is_default"/>
+            <field name="sequence"/>
+            <field name="name"/>
+            <field name="type"/>
+            <field name="description"/>
+            <field name="company_id"/>
+        </group>
+        <group>
+            <field name="json_config" 
+                   attrs="{'readonly':[('type', '=like', 'html%')]}"/>
+            <field name="html_config" 
+                   attrs="{'readonly':[('type', '=like', 'json%')]}"/>
+        </group>
+    </sheet>
+</form>
+
+<!-- Inline tree view -->
+<tree string="Config Templates" editable="bottom">
+    <field name="sequence" widget="handle"/>
+    <field name="is_default"/>
+    <field name="name"/>
+    <field name="type"/>
+    <field name="description"/>
+    <field name="company_id"/>
+    <field name="json_config" attrs="{'readonly':[('type', '=like', 'html%')]}"/>
+    <field name="html_config" attrs="{'readonly':[('type', '=like', 'json%')]}"/>
+</tree>
+```
+
+### Company View Extension
+
+The company form adds domain_code before the website field:
+
+```xml
+<xpath expr="//field[@name='website']" position="before">
+    <field name="domain_code" string="Domain Code"/>
+</xpath>
+```

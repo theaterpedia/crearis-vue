@@ -13,7 +13,7 @@ class BlogPost(models.Model):
 ### Inheritance
 
 - `blog.post` - Standard Odoo Blog module
-- `web.options.abstract` - JSON options mixin
+- `web.options.abstract` - [Web options mixin](../concepts/web-options.md) for page section configuration
 - `demo.data.mixin` - Demo data detection
 
 ## Crearis Custom Fields
@@ -205,6 +205,12 @@ header_size = fields.Selection()
 homesite_id = fields.Many2one()# Editing restriction
 cid = fields.Char(compute=...) # Crearis ID
 version = fields.Integer()
+
+# Web Options (from web.options.abstract)
+page_options = fields.Json()
+aside_options = fields.Json()
+header_options = fields.Json()
+footer_options = fields.Json()
 ```
 
 ## XML-RPC API
@@ -337,3 +343,24 @@ function getPostContent(post: BlogPost): string {
 4. **Set homesite_id** to restrict editing
 5. **Include cimg** for visual listings
 6. **Track versions** via auto-increment
+
+## Web Options (Inherited)
+
+Blog posts inherit the [web.options.abstract](../concepts/web-options.md) mixin, providing four JSON fields for page section configuration:
+
+| Field | Purpose | Example Content |
+|-------|---------|------------------|
+| `page_options` | Main page settings | `{"background": "neutral", "cssvars": "--reading-width: 800px"}` |
+| `aside_options` | Sidebar widgets | `{"toc": "auto", "list": "posts"}` |
+| `header_options` | Header banners | `{"postit": "Featured article"}` |
+| `footer_options` | Footer widgets | `{"slider": "posts", "sitemap": "small"}` |
+
+See [Web Options](../concepts/web-options.md) for full field reference and accessor fields.
+
+## Related Entity Documentation
+
+The episode form view pattern is shared across all content entities:
+
+- **[Partners](./partners.md)** - Extended partner form with Odoo UI examples
+- **[Events](./events.md)** - Extended event form with demo banner and feature flags
+- **[Domain Users](../project/domainuser.md)** - Custom form with settings JSON and web options

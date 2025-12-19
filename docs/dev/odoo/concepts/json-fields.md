@@ -248,30 +248,25 @@ await odoo.write('event.event', [eventId], {
 
 ## Web Options Abstract
 
-The `web.options.abstract` mixin provides standardized options handling:
+The `web.options.abstract` mixin provides a comprehensive system for managing web page section options using **four separate JSON fields**:
 
-```python
-class WebOptionsAbstract(models.AbstractModel):
-    _name = 'web.options.abstract'
-    
-    options = fields.Json(
-        string='Web Options',
-        help='JSON options for web display',
-        default={}
-    )
-    
-    custom_header = fields.Boolean(
-        compute='_compute_custom_header',
-        inverse='_inverse_custom_header'
-    )
-    
-    # ... computed accessors for common options
-```
+| Field | Purpose |
+|-------|---------|
+| `page_options` | Background, CSS vars, navigation |
+| `aside_options` | Sidebar: postit, toc, list, context |
+| `header_options` | Alert banners, postits |
+| `footer_options` | Gallery, slider, sitemap, repeat |
 
-Models inheriting this mixin get:
-- Standardized `options` JSON field
-- Computed accessors for common settings
-- Consistent API across entity types
+Each section has:
+- Stored JSON field with `default=False`
+- Stored `*_has_content` boolean indicator
+- Computed `*_has_changes` for change detection
+- Multiple typed accessor fields (compute/inverse pattern)
+- Helper methods: `get_option()`, `set_option()`, `remove_option()`
+
+::: tip Full Documentation
+See **[Web Options](./web-options.md)** for complete field reference, JSON structures, and API usage examples.
+:::
 
 ## Best Practices
 
@@ -280,3 +275,62 @@ Models inheriting this mixin get:
 3. **Computed accessors** - Provide typed fields for commonly accessed properties
 4. **Validate on write** - Check JSON structure in `write()` override if needed
 5. **Avoid deep nesting** - Keep structures reasonably flat for performance
+
+## Odoo UI: JSON Field Widget
+
+Odoo 16 requires a custom widget to edit JSON fields in form views. The `json_field.js` extends Odoo's field utilities:
+
+```javascript
+// Extend field_utils with JSON formatting and parsing
+field_utils.format.json = function(value) { return JSON.stringify(value); };
+field_utils.parse.json = function(value) { return JSON.parse(value); };
+
+// Textarea widget for editing JSON in forms
+var JsonTextField = basic_fields.InputField.extend({
+    description: _lt("Json"),
+    className: 'o_field_json',
+    supportedFieldTypes: ['json'],
+    tagName: 'span',
+    
+    init: function () {
+        this._super.apply(this, arguments);
+        if (this.mode === 'edit') {
+            this.tagName = 'textarea';
+        }
+        this.autoResizeOptions = {parent: this};
+    },
+    
+    // Deep equals check prevents infinite loops
+    _isSameValue: function (value) {
+        return _.isEqual(value, this.value);
+    }
+});
+fieldRegistry.add('json', JsonTextField);
+```
+
+### Key Implementation Details
+
+| Feature | Implementation |
+|---------|---------------|
+| Display mode | Renders as `<span>` with JSON.stringify |
+| Edit mode | Renders as `<textarea>` with auto-resize |
+| Value comparison | Uses `_.isEqual()` deep comparison |
+| Enter key | Stops propagation (allows newlines in textarea) |
+
+### Usage in Views
+
+```xml
+<!-- Raw JSON editing -->
+<field name="settings" widget="json"/>
+
+<!-- Text widget for computed JSON accessors -->
+<field name="page_cssvars" widget="text"/>
+```
+
+::: tip Vue.js Equivalent
+For Crearis-Vue, translate this pattern to:
+- **Display**: `<pre>{{ JSON.stringify(value, null, 2) }}</pre>`
+- **Edit**: `<textarea v-model="jsonString">` with JSON.parse/stringify
+- **Validation**: Use try/catch on JSON.parse for error handling
+- **Comparison**: Use deep equality libraries like `lodash.isEqual`
+:::

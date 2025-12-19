@@ -20,6 +20,11 @@ class DomainUser(models.Model):
     _rec_name = "cid"
 ```
 
+### Inheritance
+
+- `web.options.abstract` - [Web options mixin](../concepts/web-options.md) for page section configuration
+- `demo.data.mixin` - [Demo data detection](../concepts/demo-data.md)
+
 ## Core Fields
 
 ### Relationships
@@ -372,3 +377,119 @@ const domainUserId = await odoo.create('crearis.domainuser', {
 3. **Store complex config in settings** - Use JSON for flexibility
 4. **Check active flag** - Filter inactive records
 5. **Use cid for references** - Unique across domains
+
+## Web Options (Inherited)
+
+Domain users inherit the [web.options.abstract](../concepts/web-options.md) mixin, providing four JSON fields for user profile page configuration:
+
+| Field | Purpose | Example Content |
+|-------|---------|------------------|
+| `page_options` | User profile page settings | `{"background": "muted", "navigation": "minimal"}` |
+| `aside_options` | Profile sidebar widgets | `{"list": "events", "context": "user-events"}` |
+| `header_options` | Profile header options | `{"postit": "Team Lead"}` |
+| `footer_options` | Profile footer widgets | `{"gallery": "media", "sitemap": "none"}` |
+
+See [Web Options](../concepts/web-options.md) for full field reference and accessor fields.
+
+## Odoo Backend UI
+
+The domain user form is a fully custom view (not inheriting from another model).
+
+### Form Layout
+
+```xml
+<form string="Domain User">
+    <!-- Demo banner -->
+    <div class="ribbon ribbon-top-left" 
+         attrs="{'invisible': [('is_demo', '=', False)]}">
+        <span class="bg-success">DEMO DATA</span>
+    </div>
+    
+    <sheet>
+        <!-- Header section -->
+        <div class="oe_title">
+            <!-- Overline: CID, Domain Code, User, Role, Active -->
+            <div class="o_row">
+                <field name="cid" readonly="1"/>
+                <field name="domain_code" readonly="1"/>
+                <field name="user_id"/>
+                <field name="role"/>
+                <field name="active"/>
+            </div>
+            
+            <!-- Headline: Name -->
+            <h1><field name="name" placeholder="Title/Role Name"/></h1>
+            
+            <!-- Subline: Description -->
+            <field name="description" placeholder="Kurzbeschreibung"/>
+            
+            <!-- Domain selector -->
+            <field name="domain_id"/>
+        </div>
+        
+        <!-- Settings section -->
+        <separator string="Settings"/>
+        <group>
+            <group string="Content">
+                <field name="content_options" widget="text"/>
+                <field name="custom_md"/>
+            </group>
+            <group string="Security">
+                <field name="capabilities" placeholder="admin, editor, viewer"/>
+            </group>
+        </group>
+        
+        <!-- Conditional markdown body -->
+        <div attrs="{'invisible': [('custom_md', '=', False)]}">
+            <separator string="Body"/>
+            <field name="md" widget="text"/>
+        </div>
+        
+        <!-- Web Options sections... -->
+    </sheet>
+</form>
+```
+
+### Tree View with Filters
+
+```xml
+<tree>
+    <field name="cid"/>
+    <field name="domain_code"/>
+    <field name="role"/>
+    <field name="name"/>
+    <field name="user_id"/>
+    <field name="description"/>
+    <field name="is_demo"/>
+    <field name="page_has_content"/>
+    <field name="aside_has_content"/>
+    <field name="header_has_content"/>
+    <field name="footer_has_content"/>
+    <field name="custom_md"/>
+    <field name="active"/>
+    <field name="version"/>
+</tree>
+```
+
+### Search Filters
+
+| Filter | Domain |
+|--------|--------|
+| Inactive | `[('active','=',False)]` |
+| Active | `[('active','=',True)]` |
+| Has Page Options | `[('page_has_content','=',True)]` |
+| Has Header Options | `[('header_has_content','=',True)]` |
+
+### Group By Options
+
+- Domain (`domain_id`)
+- Role (`role`)
+- User (`user_id`)
+
+## Related Entity Documentation
+
+Domain user views share patterns with other content entities:
+
+- **[Partners](../entities/partners.md)** - Extended partner form with Odoo UI examples
+- **[Events](../entities/events.md)** - Extended event form with demo banner and feature flags
+- **[Episodes (Blog Posts)](../entities/episodes.md)** - Extended blog post form with Format Options tab

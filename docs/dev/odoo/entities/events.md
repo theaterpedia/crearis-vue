@@ -14,7 +14,7 @@ class EventEvent(models.Model):
 ### Inheritance
 
 - `event.event` - Standard Odoo Events module
-- `web.options.abstract` - JSON options mixin
+- `web.options.abstract` - [Web options mixin](../concepts/web-options.md) for page section configuration
 - `demo.data.mixin` - Demo data detection
 
 ## Crearis Custom Fields
@@ -195,6 +195,12 @@ header_type = fields.Selection([...])
 header_size = fields.Selection([...])
 edit_mode = fields.Selection([...])
 
+# Web Options (from web.options.abstract)
+page_options = fields.Json()
+aside_options = fields.Json()
+header_options = fields.Json()
+footer_options = fields.Json()
+
 # Domain & Organization
 domain_code = fields.Many2one('website')
 space_id = fields.Many2one('event.track.location')
@@ -326,3 +332,24 @@ await odoo.write('event.event', [eventId], {
 3. **Track versions** - Auto-incremented on write
 4. **Configure edit_mode** - Control dashboard editing permissions
 5. **Use appropriate header_type** - Match content style
+
+## Web Options (Inherited)
+
+Events inherit the [web.options.abstract](../concepts/web-options.md) mixin, providing four JSON fields for page section configuration:
+
+| Field | Purpose | Example Content |
+|-------|---------|-----------------|
+| `page_options` | Main page settings | `{"background": "accent", "navigation": "sidebar"}` |
+| `aside_options` | Sidebar widgets | `{"list": "events", "toc": "auto"}` |
+| `header_options` | Header banners | `{"alert": "Registration closing soon!"}` |
+| `footer_options` | Footer widgets | `{"gallery": "partners", "sitemap": "medium"}` |
+
+See [Web Options](../concepts/web-options.md) for full field reference and accessor fields.
+
+## Related Entity Documentation
+
+The event form view pattern is shared across all content entities:
+
+- **[Partners](./partners.md)** - Extended partner form with Odoo UI examples
+- **[Episodes (Blog Posts)](./episodes.md)** - Extended blog post form with Format Options tab
+- **[Domain Users](../project/domainuser.md)** - Custom form with settings JSON and web options

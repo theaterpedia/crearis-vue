@@ -149,6 +149,7 @@ export default defineConfig({
                             items: [
                                 { text: 'XML ID Versioning', link: '/dev/odoo/concepts/xmlid-versioning' },
                                 { text: 'JSON Fields', link: '/dev/odoo/concepts/json-fields' },
+                                { text: 'Web Options', link: '/dev/odoo/concepts/web-options' },
                                 { text: 'Demo Data', link: '/dev/odoo/concepts/demo-data' },
                             ]
                         },
