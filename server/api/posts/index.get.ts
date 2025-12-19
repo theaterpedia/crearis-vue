@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
         if (isServerAlphaMode()) {
             const alphaPreview = query.alpha_preview === 'true'
             const validStatuses = getAlphaProjectStatuses(alphaPreview)
-            // Use PostgreSQL array syntax for IN clause
-            sql += ` AND pr.status_old IN (${validStatuses.map((_, i) => `$${params.length + i + 1}`).join(', ')})`
+            // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
+            sql += ` AND pr.status_old IN (${validStatuses.map(() => '?').join(', ')})`
             params.push(...validStatuses)
         }
 
