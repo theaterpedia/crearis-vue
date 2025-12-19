@@ -63,8 +63,8 @@
                     <div class="preview-section">
                         <h5>List Preview (Posts)</h5>
                         <pList entity="posts" :project="projectDomaincode" :status-gt="statusFilter.statusGt"
-                            :status-lt="statusFilter.statusLt" size="small" variant="default" anatomy="bottomimage"
-                            on-activate="modal" />
+                            :status-lt="statusFilter.statusLt" :alpha-preview="previewEntities" size="small"
+                            variant="default" anatomy="bottomimage" on-activate="modal" />
                     </div>
                 </div>
 
@@ -73,8 +73,8 @@
                     <div class="preview-section">
                         <h5>Gallery Preview (Events)</h5>
                         <pGallery entity="events" :project="projectDomaincode" :status-gt="statusFilter.statusGt"
-                            :status-lt="statusFilter.statusLt" item-type="card" size="small" variant="default"
-                            anatomy="topimage" on-activate="modal" />
+                            :status-lt="statusFilter.statusLt" :alpha-preview="previewEntities" item-type="card"
+                            size="small" variant="default" anatomy="topimage" on-activate="modal" />
                     </div>
                 </div>
 

@@ -145,6 +145,8 @@ interface Props {
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
     size?: 'small' | 'medium'
     width?: 'inherit' | 'small' | 'medium' | 'large' // Item width control
     columns?: 'off' | 'on' // Enable multi-column wrapping
@@ -394,6 +396,10 @@ const fetchEntityData = async () => {
         }
         if (props.statusGt !== undefined) {
             urlObj.searchParams.append('status_gt', String(props.statusGt))
+        }
+        // Alpha mode: include draft projects (TODO v0.5: remove)
+        if (props.alphaPreview) {
+            urlObj.searchParams.append('alpha_preview', 'true')
         }
         url = urlObj.pathname + urlObj.search
 

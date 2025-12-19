@@ -1,17 +1,23 @@
 <template>
     <div class="project-site-page">
+        <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
+        <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
+            :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
+            :status-old="projectAccess.statusOld.value" :is-logged-in="!!user" />
+
         <!-- Edit Panel -->
-        <EditPanel v-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Project'}`"
+        <EditPanel v-else-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Project'}`"
             subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
             @save="handleSaveProject" />
 
         <!-- Navigation Config Panel -->
-        <NavigationConfigPanel v-if="project" :is-open="isConfigPanelOpen" :project-id="project.domaincode"
-            @close="closeConfigPanel" />
+        <NavigationConfigPanel v-if="project && projectAccess.canAccess.value" :is-open="isConfigPanelOpen"
+            :project-id="project.domaincode" @close="closeConfigPanel" />
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :projectId="project.id" :navItems="navigationItems">
+        <PageLayout v-if="project && projectAccess.canAccess.value" :asideOptions="asideOptions"
+            :footerOptions="footerOptions" :projectDomaincode="project.domaincode" :projectId="project.id"
+            :navItems="navigationItems">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Project Editor Link (for owners/admins) -->
@@ -142,8 +148,8 @@
             </Section>
         </PageLayout>
 
-        <!-- Fallback for when project is not loaded -->
-        <PageLayout v-else>
+        <!-- Fallback for when project is not loaded (and not access denied) -->
+        <PageLayout v-else-if="!accessLoaded || projectAccess.canAccess.value">
             <template #header>
                 <Section>
                     <Container>
@@ -173,6 +179,8 @@ import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
+import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
+import { useProjectAccess } from '@/composables/useProjectAccess'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
@@ -202,6 +210,10 @@ const users = ref<any[]>([])
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
+
+// Alpha mode access control
+const projectAccess = useProjectAccess()
+const accessLoaded = ref(false)
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry
@@ -470,6 +482,16 @@ onMounted(async () => {
 
     if (domaincode.value) {
         await fetchProject(domaincode.value)
+
+        // Check alpha mode access control
+        await projectAccess.load(domaincode.value)
+        accessLoaded.value = true
+
+        // If access denied in alpha mode, don't load the rest
+        if (!projectAccess.canAccess.value) {
+            console.log('[ProjectSite] Access denied for project:', domaincode.value)
+            return
+        }
 
         // Apply project theme if set
         await initTheme()

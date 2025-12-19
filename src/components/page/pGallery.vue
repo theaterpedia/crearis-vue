@@ -15,9 +15,9 @@
         <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
             :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
             :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
-            :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
-            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick"
-            @item-trash="handleItemTrash" />
+            :alpha-preview="alphaPreview" :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy"
+            :interaction="interactionMode" :data-mode="true" :multi-select="false" :show-trash="showTrash"
+            @item-click="handleItemClick" @item-trash="handleItemTrash" />
 
         <!-- Route Navigation Modal (if using route-modal mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
@@ -57,6 +57,9 @@ interface Props {
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
 
     // Display options
     itemType?: 'tile' | 'card'

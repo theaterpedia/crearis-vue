@@ -12,8 +12,13 @@
 -->
 <template>
     <div class="post-page">
+        <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
+        <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
+            :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
+            :status-old="projectAccess.statusOld.value" :is-logged-in="!!user" />
+
         <!-- Edit Panel -->
-        <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
+        <EditPanel v-else-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
             subtitle="Update post information" :data="editPanelData" entity-type="posts"
             :projectDomaincode="post.domaincode" :entity-id="post.id" :project-id="post.project_id || projectId"
             :owner-id="post.owner_id" :creator-id="post.creator_id"
@@ -21,7 +26,8 @@
             @close="closeEditPanel" @save="handleSavePost" />
 
         <!-- Page Config Panel (for admins/owners) -->
-        <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
+        <div v-if="showConfigPanel && projectAccess.canAccess.value" class="config-panel-overlay"
+            @click.self="closeConfigPanel">
             <div class="config-panel-container">
                 <button class="close-panel-btn" @click="closeConfigPanel">&times;</button>
                 <PageConfigController :project="projectId" type="posts" mode="pages" />
@@ -29,8 +35,8 @@
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
-            :navItems="navigationItems">
+        <PageLayout v-if="post && projectAccess.canAccess.value" :asideOptions="asideOptions"
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
             <template #header>
                 <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
                 <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
@@ -91,7 +97,8 @@
         </PageLayout>
 
         <!-- Fallback for when post is not loaded -->
-        <PageLayout v-else>
+        <!-- Fallback for when post is not loaded (and not access denied) -->
+        <PageLayout v-else-if="!accessLoaded || projectAccess.canAccess.value">
             <template #header>
                 <Section>
                     <Container>
@@ -117,6 +124,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useProjectAccess } from '@/composables/useProjectAccess'
 import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
@@ -128,6 +136,7 @@ import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
+import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
@@ -138,6 +147,10 @@ const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
 const { setTheme, init: initTheme } = useTheme()
 const { loadForProject, getOptions, parseXmlid } = usePageOptions()
+
+// Alpha mode access control
+const projectAccess = useProjectAccess()
+const accessLoaded = ref(false)
 
 // State
 const post = ref<any>(null)
@@ -274,6 +287,16 @@ async function loadPost() {
         console.log('[PostPage] Project data:', projectData)
         project.value = projectData
         projectId.value = projectData.id
+
+        // Check alpha mode access control
+        await projectAccess.load(domaincode.value)
+        accessLoaded.value = true
+
+        // If access denied in alpha mode, don't load the rest
+        if (!projectAccess.canAccess.value) {
+            console.log('[PostPage] Access denied for project:', domaincode.value)
+            return
+        }
 
         // Load page options for this project (uses composable with caching)
         await loadForProject(domaincode.value)
