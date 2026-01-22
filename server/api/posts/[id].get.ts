@@ -1,7 +1,7 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { db } from '../../database/init'
 
-// GET /api/posts/:id - Get a single post by ID
+// GET /api/posts/:id - Get a single post by ID or xmlid
 export default defineEventHandler(async (event) => {
     try {
         const id = getRouterParam(event, 'id')
@@ -13,6 +13,9 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        // Determine if ID is numeric or xmlid
+        const isNumeric = /^\d+$/.test(id)
+
         const sql = `
             SELECT 
                 p.*,
@@ -22,7 +25,7 @@ export default defineEventHandler(async (event) => {
             FROM posts p
             LEFT JOIN projects pr ON p.project_id = pr.id
             LEFT JOIN users u ON p.creator_id = u.id
-            WHERE p.id = ?
+            WHERE ${isNumeric ? 'p.id = ?' : 'p.xmlid = ?'}
         `
 
         const post = await db.get(sql, [id])

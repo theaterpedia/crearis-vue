@@ -464,7 +464,17 @@ export function usePageOptions() {
 
                 // Load all pages for project
                 const pagesRes = await fetch(`/api/pages/by-project?project_id=${domaincode}`)
-                const pagesData = await pagesRes.json()
+                let pagesData: { success?: boolean; pages?: PageEntry[] } = { success: false, pages: [] }
+                if (pagesRes.ok) {
+                    const text = await pagesRes.text()
+                    if (text) {
+                        try {
+                            pagesData = JSON.parse(text)
+                        } catch (e) {
+                            console.warn('[usePageOptions] Failed to parse pages response:', e)
+                        }
+                    }
+                }
 
                 // Build cache entry
                 const pagesMap = new Map<string, PageEntry>()

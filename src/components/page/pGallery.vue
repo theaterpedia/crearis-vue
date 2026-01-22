@@ -11,7 +11,9 @@
   - 'route-modal': Show modal with navigation button
 -->
 <template>
-    <div class="p-gallery">
+    <div class="p-gallery" :class="{ 'is-aside': isAside, 'is-footer': isFooter }">
+        <Heading v-if="showHeader && header" :headline="header" :is="headingLevel" />
+
         <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
             :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
             :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
@@ -40,6 +42,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ItemGallery from '@/components/clist/ItemGallery.vue'
 import ItemModalCard from '@/components/clist/ItemModalCard.vue'
+import Heading from '@/components/Heading.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
@@ -84,6 +87,11 @@ interface Props {
     modalOptions?: {
         anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     }
+
+    // Header (for aside/footer variants)
+    header?: string
+    isAside?: boolean
+    isFooter?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -94,7 +102,9 @@ const props = withDefaults(defineProps<Props>(), {
     onActivate: 'modal',
     routeButtonText: 'View Details',
     showTrash: false,
-    modalOptions: () => ({ anatomy: 'heroimage' })
+    modalOptions: () => ({ anatomy: 'heroimage' }),
+    isAside: false,
+    isFooter: false
 })
 
 const emit = defineEmits<{
@@ -106,6 +116,16 @@ const router = useRouter()
 const selectedItem = ref<any>(null)
 const showRouteModal = ref(false)
 const itemGalleryRef = ref<InstanceType<typeof ItemGallery> | null>(null)
+
+// Show header for aside/footer variants
+const showHeader = computed(() => props.isAside || props.isFooter)
+
+// Heading level based on context
+const headingLevel = computed(() => {
+    if (props.isAside) return 'h4'
+    if (props.isFooter) return 'h3'
+    return 'h3'
+})
 
 // Expose refresh method
 const refresh = () => {

@@ -7,8 +7,11 @@
 
         <!-- Edit Panel -->
         <EditPanel v-else-if="project" :is-open="isEditPanelOpen" :title="`Edit ${project.heading || 'Project'}`"
-            subtitle="Update project information and content" :data="editPanelData" @close="closeEditPanel"
-            @save="handleSaveProject" />
+            subtitle="Update project information and content" :data="editPanelData" entity-type="projects"
+            :projectDomaincode="project.domaincode" :entity-id="project.id" :project-id="project.id"
+            :owner-id="project.owner_id" :creator-id="project.creator_id"
+            :project-owner-sysmail="project.owner_sysmail || ''" :project-status="project.status || 0"
+            @close="closeEditPanel" @save="handleSaveProject" />
 
         <!-- Navigation Config Panel -->
         <NavigationConfigPanel v-if="project && projectAccess.canAccess.value" :is-open="isConfigPanelOpen"
@@ -49,14 +52,29 @@
             </template>
 
             <template #header>
-                <PageHeading :heading="project.heading || project.id"
+                <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
+                <PageHeading :heading="project.heading || project.name || String(project.id)"
                     :teaserText="project.teaser || project.md || 'Explore events, posts, and team members for this project.'"
-                    :imgTmp="project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg'"
-                    :headerType="project.site_header_type || project.header_type || 'banner'"
-                    :headerSize="project.site_header_size || project.header_size || 'prominent'"
-                    :cta="{ title: 'Get Involved', link: '/getstarted' }"
-                    :link="{ title: 'Back to Home', link: '/' }" />
+                    :image_id="project.img_id || undefined"
+                    :image_blur="project.img_square?.blur || undefined"
+                    :imgTmp="!project.img_id ? (project.img_wide?.url || project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg') : undefined"
+                    :headerType="project.header_type || 'banner'"
+                    :headerSize="project.header_size || 'prominent'"
+                    :cta="ctaConfig"
+                    :link="secondaryLinkConfig" />
             </template>
+
+            <!-- Project Description Body -->
+            <Section v-if="project.html || project.md" background="default">
+                <Container>
+                    <Prose>
+                        <!-- Project HTML or Markdown content -->
+                        <div v-if="project.html" v-html="project.html" class="project-html-content"></div>
+                        <div v-else-if="renderedBodyHtml" v-html="renderedBodyHtml" class="project-markdown-content"></div>
+                        <div v-else-if="project.md" class="project-markdown-content">{{ project.md }}</div>
+                    </Prose>
+                </Container>
+            </Section>
 
             <!-- Project Events Section -->
             <Section background="muted">
@@ -195,6 +213,7 @@ import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
+import { extractRouteSlug } from '@/utils/xmlid'
 
 const router = useRouter()
 const route = useRoute()
@@ -210,6 +229,7 @@ const users = ref<any[]>([])
 const domaincode = ref<string>('')
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
+const renderedBodyHtml = ref<string>('')
 
 // Alpha mode access control
 const projectAccess = useProjectAccess()
@@ -232,25 +252,115 @@ const footerOptions = computed<FooterOptions>(() => {
     return options.footer
 })
 
+// Build CTA config from project columns (cta_title, cta_entity, cta_link)
+// cta_entity: 'event' or 'post' - determines the entity type
+// cta_link: ID of the entity - we need to fetch the entity to get its xmlid for the route slug
+const ctaConfig = computed(() => {
+    if (!project.value) return { title: '', link: '' }
+    
+    const ctaTitle = project.value.cta_title
+    const ctaEntity = project.value.cta_entity // 'event' or 'post'
+    const ctaLink = project.value.cta_link // entity ID as string
+    
+    // If no CTA configured, return empty
+    if (!ctaTitle) return { title: '', link: '' }
+    
+    // If CTA links to an entity (event/post), build the route
+    if (ctaEntity && ctaLink) {
+        // cta_entity is singular ('event', 'post'), we need plural for URL ('events', 'posts')
+        const entityPlural = ctaEntity === 'event' ? 'events' : 'posts'
+        
+        // Try to find the linked entity to get its xmlid for slug-based routing
+        // First check if we have it in our loaded data
+        let linkedEntity: any = null
+        if (ctaEntity === 'event') {
+            linkedEntity = events.value.find((e: any) => String(e.id) === ctaLink)
+        } else if (ctaEntity === 'post') {
+            linkedEntity = posts.value.find((p: any) => String(p.id) === ctaLink)
+        }
+        
+        // Build the route path
+        let identifier = ctaLink // Default to numeric ID
+        if (linkedEntity?.xmlid) {
+            // Extract route slug from xmlid (template__slug or just slug)
+            const routeSlug = extractRouteSlug(linkedEntity.xmlid)
+            if (routeSlug) {
+                identifier = routeSlug
+            }
+        }
+        
+        const link = `/sites/${domaincode.value}/${entityPlural}/${identifier}`
+        return { title: ctaTitle, link }
+    }
+    
+    // If it's a direct link (cta_form or external), use as-is
+    if (project.value.cta_form) {
+        return { title: ctaTitle, link: project.value.cta_form }
+    }
+    
+    return { title: ctaTitle, link: '' }
+})
+
+// Build Secondary Link config from project.header_options_ext.link (JSONB)
+// Uses web.options.abstract pattern: header_options_ext stores header-related options
+// link structure: { link_title, link_entity, link_link, link_form }
+const secondaryLinkConfig = computed(() => {
+    if (!project.value) return { title: '', link: '' }
+    
+    const headerOptsLink = project.value.header_options_ext?.link
+    // If no link configured or disabled ('none'), return empty
+    if (!headerOptsLink || headerOptsLink === 'none') return { title: '', link: '' }
+    
+    const linkTitle = headerOptsLink.link_title
+    const linkEntity = headerOptsLink.link_entity // 'event' or 'post'
+    const linkLinkId = headerOptsLink.link_link // entity ID or URL
+    const linkForm = headerOptsLink.link_form
+    
+    // If no title, return empty
+    if (!linkTitle) return { title: '', link: '' }
+    
+    // If link is to an entity (event/post), build the route using ID
+    // (slug resolution still has issues, use numeric ID for now)
+    if (linkEntity && linkLinkId) {
+        const entityPlural = linkEntity === 'event' ? 'events' : 'posts'
+        const link = `/sites/${domaincode.value}/${entityPlural}/${linkLinkId}`
+        return { title: linkTitle, link }
+    }
+    
+    // If it's a direct URL link
+    if (linkLinkId && !linkEntity) {
+        return { title: linkTitle, link: linkLinkId }
+    }
+    
+    // If it's a form link
+    if (linkForm) {
+        return { title: linkTitle, link: linkForm }
+    }
+    
+    return { title: linkTitle, link: '' }
+})
+
 // Edit panel data computed from project
 const editPanelData = computed<EditPanelData>(() => {
     if (!project.value) {
         return {
             heading: '',
             teaser: '',
-            cimg: '',
+            img_id: null,
             header_type: '',
             header_size: '',
-            md: ''
+            md: '',
+            status: null
         }
     }
     return {
         heading: project.value.heading || '',
         teaser: project.value.teaser || '',
-        cimg: project.value.cimg || '',
+        img_id: project.value.img_id || null,
         header_type: project.value.header_type || '',
         header_size: project.value.header_size || '',
-        md: project.value.md || ''
+        md: project.value.md || '',
+        status: project.value.status || null
     }
 })
 
@@ -304,6 +414,10 @@ function openPageConfig() {
 
 function closeConfigPanel() {
     isConfigPanelOpen.value = false
+    // Reload project to reflect any config changes made in the panel
+    if (domaincode.value) {
+        fetchProject(domaincode.value)
+    }
 }
 
 // Handle save project
@@ -311,12 +425,28 @@ async function handleSaveProject(data: EditPanelData) {
     if (!project.value) return
 
     try {
+        // Filter out null/undefined values and status (status changes go through PostStatusBadge)
+        const payload: Record<string, any> = {}
+        for (const [key, value] of Object.entries(data)) {
+            // Skip status - it's handled separately via PostStatusBadge
+            if (key === 'status') continue
+            if (value !== null && value !== undefined && value !== '') {
+                payload[key] = value
+            }
+        }
+
+        // Render markdown to HTML if md was updated (like PostPage does)
+        if (payload.md) {
+            const { marked } = await import('marked')
+            payload.html = await marked(payload.md) as string
+        }
+
         const response = await fetch(`/api/projects/${encodeURIComponent(project.value.domaincode)}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
 
         if (response.ok) {
@@ -354,6 +484,13 @@ async function fetchProject(id: string) {
         const response = await fetch(`/api/projects/${encodeURIComponent(id)}`)
         if (response.ok) {
             project.value = await response.json()
+            // Render markdown to HTML if md exists but html doesn't
+            if (project.value.md && !project.value.html) {
+                const { marked } = await import('marked')
+                renderedBodyHtml.value = await marked(project.value.md) as string
+            } else {
+                renderedBodyHtml.value = ''
+            }
         } else {
             console.error('Project not found')
         }

@@ -91,6 +91,47 @@ export function getStatusFilter(previewEnabled: boolean): { statusGt?: number; s
 }
 
 // ============================================================================
+// Page Type Normalization
+// ============================================================================
+
+/**
+ * Valid page_type values per DB constraint pages_page_type_check
+ * CHECK ((page_type = ANY (ARRAY['landing', 'event', 'post', 'team'])))
+ */
+export const VALID_PAGE_TYPES = ['landing', 'event', 'post', 'team'] as const
+export type ValidPageType = typeof VALID_PAGE_TYPES[number]
+
+/**
+ * Map from plural entity names (used in frontend) to singular page_type (DB constraint)
+ */
+const PAGE_TYPE_MAP: Record<string, ValidPageType> = {
+    // Plural to singular
+    events: 'event',
+    posts: 'post',
+    teams: 'team',
+    landings: 'landing',
+    // Already singular (passthrough)
+    event: 'event',
+    post: 'post',
+    team: 'team',
+    landing: 'landing',
+}
+
+/**
+ * Normalize page type to match DB constraint
+ * Converts plural forms (events, posts) to singular (event, post)
+ */
+export function normalizePageType(type: string | undefined): ValidPageType | undefined {
+    if (!type) return undefined
+    const normalized = PAGE_TYPE_MAP[type.toLowerCase()]
+    if (!normalized) {
+        console.warn(`[usePageConfig] Unknown page type: '${type}'. Valid types: ${VALID_PAGE_TYPES.join(', ')}`)
+        return undefined
+    }
+    return normalized
+}
+
+// ============================================================================
 // Utilities
 // ============================================================================
 
@@ -233,7 +274,13 @@ export function usePageConfig(
     }
 
     async function loadFromPages(): Promise<void> {
-        const response = await fetch(`/api/pages/by-type?project_id=${project}&page_type=${pageType}`)
+        // Normalize page type to match DB constraint (events -> event, posts -> post)
+        const normalizedType = normalizePageType(pageType)
+        if (!normalizedType) {
+            throw new Error(`Invalid page type: '${pageType}'. Valid types: ${VALID_PAGE_TYPES.join(', ')}`)
+        }
+
+        const response = await fetch(`/api/pages/by-type?project_id=${project}&page_type=${normalizedType}`)
 
         let page: any
 
@@ -244,7 +291,7 @@ export function usePageConfig(
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_id: project,
-                    page_type: pageType
+                    page_type: normalizedType
                 })
             })
             if (!createResponse.ok) throw new Error('Failed to create page')
@@ -336,8 +383,14 @@ export function usePageConfig(
     }
 
     async function saveToPages(): Promise<void> {
+        // Normalize page type to match DB constraint
+        const normalizedType = normalizePageType(pageType)
+        if (!normalizedType) {
+            throw new Error(`Invalid page type: '${pageType}'. Valid types: ${VALID_PAGE_TYPES.join(', ')}`)
+        }
+
         // Get page ID first
-        const getResponse = await fetch(`/api/pages/by-type?project_id=${project}&page_type=${pageType}`)
+        const getResponse = await fetch(`/api/pages/by-type?project_id=${project}&page_type=${normalizedType}`)
         if (!getResponse.ok) throw new Error('Page not found')
 
         const getData = await getResponse.json()

@@ -125,8 +125,8 @@
         <Container v-if="footerOptions">
           <!-- pGallery -->
           <pGallery v-if="footerOptions.gallery?.type && footerOptions.gallery.type !== 'images'"
-            :type="footerOptions.gallery.type" :header="footerOptions.gallery.header" :isFooter="true"
-            :projectDomaincode="projectDomaincode" />
+            :entity="footerOptions.gallery.type" :header="footerOptions.gallery.header" :isFooter="true"
+            :project="projectDomaincode" />
 
           <!-- pGalleryImages -->
           <pGalleryImages v-if="footerOptions.gallery?.type === 'images' && projectId" :projectId="projectId" />
