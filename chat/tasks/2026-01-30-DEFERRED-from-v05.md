@@ -1,6 +1,6 @@
 # Deferred from v0.5 Sprint
 
-**Created:** January 20, 2026  
+**Created:** January 31, 2026  
 **Sprint:** v0.5 Odoo Integration
 
 ---

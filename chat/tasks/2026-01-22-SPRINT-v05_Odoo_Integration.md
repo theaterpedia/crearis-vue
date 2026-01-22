@@ -1,7 +1,7 @@
 # SPRINT: v0.5 Odoo Integration
-**Sprint Period:** January 12-20, 2026 (Mon-Tue)  
+**Sprint Period:** January 22-31, 2026 (Thu-Sat)  
 **Branch:** `alpha/v05-odoo`  
-**Skip Days:** Friday 17, Saturday 18
+**Skip Days:** Sunday 25, Wednesday 28
 
 ---
 
@@ -31,9 +31,9 @@ v0.5 delivers the Odoo integration foundation: polymorphic routing for comments/
 
 | Version | Date | Focus |
 |---------|------|-------|
-| v0.5-alpha | Jan 14 (Wed) | IWorkitem interface + polymorphic routing |
-| v0.5-beta | Jan 16 (Fri) | Odoo mail.message sync reference |
-| v0.5-final | Jan 20 (Tue) | Integration tested, docs complete |
+| v0.5-alpha | Jan 24 (Sat) | IWorkitem interface + polymorphic routing |
+| v0.5-beta | Jan 27 (Tue) | Odoo mail.message sync reference |
+| v0.5-final | Jan 31 (Sat) | Integration tested, docs complete |
 
 ---
 
@@ -41,13 +41,14 @@ v0.5 delivers the Odoo integration foundation: polymorphic routing for comments/
 
 | Date | Day | Status | Summary |
 |------|-----|--------|---------|
-| Jan 12 | Mon | ⬜ | Sunrise meta-session, audit review, workday planning |
-| Jan 13 | Tue | ⬜ | |
-| Jan 14 | Wed | ⬜ | |
-| Jan 15 | Thu | ⬜ | |
-| Jan 16 | Fri | ⬜ | |
-| Jan 19 | Mon | ⬜ | |
-| Jan 20 | Tue | ⬜ | Sprint close |
+| Jan 22 | Thu | ⬜ | Sunrise meta-session, audit review, workday planning |
+| Jan 23 | Fri | ⬜ | |
+| Jan 24 | Sat | ⬜ | v0.5-alpha milestone |
+| Jan 26 | Mon | ⬜ | |
+| Jan 27 | Tue | ⬜ | v0.5-beta milestone |
+| Jan 29 | Thu | ⬜ | |
+| Jan 30 | Fri | ⬜ | |
+| Jan 31 | Sat | ⬜ | Sprint close, v0.5-final |
 
 Legend: 🟢 Complete | 🟡 In Progress | 🔴 Blocked | ⬜ Not Started
 
@@ -57,11 +58,11 @@ Legend: 🟢 Complete | 🟡 In Progress | 🔴 Blocked | ⬜ Not Started
 
 Review these in sunrise session after meta-discussion:
 
-- [Beta Architecture Guide](./2026-01-12-SPRINT-v05-Input-BETA_ARCHITECTURE_GUIDE.md)
-- [DASEI Theme Proposal](./2026-01-12-SPRINT-v05-Input-DASEI_THEME_PROPOSAL.md)
-- [Hardcoded Capabilities Audit](./2026-01-12-SPRINT-v05-Input-HARDCODED_CAPABILITIES_AUDIT.md)
-- [TDD Recovery Plan](./2026-01-12-SPRINT-v05-Input-TDD_RECOVERY_PLAN.md)
-- [User States Validation](./2026-01-12-SPRINT-v05-Input-USER_STATES_VALIDATION_REPORT.md)
+- [Beta Architecture Guide](./2026-01-22-SPRINT-v05-Input-BETA_ARCHITECTURE_GUIDE.md)
+- [DASEI Theme Proposal](./2026-01-22-SPRINT-v05-Input-DASEI_THEME_PROPOSAL.md)
+- [Hardcoded Capabilities Audit](./2026-01-22-SPRINT-v05-Input-HARDCODED_CAPABILITIES_AUDIT.md)
+- [TDD Recovery Plan](./2026-01-22-SPRINT-v05-Input-TDD_RECOVERY_PLAN.md)
+- [User States Validation](./2026-01-22-SPRINT-v05-Input-USER_STATES_VALIDATION_REPORT.md)
 
 ---
 
