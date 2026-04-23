@@ -1,9 +1,34 @@
 /**
+ * ========================================================================
+ * GREY-ZONE — parked 2026-04-23 (Item-1 3a cleanup)
+ * ========================================================================
+ *
+ * Reason for greying: this test mocks `@/composables/usePostStatus` (the
+ * legacy composable) while StatusEditor.vue itself imports `usePostStatusV2`
+ * (the config-driven replacement). The test passed but did not validate
+ * production behavior — the V2-drift surfaced during Item-1 audit.
+ *
+ * The legacy `usePostStatus.ts` + `usePostPermissions.ts` were removed in
+ * the preceding chore(item-1) commit, so this file can no longer load.
+ *
+ * Decision path:
+ *   (a) rewrite against V2 — deferred until Item-2 DashboardLayout decomp
+ *       touches StatusEditor anyway (likely)
+ *   (b) delete outright — risks losing useful edge-case coverage
+ *   (c) park in grey — chosen; preserves intent, admits drift, revisits
+ *       post-Item-2 in the weekly grey-audit
+ *
+ * Honest park per _sprint-conventions §4 grey-zone discipline.
+ *
+ * Original comment preserved below.
+ *
+ * ------------------------------------------------------------------------
+ *
  * Component Tests: StatusEditor.vue
- * 
+ *
  * Tests the StatusEditor Vue component rendering and interactions.
  * Uses Vue Test Utils with CSS variable mocks.
- * 
+ *
  * Test Coverage:
  * - Renders with correct initial state
  * - Displays current status badge
@@ -12,7 +37,7 @@
  * - Displays loading state during transitions
  * - Shows error messages
  * - Trash/restore functionality
- * 
+ *
  * Note: These tests mock usePostStatus and usePostPermissions
  * to test the component in isolation.
  */
