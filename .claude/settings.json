@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx *)",
+      "Bash(bunx *)",
+      "Bash(bun *)",
+      "Bash(pnpm *)",
+      "Bash(node *)",
+      "Bash(vite *)",
+      "Bash(vue-tsc *)",
+      "Bash(tsc *)",
+      "Bash(vitest *)",
+      "Bash(ls)",
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(mkdir *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git remote*)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git stash*)",
+      "Bash(git submodule status*)",
+      "Bash(git submodule update*)",
+      "Bash(git submodule foreach*)"
+    ],
+    "additionalDirectories": [
+      "/home/persona/crearis/crearis-nuxt",
+      "/home/persona/crearis/crea-odoo",
+      "/home/persona/crearis/crearis-vue/meta"
+    ]
+  }
+}
