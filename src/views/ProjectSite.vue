@@ -164,6 +164,12 @@
                     </Prose>
                 </Container>
             </Section>
+
+            <!-- PageBottom: consulting call + email CTA lanes (T1-γ) -->
+            <template #footer>
+                <PageBottom :project-config="project.config || null"
+                    :fallback-email="project.owner_sysmail || undefined" />
+            </template>
         </PageLayout>
 
         <!-- Fallback for when project is not loaded (and not access denied) -->
@@ -197,6 +203,7 @@ import PageHeading from '@/components/PageHeading.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
+import PageBottom from '@/components/PageBottom.vue'
 import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import { useProjectAccess } from '@/composables/useProjectAccess'
 import Prose from '@/components/Prose.vue'
