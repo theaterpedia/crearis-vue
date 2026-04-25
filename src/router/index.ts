@@ -26,14 +26,26 @@ const router = createRouter({
     { path: '/home', component: () => import('../views/HomeLayoutHack.vue'), meta: { requiresAuth: true } },
     { path: '/home-clean', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
 
-    // Protected routes - Project Dashboard (route-based 5 NavStops + images for stepper)
-    // Base route redirects to home section
-    { path: '/projects/:projectId', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/agenda', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/topics', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/images', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/partners', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/settings', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    // Protected routes - Project Dashboard (Variant-C: nested per-NavStop views)
+    // Per Item-2 SFR-76 + §3 design-variant-branch exception-clause; previous flat
+    // routes-all-mapping-to-ProjectDashboard.vue replaced by DashboardShell parent
+    // + 5 nested NavStop view-components. Each view owns its right-rail per §12
+    // agenda-view-mode pattern. ProjectDashboard.vue retained in source as
+    // reference + as the Variant-A fallback target (sfr/item2-c-decision-2026-04-23
+    // tag at 6c79600).
+    {
+        path: '/projects/:projectId',
+        component: () => import('../views/project/DashboardShell.vue'),
+        meta: { requiresAuth: true },
+        children: [
+            { path: '', redirect: to => `/projects/${to.params.projectId}/agenda` },
+            { path: 'agenda', component: () => import('../views/project/AgendaView.vue') },
+            { path: 'topics', component: () => import('../views/project/TopicsView.vue') },
+            { path: 'images', component: () => import('../views/project/ImagesView.vue') },
+            { path: 'partners', component: () => import('../views/project/PartnersView.vue') },
+            { path: 'settings', component: () => import('../views/project/SettingsView.vue') },
+        ],
+    },
 
     // Legacy route - keep for backwards compatibility during transition
     // TODO v0.5: Remove this once all users migrated to /projects/:projectId routes
