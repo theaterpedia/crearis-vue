@@ -14,10 +14,10 @@
     <div class="p-list-simple">
         <ItemList :entity="entity" :project="project" :filter-ids="filterIds" :filter-xml-prefix="filterXmlPrefix"
             :filter-xml-prefixes="filterXmlPrefixes" :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt"
-            :status-eq="statusEq" :status-gt="statusGt" :size="size" :width="width" :columns="columns"
-            :heading-level="headingLevel" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
-            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick"
-            @item-trash="handleItemTrash" />
+            :status-eq="statusEq" :status-gt="statusGt" :alpha-preview="alphaPreview" :size="size" :width="width"
+            :columns="columns" :heading-level="headingLevel" :variant="variant" :anatomy="anatomy"
+            :interaction="interactionMode" :data-mode="true" :multi-select="false" :show-trash="showTrash"
+            @item-click="handleItemClick" @item-trash="handleItemTrash" />
 
         <!-- Route Navigation Modal (if using route-modal mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
@@ -53,10 +53,13 @@ interface Props {
     filterXmlPrefixes?: string[]
     filterXmlPattern?: RegExp
 
-    // Status value filtering (0-6)
+    // Status value filtering (sysreg: 64=draft, 512=confirmed, 4096=released)
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
 
     // Display options
     size?: 'small' | 'medium'
@@ -206,22 +209,26 @@ const closeRouteModal = () => {
 </script>
 
 <style scoped>
+/* ===== pList - Page List Component ===== */
+
 .p-list-simple {
     width: 100%;
 }
 
+/* --- Route Navigation Button --- */
 .route-nav-button {
     padding: 0.75rem 1.5rem;
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-button);
+    font-family: var(--headings);
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: var(--transition);
 }
 
 .route-nav-button:hover {
-    background: var(--color-primary-bg-hover, var(--color-primary-bg));
+    opacity: 0.85;
 }
 </style>

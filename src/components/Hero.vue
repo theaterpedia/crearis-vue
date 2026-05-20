@@ -4,6 +4,9 @@
     `hero-align-content-${contentAlignY}`,
     bottomline ? 'hero-bottomline' : '',
   ]" :style="contentType === 'left' ? 'padding-left: 0rem' : ''">
+    <!-- Hidden canvas for BlurHash decoding -->
+    <canvas ref="canvasRef" style="display: none;" />
+
     <div class="hero-cover">
       <div :class="target === 'page' ? 'hero-cover-image' : 'static-cover-image'" :style="{
         backgroundImage: `url(${computedBackgroundImage})`,
@@ -25,16 +28,16 @@
             : 'center',
         backgroundSize:
           target === 'page'
-            ? imgTmpAlignX === 'cover' || imgTmpAlignY === 'cover'
+            ? usesCoverSizing
               ? 'cover'
               : `${imgTmpAlignX === 'stretch' ? '100%' : 'auto'} ${imgTmpAlignY === 'stretch' ? '100%' : 'auto'}`
             : '500px',
       }">
-        <div v-if="overlay" class="hero-cover-overlay" :style="{ background: overlay }"></div>
+        <div v-if="computedOverlay" class="hero-cover-overlay" :style="{ background: computedOverlay }"></div>
       </div>
     </div>
 
-    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">
+    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">`
       <Container>
         <slot />
       </Container>
@@ -43,19 +46,33 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import type { PropType } from 'vue'
 import Container from './Container.vue'
 import { useBlurHash } from '@/composables/useBlurHash'
+import { useImageFetch, type ImageApiResponse } from '@/composables/useImageFetch'
 import { MOBILE_WIDTH_PX } from '@/composables/useTheme'
+import {
+  selectHeroInstance,
+  getHeroInstanceDimensions,
+  getHeroInstanceTemplate,
+  type HeroInstance,
+  type HeightTmp
+} from '@/utils/selectHeroInstance'
 
 // =====================================================================
-// TODO: Future refactor
-// This image loading logic is duplicated from ImgShape.vue
-// See: src/components/images/ImgShape.vue lines 100-250
-// When refactoring, extract shared logic to:
-// - src/composables/useImageAdapter.ts (adapter detection, URL building)
-// - src/composables/useResponsiveImage.ts (dimension calculation, srcset generation)
+// Hero Component with Instance-Based Image Selection
+// 
+// Uses selectHeroInstance() to choose optimal image size based on:
+// - Current viewport dimensions
+// - heightTmp prop value
+// 
+// Instance Selection:
+// - Mobile (≤440px): hero_square or hero_vertical (prominent/full)
+// - Tablet (441-768px): hero_square
+// - Small Desktop (769-1100px): hero_wide
+// - Large Desktop (1101-1440px): hero_wide_xl
+// - XL Desktop (>1440px): hero_wide_xl or hero_square_xl (full + tall)
 // =====================================================================
 
 // =====================================================================
@@ -66,10 +83,10 @@ const props = defineProps({
   /**
    * Defines the height of the hero.
    *
-   * @default 'full'
+   * @default 'prominent'
    */
   heightTmp: {
-    type: String as PropType<'full' | 'prominent' | 'medium' | 'mini'>,
+    type: String as PropType<HeightTmp>,
     default: 'prominent',
   },
 
@@ -82,28 +99,21 @@ const props = defineProps({
   },
 
   /**
-   * Image shapes data for responsive serving (Plan F)
+   * Image shapes data for responsive serving.
+   * Now supports hero instances: hero_vertical, hero_square, hero_wide, etc.
    */
   image: {
     type: Object as PropType<{
-      shape_vertical?: {
-        url?: string
-        blur?: string
-        turl?: string
-        tpar?: string
-      }
-      shape_wide?: {
-        url?: string
-        blur?: string
-        turl?: string
-        tpar?: string
-      }
-      shape_square?: {
-        url?: string
-        blur?: string
-        turl?: string
-        tpar?: string
-      }
+      // Template shapes (for fallback)
+      shape_vertical?: ShapeData
+      shape_wide?: ShapeData
+      shape_square?: ShapeData
+      // Hero instances (preferred)
+      hero_vertical?: ShapeData
+      hero_square?: ShapeData
+      hero_wide?: ShapeData
+      hero_wide_xl?: ShapeData
+      hero_square_xl?: ShapeData
     }>,
     default: undefined,
   },
@@ -201,22 +211,147 @@ const props = defineProps({
     type: [Number, String] as PropType<number | string>,
     default: 'none',
   },
+
+  /**
+   * Image ID for API-based loading.
+   * When provided, Hero will fetch image data from /api/images/:id
+   */
+  image_id: {
+    type: [Number, String] as PropType<number | string>,
+    default: undefined,
+  },
+
+  /**
+   * Image XMLID for API-based loading.
+   * When provided, Hero will fetch image data from /api/images/xmlid/:xmlid
+   */
+  image_xmlid: {
+    type: String,
+    default: undefined,
+  },
+
+  /**
+   * Pre-provided blur hash string for immediate placeholder display.
+   * Useful when entity already has img_square.blur available to avoid
+   * waiting for API response before showing blur placeholder.
+   */
+  image_blur: {
+    type: String,
+    default: undefined,
+  },
 })
 
 // =====================================================================
-// Adapter Detection (copied from ImgShape.vue)
+// Types
 // =====================================================================
 
-const detectAdapter = (url: string): 'unsplash' | 'cloudinary' | 'vimeo' | 'external' => {
-  if (url.includes('images.unsplash.com')) return 'unsplash'
-  if (url.includes('cloudinary.com')) return 'cloudinary'
-  if (url.includes('vimeo')) return 'vimeo'
-  return 'external'
+interface ShapeData {
+  url?: string
+  blur?: string
+  turl?: string
+  tpar?: string
+  x?: number
+  y?: number
+  z?: number
 }
 
 // =====================================================================
-// URL Building (copied from ImgShape.vue)
+// API-Based Image Fetching
 // =====================================================================
+
+// Use composable for API-based image loading
+const { imageData: fetchedImageData, isLoading: isFetchingImage, fetchImage } = useImageFetch()
+
+// Determine if we should fetch image via API
+const shouldFetchImage = computed(() => {
+  // Only fetch if image_id or image_xmlid is provided AND image prop is not provided
+  return (props.image_id || props.image_xmlid) && !props.image
+})
+
+// Merged image data: API-fetched data takes precedence if fetching, otherwise use prop
+const effectiveImageData = computed(() => {
+  if (shouldFetchImage.value && fetchedImageData.value) {
+    return fetchedImageData.value
+  }
+  return props.image
+})
+
+// =====================================================================
+// Viewport Tracking
+// =====================================================================
+
+const viewport = ref({
+  width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+  height: typeof window !== 'undefined' ? window.innerHeight : 768
+})
+
+// Selected hero instance based on viewport and heightTmp
+const selectedInstance = computed<HeroInstance>(() => {
+  return selectHeroInstance(viewport.value, props.heightTmp)
+})
+
+// Get dimensions for selected instance
+const instanceDimensions = computed(() => {
+  return getHeroInstanceDimensions(selectedInstance.value)
+})
+
+// =====================================================================
+// Image Selection
+// =====================================================================
+
+/**
+ * Get shape data for the selected instance.
+ * Falls back to template shape if instance not available.
+ * Now uses effectiveImageData which can be from props or API.
+ */
+const currentShapeData = computed<ShapeData | null>(() => {
+  const imageSource = effectiveImageData.value
+  if (!imageSource) return null
+
+  const instance = selectedInstance.value
+
+  // Try to get the specific instance (e.g., hero_wide_xl)
+  const instanceData = (imageSource as any)[instance] as ShapeData | undefined
+  if (instanceData?.url) {
+    return instanceData
+  }
+
+  // Priority: Try img_* JSONB columns first (they have proper object structure)
+  // These are computed from shape_* by database triggers
+  if (instance.startsWith('hero_wide')) {
+    const imgWide = (imageSource as any).img_wide as ShapeData | undefined
+    if (imgWide?.url) return imgWide
+  }
+  if (instance.startsWith('hero_square')) {
+    const imgSquare = (imageSource as any).img_square as ShapeData | undefined
+    if (imgSquare?.url) return imgSquare
+  }
+  if (instance.startsWith('hero_vert')) {
+    const imgVert = (imageSource as any).img_vert as ShapeData | undefined
+    if (imgVert?.url) return imgVert
+  }
+
+  // Last resort: try shape_* composite types (less reliable - may be ROW strings)
+  const templateName = getHeroInstanceTemplate(instance)
+  const templateKey = `shape_${templateName}`
+  const templateData = (imageSource as any)[templateKey] as ShapeData | undefined
+  if (templateData && typeof templateData === 'object' && templateData.url) {
+    return templateData
+  }
+
+  return null
+})
+
+// =====================================================================
+// Adapter Detection & URL Building
+// =====================================================================
+
+const detectAdapter = (url: string): 'unsplash' | 'cloudinary' | 'local' | 'external' => {
+  if (url.includes('images.unsplash.com')) return 'unsplash'
+  if (url.includes('cloudinary.com')) return 'cloudinary'
+  if (url.startsWith('/api/images/local/')) return 'local'
+  return 'external'
+}
 
 const buildUnsplashUrl = (baseUrl: string, width: number, height: number): string => {
   try {
@@ -232,7 +367,6 @@ const buildUnsplashUrl = (baseUrl: string, width: number, height: number): strin
 
 const buildCloudinaryUrl = (baseUrl: string, width: number, height: number): string => {
   try {
-    // Extract parts: https://res.cloudinary.com/{cloud}/image/upload/{transformations}/{version}/{public_id}.{ext}
     const match = baseUrl.match(/^(https?:\/\/[^\/]+\/[^\/]+\/image\/upload\/)([^\/]*)\/(.+)$/)
     if (match) {
       const [, prefix, , suffix] = match
@@ -244,27 +378,68 @@ const buildCloudinaryUrl = (baseUrl: string, width: number, height: number): str
   }
 }
 
+/**
+ * Build responsive image URL for current shape
+ */
+const buildImageUrl = (shapeData: ShapeData, width: number, height: number): string => {
+  if (!shapeData?.url) return ''
+
+  // Use tpar + turl if available (optimized path)
+  if (shapeData.tpar && shapeData.turl) {
+    return shapeData.tpar.replace('{turl}', shapeData.turl)
+  }
+
+  const adapter = detectAdapter(shapeData.url)
+
+  // Local adapter: URL is already sized correctly (instance files)
+  if (adapter === 'local') {
+    return shapeData.url
+  }
+
+  if (adapter === 'unsplash') {
+    return buildUnsplashUrl(shapeData.url, width, height)
+  } else if (adapter === 'cloudinary') {
+    return buildCloudinaryUrl(shapeData.url, width, height)
+  }
+
+  return shapeData.url
+}
+
 // =====================================================================
-// Responsive Image Selection
+// BlurHash Support
 // =====================================================================
 
-// Mobile detection (416px breakpoint from MOBILE_WIDTH_PX)
-const isMobile = ref(false)
+// Effective blur hash: prefer prop image_blur, then shape data blur, then fallback shapes
+const effectiveBlurHash = computed(() => {
+  // Priority 1: Pre-provided image_blur prop (instant, no API wait)
+  if (props.image_blur) return props.image_blur
 
-// Current shape selection
-const currentShape = computed(() => {
-  if (!props.image) return null
-  return isMobile.value ? props.image.shape_vertical : props.image.shape_wide
+  // Priority 2: Blur from current shape data (after API load)
+  if (currentShapeData.value?.blur) return currentShapeData.value.blur
+
+  // Priority 3: Fallback - try to find blur from any available shape
+  const imageSource = effectiveImageData.value
+  if (imageSource) {
+    // Check common shapes for blur hash
+    const shapes = ['img_square', 'img_wide', 'img_thumb', 'img_vert', 'hero_square', 'hero_wide']
+    for (const shapeKey of shapes) {
+      const shape = (imageSource as any)[shapeKey]
+      if (shape?.blur) {
+        console.log(`[Hero DEBUG] Found blur in fallback shape: ${shapeKey}`)
+        return shape.blur
+      }
+    }
+  }
+
+  return ''
 })
 
-// BlurHash support
 const { canvasRef, isDecoded } = useBlurHash({
-  hash: computed(() => currentShape.value?.blur || ''),
+  hash: effectiveBlurHash,
   width: 32,
   height: 32
 })
 
-// Convert canvas to data URL
 const blurHashUrl = computed(() => {
   if (isDecoded.value && canvasRef.value) {
     try {
@@ -276,100 +451,171 @@ const blurHashUrl = computed(() => {
   return null
 })
 
-// Build responsive image URL
-const buildImageUrl = (shapeData: any, width: number, height: number): string => {
-  if (!shapeData?.url) return ''
+// Check if currently showing a blur hash placeholder (for sizing)
+const isBlurHashActive = computed(() => {
+  return backgroundImage.value?.startsWith('data:image/png;base64,') ?? false
+})
 
-  // Use tpar + turl if available (mobile optimization)
-  if (shapeData.tpar && shapeData.turl) {
-    return shapeData.tpar.replace('{turl}', shapeData.turl)
-  }
+// Determine if we should use cover sizing (background-size: cover)
+// This is TRUE for ALL hero types with images - the image always fills the hero container
+// The DIFFERENCE between banner/cover is:
+//   - banner: shorter height (medium=50vh), image positioned at top (imgTmpAlignY='top')
+//   - cover: taller height (prominent/full), image centered (imgTmpAlignY='center')
+// Both use background-size: cover - imgTmpAlignX/Y controls background-position, not size!
+const usesCoverSizing = computed(() => {
+  // New image system or blur hash - always use cover sizing
+  if (effectiveImageData.value) return true
+  if (isBlurHashActive.value) return true
 
-  const adapter = detectAdapter(shapeData.url)
+  // Legacy imgTmp: check if cover alignment explicitly requested
+  // OR if we have an image and alignment is stretch (legacy full-width mode)
+  if (props.imgTmpAlignX === 'cover' || props.imgTmpAlignY === 'cover') return true
+  if (props.imgTmpAlignX === 'stretch' && props.imgTmpAlignY === 'stretch') return true
 
-  if (adapter === 'unsplash') {
-    return buildUnsplashUrl(shapeData.url, width, height)
-  } else if (adapter === 'cloudinary') {
-    return buildCloudinaryUrl(shapeData.url, width, height)
-  }
+  return false
+})
 
-  return shapeData.url
-}
+// =====================================================================
+// Background Image Loading
+// =====================================================================
 
-// Background image with loading states
 const backgroundImage = ref('')
 
-// Initialize background image
 const initializeBackgroundImage = () => {
-  if (!props.image) {
+  const imageSource = effectiveImageData.value
+
+  if (!imageSource) {
     // Fallback to legacy imgTmp
     if (props.imgTmp) {
       backgroundImage.value = props.imgTmp
-      if (import.meta.env.DEV) {
-        console.warn('[Hero] Using legacy imgTmp prop. Migrate to image prop with shape system.')
-      }
     }
     return
   }
 
-  // Start with BlurHash
+  // Start with BlurHash if available
   if (blurHashUrl.value) {
     backgroundImage.value = blurHashUrl.value
   }
 
-  // Check if mobile
-  isMobile.value = window.innerWidth <= MOBILE_WIDTH_PX
+  // Load image for selected instance
+  const shape = currentShapeData.value
 
-  // Load appropriate shape
-  const shape = currentShape.value
-  if (shape) {
-    const width = isMobile.value ? 416 : 672 // 2x for better quality
-    const height = isMobile.value ? 739 : 336
-    const imageUrl = buildImageUrl(shape, width, height)
+  if (shape?.url) {
+    const { width, height } = instanceDimensions.value
+    const imageUrl = buildImageUrl(shape, width * 2, height * 2) // 2x for retina
 
     // Preload and swap
     const img = new Image()
     img.onload = () => {
       backgroundImage.value = imageUrl
     }
+    img.onerror = (e) => {
+      console.warn('[Hero] Failed to load image:', imageUrl, e)
+      // Keep BlurHash as fallback
+    }
     img.src = imageUrl
   }
 }
 
-onMounted(() => {
-  initializeBackgroundImage()
+// =====================================================================
+// Lifecycle & Event Handlers
+// =====================================================================
 
-  // Optional: Handle resize for desktop upgrade
-  let resizeTimeout: number
-  const handleResize = () => {
-    clearTimeout(resizeTimeout)
-    resizeTimeout = setTimeout(() => {
-      const wasMobile = isMobile.value
-      isMobile.value = window.innerWidth <= MOBILE_WIDTH_PX
+let resizeTimeout: number | undefined
 
-      // Upgrade to desktop image if needed
-      if (wasMobile && !isMobile.value && props.image?.shape_wide) {
-        const imageUrl = buildImageUrl(props.image.shape_wide, 672, 336)
-        const img = new Image()
-        img.onload = () => {
-          backgroundImage.value = imageUrl
-        }
-        img.src = imageUrl
-      }
-    }, 100)
+const handleResize = () => {
+  clearTimeout(resizeTimeout)
+  resizeTimeout = window.setTimeout(() => {
+    const prevInstance = selectedInstance.value
+
+    viewport.value = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    // If instance changed, reload image
+    if (selectedInstance.value !== prevInstance) {
+      initializeBackgroundImage()
+    }
+  }, 100) as unknown as number
+}
+
+onMounted(async () => {
+  viewport.value = {
+    width: window.innerWidth,
+    height: window.innerHeight
   }
 
-  window.addEventListener('resize', handleResize)
+  // If we need to fetch image via API, do it first
+  if (shouldFetchImage.value) {
+    await fetchImage({
+      id: props.image_id ? Number(props.image_id) : undefined,
+      xmlid: props.image_xmlid
+    })
+  }
 
-  return () => {
-    window.removeEventListener('resize', handleResize)
-    clearTimeout(resizeTimeout)
+  initializeBackgroundImage()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  clearTimeout(resizeTimeout)
+})
+
+// Watch for image prop changes
+watch(() => props.image, initializeBackgroundImage, { deep: true })
+
+// Watch for fetched image data changes
+watch(fetchedImageData, () => {
+  if (fetchedImageData.value) {
+    initializeBackgroundImage()
+  }
+})
+
+// Watch for BlurHash decode completion - set background immediately when ready
+watch(blurHashUrl, (newUrl) => {
+  if (newUrl && !backgroundImage.value) {
+    backgroundImage.value = newUrl
+  }
+})
+
+// Watch for image_id/image_xmlid prop changes
+watch([() => props.image_id, () => props.image_xmlid], async ([newId, newXmlid]: [number | string | undefined, string | undefined]) => {
+  if (newId || newXmlid) {
+    await fetchImage({
+      id: newId ? Number(newId) : undefined,
+      xmlid: newXmlid
+    })
   }
 })
 
 // Computed background image (use new system if available, fallback to imgTmp)
 const computedBackgroundImage = computed(() => {
   return backgroundImage.value || props.imgTmp || ''
+})
+
+// Computed overlay from gradient_type/gradient_depth props OR direct overlay prop
+const computedOverlay = computed(() => {
+  // If direct overlay prop is provided, use it
+  if (props.overlay) {
+    return props.overlay
+  }
+
+  // Generate gradient based on gradient_type and gradient_depth
+  if (props.gradient_type === 'none' || !props.gradient_type) {
+    return null
+  }
+
+  const depth = props.gradient_depth ?? 0.6
+
+  if (props.gradient_type === 'left-bottom') {
+    // Gradient from bottom-left corner (dark) fading to transparent
+    return `linear-gradient(to top right, rgba(0, 0, 0, ${depth}) 0%, rgba(0, 0, 0, ${depth * 0.5}) 30%, transparent 70%)`
+  }
+
+  // Add more gradient types as needed
+  return null
 })
 </script>
 

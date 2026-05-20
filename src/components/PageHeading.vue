@@ -1,12 +1,13 @@
 <template>
   <div>
-    <!-- Hero/Banner Header -->
+    <!-- Hero/Banner Header (cover, banner, bauchbinde) -->
     <Hero v-if="showHero" :contentAlignY="headerprops.contentAlignY"
       :contentType="headerprops.contentType ? headerprops.contentType : headerprops.phoneBanner ? 'banner' : 'text'"
       :contentWidth="headerprops.contentWidth ? headerprops.contentWidth : headerprops.isFullWidth ? 'full' : 'short'"
       :gradient_depth="headerprops.gradientDepth" :gradient_type="headerprops.gradientType"
       :heightTmp="headerprops.headerSize" :imgTmp="imgTmp" :imgTmpAlignX="headerprops.imgTmpAlignX"
-      :imgTmpAlignY="headerprops.imgTmpAlignY" :backgroundCorrection="headerprops.backgroundCorrection">
+      :imgTmpAlignY="headerprops.imgTmpAlignY" :backgroundCorrection="headerprops.backgroundCorrection"
+      :image_id="image_id" :image_xmlid="image_xmlid" :image_blur="image_blur">
       <!-- Banner wrapper component (optional) -->
       <Component :card="headerprops.phoneBanner && false" :is="headerprops.contentInBanner ? Banner : 'div'"
         themeColor="secondary" :option="headerprops.name === 'bauchbinde' ? 'bauchbinde' : ''" transparent>
@@ -36,7 +37,26 @@
       </Component>
     </Hero>
 
-    <!-- Simple Header (no hero) - using Section + Container instead of SectionContainer -->
+    <!-- Columns Header (side-by-side text + image) -->
+    <TextImageHeader v-else-if="showTextImage" :headerSize="headerprops.headerSize" :imgTmp="imgTmp"
+      :imageData="columnImageData" :contentAlignY="headerprops.contentAlignY || 'center'">
+      <!-- Heading with HeadingParser for markdown support -->
+      <HeadingParser :content="heading" is="h1" />
+      <br v-if="heading && teaserText" />
+      <HeadingParser v-if="teaserText" :content="teaserText" is="h3" />
+
+      <!-- CTA Buttons -->
+      <div v-if="showCta" class="cta-group">
+        <Button :is="ctaComponent" v-bind="{ [ctaLinkProp]: cta.link }" size="medium" variant="plain">
+          {{ cta.title }}
+        </Button>
+        <component :is="linkComponent" v-if="showLink" v-bind="{ [linkLinkProp]: link.link }" class="cta-link">
+          {{ link.title }}
+        </component>
+      </div>
+    </TextImageHeader>
+
+    <!-- Simple Header (no image/hero) -->
     <Section v-else>
       <Container>
         <HeadingParser v-if="heading" :content="heading" is="h1" class="mt-14" />
@@ -47,14 +67,17 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, type PropType } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
 import Hero from './Hero.vue'
 import Banner from './Banner.vue'
 import Section from './Section.vue'
 import Container from './Container.vue'
 import HeadingParser from './HeadingParser.vue'
+import TextImageHeader from './TextImageHeader.vue'
 import Logo from './Logo.vue'
 import Button from './Button.vue'
+import { useHeaderConfig } from '@/composables/useHeaderConfig'
+import type { ImageApiResponse } from '@/composables/useImageFetch'
 
 const props = defineProps({
   /**
@@ -110,6 +133,30 @@ const props = defineProps({
     default: '',
   },
   /**
+   * Image ID for API-based loading in Hero.
+   * When provided, Hero will fetch image data from /api/images/:id
+   */
+  image_id: {
+    type: [Number, String] as PropType<number | string>,
+    default: undefined,
+  },
+  /**
+   * Image XMLID for API-based loading in Hero.
+   * When provided, Hero will fetch image data from /api/images/xmlid/:xmlid
+   */
+  image_xmlid: {
+    type: String,
+    default: undefined,
+  },
+  /**
+   * Pre-provided blur hash string for immediate placeholder display.
+   * Useful when entity already has img_square.blur available.
+   */
+  image_blur: {
+    type: String,
+    default: undefined,
+  },
+  /**
    * Call-to-action button configuration.
    */
   cta: {
@@ -147,93 +194,35 @@ const props = defineProps({
   },
 })
 
-// Default header type configurations
-const headerTypes = [
-  {
-    id: 0,
-    name: 'simple',
-    description: `no header`,
-    headerSize: 'mini',
-    allowedSizes: [],
-    isFullWidth: false,
-    contentAlignY: 'center',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-  {
-    id: 1,
-    name: 'columns',
-    description: `2-cols header`,
-    headerSize: 'prominent',
-    allowedSizes: [],
-    isFullWidth: false,
-    contentAlignY: 'center',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-  {
-    id: 2,
-    name: 'banner',
-    description: `Banner`,
-    headerSize: 'medium',
-    allowedSizes: ['prominent', 'medium', 'mini'],
-    isFullWidth: false,
-    contentAlignY: 'top',
-    imgTmpAlignX: 'center',
-    imgTmpAlignY: 'top',
-    backgroundCorrection: 1,
-    phoneBanner: false,
-    contentInBanner: false,
-    gradientType: 'left-bottom',
-    gradientDepth: 0.6,
-  },
-  {
-    id: 3,
-    name: 'cover',
-    description: `Cover`,
-    headerSize: 'prominent',
-    allowedSizes: ['prominent', 'full'],
-    isFullWidth: false,
-    contentAlignY: 'bottom',
-    imgTmpAlignX: 'cover',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 1,
-    phoneBanner: true,
-    contentInBanner: false,
-    gradientType: 'left-bottom',
-    gradientDepth: 0.6,
-  },
-  {
-    id: 4,
-    name: 'bauchbinde',
-    description: `Bauchbinde`,
-    headerSize: 'prominent',
-    allowedSizes: ['prominent', 'full'],
-    isFullWidth: true,
-    contentAlignY: 'bottom',
-    imgTmpAlignX: 'cover',
-    imgTmpAlignY: 'center',
-    backgroundCorrection: 'none',
-    phoneBanner: false,
-    contentType: 'left',
-    contentWidth: 'fixed',
-    contentInBanner: true,
-    gradientType: 'none',
-    gradientDepth: 1.0,
-  },
-]
+// =====================================================================
+// Header Configuration Resolution (via useHeaderConfig composable)
+// =====================================================================
 
-// Check whether the headerConfigs contain an entry matching the headerType-prop
+// Parse formatOptions to extract headerSubtype (if specified)
+const parsedFormatOptions = computed(() => {
+  if (typeof props.formatOptions === 'string') {
+    if (props.formatOptions.trim() === '') return {}
+    try {
+      return JSON.parse(props.formatOptions)
+    } catch (e) {
+      console.warn('Failed to parse formatOptions JSON string:', props.formatOptions, e)
+      return {}
+    }
+  }
+  return props.formatOptions
+})
+
+// Use the header config composable for API-based resolution
+// This handles the three-layer merge: Base → Subcategory → Project Override
+const { resolvedConfig: apiResolvedConfig, isLoading: configLoading } = useHeaderConfig({
+  headerType: computed(() => props.headerType || 'simple'),
+  headerSubtype: computed(() => parsedFormatOptions.value?.headerSubtype),
+  // Project overrides only apply on /sites routes (auto-detected by composable)
+  useApi: true
+})
+
+// Legacy: Check whether the headerConfigs prop contains custom config
+// This allows sites to pass custom configs (backwards compatibility)
 const customSiteHeader = computed(() =>
   props.headerConfigs?.find((config: any) => config.name === props.headerType)
 )
@@ -249,56 +238,37 @@ const siteHeader = computed(() => {
   }
 })
 
-// Get default Header, if not found, take 'simple'
-const defaultHeader = computed(() =>
-  headerTypes.find((type) => type.name === props.headerType) || headerTypes[0]
-)
-
-// Parse formatOptions if it's a string (JSON string or empty string)
-const parsedFormatOptions = computed(() => {
-  if (typeof props.formatOptions === 'string') {
-    // Empty string means empty object
-    if (props.formatOptions.trim() === '') {
-      return {}
-    }
-    // Try to parse JSON string
-    try {
-      return JSON.parse(props.formatOptions)
-    } catch (e) {
-      console.warn('Failed to parse formatOptions JSON string:', props.formatOptions, e)
-      return {}
-    }
-  }
-  // Already an object
-  return props.formatOptions
-})
-
 // Merge all header configuration sources
+// Priority: API config → legacy headerConfigs → entity formatOptions → entity headerSize
 const headerprops = computed(() => {
   const merged = Object.assign(
     {},
-    defaultHeader.value,
-    siteHeader.value,
-    parsedFormatOptions.value
+    apiResolvedConfig.value,          // From API/composable (base → subcat → project)
+    siteHeader.value,                  // Legacy headerConfigs prop override
+    parsedFormatOptions.value,         // Entity-level formatOptions JSON
+    // Entity-level headerSize prop takes priority (from database field)
+    props.headerSize ? { headerSize: props.headerSize } : {}
   )
 
   // Validate headerSize is in allowedSizes
   if (merged.allowedSizes?.length > 0 && !merged.allowedSizes.includes(merged.headerSize)) {
-    merged.headerSize = defaultHeader.value.headerSize
+    merged.headerSize = apiResolvedConfig.value.headerSize
   }
 
   return merged
 })
 
 // Display logic
-const showHero = computed(() =>
-  headerprops.value.name !== 'simple' &&
-  headerprops.value.name !== 'columns' &&
-  props.imgTmp
-)
+const showHero = computed(() => {
+  const name = headerprops.value.name
+  const hasImage = props.imgTmp || props.image_id || props.image_xmlid
+  // Hero is used for: banner, cover, bauchbinde (not simple or columns)
+  return name !== 'simple' && name !== 'columns' && hasImage
+})
 
 const showTextImage = computed(() =>
-  headerprops.value.name === 'columns' && props.imgTmp
+  headerprops.value.name === 'columns' &&
+  (props.imgTmp || props.image_id || props.image_xmlid)
 )
 
 const showCta = computed(() =>
@@ -308,6 +278,42 @@ const showCta = computed(() =>
 const showLink = computed(() =>
   headerprops.value.name !== 'simple' && props.link?.link
 )
+
+// =====================================================================
+// Image Data for Columns Layout (TextImageHeader)
+// =====================================================================
+const columnImageData = ref<ImageApiResponse | null>(null)
+
+// Fetch image data when columns layout needs it
+async function fetchColumnImageData() {
+  if (!showTextImage.value) return
+
+  // If we have image_id, fetch the image data
+  if (props.image_id) {
+    try {
+      const response = await fetch(`/api/images/${props.image_id}`)
+      if (response.ok) {
+        columnImageData.value = await response.json()
+      }
+    } catch (err) {
+      console.warn('[PageHeading] Failed to fetch column image data:', err)
+    }
+  } else if (props.image_xmlid) {
+    try {
+      const response = await fetch(`/api/images/xmlid/${props.image_xmlid}`)
+      if (response.ok) {
+        columnImageData.value = await response.json()
+      }
+    } catch (err) {
+      console.warn('[PageHeading] Failed to fetch column image by xmlid:', err)
+    }
+  }
+}
+
+// Watch for showTextImage becoming true
+watch(showTextImage, (show) => {
+  if (show) fetchColumnImageData()
+}, { immediate: true })
 
 // Helper to determine if link is internal (relative) or external (absolute)
 const isInternalLink = (url: string) => {

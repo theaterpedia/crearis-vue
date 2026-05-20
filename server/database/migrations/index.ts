@@ -72,6 +72,10 @@ import { up as migration062Up, down as migration062Down } from './062_drop_instr
 import { migration as migration063 } from './063_fix_shape_to_img_propagation'
 import { migration as migration064 } from './064_events_location_to_partners'
 import { up as migration065Up, down as migration065Down } from './065_events_header_size'
+import { migration as migration066 } from './066_add_header_size_columns'
+import { migration as migration067 } from './067_header_configs_system'
+import { migration as migration068 } from './068_header_configs_theme_id'
+import { migration as migration069 } from './069_xmlid_format_migration'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -155,6 +159,14 @@ const migrations: Migration[] = [
     { run: migration064.up, down: migration064.down, metadata: { id: '064_events_location_to_partners', description: 'Remap events.location FK from locations to partners', version: '0.4.3', date: '2025-12-12' }, reversible: true },
     // Migration 065 - Add header_size to events
     { run: migration065Up, down: migration065Down, metadata: { id: '065_events_header_size', description: 'Add header_size column to events table', version: '0.4.4', date: '2025-12-12' }, reversible: true },
+    // Migration 066 - Add header_size to posts and pages
+    { run: migration066.up, down: migration066.down, metadata: { id: migration066.id, description: migration066.description, version: '0.4.5', date: '2025-12-15' }, reversible: true },
+    // Migration 067 - Header Configs System (three-layer config)
+    { run: migration067.up, down: migration067.down, metadata: { id: migration067.id, description: migration067.description, version: '0.4.6', date: '2025-12-15' }, reversible: true },
+    // Migration 068 - Header Configs Theme ID (themed page-headings)
+    { run: migration068.up, down: migration068.down, metadata: { id: migration068.id, description: migration068.description, version: '0.4.7', date: '2025-12-17' }, reversible: true },
+    // Migration 069 - XMLID Format Migration (Odoo-aligned)
+    { run: migration069.up, down: migration069.down, metadata: { id: migration069.id, description: migration069.description, version: '0.4.8', date: '2025-12-17' }, reversible: false },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 

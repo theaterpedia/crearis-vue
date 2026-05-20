@@ -104,8 +104,9 @@
           <pToc v-if="asideOptions.toc?.enabled" :title="asideOptions.toc.title" :isAside="true" />
 
           <!-- pList -->
-          <pList v-if="asideOptions.list?.type && asideOptions.list.type !== 'images'" :type="asideOptions.list.type"
-            :header="asideOptions.list.header" :isAside="true" :projectDomaincode="projectDomaincode" />
+          <pList
+            v-if="asideOptions.list?.type && asideOptions.list.type !== 'none' && asideOptions.list.type !== 'images'"
+            :entity="asideOptions.list.type" :project="projectDomaincode" size="small" />
 
           <!-- pListImages -->
           <pListImages v-if="asideOptions.list?.type === 'images' && projectId" :projectId="projectId" />
@@ -124,8 +125,8 @@
         <Container v-if="footerOptions">
           <!-- pGallery -->
           <pGallery v-if="footerOptions.gallery?.type && footerOptions.gallery.type !== 'images'"
-            :type="footerOptions.gallery.type" :header="footerOptions.gallery.header" :isFooter="true"
-            :projectDomaincode="projectDomaincode" />
+            :entity="footerOptions.gallery.type" :header="footerOptions.gallery.header" :isFooter="true"
+            :project="projectDomaincode" />
 
           <!-- pGalleryImages -->
           <pGalleryImages v-if="footerOptions.gallery?.type === 'images' && projectId" :projectId="projectId" />

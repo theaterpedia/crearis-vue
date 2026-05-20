@@ -4,10 +4,19 @@ Welcome to the Theaterpedia developer documentation. This section is for:
 - **Code automation** (AI assistants working on the codebase)
 - **Expert-level Vue developers** contributing to the project
 
+::: danger ALPHA MODE ACTIVE
+The system currently uses a **temporary alpha publishing workaround**. Before making changes to project visibility or status logic, read:
+
+👉 **[Alpha Publishing System](/dev/alpha-publishing)** — How `status_old` controls visibility during v0.4
+
+This will be removed in v0.5 when full sysreg status is implemented.
+:::
+
 ## Quick Links
 
 | Resource | Description |
 |----------|-------------|
+| [Alpha Publishing](/dev/alpha-publishing) | 🚨 **Current** visibility control system |
 | [Hack the Sysreg](/dev/hack-sysreg) | Quick reference tables for system registry |
 | [Theme & Opus CSS](/dev/features/theme-opus-css) | oklch color system and CSS conventions |
 | [cList Components](/dev/features/clist) | Core list/grid component family |

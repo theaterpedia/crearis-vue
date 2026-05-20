@@ -11,8 +11,7 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
                 :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="(e: MouseEvent) => handleItemClick(item, e)"
-                @trash="() => handleTrash(item)">
+                @click="(e: MouseEvent) => handleItemClick(item, e)" @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -32,8 +31,7 @@
             <component :is="itemComponent" v-for="(item, index) in entities" :key="item.id || index"
                 :heading="item.heading" :size="size" :heading-level="headingLevel" :anatomy="props.anatomy"
                 :options="getItemOptions(item)" :models="getItemModels(item)" v-bind="item.props || {}"
-                @click="() => openPreviewModal(item)"
-                @trash="() => handleTrash(item)">
+                @click="() => openPreviewModal(item)" @trash="() => handleTrash(item)">
                 <template v-if="item.slot" #default>
                     <component :is="item.slot" />
                 </template>
@@ -135,6 +133,10 @@ interface Props {
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
+    // Skip alpha filtering entirely (for internal editing pages)
+    skipAlphaFilter?: boolean
     itemType?: 'card' | 'row'
     size?: 'small' | 'medium' | 'large'
     variant?: 'square' | 'wide' | 'thumb' | 'vertical'
@@ -244,11 +246,11 @@ const fetchEntityData = async () => {
 
         // Build query parameters
         const params = new URLSearchParams()
-        
+
         if (props.project) {
             params.append('project', props.project)
         }
-        
+
         // Status filtering
         if (props.statusLt !== undefined) {
             params.append('status_lt', String(props.statusLt))
@@ -259,18 +261,28 @@ const fetchEntityData = async () => {
         if (props.statusGt !== undefined) {
             params.append('status_gt', String(props.statusGt))
         }
-        
+        // Alpha mode: skip filtering entirely for internal editing pages
+        if (props.skipAlphaFilter) {
+            params.append('skip_alpha_filter', 'true')
+        }
+        // Alpha mode: include draft projects (TODO v0.5: remove)
+        else if (props.alphaPreview) {
+            params.append('alpha_preview', 'true')
+        }
+
         const queryString = params.toString()
         if (queryString) {
             url += `?${queryString}`
         }
 
+        console.log('[ItemGallery] Fetching:', url)
         const response = await fetch(url)
         if (!response.ok) {
             throw new Error(`Failed to fetch ${props.entity}: ${response.statusText}`)
         }
 
         entityData.value = await response.json()
+        console.log('[ItemGallery] Loaded', entityData.value.length, props.entity, 'items')
 
         // Sort events by date_begin (ascending - earliest first)
         if (props.entity === 'events' && Array.isArray(entityData.value)) {

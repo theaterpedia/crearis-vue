@@ -25,6 +25,24 @@ export const STATUS = {
 } as const
 
 /**
+ * Admin-bit mask (bit-31 sign-bit) — per SFR-9 resolution 2026-04-21.
+ * When set on an entity's status, the current user has administrative-authority
+ * to edit/transition that record regardless of ordinary permission-state.
+ * Detection uses `value & 0x80000000` so sign-wrap is handled uniformly.
+ */
+export const ADMIN_BIT_MASK = 0x80000000
+
+/**
+ * Pure check — does a sysreg value have bit-31 set?
+ * Accepts unsigned-positive (e.g. `0x80000000` as a decimal 2147483648) and
+ * signed-int32 (e.g. `-2071982816` from Odoo bitmask-compile) equivalently.
+ */
+export function hasAdminBitSet(status: number | null | undefined): boolean {
+    if (!status) return false
+    return (status & ADMIN_BIT_MASK) !== 0
+}
+
+/**
  * Status value to name mapping
  */
 const STATUS_TO_NAME: Record<number, string> = {
@@ -274,6 +292,21 @@ export function useCapabilities(
     const canList = computed(() => capabilities.value.list)
     const canShare = computed(() => capabilities.value.share)
 
+    // Admin-bit awareness (SFR-9 resolution). Computed client-side from
+    // entity.status for now; will migrate to server-returned once SFR-10
+    // contract lands (/api/sysreg/capabilities returns adminBit field).
+    const hasAdminBit = computed(() => hasAdminBitSet(entity.value?.status))
+
+    // Effective capabilities: admin-bit elevates update + manage.
+    // Consumers that gate write-actions should prefer these over raw
+    // canEdit / canManage.
+    const canEditEffective = computed(
+        () => capabilities.value.update || hasAdminBit.value,
+    )
+    const canManageEffective = computed(
+        () => capabilities.value.manage || hasAdminBit.value,
+    )
+
     // Available transitions as status values (for backward compatibility)
     const availableTransitions = computed(() => {
         return transitions.value
@@ -338,6 +371,12 @@ export function useCapabilities(
         alternativeTransitions,
         canTransitionTo,
         isPrimaryTransition,
+
+        // Admin-bit awareness (SFR-9) — prefer canEditEffective /
+        // canManageEffective for write-path gating.
+        hasAdminBit,
+        canEditEffective,
+        canManageEffective,
 
         // Role checks
         isCreator,

@@ -52,10 +52,24 @@ export abstract class BaseMediaAdapter implements IMediaAdapter {
             }
 
             // Use provided xmlid or construct from parts
+            // New Odoo-aligned format: {domaincode}.image-{xml_subject}__{imageIdentifier}
+            // Examples: theaterpedia.image__img_12345, theaterpedia.image-portrait__dancer_01
             let xmlid: string | null = (batchData as any)?.xmlid || null
             if (!xmlid && batchData?.domaincode && (batchData as any).imageIdentifier) {
-                const xmlSubject = batchData.xml_subject || 'mixed'
-                xmlid = `${batchData.domaincode}.image.${xmlSubject}-${(batchData as any).imageIdentifier}`
+                const xmlSubject = batchData.xml_subject || null
+                const slug = (batchData as any).imageIdentifier
+                    .toLowerCase()
+                    .replace(/[\s-]+/g, '_')  // Replace spaces/hyphens with underscore
+                    .replace(/[^a-z0-9_]/g, '')  // Remove non-alphanumeric except underscore
+                    .replace(/_+/g, '_')  // Collapse multiple underscores
+                    .replace(/^_|_$/g, '')  // Trim underscores
+                if (xmlSubject) {
+                    // Format: {domaincode}.image-{template}__{slug}
+                    xmlid = `${batchData.domaincode}.image-${xmlSubject}__${slug}`
+                } else {
+                    // Format: {domaincode}.image__{slug}
+                    xmlid = `${batchData.domaincode}.image__${slug}`
+                }
             }
 
             // Merge metadata with batch data

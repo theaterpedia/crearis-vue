@@ -1,6 +1,7 @@
 import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
 import { sessions } from '../../utils/session-store'
+import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mode'
 
 // GET /api/posts - List posts with optional filters
 // After Migration 019 Chapter 3B:
@@ -12,6 +13,10 @@ import { sessions } from '../../utils/session-store'
 // After v0.2final:
 // - Optional visibility filtering based on user role (r_anonym, r_member, etc.)
 // - Pass ?visibility=true to enable role-based filtering
+// Alpha mode (v0.4):
+// - ?alpha_preview=true to include 'draft' projects (when in alpha mode)
+// - ?skip_alpha_filter=true to bypass alpha filtering entirely (for internal editing pages)
+// - Filters by projects.status_old instead of sysreg status
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
@@ -19,12 +24,25 @@ export default defineEventHandler(async (event) => {
         let sql = `
             SELECT 
                 p.*,
-                pr.domaincode AS domaincode
+                pr.domaincode AS domaincode,
+                pr.status_old AS project_status_old
             FROM posts p
             LEFT JOIN projects pr ON p.project_id = pr.id
             WHERE 1=1
         `
         const params: any[] = []
+
+        // Alpha mode: filter by projects.status_old
+        // skip_alpha_filter=true bypasses this entirely (for internal editing pages)
+        // TODO v0.5: Remove this block when migrating to full sysreg status
+        const skipAlphaFilter = query.skip_alpha_filter === 'true'
+        if (isServerAlphaMode() && !skipAlphaFilter) {
+            const alphaPreview = query.alpha_preview === 'true'
+            const validStatuses = getAlphaProjectStatuses(alphaPreview)
+            // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
+            sql += ` AND pr.status_old IN (${validStatuses.map(() => '?').join(', ')})`
+            params.push(...validStatuses)
+        }
 
         // Visibility filtering (optional - enabled with ?visibility=true)
         if (query.visibility === 'true') {

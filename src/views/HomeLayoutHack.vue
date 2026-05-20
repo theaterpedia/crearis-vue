@@ -600,11 +600,13 @@ async function handleAvatarUpload(event: Event) {
     uploadProgress.value = 'Hochladen...'
 
     try {
-        // Generate xmlid: domaincode.image_avatar.sanitized_sysmail_timestamp
+        // Generate xmlid with Odoo-aligned format: {domaincode}.image-avatar__{slug}
+        // Template: avatar (for user avatars)
+        // Slug: sanitized_sysmail_timestamp (lowercase, underscores only)
         const sysmail = user.value?.sysmail || 'user'
-        const sanitizedMail = sysmail.replace(/[@.\-]/g, '_')
+        const sanitizedMail = sysmail.replace(/[@.\-]/g, '_').toLowerCase()
         const timestamp = Date.now()
-        const xmlid = `${selectedImageContext.value}.image_avatar.${sanitizedMail}_${timestamp}`
+        const xmlid = `${selectedImageContext.value}.image-avatar__${sanitizedMail}_${timestamp}`
 
         const formData = new FormData()
         formData.append('file', file)

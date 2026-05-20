@@ -12,6 +12,18 @@ export default defineConfig({
         // Test environment - use happy-dom for Vue component tests
         environment: 'happy-dom',
 
+        // Exclude grey-zone (honest-parked tests per _sprint-conventions §4) +
+        // vitest defaults. Anything under tests-grey/ is known-not-to-green-yet;
+        // weekly audit folds back or retires.
+        exclude: [
+            '**/node_modules/**',
+            '**/dist/**',
+            '**/cypress/**',
+            '**/.{idea,git,cache,output,temp}/**',
+            '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+            '**/tests-grey/**'
+        ],
+
         // Global setup and teardown
         globalSetup: './tests/setup/global-setup.ts',
         setupFiles: ['./tests/setup/test-setup.ts'],

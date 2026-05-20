@@ -7,6 +7,18 @@
 
 ## Core v1.1 Scope
 
+### FormatOptions System Extension (Target: 2.0)
+- [ ] **Extend header_configs pattern to all 4 chapters**
+  - Rename `header_configs` → `format_configs` with `chapter` column
+  - Rename `project_header_overrides` → `project_format_overrides`
+  - Add presets for aside/footer/page chapters
+  - Consider bit-encoding once schema finalized
+- [ ] **Aside chapter presets**: TOC modes, list types, context templates
+- [ ] **Footer chapter presets**: Gallery/slider combos, sitemap modes
+- [ ] **Page chapter presets**: Navigation modes, background themes
+- Note: Header chapter completed in v1.0 (migration 067), serves as reference
+- See: `chat/reports/2025-12-15-formatoptions-system-analysis.md`
+
 ### Null Workitem Audit
 - [ ] **Check for null-workitems**: Audit system for workitems without creator
   - Note: Likely never needed - prefer Odoo-style system users (e.g., 'bot' user)

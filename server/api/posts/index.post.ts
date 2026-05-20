@@ -48,6 +48,9 @@ export default defineEventHandler(async (event) => {
             public_user: body.public_user || null,
             img_id: body.img_id || null,
             creator_id: body.creator_id || body.owner_id || null,  // Accept both creator_id and legacy owner_id
+            // Header presentation fields
+            header_type: body.header_type || 'simple',
+            header_size: body.header_size || 'mini',
             // Tag fields (integer bitmasks)
             // Status defaults to NEW (1) - entities must never have NULL status
             status: body.status ?? 1,  // Default to NEW (1) if not provided
@@ -62,8 +65,9 @@ export default defineEventHandler(async (event) => {
             INSERT INTO posts (
                 xmlid, name, subtitle, teaser, cimg, post_date,
                 isbase, project_id, template, public_user, img_id, creator_id,
+                header_type, header_size,
                 status, dtags, ctags, ttags, rtags
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
         `
 
@@ -80,6 +84,8 @@ export default defineEventHandler(async (event) => {
             postData.public_user,
             postData.img_id,
             postData.creator_id,
+            postData.header_type,
+            postData.header_size,
             postData.status,
             postData.dtags,
             postData.ctags,

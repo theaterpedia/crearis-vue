@@ -235,12 +235,12 @@ export function useEventTemplates(options?: {
                 ttags: template.ttags,
                 dtags: template.dtags,
 
-                // Set status to draft (0x01)
-                status: '\\x01',
+                // Set status to draft (1)
+                status: 1,
 
                 // Copy config but remove template bit from rtags
                 config: template.config,
-                rtags: template.rtags ? clearBit(template.rtags, 0) : '\\x00',
+                rtags: template.rtags ? clearBit(template.rtags, 0) : 0,
 
                 // Apply any additional customization
                 ...customization
@@ -289,7 +289,7 @@ export function useEventTemplates(options?: {
             const cloned: Partial<Event> = {
                 ...template,
                 name: newName || `${template.name} (Copy)`,
-                status: '\\x01', // Draft
+                status: 1, // Draft
                 id: undefined // New record
             }
 
