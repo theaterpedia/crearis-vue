@@ -1,5 +1,5 @@
 <!--
-  AgendaView — Item-2 Variant-C nested view (SFR-76 A-scope).
+  AgendaView — cand-2-baseline Phase-A integration.
 
   §12 agenda-view-mode pattern (locked):
     - Two-mode-adaptive: `#inside` (event running OR schedule clicked) vs
@@ -7,17 +7,29 @@
     - Right-rail absorbs variation (birds-view ↔ props-edit ↔ post-it-interactions)
     - Main-view stays stable across mode switches
 
-  This commit ships the §12 frame STUB only:
-    - Mode-state + right-rail slot are wired
-    - Line-rendering area is a placeholder — the α/β/γ pick (CC-audit pending,
-      HM new-design-material in flight) will fill this region
+  Phase-A wiring (per cand-2-implementation-brief 2026-05-19):
+    - Row-family architecture mounted: AgendaLineList → AgendaDayGroup → AgendaLine
+    - Cross-preset proof: same components render schule-project + initiative
+      preset-instances via the useAgendaPreset composable (mock data for now;
+      real graphql-fetch in Phase-B / T3a-Basic upstream connectivity)
+    - Density-morph driven by [data-density] attribute (NOT v-if branching)
+    - Trio-inline-right-end + single-fpostit-on-click discipline (negative-spec)
 
-  No data fetch yet; mocked sample-state for layout shape.
+  Preset selector is a TUE-prototyping affordance (lets HM walk both
+  preset-instances in the dev-browser). Final preset-resolution lands when
+  project.config.preset is wired through.
 -->
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import AgendaLineList from '@/components/agenda/AgendaLineList.vue'
+import {
+    useAgendaPreset,
+    type AgendaPresetKind,
+    type AgendaLineData,
+    type AgendaLineTrioCounts,
+} from '@/composables/useAgendaPreset'
 
 const route = useRoute()
 const projectId = computed(() => String(route.params.projectId ?? ''))
@@ -25,12 +37,37 @@ const projectId = computed(() => String(route.params.projectId ?? ''))
 // §12 mode-state. Currently mocked; real driver = "is there a running event for this project?"
 type AgendaMode = 'main' | 'inside'
 const mode = ref<AgendaMode>('main')
-
-// Mock-state: did user click into the schedule? Drives mode switch.
 const isInsideAgenda = computed(() => mode.value === 'inside')
 
 function enterInside() { mode.value = 'inside' }
 function leaveInside() { mode.value = 'main' }
+
+// Cross-preset proof — toggle drives which mock-dataset feeds the row-family.
+// Final preset-resolution lands when project.config.preset is wired through.
+const preset = ref<AgendaPresetKind>('schule-project')
+const { dayGroups, lineCount } = useAgendaPreset(preset)
+
+// Density-morph foundation. Mode-switch drives density (compact tiny in #main,
+// fancy in #inside) — cheapest first cut; refines once HM CSS-polish lands.
+const density = computed<'tiny' | 'fancy'>(() => (isInsideAgenda.value ? 'fancy' : 'tiny'))
+
+// Shortcode-pill render gated by project.config.useTemplateCode upstream;
+// for Phase-A mock-toggle on the same axis.
+const showShortcode = ref(true)
+
+function onTrioClick(lane: keyof AgendaLineTrioCounts, line: AgendaLineData) {
+    // Phase-A stub: single-fpostit-on-click discipline lands in Phase-B when
+    // fpostit-controller wiring lands. For now, log for FLAME-iteration smoke.
+    // eslint-disable-next-line no-console
+    console.info('[AgendaView] trio-click', lane, 'on', line.id)
+}
+
+function onLineClick(line: AgendaLineData) {
+    // Phase-A: clicking a line transitions to #inside (per §12).
+    enterInside()
+    // eslint-disable-next-line no-console
+    console.info('[AgendaView] line-click', line.id, '→ #inside')
+}
 </script>
 
 <template>
@@ -48,15 +85,24 @@ function leaveInside() { mode.value = 'main' }
                 </div>
             </div>
 
-            <div class="agenda-view__line-area" data-stub="agenda-line-rendering">
-                <p class="agenda-view__placeholder">
-                    <strong>Line-rendering placeholder.</strong> α / β / γ pick pending (HM design-material in flight).
-                    Mode: <code>{{ mode }}</code> · Project: <code>{{ projectId }}</code>.
-                </p>
-                <p class="agenda-view__hint">
-                    When a variant lands, the area below populates with agenda-lines (compact + expanded).
-                    The §12 frame holds during mode-switches — main-view does not jitter.
-                </p>
+            <div class="agenda-view__preset-toggle" role="group" aria-label="Preset (mock-toggle)">
+                <span class="agenda-view__preset-label">Preset:</span>
+                <button :class="{ 'is-active': preset === 'schule-project' }"
+                    @click="preset = 'schule-project'" type="button">schule-project</button>
+                <button :class="{ 'is-active': preset === 'initiative' }"
+                    @click="preset = 'initiative'" type="button">initiative</button>
+                <label class="agenda-view__shortcode-toggle">
+                    <input v-model="showShortcode" type="checkbox" /> shortcode-pill
+                </label>
+                <span class="agenda-view__count">{{ lineCount }} lines</span>
+            </div>
+
+            <div class="agenda-view__line-area" :data-density="density" :data-preset="preset">
+                <AgendaLineList :day-groups="dayGroups"
+                    :show-shortcode="showShortcode"
+                    :density="density"
+                    @line-click="onLineClick"
+                    @trio-click="onTrioClick" />
             </div>
         </section>
 
@@ -135,24 +181,56 @@ function leaveInside() { mode.value = 'main' }
 }
 
 .agenda-view__line-area {
-    border: 1px dashed var(--color-border, #e5e7eb);
-    border-radius: 0.5rem;
-    padding: 1.25rem;
     flex: 1;
-    background: var(--color-surface-muted, #f9fafb);
-}
-
-.agenda-view__placeholder code {
     background: var(--color-surface, #fff);
-    padding: 0.0625rem 0.25rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
 }
 
-.agenda-view__hint {
-    margin-top: 0.75rem;
+.agenda-view__preset-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    background: var(--color-surface-muted, #f9fafb);
+    flex-wrap: wrap;
+}
+
+.agenda-view__preset-label {
+    font-weight: 600;
     color: var(--color-text-muted, #6b7280);
-    font-size: 0.875rem;
+}
+
+.agenda-view__preset-toggle button {
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    background: var(--color-surface, #ffffff);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.8125rem;
+}
+
+.agenda-view__preset-toggle button.is-active {
+    background: var(--color-primary-bg, #1f2937);
+    color: var(--color-primary-contrast, #ffffff);
+    border-color: var(--color-primary-bg, #1f2937);
+}
+
+.agenda-view__shortcode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    color: var(--color-text-muted, #6b7280);
+}
+
+.agenda-view__count {
+    margin-left: auto;
+    color: var(--color-text-muted, #9ca3af);
+    font-variant-numeric: tabular-nums;
 }
 
 .agenda-view__rail {
