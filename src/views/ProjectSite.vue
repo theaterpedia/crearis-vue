@@ -1,5 +1,8 @@
 <template>
     <div class="project-site-page">
+        <!-- Phase-A C11 · always-visible Edit-link in public-mode -->
+        <EditLink />
+
         <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
         <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
             :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
@@ -200,6 +203,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
+import EditLink from '@/components/EditLink.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
