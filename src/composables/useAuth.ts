@@ -110,37 +110,91 @@ export function useAuth() {
         }
     }
 
-    // Login
-    const login = async (userId: string, password: string) => {
+    // Login (CREATOR-tier · Odoo-backed via /api/auth/odoo-login)
+    //
+    // Phase-A C6 (plan §7): the canonical `login()` now routes through Odoo.
+    // The endpoint server-side creates the Odoo session, forwards Set-Cookie,
+    // and bridges into a CV-local session via bridgeFromOdoo() (see 02-auth.ts).
+    // After the round-trip we call checkSession() to populate user.value
+    // from the bridged CV session (the endpoint itself returns only the
+    // partner summary; the full CV-user shape lives behind /api/auth/session).
+    //
+    // Identity-principle: this path is creator-tier ONLY. Parents/pupils
+    // arriving on /getstarted use loginLocal() below — zero-Odoo-presence
+    // per [[project-identity-principle-2-relation-stage-gates]].
+    const login = async (email: string, password: string) => {
         isLoading.value = true
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/auth/odoo-login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ userId, password })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include',
             })
 
             if (!response.ok) {
-                const error = await response.json()
+                const error = await response.json().catch(() => ({}))
                 throw new Error(error.message || 'Login failed')
             }
 
             const data = await response.json()
+            if (!data?.success) {
+                throw new Error('Login failed')
+            }
 
+            // bridgeFromOdoo set a CV-side sessionId cookie; pull the full
+            // user shape via the existing session endpoint.
+            await checkSession()
+            if (!isAuthenticated.value) {
+                // Odoo accepted the creds but no matching CV user row exists
+                // (or the bridge returned null). Surface clearly.
+                throw new Error(
+                    'Authenticated with Odoo but no matching CV account · contact admin',
+                )
+            }
+            return { success: true }
+        } catch (error) {
+            console.error('Login error:', error)
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Login failed',
+            }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Login (CV-LOCAL-DB · for /getstarted parents/pupils · zero-Odoo-presence)
+    //
+    // Preserved verbatim shape of the pre-C6 `login()` so /getstarted callsites
+    // and any other CV-local-DB consumers keep working without surprise.
+    // The endpoint accepts userId = sysmail OR extmail.
+    const loginLocal = async (userId: string, password: string) => {
+        isLoading.value = true
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, password }),
+            })
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}))
+                throw new Error(error.message || 'Login failed')
+            }
+
+            const data = await response.json()
             if (data.success && data.user) {
                 user.value = data.user
                 isAuthenticated.value = true
                 return { success: true }
             }
-
             throw new Error('Login failed')
         } catch (error) {
             console.error('Login error:', error)
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Login failed'
+                error: error instanceof Error ? error.message : 'Login failed',
             }
         } finally {
             isLoading.value = false
@@ -236,6 +290,7 @@ export function useAuth() {
         // Methods
         checkSession,
         login,
+        loginLocal,
         logout,
         requireAuth,
         requireRole,
