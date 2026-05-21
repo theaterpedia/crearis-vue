@@ -124,14 +124,48 @@ describe('bridgeFromOdoo', () => {
         expect(result).toBeNull()
     })
 
-    it('returns null when no CV user matches the Odoo partner_id', async () => {
+    it('returns null when no CV user matches either partner_id or email', async () => {
         const findUser = vi.fn(async () => null)
         const result = await bridgeFromOdoo('odoo-id', {
-            fetchInfo: async (): Promise<OdooSessionInfo> => ({ uid: 7, partner_id: 99 }),
+            fetchInfo: async (): Promise<OdooSessionInfo> => ({
+                uid: 7,
+                partner_id: 99,
+                username: 'hans.doenitz@dasei.eu',
+            }),
             findUser,
         })
         expect(result).toBeNull()
-        expect(findUser).toHaveBeenCalledWith(99)
+        // findUser receives (partnerId, email) after the 2026-05-22 hot-patch.
+        expect(findUser).toHaveBeenCalledWith(99, 'hans.doenitz@dasei.eu')
+    })
+
+    it('passes partner_id + Odoo username (email) to findUser', async () => {
+        // Phase-D scenario 3 hot-patch: bridge must offer email as a fallback
+        // discriminator so findCvUser can match sysmail OR extmail when the
+        // partner_id link is NULL / stale. The bridge itself is opaque to
+        // which row matched; the findCvUser lookup owns the resolution order.
+        const findUser = vi.fn(async () => TEST_USER)
+        await bridgeFromOdoo('odoo-id', {
+            fetchInfo: async (): Promise<OdooSessionInfo> => ({
+                uid: 7,
+                partner_id: 99,
+                username: 'creator@example.org',
+            }),
+            findUser,
+        })
+        expect(findUser).toHaveBeenCalledWith(99, 'creator@example.org')
+    })
+
+    it('passes email=undefined to findUser when Odoo session-info omits username', async () => {
+        const findUser = vi.fn(async () => null)
+        await bridgeFromOdoo('odoo-id', {
+            fetchInfo: async (): Promise<OdooSessionInfo> => ({
+                uid: 7,
+                partner_id: 99,
+            }),
+            findUser,
+        })
+        expect(findUser).toHaveBeenCalledWith(99, undefined)
     })
 
     it('creates CV session when Odoo info + CV user both resolve', async () => {

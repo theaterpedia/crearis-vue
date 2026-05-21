@@ -94,37 +94,59 @@ export async function fetchOdooSessionInfo(
     }
 }
 
-/** Looks up the CV user row whose `partner_id` matches the Odoo partner. */
-async function findCvUserByPartner(partnerId: number): Promise<{
+/** Shape returned by the user-lookup — kept narrow to what buildBridgedSessionData reads. */
+interface BridgedCvUser {
     id: number
     sysmail: string
     username: string
     status: number | null
     img_id: number | null
     role: string
-} | null> {
-    const row = (await db.get(
-        `SELECT id, sysmail, username, status, img_id, role
-         FROM users
-         WHERE partner_id = ?
-         LIMIT 1`,
+}
+
+/**
+ * Looks up the CV user row matching either the Odoo partner_id (strong link)
+ * or the Odoo email (fallback via sysmail / extmail).
+ *
+ * Per CTO hot-patch dispatch 2026-05-22 02:15 (Phase-D scenario 3): the
+ * pre-patch lookup matched on `partner_id` only. HM's CV-user had a NULL
+ * partner_id but extmail matching the Odoo-authenticated email — bridge
+ * returned null cleanly, C6 half-authed guard fired with "no matching CV
+ * account". Widening the lookup to include email-fallback recovers users
+ * whose partner_id is NULL or stale-relative-to-Odoo (legacy users, data-
+ * drift, cross-instance migration).
+ *
+ * Resolution order:
+ *   1. partner_id match (definitive link when set)
+ *   2. email match against sysmail OR extmail (fallback)
+ *
+ * partner_id is preferred so a CV-user explicitly linked to a partner takes
+ * precedence over any unrelated email-collision row.
+ */
+async function findCvUser(
+    partnerId: number,
+    email: string | undefined,
+): Promise<BridgedCvUser | null> {
+    const select =
+        'SELECT id, sysmail, username, status, img_id, role FROM users'
+
+    const byPartner = (await db.get(
+        `${select} WHERE partner_id = ? LIMIT 1`,
         [partnerId],
-    )) as
-        | {
-              id: number
-              sysmail: string
-              username: string
-              status: number | null
-              img_id: number | null
-              role: string
-          }
-        | undefined
-    return row ?? null
+    )) as BridgedCvUser | undefined
+    if (byPartner) return byPartner
+
+    if (!email) return null
+    const byEmail = (await db.get(
+        `${select} WHERE sysmail = ? OR extmail = ? LIMIT 1`,
+        [email, email],
+    )) as BridgedCvUser | undefined
+    return byEmail ?? null
 }
 
 /** Minimal CV session-data scaffold for a lazy-bridged user. */
 function buildBridgedSessionData(
-    user: NonNullable<Awaited<ReturnType<typeof findCvUserByPartner>>>,
+    user: BridgedCvUser,
     odooInfo: OdooSessionInfo,
 ): SessionData {
     const partnerId =
@@ -155,11 +177,11 @@ export async function bridgeFromOdoo(
     odooSessionId: string,
     deps: {
         fetchInfo?: typeof fetchOdooSessionInfo
-        findUser?: typeof findCvUserByPartner
+        findUser?: typeof findCvUser
     } = {},
 ): Promise<{ sessionId: string; session: SessionData } | null> {
     const fetchInfo = deps.fetchInfo ?? fetchOdooSessionInfo
-    const findUser = deps.findUser ?? findCvUserByPartner
+    const findUser = deps.findUser ?? findCvUser
 
     const info = await fetchInfo(odooSessionId)
     if (!info || info.uid === false || typeof info.uid !== 'number') {
@@ -170,10 +192,10 @@ export async function bridgeFromOdoo(
         return null
     }
 
-    const user = await findUser(info.partner_id)
+    const user = await findUser(info.partner_id, info.username)
     if (!user) {
         console.warn(
-            `[auth] no CV user for partner-id=${info.partner_id} — skipping bridge`,
+            `[auth] no CV user matching partner-id=${info.partner_id} or email=${info.username ?? '<none>'} — skipping bridge`,
         )
         return null
     }
