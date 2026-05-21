@@ -5,6 +5,10 @@ const router = createRouter({
   routes: [
     // Public routes
     { path: '/login', component: () => import('../views/Login.vue'), meta: { public: true } },
+    // Phase-A C7 · password-reset landing surface (token-bearing email link)
+    { path: '/auth/reset', component: () => import('../views/Auth/PasswordResetPage.vue'), meta: { public: true } },
+    // Phase-A C8 · creator-tier registration form (instructor / organiser)
+    { path: '/auth/register', component: () => import('../views/Auth/RegisterPage.vue'), meta: { public: true } },
     { path: '/', component: () => import('../views/Home/HomePage.vue') },
     { path: '/start', component: () => import('../views/Home/StartPage.vue') },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },

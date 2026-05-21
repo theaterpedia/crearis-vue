@@ -12,6 +12,9 @@
 -->
 <template>
     <div class="event-page">
+        <!-- Phase-A C11 · always-visible Edit-link in public-mode -->
+        <EditLink />
+
         <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
         <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
             :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
@@ -159,6 +162,7 @@ import { useProjectAccess } from '@/composables/useProjectAccess'
 import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
+import EditLink from '@/components/EditLink.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import PostStatusBadge from '@/components/PostStatusBadge.vue'
