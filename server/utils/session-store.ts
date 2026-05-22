@@ -6,7 +6,7 @@
  * "Cannot access before initialization" errors in the bundled output.
  */
 
-interface ProjectRecord {
+export interface ProjectRecord {
     id: string  // Legacy: stores domaincode for backward compatibility
     domaincode: string  // NEW: explicit domaincode field (same as id for now)
     name: string  // domaincode

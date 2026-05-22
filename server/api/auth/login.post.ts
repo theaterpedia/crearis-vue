@@ -2,9 +2,10 @@ import { defineEventHandler, readBody, createError, setCookie, getCookie } from 
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { db } from '../../database/init'
-import type { UsersTableFields, ProjectsTableFields } from '../../types/database'
+import type { UsersTableFields } from '../../types/database'
 import { getStatusByName } from '../../utils/status-helpers'
-import { sessions } from '../../utils/session-store'
+import { sessions, type SessionData } from '../../utils/session-store'
+import { hydrateUserProjectsAndRole } from '../../utils/user-projects'
 
 // Re-export sessions for backward compatibility (deprecated - use session-store directly)
 export { sessions }
@@ -64,181 +65,21 @@ export default defineEventHandler(async (event) => {
     }
 
     // === PROJECT ROLE DETECTION ===
-    // Detect if user has project role access based on ownership, membership, instructor, or author status
-
-    const projectRecords: ProjectRecord[] = []
-    let defaultProjectId: string | null = null
-
-    // 1. Find owned projects
-    // After Migration 019: projects.id is INTEGER, projects.domaincode is TEXT (old id)
-    console.log('[LOGIN] Finding owned projects for user', user.id)
-    const ownedProjects = await db.all(`
-        SELECT domaincode, heading
-        FROM projects
-        WHERE owner_id = ?
-        ORDER BY heading ASC
-    `, [user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading'>>
-    console.log('[LOGIN] Found owned projects:', ownedProjects.length)
-
-    for (const proj of ownedProjects) {
-        projectRecords.push({
-            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
-            domaincode: proj.domaincode,  // NEW: explicit domaincode field
-            name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-            heading: proj.heading || undefined,  // Include heading separately (handle null)
-            username: proj.domaincode,  // Use domaincode as username fallback
-            isOwner: true,
-            isMember: false,
-            isInstructor: false,
-            isAuthor: false
-        })
-    }
-
-    // Set default to first owned project
-    if (ownedProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = ownedProjects[0].domaincode
-    }
-
-    // 2. Find member projects
-    console.log('[LOGIN] Finding member projects')
-    const memberProjects = await db.all(`
-        SELECT p.domaincode, p.heading
-        FROM projects p
-        INNER JOIN project_members pm ON p.id = pm.project_id
-        WHERE pm.user_id = ? AND p.owner_id != ?
-        ORDER BY p.heading ASC
-    `, [user.id, user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading'>>
-    console.log('[LOGIN] Found member projects:', memberProjects.length)
-
-    for (const proj of memberProjects) {
-        projectRecords.push({
-            id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
-            domaincode: proj.domaincode,  // NEW: explicit domaincode field
-            name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-            heading: proj.heading || undefined,  // Include heading separately (handle null)
-            username: proj.domaincode,  // Use domaincode as username fallback
-            isOwner: false,
-            isMember: true,
-            isInstructor: false,
-            isAuthor: false
-        })
-    }
-
-    // Set default to first member project if no owned projects
-    if (memberProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = memberProjects[0].domaincode
-    }
-
-    // 3. Find projects where user is instructor (via events)
-    // Note: Check if user has partner_id set, then find events taught by that partner (as instructor)
-    // Skip this query if user has no partner_id or if there are no instructors yet
-    console.log('[LOGIN] Finding instructor projects')
-    let instructorProjects: Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>> = []
-
-    if (user.partner_id && typeof user.partner_id === 'number') {
-        try {
-            // Join through partners table - partner must have instructor flag (partner_types & 1 = 1)
-            instructorProjects = await db.all(`
-                SELECT DISTINCT p.domaincode, p.heading, p.owner_id
-                FROM projects p
-                INNER JOIN events e ON p.id = e.project_id
-                INNER JOIN event_instructors ei ON e.id = ei.event_id
-                INNER JOIN partners pa ON ei.instructor_id = pa.id
-                WHERE pa.id = $1 AND (pa.partner_types & 1) = 1
-                ORDER BY p.heading ASC
-            `, [user.partner_id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
-        } catch (error) {
-            console.error('[LOGIN] Error finding instructor projects:', error)
-            // Continue without instructor projects if query fails
-        }
-    }
-    console.log('[LOGIN] Found instructor projects:', instructorProjects.length)
-
-    for (const proj of instructorProjects) {
-        // Check if already in records (as owner or member)
-        const existing = projectRecords.find(p => p.id === proj.domaincode)
-        if (existing) {
-            existing.isInstructor = true
-        } else {
-            projectRecords.push({
-                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
-                domaincode: proj.domaincode,  // NEW: explicit domaincode field
-                name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-                heading: proj.heading || undefined,  // Include heading separately (handle null)
-                username: proj.domaincode,  // Use domaincode as username fallback
-                isOwner: false,
-                isMember: false,
-                isInstructor: true,
-                isAuthor: false
-            })
-        }
-    }
-
-    // Set default to first instructor project if no owned/member projects
-    if (instructorProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = instructorProjects[0].domaincode
-    }
-
-    // 4. Find projects where user is author (via posts)
-    console.log('[LOGIN] Finding author projects')
-    const authorProjects = await db.all(`
-        SELECT DISTINCT p.domaincode, p.heading, p.owner_id
-        FROM projects p
-        INNER JOIN posts po ON p.id = po.project_id
-        WHERE po.author_id = ?
-        ORDER BY p.heading ASC
-    `, [user.id]) as Array<Pick<ProjectsTableFields, 'domaincode' | 'heading' | 'owner_id'>>
-    console.log('[LOGIN] Found author projects:', authorProjects.length)
-
-    for (const proj of authorProjects) {
-        // Check if already in records
-        const existing = projectRecords.find(p => p.id === proj.domaincode)
-        if (existing) {
-            existing.isAuthor = true
-        } else {
-            projectRecords.push({
-                id: proj.domaincode,  // Legacy: session stores domaincode as 'id'
-                domaincode: proj.domaincode,  // NEW: explicit domaincode field
-                name: proj.domaincode,  // Frontend 'name' = database 'domaincode'
-                heading: proj.heading || undefined,  // Include heading separately (handle null)
-                username: proj.domaincode,  // Use domaincode as username fallback
-                isOwner: false,
-                isMember: false,
-                isInstructor: false,
-                isAuthor: true
-            })
-        }
-    }
-
-    // Set default to first author project if no other projects found
-    if (authorProjects.length > 0 && !defaultProjectId) {
-        defaultProjectId = authorProjects[0].domaincode
-    }
-
-    // Build available roles array
-    const availableRoles: string[] = [user.role]
-
-    // Add 'project' role if user has any project access
-    if (projectRecords.length > 0 && user.role === 'user') {
-        availableRoles.push('project')
-    }
-
-    // Determine active role
-    // - If user is 'admin', always use 'admin' (admins don't switch to project role)
-    // - If user is 'base', always use 'base'
-    // - If user has project access, try to activate 'project' role by default
-    // - Otherwise use user.role
-    let activeRole = user.role
-    let initialProjectId: string | null = null
-    let initialProjectName: string | undefined = undefined
-
-    if (user.role !== 'base' && user.role !== 'admin' && projectRecords.length > 0) {
-        // Try to activate project role with default project
-        activeRole = 'project'
-        initialProjectId = defaultProjectId
-        const defaultProject = projectRecords.find(p => p.id === defaultProjectId)
-        initialProjectName = defaultProject?.name
-    }
+    // Hydrate user's projects + resolve role-state via the shared helper
+    // (server/utils/user-projects.ts). Same path used by the Odoo-SSO bridge
+    // in 02-auth.ts post-barrier-2 fix (CTO dispatch af21dae · 2026-05-22 PM)
+    // so both auth flows produce symmetric SessionData.
+    const {
+        projectRecords,
+        availableRoles,
+        activeRole,
+        initialProjectId,
+        initialProjectName,
+    } = await hydrateUserProjectsAndRole({
+        id: user.id,
+        role: user.role,
+        partner_id: typeof user.partner_id === 'number' ? user.partner_id : null,
+    })
 
     // Create session
     const sessionId = nanoid(32)

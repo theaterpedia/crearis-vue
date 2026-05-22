@@ -26,6 +26,7 @@ import { defineEventHandler, getCookie, setCookie } from 'h3'
 import { nanoid } from 'nanoid'
 import { db } from '../database/init'
 import { sessions, type SessionData } from '../utils/session-store'
+import { hydrateUserProjectsAndRole } from '../utils/user-projects'
 
 const CV_COOKIE = 'sessionId'
 const ODOO_COOKIE = 'session_id'
@@ -144,13 +145,38 @@ async function findCvUser(
     return byEmail ?? null
 }
 
-/** Minimal CV session-data scaffold for a lazy-bridged user. */
-function buildBridgedSessionData(
+/**
+ * Build a fully-populated CV session-data for a lazy-bridged user, including
+ * project memberships + role-promotion via the shared
+ * `hydrateUserProjectsAndRole` helper.
+ *
+ * Per CV@prod barrier-2 dispatch 2026-05-22 14:29 (feed `af21dae`): the
+ * pre-patch shape returned `availableRoles: [user.role]` + `activeRole:
+ * user.role` + `projects: []` regardless of project memberships. Result:
+ * Odoo-SSO bridged users couldn't switch to project-role · all subsequent
+ * `/api/auth/set-project` calls 403 with "Project role required". This now
+ * mirrors `login.post.ts` so both auth paths produce symmetric SessionData.
+ */
+async function buildBridgedSessionData(
     user: BridgedCvUser,
     odooInfo: OdooSessionInfo,
-): SessionData {
+    deps: { hydrate?: typeof hydrateUserProjectsAndRole } = {},
+): Promise<SessionData> {
+    const hydrate = deps.hydrate ?? hydrateUserProjectsAndRole
     const partnerId =
         typeof odooInfo.partner_id === 'number' ? odooInfo.partner_id : null
+    const {
+        projectRecords,
+        availableRoles,
+        activeRole,
+        initialProjectId,
+        initialProjectName,
+    } = await hydrate({
+        id: user.id,
+        role: user.role,
+        partner_id: partnerId,
+    })
+
     return {
         userId: user.id,
         sysmail: user.sysmail,
@@ -158,11 +184,11 @@ function buildBridgedSessionData(
         status: user.status,
         partner_id: partnerId,
         img_id: user.img_id,
-        availableRoles: [user.role],
-        activeRole: user.role,
-        projectId: null,
-        projectName: undefined,
-        projects: [],
+        availableRoles,
+        activeRole,
+        projectId: initialProjectId,
+        projectName: initialProjectName,
+        projects: projectRecords,
         capabilities: {},
         expiresAt: Date.now() + CV_SESSION_TTL_MS,
     }
@@ -178,6 +204,7 @@ export async function bridgeFromOdoo(
     deps: {
         fetchInfo?: typeof fetchOdooSessionInfo
         findUser?: typeof findCvUser
+        hydrate?: typeof hydrateUserProjectsAndRole
     } = {},
 ): Promise<{ sessionId: string; session: SessionData } | null> {
     const fetchInfo = deps.fetchInfo ?? fetchOdooSessionInfo
@@ -201,10 +228,12 @@ export async function bridgeFromOdoo(
     }
 
     const sessionId = nanoid(32)
-    const session = buildBridgedSessionData(user, info)
+    const session = await buildBridgedSessionData(user, info, {
+        hydrate: deps.hydrate,
+    })
     sessions.set(sessionId, session)
     console.log(
-        `[auth] lazy-create CV-session for-partner-id=${info.partner_id} from-Odoo-cookie`,
+        `[auth] lazy-create CV-session for-partner-id=${info.partner_id} from-Odoo-cookie role=${session.activeRole} projects=${session.projects?.length ?? 0}`,
     )
     return { sessionId, session }
 }
