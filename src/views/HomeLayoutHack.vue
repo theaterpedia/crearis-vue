@@ -729,7 +729,19 @@ async function createPublicProfile() {
 // ============================================================
 
 async function openProject(project: any) {
-    const projectId = project.domaincode || project.id
+    // By-domaincode-over-by-id discipline (HM 2026-05-22 PM): the project
+    // route-param IS the domaincode (per the comment-block atop useAuth.ts).
+    // Numeric `project.id` is internal-DB-only and would not resolve at any
+    // downstream lookup. Fail-fast surfaces data-quality issues instead of
+    // papering over them with a fallback.
+    const domaincode: string | undefined = project.domaincode
+    if (!domaincode) {
+        console.warn(
+            '[openProject] project record is missing its domaincode — cannot route',
+            project,
+        )
+        return
+    }
 
     // Stepper-vs-dashboard branch on project sysreg-status (restored per
     // TO dispatch 2026-05-22 11:00 · Fix #2). Was-active-start-of-week,
@@ -753,11 +765,11 @@ async function openProject(project: any) {
     if (isPreDraft) {
         // setProjectId() POSTs /api/auth/set-project (activates 'project'
         // role · stores projectId on session) and then router.push('/projects').
-        await setProjectId(projectId)
+        await setProjectId(domaincode)
         return
     }
 
-    router.push(`/projects/${projectId}`)
+    router.push(`/projects/${domaincode}`)
 }
 
 function createProject() {
