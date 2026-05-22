@@ -15,6 +15,16 @@ import {
     bridgeFromOdoo,
     type OdooSessionInfo,
 } from '../../server/middleware/02-auth'
+import type { UserProjectsAndRole } from '../../server/utils/user-projects'
+
+/** Default no-op hydrate stub: empty projects + no role-promotion. */
+const emptyHydrate = async (): Promise<UserProjectsAndRole> => ({
+    projectRecords: [],
+    availableRoles: ['user'],
+    activeRole: 'user',
+    initialProjectId: null,
+    initialProjectName: undefined,
+})
 
 const NOW = 1_700_000_000_000
 
@@ -152,6 +162,7 @@ describe('bridgeFromOdoo', () => {
                 username: 'creator@example.org',
             }),
             findUser,
+            hydrate: emptyHydrate,
         })
         expect(findUser).toHaveBeenCalledWith(99, 'creator@example.org')
     })
@@ -168,7 +179,7 @@ describe('bridgeFromOdoo', () => {
         expect(findUser).toHaveBeenCalledWith(99, undefined)
     })
 
-    it('creates CV session when Odoo info + CV user both resolve', async () => {
+    it('creates CV session when Odoo info + CV user both resolve (no projects → stays user-role)', async () => {
         const result = await bridgeFromOdoo('odoo-id', {
             fetchInfo: async (): Promise<OdooSessionInfo> => ({
                 uid: 7,
@@ -176,15 +187,101 @@ describe('bridgeFromOdoo', () => {
                 username: 'creator',
             }),
             findUser: async () => TEST_USER,
+            hydrate: emptyHydrate,
         })
         expect(result).not.toBeNull()
         expect(result!.session.userId).toBe(TEST_USER.id)
         expect(result!.session.partner_id).toBe(99)
         expect(result!.session.sysmail).toBe(TEST_USER.sysmail)
         expect(result!.session.activeRole).toBe('user')
+        expect(result!.session.projects).toEqual([])
+        expect(result!.session.projectId).toBeNull()
         expect(result!.sessionId).toMatch(/^[A-Za-z0-9_-]{32}$/)
         // Side effect: the session is registered in the in-memory store
         expect(sessions.get(result!.sessionId)).toBeDefined()
+    })
+
+    it("promotes activeRole to 'project' when the hydrate yields project memberships (barrier-2 fix)", async () => {
+        // Mirrors Rosa Königer's surfaced bug at HM Phase-D scenario 3 retry:
+        // bridge user has project memberships but pre-patch session stayed at
+        // role='user' → /api/auth/set-project 403'd. Hydrate now provides the
+        // role-promotion so session.activeRole reflects project access.
+        const hydrate = vi.fn(async () => ({
+            projectRecords: [
+                {
+                    id: 'utopiaxaction',
+                    domaincode: 'utopiaxaction',
+                    name: 'utopiaxaction',
+                    heading: 'Utopia in Action',
+                    username: 'utopiaxaction',
+                    isOwner: true,
+                    isMember: false,
+                    isInstructor: false,
+                    isAuthor: false,
+                },
+            ],
+            availableRoles: ['user', 'project'],
+            activeRole: 'project',
+            initialProjectId: 'utopiaxaction',
+            initialProjectName: 'utopiaxaction',
+        }))
+        const result = await bridgeFromOdoo('odoo-id', {
+            fetchInfo: async (): Promise<OdooSessionInfo> => ({
+                uid: 7,
+                partner_id: 99,
+                username: 'creator@example.org',
+            }),
+            findUser: async () => TEST_USER,
+            hydrate,
+        })
+        expect(result).not.toBeNull()
+        expect(result!.session.activeRole).toBe('project')
+        expect(result!.session.availableRoles).toEqual(['user', 'project'])
+        expect(result!.session.projectId).toBe('utopiaxaction')
+        expect(result!.session.projects).toHaveLength(1)
+        // hydrate receives the (id, role, partner_id) triple from the bridged user
+        expect(hydrate).toHaveBeenCalledWith({
+            id: TEST_USER.id,
+            role: TEST_USER.role,
+            partner_id: 99,
+        })
+    })
+
+    it("does NOT promote 'base' user role even with project memberships", async () => {
+        // Mirror login.post.ts's role-resolution rules: 'base' and 'admin' stay
+        // put; only 'user' gets auto-promoted to 'project'. This protects
+        // admin sessions from being routed into project-role flow by accident.
+        const result = await bridgeFromOdoo('odoo-id', {
+            fetchInfo: async (): Promise<OdooSessionInfo> => ({
+                uid: 7,
+                partner_id: 99,
+                username: 'admin@example.org',
+            }),
+            findUser: async () => ({ ...TEST_USER, role: 'base' }),
+            hydrate: async () => ({
+                projectRecords: [
+                    {
+                        id: 'x',
+                        domaincode: 'x',
+                        name: 'x',
+                        username: 'x',
+                        isOwner: true,
+                        isMember: false,
+                        isInstructor: false,
+                        isAuthor: false,
+                    },
+                ],
+                // Resolved by the hydrate-helper itself (login.post.ts canon):
+                // 'base' keeps its single role; activeRole stays 'base'.
+                availableRoles: ['base'],
+                activeRole: 'base',
+                initialProjectId: null,
+                initialProjectName: undefined,
+            }),
+        })
+        expect(result!.session.activeRole).toBe('base')
+        expect(result!.session.availableRoles).toEqual(['base'])
+        expect(result!.session.projectId).toBeNull()
     })
 
     it('passes the supplied Odoo cookie value to fetchInfo unchanged', async () => {
