@@ -353,6 +353,7 @@ import { useRouter } from 'vue-router'
 import { LogOut, Plus } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { PROJECT_STATUS } from '@/composables/useProjectActivation'
 
 // ============================================================
 // INTERNAL THEME CONTEXT
@@ -373,7 +374,7 @@ onUnmounted(() => {
 // ============================================================
 
 const router = useRouter()
-const { user, logout, checkSession } = useAuth()
+const { user, logout, checkSession, setProjectId } = useAuth()
 
 // ============================================================
 // STATE
@@ -727,8 +728,35 @@ async function createPublicProfile() {
 // METHODS: Navigation
 // ============================================================
 
-function openProject(project: any) {
+async function openProject(project: any) {
     const projectId = project.domaincode || project.id
+
+    // Stepper-vs-dashboard branch on project sysreg-status (restored per
+    // TO dispatch 2026-05-22 11:00 · Fix #2). Was-active-start-of-week,
+    // erased when the Variant-C nested `/projects/:projectId/*` routes
+    // (DashboardShell + 5 NavStops) took over the navigation default and
+    // left the legacy `/projects` → ProjectMain.vue stepper-aware branch
+    // unreachable from the home-page click.
+    //
+    //   · pre-draft (null / NEW / DEMO) → setProjectId() routes to legacy
+    //     `/projects`, where ProjectMain.vue's existing `isStepper`
+    //     computed renders ProjectStepper + the ProjectStep* editor flow.
+    //   · draft and above → `/projects/:projectId` (DashboardShell · the
+    //     current Variant-C 5-NavStop dashboard).
+    const status: number | null | undefined = project.status
+    const isPreDraft =
+        status === null ||
+        status === undefined ||
+        status === PROJECT_STATUS.NEW ||
+        status === PROJECT_STATUS.DEMO
+
+    if (isPreDraft) {
+        // setProjectId() POSTs /api/auth/set-project (activates 'project'
+        // role · stores projectId on session) and then router.push('/projects').
+        await setProjectId(projectId)
+        return
+    }
+
     router.push(`/projects/${projectId}`)
 }
 
