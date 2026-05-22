@@ -23,7 +23,7 @@
  * Per CTO-WED-package §3.3 + CV@wsl-1 Option-A-recommendation 2026-05-19.
  */
 
-import { defineEventHandler, getRequestURL } from 'h3'
+import { defineEventHandler, getRequestURL, setResponseHeader } from 'h3'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseHTML } from 'linkedom'
@@ -248,6 +248,18 @@ export default defineEventHandler(async (event) => {
     const tags = resolveMetaTags(project)
     const rewritten = injectMetaIntoHtml(shell, tags)
 
-    event.node.res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    // Use h3's `setResponseHeader` (not `event.node.res.setHeader`) so the
+    // Content-Type sticks through h3's GET response-finalize pipeline.
+    //
+    // Per CV@prod barrier-3b dispatch (`meta@bf1aad8` · 2026-05-22 15:40):
+    // HEAD returned `text/html` correctly but GET responses came back as
+    // `text/plain` because `event.node.res.setHeader` writes to the raw
+    // node:http ServerResponse, bypassing h3's response-state — h3's
+    // response-serializer then auto-detected text/plain from the returned
+    // string and applied that as the default on GET. Browsers receiving
+    // text/plain render the HTML body as raw text, the `<script type=
+    // "module">` never executes, the SPA never mounts, and the page looks
+    // blank-with-text-only — the visible symptom of HM's probe-4.
+    setResponseHeader(event, 'Content-Type', 'text/html; charset=utf-8')
     return rewritten
 })
