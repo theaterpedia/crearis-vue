@@ -238,8 +238,18 @@ async function loadProjects() {
 }
 
 async function openProject(project: any) {
-    // Use domaincode or id for route
-    const projectId = project.domaincode || project.id
+    // By-domaincode-over-by-id discipline (HM 2026-05-22 PM) — see the
+    // HomeLayoutHack.vue counterpart for the longer rationale. Fail-fast
+    // if domaincode is missing rather than falling back to numeric id
+    // (which doesn't resolve at downstream lookups).
+    const domaincode: string | undefined = project.domaincode
+    if (!domaincode) {
+        console.warn(
+            '[openProject] project record is missing its domaincode — cannot route',
+            project,
+        )
+        return
+    }
 
     // Stepper-vs-dashboard branch on project sysreg-status — per TO dispatch
     // 2026-05-22 11:00 · Fix #2. Mirrors HomeLayoutHack.vue's openProject.
@@ -254,11 +264,11 @@ async function openProject(project: any) {
         status === PROJECT_STATUS.DEMO
 
     if (isPreDraft) {
-        await setProjectId(projectId)
+        await setProjectId(domaincode)
         return
     }
 
-    router.push(`/projects/${projectId}`)
+    router.push(`/projects/${domaincode}`)
 }
 
 function createProject() {
