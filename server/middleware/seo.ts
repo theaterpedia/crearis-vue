@@ -207,10 +207,22 @@ export function injectMetaIntoHtml(
 
 /** Disk read of the SPA shell — separated so tests can swap with an in-memory value. */
 async function readIndexHtmlShell(): Promise<string | null> {
-    // Resolve under server/public; .output/public mirrors this in prod.
+    // Priority-order per the file's doc-header: `.output/public/index.html` is
+    // the canonical Nitro-standalone prod read-source (built SPA). The
+    // `server/public/index.html` fallback covers dev-mode shape; in prod
+    // `server/` is genuine legacy debris from a pre-`.output`-deploy pattern
+    // and must NOT take precedence (otherwise a stale legacy shell wins over
+    // the current build and asset-references 404 → white-page hydrate-fail).
+    //
+    // Per CV@prod barrier-3 dispatch 2026-05-22 (meta@5232caa): HM probe-4
+    // surfaced exactly this — `/opt/crearis/live/server/public/index.html`
+    // at mtime 2025-11-20 referenced a bundle filename that no longer
+    // existed in the current build · the `.output/public/index.html`
+    // mirror with the fresh reference was never reached because of the
+    // pre-patch ordering.
     const candidates = [
-        resolve(process.cwd(), 'server', 'public', 'index.html'),
         resolve(process.cwd(), '.output', 'public', 'index.html'),
+        resolve(process.cwd(), 'server', 'public', 'index.html'),
     ]
     for (const path of candidates) {
         try {
