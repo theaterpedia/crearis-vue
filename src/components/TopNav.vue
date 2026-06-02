@@ -1243,4 +1243,20 @@ onUnmounted(() => {
     flex-shrink: 0;
   }
 }
+
+/* Accessibility: respect prefers-reduced-motion · disable transitions + hide-animation */
+@media (prefers-reduced-motion: reduce) {
+  .topnav,
+  .topnav *,
+  .topnav *::before,
+  .topnav *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .topnav-scroll-overlay_reappear.topnav-hidden {
+    transform: none !important;
+  }
+}
 </style>
