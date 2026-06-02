@@ -1244,6 +1244,21 @@ onUnmounted(() => {
   }
 }
 
+/* Accessibility: focus-visible outline · keyboard navigation */
+.topnav-menu-link:focus-visible,
+.topnav-dropdown-link:focus-visible,
+.topnav-mobile-menu-link:focus-visible,
+.topnav-mobile-dropdown-link:focus-visible,
+.topnav-mobile-menu-option:focus-visible,
+.topnav-hamburger:focus-visible,
+.topnav-mobile-burger:focus-visible,
+.topnav-mobile-home:focus-visible,
+.topnav-logo:focus-visible {
+  outline: 2px solid var(--color-accent-bg, currentColor);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
 /* Accessibility: respect prefers-reduced-motion · disable transitions + hide-animation */
 @media (prefers-reduced-motion: reduce) {
   .topnav,
