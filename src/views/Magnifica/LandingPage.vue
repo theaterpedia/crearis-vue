@@ -51,6 +51,10 @@
         ·
         <router-link to="/verein">Verein</router-link>
       </p>
+
+      <p class="magnifica-landing-actions">
+        <MagnificaLogoutButton />
+      </p>
     </main>
   </div>
 </template>
@@ -59,6 +63,7 @@
 import { onMounted, ref } from 'vue'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
+import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
 import { postits } from './content/landing'
@@ -127,5 +132,12 @@ onMounted(() => {
   outline: 2px solid #ffee00;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+.magnifica-landing-actions {
+  text-align: center;
+  margin: 0;
+  padding: 0 1rem 3rem;
+  background: #1a1a1a;
 }
 </style>

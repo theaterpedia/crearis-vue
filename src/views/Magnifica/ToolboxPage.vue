@@ -5,7 +5,11 @@
 
 <template>
   <div class="magnifica-page">
-    <TopNav :items="navItems" navbar-mode="page" scroll-style="simple" />
+    <TopNav :items="navItems" navbar-mode="page" scroll-style="simple">
+      <template #actions>
+        <MagnificaLogoutButton />
+      </template>
+    </TopNav>
     <main class="magnifica-page-content">
       <h1 class="magnifica-page-title">{{ pageTitle }}</h1>
       <CardsCanvas :items="postits">
@@ -21,6 +25,7 @@
 
 <script setup lang="ts">
 import TopNav from '@/components/TopNav.vue'
+import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import { pageTitle, postits } from './content/toolbox'
 import { navItems } from './content/nav'
