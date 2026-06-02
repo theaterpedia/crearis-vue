@@ -50,6 +50,21 @@ export default defineConfig({
             }
           })
         }
+      },
+      // Magnifica password-gate endpoints · Nitro middleware handles POST /__auth
+      // and POST /__auth/logout (see server/middleware/00-magnifica-auth.ts).
+      // Dev-mode form-submit from the SPA at :3001 needs to reach Nitro at :3000.
+      '/__auth': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            if (req.headers.cookie) {
+              proxyReq.setHeader('Cookie', req.headers.cookie)
+            }
+          })
+        }
       }
     }
   },
