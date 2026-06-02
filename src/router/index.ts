@@ -82,6 +82,8 @@ const router = createRouter({
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
     { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },
     { path: '/demo/display-image', component: () => import('../views/Demo/DemoDisplayImage.vue') },
+    // Magnifica primitives playground · per CV@wsl dispatch #4 §5 (TO (website) 2026-06-02)
+    { path: '/demo/magnifica', component: () => import('../views/Demo/MagnificaDemo.vue') },
 
     // Other routes (demos, legacy)
     { path: '/legacy-home', component: () => import('../views/index.vue') }, // Renamed from /home
