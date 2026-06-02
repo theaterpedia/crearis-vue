@@ -15,15 +15,15 @@
     :data-just-unlocked="showUnlock ? 'true' : null"
   >
     <!--
-      3-beat unlock overlay · mounts once after password-success (URL-param
-      trigger from middleware). Component lives at @/views/Magnifica/UnlockOverlay.vue
-      per crearis:projects/magnifica/docs/animations.md §2.1 · to be implemented
-      by the overlay-spec-implementer · this scaffolding (the showUnlock ref +
-      onMounted read + history.replaceState clean + data-just-unlocked attribute)
-      is in place so the implementer only needs to add the import + the v-if line.
-
-      <UnlockOverlay v-if="showUnlock" @complete="showUnlock = false" />
+      3-beat unlock overlay · mounts once after password-success.
+      Trigger: middleware redirects to /?just_unlocked=1 on auth-match · onMounted
+      below reads the flag · sets showUnlock · cleans the URL via history.replaceState.
+      Per crearis:projects/magnifica/docs/animations.md §1 + §2.
     -->
+    <UnlockOverlay
+      v-if="showUnlock"
+      @complete="showUnlock = false"
+    />
 
     <EntryHero :show-form="!isAuthenticated" />
 
@@ -63,6 +63,7 @@
 import { onMounted, ref } from 'vue'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
+import UnlockOverlay from './UnlockOverlay.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
