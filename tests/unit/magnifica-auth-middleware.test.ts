@@ -10,6 +10,8 @@ import { describe, it, expect } from 'vitest'
 import {
     sha256Hex,
     decideAuthOutcome,
+    SUCCESS_REDIRECT,
+    MISMATCH_REDIRECT,
 } from '@/../server/middleware/00-magnifica-auth'
 
 describe('sha256Hex', () => {
@@ -77,5 +79,17 @@ describe('decideAuthOutcome', () => {
         // Empty-expected always means misconfig · we never auto-accept empty
         const result = decideAuthOutcome({ submitted: '', expected: '' })
         expect(result).toEqual({ kind: 'misconfig' })
+    })
+})
+
+describe('redirect constants', () => {
+    it('SUCCESS_REDIRECT carries the just_unlocked trigger per animations.md §2.3 Option A', () => {
+        // The 3-beat unlock overlay mounts when this query-param is present on /
+        expect(SUCCESS_REDIRECT).toBe('/?just_unlocked=1')
+    })
+
+    it('MISMATCH_REDIRECT carries the inline-error query-param for the entry-hero', () => {
+        // EntryHero reads route.query.error and renders "Wrong password." inline
+        expect(MISMATCH_REDIRECT).toBe('/?error=invalid')
     })
 })

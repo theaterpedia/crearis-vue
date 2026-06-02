@@ -44,6 +44,21 @@ const COOKIE_AUTH = 'magnifica_auth'
 const COOKIE_PRESENT = 'magnifica_auth_present'
 const DEFAULT_MAX_AGE = 60 * 60 * 24 * 365 // 1 year · gesture-mode long-lived cookie
 
+/**
+ * Redirect URLs · exported for test verification + reuse.
+ *
+ * SUCCESS_REDIRECT carries the `?just_unlocked=1` flag that triggers the
+ * 3-beat unlock overlay per crearis:projects/magnifica/docs/animations.md §2.3
+ * Option A. The SPA reads the flag on mount, plays the overlay, then calls
+ * `history.replaceState` to clean the URL · prevents replay on refresh.
+ *
+ * MISMATCH_REDIRECT carries the inline-error query-param read by EntryHero ·
+ * shows "Wrong password." in the form-region. Adapts howto-password-entry §4
+ * (401-with-inline-error) to a 302-with-query for pure-HTML-form-POST shape.
+ */
+export const SUCCESS_REDIRECT = '/?just_unlocked=1'
+export const MISMATCH_REDIRECT = '/?error=invalid'
+
 /** sha256 hex of a string · used for the auth-cookie value. Pure helper. */
 export function sha256Hex(input: string): string {
     return createHash('sha256').update(input, 'utf8').digest('hex')
@@ -73,7 +88,7 @@ export default defineEventHandler(async (event) => {
 
     const isProd = process.env.NODE_ENV === 'production'
 
-    // POST /__auth/logout · clear both cookies · redirect home
+    // POST /__auth/logout · clear both cookies · redirect home (no unlock trigger)
     if (url.pathname === '/__auth/logout') {
         deleteCookie(event, COOKIE_AUTH, { path: '/' })
         deleteCookie(event, COOKIE_PRESENT, { path: '/' })
@@ -91,7 +106,7 @@ export default defineEventHandler(async (event) => {
         return { error: 'MAGNIFICA_PASSWORD is not configured on the server.' }
     }
     if (outcome.kind === 'mismatch') {
-        return sendRedirect(event, '/?error=invalid', 302)
+        return sendRedirect(event, MISMATCH_REDIRECT, 302)
     }
 
     // Match · set both cookies and redirect home
@@ -114,5 +129,5 @@ export default defineEventHandler(async (event) => {
         path: '/',
         maxAge,
     })
-    return sendRedirect(event, '/', 302)
+    return sendRedirect(event, SUCCESS_REDIRECT, 302)
 })
