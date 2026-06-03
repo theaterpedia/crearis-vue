@@ -1,19 +1,15 @@
 /**
- * Shared navigation items for the Magnifica alt-routes (vision · toolbox · verein).
+ * Shared navigation items for the Magnifica alt-routes (cand-1c · 3 detail-pages).
  *
- * Per crearis:projects/magnifica/docs/howto-topbar.md §7.1 (hardcoded nav · the
- * 4 routes are fixed · home is intentionally NOT in the nav since the wordmark
- * already links there).
- *
- * Imported by VisionPage / ToolboxPage / VereinPage so all three render the
- * same TopNav with consistent items. LandingPage renders EntryHero instead
- * (no TopNav · per howto-password-entry §0.4).
+ * Per cand-1c §11.5 + §11.1 (killed 2022-routes · only Magnifica routes ship).
+ * Home (/) is intentionally NOT in the nav — the wordmark already links there.
+ * Tabs follow the cand-1c §11.5.1-§11.5.3 picks.
  */
 
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 
 export const navItems: ReadonlyArray<TopnavParentItem> = [
-    { label: 'Vision', link: '/vision' },
-    { label: 'Toolbox', link: '/toolbox' },
-    { label: 'Verein', link: '/verein' },
+    { label: 'Claude', link: '/ethnography' },
+    { label: 'Hans', link: '/hans-doenitz' },
+    { label: 'Foucault', link: '/cultural-studies' },
 ]

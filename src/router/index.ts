@@ -1,15 +1,13 @@
 /**
  * Vue Router · DESTRUCTIVE for alpha/magnifica-site.
  *
- * Replaces the mainline crearis-vue routes-array entirely with the 4 magnifica
- * routes (per crearis:projects/magnifica/docs/integration-directions.md §3
- * step-3 (a) wholesale-replace pattern). The mainline routes belong on
+ * Cand-1c routes per §11.1 (killed 2022-routes · only Magnifica routes ship) +
+ * §11.5 detail-page paths. The mainline crearis-vue routes belong on
  * alpha/magnifica · this branch is the destructive content-site.
  *
  * Auth-shape: cookie-gesture-mode per HM-2026-06-02 PM (see
  * src/composables/useMagnificaAuth.ts + server/middleware/00-magnifica-auth.ts).
- * The previous session-based `router.beforeEach` is replaced by a
- * magnifica-auth guard · alt-routes redirect to `/` when unauthenticated ·
+ * Magnifica-auth guard · alt-routes redirect to `/` when unauthenticated ·
  * landing is always reachable.
  */
 
@@ -25,9 +23,9 @@ const router = createRouter({
   },
   routes: [
     { path: '/', component: () => import('@/views/Magnifica/LandingPage.vue') },
-    { path: '/vision', component: () => import('@/views/Magnifica/VisionPage.vue') },
-    { path: '/toolbox', component: () => import('@/views/Magnifica/ToolboxPage.vue') },
-    { path: '/verein', component: () => import('@/views/Magnifica/VereinPage.vue') },
+    { path: '/ethnography', component: () => import('@/views/Magnifica/EthnographyPage.vue') },
+    { path: '/hans-doenitz', component: () => import('@/views/Magnifica/HansDoenitzPage.vue') },
+    { path: '/cultural-studies', component: () => import('@/views/Magnifica/CulturalStudiesPage.vue') },
     // Catch-all · any other path redirects to landing (the gate is at /)
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
