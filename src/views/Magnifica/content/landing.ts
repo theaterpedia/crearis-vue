@@ -87,31 +87,42 @@ export interface SubstrateBackSlide {
     body: string
     /** Optional link rendered at the body's end. */
     link?: { href: string; label: string }
+    /**
+     * Render the existing Theaterpedia Logo component as the visual identity
+     * instead of the headline-string. Used for substrate-point 3 per HM-
+     * 2026-06-03 PM (the 2022 wordmark-asset survives in src/components/Logo.vue).
+     */
+    useLogo?: boolean
 }
 
-/** TODO HM · provide Cloudinary URLs or local paths for these 3 + the closing spiegelkugel. */
+/** Image URLs provided by HM 2026-06-03 PM · Cloudinary transformations added by CV@wsl. */
 export const substrateThree: ReadonlyArray<SubstrateBackSlide> = [
     {
-        image: '', // TODO HM · dasei-anchor.jpg
-        imageAlt: 'DAS Ei · institutional anchor',
+        // dasei-anchor · "alles ist möglich" · the lived-practice photograph
+        image: 'https://res.cloudinary.com/little-papillon/image/upload/w_2560,c_fill,q_auto,f_auto/v1676101342/dasei/alles_ist_moeglich.jpg',
+        imageAlt: 'DAS Ei · institutional anchor · alles ist möglich',
         themeColor: 'yellow',
         headline: 'DAS Ei — Theaterpädagogisches Institut Bayern e.V.',
         body: 'Thirty years of Theaterpädagogik. The institutional substrate that runs underneath everything that follows. Geschäftsführung, Institutsleitung-of-four, eingetragener Verein. The actively-maintained anchor.',
         link: { href: 'https://dasei.eu', label: '→ dasei.eu' },
     },
     {
-        image: '', // TODO HM · crearis-substrate.svg
-        imageAlt: 'Crearis · multi-tenant substrate',
+        // crearis-substrate · local asset · architectural diagram
+        image: '/assets/crearis-substrate.png',
+        imageAlt: 'Crearis · multi-tenant substrate · architectural diagram',
         themeColor: 'green',
         headline: 'Crearis — the multi-tenant substrate',
         body: 'You are reading this page on Crearis right now. The substrate that lets DASEi, Theaterpedia, and the broader Soziokultur practice share infrastructure honestly. Claim-back-the-desktop architecture. The URL itself is the substrate-self-reference.',
     },
     {
-        image: '', // TODO HM · theaterpedia-mark.svg
+        // theaterpedia-mark · the 2022 wordmark via the surviving Logo.vue component
+        // (rendered in the LandingPage template with --color-primary-bg overridden to yellow)
+        image: '',
         imageAlt: 'Theaterpedia.org · open-knowledge infrastructure',
         themeColor: 'yellow',
         headline: 'Theaterpedia.org — open-knowledge infrastructure for the field',
         body: 'In Gründung — a real field-initiative still taking shape. The forward-vision: open-knowledge infrastructure for Theaterpädagogik across the German-speaking world. This is what comes next.',
+        useLogo: true,
     },
 ]
 
@@ -154,8 +165,9 @@ export const menuCards: ReadonlyArray<MenuCardData> = [
 // ==Closing back-slide== (spiegelkugel · per v0.5)
 
 export const closing = {
-    image: '', // TODO HM · spiegelkugel.jpg from 2022-site if any copy survives
-    imageAlt: 'Spiegelkugel · disco-ball framing · the looking-in-from-outside gesture',
+    // HM-provided 2026-06-03 PM · base URL already had c_fill,w_1440,h_900,g_auto · q_auto,f_auto added for byte-optimization
+    image: 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto,q_auto,f_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg',
+    imageAlt: 'Closing · the looking-in-from-outside gesture',
     themeColor: 'yellow' as const,
     headline: 'If any of this resonates',
     bodyHtml: '<p>Please reach out: <a href="mailto:hans.doenitz@dasei.eu">hans.doenitz@dasei.eu</a>. I will respond personally.</p><p>This page is password-protected because it contains substrate that is real but not public. The password-step is also a small gesture in the discipline I work in: invitation, not push.</p><p>Thank you for the Vatican speech, and for the position Anthropic has taken on these questions.</p><p><em>Alles ist Kooperation</em> — that is the line that recurs when I describe what I do. The opening you made at the Vatican is one I have been answering, in my own way, for thirty years, in a small institute in Bavaria, with bodies and websites and live agreements between people.</p><p>— Hans Dönitz · Fürth, Bayern</p>',

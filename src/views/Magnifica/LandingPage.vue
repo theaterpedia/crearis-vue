@@ -55,7 +55,16 @@
         :image-alt="slide.imageAlt"
         :theme-color="slide.themeColor"
       >
-        <h2 class="back-slide-headline">{{ slide.headline }}</h2>
+        <!-- Substrate-point 3 · render the surviving 2022 Logo wordmark with yellow accent -->
+        <div
+          v-if="slide.useLogo"
+          class="theaterpedia-mark"
+          :style="logoColorOverride"
+        >
+          <Logo logo-size="lg" />
+        </div>
+        <h2 v-else class="back-slide-headline">{{ slide.headline }}</h2>
+
         <p>{{ slide.body }}</p>
         <p v-if="slide.link">
           <a :href="slide.link.href" target="_blank" rel="noopener">{{ slide.link.label }}</a>
@@ -111,6 +120,7 @@ import EntryHero from './EntryHero.vue'
 import UnlockOverlay from './UnlockOverlay.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
+import Logo from '@/components/Logo.vue'
 import MagnificaMenuCard from './MagnificaMenuCard.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import {
@@ -125,6 +135,13 @@ import {
 } from './content/landing'
 
 const { isAuthenticated } = useMagnificaAuth()
+
+// Override the Logo's CSS custom-properties for the Magnifica-context · keeps
+// the "Theater" in light-text and the "pedia" in yellow accent · per HM-2026-06-03
+// PM ("you could change --color-primary-bg") · scoped to this one wordmark via
+// inline-style so the global token-set isn't touched.
+const logoColorOverride =
+    '--color-accent-contrast: #f4f4f4; --color-primary-bg: #ffee00; --color-primary-base: #ffee00;'
 
 const showUnlock = ref(false)
 
@@ -212,6 +229,12 @@ onMounted(() => {
   font-weight: 700;
   margin: 0 0 1rem;
   line-height: 1.25;
+}
+
+/* Substrate-point 3 · Theaterpedia-wordmark via Logo.vue */
+.theaterpedia-mark {
+  margin: 0 0 1.25rem;
+  /* The Logo's internal heading is sized by media-queries; here we just give it the back-slide context. */
 }
 
 /* ==Menu section==  */
