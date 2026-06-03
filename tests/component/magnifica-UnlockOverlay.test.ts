@@ -1,13 +1,14 @@
 /**
- * Tests for src/views/Magnifica/UnlockOverlay.vue.
+ * UnlockOverlay component-tests · cand-1c §11.4 one-beat shrink.
  *
- * Per crearis:projects/magnifica/docs/animations.md §1 + §2 · verifies the
- * 3-beat content + the timing-driven `complete` emit.
+ * Prior 3-beat staging (CCC → CCCS-Williams → CCC+CCCS-Hans) compressed to
+ * a single beat carrying both anchors in one understated revelation. Timing
+ * tightened from 9000ms+600ms to 3400ms+600ms · 4000ms total.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import UnlockOverlay from '@/views/Magnifica/UnlockOverlay.vue'
+import UnlockOverlay from '../../src/views/Magnifica/UnlockOverlay.vue'
 
 describe('UnlockOverlay component', () => {
     beforeEach(() => {
@@ -18,82 +19,79 @@ describe('UnlockOverlay component', () => {
         vi.useRealTimers()
     })
 
-    it('renders Beat 1 · CCC Hackerethik citation (§1.2)', () => {
+    it('renders the CCC + CCCS one-beat headline (§11.4)', () => {
         const wrapper = mount(UnlockOverlay)
-        expect(wrapper.text()).toContain('Öffentliche Daten nützen, private Daten schützen.')
-        expect(wrapper.text()).toContain('Chaos Computer Club · Hackerethik')
-        expect(wrapper.text()).toContain('Use public data. Protect private data.')
+        const headline = wrapper.find('.unlock-headline')
+        expect(headline.exists()).toBe(true)
+        expect(headline.text()).toBe('CCC + CCCS')
     })
 
-    it('renders Beat 2 · CCCS Williams citation (§1.3 primary)', () => {
+    it('renders the "Hackerethik from Hamburg · organic intellectual from Birmingham" anchor-line', () => {
         const wrapper = mount(UnlockOverlay)
-        expect(wrapper.text()).toContain('Culture is ordinary.')
-        expect(wrapper.text()).toContain('Raymond Williams · CCCS Birmingham orbit')
+        const html = wrapper.html()
+        expect(html).toContain('Hackerethik from Hamburg')
+        expect(html).toContain('organic intellectual from Birmingham')
     })
 
-    it('renders Beat 3 · Hans one-sentence with "CCC + CCCS" headline (§1.4)', () => {
+    it('renders the "two anchors of one practice, for thirty years" coda-line', () => {
         const wrapper = mount(UnlockOverlay)
-        expect(wrapper.text()).toContain('CCC + CCCS')
-        expect(wrapper.text()).toContain(
-            'Hackerethik from Hamburg, organic intellectual from Birmingham',
-        )
-        expect(wrapper.text()).toContain('Hans Dönitz · Theaterpädagoge · Fürth, Bayern')
+        const html = wrapper.html()
+        expect(html).toContain('the two anchors of one practice')
+        expect(html).toContain('for thirty years')
     })
 
-    it('renders the overlay root with aria-hidden=true (a11y per §2.4)', () => {
+    it('has exactly one unlock-beat (no .unlock-beat--1 or --2 from the prior 3-beat staging)', () => {
         const wrapper = mount(UnlockOverlay)
-        const root = wrapper.find('.unlock-overlay')
-        expect(root.attributes('aria-hidden')).toBe('true')
+        const beats = wrapper.findAll('.unlock-beat')
+        expect(beats.length).toBe(1)
+        expect(wrapper.find('.unlock-beat--1').exists()).toBe(false)
+        expect(wrapper.find('.unlock-beat--2').exists()).toBe(false)
+        expect(wrapper.find('.unlock-beat--3').exists()).toBe(false)
+    })
+
+    it('renders the overlay root with aria-hidden=true (decorative · a11y per §11.4)', () => {
+        const wrapper = mount(UnlockOverlay)
+        const overlay = wrapper.find('.unlock-overlay')
+        expect(overlay.attributes('aria-hidden')).toBe('true')
     })
 
     it('starts WITHOUT the --finishing modifier class', () => {
         const wrapper = mount(UnlockOverlay)
-        const root = wrapper.find('.unlock-overlay')
-        expect(root.classes()).not.toContain('unlock-overlay--finishing')
+        expect(wrapper.find('.unlock-overlay').classes()).not.toContain('unlock-overlay--finishing')
     })
 
-    it('adds the --finishing modifier after 9000ms (fade-out begins)', async () => {
+    it('adds the --finishing modifier after 3400ms (fade-out begins · per §11.4 timing)', async () => {
         const wrapper = mount(UnlockOverlay)
-        vi.advanceTimersByTime(9000)
+        vi.advanceTimersByTime(3399)
+        expect(wrapper.find('.unlock-overlay').classes()).not.toContain('unlock-overlay--finishing')
+        vi.advanceTimersByTime(1)
         await wrapper.vm.$nextTick()
-        const root = wrapper.find('.unlock-overlay')
-        expect(root.classes()).toContain('unlock-overlay--finishing')
+        expect(wrapper.find('.unlock-overlay').classes()).toContain('unlock-overlay--finishing')
     })
 
-    it('emits "complete" after 9600ms (fade-out finishes)', async () => {
+    it('emits "complete" after 4000ms (3400ms hold + 600ms fade-out)', async () => {
         const wrapper = mount(UnlockOverlay)
-        vi.advanceTimersByTime(9000)
-        await wrapper.vm.$nextTick()
-        expect(wrapper.emitted('complete')).toBeUndefined()
-        vi.advanceTimersByTime(600)
+        vi.advanceTimersByTime(3999)
+        expect(wrapper.emitted('complete')).toBeFalsy()
+        vi.advanceTimersByTime(1)
         await wrapper.vm.$nextTick()
         expect(wrapper.emitted('complete')).toBeTruthy()
-        expect(wrapper.emitted('complete')).toHaveLength(1)
+        expect(wrapper.emitted('complete')?.length).toBe(1)
     })
 
-    it('does NOT emit "complete" before the full 9600ms have elapsed', async () => {
+    it('does NOT emit "complete" before the full 4000ms have elapsed', () => {
         const wrapper = mount(UnlockOverlay)
-        vi.advanceTimersByTime(9500)
-        await wrapper.vm.$nextTick()
-        expect(wrapper.emitted('complete')).toBeUndefined()
-    })
-
-    it('renders all three beat-containers in DOM order', () => {
-        const wrapper = mount(UnlockOverlay)
-        const beats = wrapper.findAll('.unlock-beat')
-        expect(beats).toHaveLength(3)
-        expect(beats[0].classes()).toContain('unlock-beat--1')
-        expect(beats[1].classes()).toContain('unlock-beat--2')
-        expect(beats[2].classes()).toContain('unlock-beat--3')
+        vi.advanceTimersByTime(3500)
+        expect(wrapper.emitted('complete')).toBeFalsy()
     })
 
     it('clears timers on unmount (no late emits after teardown)', async () => {
         const wrapper = mount(UnlockOverlay)
+        vi.advanceTimersByTime(1000)
         wrapper.unmount()
-        vi.advanceTimersByTime(20000)
-        // No assertion needed beyond surviving the unmount + timer-advance ·
-        // if the timers leaked, vitest would surface a warning or the emitted-event
-        // would fire on a detached wrapper. The test passes if no error throws.
+        vi.advanceTimersByTime(5000)
+        // After unmount, no complete should fire — the test passes if no error throws
+        // (the listeners are removed; the timers were cleared via onUnmounted)
         expect(true).toBe(true)
     })
 })

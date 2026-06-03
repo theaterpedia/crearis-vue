@@ -1,26 +1,24 @@
 <!--
-  UnlockOverlay · the 3-beat unlock animation that plays once after password-success.
+  UnlockOverlay · the one-beat unlock animation that plays once after password-success.
 
-  Per crearis:projects/magnifica/docs/animations.md §1 (CCC → CCCS → Hans
-  one-sentence + boom · the joke/payoff is naming the TWO CC-prefixed
-  communities Olah will recognize as serious) + §2 (CSS-driven · 9-second
-  total · respects prefers-reduced-motion).
+  ==Cand-1c §11.4 shrink== (2026-06-03): the prior 3-beat staging (CCC → CCCS →
+  CCC+CCCS) is tightened to a single British-understated beat. The CCC + CCCS
+  double-anchor naming IS the joke; three beats over-stages it. Williams "Culture
+  is ordinary" moves to Page 3 §3; Hall "Identity is not an essence" moves to
+  Page 2 abstract — neither citation is lost · only the staging compresses.
 
-  Beat 1 (§1.2) · Chaos Computer Club · Hackerethik
-  Beat 2 (§1.3) · Raymond Williams · CCCS Birmingham orbit (primary option ·
-    swappable to Stuart Hall's "Identity is not an essence, it is a positioning"
-    per the §1.3 alternative if HM prefers)
-  Beat 3 (§1.4) · Hans's one-sentence + boom
+  Timing (per §11.4):
+    - 1.2s fade-in + 2.2s hold = 3400ms beat-duration
+    - 600ms overlay opacity-fade (carries the exit · no separate beat-fadeout)
+    - 4000ms total · emit complete
 
   Trigger: mounted by LandingPage when `?just_unlocked=1` is on the URL after
-  the middleware's success-redirect. The component manages its own teardown
-  via setTimeout (~9s total + 600ms fade-out). Emits `complete` after the
-  fade · parent removes via v-if.
+  the middleware's success-redirect. Component manages its own teardown via
+  setTimeout. Emits `complete` after the fade · parent removes via v-if.
 
   Accessibility: aria-hidden="true" on the root · the content is brief and
-  decorative-leaning · the response page below carries the load-bearing text
-  for screen-readers. prefers-reduced-motion skips beats 1+2 entirely and
-  shows beat 3 only for ~2s before fading.
+  decorative-leaning. prefers-reduced-motion shows the text static, fades after
+  1.5s instead of 4s (per §11.4 reduced-motion treatment).
 -->
 
 <template>
@@ -29,27 +27,16 @@
     :class="{ 'unlock-overlay--finishing': finishing }"
     aria-hidden="true"
   >
-    <!-- Beat 1 · CCC anchor (Hackerethik) -->
-    <div class="unlock-beat unlock-beat--1">
-      <h1>Öffentliche Daten nützen, private Daten schützen.</h1>
-      <p class="unlock-cite">Chaos Computer Club · Hackerethik</p>
-      <p class="unlock-translation">Use public data. Protect private data.</p>
-    </div>
-
-    <!-- Beat 2 · CCCS anchor (Raymond Williams · §1.3 primary) -->
-    <div class="unlock-beat unlock-beat--2">
-      <h1>Culture is ordinary.</h1>
-      <p class="unlock-cite">Raymond Williams · CCCS Birmingham orbit</p>
-    </div>
-
-    <!-- Beat 3 · Hans's one-sentence + boom -->
-    <div class="unlock-beat unlock-beat--3">
+    <div class="unlock-beat">
       <h2 class="unlock-headline">CCC + CCCS</h2>
       <p class="unlock-body">
-        Hackerethik from Hamburg, organic intellectual from Birmingham —
-        the two anchors of one practice, for thirty years.
+        Hackerethik from Hamburg ·<br />
+        organic intellectual from Birmingham —
       </p>
-      <p class="unlock-cite">Hans Dönitz · Theaterpädagoge · Fürth, Bayern</p>
+      <p class="unlock-body unlock-body--coda">
+        the two anchors of one practice,<br />
+        for thirty years.
+      </p>
     </div>
   </div>
 </template>
@@ -65,10 +52,9 @@ const finishing = ref(false)
 let finishingTimer: ReturnType<typeof setTimeout> | null = null
 let completeTimer: ReturnType<typeof setTimeout> | null = null
 
-// Total timing per animations.md §1.1: ~9000ms (3 beats × 2.8s + tail).
-// At 9000ms set finishing=true → CSS triggers 600ms opacity-fade-out.
-// At 9600ms emit complete → parent v-if unmounts the overlay.
-const HOLD_DURATION_MS = 9000
+// Cand-1c §11.4 timing: 1.2s fade-in + 2.2s hold = 3400ms beat-duration · then
+// the overlay opacity-fades for 600ms (CSS transition) · 4000ms total to complete.
+const HOLD_DURATION_MS = 3400
 const FADE_OUT_DURATION_MS = 600
 
 onMounted(() => {
@@ -87,7 +73,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Per animations.md §2.2 · plain CSS · no Tailwind */
 .unlock-overlay {
   position: fixed;
   inset: 0;
@@ -110,102 +95,35 @@ onUnmounted(() => {
 }
 
 .unlock-beat {
-  position: absolute;
-  max-width: 50rem;
+  max-width: 60rem;
   padding: 0 2rem;
   opacity: 0;
-  animation-fill-mode: forwards;
-  animation-timing-function: ease;
-}
-
-.unlock-beat h1 {
-  font-size: clamp(1.5rem, 5vw, 3rem);
-  font-weight: 700;
-  line-height: 1.25;
-  margin: 0 0 1rem;
-}
-
-.unlock-beat .unlock-headline {
-  font-size: clamp(2rem, 6vw, 4rem);
-  font-weight: 700;
-  color: #ffee00;
-  margin: 0 0 1.25rem;
-  letter-spacing: 0.02em;
-}
-
-.unlock-beat .unlock-body {
-  font-size: clamp(1rem, 2.25vw, 1.5rem);
-  line-height: 1.5;
-  margin: 0 0 1rem;
-}
-
-.unlock-beat .unlock-cite {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  color: #aaa;
-  margin: 0;
-}
-
-.unlock-beat .unlock-translation {
-  font-size: clamp(0.75rem, 1.25vw, 0.9rem);
-  color: #aaa;
-  opacity: 0.7;
-  margin: 0.75rem 0 0;
-  font-style: italic;
-}
-
-/* Beat 1 · 0ms → 2800ms */
-.unlock-beat--1 {
-  animation-name: beat-fade;
-  animation-duration: 2800ms;
+  animation: beat-fade-in 1200ms ease forwards;
   animation-delay: 0ms;
 }
 
-/* Beat 2 · 2800ms → 5600ms */
-.unlock-beat--2 {
-  animation-name: beat-fade;
-  animation-duration: 2800ms;
-  animation-delay: 2800ms;
+.unlock-headline {
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 700;
+  color: #ffee00;
+  margin: 0 0 1.5rem;
+  letter-spacing: 0.02em;
 }
 
-/* Beat 3 · 5600ms → 9000ms · fade-in-and-hold (overlay-fade carries the exit) */
-.unlock-beat--3 {
-  animation-name: beat-fade-and-hold;
-  animation-duration: 3400ms;
-  animation-delay: 5600ms;
+.unlock-body {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  line-height: 1.6;
+  margin: 0;
 }
 
-@keyframes beat-fade {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  80% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
+.unlock-body--coda {
+  margin-top: 1.25rem;
+  color: #aaa;
 }
 
-@keyframes beat-fade-and-hold {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes beat-fade-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 640px) {
@@ -214,19 +132,15 @@ onUnmounted(() => {
   }
 }
 
-/* Reduced-motion · skip beats 1+2 · show beat 3 only · fade after 2s */
+/* Reduced-motion · skip the fade-in · show static · overlay fades earlier (1500ms vs 3400ms) */
 @media (prefers-reduced-motion: reduce) {
-  .unlock-beat--1,
-  .unlock-beat--2 {
-    display: none;
-  }
-  .unlock-beat--3 {
+  .unlock-beat {
     animation: none;
     opacity: 1;
     transform: none;
   }
   .unlock-overlay {
-    animation: respect-reduced-motion-fade 600ms ease 2000ms forwards;
+    animation: respect-reduced-motion-fade 600ms ease 1500ms forwards;
   }
 }
 
