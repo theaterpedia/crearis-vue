@@ -1,70 +1,74 @@
 <!--
-  LandingPage · Magnifica response-page root (/) · cand-1a per candidate-1a/landing-page.md.
+  LandingPage · Magnifica response-page root (/) · the RESTRUCTURE per
+  projects/magnifica/final/landing-proposal.md (HM-audited 2026-06-06).
 
-  Pre-auth: EntryHero shows the 6-beat password-gate. Post-auth: gated content unfolds:
-  hero overline-headline · ~210-word opener · 3 clickable route-cards · Hans-voice
-  closing block (2 callouts) · engagement-shapes strip · close-and-reopen button.
-  (The separate UnlockOverlay retired · the choreography now lives inside EntryHero.)
-
-  Route-cards are RouterLinks styled as post-its (clickable navigation) — a CV rendering
-  choice honoring landing-page.md's "post-it-styled, clickable" intent.
+  Pre-auth: EntryHero shows the 6-beat password-gate. Post-auth (proposal §9):
+    [static blackboard · hero title+subtitle + pinned post-its]   ← CardsCanvas board-mode (Q1 static)
+    [backslide 1 · before magnifica]                              ← BackSlide
+    [backslide 2 · after magnifica]                               ← BackSlide (facing-inverse · E pending HM-chat)
+    [3 navcards · Cultural-Studies lanes · D-coloring]
+    [page-bottom · Hans-voice closing + close-and-reopen]
+  Engagement-shapes CUT (§8) · the ~210-word opener CUT · Wege CUT.
 -->
 
 <template>
   <div class="magnifica-landing">
     <EntryHero v-if="!isAuthenticated" />
 
-    <main v-if="isAuthenticated" class="magnifica-landing-content">
+    <div v-if="isAuthenticated" class="magnifica-landing-content">
 
-      <!-- Hero · overline-headline -->
-      <header class="landing-hero">
-        <p class="landing-hero-overline">{{ hero.overline }}</p>
-        <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
-      </header>
+      <!-- Static blackboard · hero title+subtitle in the #board slot · post-its pinned (A-coloring) -->
+      <CardsCanvas :items="landingPostits" class="landing-board">
+        <template #board>
+          <span class="landing-board-overline">{{ hero.overline }}</span>
+          <span class="landing-board-title">{{ hero.headline }}</span>
+        </template>
+      </CardsCanvas>
 
-      <!-- Opener (~210 words) · Olah's quoted argument-types preserved as <em> -->
-      <section class="landing-opener" v-html="openerHtml"></section>
+      <!-- 2 backslides · before / after magnifica -->
+      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor">
+        <h2>{{ backslide1.headline }}</h2>
+        <p v-for="(para, i) in backslide1.paras" :key="i">{{ para }}</p>
+      </BackSlide>
 
-      <!-- Three route-cards · post-it-styled, clickable navigation -->
-      <nav class="route-cards" aria-label="Three routes">
-        <RouterLink
-          v-for="card in routeCards"
-          :key="card.to"
-          :to="card.to"
-          class="route-card"
-          :class="`route-card--${card.theme}`"
-        >
-          <span class="route-card-overline">{{ card.overline }}</span>
-          <span class="route-card-headline">{{ card.headline }}</span>
-          <span class="route-card-subline">{{ card.subline }}</span>
-        </RouterLink>
-      </nav>
+      <p class="backslide-intro">{{ backslideIntro }}</p>
 
-      <!-- Closing block · Hans-voice -->
-      <section class="landing-closing">
-        <p>{{ closingP1 }}</p>
-        <p>
-          {{ closingP2Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP2After }}
+      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right>
+        <h2>{{ backslide2.headline }}</h2>
+        <p v-for="(para, i) in backslide2.paras" :key="i">{{ para }}</p>
+      </BackSlide>
+
+      <div class="landing-narrow">
+        <!-- 3 navcards · Cultural-Studies lanes (D) -->
+        <nav class="route-cards" aria-label="Three routes">
+          <RouterLink
+            v-for="card in navCards"
+            :key="card.to"
+            :to="card.to"
+            class="route-card"
+            :class="`route-card--${card.theme}`"
+          >
+            <span class="route-card-overline">{{ card.overline }}</span>
+            <span class="route-card-headline">{{ card.headline }}</span>
+            <span class="route-card-subline">{{ card.subline }}</span>
+          </RouterLink>
+        </nav>
+
+        <!-- Page-bottom · Hans-voice closing -->
+        <section class="landing-closing">
+          <p>{{ closingP1 }}</p>
+          <p>{{ closingP2 }}</p>
+          <p>
+            {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
+          </p>
+        </section>
+
+        <!-- Close-and-reopen action -->
+        <p class="magnifica-landing-actions">
+          <MagnificaLogoutButton />
         </p>
-        <p class="landing-leitmotif">
-          <CalloutPhrase :callout="callouts.wegeEntstehen"><em>Wege entstehen beim Gehen.</em></CalloutPhrase>
-        </p>
-      </section>
-
-      <!-- Engagement-shapes strip -->
-      <aside class="engagement-strip">
-        <p class="engagement-intro"><em>{{ engagementIntro }}</em></p>
-        <p class="engagement-shapes">
-          <template v-for="(shape, i) in engagementShapes" :key="i"><strong>{{ shape.label }}</strong> — {{ shape.body }}<span v-if="i < engagementShapes.length - 1" class="engagement-sep"> · </span></template>
-        </p>
-        <p class="engagement-outro"><em>{{ engagementOutro }}</em></p>
-      </aside>
-
-      <!-- Close-and-reopen action -->
-      <p class="magnifica-landing-actions">
-        <MagnificaLogoutButton />
-      </p>
-    </main>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -72,18 +76,21 @@
 import { RouterLink } from 'vue-router'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
+import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
+import BackSlide from '@/components/magnifica/BackSlide.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import {
   hero,
-  openerHtml,
-  routeCards,
+  landingPostits,
+  backslide1,
+  backslideIntro,
+  backslide2,
+  navCards,
   closingP1,
-  closingP2Before,
-  closingP2After,
-  engagementIntro,
-  engagementShapes,
-  engagementOutro,
+  closingP2,
+  closingP3Before,
+  closingP3After,
   callouts,
 } from './content/landing'
 
@@ -96,54 +103,46 @@ const { isAuthenticated } = useMagnificaAuth()
 }
 
 .magnifica-landing-content {
-  background: #1a1a1a;
-  color: #f4f4f4;
-  max-width: 56rem;
-  margin: 0 auto;
-  padding: clamp(3rem, 8vh, 6rem) clamp(1rem, 6vw, 3rem) 0;
+  background: var(--color-bg);
+  color: var(--color-contrast);
 }
 
-/* ==Hero== */
-.landing-hero {
-  margin-bottom: clamp(2rem, 5vh, 3.5rem);
+/* ==Blackboard== · hero title+subtitle live on the board surface */
+.landing-board :deep(.bb-board-prose) {
+  max-width: 34rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.landing-hero-overline {
+.landing-board-overline {
   font-size: 0.875rem;
-  color: #aaa;
-  margin: 0 0 0.75rem;
+  color: var(--color-muted-contrast);
   letter-spacing: 0.02em;
 }
 
-.landing-hero-headline {
-  font-size: clamp(2rem, 6vw, 3.5rem);
+.landing-board-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 700;
-  margin: 0;
   line-height: 1.1;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
   color: var(--color-primary-bg);
 }
 
-/* ==Opener== */
-.landing-opener {
-  margin-bottom: clamp(2.5rem, 6vh, 4rem);
-}
-
-.landing-opener :deep(p) {
-  font-size: clamp(0.95rem, 1.6vw, 1.0625rem);
-  line-height: 1.7;
-  margin: 0 0 1rem;
-  color: #e8e8e8;
-}
-
-.landing-opener :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-.landing-opener :deep(em) {
+/* ==Backslides== */
+.backslide-intro {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 6vw, 3rem);
+  font-size: clamp(1rem, 2vw, 1.25rem);
   font-style: italic;
-  color: #f4f4f4;
+  color: var(--color-contrast);
+}
+
+/* ==Centered column for navcards + closing== */
+.landing-narrow {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vh, 4rem) clamp(1rem, 6vw, 3rem) 0;
 }
 
 /* ==Route-cards== */
@@ -162,19 +161,13 @@ const { isAuthenticated } = useMagnificaAuth()
   padding: 1.5rem 1.25rem;
   border-radius: 6px;
   text-decoration: none;
-  color: #1d1b1a;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   transform: rotate(-1deg);
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-.route-card:nth-child(2) {
-  transform: rotate(1.5deg);
-}
-
-.route-card:nth-child(3) {
-  transform: rotate(-2deg);
-}
+.route-card:nth-child(2) { transform: rotate(1.5deg); }
+.route-card:nth-child(3) { transform: rotate(-2deg); }
 
 .route-card:hover,
 .route-card:focus-visible {
@@ -187,9 +180,9 @@ const { isAuthenticated } = useMagnificaAuth()
   box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
-.route-card--yellow { background: var(--color-primary-bg); }
-.route-card--green  { background: #84cc16; }
-.route-card--pink   { background: #ff7598; }
+.route-card--yellow { background: var(--color-primary-bg);  color: var(--color-primary-contrast); }
+.route-card--green  { background: var(--color-positive-bg); color: var(--color-positive-contrast); }
+.route-card--pink   { background: var(--color-negative-bg); color: var(--color-negative-contrast); }
 
 .route-card-overline {
   font-size: 0.8125rem;
@@ -216,50 +209,7 @@ const { isAuthenticated } = useMagnificaAuth()
   font-size: clamp(0.9rem, 1.5vw, 1rem);
   line-height: 1.7;
   margin: 0 0 1rem;
-  color: #d0d0d0;
-}
-
-.landing-leitmotif {
-  font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
-  font-weight: 700;
-  color: var(--color-primary-bg) !important;
-}
-
-.landing-leitmotif :deep(em) {
-  font-style: italic;
-}
-
-/* ==Engagement-shapes strip== */
-.engagement-strip {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1.75rem 0;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: #aaa;
-}
-
-.engagement-intro,
-.engagement-outro {
-  margin: 0 0 0.75rem;
-  font-style: italic;
-}
-
-.engagement-outro {
-  margin: 0.75rem 0 0;
-}
-
-.engagement-shapes {
-  margin: 0;
-  color: #d0d0d0;
-}
-
-.engagement-shapes strong {
-  color: var(--color-primary-bg);
-  font-weight: 700;
-}
-
-.engagement-sep {
-  color: #666;
+  color: var(--color-muted-contrast);
 }
 
 /* ==Close-and-reopen actions== */
