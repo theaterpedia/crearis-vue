@@ -14,13 +14,21 @@
       </template>
     </TopNav>
 
-    <main class="magnifica-page-content">
-      <!-- Hero -->
-      <header class="page-hero">
-        <p class="page-hero-overline">{{ hero.overline }}</p>
-        <h1 class="page-hero-headline">{{ hero.headline }}</h1>
-      </header>
+    <!-- Hero · HM-provided per-page image (relay 2026-06-06) + overline-headline -->
+    <Hero
+      height-tmp="full"
+      :img-tmp="hero.image"
+      img-tmp-align-x="cover"
+      img-tmp-align-y="cover"
+      content-align-y="bottom"
+      gradient_type="left-bottom"
+      :gradient_depth="0.75"
+    >
+      <p class="page-hero-overline">{{ hero.overline }}</p>
+      <h1 class="page-hero-headline">{{ hero.headline }}</h1>
+    </Hero>
 
+    <main class="magnifica-page-content">
       <!-- §1 · joining a conversation already underway -->
       <section class="page-section">
         <h2 class="page-section-heading">Joining a conversation already underway</h2>
@@ -123,6 +131,7 @@
 
 <script setup lang="ts">
 import { provide } from 'vue'
+import Hero from '@/components/Hero.vue'
 import TopNav from '@/components/TopNav.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
@@ -147,10 +156,6 @@ provide(MAGNIFICA_POSTIT_MODE, 'scientific')
   max-width: 56rem;
   margin: 0 auto;
   padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 2rem);
-}
-
-.page-hero {
-  margin-bottom: clamp(2rem, 5vh, 4rem);
 }
 
 .page-hero-overline {

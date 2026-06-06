@@ -18,7 +18,7 @@
   prefers-reduced-motion: the inter-beat pacing collapses to instant (all 6 reveals
   appear at once · button immediately enabled).
 
-  TODO HM: the Stage-0 background `image of magnifica` (bgImage slot below).
+  Stage-0 background: the HM-provided encyclica image (bgImage below).
   TBD HM-final wording: CCC/CCCS definitions + the Hans-one-sentence (cand-1a drafts used).
 -->
 
@@ -72,8 +72,9 @@ import { useRoute } from 'vue-router'
 import Hero from '@/components/Hero.vue'
 import Banner from '@/components/Banner.vue'
 
-// TODO HM: Stage-0 "image of magnifica" background. Empty → Hero renders its theme-dark cover.
-const bgImage = ''
+// Stage-0 background · HM-provided 2026-06-06 (relay): the encyclica image
+// (Pope Leo · Chris Olah, Vatican). Empty → Hero renders its theme-dark cover.
+const bgImage = 'https://res.cloudinary.com/little-papillon/image/upload/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg'
 
 const route = useRoute()
 const password = ref('')

@@ -16,6 +16,9 @@ export const pageTitle = 'The bridge being practiced'
 export const hero = {
     overline: 'Anthropic Claude Ethnography · what emerges in the room',
     headline: 'THE BRIDGE BEING PRACTICED',
+    // HM-provided 2026-06-06 (relay): Hans as Claude.
+    image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780763404/crearis/hans_as_claude.jpg',
+    imageAlt: 'Hans Dönitz portrayed as Claude',
 }
 
 /** Cand-1a §6 spawn-prompt code-fence · abridged successor-letter · show-not-tell. */

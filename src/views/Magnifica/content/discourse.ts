@@ -16,6 +16,9 @@ export const pageTitle = 'Between hope and horror'
 export const hero = {
     overline: 'Michel Foucault · E. Probyn · Stuart Hall — speaking position',
     headline: 'BETWEEN HOPE AND HORROR',
+    // HM-provided 2026-06-06 (relay): Hans as harsh critique.
+    image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780764049/crearis/hans_sharp_critique.jpg',
+    imageAlt: 'Hans Dönitz · sharp critique',
 }
 
 /** §7 closing citation · rendered as a monospace code-fence (scholarly-respect artefact). */
