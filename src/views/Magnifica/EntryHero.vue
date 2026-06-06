@@ -23,7 +23,8 @@
 -->
 
 <template>
-  <Hero height-tmp="full" content-align-y="center" content-width="short" :img-tmp="bgImage || undefined">
+  <!-- HM 2026-06-06: prompt height at 62% of the full-viewport hero (100vh → 62vh). -->
+  <Hero height-tmp="full" content-align-y="center" content-width="short" :img-tmp="bgImage || undefined" :style="{ minHeight: '62vh' }">
     <Banner transparent>
       <div class="entry-gate">
         <a class="entry-wordmark" href="/">Theater<span class="entry-wordmark-accent">pedia</span></a>
