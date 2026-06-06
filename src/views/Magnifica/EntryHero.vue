@@ -33,7 +33,10 @@
         <div v-if="beat >= 1" class="entry-chatbox" aria-live="polite">
           <template v-for="n in contentBeats" :key="n">
             <p v-if="beat >= n" class="entry-line" :class="{ 'entry-disclaimer': n === 5 }">
-              <span v-for="(w, i) in shownWords(n)" :key="i" :class="{ 'entry-accent': w.a }">{{ w.t }} </span>
+              <template v-for="(w, i) in shownWords(n)" :key="i">
+                <br v-if="w.br" />
+                <span v-else :class="{ 'entry-accent': w.a }">{{ w.t }} </span>
+              </template>
             </p>
           </template>
         </div>
@@ -95,15 +98,17 @@ const prefersReducedMotion =
 const error = computed<string | null>(() => (route.query.error === 'invalid' ? 'Wrong password.' : null))
 
 // Content beats (2-5) as accent-aware word tokens · `a` marks primary-accent words.
-// O7: CCC/CCCS Beat-2/3 use the substrate §E "E2" (warmer) wording — HM-review-open.
-// Beat-4 Hans-sentence is the SETTLED proposal §2 text. (alternatives §E carries E1.)
-interface Word { t: string; a: boolean }
+// O7 (HM 2026-06-06): Beat-2 keeps the CCC Hackerethik motto + the E1 institutional
+// line below it; Beat-3 uses §E "E2". HM-review-open (final wording via HM-chat).
+// Beat-4 Hans-sentence is the SETTLED proposal §2 text.
+interface Word { t: string; a: boolean; br?: boolean }
 const contentBeats = [2, 3, 4, 5] as const
+// ' \n ' (space-padded) becomes a line-break token within a beat.
 function tok(line: string, accents: string[]): Word[] {
-    return line.split(' ').map((t) => ({ t, a: accents.includes(t) }))
+    return line.split(' ').map((t) => (t === '\n' ? { t: '', a: false, br: true } : { t, a: accents.includes(t) }))
 }
 const beatWords: Record<number, Word[]> = {
-    2: tok('CCC — Chaos Computer Club · the German hacker collective whose Hackerethik shaped a generation of European technology-conscious practice.', ['CCC']),
+    2: tok('CCC — Chaos Computer Club. „Öffentliche Daten nützen, private Daten schützen.“ \n German hacker collective since 1981 · advocates of Hackerethik · openness, privacy, and the right to question technology.', ['CCC']),
     3: tok('CCCS — Centre for Contemporary Cultural Studies · Birmingham · the school that asked who speaks, from where, with what authority — and made the asking into methodology. Stuart Hall: „Identity is not an essence, it is a positioning.“', ['CCCS']),
     4: tok('CCC + CCCS — Hackerethik from Hamburg, organic intellectual from Birmingham — two anchors, one practice, thirty years. — Hans Dönitz · Theaterpädagoge · Fürth, Bayern', ['Hans', 'Dönitz']),
     5: tok('© all images M. Farkas 2022–2026 · they show H. Dönitz and the team of dasei; used only to present this website.', []),
