@@ -7,9 +7,13 @@
  */
 
 /**
- * Horizontal positioning logic for floating post-its
+ * Horizontal positioning logic for floating post-its.
+ *
+ * `static-board` is the pinned-board mode (see BoardItem + utils/board.ts):
+ * the post-it renders in-place inside a positioned board container at authored
+ * top/left percentages instead of floating relative to a trigger element.
  */
-export type HorizontalLogic = 'default' | 'element' | 'right' | 'left'
+export type HorizontalLogic = 'default' | 'element' | 'right' | 'left' | 'static-board'
 
 /**
  * Theme colors matching the PostIt component
@@ -82,6 +86,56 @@ export interface FpostitData {
 
     /** Trigger element reference (set during opening) */
     triggerElement?: HTMLElement
+
+    /**
+     * Authored CSS `top` (e.g. `'32.5%'`) — used by `static-board` hlogic only,
+     * where the post-it pins inside a positioned board container instead of
+     * floating relative to a trigger. Ignored by the trigger-based hlogics.
+     */
+    top?: string
+
+    /** Authored CSS `left` (e.g. `'25%'`) — `static-board` hlogic only. */
+    left?: string
+}
+
+/**
+ * Item shape for the pinned `static-board` mode (e.g. the magnifica
+ * cards-blackboard). A board renders many post-its at authored top/left
+ * percentages inside its own positioned container — distinct from the
+ * trigger-floating `FpostitData` lifecycle (no open/close, no teleport,
+ * no p1-p9 / max-9 constraints). Positions are typically filled by
+ * `distributeAcrossLanes()` in `utils/board.ts`.
+ */
+export interface BoardItem {
+    /** Stable key for v-for (board keys are free-form, not p1-p9). */
+    key: string
+
+    /** Display title (overline**headline** or plain). */
+    title: string
+
+    /** HTML content. */
+    content: string
+
+    /** Theme color (OKLCH token via `.bg-{color}`). Default 'primary'. */
+    color?: PostitColor
+
+    /** Rotation class for visual variety. */
+    rotation?: PostitRotation
+
+    /** CSS `top` position (percentage string · lane-distribution output). */
+    top: string
+
+    /** CSS `left` position (percentage string · lane-distribution output). */
+    left: string
+
+    /** Optional image URL. */
+    image?: string
+
+    /** Optional raw SVG. */
+    svg?: string
+
+    /** Optional action buttons (max 2). */
+    actions?: FpostitAction[]
 }
 
 /**
