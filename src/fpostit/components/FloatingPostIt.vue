@@ -132,7 +132,9 @@ onUnmounted(() => {
 .floating-postit {
     position: absolute;
     padding: 1.5rem;
-    border-radius: 0.5rem;
+    /* Theme-overridable corner radius · magnifica/Theme-7 sets --fpostit-radius:0
+       (square) at :root; unset elsewhere falls back to the default 0.5rem. */
+    border-radius: var(--fpostit-radius, 0.5rem);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     word-wrap: break-word;

@@ -38,9 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, ref, useId, inject } from 'vue'
 import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
+import { getRandomRotation } from '@/fpostit/utils/positioning'
 import { normalizeTheme, magnificaToFpostitColor, type CardsCanvasItem } from '@/components/magnifica/types'
+import { MAGNIFICA_POSTIT_MODE, SCIENTIFIC_MIN_WIDTH, type MagnificaPostitMode } from './content/postit-mode'
 import type { FpostitData } from '@/fpostit/types'
 
 interface Props {
@@ -51,6 +53,14 @@ const props = defineProps<Props>()
 
 const open = ref(false)
 const triggerRef = ref<HTMLButtonElement | null>(null)
+
+// Page-level post-it mode (provided per page · default 'playful').
+//  - 'scientific' (e.g. /discourse): on a wide viewport the popover opens to the
+//    RIGHT, vertically aligned to the trigger → two-lane close-reading. No rotation.
+//  - 'playful' (default): popover opens near the trigger with a subtle, stable
+//    random tilt. Per HM 2026-06-06.
+const mode = inject<MagnificaPostitMode>(MAGNIFICA_POSTIT_MODE, 'playful')
+const baseRotation = mode === 'playful' ? getRandomRotation() : 'rotate-0'
 
 /** Stable per-instance id (only used for the popover's aria-labelledby). */
 const uid = useId()
@@ -66,13 +76,17 @@ const fpostitData = computed<FpostitData>(() => {
   const p = props.callout.props
   const overline = p.overline ? `<p class="callout-overline">${escapeHtml(p.overline)}</p>` : ''
   const body = p.bodyText ? `<p>${escapeHtml(p.bodyText)}</p>` : ''
+  // Reference `open` so hlogic re-evaluates against the live viewport at open-time.
+  const wide = open.value && typeof window !== 'undefined' && window.innerWidth > SCIENTIFIC_MIN_WIDTH
+  const rightLane = mode === 'scientific' && wide
+  const hlogic = rightLane ? 'right' : 'element'
   return {
     key,
     title: p.headline ?? '',
     content: overline + body,
     color: magnificaToFpostitColor(p.themeColor),
-    rotation: 'rotate-0',
-    hlogic: 'element',
+    rotation: rightLane ? 'rotate-0' : baseRotation,
+    hlogic,
     triggerElement: triggerRef.value ?? undefined,
   }
 })

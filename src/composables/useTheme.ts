@@ -74,6 +74,35 @@ export interface ThemeVars {
     [key: string]: string
 }
 
+// Bundled theme JSONs · frontend fallback when /api/themes is unavailable
+// (no backend / no DB · e.g. the static magnifica deploy, or backend-less dev).
+// Mirrors the thin file-transform in server/api/themes/[id].get.ts:
+//   each theme-{id}.json key → `--color-{key}` · font/headings/inverted from index.json.
+const _bundledThemes = import.meta.glob('/server/themes/theme-*.json')
+const _bundledThemeIndex = import.meta.glob('/server/themes/index.json')
+
+async function loadBundledTheme(id: number): Promise<{ vars: ThemeVars; inverted: boolean } | null> {
+    const loader = _bundledThemes[`/server/themes/theme-${id}.json`]
+    if (!loader) return null
+    const themeData = ((await loader()) as { default: Record<string, string> }).default
+    const vars: ThemeVars = {}
+    for (const [k, v] of Object.entries(themeData)) vars[`--color-${k}`] = v
+    let inverted = false
+    const idxLoader = _bundledThemeIndex['/server/themes/index.json']
+    if (idxLoader) {
+        const idx = ((await idxLoader()) as { default: Array<Record<string, unknown>> }).default
+        const meta = idx.find((t) => t.id === id)
+        if (meta) {
+            inverted = Boolean(meta.inverted)
+            const font = meta.font as string | undefined
+            const headings = (meta.headings as string | undefined) ?? font
+            if (font) vars['--font'] = font
+            if (headings) vars['--headings'] = headings
+        }
+    }
+    return { vars, inverted }
+}
+
 export function useTheme() {
     /**
      * Helper: Apply CSS variables to document root
@@ -267,6 +296,18 @@ export function useTheme() {
 
             return data.vars
         } catch (error) {
+            // Fallback to the bundled theme JSON (no API/DB needed · static deploy
+            // or backend-less dev). API stays the primary path; this only fires on failure.
+            try {
+                const bundled = await loadBundledTheme(id)
+                if (bundled) {
+                    themeVarsCache.value.set(id, { vars: bundled.vars, inverted: bundled.inverted })
+                    setInverted(bundled.inverted)
+                    return bundled.vars
+                }
+            } catch (fallbackError) {
+                console.error(`Theme ${id} bundled-fallback failed:`, fallbackError)
+            }
             console.error(`Failed to load theme ${id}:`, error)
             throw error
         }

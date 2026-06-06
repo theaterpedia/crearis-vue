@@ -1,9 +1,9 @@
 {
-  "primary-base": "oklch(93% 0.25 104.001)",
+  "primary-base": "oklch(74% 0.175 62)",
   "secondary-base": "oklch(76% 0.25 131)",
   "warning-base": "oklch(93% 0.25 104)",
   "positive-base": "oklch(76% 0.25 131)",
-  "negative-base": "oklch(82% 0.3 17)",
+  "negative-base": "oklch(64% 0.2 28)",
   "neutral-base": "oklch(80% 0.02 104)",
   "gray-base": "oklch(80% 0.02 104.001)",
   "bg": "oklch(from var(--color-neutral-base) calc(l + 1 * (1 - var(--color-inverted) - l)) calc(c / 4.5) h)",

@@ -122,11 +122,17 @@
 </template>
 
 <script setup lang="ts">
+import { provide } from 'vue'
 import TopNav from '@/components/TopNav.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import { navItems } from './content/nav'
 import { hero, citationBlock, callouts } from './content/discourse'
+import { MAGNIFICA_POSTIT_MODE } from './content/postit-mode'
+
+// /discourse is the scientific page: its ~10-16 callouts open in the right lane
+// (two-lane close-reading) on wide viewports. The other pages default to 'playful'.
+provide(MAGNIFICA_POSTIT_MODE, 'scientific')
 </script>
 
 <style scoped>
