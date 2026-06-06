@@ -1,27 +1,18 @@
 <!--
   LandingPage · Magnifica response-page root (/) · cand-1a per candidate-1a/landing-page.md.
 
-  Pre-auth: EntryHero shows the password-form-region. Post-auth: form collapses ·
-  3-beat UnlockOverlay plays (per page-zero-unlock.md) · gated content unfolds below:
+  Pre-auth: EntryHero shows the 6-beat password-gate. Post-auth: gated content unfolds:
   hero overline-headline · ~210-word opener · 3 clickable route-cards · Hans-voice
   closing block (2 callouts) · engagement-shapes strip · close-and-reopen button.
+  (The separate UnlockOverlay retired · the choreography now lives inside EntryHero.)
 
-  Route-cards are RouterLinks styled as post-its (clickable navigation, which PostIt
-  is not built for) — a CV rendering choice honoring landing-page.md's
-  "post-it-styled, clickable" intent.
+  Route-cards are RouterLinks styled as post-its (clickable navigation) — a CV rendering
+  choice honoring landing-page.md's "post-it-styled, clickable" intent.
 -->
 
 <template>
-  <div
-    class="magnifica-landing"
-    :data-just-unlocked="showUnlock ? 'true' : null"
-  >
-    <UnlockOverlay
-      v-if="showUnlock"
-      @complete="showUnlock = false"
-    />
-
-    <EntryHero :show-form="!isAuthenticated" />
+  <div class="magnifica-landing">
+    <EntryHero v-if="!isAuthenticated" />
 
     <main v-if="isAuthenticated" class="magnifica-landing-content">
 
@@ -78,11 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
-import UnlockOverlay from './UnlockOverlay.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import {
@@ -99,17 +88,6 @@ import {
 } from './content/landing'
 
 const { isAuthenticated } = useMagnificaAuth()
-
-const showUnlock = ref(false)
-
-onMounted(() => {
-  if (typeof window === 'undefined') return
-  const params = new URLSearchParams(window.location.search)
-  if (params.has('just_unlocked')) {
-    showUnlock.value = true
-    window.history.replaceState({}, '', window.location.pathname)
-  }
-})
 </script>
 
 <style scoped>

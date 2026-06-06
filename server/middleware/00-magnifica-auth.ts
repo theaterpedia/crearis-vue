@@ -47,16 +47,15 @@ const DEFAULT_MAX_AGE = 60 * 60 * 24 * 365 // 1 year · gesture-mode long-lived 
 /**
  * Redirect URLs · exported for test verification + reuse.
  *
- * SUCCESS_REDIRECT carries the `?just_unlocked=1` flag that triggers the
- * 3-beat unlock overlay per crearis:projects/magnifica/docs/animations.md §2.3
- * Option A. The SPA reads the flag on mount, plays the overlay, then calls
- * `history.replaceState` to clean the URL · prevents replay on refresh.
+ * SUCCESS_REDIRECT lands the user on `/` directly. The 6-beat entry-choreography
+ * plays pre-submit inside EntryHero (final_conception.md §Landing) · there is no
+ * post-submit overlay to gate, so the `?just_unlocked=1` flag retired (2026-06-06).
  *
  * MISMATCH_REDIRECT carries the inline-error query-param read by EntryHero ·
  * shows "Wrong password." in the form-region. Adapts howto-password-entry §4
  * (401-with-inline-error) to a 302-with-query for pure-HTML-form-POST shape.
  */
-export const SUCCESS_REDIRECT = '/?just_unlocked=1'
+export const SUCCESS_REDIRECT = '/'
 export const MISMATCH_REDIRECT = '/?error=invalid'
 
 /** sha256 hex of a string · used for the auth-cookie value. Pure helper. */

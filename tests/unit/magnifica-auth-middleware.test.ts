@@ -83,9 +83,9 @@ describe('decideAuthOutcome', () => {
 })
 
 describe('redirect constants', () => {
-    it('SUCCESS_REDIRECT carries the just_unlocked trigger per animations.md §2.3 Option A', () => {
-        // The 3-beat unlock overlay mounts when this query-param is present on /
-        expect(SUCCESS_REDIRECT).toBe('/?just_unlocked=1')
+    it('SUCCESS_REDIRECT lands on / directly (6-beat plays pre-submit · no overlay flag)', () => {
+        // The ?just_unlocked overlay-trigger retired 2026-06-06; choreography is in EntryHero
+        expect(SUCCESS_REDIRECT).toBe('/')
     })
 
     it('MISMATCH_REDIRECT carries the inline-error query-param for the entry-hero', () => {
