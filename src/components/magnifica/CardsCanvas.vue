@@ -97,7 +97,7 @@ function toData(item: BoardItem): FpostitData {
 <style scoped>
 .bb-canvas {
     position: relative;
-    background: var(--bb-page-bg, #1d1b1a);
+    background: var(--bb-page-bg, var(--color-bg, #1d1b1a));
     min-height: 100vh;
 }
 
@@ -106,7 +106,7 @@ function toData(item: BoardItem): FpostitData {
     top: var(--bb-navbar-offset, 6rem);
     height: 100vh;
     padding-bottom: 24rem;
-    background: var(--bb-board-bg, #1d1b1a);
+    background: var(--bb-board-bg, var(--color-bg, #1d1b1a));
 }
 
 .bb-board-prose {
@@ -115,7 +115,7 @@ function toData(item: BoardItem): FpostitData {
 }
 
 .bb-board-prose :deep(p) {
-    color: var(--bb-board-text, #f4f4f4);
+    color: var(--bb-board-text, var(--color-contrast, #f4f4f4));
     font-size: 1rem;
     line-height: 1.5;
 }

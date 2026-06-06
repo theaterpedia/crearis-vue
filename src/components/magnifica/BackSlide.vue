@@ -124,19 +124,19 @@ const panelClasses = computed(() => {
 
 .panel-side--yellow {
     background: var(--color-primary-bg);
-    color: #1d1b1a;
+    color: var(--color-primary-contrast, #1d1b1a);
 }
 .panel-side--green {
-    background: #84cc16;
-    color: #1d1b1a;
+    background: var(--color-positive-bg, #84cc16);
+    color: var(--color-positive-contrast, #1d1b1a);
 }
 .panel-side--pink {
-    background: #ff7598;
-    color: #1d1b1a;
+    background: var(--color-negative-bg, #ff7598);
+    color: var(--color-negative-contrast, #1d1b1a);
 }
 .panel-side--dim {
-    background: #2a2a2a;
-    color: #f4f4f4;
+    background: var(--color-card-bg, #2a2a2a);
+    color: var(--color-card-contrast, #f4f4f4);
 }
 
 .panel-text {

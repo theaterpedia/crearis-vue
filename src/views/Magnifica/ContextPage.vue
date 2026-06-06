@@ -95,8 +95,8 @@ import { hero, portrait, callouts } from './content/context'
 .magnifica-page {
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
   min-height: 100vh;
-  background: #1a1a1a;
-  color: #f4f4f4;
+  background: var(--color-bg, #1a1a1a);
+  color: var(--color-contrast, #f4f4f4);
 }
 
 .magnifica-page-content {
@@ -140,7 +140,7 @@ import { hero, portrait, callouts } from './content/context'
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
   line-height: 1.7;
   margin: 0 0 1rem;
-  color: #e8e8e8;
+  color: var(--color-contrast, #e8e8e8);
 }
 
 .page-section p:last-child {
@@ -148,8 +148,8 @@ import { hero, portrait, callouts } from './content/context'
 }
 
 .page-codefence {
-  background: #0f0f0f;
-  color: #d0d0d0;
+  background: var(--color-popover-bg, #0f0f0f);
+  color: var(--color-popover-contrast, #d0d0d0);
   padding: 1.5rem;
   border-radius: 4px;
   overflow-x: auto;

@@ -44,7 +44,7 @@ defineProps<{
   width: min(22rem, 100%);
   padding: 1.5rem clamp(1rem, 3vw, 1.75rem);
   background: rgba(36, 36, 36, 0.92);
-  color: #f4f4f4;
+  color: var(--color-contrast, #f4f4f4);
   border-radius: 6px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
@@ -65,7 +65,7 @@ defineProps<{
 .menu-card-body {
   font-size: 0.875rem;
   line-height: 1.55;
-  color: #d0d0d0;
+  color: var(--color-muted-contrast, #d0d0d0);
 }
 
 .menu-card-body :deep(p) {
@@ -74,6 +74,6 @@ defineProps<{
 
 .menu-card-body :deep(em) {
   font-style: italic;
-  color: #f4f4f4;
+  color: var(--color-contrast, #f4f4f4);
 }
 </style>
