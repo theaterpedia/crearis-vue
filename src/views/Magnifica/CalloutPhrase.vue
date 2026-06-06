@@ -23,13 +23,16 @@
       type="button"
       class="callout-phrase"
       :class="`callout-phrase--${theme}`"
-      :aria-expanded="open"
+      :aria-expanded="expanded"
       aria-haspopup="dialog"
-      @click="open = true"
+      @click="onTrigger"
     >
       <slot />
     </button>
+    <!-- playful/scientific render the popover LOCALLY (clean unmount). glossary routes
+         through the controller → the page's <FpostitRenderer/> renders the open stack. -->
     <FloatingPostIt
+      v-if="!isGlossary"
       :data="fpostitData"
       :is-open="open"
       @close="open = false"
@@ -38,9 +41,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId, inject } from 'vue'
+import { computed, ref, useId, inject, onMounted, onUnmounted } from 'vue'
 import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
 import { getRandomRotation } from '@/fpostit/utils/positioning'
+import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import { normalizeTheme, magnificaToFpostitColor, type CardsCanvasItem } from '@/components/magnifica/types'
 import { MAGNIFICA_POSTIT_MODE, SCIENTIFIC_MIN_WIDTH, type MagnificaPostitMode } from './content/postit-mode'
 import type { FpostitData } from '@/fpostit/types'
@@ -53,6 +57,7 @@ const props = defineProps<Props>()
 
 const open = ref(false)
 const triggerRef = ref<HTMLButtonElement | null>(null)
+const controller = useFpostitController()
 
 // Page-level post-it mode (provided per page · default 'playful').
 //  - 'scientific' (e.g. /discourse): on a wide viewport the popover opens to the
@@ -60,6 +65,7 @@ const triggerRef = ref<HTMLButtonElement | null>(null)
 //  - 'playful' (default): popover opens near the trigger with a subtle, stable
 //    random tilt. Per HM 2026-06-06.
 const mode = inject<MagnificaPostitMode>(MAGNIFICA_POSTIT_MODE, 'playful')
+const isGlossary = mode === 'glossary'
 const baseRotation = mode === 'playful' ? getRandomRotation() : 'rotate-0'
 
 /** Stable per-instance id (only used for the popover's aria-labelledby). */
@@ -72,24 +78,59 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-const fpostitData = computed<FpostitData>(() => {
+/** overline + body as the post-it's HTML content (shared by local + glossary paths). */
+function renderContent(): string {
   const p = props.callout.props
   const overline = p.overline ? `<p class="callout-overline">${escapeHtml(p.overline)}</p>` : ''
   const body = p.bodyText ? `<p>${escapeHtml(p.bodyText)}</p>` : ''
+  return overline + body
+}
+
+function isWideViewport(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth > SCIENTIFIC_MIN_WIDTH
+}
+
+// Local popover data (playful/scientific). Glossary registers its own via the controller.
+const fpostitData = computed<FpostitData>(() => {
+  const p = props.callout.props
   // Reference `open` so hlogic re-evaluates against the live viewport at open-time.
-  const wide = open.value && typeof window !== 'undefined' && window.innerWidth > SCIENTIFIC_MIN_WIDTH
-  const rightLane = mode === 'scientific' && wide
-  const hlogic = rightLane ? 'right' : 'element'
+  const rightLane = mode === 'scientific' && open.value && isWideViewport()
   return {
     key,
     title: p.headline ?? '',
-    content: overline + body,
+    content: renderContent(),
     color: magnificaToFpostitColor(p.themeColor),
     rotation: rightLane ? 'rotate-0' : baseRotation,
-    hlogic,
+    hlogic: rightLane ? 'right' : 'element',
     triggerElement: triggerRef.value ?? undefined,
   }
 })
+
+// ==Glossary mode== · register on mount, remove on unmount (no cross-page leak),
+// open through the controller so glosses persist + stack as the reading-trail.
+onMounted(() => {
+  if (!isGlossary) return
+  const p = props.callout.props
+  controller.create({
+    key,
+    title: p.headline ?? '',
+    content: renderContent(),
+    color: magnificaToFpostitColor(p.themeColor),
+    rotation: 'rotate-0',
+    hlogic: isWideViewport() ? 'right' : 'element',
+  })
+})
+
+onUnmounted(() => {
+  if (isGlossary) controller.remove(key)
+})
+
+const expanded = computed(() => (isGlossary ? controller.isOpen(key) : open.value))
+
+function onTrigger() {
+  if (isGlossary) controller.openPostit(key, triggerRef.value ?? undefined)
+  else open.value = true
+}
 </script>
 
 <style scoped>

@@ -83,3 +83,23 @@ describe('open / close basics', () => {
         expect(c.openKeys.size).toBe(0)
     })
 })
+
+describe('remove (glossary lifecycle · unregister)', () => {
+    it('removes a post-it from both the open set and the registry', () => {
+        const c = useFpostitController()
+        c.create(make('cixous'))
+        c.openPostit('cixous')
+        expect(c.isOpen('cixous')).toBe(true)
+        c.remove('cixous')
+        expect(c.isOpen('cixous')).toBe(false)
+        expect(c.getKeys()).not.toContain('cixous')
+    })
+
+    it('frees registration headroom so a re-mount can re-register', () => {
+        const c = useFpostitController()
+        c.create(make('probyn'))
+        c.remove('probyn')
+        c.create(make('probyn')) // would warn "already exists" if remove didn't unregister
+        expect(c.getKeys()).toContain('probyn')
+    })
+})

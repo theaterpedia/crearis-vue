@@ -10,6 +10,11 @@
  *     (left) and its glosses (right) form a two-lane close-reading surface. No tilt.
  *     Below the breakpoint it falls back to the near-trigger 'element' popover.
  *   - 'playful'     → near-trigger 'element' popover with a subtle, stable random tilt.
+ *   - 'glossary'    → like 'scientific' (right-lane stack on wide viewports) but routed
+ *     through the singleton `useFpostitController`, so opened glosses PERSIST and stack
+ *     as an accumulating reading-trail (Strategy 5). The page mounts <FpostitRenderer/>
+ *     (the stack) + <FpostitGlossary/> (a scan-and-dismiss chip-rail). Each CalloutPhrase
+ *     registers on mount and removes on unmount (controller.remove) → no cross-page leak.
  *
  * The strategies are documented for successors in
  * `dev/Act26/06-06_DEVDOC_post-its_master.md` (+ the per-strategy DEVDOCs).
@@ -17,7 +22,7 @@
 
 import type { InjectionKey } from 'vue'
 
-export type MagnificaPostitMode = 'scientific' | 'playful'
+export type MagnificaPostitMode = 'scientific' | 'playful' | 'glossary'
 
 /** provide/inject key for the page-level post-it mode. */
 export const MAGNIFICA_POSTIT_MODE: InjectionKey<MagnificaPostitMode> = Symbol('magnifica-postit-mode')

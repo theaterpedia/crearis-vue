@@ -156,6 +156,11 @@
         <pre class="page-codefence"><code>{{ citationBlock }}</code></pre>
       </article>
     </main>
+
+    <!-- Glossary mode (Q2): the open glosses stack (right-lane on wide viewports) +
+         a scan-and-dismiss reading-trail rail. CalloutPhrase routes through the controller. -->
+    <FpostitRenderer />
+    <FpostitGlossary />
   </div>
 </template>
 
@@ -165,13 +170,16 @@ import Hero from '@/components/Hero.vue'
 import TopNav from '@/components/TopNav.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
+import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
+import FpostitGlossary from '@/fpostit/components/FpostitGlossary.vue'
 import { navItems } from './content/nav'
 import { hero, citationBlock, callouts } from './content/discourse'
 import { MAGNIFICA_POSTIT_MODE } from './content/postit-mode'
 
-// /discourse is the scientific page: its 16 callouts open in the right lane
-// (two-lane close-reading) on wide viewports. The other pages default to 'playful'.
-provide(MAGNIFICA_POSTIT_MODE, 'scientific')
+// /discourse runs the glossary strategy (Q2): its 16 callouts route through the
+// fpostit controller, so opened glosses persist + stack (right-lane on wide
+// viewports) and the reader builds a reading-trail (the <FpostitGlossary/> rail).
+provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 </script>
 
 <style scoped>
