@@ -28,21 +28,13 @@
       <div class="entry-gate">
         <a class="entry-wordmark" href="/">Theater<span class="entry-wordmark-accent">pedia</span></a>
 
-        <!-- 6-beat chat-box · appears at beat 1 · codebox styling -->
+        <!-- 6-beat chat-box · fixed square · word-by-word typewriter · codebox styling -->
         <div v-if="beat >= 1" class="entry-chatbox" aria-live="polite">
-          <p v-if="beat >= 2" class="entry-line">
-            <strong>CCC</strong> — Chaos Computer Club. „Öffentliche Daten nützen, private Daten schützen.“
-          </p>
-          <p v-if="beat >= 3" class="entry-line">
-            <strong>CCCS</strong> — Centre for Contemporary Cultural Studies, Birmingham.
-            Stuart Hall: „Identity is not an essence, it is a positioning.“
-          </p>
-          <p v-if="beat >= 4" class="entry-line">
-            Hackerethik from Hamburg, organic intellectual from Birmingham — two anchors, one practice, thirty years. — Hans Dönitz
-          </p>
-          <p v-if="beat >= 5" class="entry-line entry-disclaimer">
-            © all images M. Farkas 2022–2026 · they show H. Dönitz and the team of dasei; used only to present this website.
-          </p>
+          <template v-for="n in contentBeats" :key="n">
+            <p v-if="beat >= n" class="entry-line" :class="{ 'entry-disclaimer': n === 5 }">
+              <span v-for="(w, i) in shownWords(n)" :key="i" :class="{ 'entry-accent': w.a }">{{ w.t }} </span>
+            </p>
+          </template>
         </div>
 
         <form class="entry-form" method="POST" action="/__auth" novalidate @submit="onSubmit">
@@ -86,8 +78,12 @@ const bgImage = ''
 const route = useRoute()
 const password = ref('')
 const beat = ref(0) // 0 = pre-input · 1..6 = reveal beats (6 = button enabled / steady-state)
+const typed = ref(0) // words revealed so far in the currently-typing content-beat
 const locked = ref(false)
 const timers: ReturnType<typeof setTimeout>[] = []
+
+const WORD_MS = 70 // word-by-word typewriter cadence
+const BREAK_MS = 1000 // 1-second break between beats
 
 const prefersReducedMotion =
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -96,6 +92,32 @@ const prefersReducedMotion =
 
 const error = computed<string | null>(() => (route.query.error === 'invalid' ? 'Wrong password.' : null))
 
+// Content beats (2-5) as accent-aware word tokens · `a` marks primary-accent words.
+// TBD HM-final wording for CCC/CCCS definitions (O7); cand-1a drafts in place.
+interface Word { t: string; a: boolean }
+const contentBeats = [2, 3, 4, 5] as const
+function tok(line: string, accents: string[]): Word[] {
+    return line.split(' ').map((t) => ({ t, a: accents.includes(t) }))
+}
+const beatWords: Record<number, Word[]> = {
+    2: tok('CCC — Chaos Computer Club. „Öffentliche Daten nützen, private Daten schützen.“', ['CCC']),
+    3: tok('CCCS — Centre for Contemporary Cultural Studies, Birmingham. Stuart Hall: „Identity is not an essence, it is a positioning.“', ['CCCS']),
+    4: tok('Hackerethik from Hamburg, organic intellectual from Birmingham — two anchors, one practice, thirty years. — Hans Dönitz', ['Hans', 'Dönitz']),
+    5: tok('© all images M. Farkas 2022–2026 · they show H. Dönitz and the team of dasei; used only to present this website.', []),
+}
+
+/** Words to render for content-beat `n`: full once passed, slice while typing, none before. */
+function shownWords(n: number): Word[] {
+    const words = beatWords[n] ?? []
+    if (beat.value > n) return words
+    if (beat.value === n) return words.slice(0, typed.value)
+    return []
+}
+
+function schedule(fn: () => void, ms: number) {
+    timers.push(setTimeout(fn, ms))
+}
+
 // Stage 1 trigger · single reveal on full case-sensitive match of `CCCS`.
 watch(password, (val) => {
     if (beat.value === 0 && val === 'CCCS') startSequence()
@@ -103,12 +125,32 @@ watch(password, (val) => {
 
 function startSequence() {
     locked.value = true
-    beat.value = 1
-    // 1-second break between beats (collapses to instant under reduced-motion).
-    const step = prefersReducedMotion ? 0 : 1000
-    for (let b = 2; b <= 6; b++) {
-        timers.push(setTimeout(() => { beat.value = b }, step * (b - 1)))
+    beat.value = 1 // chat-box appears (empty square)
+    schedule(() => playBeat(2), BREAK_MS)
+}
+
+function playBeat(n: number) {
+    beat.value = n
+    if (n > 5) return // beat 6: button greyed→primary + enabled · steady-state (no auto-advance)
+    typed.value = 0
+    const total = (beatWords[n] ?? []).length
+    if (prefersReducedMotion) {
+        typed.value = total
+        schedule(() => playBeat(n + 1), 0)
+        return
     }
+    typeWord(n, total)
+}
+
+function typeWord(n: number, total: number) {
+    if (typed.value >= total) {
+        schedule(() => playBeat(n + 1), BREAK_MS) // 1s break, then next beat
+        return
+    }
+    schedule(() => {
+        typed.value += 1
+        typeWord(n, total)
+    }, WORD_MS)
 }
 
 // Belt-and-suspenders: never submit before beat 6 / without the matching value.
@@ -141,7 +183,8 @@ onUnmounted(() => timers.forEach(clearTimeout))
   color: var(--color-primary-bg, #ffee00);
 }
 
-/* Chat-box · codebox surface (consistent with code/pre blocks) */
+/* Chat-box · codebox surface (consistent with code/pre blocks) · fixed square
+   (height = width) from Beat 1 · does not grow line-by-line. */
 .entry-chatbox {
   background: var(--color-popover-bg, #0f0f0f);
   color: var(--color-popover-contrast, #d0d0d0);
@@ -150,6 +193,8 @@ onUnmounted(() => timers.forEach(clearTimeout))
   padding: 1.25rem 1.5rem;
   font-size: 0.9375rem;
   line-height: 1.6;
+  aspect-ratio: 1 / 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -157,7 +202,12 @@ onUnmounted(() => timers.forEach(clearTimeout))
 
 .entry-line {
   margin: 0;
-  animation: entry-line-in 320ms ease forwards;
+}
+
+/* Primary-accent words (CCC · CCCS · Hans Dönitz) revealed by the typewriter. */
+.entry-accent {
+  color: var(--color-primary-bg, #ffee00);
+  font-weight: 700;
 }
 
 .entry-line strong {
