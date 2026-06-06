@@ -186,6 +186,13 @@ export interface FpostitController {
     closeAll(): void
 
     /**
+     * Unregister a post-it entirely (close + delete its registration). Pair with
+     * `create()` on a per-page lifecycle so controller-routed pages (glossary-mode)
+     * don't accumulate registrations across route navigation.
+     */
+    remove(key: string): void
+
+    /**
      * Check if a post-it is currently open
      */
     isOpen(key: string): boolean

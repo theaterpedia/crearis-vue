@@ -203,6 +203,15 @@ function createFpostitController(): FpostitController {
             })
         },
 
+        remove(key: string) {
+            // Unregister a post-it entirely (close + delete the registration). The
+            // missing primitive that makes per-page controller-routed lifecycles safe:
+            // a glossary-mode page registers its triggers on mount and removes them on
+            // unmount, so registrations don't accumulate across route navigation.
+            openKeys.delete(key)
+            postits.delete(key)
+        },
+
         isOpen(key: string): boolean {
             return openKeys.has(key)
         },
