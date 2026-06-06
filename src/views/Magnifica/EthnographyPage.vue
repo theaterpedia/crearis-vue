@@ -146,9 +146,7 @@ async function copyChat() {
 .magnifica-page {
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
   min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-contrast);
-}
+  background: var(--color-bg);}
 
 .magnifica-page-content {
   max-width: 56rem;
@@ -184,9 +182,7 @@ async function copyChat() {
 .page-section p {
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
   line-height: 1.7;
-  margin: 0 0 1rem;
-  color: var(--color-contrast);
-}
+  margin: 0 0 1rem;}
 
 /* §A frame · set slightly apart as the methodological preface */
 .page-frame {
@@ -199,9 +195,7 @@ async function copyChat() {
 .page-list,
 .page-flip-list {
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-  color: var(--color-contrast);
-  padding-left: 1.5rem;
+  line-height: 1.7;  padding-left: 1.5rem;
   margin: 0 0 1rem;
 }
 

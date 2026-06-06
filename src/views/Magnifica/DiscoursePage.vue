@@ -186,9 +186,7 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 .magnifica-page {
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
   min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-contrast);
-}
+  background: var(--color-bg);}
 
 .magnifica-page-content {
   max-width: 56rem;
@@ -213,9 +211,7 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 .page-body p {
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
   line-height: 1.7;
-  margin: 0 0 1.25rem;
-  color: var(--color-contrast);
-}
+  margin: 0 0 1.25rem;}
 
 /* Cixous block · the structural centre of the page */
 .page-cixous {
@@ -228,9 +224,7 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
   font-size: clamp(1rem, 1.7vw, 1.1875rem);
   line-height: 1.65;
   font-style: italic;
-  margin: 0 0 0.75rem;
-  color: var(--color-contrast);
-}
+  margin: 0 0 0.75rem;}
 
 .page-cixous cite {
   font-size: 0.875rem;

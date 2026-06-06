@@ -103,9 +103,7 @@ const { isAuthenticated } = useMagnificaAuth()
 }
 
 .magnifica-landing-content {
-  background: var(--color-bg);
-  color: var(--color-contrast);
-}
+  background: var(--color-bg);}
 
 /* ==Blackboard== · hero title+subtitle live on the board surface */
 .landing-board :deep(.bb-board-prose) {
@@ -134,9 +132,7 @@ const { isAuthenticated } = useMagnificaAuth()
   margin: 0 auto;
   padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 6vw, 3rem);
   font-size: clamp(1rem, 2vw, 1.25rem);
-  font-style: italic;
-  color: var(--color-contrast);
-}
+  font-style: italic;}
 
 /* ==Centered column for navcards + closing== */
 .landing-narrow {
