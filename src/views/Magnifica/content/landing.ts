@@ -45,14 +45,14 @@ export const routeCards: ReadonlyArray<RouteCard> = [
         theme: 'yellow',
     },
     {
-        to: '/bio',
+        to: '/context',
         overline: 'organic intellectual · Gestalter · Bavaria',
         headline: 'HANS DÖNITZ',
         subline: 'Three lineages converge. The institutional position the response is rooted in.',
         theme: 'green',
     },
     {
-        to: '/foucault',
+        to: '/discourse',
         overline: 'speaking position · Ideologie-Kritik',
         headline: 'FOUCAULT',
         subline: 'Where the apparatus-critique meets the practice. Why this voice carries weight.',

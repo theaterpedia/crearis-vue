@@ -126,7 +126,7 @@ import TopNav from '@/components/TopNav.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import { navItems } from './content/nav'
-import { hero, citationBlock, callouts } from './content/foucault'
+import { hero, citationBlock, callouts } from './content/discourse'
 </script>
 
 <style scoped>

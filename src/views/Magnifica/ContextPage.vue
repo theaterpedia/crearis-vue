@@ -88,7 +88,7 @@ import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
 import { navItems } from './content/nav'
-import { hero, portrait, callouts } from './content/bio'
+import { hero, portrait, callouts } from './content/context'
 </script>
 
 <style scoped>

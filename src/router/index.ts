@@ -1,10 +1,10 @@
 /**
- * Vue Router · DESTRUCTIVE for alpha/magnifica-site-1a.
+ * Vue Router · DESTRUCTIVE for alpha/magnifica-final.
  *
- * Cand-1a routes per candidate-1a/_manifest §1 (killed mainline routes · only
- * Magnifica routes ship): / · /ethnography · /bio · /foucault. The mainline
+ * Final-lane routes per final_conception.md + dispatch §5 (killed mainline routes ·
+ * only Magnifica routes ship): / · /ethnography · /context · /discourse. The mainline
  * crearis-vue routes belong on alpha/magnifica · this branch is the destructive
- * content-site (peer to cand-1c's alpha/magnifica-site).
+ * publication site.
  *
  * Auth-shape: cookie-gesture-mode (see src/composables/useMagnificaAuth.ts +
  * server/middleware/00-magnifica-auth.ts). Magnifica-auth guard · alt-routes
@@ -24,8 +24,8 @@ const router = createRouter({
   routes: [
     { path: '/', component: () => import('@/views/Magnifica/LandingPage.vue') },
     { path: '/ethnography', component: () => import('@/views/Magnifica/EthnographyPage.vue') },
-    { path: '/bio', component: () => import('@/views/Magnifica/BioPage.vue') },
-    { path: '/foucault', component: () => import('@/views/Magnifica/FoucaultPage.vue') },
+    { path: '/context', component: () => import('@/views/Magnifica/ContextPage.vue') },
+    { path: '/discourse', component: () => import('@/views/Magnifica/DiscoursePage.vue') },
     // Catch-all · any other path redirects to landing (the gate is at /)
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
