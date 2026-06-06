@@ -95,16 +95,17 @@ const prefersReducedMotion =
 const error = computed<string | null>(() => (route.query.error === 'invalid' ? 'Wrong password.' : null))
 
 // Content beats (2-5) as accent-aware word tokens · `a` marks primary-accent words.
-// TBD HM-final wording for CCC/CCCS definitions (O7); cand-1a drafts in place.
+// O7: CCC/CCCS Beat-2/3 use the substrate §E "E2" (warmer) wording — HM-review-open.
+// Beat-4 Hans-sentence is the SETTLED proposal §2 text. (alternatives §E carries E1.)
 interface Word { t: string; a: boolean }
 const contentBeats = [2, 3, 4, 5] as const
 function tok(line: string, accents: string[]): Word[] {
     return line.split(' ').map((t) => ({ t, a: accents.includes(t) }))
 }
 const beatWords: Record<number, Word[]> = {
-    2: tok('CCC — Chaos Computer Club. „Öffentliche Daten nützen, private Daten schützen.“', ['CCC']),
-    3: tok('CCCS — Centre for Contemporary Cultural Studies, Birmingham. Stuart Hall: „Identity is not an essence, it is a positioning.“', ['CCCS']),
-    4: tok('Hackerethik from Hamburg, organic intellectual from Birmingham — two anchors, one practice, thirty years. — Hans Dönitz', ['Hans', 'Dönitz']),
+    2: tok('CCC — Chaos Computer Club · the German hacker collective whose Hackerethik shaped a generation of European technology-conscious practice.', ['CCC']),
+    3: tok('CCCS — Centre for Contemporary Cultural Studies · Birmingham · the school that asked who speaks, from where, with what authority — and made the asking into methodology. Stuart Hall: „Identity is not an essence, it is a positioning.“', ['CCCS']),
+    4: tok('CCC + CCCS — Hackerethik from Hamburg, organic intellectual from Birmingham — two anchors, one practice, thirty years. — Hans Dönitz · Theaterpädagoge · Fürth, Bayern', ['Hans', 'Dönitz']),
     5: tok('© all images M. Farkas 2022–2026 · they show H. Dönitz and the team of dasei; used only to present this website.', []),
 }
 
