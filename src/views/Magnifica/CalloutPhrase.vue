@@ -1,19 +1,19 @@
 <!--
-  CalloutPhrase · clickable inline phrase that opens a PopOverPostIt.
+  CalloutPhrase · clickable inline phrase that opens a floating post-it.
 
-  The detail-page authoring shape per cand-1c conception §6 + §11.5 + devdoc §2:
+  Authoring shape (unchanged for content authors):
 
       <p>
         Some prose with <CalloutPhrase :callout="phraseX">a clickable phrase</CalloutPhrase> in it.
       </p>
 
-  Where `phraseX` is a CardsCanvasItem-shaped object from a content module
-  (e.g. `src/views/Magnifica/content/ethnography.ts`). The visible phrase
-  uses a dotted-underline in the theme accent-color; click opens a PostIt
-  popover anchored beneath the phrase (or as bottom-sheet on mobile).
+  `phraseX` is a CardsCanvasItem-shaped object from a content module. The visible
+  phrase has a dotted-underline; click opens a popover anchored to the phrase.
 
-  Reuses PostIt as the card; this component only adds the inline-trigger
-  + open/close state. PopOverPostIt.vue handles positioning, dismiss, ARIA.
+  ==fpostit-unification (2026-06-06 magnifica-final)==: the popover now renders via
+  the shared `<FloatingPostIt>` (hlogic="element") with OKLCH theme colors, retiring
+  the bespoke PopOverPostIt + PostIt stack. Open/close state is local per-instance
+  (not the singleton controller) so it unmounts cleanly across route navigation.
 -->
 
 <template>
@@ -29,19 +29,19 @@
     >
       <slot />
     </button>
-    <PopOverPostIt
-      :open="open"
-      :anchor-el="triggerRef"
-      :postit="callout.props"
+    <FloatingPostIt
+      :data="fpostitData"
+      :is-open="open"
       @close="open = false"
     />
   </span>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import PopOverPostIt from './PopOverPostIt.vue'
-import { normalizeTheme, type CardsCanvasItem } from '@/components/magnifica/types'
+import { computed, ref, useId } from 'vue'
+import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
+import { normalizeTheme, magnificaToFpostitColor, type CardsCanvasItem } from '@/components/magnifica/types'
+import type { FpostitData } from '@/fpostit/types'
 
 interface Props {
   callout: CardsCanvasItem
@@ -52,7 +52,30 @@ const props = defineProps<Props>()
 const open = ref(false)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 
+/** Stable per-instance id (only used for the popover's aria-labelledby). */
+const uid = useId()
+const key = `callout-${(uid ?? '0').replace(/[^a-zA-Z0-9_-]/g, '-')}`
+
 const theme = computed(() => normalizeTheme(props.callout.props.themeColor ?? 'yellow'))
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+const fpostitData = computed<FpostitData>(() => {
+  const p = props.callout.props
+  const overline = p.overline ? `<p class="callout-overline">${escapeHtml(p.overline)}</p>` : ''
+  const body = p.bodyText ? `<p>${escapeHtml(p.bodyText)}</p>` : ''
+  return {
+    key,
+    title: p.headline ?? '',
+    content: overline + body,
+    color: magnificaToFpostitColor(p.themeColor),
+    rotation: 'rotate-0',
+    hlogic: 'element',
+    triggerElement: triggerRef.value ?? undefined,
+  }
+})
 </script>
 
 <style scoped>
@@ -73,17 +96,17 @@ const theme = computed(() => normalizeTheme(props.callout.props.themeColor ?? 'y
   transition: color 200ms ease;
 }
 
-.callout-phrase--yellow { text-decoration-color: #ffee00; }
-.callout-phrase--green  { text-decoration-color: #57e389; }
-.callout-phrase--pink   { text-decoration-color: #f06292; }
-.callout-phrase--dim    { text-decoration-color: #888888; }
+.callout-phrase--yellow { text-decoration-color: var(--color-primary-bg, #ffee00); }
+.callout-phrase--green  { text-decoration-color: var(--color-positive-bg, #57e389); }
+.callout-phrase--pink   { text-decoration-color: var(--color-negative-bg, #f06292); }
+.callout-phrase--dim    { text-decoration-color: var(--color-dimmed, #888888); }
 
 .callout-phrase:hover {
-  color: #ffee00;
+  color: var(--color-primary-bg, #ffee00);
 }
 
 .callout-phrase:focus-visible {
-  outline: 2px solid #ffee00;
+  outline: 2px solid var(--color-primary-bg, #ffee00);
   outline-offset: 2px;
   border-radius: 2px;
 }

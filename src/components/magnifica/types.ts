@@ -8,6 +8,8 @@
  * Per CV@wsl dispatch #4 (TO (website) 2026-06-02 DI).
  */
 
+import type { PostitColor } from '@/fpostit/types'
+
 export type PostItThemeColorNew = 'yellow' | 'green' | 'pink' | 'dim'
 export type PostItThemeColor2022 = 'primary' | 'secondary' | 'accent' | 'warn'
 export type PostItThemeColor = PostItThemeColorNew | PostItThemeColor2022
@@ -26,6 +28,21 @@ export function normalizeTheme(c: PostItThemeColor): PostItThemeColorNew {
         return THEME_ALIAS[c]
     }
     return c
+}
+
+/**
+ * Map a magnifica theme-color (new or 2022-alias) to an fpostit OKLCH `PostitColor`,
+ * so magnifica content renders through the shared fpostit theme tokens instead of
+ * hardcoded hex. yellow→primary · green→positive · pink→negative · dim→dimmed.
+ */
+export function magnificaToFpostitColor(c: PostItThemeColor = 'yellow'): PostitColor {
+    switch (normalizeTheme(c)) {
+        case 'green': return 'positive'
+        case 'pink': return 'negative'
+        case 'dim': return 'dimmed'
+        case 'yellow':
+        default: return 'primary'
+    }
 }
 
 /**

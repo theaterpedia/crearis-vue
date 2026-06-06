@@ -8,127 +8,97 @@
         </div>
 
         <!--
-            Items-array consumer-contract (mirrors the 2022 JSON-items pattern at
-            theaterpedia2022/components/content/CardsCanvas.vue). Each item resolves
-            to <PostIt> with its props forwarded; if `top`/`left`/`rotate` is missing
-            on an item, lane-distribution + jitter + discrete-rotation fill them in.
+            Board-mode (fpostit-unified · 2026-06-06): each item is a pinned
+            `<FloatingPostIt hlogic="static-board">` positioned by buildBoardItems()
+            (lane-distribution + jitter). Reuses the shared card + OKLCH theme tokens;
+            the bespoke PostIt + lanes.ts are retired.
         -->
-        <template v-if="items && items.length">
-            <PostIt
-                v-for="(item, i) in resolvedItems"
-                :key="item.key ?? i"
-                v-bind="item.props"
-                :style="item.extraStyle"
-            />
-        </template>
+        <FloatingPostIt
+            v-for="item in boardItems"
+            :key="item.key"
+            :data="toData(item)"
+            :is-open="true"
+        />
 
-        <!-- Slot-based consumer-contract · alternative to items-prop -->
+        <!-- Slot-based consumer-contract · author children directly -->
         <slot />
 
-        <!-- End-strip · clean bottom · per howto §4 -->
         <div class="bb-end" />
     </section>
 </template>
 
 <script setup lang="ts">
 /**
- * CardsCanvas — sticky-post-its blackboard · canonical CSS per
- * `crearis:projects/magnifica/docs/howto-blackboard.md`.
+ * CardsCanvas — sticky cards-blackboard, now a thin wrapper over the shared fpostit
+ * board-mode. Items (CardsCanvasItem shape · authoring-compatible) map to
+ * `BoardItem`s via `buildBoardItems()` and render as pinned `<FloatingPostIt>`s with
+ * OKLCH theme colors. Lane-distribution + jitter live in `fpostit/utils/board.ts`.
  *
- * Two consumer-contracts (per howto §7):
- *   - JSON-items prop · each item `{component, props}` resolves to <PostIt />
- *     (mirrors the 2022 source-of-truth pattern at
- *     `theaterpedia2022/components/content/CardsCanvas.vue`)
- *   - Default slot · author <PostIt> children directly · use when content
- *     authoring lives in templates rather than markdown frontmatter
- *
- * ==Lane-distribution + randomness== (per dispatch #4 §3): when items omit
- * `top`/`left`/`rotate`, `distributeAcrossLanes()` fills them in. 5 default
- * horizontal lanes (5%, 25%, 45%, 62%, 85%) · per-item jitter ±3% on `top` ·
- * discrete rotation pick from {-3°…+3°}. Result feels curated, not chaotic.
- *
- * The board's persistent body-text lives in the `board` named-slot.
- *
- * Per CV@wsl dispatch #4 (TO (website) 2026-06-02 DI · meta-feed).
+ * The `board` named-slot still carries the persistent blackboard prose.
  */
 import { computed } from 'vue'
-import PostIt from './PostIt.vue'
-import type { CardsCanvasItem } from './types'
+import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
+import { magnificaToFpostitColor, type CardsCanvasItem } from './types'
 import {
+    buildBoardItems,
     DEFAULT_LANES,
-    DEFAULT_ROTATIONS_DEG,
-    distributeAcrossLanes,
-    type LaneAssignment,
+    type BoardContent,
+    type BoardItem,
     type RandomSource,
-} from './lanes'
+} from '@/fpostit/utils/board'
+import type { FpostitData } from '@/fpostit/types'
 
 interface Props {
-    /** Optional JSON-items list. When provided, post-its are rendered from this array; the default slot is still honored alongside. */
+    /** Items to pin on the board (CardsCanvasItem shape · authoring-compatible). */
     items?: ReadonlyArray<CardsCanvasItem>
-    /**
-     * Override the default 5 lanes (left-% values). Min 5 lanes enforced
-     * by `distributeAcrossLanes()` per dispatch §3.
-     */
+    /** Override the default 5 lanes (left-% values). */
     lanes?: ReadonlyArray<number>
-    /** Override the default discrete rotation pool (degrees). */
-    rotations?: ReadonlyArray<number>
     /** Override the per-item `top` jitter half-range (default ±3%). */
     topJitterPercent?: number
-    /**
-     * Inject a deterministic random-source for tests. Default `Math.random`.
-     * Marks the lane-distribution as a pure decision given the rng — same
-     * grandfather-pattern as bridgeFromOdoo's injectable deps.
-     */
+    /** Inject a deterministic random-source for tests. Default Math.random. */
     rng?: RandomSource
 }
 
 const props = withDefaults(defineProps<Props>(), {
     lanes: () => DEFAULT_LANES,
-    rotations: () => DEFAULT_ROTATIONS_DEG,
     topJitterPercent: 3,
 })
 
-/**
- * Resolve items: fill in lane-distributed `top`/`left`/`rotate` for items
- * that omit them, leave authored values for items that have them. Pure;
- * tests verify the distribution shape via injected rng.
- */
-const resolvedItems = computed(() => {
-    const itemsArr = props.items ?? []
-    if (itemsArr.length === 0) return []
+function esc(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
-    // Compute distribution for items that need fill-in. To keep the
-    // distribution deterministic per item-index regardless of which items
-    // have authored positions, compute lane-assignments for ALL indices
-    // and apply them only where the item omits the corresponding prop.
-    const distribution: LaneAssignment[] = distributeAcrossLanes(itemsArr.length, {
+const boardItems = computed<BoardItem[]>(() => {
+    const items = props.items ?? []
+    const contents: BoardContent[] = items.map((it, i) => {
+        const p = it.props
+        const overline = p.overline ? `<p class="bb-overline">${esc(p.overline)}</p>` : ''
+        const body = p.bodyText ? `<p>${esc(p.bodyText)}</p>` : ''
+        return {
+            key: String(it.key ?? `b${i + 1}`),
+            title: p.headline ?? '',
+            content: overline + body,
+            color: magnificaToFpostitColor(p.themeColor),
+            image: p.image,
+        }
+    })
+    return buildBoardItems(contents, {
         lanes: props.lanes,
-        rotations: props.rotations,
         topJitterPercent: props.topJitterPercent,
         rng: props.rng,
     })
-
-    return itemsArr.map((item, i) => {
-        const assigned = distribution[i] as LaneAssignment
-        const propsOut = { ...item.props }
-        if (propsOut.top === undefined) propsOut.top = `${assigned.topPercent.toFixed(1)}%`
-        if (propsOut.left === undefined) propsOut.left = `${assigned.leftPercent}%`
-        if (propsOut.rotate === undefined) propsOut.rotate = assigned.rotateDeg
-        return {
-            key: item.key,
-            props: propsOut,
-            extraStyle: undefined,
-        }
-    })
 })
+
+function toData(item: BoardItem): FpostitData {
+    return { ...item, hlogic: 'static-board' }
+}
 </script>
 
 <style scoped>
 .bb-canvas {
-    /* No positioning, no overflow, no flex · height comes from children
-       per howto-blackboard §4 (sticky requires this). */
     position: relative;
     background: var(--bb-page-bg, #1d1b1a);
+    min-height: 100vh;
 }
 
 .bb-board {
@@ -154,8 +124,7 @@ const resolvedItems = computed(() => {
     height: 2rem;
 }
 
-/* Mobile · Option-A linearised per howto-blackboard §5 (HM-approved):
-   blackboard hidden, post-its flow normally · linearised reading. */
+/* Mobile · linearised per howto-blackboard §5 */
 @media (max-width: 768px) {
     .bb-board {
         display: none;
