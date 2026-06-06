@@ -59,7 +59,7 @@ defineProps<{
 }
 
 .menu-card-accent {
-  color: #ffee00;
+  color: var(--color-primary-bg);
 }
 
 .menu-card-body {

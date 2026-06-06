@@ -13,11 +13,13 @@ import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
 import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
-const { setupLocalScopeWatcher } = useTheme()
+const { setTheme, setupLocalScopeWatcher } = useTheme()
 
-// Setup route watcher for local scope auto-reset
+// This destructive branch is the whole Magnifica site → Theme 7 (Theaterpedia)
+// is the app-wide base theme (initial scope · not route-local). Per dispatch §2.
 onMounted(() => {
   setupLocalScopeWatcher(router)
+  void setTheme(7, 'initial')
 })
 </script>
 

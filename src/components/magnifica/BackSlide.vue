@@ -123,7 +123,7 @@ const panelClasses = computed(() => {
 }
 
 .panel-side--yellow {
-    background: #ffee00;
+    background: var(--color-primary-bg);
     color: #1d1b1a;
 }
 .panel-side--green {

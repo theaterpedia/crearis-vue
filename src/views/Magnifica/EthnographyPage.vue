@@ -186,7 +186,7 @@ import { hero, spawnPromptCodeFence, callouts } from './content/ethnography'
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   font-weight: 700;
   margin: 0 0 1rem;
-  color: #ffee00;
+  color: var(--color-primary-bg);
 }
 
 .page-section p {
@@ -231,9 +231,9 @@ import { hero, spawnPromptCodeFence, callouts } from './content/ethnography'
 .page-flip {
   font-size: clamp(1.125rem, 2vw, 1.375rem) !important;
   font-weight: 700;
-  color: #ffee00 !important;
+  color: var(--color-primary-bg) !important;
   background: rgba(255, 238, 0, 0.05);
-  border-left: 3px solid #ffee00;
+  border-left: 3px solid var(--color-primary-bg);
   padding: 1.25rem 1.5rem;
   border-radius: 4px;
 }

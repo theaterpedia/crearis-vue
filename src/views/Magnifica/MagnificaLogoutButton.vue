@@ -41,7 +41,7 @@ function onClick() {
   font-size: 0.875rem;
   background: transparent;
   border: 0;
-  color: #ffee00;
+  color: var(--color-primary-bg);
   cursor: pointer;
   padding: 0.25rem 0.75rem;
   text-decoration: underline;
@@ -54,7 +54,7 @@ function onClick() {
 }
 
 .magnifica-logout:focus-visible {
-  outline: 2px solid #ffee00;
+  outline: 2px solid var(--color-primary-bg);
   outline-offset: 2px;
   border-radius: 2px;
 }

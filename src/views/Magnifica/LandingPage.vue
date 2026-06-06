@@ -144,7 +144,7 @@ onMounted(() => {
   line-height: 1.1;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #ffee00;
+  color: var(--color-primary-bg);
 }
 
 /* ==Opener== */
@@ -206,10 +206,10 @@ onMounted(() => {
 }
 
 .route-card:focus-visible {
-  box-shadow: 0 0 0 3px #ffee00, 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
-.route-card--yellow { background: #ffee00; }
+.route-card--yellow { background: var(--color-primary-bg); }
 .route-card--green  { background: #84cc16; }
 .route-card--pink   { background: #ff7598; }
 
@@ -244,7 +244,7 @@ onMounted(() => {
 .landing-leitmotif {
   font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
   font-weight: 700;
-  color: #ffee00 !important;
+  color: var(--color-primary-bg) !important;
 }
 
 .landing-leitmotif :deep(em) {
@@ -276,7 +276,7 @@ onMounted(() => {
 }
 
 .engagement-shapes strong {
-  color: #ffee00;
+  color: var(--color-primary-bg);
   font-weight: 700;
 }
 

@@ -133,7 +133,7 @@ import { hero, portrait, callouts } from './content/context'
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   font-weight: 700;
   margin: 0 0 1rem;
-  color: #ffee00;
+  color: var(--color-primary-bg);
 }
 
 .page-section p {
