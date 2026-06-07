@@ -1,5 +1,5 @@
 <!--
-  BioPage · /bio · Page 2 of cand-1a · "Organic intellectual, grounded practice".
+  ContextPage · /context · Page 2 · "Organic intellectual, grounded practice".
   Per candidate-1a/page-2-bio.md (v1.0). English abstract → German body (4 paragraphs,
   rendered inside a lang="de" section for screen-reader correctness) → English closing
   question. 8 inline CalloutPhrase triggers (c-bio-1..7 + c-bio-foot). Bilingual is

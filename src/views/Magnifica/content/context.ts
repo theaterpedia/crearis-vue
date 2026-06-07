@@ -1,11 +1,11 @@
 /**
- * Page 2 · /bio content · cand-1a · "Organic intellectual, grounded practice".
+ * Page 2 · /context content · "Organic intellectual, grounded practice".
  *
  * Source: candidate-1a/page-2-bio.md (v1.0 · 2026-06-03). Institutional anchor +
  * organic-intellectual claim. English abstract → German body (4 paragraphs, rendered
  * with lang="de") → closing English question. 7 callouts + c-bio-foot (rendered as
  * callout). Bilingual is structural, not decorative. Callout-bearing prose is authored
- * inline in BioPage.vue; this module holds the hero + the callouts catalog.
+ * inline in ContextPage.vue; this module holds the hero + the callouts catalog.
  */
 
 import type { CardsCanvasItem } from '@/components/magnifica/types'
@@ -19,7 +19,7 @@ export const hero = {
 
 /**
  * Page-hero portrait · HM-provided 2026-06-03 PM · Cloudinary c_crop,g_north 3:4 (1200×1600).
- * Rendered via BackSlide at the top of /bio (manifest §5). The page renders fine without it.
+ * Rendered via BackSlide at the top of /context (manifest §5). The page renders fine without it.
  */
 export const portrait = {
     image: 'https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_north,h_1600,w_1200/v1775638865/dasei/hans_kontakt.jpg',
