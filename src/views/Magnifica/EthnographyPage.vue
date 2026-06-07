@@ -141,8 +141,8 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
 // Slight, bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
 // Layered: a `to top` gradient does the bottom; a `to right` adds the faint left lean.
 const heroOverlay =
-  'linear-gradient(to top, oklch(0% 0 0 / 0.55) 0%, oklch(0% 0 0 / 0.2) 35%, transparent 65%), ' +
-  'linear-gradient(to right, oklch(0% 0 0 / 0.22) 0%, transparent 45%)'
+  'linear-gradient(to top, oklch(0% 0 0 / 0.72) 0%, oklch(0% 0 0 / 0.34) 38%, transparent 68%), ' +
+  'linear-gradient(to right, oklch(0% 0 0 / 0.40) 0%, transparent 48%)'
 </script>
 
 <style scoped>
