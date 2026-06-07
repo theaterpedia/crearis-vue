@@ -16,9 +16,9 @@
     <template #header><MagnificaHeader show-nav compact /></template>
 
     <template #hero>
-    <!-- Hero · 90rem (magnifica). The banner reuses the framework components instead of
-         hand-rolled markup: <Banner transparent> (the translucent panel) wrapping
-         <Heading> (the overline-headline pair) + the methodology-frame paragraph. -->
+    <!-- Hero · 90rem (magnifica). Uses the framework <Heading> (overline-headline) directly
+         — no Banner panel; legibility comes from a slight, bottom-weighted dark overlay
+         (Hero's `overlay` prop · bottom-dominant with a faint left, per HM). -->
     <Hero
       class="ethno-hero"
       magnifica
@@ -27,13 +27,10 @@
       img-tmp-align-x="cover"
       img-tmp-align-y="cover"
       content-align-y="bottom"
-      gradient_type="left-bottom"
-      :gradient_depth="0.85"
+      :overlay="heroOverlay"
     >
-      <Banner transparent>
-        <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
-        <p class="ethno-hero-frame">{{ methodologyFrame }}</p>
-      </Banner>
+      <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
+      <p class="ethno-hero-frame">{{ methodologyFrame }}</p>
     </Hero>
 
     <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
@@ -133,7 +130,6 @@
 
 <script setup lang="ts">
 import Hero from '@/components/Hero.vue'
-import Banner from '@/components/Banner.vue'
 import Heading from '@/components/Heading.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
@@ -141,6 +137,12 @@ import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEntries, callouts } from './content/ethnography'
+
+// Slight, bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
+// Layered: a `to top` gradient does the bottom; a `to right` adds the faint left lean.
+const heroOverlay =
+  'linear-gradient(to top, oklch(0% 0 0 / 0.55) 0%, oklch(0% 0 0 / 0.2) 35%, transparent 65%), ' +
+  'linear-gradient(to right, oklch(0% 0 0 / 0.22) 0%, transparent 45%)'
 </script>
 
 <style scoped>
