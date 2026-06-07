@@ -137,6 +137,7 @@ import { useRouter } from 'vue-router'
 import { LogOut, Plus } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { PROJECT_STATUS } from '@/composables/useProjectActivation'
 
 // ============================================================
 // INTERNAL THEME CONTEXT
@@ -157,7 +158,7 @@ onUnmounted(() => {
 // ============================================================
 
 const router = useRouter()
-const { user, logout } = useAuth()
+const { user, logout, setProjectId } = useAuth()
 
 // ============================================================
 // STATE
@@ -236,10 +237,38 @@ async function loadProjects() {
     }
 }
 
-function openProject(project: any) {
-    // Use domaincode or id for route
-    const projectId = project.domaincode || project.id
-    router.push(`/projects/${projectId}`)
+async function openProject(project: any) {
+    // By-domaincode-over-by-id discipline (HM 2026-05-22 PM) — see the
+    // HomeLayoutHack.vue counterpart for the longer rationale. Fail-fast
+    // if domaincode is missing rather than falling back to numeric id
+    // (which doesn't resolve at downstream lookups).
+    const domaincode: string | undefined = project.domaincode
+    if (!domaincode) {
+        console.warn(
+            '[openProject] project record is missing its domaincode — cannot route',
+            project,
+        )
+        return
+    }
+
+    // Stepper-vs-dashboard branch on project sysreg-status — per TO dispatch
+    // 2026-05-22 11:00 · Fix #2. Mirrors HomeLayoutHack.vue's openProject.
+    //   · pre-draft (null / NEW / DEMO) → legacy /projects (ProjectMain.vue
+    //     isStepper branch renders ProjectStepper)
+    //   · draft and above → /projects/:projectId (DashboardShell)
+    const status: number | null | undefined = project.status
+    const isPreDraft =
+        status === null ||
+        status === undefined ||
+        status === PROJECT_STATUS.NEW ||
+        status === PROJECT_STATUS.DEMO
+
+    if (isPreDraft) {
+        await setProjectId(domaincode)
+        return
+    }
+
+    router.push(`/projects/${domaincode}`)
 }
 
 function createProject() {

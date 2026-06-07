@@ -141,10 +141,12 @@ interface Props {
     filterXmlPrefix?: string // Filter by single XML ID prefix (e.g., "tp.event")
     filterXmlPrefixes?: string[] // Filter by multiple XML ID prefixes with OR logic
     filterXmlPattern?: RegExp // Filter by XML ID regex pattern
-    // Status value filtering (0-6)
+    // Status value filtering (uses sysreg: 64=draft, 512=confirmed, 4096=released, 32768=archived, 65536=trash)
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
     size?: 'small' | 'medium'
     width?: 'inherit' | 'small' | 'medium' | 'large' // Item width control
     columns?: 'off' | 'on' // Enable multi-column wrapping
@@ -384,16 +386,20 @@ const fetchEntityData = async () => {
             url += `?project=${encodeURIComponent(props.project)}`
         }
 
-        // Add status filters if specified (0-6 values)
+        // Add status filters if specified (uses sysreg status values: 64=draft, 512=confirmed, 4096=released, etc)
         const urlObj = new URL(url, window.location.origin)
-        if (props.statusLt !== undefined && props.statusLt >= 0 && props.statusLt <= 6) {
+        if (props.statusLt !== undefined) {
             urlObj.searchParams.append('status_lt', String(props.statusLt))
         }
-        if (props.statusEq !== undefined && props.statusEq >= 0 && props.statusEq <= 6) {
+        if (props.statusEq !== undefined) {
             urlObj.searchParams.append('status_eq', String(props.statusEq))
         }
-        if (props.statusGt !== undefined && props.statusGt >= 0 && props.statusGt <= 6) {
+        if (props.statusGt !== undefined) {
             urlObj.searchParams.append('status_gt', String(props.statusGt))
+        }
+        // Alpha mode: include draft projects (TODO v0.5: remove)
+        if (props.alphaPreview) {
+            urlObj.searchParams.append('alpha_preview', 'true')
         }
         url = urlObj.pathname + urlObj.search
 

@@ -1,16 +1,27 @@
 <!--
   PostPage.vue - Single post view with page configuration
   
-  TODO v0.5 (Odoo Integration):
-  - Implement slug-from-xmlid for SEO-friendly URLs
-  - Current implementation uses numeric IDs: /sites/:domaincode/posts/:id
-  - Target URL pattern: /sites/:domaincode/posts/:slug
-  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.post-workshop-recap" → "post-workshop-recap"
+  URL Pattern: /sites/:domaincode/posts/:identifier
+  
+  Identifier can be:
+  - Numeric ID: 123 → fetches post by id=123
+  - Plain slug: my_post → resolves to xmlid: {domaincode}.post__my_post
+  - Template+slug: workshop__my_post → resolves to xmlid: {domaincode}.post-workshop__my_post
+  
+  SEO-friendly URLs: /sites/theaterpedia/posts/workshop__my_post
 -->
 <template>
     <div class="post-page">
+        <!-- Phase-A C11 · always-visible Edit-link in public-mode -->
+        <EditLink />
+
+        <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
+        <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
+            :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
+            :status-old="projectAccess.statusOld.value" :is-logged-in="!!user" />
+
         <!-- Edit Panel -->
-        <EditPanel v-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
+        <EditPanel v-else-if="post" :is-open="isEditPanelOpen" :title="`Edit ${post.name || 'Post'}`"
             subtitle="Update post information" :data="editPanelData" entity-type="posts"
             :projectDomaincode="post.domaincode" :entity-id="post.id" :project-id="post.project_id || projectId"
             :owner-id="post.owner_id" :creator-id="post.creator_id"
@@ -18,7 +29,8 @@
             @close="closeEditPanel" @save="handleSavePost" />
 
         <!-- Page Config Panel (for admins/owners) -->
-        <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
+        <div v-if="showConfigPanel && projectAccess.canAccess.value" class="config-panel-overlay"
+            @click.self="closeConfigPanel">
             <div class="config-panel-container">
                 <button class="close-panel-btn" @click="closeConfigPanel">&times;</button>
                 <PageConfigController :project="projectId" type="posts" mode="pages" />
@@ -26,36 +38,32 @@
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="post" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
-            :navItems="navigationItems">
+        <PageLayout v-if="post && projectAccess.canAccess.value" :asideOptions="asideOptions"
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
             <template #header>
-                <PageHeading :heading="post.name || String(post.id)"
-                    :imgTmp="post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post'"
-                    :headerType="post.header_type || 'banner'" :headerSize="'prominent'" />
+                <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
+                <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
+                    :image_blur="post.img_square?.blur || undefined"
+                    :imgTmp="!post.img_id ? (post.img_wide?.url || post.cimg || 'https://picsum.photos/1440/900?random=post') : undefined"
+                    :headerType="post.header_type || 'banner'" :headerSize="post.header_size || 'prominent'" />
             </template>
-
-            <!-- Tag Families Row -->
-            <Section v-if="post.ttags || post.ctags || post.dtags" background="muted" spacing="compact">
-                <Container>
-                    <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags" v-model:dtags="post.dtags"
-                        :status="post.status" :config="post.config" :enable-edit="canEdit" group-selection="core"
-                        layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
-                        @update:ctags="handleUpdateTags('ctags', $event)"
-                        @update:dtags="handleUpdateTags('dtags', $event)" />
-                </Container>
-            </Section>
 
             <!-- Post Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Post metadata row: Status + Updated date + Controls (right-aligned) -->
+                        <!-- Post metadata row: Status + Tags + Updated date + Controls (right-aligned) -->
                         <div class="post-meta-row">
                             <div class="post-meta-left">
                                 <PostStatusBadge v-if="post && project" :post="postDataForPermissions"
                                     :project="projectDataForPermissions" :membership="null"
                                     @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
                                     @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                <TagFamilies v-model:ttags="post.ttags" v-model:ctags="post.ctags"
+                                    v-model:dtags="post.dtags" :enable-edit="canEdit" group-selection="core"
+                                    layout="inline" @update:ttags="handleUpdateTags('ttags', $event)"
+                                    @update:ctags="handleUpdateTags('ctags', $event)"
+                                    @update:dtags="handleUpdateTags('dtags', $event)" />
                                 <span v-if="post.updated_at" class="post-updated">
                                     Updated: {{ formatDate(post.updated_at) }}
                                 </span>
@@ -92,7 +100,8 @@
         </PageLayout>
 
         <!-- Fallback for when post is not loaded -->
-        <PageLayout v-else>
+        <!-- Fallback for when post is not loaded (and not access denied) -->
+        <PageLayout v-else-if="!accessLoaded || projectAccess.canAccess.value">
             <template #header>
                 <Section>
                     <Container>
@@ -118,8 +127,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useProjectAccess } from '@/composables/useProjectAccess'
+import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
+import EditLink from '@/components/EditLink.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import StatusBadge from '@/components/sysreg/StatusBadge.vue'
@@ -128,13 +140,21 @@ import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
+import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
+const { setTheme, init: initTheme } = useTheme()
+const { loadForProject, getOptions, parseXmlid } = usePageOptions()
+
+// Alpha mode access control
+const projectAccess = useProjectAccess()
+const accessLoaded = ref(false)
 
 // State
 const post = ref<any>(null)
@@ -177,27 +197,25 @@ const navigationItems = computed(() => {
     return items
 })
 
-// Parse options for PageLayout from post data
+// Parse options for PageLayout using usePageOptions composable
+// This applies: hardcoded defaults → project fields → pages table entry
+// Variant is extracted from xmlid (e.g., opus1.post-workshop.slug → variant='workshop')
 const asideOptions = computed<AsideOptions>(() => {
     if (!post.value) return {}
-    // Posts table uses JSONB fields for options
-    return parseAsideOptions({
-        aside_postit: post.value.aside_options,
-        aside_toc: post.value.aside_toc,
-        aside_list: post.value.aside_list,
-        aside_context: post.value.aside_context
-    })
+    // Extract variant from xmlid if present
+    const { variant } = parseXmlid(post.value.xmlid || '')
+    const options = getOptions('post', variant)
+    console.log('[PostPage] Aside options resolved:', { xmlid: post.value.xmlid, variant, options: options.aside, source: options.source })
+    return options.aside
 })
 
 const footerOptions = computed<FooterOptions>(() => {
     if (!post.value) return {}
-    // Posts table uses JSONB fields for options
-    return parseFooterOptions({
-        footer_gallery: post.value.footer_gallery,
-        footer_postit: post.value.footer_options,
-        footer_slider: post.value.footer_slider,
-        footer_repeat: post.value.footer_repeat
-    })
+    // Extract variant from xmlid if present
+    const { variant } = parseXmlid(post.value.xmlid || '')
+    const options = getOptions('post', variant)
+    console.log('[PostPage] Footer options resolved:', { xmlid: post.value.xmlid, variant, options: options.footer, source: options.source })
+    return options.footer
 })
 
 // Convert status_val to hex string and get label (synchronous with unified composable)
@@ -257,10 +275,10 @@ const projectDataForPermissions = computed(() => {
 
 // Methods
 async function loadPost() {
-    const postId = route.params.id
+    const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
 
-    console.log('[PostPage] Loading post:', { postId, domaincode: domaincode.value })
+    console.log('[PostPage] Loading post:', { identifier, domaincode: domaincode.value })
 
     try {
         // First, get project by domaincode to get project_id
@@ -274,9 +292,43 @@ async function loadPost() {
         project.value = projectData
         projectId.value = projectData.id
 
+        // Check alpha mode access control
+        await projectAccess.load(domaincode.value)
+        accessLoaded.value = true
+
+        // If access denied in alpha mode, don't load the rest
+        if (!projectAccess.canAccess.value) {
+            console.log('[PostPage] Access denied for project:', domaincode.value)
+            return
+        }
+
+        // Load page options for this project (uses composable with caching)
+        await loadForProject(domaincode.value)
+        console.log('[PostPage] Page options loaded for project:', domaincode.value)
+
+        // Apply project theme if set
+        await initTheme()
+        if (projectData.theme !== null && projectData.theme !== undefined) {
+            await setTheme(projectData.theme, 'initial')
+        }
+
+        // Determine if identifier is numeric ID or slug-based
+        // parseRouteIdentifier returns: { type: 'id' | 'slug', id?, xmlid?, template?, slug? }
+        const parsed = parseRouteIdentifier(identifier, domaincode.value, 'post')
+        console.log('[PostPage] Parsed identifier:', parsed)
+
+        let postApiUrl: string
+        if (parsed.type === 'id') {
+            // Numeric ID: fetch by ID
+            postApiUrl = `/api/posts/${parsed.id}`
+        } else {
+            // Slug-based: fetch by xmlid
+            postApiUrl = `/api/posts/${encodeURIComponent(parsed.xmlid!)}`
+        }
+
         // Load post
-        console.log('[PostPage] Fetching post:', `/api/posts/${postId}`)
-        const response = await fetch(`/api/posts/${postId}`)
+        console.log('[PostPage] Fetching post:', postApiUrl)
+        const response = await fetch(postApiUrl)
         console.log('[PostPage] Post response:', { ok: response.ok, status: response.status })
 
         if (!response.ok) throw new Error('Failed to load post')
@@ -406,10 +458,10 @@ async function handleSavePost(data: Record<string, any>) {
             header_type: data.header_type || 'banner',
             header_size: data.header_size || null,
             status: sanitizeStatusVal(data.status),
-            // Include sysreg tags (sanitize to prevent NULL bytes)
-            ttags: data.ttags || '\\x00',
-            ctags: data.ctags || '\\x00',
-            dtags: data.dtags || '\\x00'
+            // Tag fields are integers, not hex strings
+            ttags: typeof data.ttags === 'number' ? data.ttags : 0,
+            ctags: typeof data.ctags === 'number' ? data.ctags : 0,
+            dtags: typeof data.dtags === 'number' ? data.dtags : 0
         }
 
         console.log('[PostPage] Sending payload:', payload)

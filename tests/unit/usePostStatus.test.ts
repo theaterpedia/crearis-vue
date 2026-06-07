@@ -25,9 +25,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick } from 'vue'
 
-// Import the composable under test
-// Note: We test the composable logic, not the full Vue reactivity
-import { STATUS } from '../../src/composables/usePostPermissions'
+// STATUS constant — re-rooted from removed usePostPermissions to useCapabilities
+// as part of Item-1 cleanup (3a). This test re-implements STATUS_META locally
+// and exercises the workflow-logic shape; no actual composable under test.
+import { STATUS } from '../../src/composables/useCapabilities'
 
 // ============================================================================
 // Test the STATUS_META and TRANSITION_LABELS directly

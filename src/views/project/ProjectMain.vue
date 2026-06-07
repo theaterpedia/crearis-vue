@@ -182,6 +182,15 @@
                     </svg>
                 </button>
                 <span class="overline-domaincode">{{ projectId }}</span>
+
+                <!-- Alpha Mode: Publish Toggle (always visible for project owners in alpha) -->
+                <div v-if="isAlphaMode() && isProjectOwner" class="alpha-publish-toggle alpha-publish-toggle--inline">
+                    <button class="alpha-toggle-btn" :class="{ 'is-published': isAlphaPublished }"
+                        :disabled="isAlphaUpdating" @click="toggleAlphaPublish"
+                        :title="isAlphaPublished ? 'Öffentlich - Klicken zum Verbergen' : 'Nur Team - Klicken zum Veröffentlichen'">
+                        <span class="toggle-icon">{{ isAlphaPublished ? '🌐' : '🔒' }}</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Columns Container -->
@@ -262,6 +271,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { isAlphaMode } from '@/composables/useAlphaMode'
 import Navbar from '@/components/Navbar.vue'
 import ProjectStepper from './ProjectStepper.vue'
 import ProjectNavigation from './ProjectNavigation.vue'
@@ -374,6 +384,43 @@ function handleWorkflowSelect(status: number) {
 const STATUS_NEW = 1        // bits 0-2
 const STATUS_DEMO = 8       // bits 3-5
 const STATUS_DRAFT = 64     // bits 6-8
+
+// Alpha mode: computed project visibility status
+const alphaStatusOld = computed(() => projectData.value?.status_old || 'new')
+const isAlphaPublished = computed(() => alphaStatusOld.value === 'public')
+const isAlphaUpdating = ref(false)
+
+// Alpha mode: toggle publish status
+async function toggleAlphaPublish() {
+    if (!isAlphaMode() || !isProjectOwner.value || isAlphaUpdating.value) return
+
+    const newStatusOld = isAlphaPublished.value ? 'draft' : 'public'
+    isAlphaUpdating.value = true
+
+    try {
+        const response = await fetch(`/api/projects/${projectId.value}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status_old: newStatusOld })
+        })
+
+        if (response.ok) {
+            if (projectData.value) {
+                projectData.value.status_old = newStatusOld
+            }
+            console.log(`[Alpha Mode] Project ${newStatusOld === 'public' ? 'published' : 'unpublished'}`)
+        } else {
+            const error = await response.json()
+            console.error('Failed to update alpha publish status:', error)
+            alert('Fehler beim Ändern des Veröffentlichungsstatus')
+        }
+    } catch (error) {
+        console.error('Failed to update alpha publish status:', error)
+        alert('Fehler beim Ändern des Veröffentlichungsstatus')
+    } finally {
+        isAlphaUpdating.value = false
+    }
+}
 
 // Feature flag for new 3-column dashboard layout (alpha/dashboard branch)
 const useNewDashboard = ref(true) // Toggle to switch between old/new dashboard
@@ -513,6 +560,12 @@ async function loadProjectData() {
             // Use status field (integer, Migration 040 values)
             projectStatus.value = projectData.value.status ?? null
 
+            // Debug alpha mode after loading project
+            console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
+            console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
+            console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
+            console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
+
             // Load project members
             await loadProjectMembers()
         }
@@ -573,10 +626,17 @@ function completeProject() {
 async function handleActivateProject() {
     try {
         // Status 'draft' = 64 (from Migration 040: bits 6-8)
+        // In alpha mode, also set status_old = 'draft' for visibility filtering
+        const updatePayload: Record<string, any> = { status: STATUS_DRAFT }
+        if (isAlphaMode()) {
+            updatePayload.status_old = 'draft'
+            console.log('[Alpha Mode] Also setting status_old = draft')
+        }
+
         const response = await fetch(`/api/projects/${projectId.value}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: STATUS_DRAFT })
+            body: JSON.stringify(updatePayload)
         })
 
         if (response.ok) {
@@ -584,6 +644,9 @@ async function handleActivateProject() {
             projectStatus.value = STATUS_DRAFT
             if (projectData.value) {
                 projectData.value.status = STATUS_DRAFT
+                if (isAlphaMode()) {
+                    projectData.value.status_old = 'draft'
+                }
             }
             // Reset to first navigation tab
             currentNavTab.value = 'homepage'
@@ -660,6 +723,16 @@ function handleDashboardOpenExternal(url: string) {
 // Initialize theme system
 const { init: initTheme } = useTheme()
 
+// Debug: Log alpha mode state
+const debugAlphaMode = () => {
+    console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
+    console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
+    console.log('[Alpha Debug] projectData:', projectData.value)
+    console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
+    console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
+    console.log('[Alpha Debug] isAlphaPublished:', isAlphaPublished.value)
+}
+
 // Auth check on mount
 onMounted(async () => {
     // Initialize theme system (loads available themes, doesn't set any by default)
@@ -696,6 +769,9 @@ onUnmounted(() => {
     border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
 }
 
 /* ===== NAVBAR ===== */
@@ -980,6 +1056,49 @@ onUnmounted(() => {
 .overline-domaincode {
     font-size: 0.875rem;
     color: var(--color-dimmed);
+}
+
+/* Alpha Publish Toggle - Inline variant for stepper overline */
+.alpha-publish-toggle--inline {
+    margin-left: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: var(--color-muted-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn:hover {
+    background: var(--color-bg);
+    border-color: var(--color-project);
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn.is-published {
+    background: var(--color-success, #22c55e);
+    border-color: var(--color-success, #22c55e);
+}
+
+.alpha-publish-toggle--inline .alpha-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.alpha-publish-toggle--inline .toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
 }
 
 /* Columns Container */

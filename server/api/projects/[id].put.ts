@@ -38,6 +38,12 @@ export default defineEventHandler(async (event) => {
             header_size,
             md,
             img_id,
+            config,
+            // CTA options
+            cta_title,
+            cta_entity,
+            cta_link,
+            cta_form,
             // Chapter 11: Page options
             page_background,
             page_cssvars,
@@ -138,11 +144,36 @@ export default defineEventHandler(async (event) => {
             updates.push('md = ?')
             values.push(updateData.md)
         }
+        if (body.html !== undefined) {
+            updates.push('html = ?')
+            values.push(body.html)
+        }
         if (img_id !== undefined) {
             updateData.img_id = img_id
             updates.push('img_id = ?')
             values.push(updateData.img_id)
         }
+
+        // CTA options
+        if (cta_title !== undefined) {
+            updates.push('cta_title = ?')
+            values.push(cta_title || null)
+        }
+        if (cta_entity !== undefined) {
+            updates.push('cta_entity = ?')
+            values.push(cta_entity || null)
+        }
+        if (cta_link !== undefined) {
+            updates.push('cta_link = ?')
+            values.push(cta_link || null)
+        }
+        if (cta_form !== undefined) {
+            updates.push('cta_form = ?')
+            values.push(cta_form || null)
+        }
+
+        // Note: projects.config is INTEGER (theme_id reference), not JSONB
+        // Use header_options_ext for header-related options like secondary links
 
         // Chapter 11: Page options
         if (page_background !== undefined) {

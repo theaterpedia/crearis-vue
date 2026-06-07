@@ -318,6 +318,7 @@ export interface PagesTableFields {
     footer_options?: Record<string, any> | null // default: '{}'::jsonb
     header_has_content?: boolean | null
     header_options?: Record<string, any> | null // default: '{}'::jsonb
+    header_size?: string | null // default: 'mini' (Migration 066)
     header_type?: string | null // default: 'simple'::text
     id: string // default: (gen_random_uuid())::text
     page_has_content?: boolean | null
@@ -362,6 +363,7 @@ export interface PostsTableFields {
     cover_properties?: string | null
     created_at?: string | null
     event_xmlid?: string | null
+    header_size?: string | null // default: 'mini' (Migration 066)
     header_type?: string | null
     html?: string | null
     id: number // default: nextval('posts_id_seq'::regclass)

@@ -1,10 +1,14 @@
 <template>
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isStaticBoard">
         <Transition name="fpostit-fade">
-            <div v-if="isOpen" :class="['floating-postit', `bg-${data.color}`, data.rotation]" :style="positionStyle"
-                role="dialog" aria-modal="false" :aria-labelledby="`fpostit-title-${data.key}`">
-                <!-- Close button -->
-                <button class="fpostit-close" @click="handleClose" aria-label="Close" type="button">
+            <div v-if="isOpen"
+                :class="['floating-postit', `bg-${data.color}`, data.rotation, { 'floating-postit--board': isStaticBoard }]"
+                :style="positionStyle"
+                :role="isStaticBoard ? 'note' : 'dialog'"
+                :aria-modal="isStaticBoard ? undefined : 'false'"
+                :aria-labelledby="`fpostit-title-${data.key}`">
+                <!-- Close button · pinned board cards are not dismissable -->
+                <button v-if="!isStaticBoard" class="fpostit-close" @click="handleClose" aria-label="Close" type="button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
@@ -50,8 +54,22 @@ const emit = defineEmits<{
     close: []
 }>()
 
+// Pinned board-mode: render in-place inside a positioned board container.
+const isStaticBoard = computed(() => props.data.hlogic === 'static-board')
+
 // Calculate position based on trigger element and hlogic
 const positionStyle = computed(() => {
+    // Static-board mode: pin at authored top/left percentages within the board.
+    if (isStaticBoard.value) {
+        return {
+            position: 'absolute',
+            top: props.data.top ?? '0',
+            left: props.data.left ?? '0',
+            maxWidth: '20rem',
+            zIndex: '1'
+        }
+    }
+
     if (!props.data.triggerElement) {
         // Fallback position if no trigger element
         return {
@@ -119,6 +137,12 @@ onUnmounted(() => {
     overflow: hidden;
     word-wrap: break-word;
     transition: transform 0.2s ease-out;
+}
+
+/* Pinned board-mode card · consistent blackboard width, lighter elevation */
+.floating-postit--board {
+    width: 20rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* Rotation classes (matching PostIt component) */

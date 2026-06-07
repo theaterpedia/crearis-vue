@@ -45,6 +45,12 @@
 
 ## Nice-to-Have (Future Consideration)
 
+### FormatOptions / Config System
+- Note: Header chapter config system implemented in v1.0 (sysreg-style)
+- Full 4-chapter extension (aside/footer/page) deferred to v2.0 (~2026)
+- Let chapters evolve naturally before bit-encoding
+- See: `chat/reports/2025-12-15-formatoptions-system-analysis.md`
+
 ### Status System
 - [ ] Visual status flow diagram component
 - [ ] Status history/audit trail

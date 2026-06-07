@@ -1,16 +1,27 @@
 <!--
   EventPage.vue - Single event view with page configuration
   
-  TODO v0.5 (Odoo Integration):
-  - Implement slug-from-xmlid for SEO-friendly URLs
-  - Current implementation uses numeric IDs: /sites/:domaincode/events/:id
-  - Target URL pattern: /sites/:domaincode/events/:slug
-  - Slug derivation: xmlid.split('.').pop() → e.g., "dasei.event-workshop-2024" → "event-workshop-2024"
+  URL Pattern: /sites/:domaincode/events/:identifier
+  
+  Identifier can be:
+  - Numeric ID: 123 → fetches event by id=123
+  - Plain slug: my_event → resolves to xmlid: {domaincode}.event__my_event
+  - Template+slug: conference__my_event → resolves to xmlid: {domaincode}.event-conference__my_event
+  
+  SEO-friendly URLs: /sites/theaterpedia/events/conference__my_event
 -->
 <template>
     <div class="event-page">
+        <!-- Phase-A C11 · always-visible Edit-link in public-mode -->
+        <EditLink />
+
+        <!-- Alpha Mode: Show ProjectNotPublished when access denied -->
+        <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
+            :project-name="project?.heading || project?.name" :owner-name="project?.owner_name"
+            :status-old="projectAccess.statusOld.value" :is-logged-in="!!user" />
+
         <!-- Edit Panel -->
-        <EditPanel v-if="event" :is-open="isEditPanelOpen" :title="`Edit ${event.name || 'Event'}`"
+        <EditPanel v-else-if="event" :is-open="isEditPanelOpen" :title="`Edit ${event.name || 'Event'}`"
             subtitle="Update event information" :data="editPanelData" entity-type="events"
             :projectDomaincode="event.domaincode" :entity-id="event.id" :project-id="event.project_id || projectId"
             :owner-id="event.owner_id" :creator-id="event.creator_id"
@@ -18,7 +29,8 @@
             @close="closeEditPanel" @save="handleSaveEvent" />
 
         <!-- Page Config Panel (for admins/owners) -->
-        <div v-if="showConfigPanel" class="config-panel-overlay" @click.self="closeConfigPanel">
+        <div v-if="showConfigPanel && projectAccess.canAccess.value" class="config-panel-overlay"
+            @click.self="closeConfigPanel">
             <div class="config-panel-container">
                 <button class="close-panel-btn" @click="closeConfigPanel">&times;</button>
                 <PageConfigController :project="projectId" type="events" mode="pages" />
@@ -26,36 +38,31 @@
         </div>
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
-        <PageLayout v-if="event" :asideOptions="asideOptions" :footerOptions="footerOptions" :projectId="projectId"
-            :navItems="navigationItems">
+        <PageLayout v-if="event && projectAccess.canAccess.value" :asideOptions="asideOptions"
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
-                    :headerType="event.header_type || 'banner'" :headerSize="'prominent'" />
+                    :image_id="event.img_id || undefined" :image_blur="event.img_square?.blur || undefined"
+                    :headerType="event.header_type || 'banner'" :headerSize="event.header_size || 'prominent'" />
             </template>
-
-            <!-- Tag Families Row -->
-            <Section v-if="event.ttags || event.ctags || event.dtags" background="muted" spacing="compact">
-                <Container>
-                    <TagFamilies v-model:ttags="event.ttags" v-model:ctags="event.ctags" v-model:dtags="event.dtags"
-                        :status="event.status" :config="event.config" :enable-edit="canEdit" group-selection="core"
-                        layout="wrap" @update:ttags="handleUpdateTags('ttags', $event)"
-                        @update:ctags="handleUpdateTags('ctags', $event)"
-                        @update:dtags="handleUpdateTags('dtags', $event)" />
-                </Container>
-            </Section>
 
             <!-- Event Content Section -->
             <Section background="default">
                 <Container>
                     <Prose>
-                        <!-- Event metadata row: Status + Updated date + Controls (right-aligned) -->
+                        <!-- Event metadata row: Status + Tags + Updated date + Controls (right-aligned) -->
                         <div class="event-meta-row">
                             <div class="event-meta-left">
                                 <PostStatusBadge v-if="event && project" :post="eventDataForPermissions"
                                     :project="projectDataForPermissions" :membership="null"
                                     @status-changed="handleStatusChange" @scope-changed="handleStatusChange"
                                     @trash="handleTrash" @restore="handleRestore" @error="handleStatusError" />
+                                <TagFamilies v-model:ttags="event.ttags" v-model:ctags="event.ctags"
+                                    v-model:dtags="event.dtags" :enable-edit="canEdit" group-selection="core"
+                                    layout="inline" @update:ttags="handleUpdateTags('ttags', $event)"
+                                    @update:ctags="handleUpdateTags('ctags', $event)"
+                                    @update:dtags="handleUpdateTags('dtags', $event)" />
                                 <span v-if="event.updated_at" class="event-updated">
                                     Updated: {{ formatDate(event.updated_at) }}
                                 </span>
@@ -124,8 +131,8 @@
             </Section>
         </PageLayout>
 
-        <!-- Fallback for when event is not loaded -->
-        <PageLayout v-else>
+        <!-- Fallback for when event is not loaded (and not access denied) -->
+        <PageLayout v-else-if="!accessLoaded || projectAccess.canAccess.value">
             <template #header>
                 <Section>
                     <Container>
@@ -151,8 +158,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useProjectAccess } from '@/composables/useProjectAccess'
+import { parseRouteIdentifier } from '@/utils/xmlid'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
+import EditLink from '@/components/EditLink.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import PageConfigController from '@/components/PageConfigController.vue'
 import PostStatusBadge from '@/components/PostStatusBadge.vue'
@@ -160,14 +170,22 @@ import TagFamilies from '@/components/sysreg/TagFamilies.vue'
 import Prose from '@/components/Prose.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
+import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
+import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { formatDateTime } from '@/plugins/dateTimeFormat'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
+const { setTheme, init: initTheme } = useTheme()
+const { loadForProject, getOptions, parseXmlid } = usePageOptions()
+
+// Alpha mode access control
+const projectAccess = useProjectAccess()
+const accessLoaded = ref(false)
 
 // State
 const event = ref<any>(null)
@@ -206,25 +224,23 @@ const navigationItems = computed(() => {
     return items
 })
 
-// Parse options for PageLayout from event data
+// Parse options for PageLayout using usePageOptions composable
+// This applies: hardcoded defaults → project fields → pages table entry
+// Variant is extracted from xmlid (e.g., opus1.event-workshop__slug → variant='workshop')
 const asideOptions = computed<AsideOptions>(() => {
     if (!event.value) return {}
-    return parseAsideOptions({
-        aside_postit: event.value.aside_options,
-        aside_toc: event.value.aside_toc,
-        aside_list: event.value.aside_list,
-        aside_context: event.value.aside_context
-    })
+    const { variant } = parseXmlid(event.value.xmlid || '')
+    const options = getOptions('event', variant)
+    console.log('[EventPage] Aside options resolved:', { xmlid: event.value.xmlid, variant, options: options.aside, source: options.source })
+    return options.aside
 })
 
 const footerOptions = computed<FooterOptions>(() => {
     if (!event.value) return {}
-    return parseFooterOptions({
-        footer_gallery: event.value.footer_gallery,
-        footer_postit: event.value.footer_options,
-        footer_slider: event.value.footer_slider,
-        footer_repeat: event.value.footer_repeat
-    })
+    const { variant } = parseXmlid(event.value.xmlid || '')
+    const options = getOptions('event', variant)
+    console.log('[EventPage] Footer options resolved:', { xmlid: event.value.xmlid, variant, options: options.footer, source: options.source })
+    return options.footer
 })
 
 // Convert status_val to hex string and get label
@@ -298,10 +314,10 @@ const projectDataForPermissions = computed(() => {
 
 // Methods
 async function loadEvent() {
-    const eventId = route.params.id
+    const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
 
-    console.log('[EventPage] Loading event:', { eventId, domaincode: domaincode.value })
+    console.log('[EventPage] Loading event:', { identifier, domaincode: domaincode.value })
 
     try {
         // First, get project by domaincode to get project_id
@@ -311,8 +327,42 @@ async function loadEvent() {
         project.value = projectData
         projectId.value = projectData.id
 
+        // Check alpha mode access control
+        await projectAccess.load(domaincode.value)
+        accessLoaded.value = true
+
+        // If access denied in alpha mode, don't load the rest
+        if (!projectAccess.canAccess.value) {
+            console.log('[EventPage] Access denied for project:', domaincode.value)
+            return
+        }
+
+        // Apply project theme if set
+        await initTheme()
+        if (projectData.theme !== null && projectData.theme !== undefined) {
+            await setTheme(projectData.theme, 'initial')
+        }
+
+        // Load page options for this project (uses composable with caching)
+        await loadForProject(domaincode.value)
+        console.log('[EventPage] Page options loaded for project:', domaincode.value)
+
+        // Determine if identifier is numeric ID or slug-based
+        // parseRouteIdentifier returns: { type: 'id' | 'slug', id?, xmlid?, template?, slug? }
+        const parsed = parseRouteIdentifier(identifier, domaincode.value, 'event')
+        console.log('[EventPage] Parsed identifier:', parsed)
+
+        let eventApiUrl: string
+        if (parsed.type === 'id') {
+            // Numeric ID: fetch by ID
+            eventApiUrl = `/api/events/${parsed.id}`
+        } else {
+            // Slug-based: fetch by xmlid
+            eventApiUrl = `/api/events/${encodeURIComponent(parsed.xmlid!)}`
+        }
+
         // Load event
-        const response = await fetch(`/api/events/${eventId}`)
+        const response = await fetch(eventApiUrl)
         if (!response.ok) throw new Error('Failed to load event')
         const data = await response.json()
         event.value = data.event || data

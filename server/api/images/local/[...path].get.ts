@@ -130,7 +130,10 @@ export default defineEventHandler(async (event) => {
 
         return fileBuffer
     } catch (error: any) {
-        console.error('[Image Serve] Error:', error)
+        // Only log non-404 errors (404s are expected for missing images)
+        if (error.statusCode !== 404) {
+            console.error('[Image Serve] Error:', error)
+        }
 
         // Re-throw H3 errors
         if (error.statusCode) {

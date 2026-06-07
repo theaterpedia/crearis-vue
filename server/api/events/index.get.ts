@@ -1,5 +1,6 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
+import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mode'
 
 // GET /api/events - List events with optional filters
 // After Migration 019 Chapter 3B:
@@ -8,6 +9,10 @@ import { db } from '../../database/init'
 // - events.project_id stores INTEGER FK to projects.id
 // - query.project accepts domaincode (TEXT) for filtering
 // - response includes domaincode from joined projects table
+// Alpha mode (v0.4):
+// - ?alpha_preview=true to include 'draft' projects (when in alpha mode)
+// - ?skip_alpha_filter=true to bypass alpha filtering entirely (for internal editing pages)
+// - Filters by projects.status_old instead of sysreg status
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
@@ -15,12 +20,25 @@ export default defineEventHandler(async (event) => {
         let sql = `
             SELECT 
                 e.*,
-                p.domaincode AS domaincode
+                p.domaincode AS domaincode,
+                p.status_old AS project_status_old
             FROM events e
             LEFT JOIN projects p ON e.project_id = p.id
             WHERE 1=1
         `
         const params: any[] = []
+
+        // Alpha mode: filter by projects.status_old
+        // skip_alpha_filter=true bypasses this entirely (for internal editing pages)
+        // TODO v0.5: Remove this block when migrating to full sysreg status
+        const skipAlphaFilter = query.skip_alpha_filter === 'true'
+        if (isServerAlphaMode() && !skipAlphaFilter) {
+            const alphaPreview = query.alpha_preview === 'true'
+            const validStatuses = getAlphaProjectStatuses(alphaPreview)
+            // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
+            sql += ` AND p.status_old IN (${validStatuses.map(() => '?').join(', ')})`
+            params.push(...validStatuses)
+        }
 
         // Filter by isbase (if this field exists)
         if (query.isbase !== undefined) {

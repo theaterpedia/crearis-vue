@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
         const body = await readBody(event)
 
         // Build update query dynamically
-        const allowedFields = ['status', 'heading', 'description', 'teaser', 'theme', 'config']
+        const allowedFields = ['status', 'status_old', 'heading', 'description', 'teaser', 'theme', 'config']
         const updates: string[] = []
         const values: any[] = []
 

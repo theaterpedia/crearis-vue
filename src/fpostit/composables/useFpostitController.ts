@@ -15,9 +15,23 @@ import type {
 import { getRandomRotation } from '../utils/positioning'
 
 /**
- * Maximum number of floating post-its allowed per page
+ * Soft-cap on simultaneously-OPEN trigger post-its: opening beyond this closes
+ * the oldest, keeping the floating UX sane. Board-mode (`static-board`) renders
+ * locally inside its container and is NOT routed through this controller, so it
+ * is unaffected.
  */
-const MAX_POSTITS = 9
+const MAX_OPEN_POSTITS = 9
+
+/**
+ * Registration headroom. Post-its are starting to back scientific-citation use,
+ * so a page may register many triggers up-front (well past the legacy 9) even
+ * though only a few are open at once. Registration ceiling sits well above the
+ * open soft-cap; the concurrency limit (MAX_OPEN_POSTITS) is the real guard.
+ */
+const MAX_REGISTERED_POSTITS = 29
+
+/** Valid key format: free-form identifier (superset of the legacy p1-p9 keys). */
+const KEY_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/
 
 /**
  * Singleton instance
@@ -94,9 +108,9 @@ function createFpostitController(): FpostitController {
             // Skip in SSR
             if (typeof window === 'undefined') return
 
-            // Validate key format (p1-p9)
-            if (!/^p[1-9]$/.test(data.key)) {
-                console.warn(`[fpostit] Invalid key format: ${data.key}. Must be p1-p9.`)
+            // Validate key format (free-form identifier · superset of legacy p1-p9)
+            if (!KEY_PATTERN.test(data.key)) {
+                console.warn(`[fpostit] Invalid key format: ${data.key}. Must match ${KEY_PATTERN}.`)
                 return
             }
 
@@ -106,9 +120,9 @@ function createFpostitController(): FpostitController {
                 return
             }
 
-            // Check max limit
-            if (postits.size >= MAX_POSTITS) {
-                console.warn(`[fpostit] Maximum of ${MAX_POSTITS} post-its reached. Cannot create more.`)
+            // Check registration ceiling
+            if (postits.size >= MAX_REGISTERED_POSTITS) {
+                console.warn(`[fpostit] Maximum of ${MAX_REGISTERED_POSTITS} registered post-its reached. Cannot create more.`)
                 return
             }
 
@@ -139,8 +153,8 @@ function createFpostitController(): FpostitController {
                 return
             }
 
-            // Close oldest if at max open
-            if (openKeys.size >= MAX_POSTITS) {
+            // Close oldest if at the open soft-cap
+            if (openKeys.size >= MAX_OPEN_POSTITS) {
                 const oldestKey = Array.from(openKeys)[0] as string
                 this.closePostit(oldestKey)
             }
@@ -187,6 +201,15 @@ function createFpostitController(): FpostitController {
             postits.forEach((postit: FpostitData) => {
                 postit.triggerElement = undefined
             })
+        },
+
+        remove(key: string) {
+            // Unregister a post-it entirely (close + delete the registration). The
+            // missing primitive that makes per-page controller-routed lifecycles safe:
+            // a glossary-mode page registers its triggers on mount and removes them on
+            // unmount, so registrations don't accumulate across route navigation.
+            openKeys.delete(key)
+            postits.delete(key)
         },
 
         isOpen(key: string): boolean {

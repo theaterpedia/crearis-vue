@@ -1,0 +1,31 @@
+# Domain to domaincode mapping
+# Auto-managed by add-domain.sh and add-subdomain.sh
+# Format: domain "domaincode";
+#
+# Deploy this file to: /etc/nginx/conf.d/domain-map.conf
+# Then include it in your main nginx server block
+
+map $host $domaincode {
+    default "";
+    
+    # =================================
+    # Subdomains (wildcard SSL)
+    # =================================
+    # Format: subdomain.sysdomain.tld "domaincode";
+    
+    # theaterpedia.org subdomains
+    # dasei.theaterpedia.org      "dasei";
+    # raumlauf.theaterpedia.org   "raumlauf";
+    
+    # crearis.info subdomains (private)
+    # dev.crearis.info            "dev";
+    
+    # =================================
+    # Custom domains (individual SSL)
+    # =================================
+    # Format: domain.tld "domaincode";
+    #         www.domain.tld "domaincode";
+    
+    # dasei.eu        "dasei";
+    # www.dasei.eu    "dasei";
+}

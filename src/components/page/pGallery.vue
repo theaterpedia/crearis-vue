@@ -11,13 +11,15 @@
   - 'route-modal': Show modal with navigation button
 -->
 <template>
-    <div class="p-gallery">
+    <div class="p-gallery" :class="{ 'is-aside': isAside, 'is-footer': isFooter }">
+        <Heading v-if="showHeader && header" :headline="header" :is="headingLevel" />
+
         <ItemGallery ref="itemGalleryRef" :entity="entity" :project="project" :filter-ids="filterIds"
             :filter-xml-prefix="filterXmlPrefix" :filter-xml-prefixes="filterXmlPrefixes"
             :filter-xml-pattern="filterXmlPattern" :status-lt="statusLt" :status-eq="statusEq" :status-gt="statusGt"
-            :item-type="itemType" :size="size" :variant="variant" :anatomy="anatomy" :interaction="interactionMode"
-            :data-mode="true" :multi-select="false" :show-trash="showTrash" @item-click="handleItemClick"
-            @item-trash="handleItemTrash" />
+            :alpha-preview="alphaPreview" :skip-alpha-filter="skipAlphaFilter" :item-type="itemType" :size="size"
+            :variant="variant" :anatomy="anatomy" :interaction="interactionMode" :data-mode="true" :multi-select="false"
+            :show-trash="showTrash" @item-click="handleItemClick" @item-trash="handleItemTrash" />
 
         <!-- Route Navigation Modal (if using route-modal mode) -->
         <ItemModalCard v-if="showRouteModal" :is-open="showRouteModal"
@@ -40,6 +42,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ItemGallery from '@/components/clist/ItemGallery.vue'
 import ItemModalCard from '@/components/clist/ItemModalCard.vue'
+import Heading from '@/components/Heading.vue'
 import type { ImgShapeData } from '@/components/images/ImgShape.vue'
 
 interface Props {
@@ -57,6 +60,11 @@ interface Props {
     statusLt?: number  // Less than
     statusEq?: number  // Equal
     statusGt?: number  // Greater than
+
+    // Alpha mode: include 'draft' projects in results (TODO v0.5: remove)
+    alphaPreview?: boolean
+    // Skip alpha filtering entirely (for internal editing pages)
+    skipAlphaFilter?: boolean
 
     // Display options
     itemType?: 'tile' | 'card'
@@ -79,6 +87,11 @@ interface Props {
     modalOptions?: {
         anatomy?: 'topimage' | 'bottomimage' | 'fullimage' | 'heroimage' | false
     }
+
+    // Header (for aside/footer variants)
+    header?: string
+    isAside?: boolean
+    isFooter?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -89,7 +102,9 @@ const props = withDefaults(defineProps<Props>(), {
     onActivate: 'modal',
     routeButtonText: 'View Details',
     showTrash: false,
-    modalOptions: () => ({ anatomy: 'heroimage' })
+    modalOptions: () => ({ anatomy: 'heroimage' }),
+    isAside: false,
+    isFooter: false
 })
 
 const emit = defineEmits<{
@@ -101,6 +116,16 @@ const router = useRouter()
 const selectedItem = ref<any>(null)
 const showRouteModal = ref(false)
 const itemGalleryRef = ref<InstanceType<typeof ItemGallery> | null>(null)
+
+// Show header for aside/footer variants
+const showHeader = computed(() => props.isAside || props.isFooter)
+
+// Heading level based on context
+const headingLevel = computed(() => {
+    if (props.isAside) return 'h4'
+    if (props.isFooter) return 'h3'
+    return 'h3'
+})
 
 // Expose refresh method
 const refresh = () => {
@@ -212,22 +237,26 @@ const closeRouteModal = () => {
 </script>
 
 <style scoped>
+/* ===== pGallery - Page Gallery Component ===== */
+
 .p-gallery {
     width: 100%;
 }
 
+/* --- Route Navigation Button --- */
 .route-nav-button {
     padding: 0.75rem 1.5rem;
     background: var(--color-primary-bg);
     color: var(--color-primary-contrast);
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-button);
+    font-family: var(--headings);
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: var(--transition);
 }
 
 .route-nav-button:hover {
-    background: var(--color-primary-bg-hover, var(--color-primary-bg));
+    opacity: 0.85;
 }
 </style>

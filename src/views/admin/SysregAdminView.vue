@@ -341,6 +341,11 @@
             <CapabilitiesEditor />
         </div>
 
+        <!-- Header Configs Tab -->
+        <div v-if="activeTab === 'headers'" class="panel headers-panel">
+            <HeaderConfigsEditor />
+        </div>
+
         <!-- Create/Edit Tag Dialog -->
         <div v-if="showCreateDialog || editingTag" class="modal-overlay" @click.self="closeDialog">
             <div class="modal-dialog">
@@ -439,15 +444,17 @@ import { useSysregOptions } from '@/composables/useSysregOptions'
 import { useSysregAnalytics } from '@/composables/useSysregAnalytics'
 import { useSysregBatchOperations } from '@/composables/useSysregBatchOperations'
 import CapabilitiesEditor from '@/components/sysreg/CapabilitiesEditor.vue'
+import HeaderConfigsEditor from '@/components/sysreg/HeaderConfigsEditor.vue'
 
 // Use unified sysreg for common operations
 const sysreg = useSysreg()
 
 // Tab state
-const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch' | 'capabilities'>('viewer')
+const activeTab = ref<'viewer' | 'create' | 'analytics' | 'batch' | 'capabilities' | 'headers'>('viewer')
 const tabs = [
     { id: 'viewer', label: 'Tag Viewer', icon: '👁️' },
     { id: 'capabilities', label: 'Capabilities Matrix', icon: '🔐' },
+    { id: 'headers', label: 'Header Configs', icon: '🖼️' },
     { id: 'create', label: 'Create Tags', icon: '➕' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'batch', label: 'Batch Operations', icon: '⚡' }
@@ -1511,6 +1518,14 @@ async function executeBatch() {
  */
 
 .capabilities-panel {
+    padding: 0;
+}
+
+/**
+ * Headers Panel
+ */
+
+.headers-panel {
     padding: 0;
 }
 </style>

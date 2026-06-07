@@ -900,9 +900,9 @@ function cancelEdits() {
  * @returns Updated URL with focal point parameters
  */
 function rebuildShapeUrlWithXYZ(
-    baseUrl: string, 
-    x: number | null, 
-    y: number | null, 
+    baseUrl: string,
+    x: number | null,
+    y: number | null,
     z: number | null,
     shape: 'square' | 'wide' | 'vertical' | 'thumb',
     xDefaultShrink: number
@@ -920,24 +920,24 @@ function rebuildShapeUrlWithXYZ(
             // For Unsplash: update fp-x, fp-y, fp-z parameters
             if (x !== null && y !== null && z !== null) {
                 // XYZ mode: set focal point parameters
-                
+
                 // X and Y: Convert 0-100 scale to 0.0-1.0 scale
                 url.searchParams.set('fp-x', (x / 100).toFixed(2))
                 url.searchParams.set('fp-y', (y / 100).toFixed(2))
-                
+
                 // Z: Use shrink multiplier strategy
                 // z=100 (wide default) → multiplier=1.0 → no adjustment
                 // z=50 (square/vertical default) → multiplier=0.5 → show 2x more context
                 // z=25 (thumb default) → multiplier=0.25 → show 4x more context
                 const shrinkMultiplier = z / 100
-                
+
                 // Unsplash fp-z: higher value = zoom out (show more context)
                 // We want: multiplier=0.5 → fp-z=2.0 (show 2x more)
                 //          multiplier=1.0 → fp-z=1.0 (normal)
                 //          multiplier=2.0 → fp-z=0.5 (zoom in 2x)
                 const fpZ = 1.0 / shrinkMultiplier
                 url.searchParams.set('fp-z', fpZ.toFixed(2))
-                
+
                 // Keep existing crop mode (entropy or focalpoint from automation)
             } else {
                 // Auto mode: use entropy crop
@@ -975,7 +975,7 @@ function rebuildShapeUrlWithXYZ(
                     const offsetY = Math.round((y - 50) * (params.get('h') ? parseInt(params.get('h')!) / 100 : 1.68))
                     params.set('x', offsetX.toString())
                     params.set('y', offsetY.toString())
-                    
+
                     // Z: Cloudinary implementation using zoom parameter
                     if (z !== null) {
                         // Use shrink multiplier strategy (same as Unsplash)
@@ -983,7 +983,7 @@ function rebuildShapeUrlWithXYZ(
                         // z=50 → multiplier=0.5 → zoom=0.5 (show 2x more context)
                         // z=200 → multiplier=2.0 → zoom=2.0 (zoom in 2x)
                         const shrinkMultiplier = z / 100
-                        
+
                         // Cloudinary zoom: higher = zoom out (opposite of fp-z)
                         // We want: multiplier=0.5 → z=2.0 (show 2x more)
                         //          multiplier=1.0 → z=1.0 (normal)
@@ -1175,6 +1175,197 @@ const importSystemBackup = async () => {
     } catch (error) {
         console.error('System import error:', error)
         alert(`❌ System import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+}
+
+// =====================================================================
+// Local Adapter Maintenance Functions
+// =====================================================================
+
+// Regenerate blur hashes for all local adapter images
+const regenerateBlurHashes = async () => {
+    const limitStr = prompt('How many images to process? (default: 50)', '50')
+    if (limitStr === null) return
+
+    const limit = parseInt(limitStr) || 50
+    const force = confirm('Force regeneration even for images that already have blur hashes?')
+
+    try {
+        loading.value = true
+        const response = await fetch('/api/images/regenerate-blur-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit, force })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        alert(`✅ Blur Hash Regeneration Complete\n\n${result.message}\n\nSuccess: ${result.successCount}\nFailed: ${result.failCount}`)
+
+        // Refresh images to see updated blur hashes
+        await fetchImages()
+    } catch (error) {
+        console.error('Blur hash regeneration error:', error)
+        alert(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+        loading.value = false
+    }
+}
+
+// Regenerate all shapes and instances for local adapter images
+const regenerateShapes = async () => {
+    if (!confirm('⚠️ This will regenerate ALL shape files for local adapter images.\n\nThis may take a while. Continue?')) {
+        return
+    }
+
+    const limitStr = prompt('How many images to process? (default: 50)', '50')
+    if (limitStr === null) return
+
+    const limit = parseInt(limitStr) || 50
+    const includeInstances = confirm('Also regenerate hero/display instances?')
+    const includeBlur = confirm('Also regenerate blur hashes?')
+
+    try {
+        loading.value = true
+        const response = await fetch('/api/images/regenerate-shapes-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit, includeInstances, includeBlur })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        alert(`✅ Shape Regeneration Complete\n\n${result.message}\n\nSuccess: ${result.successCount}\nFailed: ${result.failCount}\nInstances: ${result.includeInstances ? 'Yes' : 'No'}\nBlur: ${result.includeBlur ? 'Yes' : 'No'}`)
+
+        // Refresh images to see updated shapes
+        await fetchImages()
+    } catch (error) {
+        console.error('Shape regeneration error:', error)
+        alert(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+        loading.value = false
+    }
+}
+
+// Cleanup orphaned files from local storage
+const cleanupOrphanedFiles = async () => {
+    // First, do a dry run
+    try {
+        loading.value = true
+        const dryRunResponse = await fetch('/api/images/cleanup-orphans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dryRun: true })
+        })
+
+        if (!dryRunResponse.ok) {
+            throw new Error(`Failed: ${dryRunResponse.status}`)
+        }
+
+        const dryRunResult = await dryRunResponse.json()
+
+        if (dryRunResult.totalOrphans === 0) {
+            alert('✅ No orphaned files found. Storage is clean!')
+            return
+        }
+
+        // Show preview and confirm deletion
+        const fileList = dryRunResult.orphanedFiles.slice(0, 10).map((f: any) => `  ${f.type}: ${f.path.split('/').pop()} (${f.size})`).join('\n')
+        const moreFiles = dryRunResult.totalOrphans > 10 ? `\n  ... and ${dryRunResult.totalOrphans - 10} more files` : ''
+
+        if (!confirm(`Found ${dryRunResult.totalOrphans} orphaned files (${dryRunResult.totalSize}):\n\n${fileList}${moreFiles}\n\n⚠️ Delete these files permanently?`)) {
+            return
+        }
+
+        // Actually delete
+        const deleteResponse = await fetch('/api/images/cleanup-orphans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dryRun: false })
+        })
+
+        if (!deleteResponse.ok) {
+            throw new Error(`Failed: ${deleteResponse.status}`)
+        }
+
+        const deleteResult = await deleteResponse.json()
+        alert(`✅ Cleanup Complete\n\n${deleteResult.message}\n\nDeleted: ${deleteResult.deleted.length} files\nFailed: ${deleteResult.failed.length} files`)
+    } catch (error) {
+        console.error('Cleanup error:', error)
+        alert(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+        loading.value = false
+    }
+}
+
+// Find and optionally delete database records pointing to missing files
+const findBrokenReferences = async () => {
+    if (!confirm('This will scan all local adapter images and find database records that point to missing files.\n\nContinue?')) {
+        return
+    }
+
+    loading.value = true
+    try {
+        // First do a dry run to see what's broken (deleteRecords: false)
+        const response = await fetch('/api/images/find-broken-refs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deleteRecords: false })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed to find broken refs: ${response.status}`)
+        }
+
+        const result = await response.json()
+
+        if (result.brokenRecords.length === 0) {
+            alert(`✅ No broken references found!\n\nAll ${result.totalChecked} local adapter images have valid source files.`)
+            return
+        }
+
+        // Show preview and ask to delete
+        const brokenNames = result.brokenRecords.slice(0, 10).map((b: { name: string; xmlid: string }) => `  • ${b.name || b.xmlid}`).join('\n')
+        const moreText = result.brokenRecords.length > 10 ? `\n  ... and ${result.brokenRecords.length - 10} more` : ''
+
+        const shouldDelete = confirm(
+            `⚠️ Found ${result.brokenRecords.length} broken references out of ${result.totalChecked} scanned:\n\n${brokenNames}${moreText}\n\n` +
+            `These database records point to source files that no longer exist.\n\n` +
+            `Click OK to DELETE these broken records from the database.\nClick Cancel to keep them.`
+        )
+
+        if (!shouldDelete) {
+            alert('No changes made. Broken records were not deleted.')
+            return
+        }
+
+        // Actually delete
+        const deleteResponse = await fetch('/api/images/find-broken-refs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deleteRecords: true })
+        })
+
+        if (!deleteResponse.ok) {
+            throw new Error(`Failed to delete broken refs: ${deleteResponse.status}`)
+        }
+
+        const deleteResult = await deleteResponse.json()
+        alert(`✅ Cleanup Complete\n\n${deleteResult.message}\n\nDeleted: ${deleteResult.deleted?.length || 0} broken records`)
+
+        // Refresh the images list
+        await loadImages()
+    } catch (error) {
+        console.error('Find broken refs error:', error)
+        alert(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+        loading.value = false
     }
 }
 
@@ -2087,6 +2278,23 @@ onMounted(() => {
                                     Export JSON
                                 </button>
                                 <div class="menu-divider"></div>
+                                <div class="menu-section-title">Local Adapter Maintenance</div>
+                                <button class="menu-action-button"
+                                    @click="regenerateBlurHashes(); showDataMenu = false">
+                                    Regenerate Blur Hashes
+                                </button>
+                                <button class="menu-action-button" @click="regenerateShapes(); showDataMenu = false">
+                                    Regenerate All Shapes
+                                </button>
+                                <button class="menu-action-button"
+                                    @click="cleanupOrphanedFiles(); showDataMenu = false">
+                                    Cleanup Orphaned Files
+                                </button>
+                                <button class="menu-action-button"
+                                    @click="findBrokenReferences(); showDataMenu = false">
+                                    Find Broken References
+                                </button>
+                                <div class="menu-divider"></div>
                                 <div class="menu-section-title">System Administration</div>
                                 <button class="menu-action-button" @click="exportSystemBackup(); showDataMenu = false">
                                     Create System Backup
@@ -2439,8 +2647,7 @@ onMounted(() => {
                             <template v-else-if="viewMode === 'shape'">
                                 <div v-if="activeShape && activeShapeData" class="shape-editor-section">
                                     <ShapeEditor :shape="activeShape.shape as any" :adapter="activeShape.adapter as any"
-                                        :x-default-shrink="xDefaultShrink"
-                                        :data="{
+                                        :x-default-shrink="xDefaultShrink" :data="{
                                             x: activeShapeXYZ.x,
                                             y: activeShapeXYZ.y,
                                             z: activeShapeXYZ.z,

@@ -2,9 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Restore browser-restored position on back/forward; jump to hash anchors; scroll-top on fresh nav.
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash }
+    return { top: 0 }
+  },
   routes: [
     // Public routes
     { path: '/login', component: () => import('../views/Login.vue'), meta: { public: true } },
+    // Phase-A C7 · password-reset landing surface (token-bearing email link)
+    { path: '/auth/reset', component: () => import('../views/Auth/PasswordResetPage.vue'), meta: { public: true } },
+    // Phase-A C8 · creator-tier registration form (instructor / organiser)
+    { path: '/auth/register', component: () => import('../views/Auth/RegisterPage.vue'), meta: { public: true } },
     { path: '/', component: () => import('../views/Home/HomePage.vue') },
     { path: '/start', component: () => import('../views/Home/StartPage.vue') },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
@@ -14,22 +24,38 @@ const router = createRouter({
     { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
-    { path: '/sites/:domaincode/posts/:id', component: () => import('../views/PostPage.vue') },
-    { path: '/sites/:domaincode/events/:id', component: () => import('../views/EventPage.vue') },
+    // Posts: Support both numeric ID and slug-based URLs
+    // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.post__{slug} or {domaincode}.post-{template}__{slug}
+    { path: '/sites/:domaincode/posts/:identifier', component: () => import('../views/PostPage.vue') },
+    // Events: Support both numeric ID and slug-based URLs
+    // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.event__{slug} or {domaincode}.event-{template}__{slug}
+    { path: '/sites/:domaincode/events/:identifier', component: () => import('../views/EventPage.vue') },
 
     // Protected routes - User Home (cross-project overview)
     // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)
     { path: '/home', component: () => import('../views/HomeLayoutHack.vue'), meta: { requiresAuth: true } },
     { path: '/home-clean', component: () => import('../views/HomeLayout.vue'), meta: { requiresAuth: true } },
 
-    // Protected routes - Project Dashboard (route-based 5 NavStops + images for stepper)
-    // Base route redirects to home section
-    { path: '/projects/:projectId', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/agenda', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/topics', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/images', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/partners', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
-    { path: '/projects/:projectId/settings', component: () => import('../views/project/ProjectDashboard.vue'), meta: { requiresAuth: true } },
+    // Protected routes - Project Dashboard (Variant-C: nested per-NavStop views)
+    // Per Item-2 SFR-76 + §3 design-variant-branch exception-clause; previous flat
+    // routes-all-mapping-to-ProjectDashboard.vue replaced by DashboardShell parent
+    // + 5 nested NavStop view-components. Each view owns its right-rail per §12
+    // agenda-view-mode pattern. ProjectDashboard.vue retained in source as
+    // reference + as the Variant-A fallback target (sfr/item2-c-decision-2026-04-23
+    // tag at 6c79600).
+    {
+        path: '/projects/:projectId',
+        component: () => import('../views/project/DashboardShell.vue'),
+        meta: { requiresAuth: true },
+        children: [
+            { path: '', redirect: to => `/projects/${to.params.projectId}/agenda` },
+            { path: 'agenda', component: () => import('../views/project/AgendaView.vue') },
+            { path: 'topics', component: () => import('../views/project/TopicsView.vue') },
+            { path: 'images', component: () => import('../views/project/ImagesView.vue') },
+            { path: 'partners', component: () => import('../views/project/PartnersView.vue') },
+            { path: 'settings', component: () => import('../views/project/SettingsView.vue') },
+        ],
+    },
 
     // Legacy route - keep for backwards compatibility during transition
     // TODO v0.5: Remove this once all users migrated to /projects/:projectId routes
@@ -40,6 +66,7 @@ const router = createRouter({
     { path: '/base', component: () => import('../views/BaseView.vue'), meta: { requiresAuth: true, role: 'base' } },
 
     // Admin routes
+    { path: '/admin/domains', component: () => import('../views/admin/DomainsAdmin.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/i18n', component: () => import('../views/I18nManagement.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/sysreg', component: () => import('../views/admin/SysregAdminView.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/sysreg-demo', component: () => import('../views/admin/SysregDemoView.vue'), meta: { requiresAuth: true, role: 'admin' } },
@@ -60,6 +87,9 @@ const router = createRouter({
     { path: '/demo/float-dyn', component: () => import('../views/Demo/DemoFloatDyn.vue') },
     { path: '/demo/float-markdown', component: () => import('../views/Demo/DemoFloatMarkdown.vue') },
     { path: '/demo/list-item', component: () => import('../views/Demo/DemoListItem.vue') },
+    { path: '/demo/display-image', component: () => import('../views/Demo/DemoDisplayImage.vue') },
+    // Magnifica primitives playground · per CV@wsl dispatch #4 §5 (TO (website) 2026-06-02)
+    { path: '/demo/magnifica', component: () => import('../views/Demo/MagnificaDemo.vue') },
 
     // Other routes (demos, legacy)
     { path: '/legacy-home', component: () => import('../views/index.vue') }, // Renamed from /home

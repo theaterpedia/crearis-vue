@@ -468,3 +468,55 @@ Dashboard Mode (horizontal tabs):
 - TagFamilies.vue component
 - ctags field in events table
 - Format tag family in sysreg
+---
+
+## xmlid Variant System Enhancements
+
+### Full xmlid Editor with Page Options Preview
+
+**Created:** 2025-12-16  
+**Context:** Per-page options system implementation added basic variant input to AddPostPanel and EventPanel. Further enhancements needed for complete xmlid management.
+
+**Current Implementation (Completed):**
+- ✅ `usePageOptions.ts` - Singleton composable with variant resolution, caching, entity defaults
+- ✅ `ProjectStepLanding.vue` - Toggle (project|landing), PageConfigController integration
+- ✅ `ProjectStepPages.vue` - CRUD for page entries (post-*, event-* variants)
+- ✅ `AddPostPanel.vue` - Variant input field with page_type preview
+- ✅ `EventPanel.vue` - Variant input field with page_type preview
+- ✅ `server/api/pages/by-project.get.ts` - Get all pages for project
+- ✅ `server/api/pages/[id].delete.ts` - Delete page entry
+
+**Deferred Enhancements:**
+- [ ] **Full xmlid preview**: Show complete xmlid format `{domaincode}.{entity}-{variant}.{slug}` as user types
+- [ ] **Variant autocomplete**: Suggest existing variants from pages table
+- [ ] **Page options preview**: Show mini-preview of aside/footer/page options for selected variant
+- [ ] **Validation**: Check if variant has corresponding pages entry, show warning if not
+- [ ] **Bulk variant assignment**: UI to assign variants to multiple existing posts/events
+
+**xmlid Format Reference:**
+```
+{domaincode}.{entity}-{variant}.{slug}
+
+Examples:
+- opus1.post.my_article          → page_type: post
+- opus1.post-demo.demo_post      → page_type: post-demo
+- opus1.event-conference.summit  → page_type: event-conference
+- opus1.event.regular_event      → page_type: event
+```
+
+**Resolution Order (in usePageOptions):**
+1. Hardcoded defaults (ENTITY_DEFAULTS)
+2. Project fields (aside_*, footer_*, page_*)
+3. Pages entry (variant falls back to base type)
+
+**Files to Enhance:**
+- `src/components/AddPostPanel.vue` - Add xmlid preview, variant autocomplete
+- `src/components/EventPanel.vue` - Add xmlid preview, variant autocomplete
+- `src/composables/usePageOptions.ts` - Add getAvailableVariants() helper
+- `src/views/project/ProjectStepPages.vue` - Add bulk variant assignment UI
+
+**Related API Endpoints:**
+- `GET /api/pages/by-project?project_id=<id>` - List all page variants
+- `POST /api/pages` - Create new page entry
+- `PUT /api/pages/:id` - Update page options
+- `DELETE /api/pages/:id` - Delete page entry

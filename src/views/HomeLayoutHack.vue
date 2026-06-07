@@ -353,6 +353,7 @@ import { useRouter } from 'vue-router'
 import { LogOut, Plus } from 'lucide-vue-next'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { PROJECT_STATUS } from '@/composables/useProjectActivation'
 
 // ============================================================
 // INTERNAL THEME CONTEXT
@@ -373,7 +374,7 @@ onUnmounted(() => {
 // ============================================================
 
 const router = useRouter()
-const { user, logout, checkSession } = useAuth()
+const { user, logout, checkSession, setProjectId } = useAuth()
 
 // ============================================================
 // STATE
@@ -600,11 +601,13 @@ async function handleAvatarUpload(event: Event) {
     uploadProgress.value = 'Hochladen...'
 
     try {
-        // Generate xmlid: domaincode.image_avatar.sanitized_sysmail_timestamp
+        // Generate xmlid with Odoo-aligned format: {domaincode}.image-avatar__{slug}
+        // Template: avatar (for user avatars)
+        // Slug: sanitized_sysmail_timestamp (lowercase, underscores only)
         const sysmail = user.value?.sysmail || 'user'
-        const sanitizedMail = sysmail.replace(/[@.\-]/g, '_')
+        const sanitizedMail = sysmail.replace(/[@.\-]/g, '_').toLowerCase()
         const timestamp = Date.now()
-        const xmlid = `${selectedImageContext.value}.image_avatar.${sanitizedMail}_${timestamp}`
+        const xmlid = `${selectedImageContext.value}.image-avatar__${sanitizedMail}_${timestamp}`
 
         const formData = new FormData()
         formData.append('file', file)
@@ -725,9 +728,48 @@ async function createPublicProfile() {
 // METHODS: Navigation
 // ============================================================
 
-function openProject(project: any) {
-    const projectId = project.domaincode || project.id
-    router.push(`/projects/${projectId}`)
+async function openProject(project: any) {
+    // By-domaincode-over-by-id discipline (HM 2026-05-22 PM): the project
+    // route-param IS the domaincode (per the comment-block atop useAuth.ts).
+    // Numeric `project.id` is internal-DB-only and would not resolve at any
+    // downstream lookup. Fail-fast surfaces data-quality issues instead of
+    // papering over them with a fallback.
+    const domaincode: string | undefined = project.domaincode
+    if (!domaincode) {
+        console.warn(
+            '[openProject] project record is missing its domaincode — cannot route',
+            project,
+        )
+        return
+    }
+
+    // Stepper-vs-dashboard branch on project sysreg-status (restored per
+    // TO dispatch 2026-05-22 11:00 · Fix #2). Was-active-start-of-week,
+    // erased when the Variant-C nested `/projects/:projectId/*` routes
+    // (DashboardShell + 5 NavStops) took over the navigation default and
+    // left the legacy `/projects` → ProjectMain.vue stepper-aware branch
+    // unreachable from the home-page click.
+    //
+    //   · pre-draft (null / NEW / DEMO) → setProjectId() routes to legacy
+    //     `/projects`, where ProjectMain.vue's existing `isStepper`
+    //     computed renders ProjectStepper + the ProjectStep* editor flow.
+    //   · draft and above → `/projects/:projectId` (DashboardShell · the
+    //     current Variant-C 5-NavStop dashboard).
+    const status: number | null | undefined = project.status
+    const isPreDraft =
+        status === null ||
+        status === undefined ||
+        status === PROJECT_STATUS.NEW ||
+        status === PROJECT_STATUS.DEMO
+
+    if (isPreDraft) {
+        // setProjectId() POSTs /api/auth/set-project (activates 'project'
+        // role · stores projectId on session) and then router.push('/projects').
+        await setProjectId(domaincode)
+        return
+    }
+
+    router.push(`/projects/${domaincode}`)
 }
 
 function createProject() {

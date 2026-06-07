@@ -71,9 +71,11 @@
 
                 <!-- Edit Mode: Editable form -->
                 <div v-else class="image-edit-form">
-                    <div class="form-group">
+                    <div class="form-group form-group-slug">
                         <label class="form-label">XMLID</label>
-                        <input v-model="editForm.xmlid" type="text" class="form-input" placeholder="Image identifier" />
+                        <SlugEditor v-model="slugData" :domaincode="domaincode" entity="image" :show-template="true"
+                            :show-generate="false" :show-preview="true" slug-label="Slug"
+                            slug-placeholder="mein_bildname" template-label="Kategorie" no-template-text="(keine)" />
                     </div>
 
                     <div class="form-group">
@@ -126,6 +128,8 @@
 import { ref, computed, watch, reactive } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import TagFamilies from '@/components/sysreg/TagFamilies.vue'
+import SlugEditor from '@/components/SlugEditor.vue'
+import { parseXmlid, buildXmlid, type EntityType } from '@/utils/xmlid'
 
 interface ImageData {
     id: number
@@ -168,9 +172,11 @@ const imageKey = ref(0)
 const isEditMode = ref(false)
 const isSaving = ref(false)
 
+// Slug editor state for xmlid editing
+const slugData = ref<{ template?: string; slug: string }>({ slug: '' })
+
 // Edit form state
 const editForm = reactive({
-    xmlid: '',
     author: '',
     owner: 0,
     alt_text: '',
@@ -181,13 +187,27 @@ const editForm = reactive({
 
 // Original values for change detection
 const originalForm = reactive({
-    xmlid: '',
+    slugData: { template: '', slug: '' },
     author: '',
     owner: 0,
     alt_text: '',
     ttags: 0,
     ctags: 0,
     dtags: 0
+})
+
+// Computed domaincode from image project
+const domaincode = computed(() => props.image?.project || '_unknown')
+
+// Computed full xmlid from slugData
+const editedXmlid = computed(() => {
+    if (!slugData.value.slug) return ''
+    return buildXmlid({
+        domaincode: domaincode.value,
+        entity: 'image',
+        template: slugData.value.template || undefined,
+        slug: slugData.value.slug
+    })
 })
 
 // Computed tag values from image data (rtags excluded - no resources)
@@ -197,7 +217,8 @@ const imageDtags = computed(() => props.image?.dtags ?? 0)
 
 // Check if form has changes
 const hasChanges = computed(() => {
-    return editForm.xmlid !== originalForm.xmlid ||
+    return slugData.value.template !== originalForm.slugData.template ||
+        slugData.value.slug !== originalForm.slugData.slug ||
         editForm.author !== originalForm.author ||
         editForm.owner !== originalForm.owner ||
         editForm.alt_text !== originalForm.alt_text ||
@@ -270,7 +291,15 @@ const enterEditMode = () => {
         ? props.image.author
         : props.image.author?.name || ''
 
-    editForm.xmlid = props.image.xmlid || ''
+    // Parse xmlid into slug components
+    const parsed = parseXmlid(props.image.xmlid || '')
+    if (parsed) {
+        slugData.value = { template: parsed.template || '', slug: parsed.slug }
+    } else {
+        // Fallback: use xmlid as slug if parsing fails
+        slugData.value = { template: '', slug: props.image.xmlid || '' }
+    }
+
     editForm.author = authorName
     editForm.owner = props.image.owner || 0
     editForm.alt_text = props.image.alt_text || ''
@@ -279,7 +308,7 @@ const enterEditMode = () => {
     editForm.dtags = props.image.dtags || 0
 
     // Store original values
-    originalForm.xmlid = editForm.xmlid
+    originalForm.slugData = { ...slugData.value }
     originalForm.author = editForm.author
     originalForm.owner = editForm.owner
     originalForm.alt_text = editForm.alt_text
@@ -307,7 +336,7 @@ const saveChanges = async () => {
     try {
         const updateData: Partial<ImageData> = {
             id: props.image.id,
-            xmlid: editForm.xmlid,
+            xmlid: editedXmlid.value,
             author: editForm.author,
             owner: editForm.owner,
             alt_text: editForm.alt_text,
