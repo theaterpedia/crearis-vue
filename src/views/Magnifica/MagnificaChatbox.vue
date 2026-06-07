@@ -1,14 +1,14 @@
 <!--
   MagnificaChatbox · the typewriter codebox · reused for both Magnifica chat/letter views:
-    - landing: Hans's letter to Olah (no speakers · CCC/CCCS lines accented)
-    - /ethnography: the Nahtod compaction-chat (speaker-turns · the system-entry pins TOP
-      but types LAST — Hans did not know about these makings until after the exchange).
-  Entries type word-by-word in reveal-order (pinTop entries last); they render in array
-  order (pinTop at top). Non-interactive. prefers-reduced-motion → everything at once.
+    - landing: Hans's letter to Olah (no speakers · CCC/CCCS lines accented · `instant-portion`
+      reveals ~the first half at once, then types the rest word-by-word)
+    - /ethnography: the Nahtod compaction-chat (speaker-turns · the system-entry pins TOP but
+      types LAST — Hans did not know about these makings until after the exchange).
+  The typewriter only starts once the box scrolls into view. prefers-reduced-motion → all at once.
 -->
 
 <template>
-  <div class="chatbox" aria-live="polite">
+  <div ref="rootEl" class="chatbox" aria-live="polite">
     <template v-for="(entry, i) in entries" :key="i">
       <div
         v-if="rank[i] <= step"
@@ -16,12 +16,7 @@
         :class="[entry.role ? `chatbox-entry--${entry.role}` : '', { 'chatbox-entry--accent': entry.accent }]"
       >
         <p v-if="entry.speaker" class="chatbox-speaker">{{ entry.speaker }}</p>
-        <p class="chatbox-line">
-          <template v-for="(tok, j) in shownTokens(i)" :key="j">
-            <br v-if="tok.br" />
-            <template v-else>{{ tok.t }} </template>
-          </template>
-        </p>
+        <p class="chatbox-line">{{ shownText(i) }}</p>
       </div>
     </template>
   </div>
@@ -31,7 +26,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { ChatEntry } from './content/chat'
 
-const props = defineProps<{ entries: ReadonlyArray<ChatEntry> }>()
+const props = withDefaults(defineProps<{
+  entries: ReadonlyArray<ChatEntry>
+  /** Fraction of entries (in reveal-order) shown at once before the typewriter starts. */
+  instantPortion?: number
+}>(), { instantPortion: 0 })
 
 const WORD_MS = 45 // word-by-word cadence
 const PAUSE_MS = 320 // pause between entries
@@ -64,12 +63,20 @@ const rank = computed<number[]>(() => {
 const step = ref(0) // index into order · which entry is currently typing
 const typed = ref(0) // tokens revealed in the current entry
 const timers: ReturnType<typeof setTimeout>[] = []
+const rootEl = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
-function shownTokens(arrayIndex: number): Tok[] {
+// Build the revealed text of an entry · real spaces between words, newlines between lines.
+function shownText(arrayIndex: number): string {
   const pos = rank.value[arrayIndex]!
-  if (pos < step.value) return tokenCache[arrayIndex]! // fully typed
-  if (pos === step.value) return tokenCache[arrayIndex]!.slice(0, typed.value) // typing
-  return []
+  const toks = tokenCache[arrayIndex]!
+  const slice = pos < step.value ? toks : pos === step.value ? toks.slice(0, typed.value) : []
+  let out = ''
+  slice.forEach((tok) => {
+    if (tok.br) out = out.replace(/ $/, '') + '\n'
+    else out += tok.t + ' '
+  })
+  return out.replace(/ $/, '')
 }
 
 function typeEntry() {
@@ -88,19 +95,43 @@ function typeEntry() {
   tick()
 }
 
+function start() {
+  // landing: reveal ~`instantPortion` of the entries at once, then type the remainder.
+  const instant = Math.floor(order.value.length * props.instantPortion)
+  step.value = instant
+  typeEntry()
+}
+
 onMounted(() => {
   const reduce =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (reduce) {
-    step.value = order.value.length // all entries revealed (pos < step) → full
+    step.value = order.value.length // everything revealed at once
     return
   }
-  typeEntry()
+  // Wait until the box is in view before the effect plays.
+  if (typeof IntersectionObserver === 'undefined' || !rootEl.value) {
+    start()
+    return
+  }
+  observer = new IntersectionObserver(
+    (obs) => {
+      if (obs.some((o) => o.isIntersecting && o.intersectionRatio >= 0.6)) {
+        observer?.disconnect()
+        start()
+      }
+    },
+    { threshold: [0.6] },
+  )
+  observer.observe(rootEl.value)
 })
 
-onUnmounted(() => timers.forEach(clearTimeout))
+onUnmounted(() => {
+  timers.forEach(clearTimeout)
+  observer?.disconnect()
+})
 </script>
 
 <style scoped>
@@ -146,6 +177,7 @@ onUnmounted(() => timers.forEach(clearTimeout))
 
 .chatbox-line {
   margin: 0;
+  white-space: pre-wrap; /* preserve the spaces + line-breaks the typewriter builds */
 }
 
 /* the system instruction reads as quoted machinery */

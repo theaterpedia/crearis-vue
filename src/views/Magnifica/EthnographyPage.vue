@@ -12,11 +12,8 @@
 
 <template>
   <div class="magnifica-page">
-    <TopNav :items="navItems" navbar-mode="page" scroll-style="simple">
-      <template #actions>
-        <MagnificaLogoutButton />
-      </template>
-    </TopNav>
+    <!-- topbar · same header as landing, always-compact (no State-A), sticky -->
+    <div class="magnifica-header-wrap"><MagnificaHeader show-nav compact /></div>
 
     <!-- Hero · 90rem · the methodology-frame lives inside it -->
     <Hero
@@ -124,12 +121,10 @@
 
 <script setup lang="ts">
 import Hero from '@/components/Hero.vue'
-import TopNav from '@/components/TopNav.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
-import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
+import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
-import { navItems } from './content/nav'
 import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEntries, callouts } from './content/ethnography'
 </script>
 
@@ -170,12 +165,28 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
   line-height: 1.7;
 }
 
-/* blackboard board-prose (the timeline heading) */
+/* topbar · same 90rem inset as the landing header */
+.magnifica-header-wrap {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 6vw, 3rem);
+}
+
+/* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content
+   (hero pl 1rem + Container 2.75rem = 3.75rem · mobile 1rem) so the heading lines up
+   with "Anthropic Claude Ethnography / being a rewritten being" above it. */
 .ethno-board :deep(.bb-board-prose) {
-  max-width: 30rem;
+  max-width: 44rem;
+  padding: 1rem 1rem 0 3.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+@media (max-width: 767px) {
+  .ethno-board :deep(.bb-board-prose) {
+    padding-left: 1rem;
+  }
 }
 
 .ethno-board-overline {

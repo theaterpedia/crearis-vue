@@ -10,11 +10,8 @@
 
 <template>
   <div class="magnifica-page">
-    <TopNav :items="navItems" navbar-mode="page" scroll-style="simple">
-      <template #actions>
-        <MagnificaLogoutButton />
-      </template>
-    </TopNav>
+    <!-- topbar · same header as landing, always-compact, sticky -->
+    <div class="magnifica-header-wrap"><MagnificaHeader show-nav compact /></div>
 
     <!-- Hero · HM-provided image (Hans as harsh critique) + overline-headline -->
     <Hero
@@ -167,12 +164,10 @@
 <script setup lang="ts">
 import { provide } from 'vue'
 import Hero from '@/components/Hero.vue'
-import TopNav from '@/components/TopNav.vue'
-import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
+import MagnificaHeader from './MagnificaHeader.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
 import FpostitGlossary from '@/fpostit/components/FpostitGlossary.vue'
-import { navItems } from './content/nav'
 import { hero, citationBlock, callouts } from './content/discourse'
 import { MAGNIFICA_POSTIT_MODE } from './content/postit-mode'
 
@@ -188,10 +183,24 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
   min-height: 100vh;
   background: var(--color-bg);}
 
-.magnifica-page-content {
-  max-width: 56rem;
+/* topbar · same 90rem inset as the landing header */
+.magnifica-header-wrap {
+  max-width: 90rem;
   margin: 0 auto;
-  padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 2rem);
+  padding: 0 clamp(1rem, 6vw, 3rem);
+}
+
+/* scientific: a 90rem-centered container (same inset as the header) holding a 56rem
+   LEFT-aligned prose column — so the prose-left lines up with the top-bar header-left,
+   and the right of the container is the post-it lane (glosses open hlogic 'right'). */
+.magnifica-page-content {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 6vw, 3rem);
+}
+
+.page-body {
+  max-width: 56rem;
 }
 
 .page-hero-overline {

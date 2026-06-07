@@ -24,7 +24,7 @@
             <!-- TODO HM: the "Websites Theaterpädagogik dringend gesucht!" left-column copy. -->
           </div>
           <div class="landing-hero-right">
-            <MagnificaChatbox :entries="letterEntries" />
+            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" />
           </div>
         </section>
       </div>

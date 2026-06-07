@@ -7,7 +7,7 @@
 -->
 
 <template>
-  <header class="mag-header" :class="{ 'is-scrolled': scrolled }">
+  <header class="mag-header" :class="{ 'is-scrolled': scrolled || compact }">
     <a class="mag-wordmark" href="/">Anthropic and <span class="mag-wordmark-accent">Magnifica Humanitas</span></a>
     <p class="mag-subline">moving past the incentives</p>
 
@@ -24,7 +24,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { navItems } from './content/nav'
 
-defineProps<{ showNav?: boolean }>()
+// `compact`: detail-route topbar — always in the collapsed form (State C · no big State-A,
+// no scroll-collapse), just sticky. The landing omits it → it gets the State A→B collapse.
+const props = defineProps<{ showNav?: boolean; compact?: boolean }>()
 
 // State A → B: collapse (subline away, title shrinks) once scrolled past the threshold.
 const SCROLL_THRESHOLD = 80
@@ -35,11 +37,14 @@ function onScroll() {
 }
 
 onMounted(() => {
+  if (props.compact) return // always-compact · no scroll listener
   onScroll() // honor a non-zero initial scroll (e.g. on reload mid-page)
   window.addEventListener('scroll', onScroll, { passive: true })
 })
 
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
+onUnmounted(() => {
+  if (!props.compact) window.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <style scoped>
