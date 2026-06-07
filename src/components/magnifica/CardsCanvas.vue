@@ -148,7 +148,7 @@ function postitStyle(card: BoardCard): Record<string, string> {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    font-family: var(--font, ui-monospace);
 }
 
 /* opt-out: scroll off in place (no collect) */

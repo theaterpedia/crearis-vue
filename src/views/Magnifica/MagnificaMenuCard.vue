@@ -47,7 +47,7 @@ defineProps<{
   color: var(--color-contrast, #f4f4f4);
   border-radius: 6px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-  font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-family: var(--font, ui-monospace);
 }
 
 .menu-card-title {

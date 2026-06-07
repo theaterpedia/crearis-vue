@@ -2,7 +2,7 @@
     <Teleport to="body" :disabled="isStaticBoard">
         <Transition name="fpostit-fade">
             <div v-if="isOpen"
-                :class="['floating-postit', `bg-${data.color}`, data.rotation, { 'floating-postit--board': isStaticBoard }]"
+                :class="['floating-postit', `bg-${data.color}`, data.rotation, data.hlogic ? `fp-h-${data.hlogic}` : '', { 'floating-postit--board': isStaticBoard }]"
                 :style="positionStyle"
                 :role="isStaticBoard ? 'note' : 'dialog'"
                 :aria-modal="isStaticBoard ? undefined : 'false'"
@@ -376,5 +376,22 @@ onUnmounted(() => {
     .fpostit-action {
         width: 100%;
     }
+}
+
+/* Scientific right-lane glosses (hlogic 'right' · /discourse) · responsive sizing
+   (HM 2026-06-07). #5: below 1450px the typography is one level smaller. #6: the width
+   grows +10% above 1450px and +20% above 1800px (overrides the 400px inline maxWidth).
+   NB · general fpostit infra — backport to alpha/fpostit-extend for the mainline PR. */
+@media (max-width: 1450px) {
+    .fp-h-right .fpostit-title { font-size: 1.0625rem; }
+    .fp-h-right .fpostit-content { font-size: 0.875rem; }
+}
+
+@media (min-width: 1451px) {
+    .fp-h-right { max-width: 460px !important; } /* +15% of 400px */
+}
+
+@media (min-width: 1651px) {
+    .fp-h-right { max-width: 520px !important; } /* +30% of 400px */
 }
 </style>

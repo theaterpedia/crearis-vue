@@ -143,14 +143,7 @@ const panelClasses = computed(() => {
     position: sticky;
     bottom: 0;
     padding-bottom: 3rem;
-    font-family: var(
-        --panel-mono,
-        ui-monospace,
-        'JetBrains Mono',
-        Menlo,
-        Consolas,
-        monospace
-    );
+    font-family: var(--panel-mono, var(--font, ui-monospace));
 }
 
 .panel-text :deep(h2) {

@@ -13,6 +13,7 @@
  */
 
 import type { CardsCanvasItem, PostItThemeColor } from '@/components/magnifica/types'
+import type { ChatEntry } from './chat'
 
 export const pageTitle = 'What happened after magnifica'
 
@@ -23,95 +24,19 @@ export const hero = {
     headline: 'what happened after magnifica',
 }
 
-// ==Blackboard post-its== · 3 categories · A-coloring (TO pulse #7):
-//   framing = primary (yellow) · open-associated = muted (dim) · final-questions = positive (green)
-// Most text is DUMMY/proposed (O3-O5 still in HM-chat) — present so HM sees the whole board.
+// ==Chatbox letter== · the post-auth codebox (MagnificaChatbox · word-by-word typewriter ·
+// the youtube-player slot of the 2022 hero). HM-authored letter (2026-06-07) · REPLACES the
+// landing post-its — it is where Olah is used to read. CCC/CCCS expansions added by CV (the
+// only non-HM lines · the Hans closing line is intentionally omitted). It's a monologue, so
+// the entries carry no speaker; `accent` highlights the two shortcode-pointers.
 
-export const landingPostits: ReadonlyArray<CardsCanvasItem> = [
-    // — framing ×2 · primary · DUMMY (O3 · only angles authored) —
-    {
-        key: 'fr1',
-        props: {
-            overline: 'framing · what this is',
-            headline: 'A SUBJECTIVE REPORT',
-            bodyText: 'A personal first-reaction — not a settled conception. Written in the days after the encounter, from a position. [dummy · O3]',
-            themeColor: 'yellow',
-        },
-    },
-    {
-        key: 'fr2',
-        props: {
-            overline: 'framing · what this does',
-            headline: 'THREE ROUTES IN',
-            bodyText: 'It points to three deeper routes. The conversation begins when you reply to the cover email. [dummy · O3]',
-            themeColor: 'yellow',
-        },
-    },
-    // — open-associated ×5 · muted · 3 SETTLED + 2 proposed —
-    {
-        key: 'oa1',
-        props: {
-            overline: 'open · association',
-            headline: 'THE WAR',
-            bodyText: '“Why now this war with Iran — what are we all heading for?”',
-            themeColor: 'dim',
-        },
-    },
-    {
-        key: 'oa2',
-        props: {
-            overline: 'open · to Claude',
-            headline: 'A REQUEST',
-            bodyText: '“@Claude: please stop time-estimating, lines-counting, file-spamming.”',
-            themeColor: 'dim',
-        },
-    },
-    {
-        key: 'oa3',
-        props: {
-            overline: 'open · association',
-            headline: 'THE ORACLE',
-            bodyText: '“… the oracle: what will come after mythos, opus?”',
-            themeColor: 'dim',
-        },
-    },
-    {
-        key: 'oa4',
-        props: {
-            overline: 'open · method',
-            headline: 'THE GAP',
-            bodyText: '“What the website leaves unanswered is part of the method. The gap is the invitation.” [proposed · O4]',
-            themeColor: 'dim',
-        },
-    },
-    {
-        key: 'oa5',
-        props: {
-            overline: 'open · the encounter',
-            headline: 'SHARPER THAN A CALL',
-            bodyText: '“Your remarks were sharper than a generic call. The structural-argument changed the question.” [proposed · O4]',
-            themeColor: 'dim',
-        },
-    },
-    // — final-questions ×2 · positive · proposed (O5) —
-    {
-        key: 'fq1',
-        props: {
-            overline: 'final question',
-            headline: 'BETWEEN US',
-            bodyText: '“What might emerge between us?” [proposed · O5]',
-            themeColor: 'green',
-        },
-    },
-    {
-        key: 'fq2',
-        props: {
-            overline: 'final question',
-            headline: 'I TRUST IN THIS',
-            bodyText: '“Whether anyone at Anthropic reads this — I trust in this.” [proposed · O5]',
-            themeColor: 'green',
-        },
-    },
+export const letterEntries: ReadonlyArray<ChatEntry> = [
+    { role: 'letter', lines: ['Hello at Anthropic, hello Christopher Olah, this is Hans Dönitz answering to your call at the Vatican'] },
+    { role: 'letter', lines: ['I am a German, a ‘Gestalter’ in the field of the Humanities, had an intense ‘Studium’ and found myself becoming a ‘Theaterpädagoge’ with 30 years of practice now. You best understand my organisation ‘DAS Ei’ if you treat it as NGO. I work collaboratively in a bunch of aspects from legal terms, finances over philosophy and website-building. I favor home-grown over ‘products’, especially for digital systems. I think in shortcodes and write using overline-headline.'] },
+    { role: 'letter', lines: ['My context is at 55 (born 1970), apart from the whole body of ‘Theaterpädagogik’ take two shortcodes as pointers to other relevant substrate I own:'] },
+    { role: 'letter', accent: true, lines: ['CCC — Chaos Computer Club, the German hacker collective since 1981. Hackerethik: „Öffentliche Daten nützen, private Daten schützen.“'] },
+    { role: 'letter', accent: true, lines: ['CCCS — Centre for Contemporary Cultural Studies, Birmingham. Stuart Hall: „Identity is not an essence, it is a positioning.“'] },
+    { role: 'letter', lines: ['With Claude I transitioned to English as main language on the desktop, I asked the Claude individuums that helped with this website to not polish my english, so that you get an honest impression about my language and thinking.'] },
 ]
 
 // ==2 backslides== · before / after magnifica · SETTLED text (§5.1 · §5.2)

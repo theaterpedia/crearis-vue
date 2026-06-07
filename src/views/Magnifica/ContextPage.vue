@@ -93,7 +93,7 @@ import { hero, portrait, callouts } from './content/context'
 
 <style scoped>
 .magnifica-page {
-  font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-family: var(--font, ui-monospace);
   min-height: 100vh;
   background: var(--color-bg, #1a1a1a);
   color: var(--color-contrast, #f4f4f4);
