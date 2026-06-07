@@ -18,6 +18,7 @@
     <template #hero>
     <!-- Hero · 90rem · the methodology-frame lives inside it -->
     <Hero
+      class="ethno-hero"
       magnifica
       height-tmp="full"
       :img-tmp="hero.image"
@@ -141,12 +142,12 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
 /* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout).
    Only the blackboard (CardsCanvas) board-prose styling is page-unique here. */
 
-/* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content
-   (hero pl 1rem + Container 2.75rem = 3.75rem · mobile 1rem) so the heading lines up
-   with "Anthropic Claude Ethnography / being a rewritten being" above it. */
+/* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content.
+   With magnifica-mode both are 90rem-bounded and the hero's 1rem pad is zeroed, so the
+   shared inset is just the Container's 2.75rem (was 3.75rem · the extra 1rem now over-shot). */
 .ethno-board :deep(.bb-board-prose) {
   max-width: 44rem;
-  padding: 1rem 1rem 0 3.75rem;
+  padding: 1rem 1rem 0 2.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -158,17 +159,26 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
   }
 }
 
+/* explicit var(--font) · the slot spans weren't inheriting MonaspaceNeon reliably */
 .ethno-board-overline {
+  font-family: var(--font, ui-monospace);
   font-size: 0.875rem;
   color: var(--color-muted-contrast);
   letter-spacing: 0.02em;
 }
 
 .ethno-board-title {
+  font-family: var(--font, ui-monospace);
   font-size: clamp(1.5rem, 3.5vw, 2.5rem);
   font-weight: 700;
   line-height: 1.1;
   color: var(--color-primary-bg);
+}
+
+/* push the (bottom-aligned) hero banner lower · the overline was floating mid-space.
+   Page-level :deep into the Hero content (HM 2026-06-07). Tune with the shortened frame text. */
+.ethno-hero :deep(.hero-content) {
+  bottom: 2rem;
 }
 
 /* §C · the 3-point decision as a called-out artifact in the right column (border-left
