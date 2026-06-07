@@ -18,11 +18,18 @@
   color: var(--color-contrast);
 }
 
-/* topbar · 90rem inset (matches the landing header) */
-.magnifica-header-wrap {
+/* topbar · the header (position:sticky in MagnificaHeader) is a DIRECT child of
+   .magnifica-page so it pins across the whole page (a height-limited wrapper would give
+   sticky zero travel). Apply the 90rem centered inset the old wrapper provided.
+   `header.mag-header` outranks MagnificaHeader's scoped `.mag-header` so the horizontal
+   inset wins; vertical padding + the scroll/compact states stay owned by MagnificaHeader.
+   Scoped to `.magnifica-page >` so the landing header (in .landing-container) is untouched. */
+.magnifica-page > header.mag-header {
   max-width: 90rem;
-  margin: 0 auto;
-  padding: 0 clamp(1rem, 6vw, 3rem);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 6vw, 3rem);
+  padding-right: clamp(1rem, 6vw, 3rem);
 }
 
 /* content-column · 90rem centered for both variants; the variants differ in horizontal
