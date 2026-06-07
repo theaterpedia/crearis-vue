@@ -1,5 +1,5 @@
 <template>
-    <section class="bb-canvas">
+    <section class="bb-canvas" :class="{ 'bb-canvas--bounded': bounded }">
         <!-- Blackboard · sticky · holds the persistent prose (hero title/subtitle) -->
         <div class="bb-board">
             <div class="bb-board-prose">
@@ -56,10 +56,15 @@ interface Props {
     items?: ReadonlyArray<CardsCanvasItem>
     /** Override the default horizontal lanes (left-% values). */
     lanes?: ReadonlyArray<number>
+    /** Opt-in: bound the full-bleed canvas to the 90rem content-column on wide
+     *  viewports (≥1456px), aligning it with the magnifica page-shell + Hero. Default
+     *  false → full-bleed (unchanged for the Demo / any non-magnifica use). */
+    bounded?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
     lanes: () => DEFAULT_LANES,
+    bounded: false,
 })
 
 interface BoardCard {
@@ -114,6 +119,16 @@ function postitStyle(card: BoardCard): Record<string, string> {
 .bb-canvas {
     position: relative;
     background: var(--bb-page-bg, var(--color-bg, #1d1b1a));
+}
+
+/* opt-in (`bounded`) · align the canvas with the 90rem content-column on wide viewports
+   (same 1456px gate + 90rem as Hero `magnifica`). max-width + margin only — no overflow/
+   flex/transform — so the sticky scroll-choreography (§6 invariant) stays intact. */
+@media (min-width: 1456px) {
+    .bb-canvas--bounded {
+        max-width: 90rem;
+        margin-inline: auto;
+    }
 }
 
 .bb-board {

@@ -48,16 +48,22 @@ interface Props {
     themeColor?: PostItThemeColor
     /** Image on the right instead of the left (per howto §5.1). Default false (image-left). */
     imageRight?: boolean
+    /** Opt-in: bound the full-bleed slide to the 90rem content-column on wide viewports
+     *  (≥1456px), aligning it with the magnifica page-shell + Hero. Default false →
+     *  full-bleed (unchanged for the Demo / any non-magnifica use). */
+    bounded?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
     themeColor: 'yellow',
     imageRight: false,
+    bounded: false,
 })
 
 const slideClasses = computed(() => {
     const classes = ['panel-slide']
     if (props.imageRight) classes.push('panel-slide--image-right')
+    if (props.bounded) classes.push('panel-slide--bounded')
     return classes
 })
 
@@ -163,6 +169,20 @@ const panelClasses = computed(() => {
 @media (min-width: 768px) {
     .panel-text {
         margin-top: 18rem;
+    }
+}
+
+/* opt-in (`bounded`) · align the full-bleed slide with the 90rem content-column on wide
+   viewports (same 1456px gate + 90rem as Hero `magnifica`). The image switches to
+   element-anchored (scroll) in this state so it tracks the now-narrower bounded panel
+   instead of the viewport-fixed window — same fallback the reduced-motion rule uses. */
+@media (min-width: 1456px) {
+    .panel-slide--bounded {
+        max-width: 90rem;
+        margin-inline: auto;
+    }
+    .panel-slide--bounded .panel-image {
+        background-attachment: scroll;
     }
 }
 

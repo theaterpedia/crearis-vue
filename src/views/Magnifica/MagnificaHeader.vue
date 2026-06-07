@@ -29,11 +29,18 @@ import { navItems } from './content/nav'
 const props = defineProps<{ showNav?: boolean; compact?: boolean }>()
 
 // State A → B: collapse (subline away, title shrinks) once scrolled past the threshold.
-const SCROLL_THRESHOLD = 80
+// Hysteresis (collapse at 80, expand only below 32) gives a dead-band so the A↔B flip
+// can't oscillate in the narrow region where the header is mid-collapse — Chrome's
+// scroll-anchoring otherwise nudges scrollY back across a single threshold and flickers
+// (paired with `overflow-anchor: none` on the landing, which kills the nudge at the source).
+const COLLAPSE_AT = 80
+const EXPAND_AT = 32
 const scrolled = ref(false)
 
 function onScroll() {
-  scrolled.value = window.scrollY > SCROLL_THRESHOLD
+  const y = window.scrollY
+  if (!scrolled.value && y > COLLAPSE_AT) scrolled.value = true
+  else if (scrolled.value && y < EXPAND_AT) scrolled.value = false
 }
 
 onMounted(() => {

@@ -30,14 +30,14 @@
       </div>
 
       <!-- 2 backslides · before / after magnifica -->
-      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor">
+      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor" bounded>
         <h2>{{ backslide1.headline }}</h2>
         <p v-for="(para, i) in backslide1.paras" :key="i">{{ para }}</p>
       </BackSlide>
 
       <p class="backslide-intro">{{ backslideIntro }}</p>
 
-      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right>
+      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right bounded>
         <h2>{{ backslide2.headline }}</h2>
         <p v-for="(para, i) in backslide2.paras" :key="i">{{ para }}</p>
       </BackSlide>
@@ -104,6 +104,10 @@ const { isAuthenticated } = useMagnificaAuth()
 <style scoped>
 .magnifica-landing {
   font-family: var(--font, ui-monospace);
+  /* Chrome scroll-anchoring nudges scrollY when the sticky header collapses (State A→B),
+     which re-crosses the threshold and flickers heavily. Opt the landing content out of
+     anchoring (Firefox was already fine); paired with the header's hysteresis dead-band. */
+  overflow-anchor: none;
 }
 
 .magnifica-landing-content {

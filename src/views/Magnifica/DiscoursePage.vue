@@ -14,18 +14,17 @@
     <template #header><MagnificaHeader show-nav compact /></template>
 
     <template #hero>
-    <!-- Hero · HM-provided image (Hans as harsh critique) + overline-headline -->
+    <!-- Hero · HM-provided image (Hans as harsh critique). Framework <Heading> (overline-
+         headline), magnifica-bounded. No overlay (HM: discourse hero stays clean). -->
     <Hero
+      magnifica
       height-tmp="full"
       :img-tmp="hero.image"
       img-tmp-align-x="cover"
       img-tmp-align-y="cover"
       content-align-y="bottom"
-      gradient_type="left-bottom"
-      :gradient_depth="0.75"
     >
-      <p class="page-hero-overline">{{ hero.overline }}</p>
-      <h1 class="page-hero-headline">{{ hero.headline }}</h1>
+      <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
     </Hero>
     </template>
 
@@ -167,6 +166,7 @@
 <script setup lang="ts">
 import { provide } from 'vue'
 import Hero from '@/components/Hero.vue'
+import Heading from '@/components/Heading.vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import CalloutPhrase from './CalloutPhrase.vue'

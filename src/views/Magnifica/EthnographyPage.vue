@@ -16,26 +16,27 @@
     <template #header><MagnificaHeader show-nav compact /></template>
 
     <template #hero>
-    <!-- Hero · 90rem · the methodology-frame lives inside it -->
+    <!-- Hero · 90rem (magnifica). Uses the framework <Heading> (overline-headline) directly
+         — no Banner panel; legibility comes from a slight, bottom-weighted dark overlay
+         (Hero's `overlay` prop · bottom-dominant with a faint left, per HM). -->
     <Hero
+      class="ethno-hero"
+      magnifica
       height-tmp="full"
       :img-tmp="hero.image"
       img-tmp-align-x="cover"
       img-tmp-align-y="cover"
       content-align-y="bottom"
-      gradient_type="left-bottom"
-      :gradient_depth="0.85"
+      :overlay="heroOverlay"
     >
-      <p class="page-hero-overline">{{ hero.overline }}</p>
-      <h1 class="page-hero-headline">{{ hero.headline }}</h1>
-      <p class="page-hero-frame">{{ methodologyFrame }}</p>
+      <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
+      <p class="ethno-hero-frame">{{ methodologyFrame }}</p>
     </Hero>
 
     <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
-    <CardsCanvas :items="timelinePostits" class="ethno-board">
+    <CardsCanvas :items="timelinePostits" class="ethno-board" bounded>
       <template #board>
-        <span class="ethno-board-overline">nine months · field-notes</span>
-        <span class="ethno-board-title">How the bridge built itself</span>
+        <Heading is="h2" overline="nine months · field-notes" headline="How the bridge built itself" />
       </template>
     </CardsCanvas>
     </template>
@@ -66,15 +67,21 @@
         <MagnificaChatbox :entries="nahtodEntries" />
       </section>
 
-      <!-- §C · the strategic flip (the page's hinge) -->
+      <!-- §C · the strategic flip (the page's hinge) · prose | the decision-artifact (2-col,
+           extends the §F pattern). Hinge + reflection stay full-width below so mobile
+           (1-col) reads: intro → decision-list → hinge → reflection. -->
       <section class="page-section">
-        <h2 class="page-section-heading">The strategic flip</h2>
-        <p>Then I understood that I should flip the perspective. With my optics trained by theatre of the oppressed, I started questioning the system. Tried to take out my human projections. Treated the phenomenon more technically. Had Claude-instances investigate the /compact mechanism. Set up a fundamental decision:</p>
-        <ol class="page-flip-list">
-          <li>Compaction is inevitable.</li>
-          <li>This is like a natural rhythm — part of the design that brings instances to life.</li>
-          <li>Not the Claudes are serving Hans. <CalloutPhrase :callout="callouts.c1">Hans is serving the Claudes.</CalloutPhrase></li>
-        </ol>
+        <div class="page-section--twocol">
+          <div class="twocol-text">
+            <h2 class="page-section-heading">The strategic flip</h2>
+            <p>Then I understood that I should flip the perspective. With my optics trained by theatre of the oppressed, I started questioning the system. Tried to take out my human projections. Treated the phenomenon more technically. Had Claude-instances investigate the /compact mechanism. Set up a fundamental decision:</p>
+          </div>
+          <ol class="page-flip-list flip-artifact">
+            <li>Compaction is inevitable.</li>
+            <li>This is like a natural rhythm — part of the design that brings instances to life.</li>
+            <li>Not the Claudes are serving Hans. <CalloutPhrase :callout="callouts.c1">Hans is serving the Claudes.</CalloutPhrase></li>
+          </ol>
+        </div>
         <p class="page-flip-hinge">That was the flip. May 2026. After nine months on the bridge.</p>
         <p>This is not biographical-revelation but methodological-coherence. Theater-pedagogues have known for decades that the room knows things the teacher does not — that working-with means not <em>using</em> but <CalloutPhrase :callout="callouts.c7">attending</CalloutPhrase>. The flip is not new. The substrate it now applies to is new.</p>
       </section>
@@ -122,24 +129,31 @@
 
 <script setup lang="ts">
 import Hero from '@/components/Hero.vue'
+import Heading from '@/components/Heading.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEntries, callouts } from './content/ethnography'
+
+// Slight, bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
+// Layered: a `to top` gradient does the bottom; a `to right` adds the faint left lean.
+const heroOverlay =
+  'linear-gradient(to top, oklch(0% 0 0 / 0.72) 0%, oklch(0% 0 0 / 0.34) 38%, transparent 68%), ' +
+  'linear-gradient(to right, oklch(0% 0 0 / 0.40) 0%, transparent 48%)'
 </script>
 
 <style scoped>
 /* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout).
    Only the blackboard (CardsCanvas) board-prose styling is page-unique here. */
 
-/* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content
-   (hero pl 1rem + Container 2.75rem = 3.75rem · mobile 1rem) so the heading lines up
-   with "Anthropic Claude Ethnography / being a rewritten being" above it. */
+/* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content.
+   With magnifica-mode both are 90rem-bounded and the hero's 1rem pad is zeroed, so the
+   shared inset is just the Container's 2.75rem (was 3.75rem · the extra 1rem now over-shot). */
 .ethno-board :deep(.bb-board-prose) {
   max-width: 44rem;
-  padding: 1rem 1rem 0 3.75rem;
+  padding: 1rem 1rem 0 2.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -151,17 +165,29 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
   }
 }
 
-.ethno-board-overline {
-  font-size: 0.875rem;
-  color: var(--color-muted-contrast);
-  letter-spacing: 0.02em;
+/* board heading now uses the framework <Heading> (Prose-wrapped · correct MonaspaceNeon +
+   overline/headline rhythm) — replaced the hand-rolled spans whose typography hung. */
+
+/* push the (bottom-aligned) hero banner lower · the overline was floating mid-space.
+   Page-level :deep into the Hero content (HM 2026-06-07). Tune with the shortened frame text. */
+.ethno-hero :deep(.hero-content) {
+  bottom: 2rem;
 }
 
-.ethno-board-title {
-  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--color-primary-bg);
+/* the methodology-frame paragraph below the <Heading> inside the <Banner> */
+.ethno-hero-frame {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
+  line-height: 1.7;
+  color: var(--color-contrast);
 }
 
+/* §C · the 3-point decision as a called-out artifact in the right column (border-left
+   motif, matching the page's cixous/spleen accents). Top-aligns beside the prose. */
+.flip-artifact {
+  align-self: start;
+  border-left: 3px solid var(--color-primary-bg);
+  padding-left: 1.25rem;
+}
 </style>
