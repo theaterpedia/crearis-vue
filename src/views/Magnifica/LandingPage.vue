@@ -103,7 +103,7 @@ const { isAuthenticated } = useMagnificaAuth()
 
 <style scoped>
 .magnifica-landing {
-  font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-family: var(--font, ui-monospace);
 }
 
 .magnifica-landing-content {

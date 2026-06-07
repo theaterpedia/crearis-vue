@@ -69,7 +69,7 @@ function onSubmit(e: Event) {
   min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-contrast);
-  font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-family: var(--font, ui-monospace);
 }
 
 .entry-container {

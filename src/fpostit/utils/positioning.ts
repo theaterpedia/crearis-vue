@@ -34,10 +34,10 @@ const EDGE_SPACING = 16
 
 /**
  * Right-lane gloss margin from the viewport edge (scientific · hlogic 'right'):
- * 1rem up to 1800px, 2rem above (HM 2026-06-07). Stacking hOffset still adds on top.
+ * 1rem up to 1800px, 6rem above (HM 2026-06-07). Stacking hOffset still adds on top.
  */
 function rightEdgeSpacing(): number {
-    return typeof window !== 'undefined' && window.innerWidth > 1800 ? 32 : 16
+    return typeof window !== 'undefined' && window.innerWidth > 1800 ? 96 : 16
 }
 
 /**

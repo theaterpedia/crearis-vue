@@ -63,7 +63,7 @@ onUnmounted(() => {
   row-gap: 0.25rem;
   padding: clamp(1.5rem, 5vh, 3.5rem) 0 clamp(1.5rem, 4vh, 2.5rem);
   background: var(--color-bg);
-  font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-family: var(--font, ui-monospace);
   transition: padding 300ms ease, box-shadow 300ms ease;
 }
 

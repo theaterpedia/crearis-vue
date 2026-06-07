@@ -391,7 +391,7 @@ onUnmounted(() => {
     .fp-h-right { max-width: 460px !important; } /* +15% of 400px */
 }
 
-@media (min-width: 1801px) {
-    .fp-h-right { max-width: 500px !important; } /* +25% of 400px */
+@media (min-width: 1651px) {
+    .fp-h-right { max-width: 520px !important; } /* +30% of 400px */
 }
 </style>
