@@ -1,14 +1,15 @@
 <!--
-  MagnificaHeader · the landing/entry header (2022 "Theaterpedia" shape).
-  Big wordmark + subline · nav appears post-auth only (`show-nav`). Pre-auth the gate
-  shows it without nav. Collapse-to-topbar on scroll (howto-topbar State A→B) is a
-  follow-up of the layout pass; this is the extended (State A) form.
+  MagnificaHeader · the landing/entry header (2022 "Theaterpedia" shape, magnifica title).
+  Title "Anthropic and Magnifica Humanitas" + subline "moving past the incentives".
+  Scroll-collapse (howto-topbar State A→B): at the top it's big with the subline; once the
+  page scrolls past the threshold it shrinks and the subline goes away (sticky · CSS-animated).
+  Nav appears post-auth only (`show-nav`).
 -->
 
 <template>
-  <header class="mag-header">
-    <a class="mag-wordmark" href="/">Theater<span class="mag-wordmark-accent">pedia</span></a>
-    <p class="mag-subline"><span class="mag-subline-accent">Theaterpädagogik</span> digital vernetzen</p>
+  <header class="mag-header" :class="{ 'is-scrolled': scrolled }">
+    <a class="mag-wordmark" href="/">Anthropic and <span class="mag-wordmark-accent">Magnifica Humanitas</span></a>
+    <p class="mag-subline">moving past the incentives</p>
 
     <nav v-if="showNav" class="mag-nav" aria-label="Sections">
       <RouterLink v-for="item in navItems" :key="item.link" :to="item.link" class="mag-nav-link">
@@ -19,34 +20,67 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { navItems } from './content/nav'
 
 defineProps<{ showNav?: boolean }>()
+
+// State A → B: collapse (subline away, title shrinks) once scrolled past the threshold.
+const SCROLL_THRESHOLD = 80
+const scrolled = ref(false)
+
+function onScroll() {
+  scrolled.value = window.scrollY > SCROLL_THRESHOLD
+}
+
+onMounted(() => {
+  onScroll() // honor a non-zero initial scroll (e.g. on reload mid-page)
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
 .mag-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
     "wordmark nav"
     "subline  nav";
-  align-items: start;
+  align-items: center;
   column-gap: 2rem;
   row-gap: 0.25rem;
   padding: clamp(1.5rem, 5vh, 3.5rem) 0 clamp(1.5rem, 4vh, 2.5rem);
+  background: var(--color-bg);
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  transition: padding 300ms ease, box-shadow 300ms ease;
+}
+
+/* collapsed (State B) · compact bar · subline gone · shadow separates from content */
+.mag-header.is-scrolled {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
 }
 
 .mag-wordmark {
   grid-area: wordmark;
-  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-size: clamp(2rem, 6vw, 4.25rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.05;
   text-decoration: none;
   color: var(--color-contrast);
+  transition: font-size 300ms ease;
+}
+
+.mag-header.is-scrolled .mag-wordmark {
+  font-size: clamp(1.25rem, 3vw, 2rem);
 }
 
 .mag-wordmark-accent {
@@ -59,10 +93,16 @@ defineProps<{ showNav?: boolean }>()
   font-size: clamp(1rem, 2.2vw, 1.5rem);
   font-weight: 700;
   color: var(--color-contrast);
+  /* collapses on scroll */
+  max-height: 3rem;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 300ms ease, opacity 250ms ease, margin 300ms ease;
 }
 
-.mag-subline-accent {
-  color: var(--color-primary-bg);
+.mag-header.is-scrolled .mag-subline {
+  max-height: 0;
+  opacity: 0;
 }
 
 .mag-nav {
@@ -94,6 +134,14 @@ defineProps<{ showNav?: boolean }>()
     align-self: start;
     flex-wrap: wrap;
     margin-top: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mag-header,
+  .mag-wordmark,
+  .mag-subline {
+    transition: none;
   }
 }
 </style>
