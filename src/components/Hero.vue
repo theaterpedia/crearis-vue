@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">`
+    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">
       <Container>
         <slot />
       </Container>
