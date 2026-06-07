@@ -33,7 +33,7 @@
     </Hero>
 
     <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
-    <CardsCanvas :items="timelinePostits" class="ethno-board">
+    <CardsCanvas :items="timelinePostits" class="ethno-board" bounded>
       <template #board>
         <span class="ethno-board-overline">nine months · field-notes</span>
         <span class="ethno-board-title">How the bridge built itself</span>

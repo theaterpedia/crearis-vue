@@ -19,6 +19,7 @@
       :image="portrait.image"
       :image-alt="portrait.imageAlt"
       theme-color="green"
+      bounded
     >
       <p class="bio-hero-overline">{{ hero.overline }}</p>
       <h1 class="bio-hero-headline">{{ hero.headline }}</h1>

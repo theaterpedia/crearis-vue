@@ -30,14 +30,14 @@
       </div>
 
       <!-- 2 backslides · before / after magnifica -->
-      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor">
+      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor" bounded>
         <h2>{{ backslide1.headline }}</h2>
         <p v-for="(para, i) in backslide1.paras" :key="i">{{ para }}</p>
       </BackSlide>
 
       <p class="backslide-intro">{{ backslideIntro }}</p>
 
-      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right>
+      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right bounded>
         <h2>{{ backslide2.headline }}</h2>
         <p v-for="(para, i) in backslide2.paras" :key="i">{{ para }}</p>
       </BackSlide>
