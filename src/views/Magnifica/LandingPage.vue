@@ -24,7 +24,7 @@
             <!-- TODO HM: the "Websites Theaterpädagogik dringend gesucht!" left-column copy. -->
           </div>
           <div class="landing-hero-right">
-            <MagnificaPromptbox :lines="promptboxLines" />
+            <MagnificaChatbox :entries="letterEntries" />
           </div>
         </section>
       </div>
@@ -80,13 +80,13 @@ import { RouterLink } from 'vue-router'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
-import MagnificaPromptbox from './MagnificaPromptbox.vue'
+import MagnificaChatbox from './MagnificaChatbox.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import {
   hero,
-  promptboxLines,
+  letterEntries,
   backslide1,
   backslideIntro,
   backslide2,

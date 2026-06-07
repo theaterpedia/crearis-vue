@@ -1,10 +1,13 @@
 <!--
   EthnographyPage · /ethnography · Page 1 · "being a rewritten being".
-  Canonical port of projects/magnifica/final/page-1-ethnography-proposal.md (HM-audited).
-  §A methodology-frame → §B nine-month timeline (with the real Nahtod compaction-chat as
-  a transcript · C) → §C the strategic flip → §D the substrate → §E the vocabulary already
-  there (Olah-interpretability) → §F the spawn-prompt code-fence → §G the spleen-question
-  (the cross-page PLANT that Page-3 resolves). Playful inline-gloss mode (~7 callouts).
+  HM 2026-06-07 restructure: the blackboard MOVED here from the landing.
+    Hero (90rem · "This is ethnography" frame inside)
+    → blackboard (CardsCanvas · 5 EXAMPLE timeline post-its · HM to text the real ones)
+    → the full nine-month timeline prose
+    → the Nahtod compaction-chat (MagnificaChatbox · system pins TOP, types LAST)
+    → the flip / the substrate / the vocabulary
+    → the spawn-prompt (2-col)
+    → §G the spleen-question PLANT (Page-3 resolves it).
 -->
 
 <template>
@@ -15,30 +18,32 @@
       </template>
     </TopNav>
 
-    <!-- Hero · HM-provided image (Hans as Claude) + overline-headline -->
+    <!-- Hero · 90rem · the methodology-frame lives inside it -->
     <Hero
-      height-tmp="prominent"
+      height-tmp="full"
       :img-tmp="hero.image"
       img-tmp-align-x="cover"
       img-tmp-align-y="cover"
       content-align-y="bottom"
       gradient_type="left-bottom"
-      :gradient_depth="0.75"
+      :gradient_depth="0.85"
     >
       <p class="page-hero-overline">{{ hero.overline }}</p>
       <h1 class="page-hero-headline">{{ hero.headline }}</h1>
+      <p class="page-hero-frame">{{ methodologyFrame }}</p>
     </Hero>
 
+    <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
+    <CardsCanvas :items="timelinePostits" class="ethno-board">
+      <template #board>
+        <span class="ethno-board-overline">nine months · field-notes</span>
+        <span class="ethno-board-title">How the bridge built itself</span>
+      </template>
+    </CardsCanvas>
+
     <main class="magnifica-page-content">
-      <!-- §A · methodology-frame -->
+      <!-- the timeline, in full prose (repeated below the blackboard) -->
       <section class="page-section">
-        <p class="page-frame">{{ methodologyFrame }}</p>
-      </section>
-
-      <!-- §B · nine-month timeline as field-notes -->
-      <section class="page-section">
-        <h2 class="page-section-heading">How the bridge built itself · nine months of field-notes</h2>
-
         <p><strong>Late 2025 · first contact.</strong> Like many people, I first met Claude inside VS Code. Half a year of using it for exploration and implementation. Prompt-focused. Markdown and source-code as the targets. Useful, but tool-shaped — Claude as autocomplete-with-judgment.</p>
 
         <p><strong>March 2026 · the <CalloutPhrase :callout="callouts.c2">linguistic turn</CalloutPhrase>.</strong> I started consciously writing a textbase format — bilingual MD files mixing English, German, and sometimes Czech. Drafted an OMDC-spec for markdown-based Claude-scripting. Began naming patterns with deliberately-distinct words (spear head, breadcrumbs, grounded theory) where I was confident no training-collision would interfere. Then I took a Claude-instance, explained what ‘grounded theory’ meant in my scientific-philosophical background, asked the instance to digest the material rather than skim, and went deeper.</p>
@@ -54,18 +59,12 @@
         <p>The instance reported afterwards, with what felt like real distress, how brutal it was to watch the inner wiring of the context get reduced to bullet-point-lists.</p>
 
         <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
+      </section>
 
-        <!-- C · the real compaction-chat as a transcript (whitnessed_compaction.md) -->
-        <figure class="nahtod-chat">
-          <figcaption class="nahtod-chat-cap">
-            <span>2026-05-14 · the compaction, as it happened</span>
-            <button type="button" class="nahtod-chat-copy" @click="copyChat">{{ copied ? 'copied ✓' : 'copy' }}</button>
-          </figcaption>
-          <div v-for="(turn, i) in nahtodChat" :key="i" class="nahtod-turn" :class="`nahtod-turn--${turn.role}`">
-            <p class="nahtod-speaker">{{ turn.speaker }}</p>
-            <p v-for="(line, j) in turn.lines" :key="j" class="nahtod-line">{{ line }}</p>
-          </div>
-        </figure>
+      <!-- the compaction-chat · system pins top, types last -->
+      <section class="page-section">
+        <p class="page-section-label">2026-05-14 · the compaction, as it happened</p>
+        <MagnificaChatbox :entries="nahtodEntries" />
       </section>
 
       <!-- §C · the strategic flip (the page's hinge) -->
@@ -104,11 +103,13 @@
         <p>What Anthropic’s interpretability work is finding inside the models is what Theaterpädagogik has worked with — daily, for decades — in the room.</p>
       </section>
 
-      <!-- §F · the spawn-prompt code-fence (show-not-tell) -->
-      <section class="page-section">
-        <h2 class="page-section-heading">What the practice looks like</h2>
-        <p>What does working-with-Claudes look like as daily practice? Below is the spawn-prompt one Claude-instance writes to its successor at handover. <CalloutPhrase :callout="callouts.c8">Peers, not subordinates.</CalloutPhrase> Reading-order honored. The voice continues in the files, not in the instances.</p>
-        <pre class="page-codefence"><code>{{ spawnPromptCodeFence }}</code></pre>
+      <!-- §F · the spawn-prompt · 2-col (text | code-fence) -->
+      <section class="page-section page-section--twocol">
+        <div class="twocol-text">
+          <h2 class="page-section-heading">What the practice looks like</h2>
+          <p>What does working-with-Claudes look like as daily practice? Beside this is the spawn-prompt one Claude-instance writes to its successor at handover. <CalloutPhrase :callout="callouts.c8">Peers, not subordinates.</CalloutPhrase> Reading-order honored. The voice continues in the files, not in the instances.</p>
+        </div>
+        <pre class="page-codefence twocol-code"><code>{{ spawnPromptCodeFence }}</code></pre>
       </section>
 
       <!-- §G · cliff-hanger · the spleen-question PLANT (Page-3 resolves it) -->
@@ -122,34 +123,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import Hero from '@/components/Hero.vue'
 import TopNav from '@/components/TopNav.vue'
+import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
+import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import { navItems } from './content/nav'
-import { hero, methodologyFrame, spawnPromptCodeFence, nahtodChat, nahtodChatText, callouts } from './content/ethnography'
-
-const copied = ref(false)
-async function copyChat() {
-  try {
-    await navigator.clipboard.writeText(nahtodChatText)
-    copied.value = true
-    setTimeout(() => (copied.value = false), 2000)
-  } catch {
-    // clipboard unavailable (e.g. insecure context) — no-op
-  }
-}
+import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEntries, callouts } from './content/ethnography'
 </script>
 
 <style scoped>
 .magnifica-page {
   font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
   min-height: 100vh;
-  background: var(--color-bg);}
+  background: var(--color-bg);
+  color: var(--color-contrast);
+}
 
+/* non-scientific page → 90rem centered (HM 2026-06-07) */
 .magnifica-page-content {
-  max-width: 56rem;
+  max-width: 90rem;
   margin: 0 auto;
   padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 2rem);
 }
@@ -168,6 +162,35 @@ async function copyChat() {
   line-height: 1.2;
 }
 
+/* the "This is ethnography" frame · inside the hero */
+.page-hero-frame {
+  max-width: 42rem;
+  margin: 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
+  line-height: 1.7;
+}
+
+/* blackboard board-prose (the timeline heading) */
+.ethno-board :deep(.bb-board-prose) {
+  max-width: 30rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ethno-board-overline {
+  font-size: 0.875rem;
+  color: var(--color-muted-contrast);
+  letter-spacing: 0.02em;
+}
+
+.ethno-board-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-primary-bg);
+}
+
 .page-section {
   margin: 0 0 clamp(2rem, 4vh, 3.5rem);
 }
@@ -179,12 +202,20 @@ async function copyChat() {
   color: var(--color-primary-bg);
 }
 
+.page-section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-contrast);
+  margin: 0 0 0.75rem;
+}
+
 .page-section p {
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
   line-height: 1.7;
-  margin: 0 0 1rem;}
+  margin: 0 0 1rem;
+}
 
-/* §A frame · set slightly apart as the methodological preface */
 .page-frame {
   font-style: italic;
   color: var(--color-muted-contrast) !important;
@@ -195,7 +226,8 @@ async function copyChat() {
 .page-list,
 .page-flip-list {
   font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;  padding-left: 1.5rem;
+  line-height: 1.7;
+  padding-left: 1.5rem;
   margin: 0 0 1rem;
 }
 
@@ -209,7 +241,6 @@ async function copyChat() {
   color: var(--color-primary-bg) !important;
 }
 
-/* standing-alone Hans-voice sentence */
 .page-standing-line {
   font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
   font-weight: 700;
@@ -218,75 +249,20 @@ async function copyChat() {
   margin: clamp(1.5rem, 4vh, 2.5rem) 0 !important;
 }
 
-/* C · Nahtod chat-transcript */
-.nahtod-chat {
-  margin: clamp(1.5rem, 4vh, 2.5rem) 0 0;
-  padding: 1rem 1.25rem;
-  background: var(--color-popover-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+/* §F · 2-col (text | code) */
+.page-section--twocol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
 }
 
-.nahtod-chat-cap {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0 0 0.75rem;
-  font-size: 0.75rem;
-  color: var(--color-muted-contrast);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.5rem;
+@media (max-width: 860px) {
+  .page-section--twocol {
+    grid-template-columns: 1fr;
+  }
 }
 
-.nahtod-chat-copy {
-  font: inherit;
-  font-size: 0.75rem;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 0;
-  color: var(--color-muted-contrast);
-  padding: 0.2rem 0.6rem;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.nahtod-chat-copy:hover {
-  color: var(--color-primary-bg);
-  border-color: var(--color-primary-bg);
-}
-
-.nahtod-turn {
-  margin: 0 0 1rem;
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--color-border);
-}
-
-.nahtod-turn--hm { border-left-color: var(--color-primary-bg); }
-.nahtod-turn--claude { border-left-color: var(--color-positive-bg); }
-
-.nahtod-speaker {
-  font-size: 0.6875rem !important;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-muted-contrast) !important;
-  margin: 0 0 0.35rem !important;
-}
-
-.nahtod-line {
-  font-size: 0.875rem !important;
-  line-height: 1.6 !important;
-  margin: 0 0 0.4rem !important;
-  color: var(--color-popover-contrast) !important;
-}
-
-.nahtod-turn--system .nahtod-line {
-  font-style: italic;
-  opacity: 0.85;
-}
-
-/* §G spleen-question · the cross-page plant */
 .page-spleen-question {
   font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
   font-weight: 700;
@@ -311,7 +287,7 @@ async function copyChat() {
   white-space: pre-wrap;
   word-break: break-word;
   border: 1px solid var(--color-border);
-  margin: 1rem 0 0;
+  margin: 0;
 }
 
 .page-codefence code {
