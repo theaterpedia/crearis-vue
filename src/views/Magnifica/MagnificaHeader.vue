@@ -51,7 +51,8 @@ onUnmounted(() => {
 .mag-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  /* above the glosses (FloatingPostIt z-index 1000) so the topbar runs OVER all content */
+  z-index: 1100;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:

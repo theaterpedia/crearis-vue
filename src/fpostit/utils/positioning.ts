@@ -33,6 +33,14 @@ const MOBILE_WIDTH_PERCENTAGE = 50
 const EDGE_SPACING = 16
 
 /**
+ * Right-lane gloss margin from the viewport edge (scientific · hlogic 'right'):
+ * 1rem up to 1800px, 2rem above (HM 2026-06-07). Stacking hOffset still adds on top.
+ */
+function rightEdgeSpacing(): number {
+    return typeof window !== 'undefined' && window.innerWidth > 1800 ? 32 : 16
+}
+
+/**
  * Check if current viewport is mobile
  */
 export function isMobileViewport(): boolean {
@@ -90,7 +98,7 @@ export function calculatePosition(
             // Always position on right side of screen
             return {
                 top,
-                right: `${EDGE_SPACING}px`,
+                right: `${rightEdgeSpacing()}px`,
                 maxWidth: DESKTOP_WIDTH,
                 isMobile: false,
                 hOffset

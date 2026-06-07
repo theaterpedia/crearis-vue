@@ -388,10 +388,10 @@ onUnmounted(() => {
 }
 
 @media (min-width: 1451px) {
-    .fp-h-right { max-width: 440px !important; } /* +10% of 400px */
+    .fp-h-right { max-width: 460px !important; } /* +15% of 400px */
 }
 
 @media (min-width: 1801px) {
-    .fp-h-right { max-width: 480px !important; } /* +20% of 400px */
+    .fp-h-right { max-width: 500px !important; } /* +25% of 400px */
 }
 </style>
