@@ -16,7 +16,12 @@
         :class="[entry.role ? `chatbox-entry--${entry.role}` : '', { 'chatbox-entry--accent': entry.accent }]"
       >
         <p v-if="entry.speaker" class="chatbox-speaker">{{ entry.speaker }}</p>
-        <p class="chatbox-line">{{ shownText(i) }}</p>
+        <p
+          v-for="(ln, li) in shownLines(i)"
+          :key="li"
+          class="chatbox-line"
+          :class="{ 'chatbox-line--highlight': entry.highlightLines?.includes(li) }"
+        >{{ ln }}</p>
       </div>
     </template>
   </div>
@@ -30,7 +35,9 @@ const props = withDefaults(defineProps<{
   entries: ReadonlyArray<ChatEntry>
   /** Fraction of entries (in reveal-order) shown at once before the typewriter starts. */
   instantPortion?: number
-}>(), { instantPortion: 0 })
+  /** Render everything at once, no typewriter / no in-view wait (the static system-prompt box). */
+  noAnimation?: boolean
+}>(), { instantPortion: 0, noAnimation: false })
 
 const WORD_MS = 45 // word-by-word cadence
 const PAUSE_MS = 320 // pause between entries
@@ -79,6 +86,12 @@ function shownText(arrayIndex: number): string {
   return out.replace(/ $/, '')
 }
 
+// Split the revealed text into per-line strings, so individual lines can be highlighted.
+function shownLines(arrayIndex: number): string[] {
+  const t = shownText(arrayIndex)
+  return t ? t.split('\n') : []
+}
+
 function typeEntry() {
   if (step.value >= order.value.length) return
   const ai = order.value[step.value]!
@@ -103,6 +116,10 @@ function start() {
 }
 
 onMounted(() => {
+  if (props.noAnimation) {
+    step.value = order.value.length // static · everything revealed, no typewriter, no observer
+    return
+  }
   const reduce =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
@@ -163,8 +180,9 @@ onUnmounted(() => {
   border-left: 2px solid var(--color-border);
 }
 
-.chatbox-entry--hm { border-left-color: var(--color-primary-bg); }
-.chatbox-entry--claude { border-left-color: var(--color-positive-bg); }
+/* speaker accent (magnifica chat · HM 2026-06-07): HM green, Claude orange */
+.chatbox-entry--hm { border-left-color: var(--color-positive-bg); }
+.chatbox-entry--claude { border-left-color: var(--color-primary-bg); }
 
 .chatbox-speaker {
   margin: 0 0 0.35rem;
@@ -178,6 +196,18 @@ onUnmounted(() => {
 .chatbox-line {
   margin: 0;
   white-space: pre-wrap; /* preserve the spaces + line-breaks the typewriter builds */
+}
+
+/* a single highlighted line (the Claude "As if the break never happened" line) ·
+   filled bar, content-width */
+.chatbox-line--highlight {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.25rem 0;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+  font-weight: 700;
 }
 
 /* the system instruction reads as quoted machinery */

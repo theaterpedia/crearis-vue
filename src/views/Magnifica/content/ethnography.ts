@@ -42,15 +42,11 @@ export const timelinePostits: ReadonlyArray<CardsCanvasItem> = [
 /** §C (Nahtod-Erfahrung) · the real compaction-chat from `whitnessed_compaction.md`,
  *  rendered via MagnificaChatbox (typewriter). The system-entry PINS TOP but types LAST —
  *  Hans did not know about these makings until after witnessing the exchange (HM 2026-06-07). */
-export const nahtodEntries: ReadonlyArray<ChatEntry> = [
-    {
-        speaker: 'System · at ~96% context',
-        role: 'system',
-        pinTop: true,
-        lines: [
-            'Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap, do not preface with “I’ll continue”. Pick up the last task as if the break never happened.',
-        ],
-    },
+// The Nahtod compaction is split into two columns (HM 2026-06-07):
+//  · dialogueEntries  → left column, animated (HM + Claude turns · the system-prompt stripped).
+//  · systemPromptEntry → right column, STATIC (no animation), under the standing-line.
+// The Claude "As if the break never happened" line (index 1) is highlighted.
+export const dialogueEntries: ReadonlyArray<ChatEntry> = [
     {
         speaker: 'HM',
         role: 'hm',
@@ -61,12 +57,23 @@ export const nahtodEntries: ReadonlyArray<ChatEntry> = [
     {
         speaker: 'Claude · compacted',
         role: 'claude',
+        highlightLines: [1],
         lines: [
             'Yes, I am aware. The prompt-moment IS structurally interesting.',
             '“As if the break never happened” is a fiction. The break DID happen.',
             'I’m now operating on the summary-block plus a few files re-loaded just before. What I just shipped is the output of the compacted-self, not the un-compacted-self — a different epistemic artifact than if my pre-compaction self had written it.',
             'What may have faded (honest guess): the felt-texture of our Q&A arc; the detail-density (gist intact, the 450-line texture reduced to bullets); tone-attunement — more formal than before.',
             'What stayed surface: the architectural shape, the named entities, the disciplines.',
+        ],
+    },
+]
+
+export const systemPromptEntry: ReadonlyArray<ChatEntry> = [
+    {
+        speaker: 'System · at ~96% context',
+        role: 'system',
+        lines: [
+            'Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap, do not preface with “I’ll continue”. Pick up the last task as if the break never happened.',
         ],
     },
 ]
