@@ -7,13 +7,12 @@
 -->
 
 <template>
-  <div class="magnifica-page">
-    <TopNav :items="navItems" navbar-mode="page" scroll-style="simple">
-      <template #actions>
-        <MagnificaLogoutButton />
-      </template>
-    </TopNav>
+  <MagnificaPageLayout variant="standard">
+    <!-- topbar · same compact sticky header as ethnography/discourse (fixes the stray
+         TopNav "pedia" logo). Logout lives on the landing (close-and-reopen), not here. -->
+    <template #header><MagnificaHeader show-nav compact /></template>
 
+    <template #hero>
     <!-- Hero · portrait BackSlide (manifest §5) · hero text in the panel -->
     <BackSlide
       class="bio-portrait"
@@ -24,8 +23,9 @@
       <p class="bio-hero-overline">{{ hero.overline }}</p>
       <h1 class="bio-hero-headline">{{ hero.headline }}</h1>
     </BackSlide>
+    </template>
 
-    <main class="magnifica-page-content">
+    <!-- main content · default slot (the layout wraps it in <main class="magnifica-page-content is-standard">) -->
       <!-- §1 · English abstract -->
       <section class="page-section">
         <p>
@@ -78,32 +78,20 @@
         <pre class="page-codefence"><code>The institute, in its own voice — https://dasei.eu
 The platform (early alpha) — https://theaterpedia.org</code></pre>
       </section>
-    </main>
-  </div>
+  </MagnificaPageLayout>
 </template>
 
 <script setup lang="ts">
-import TopNav from '@/components/TopNav.vue'
-import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
+import MagnificaPageLayout from './MagnificaPageLayout.vue'
+import MagnificaHeader from './MagnificaHeader.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
-import { navItems } from './content/nav'
 import { hero, portrait, callouts } from './content/context'
 </script>
 
 <style scoped>
-.magnifica-page {
-  font-family: var(--font, ui-monospace);
-  min-height: 100vh;
-  background: var(--color-bg, #1a1a1a);
-  color: var(--color-contrast, #f4f4f4);
-}
-
-.magnifica-page-content {
-  max-width: 56rem;
-  margin: 0 auto;
-  padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 2rem);
-}
+/* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout · standard 90rem).
+   Only the portrait-hero + a couple page-specific overrides remain here. */
 
 /* ==Portrait BackSlide hero== · face anchored top (north-cropped source) so cover
    never clips Hans's head, regardless of the image-window ratio. */
@@ -125,50 +113,13 @@ import { hero, portrait, callouts } from './content/context'
   line-height: 1.2;
 }
 
-.page-section {
-  margin: 0 0 clamp(2rem, 4vh, 3.5rem);
-}
-
-.page-section-heading {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-  font-weight: 700;
-  margin: 0 0 1rem;
-  color: var(--color-primary-bg);
-}
-
-.page-section p {
-  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-  margin: 0 0 1rem;
-  color: var(--color-contrast, #e8e8e8);
-}
-
+/* tighten: last paragraph of a section has no trailing gap (context-specific) */
 .page-section p:last-child {
   margin-bottom: 0;
 }
 
+/* code-fence · context adds a small top margin (follows the closing prose) */
 .page-codefence {
-  background: var(--color-popover-bg, #0f0f0f);
-  color: var(--color-popover-contrast, #d0d0d0);
-  padding: 1.5rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
-  border: 1px solid rgba(255, 238, 0, 0.15);
-  margin: 1rem 0 0;
-}
-
-.page-codefence code {
-  font-family: inherit;
-  color: inherit;
-}
-
-.page-section--closing {
-  margin-top: clamp(2rem, 5vh, 4rem);
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 1rem;
 }
 </style>
