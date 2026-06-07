@@ -16,7 +16,9 @@
     <template #header><MagnificaHeader show-nav compact /></template>
 
     <template #hero>
-    <!-- Hero · 90rem · the methodology-frame lives inside it -->
+    <!-- Hero · 90rem (magnifica). The banner reuses the framework components instead of
+         hand-rolled markup: <Banner transparent> (the translucent panel) wrapping
+         <Heading> (the overline-headline pair) + the methodology-frame paragraph. -->
     <Hero
       class="ethno-hero"
       magnifica
@@ -28,9 +30,10 @@
       gradient_type="left-bottom"
       :gradient_depth="0.85"
     >
-      <p class="page-hero-overline">{{ hero.overline }}</p>
-      <h1 class="page-hero-headline">{{ hero.headline }}</h1>
-      <p class="page-hero-frame">{{ methodologyFrame }}</p>
+      <Banner transparent>
+        <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
+        <p class="ethno-hero-frame">{{ methodologyFrame }}</p>
+      </Banner>
     </Hero>
 
     <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
@@ -130,6 +133,8 @@
 
 <script setup lang="ts">
 import Hero from '@/components/Hero.vue'
+import Banner from '@/components/Banner.vue'
+import Heading from '@/components/Heading.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
@@ -179,6 +184,15 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
    Page-level :deep into the Hero content (HM 2026-06-07). Tune with the shortened frame text. */
 .ethno-hero :deep(.hero-content) {
   bottom: 2rem;
+}
+
+/* the methodology-frame paragraph below the <Heading> inside the <Banner> */
+.ethno-hero-frame {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
+  line-height: 1.7;
+  color: var(--color-contrast);
 }
 
 /* §C · the 3-point decision as a called-out artifact in the right column (border-left
