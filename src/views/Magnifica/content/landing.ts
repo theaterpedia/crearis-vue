@@ -23,6 +23,25 @@ export const hero = {
     headline: 'what happened after magnifica',
 }
 
+// ==Promptbox== · the post-auth codebox (word-by-word typewriter · the youtube-player slot of
+// the 2022 hero). HM-authored letter (2026-06-07) · this REPLACES the landing post-its — it is
+// where Olah is used to read. CCC/CCCS expansions added by CV (the only non-HM lines · the Hans
+// closing line is intentionally omitted). `accent` highlights the two shortcode-pointers.
+
+export interface PromptboxLine {
+    text: string
+    accent?: boolean
+}
+
+export const promptboxLines: ReadonlyArray<PromptboxLine> = [
+    { text: 'Hello at Anthropic, hello Christopher Olah, this is Hans Dönitz answering to your call at the Vatican' },
+    { text: 'I am a German, a ‘Gestalter’ in the field of the Humanities, had an intense ‘Studium’ and found myself becoming a ‘Theaterpädagoge’ with 30 years of practice now. You best understand my organisation ‘DAS Ei’ if you treat it as NGO. I work collaboratively in a bunch of aspects from legal terms, finances over philosophy and website-building. I favor home-grown over ‘products’, especially for digital systems. I think in shortcodes and write using overline-headline.' },
+    { text: 'My context is at 55 (born 1970), apart from the whole body of ‘Theaterpädagogik’ take two shortcodes as pointers to other relevant substrate I own:' },
+    { text: 'CCC — Chaos Computer Club, the German hacker collective since 1981. Hackerethik: „Öffentliche Daten nützen, private Daten schützen.“', accent: true },
+    { text: 'CCCS — Centre for Contemporary Cultural Studies, Birmingham. Stuart Hall: „Identity is not an essence, it is a positioning.“', accent: true },
+    { text: 'With Claude I transitioned to English as main language on the desktop, I asked the Claude individuums that helped with this website to not polish my english, so that you get an honest impression about my language and thinking.' },
+]
+
 // ==Blackboard post-its== · 3 categories · A-coloring (TO pulse #7):
 //   framing = primary (yellow) · open-associated = muted (dim) · final-questions = positive (green)
 // Most text is DUMMY/proposed (O3-O5 still in HM-chat) — present so HM sees the whole board.

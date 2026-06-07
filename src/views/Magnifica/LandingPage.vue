@@ -1,14 +1,11 @@
 <!--
-  LandingPage · Magnifica response-page root (/) · the RESTRUCTURE per
-  projects/magnifica/final/landing-proposal.md (HM-audited 2026-06-06).
+  LandingPage · Magnifica response-page root (/) · Entry/Landing redesign (HM 2026-06-07).
 
-  Pre-auth: EntryHero shows the 6-beat password-gate. Post-auth (proposal §9):
-    [static blackboard · hero title+subtitle + pinned post-its]   ← CardsCanvas board-mode (Q1 static)
-    [backslide 1 · before magnifica]                              ← BackSlide
-    [backslide 2 · after magnifica]                               ← BackSlide (facing-inverse · E pending HM-chat)
-    [3 navcards · Cultural-Studies lanes · D-coloring]
-    [page-bottom · Hans-voice closing + close-and-reopen]
-  Engagement-shapes CUT (§8) · the ~210-word opener CUT · Wege CUT.
+  Pre-auth: EntryHero · 2-beat gate (header + password). Post-auth: the 2022 hero shape —
+  big header (+nav) · left-column headline (placeholder · "Websites … gesucht" slot) · and
+  on the right the PROMPTBOX (codebox letter, word-by-word) where 2022 had the youtube-player.
+  The promptbox REPLACES the post-it blackboard (the blackboard moved to /ethnography).
+  Below: 2 backslides · 3 navcards · Hans-voice page-bottom.
 -->
 
 <template>
@@ -16,14 +13,21 @@
     <EntryHero v-if="!isAuthenticated" />
 
     <div v-if="isAuthenticated" class="magnifica-landing-content">
+      <div class="landing-container">
+        <MagnificaHeader show-nav />
 
-      <!-- Static blackboard · hero title+subtitle in the #board slot · post-its pinned (A-coloring) -->
-      <CardsCanvas :items="landingPostits" class="landing-board">
-        <template #board>
-          <span class="landing-board-overline">{{ hero.overline }}</span>
-          <span class="landing-board-title">{{ hero.headline }}</span>
-        </template>
-      </CardsCanvas>
+        <!-- 2022 hero shape · left headline + right promptbox -->
+        <section class="landing-hero">
+          <div class="landing-hero-left">
+            <p class="landing-hero-overline">{{ hero.overline }}</p>
+            <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
+            <!-- TODO HM: the "Websites Theaterpädagogik dringend gesucht!" left-column copy. -->
+          </div>
+          <div class="landing-hero-right">
+            <MagnificaPromptbox :lines="promptboxLines" />
+          </div>
+        </section>
+      </div>
 
       <!-- 2 backslides · before / after magnifica -->
       <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor">
@@ -63,7 +67,6 @@
           </p>
         </section>
 
-        <!-- Close-and-reopen action -->
         <p class="magnifica-landing-actions">
           <MagnificaLogoutButton />
         </p>
@@ -76,13 +79,14 @@
 import { RouterLink } from 'vue-router'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
-import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
+import MagnificaHeader from './MagnificaHeader.vue'
+import MagnificaPromptbox from './MagnificaPromptbox.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import {
   hero,
-  landingPostits,
+  promptboxLines,
   backslide1,
   backslideIntro,
   backslide2,
@@ -103,27 +107,44 @@ const { isAuthenticated } = useMagnificaAuth()
 }
 
 .magnifica-landing-content {
-  background: var(--color-bg);}
-
-/* ==Blackboard== · hero title+subtitle live on the board surface */
-.landing-board :deep(.bb-board-prose) {
-  max-width: 34rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  background: var(--color-bg);
+  color: var(--color-contrast);
 }
 
-.landing-board-overline {
+.landing-container {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 6vw, 3rem) clamp(2rem, 5vh, 4rem);
+}
+
+/* 2022 hero · left text · right promptbox */
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+  padding-top: clamp(1rem, 4vh, 3rem);
+}
+
+.landing-hero-overline {
   font-size: 0.875rem;
   color: var(--color-muted-contrast);
+  margin: 0 0 0.75rem;
   letter-spacing: 0.02em;
 }
 
-.landing-board-title {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+.landing-hero-headline {
+  font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 700;
-  line-height: 1.1;
+  margin: 0;
+  line-height: 1.15;
   color: var(--color-primary-bg);
+}
+
+@media (max-width: 860px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ==Backslides== */
@@ -132,7 +153,8 @@ const { isAuthenticated } = useMagnificaAuth()
   margin: 0 auto;
   padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 6vw, 3rem);
   font-size: clamp(1rem, 2vw, 1.25rem);
-  font-style: italic;}
+  font-style: italic;
+}
 
 /* ==Centered column for navcards + closing== */
 .landing-narrow {
