@@ -104,6 +104,10 @@ const { isAuthenticated } = useMagnificaAuth()
 <style scoped>
 .magnifica-landing {
   font-family: var(--font, ui-monospace);
+  /* Chrome scroll-anchoring nudges scrollY when the sticky header collapses (State A→B),
+     which re-crosses the threshold and flickers heavily. Opt the landing content out of
+     anchoring (Firefox was already fine); paired with the header's hysteresis dead-band. */
+  overflow-anchor: none;
 }
 
 .magnifica-landing-content {
