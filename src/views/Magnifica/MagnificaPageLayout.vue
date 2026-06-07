@@ -26,10 +26,13 @@
       <slot />
     </main>
     <slot name="after" />
+    <MagnificaFooter />
   </div>
 </template>
 
 <script setup lang="ts">
+import MagnificaFooter from './MagnificaFooter.vue'
+
 withDefaults(defineProps<{ variant?: 'standard' | 'scientific' }>(), {
   variant: 'standard',
 })
