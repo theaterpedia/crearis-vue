@@ -34,6 +34,11 @@ When you touch a **shared / mainline** component (Hero, TopNav, FloatingPostIt, 
 - Type → `var(--font)` (theme-7 = MonaspaceNeon, already loaded).
 - If text/colour renders wrong, **suspect a local override fighting the token** before anything
   else (that was the contrast bug + the font bug).
+- **Headings: use `Heading.vue`** — `<Heading is="h1|h2" :overline :headline>` — for every
+  hero/board overline-headline. Never hand-roll `overline`+`<h1>` spans (they mis-inherit the
+  font + rhythm). It's Prose-wrapped and renders correctly in theme-7 with no per-page typography.
+  The magnifica hero recipe: `Hero magnifica` + `Heading` (+ optional bottom-weighted `overlay`
+  for legibility on busy images — ethnography uses it; discourse omits it).
 
 ## 4 · Branch + PR rhythm (how we avoid colliding)
 

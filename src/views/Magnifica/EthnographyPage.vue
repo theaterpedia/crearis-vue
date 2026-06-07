@@ -36,8 +36,7 @@
     <!-- the blackboard · sticky-scroll timeline cards (5 example entries) -->
     <CardsCanvas :items="timelinePostits" class="ethno-board" bounded>
       <template #board>
-        <span class="ethno-board-overline">nine months · field-notes</span>
-        <span class="ethno-board-title">How the bridge built itself</span>
+        <Heading is="h2" overline="nine months · field-notes" headline="How the bridge built itself" />
       </template>
     </CardsCanvas>
     </template>
@@ -166,21 +165,8 @@ const heroOverlay =
   }
 }
 
-/* explicit var(--font) · the slot spans weren't inheriting MonaspaceNeon reliably */
-.ethno-board-overline {
-  font-family: var(--font, ui-monospace);
-  font-size: 0.875rem;
-  color: var(--color-muted-contrast);
-  letter-spacing: 0.02em;
-}
-
-.ethno-board-title {
-  font-family: var(--font, ui-monospace);
-  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--color-primary-bg);
-}
+/* board heading now uses the framework <Heading> (Prose-wrapped · correct MonaspaceNeon +
+   overline/headline rhythm) — replaced the hand-rolled spans whose typography hung. */
 
 /* push the (bottom-aligned) hero banner lower · the overline was floating mid-space.
    Page-level :deep into the Hero content (HM 2026-06-07). Tune with the shortened frame text. */
