@@ -1,5 +1,5 @@
 <!--
-  CulturalStudiesPage · /cultural-studies · Page 3 of cand-1c · "Between hope
+  DiscoursePage · /discourse · Page 3 of cand-1c · "Between hope
   and horror?" · Ideologie-Kritik. Per cand-1c §11.10.3 round-3 prose +
   §11.5.3 callouts + §11.10.4 bibliography.
 
@@ -119,7 +119,7 @@ import {
   bibliography,
   bibliographyNote,
   callouts,
-} from './content/cultural-studies'
+} from './content/discourse'
 </script>
 
 <style scoped>

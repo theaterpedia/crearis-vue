@@ -11,5 +11,5 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 export const navItems: ReadonlyArray<TopnavParentItem> = [
     { label: 'Claude', link: '/ethnography' },
     { label: 'Hans', link: '/hans-doenitz' },
-    { label: 'Foucault', link: '/cultural-studies' },
+    { label: 'Foucault', link: '/discourse' },
 ]
