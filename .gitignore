@@ -92,3 +92,4 @@ build/Release/
 docs/NITRO_3_NEW_BUILD.md
 server/data/import/users.csv
 docs/.vitepress/cache/
+.gitmodules
