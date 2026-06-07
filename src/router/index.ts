@@ -24,7 +24,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: () => import('@/views/Magnifica/LandingPage.vue') },
     { path: '/ethnography', component: () => import('@/views/Magnifica/EthnographyPage.vue') },
-    { path: '/hans-doenitz', component: () => import('@/views/Magnifica/HansDoenitzPage.vue') },
+    { path: '/context', component: () => import('@/views/Magnifica/ContextPage.vue') },
     { path: '/discourse', component: () => import('@/views/Magnifica/DiscoursePage.vue') },
     // Catch-all · any other path redirects to landing (the gate is at /)
     { path: '/:pathMatch(.*)*', redirect: '/' },

@@ -1,5 +1,5 @@
 <!--
-  HansDoenitzPage · /hans-doenitz · Page 2 of cand-1c · "Organic intellectual".
+  ContextPage · /context · Page 2 of cand-1c · "Organic intellectual".
   Per cand-1c §11.10.2 + §11.5.2 callouts. German body preserved monolingual
   per HM-Q1 resolution; English wrapper (abstract + intro + closing) carries
   the through-line for non-German readers. dasei.eu link as institutional-anchor.
@@ -104,7 +104,7 @@ import {
   daseiLink,
   englishClosing,
   callouts,
-} from './content/hans-doenitz'
+} from './content/context'
 </script>
 
 <style scoped>
