@@ -16,6 +16,7 @@
     <template #hero>
     <!-- Hero · HM-provided image (Hans as harsh critique) + overline-headline -->
     <Hero
+      magnifica
       height-tmp="full"
       :img-tmp="hero.image"
       img-tmp-align-x="cover"

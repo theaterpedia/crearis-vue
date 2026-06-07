@@ -18,6 +18,7 @@
     <template #hero>
     <!-- Hero · 90rem · the methodology-frame lives inside it -->
     <Hero
+      magnifica
       height-tmp="full"
       :img-tmp="hero.image"
       img-tmp-align-x="cover"
