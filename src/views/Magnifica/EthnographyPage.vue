@@ -11,10 +11,11 @@
 -->
 
 <template>
-  <div class="magnifica-page">
+  <MagnificaPageLayout variant="standard">
     <!-- topbar · same header as landing, always-compact (no State-A), sticky -->
-    <div class="magnifica-header-wrap"><MagnificaHeader show-nav compact /></div>
+    <template #header><MagnificaHeader show-nav compact /></template>
 
+    <template #hero>
     <!-- Hero · 90rem · the methodology-frame lives inside it -->
     <Hero
       height-tmp="full"
@@ -37,8 +38,9 @@
         <span class="ethno-board-title">How the bridge built itself</span>
       </template>
     </CardsCanvas>
+    </template>
 
-    <main class="magnifica-page-content">
+    <!-- main content · default slot (the layout wraps it in <main class="magnifica-page-content">) -->
       <!-- the timeline, in full prose (repeated below the blackboard) -->
       <section class="page-section">
         <p><strong>Late 2025 · first contact.</strong> Like many people, I first met Claude inside VS Code. Half a year of using it for exploration and implementation. Prompt-focused. Markdown and source-code as the targets. Useful, but tool-shaped — Claude as autocomplete-with-judgment.</p>
@@ -115,13 +117,13 @@
         <p class="page-spleen-question">Is this simply my personal spleen — or is it about something that is generally important?</p>
         <p>I keep the question open here. The answer — to the degree I have one — lives on Page 3.</p>
       </section>
-    </main>
-  </div>
+  </MagnificaPageLayout>
 </template>
 
 <script setup lang="ts">
 import Hero from '@/components/Hero.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
+import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
@@ -129,48 +131,8 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
 </script>
 
 <style scoped>
-.magnifica-page {
-  font-family: var(--font, ui-monospace);
-  min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-contrast);
-}
-
-/* non-scientific page → 90rem centered (HM 2026-06-07) */
-.magnifica-page-content {
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 2rem);
-}
-
-.page-hero-overline {
-  font-size: 0.875rem;
-  color: var(--color-muted-contrast);
-  margin: 0 0 0.5rem;
-  letter-spacing: 0.02em;
-}
-
-.page-hero-headline {
-  font-size: clamp(1.75rem, 4.5vw, 3rem);
-  font-weight: 700;
-  margin: 0 0 0.75rem;
-  line-height: 1.2;
-}
-
-/* the "This is ethnography" frame · inside the hero */
-.page-hero-frame {
-  max-width: 42rem;
-  margin: 0;
-  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-}
-
-/* topbar · same 90rem inset as the landing header */
-.magnifica-header-wrap {
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: 0 clamp(1rem, 6vw, 3rem);
-}
+/* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout).
+   Only the blackboard (CardsCanvas) board-prose styling is page-unique here. */
 
 /* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content
    (hero pl 1rem + Container 2.75rem = 3.75rem · mobile 1rem) so the heading lines up
@@ -202,107 +164,4 @@ import { hero, methodologyFrame, timelinePostits, spawnPromptCodeFence, nahtodEn
   color: var(--color-primary-bg);
 }
 
-.page-section {
-  margin: 0 0 clamp(2rem, 4vh, 3.5rem);
-}
-
-.page-section-heading {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-  font-weight: 700;
-  margin: 0 0 1rem;
-  color: var(--color-primary-bg);
-}
-
-.page-section-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-muted-contrast);
-  margin: 0 0 0.75rem;
-}
-
-.page-section p {
-  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-  margin: 0 0 1rem;
-}
-
-.page-frame {
-  font-style: italic;
-  color: var(--color-muted-contrast) !important;
-  border-left: 3px solid var(--color-primary-bg);
-  padding-left: 1.25rem;
-}
-
-.page-list,
-.page-flip-list {
-  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-  padding-left: 1.5rem;
-  margin: 0 0 1rem;
-}
-
-.page-list li,
-.page-flip-list li {
-  margin-bottom: 0.75rem;
-}
-
-.page-flip-hinge {
-  font-weight: 700;
-  color: var(--color-primary-bg) !important;
-}
-
-.page-standing-line {
-  font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
-  font-weight: 700;
-  color: var(--color-primary-bg) !important;
-  text-align: center;
-  margin: clamp(1.5rem, 4vh, 2.5rem) 0 !important;
-}
-
-/* §F · 2-col (text | code) */
-.page-section--twocol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .page-section--twocol {
-    grid-template-columns: 1fr;
-  }
-}
-
-.page-spleen-question {
-  font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
-  font-weight: 700;
-  color: var(--color-primary-bg) !important;
-  margin: clamp(1.25rem, 3vh, 2rem) 0 !important;
-}
-
-.page-section--closing {
-  margin-top: clamp(2rem, 5vh, 4rem);
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.page-codefence {
-  background: var(--color-popover-bg);
-  color: var(--color-popover-contrast);
-  padding: 1.5rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
-  border: 1px solid var(--color-border);
-  margin: 0;
-}
-
-.page-codefence code {
-  font-family: inherit;
-  color: inherit;
-}
 </style>

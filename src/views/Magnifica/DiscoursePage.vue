@@ -9,10 +9,11 @@
 -->
 
 <template>
-  <div class="magnifica-page">
+  <MagnificaPageLayout variant="scientific">
     <!-- topbar · same header as landing, always-compact, sticky -->
-    <div class="magnifica-header-wrap"><MagnificaHeader show-nav compact /></div>
+    <template #header><MagnificaHeader show-nav compact /></template>
 
+    <template #hero>
     <!-- Hero · HM-provided image (Hans as harsh critique) + overline-headline -->
     <Hero
       height-tmp="full"
@@ -26,9 +27,10 @@
       <p class="page-hero-overline">{{ hero.overline }}</p>
       <h1 class="page-hero-headline">{{ hero.headline }}</h1>
     </Hero>
+    </template>
 
-    <main class="magnifica-page-content">
-      <article class="page-body">
+    <!-- main content · default slot (the layout wraps it in <main class="magnifica-page-content is-scientific">) -->
+    <article class="page-body">
         <p>
           Raymond Williams, 1958: <strong><em>Culture is ordinary.</em></strong> The cornerstone of the tradition that took shape from 1964 onward — Richard Hoggart founded the CCCS, Stuart Hall and Williams shaped it. The line is short and load-bearing. It refuses the high/low-culture split, places lived-practice at the centre of analysis.
           <CalloutPhrase :callout="callouts.cccs">Cultural Studies</CalloutPhrase>
@@ -151,19 +153,21 @@
         </p>
 
         <pre class="page-codefence"><code>{{ citationBlock }}</code></pre>
-      </article>
-    </main>
+    </article>
 
     <!-- Glossary mode (Q2): the open glosses stack (right-lane on wide viewports) +
          a scan-and-dismiss reading-trail rail. CalloutPhrase routes through the controller. -->
-    <FpostitRenderer />
-    <FpostitGlossary />
-  </div>
+    <template #after>
+      <FpostitRenderer />
+      <FpostitGlossary />
+    </template>
+  </MagnificaPageLayout>
 </template>
 
 <script setup lang="ts">
 import { provide } from 'vue'
 import Hero from '@/components/Hero.vue'
+import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
@@ -178,49 +182,9 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 </script>
 
 <style scoped>
-.magnifica-page {
-  font-family: var(--font, ui-monospace);
-  min-height: 100vh;
-  background: var(--color-bg);}
-
-/* topbar · same 90rem inset as the landing header */
-.magnifica-header-wrap {
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: 0 clamp(1rem, 6vw, 3rem);
-}
-
-/* scientific: a 90rem-centered container (same inset as the header) holding a 56rem
-   LEFT-aligned prose column — so the prose-left lines up with the top-bar header-left,
-   and the right of the container is the post-it lane (glosses open hlogic 'right'). */
-.magnifica-page-content {
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 6vw, 3rem);
-}
-
-.page-body {
-  max-width: 56rem;
-}
-
-.page-hero-overline {
-  font-size: 0.875rem;
-  color: var(--color-muted-contrast);
-  margin: 0 0 0.5rem;
-  letter-spacing: 0.02em;
-}
-
-.page-hero-headline {
-  font-size: clamp(1.75rem, 4.5vw, 3rem);
-  font-weight: 700;
-  margin: 0 0 0.75rem;
-  line-height: 1.2;
-}
-
-.page-body p {
-  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
-  line-height: 1.7;
-  margin: 0 0 1.25rem;}
+/* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout · scientific
+   variant: 90rem container, 56rem left .page-body lane, right gloss-lane). Only the
+   page-3-unique decorations remain here. */
 
 /* Cixous block · the structural centre of the page */
 .page-cixous {
@@ -241,15 +205,6 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
   color: var(--color-muted-contrast);
 }
 
-/* Standing-line · "I read this at twenty-six." */
-.page-standing-line {
-  font-size: clamp(1.0625rem, 2vw, 1.375rem) !important;
-  font-weight: 700;
-  color: var(--color-primary-bg) !important;
-  text-align: center;
-  margin: clamp(1.5rem, 4vh, 2.5rem) 0 !important;
-}
-
 /* spleen-pivot · the cross-page handle resolves here */
 .page-spleen-pivot {
   border-left: 3px solid var(--color-positive-bg);
@@ -266,22 +221,8 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
   margin-top: clamp(1.5rem, 4vh, 2.5rem);
 }
 
+/* code-fence · page-3 adds a top margin (it follows the article prose) */
 .page-codefence {
-  background: var(--color-popover-bg);
-  color: var(--color-popover-contrast);
-  padding: 1.5rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
-  border: 1px solid var(--color-border);
-  margin: clamp(1.5rem, 4vh, 2.5rem) 0 0;
-}
-
-.page-codefence code {
-  font-family: inherit;
-  color: inherit;
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
 }
 </style>
