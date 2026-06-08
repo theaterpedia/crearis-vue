@@ -16,11 +16,11 @@
 
 import type { CardsCanvasItem } from '@/components/magnifica/types'
 
-export const pageTitle = 'Between horror and hope'
+export const pageTitle = 'How should we speak to each other?'
 
 export const hero = {
     overline: 'Michel Foucault · E. Probyn · Stuart Hall — speaking position',
-    headline: 'BETWEEN HORROR AND HOPE',
+    headline: 'HOW SHOULD WE SPEAK TO EACH OTHER?',
     // HM-provided 2026-06-06 (relay): Hans as harsh critique.
     image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780764049/crearis/hans_sharp_critique.jpg',
     imageAlt: 'Hans Dönitz · sharp critique',
@@ -111,9 +111,9 @@ export const callouts: Record<string, CardsCanvasItem> = {
     diplomarbeit: {
         props: {
             overline: '170 pages · Berlin',
-            headline: 'THEATERPÄDAGOGIK AS CULTURAL STUDIES PRACTICE',
+            headline: 'WIE SOLLEN WIR SPRECHEN?',
             bodyText:
-                'My Diplomarbeit in Pädagogik (1996-1997), 170 pages, argued that Theaterpädagogik can be read as a form of Cultural Studies practice. Three professors witnessed the work from the sideline — interested but distanced — and read it through, concluding in their own ways, like an oracle. The most important message: yes, go on, devote your life to this. But spend ten years in praxis first; experience yourself performing. I took the advice. Thirty years later, the speaking-position the rest of this page is offered from is what those ten years (now thirty) earned.',
+                'My Diplomarbeit in Pädagogik (1996-1997), 170 pages, carried the title “Wie sollen wir sprechen?” — how should we speak? It was a worked model of what Foucault calls the technologies of the self, applied to Theaterpädagogik: the concrete practices through which a group learns to speak, to listen, and to shape itself. Three professors witnessed the work from the sideline — interested but distanced — and read it through like an oracle. Their message: yes, devote your life to this — but spend ten years in praxis first; experience yourself performing. I took the advice. Thirty years later, the speaking-position this page is offered from is what those years earned — and the thesis-question is the one on the cover.',
             themeColor: 'green',
         },
     },
