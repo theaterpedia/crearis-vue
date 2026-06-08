@@ -58,13 +58,15 @@
           </RouterLink>
         </nav>
 
-        <!-- Page-bottom · Hans-voice closing -->
+        <!-- Page-bottom · Hans-voice closing · genealogy-nod → honest-flag (the page ends here) -->
         <section class="landing-closing">
-          <p>{{ closingP1 }}</p>
-          <p>{{ closingP2 }}</p>
           <p>
             {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
           </p>
+          <div class="landing-honest-flag">
+            <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
+            <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
+          </div>
         </section>
 
         <p class="magnifica-landing-actions">
@@ -94,10 +96,9 @@ import {
   backslideIntro,
   backslide2,
   navCards,
-  closingP1,
-  closingP2,
   closingP3Before,
   closingP3After,
+  honestFlag,
   callouts,
 } from './content/landing'
 
@@ -235,6 +236,26 @@ const { isAuthenticated } = useMagnificaAuth()
   line-height: 1.7;
   margin: 0 0 1rem;
   color: var(--color-muted-contrast);
+}
+
+/* the honest-flag · the page's last word · lifts off the muted closing with a primary
+   overline and full-contrast body (HM-authored · bookends the opening letter). */
+.landing-honest-flag {
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+  padding-top: clamp(1.25rem, 3vh, 2rem);
+  border-top: 1px solid var(--color-border);
+}
+
+.landing-honest-flag-overline {
+  font-size: 0.875rem !important;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-primary-bg) !important;
+  margin: 0 0 0.75rem !important;
+}
+
+.landing-honest-flag p:not(.landing-honest-flag-overline) {
+  color: var(--color-contrast);
 }
 
 /* ==Close-and-reopen actions== */

@@ -103,4 +103,62 @@ export const callouts: Record<string, CardsCanvasItem> = {
             themeColor: 'dim',
         },
     },
+
+    // ==NEW callouts for the English-spine rewrite== (context-content-draft.md · HM 2026-06-08).
+    // {{please detail}} placeholders left verbatim per HM (cleaned tomorrow). The German
+    // institutional detail lives only inside these post-its (the spine stays English).
+    figurGrund: {
+        props: {
+            overline: 'the Gestalt word',
+            headline: 'FIGURE AND GROUND',
+            bodyText:
+                'Perception’s oldest pair: the figure only reads against its ground. Hans is the figure, DAS Ei the ground — reversibly. Neither spells without the other; yet it is no one-person show. The page is named context because that is what a ground is.',
+            themeColor: 'yellow',
+        },
+    },
+    performativeTurn: {
+        props: {
+            overline: 'after the linguistic turn',
+            headline: 'THE BODY AS EPISTEMIC TARGET',
+            bodyText:
+                '{{please detail: years · that Eleanora + Rosalin pushed it · the Cojc-then-DAS-Ei path}}. The shift from the story to the body as where knowing happens. Hans came up under Cultural Studies (the word); his colleagues turned the Institute toward the body.',
+            themeColor: 'green',
+        },
+    },
+    raumlauf: {
+        props: {
+            overline: 'naming the unspoken',
+            headline: 'THE ROOM-WALK',
+            bodyText:
+                'Everyone did it; no one had a Terminus for it (“ok, wir laufen durch den Raum”). With Eleanora and the Bundesverband’s 1. Vorsitzende, three articles gave it a name — the first time. One of the 3–4 dominant settings of Theaterpädagogik; the Kreis is its sibling. {{please detail: years · the interesting line to the Aboriginal walkabout · the near-encounter with Elspeth Probyn}}.',
+            themeColor: 'green',
+        },
+    },
+    schwebezustaende: {
+        props: {
+            overline: 'a coined term',
+            headline: 'OPENLY DECOUPLED',
+            bodyText:
+                'A phenomenological term Hans and Rosalin coined: the intrapersonal state of being openly decoupled — not positive, not negative — one of the strongest effects of Theaterpädagogik on the Individuum, on the performative side. (The same word Hans reaches for on /discourse, for what working with the compacted Claude did to him.)',
+            themeColor: 'pink',
+        },
+    },
+    theaterpediaOpen: {
+        props: {
+            overline: 'the Open Phase',
+            headline: 'OPEN, OR IT DIES',
+            bodyText:
+                '{{please detail: Vue-not-React 2018 (wife) · Evan You on the inner wall · the Facebook–WordPress/Gutenberg cautionary tale · “not all open source is good open source” · the two grants (Fonds Soziokultur + Kulturstiftung der Länder) · conferences NOV 2022/24/25 · Odoo since MAR 2026 · Beta coming}}. The claim against the field’s Privatwissen: only open-and-together survives.',
+            themeColor: 'yellow',
+        },
+    },
+    fiveHands: {
+        props: {
+            overline: 'the hope, not naive',
+            headline: '5–10 HANDS',
+            bodyText:
+                'What Claude could be for: the small, open, human-scale builder — Muris, pi0, Hans — suddenly able to deliver a vision larger than one person could. Used in the open, with honest discourse, the right kind of push. {{please detail: Muris Ceman · pi0 one-liners}}.',
+            themeColor: 'green',
+        },
+    },
 }

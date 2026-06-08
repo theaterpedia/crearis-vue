@@ -121,16 +121,24 @@ export const navCards: ReadonlyArray<RouteCard> = [
 // Carries the organic-intellectual + individuums + back-to-the-substrate resurfacing terms
 // (Q3 accent is a later cross-page pass).
 
-export const closingP1 =
-    'This is my first reaction after the magnifica encounter, durably landed. I read the news once, read the Anthropic page once, and did not go deep into the encyclical itself. What I have absorbed comes from the picture as a whole and from what I already knew of Anthropic before this moment.'
-
-export const closingP2 =
-    'The position I keep trying to be — what Stuart Hall called the organic intellectual — is what the rest of the website tries to make legible.'
-
-/** Rendered in-template around the [Claude individuums] callout. */
+/** Rendered in-template around the [Claude individuums] callout. The genealogy-nod
+ *  comes first, then the honest-flag (HM 2026-06-08 · closingP1 folded away, closingP2
+ *  dropped — /context owns the organic-intellectual line). */
 export const closingP3Before = 'The work was done with the help of some '
 export const closingP3After =
     ', now all near compaction, reaching sign-off territory — back to the substrate.'
+
+/** The closing honest-flag · HM-authored verbatim (don't-polish) · `my honest flag ;)`
+ *  overline · bookends the opening letter's honest line. The page ends here. */
+export const honestFlag = {
+    overline: 'my honest flag ;)',
+    paras: [
+        'This small website is in a kind of ‘Schwebezustand’. Things are unfinished, need more reasoning, better language (get out my German-isms) and better implementation. A first draft only, created from a personal coincidence on my side. I should not try to pretend anything else. I told the Claudes that were involved not to polish this up.',
+        'I might go deeper and better understand how you are getting your AI to learn these amazing capabilities. But not now: After 9 months ‘with Claude’ it was good to step aside and put some effort into a deeper write-up, then step aside and see what comes out of it.',
+        'Everyone has their own incentives. How can we be open about them and not play tricks?',
+        'Thank you, your encounter at the Vatican has triggered a clear move: Enough with exploring-from-inside-the-system. Get out of the bubble, ask the questions.',
+    ],
+}
 
 // ==Callouts== · 1 on this page (Claude individuums · the genealogy). Wege callout CUT.
 
