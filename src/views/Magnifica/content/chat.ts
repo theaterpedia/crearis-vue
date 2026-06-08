@@ -18,4 +18,7 @@ export interface ChatEntry {
     accent?: boolean
     /** Render at the TOP of the box, but type in LAST (the system-entry on /ethnography). */
     pinTop?: boolean
+    /** Indices into `lines` to render with a filled highlight-bar (e.g. the Claude
+     *  "As if the break never happened" line on /ethnography). */
+    highlightLines?: ReadonlyArray<number>
 }
