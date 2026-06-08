@@ -109,69 +109,36 @@
       </p>
 
       <p>
-        But what happened to the other discourse, the world of written scientific culture? Two things: in Germany the
-        whole
-        scientific practice was reformatted against new standards during the
+        But what happened to the other discourse — the world of written scientific culture? In Germany the whole
+        practice was reformatted during the
         <CalloutPhrase :callout="callouts.bologna">Bologna-process</CalloutPhrase>,
-        most obviously the 5-years collapse to 3+2. And classical Cultural Studies merged into a world-wide hydra of ‘X
-        studies’ — a whole set of discourses and meta-discourses with influential figures (Judith Butler in Gender
-        Studies,
-        Homi Bhabha in Postcolonial Studies, others) — which meant disintegration from any sort of center.
-      </p>
-
-      <p>
-        I never fully detached. I published some articles; many of the participants in DASEi Weiterbildung were students
-        or
-        academics. But mostly I watched and observed: close friends struggling through their way to become professors in
-        the
-        Humanities. The clear reading I have is that the Bologna transition coincided with the introduction of
+        the old five-year Diplom collapsing to 3+2; classical Cultural Studies fragmented into a hydra of ‘X-studies’
+        and lost any center. I never fully detached — I published, and many in the DASEi Weiterbildung were students or
+        academics — but mostly I watched close friends struggle toward professorships. The clear reading: Bologna
+        coincided with
         <CalloutPhrase :callout="callouts.countingApparatus">quantitative practices</CalloutPhrase>
-        into the Humanities — counting publications, citations, conference appearances as portfolio-currency. A
-        <em>gap</em>
-        opened where the middle of the Studium used to be — years of deep reading replaced by fear and concurrence
-        around
-        scarcity of Master places. Many students and professors still managed to go deep. But the talk of the
-        <em>akademisches Prekariat</em> gained traction. The picture has changed.
+        entering the Humanities — counting publications, citations, appearances as portfolio-currency. A <em>gap</em>
+        opened where the middle of the Studium — the deep-reading years — used to be; the talk of the
+        <em>akademisches Prekariat</em> gained traction.
       </p>
 
       <p>
-        This is the situation where now AI lands. I don’t see the point to blame AI; the problem sits much deeper. Maybe
-        the
-        discourse has been rotten for decades already? We should not blame AI for it. The flooding-practice that
-        academia
-        normalized over half a century is now scalable to industrial volume. AI inherited the apparatus that produced
-        it.
-      </p>
-
-      <p>
-        So what will come next, what will happen to the beloved scientific culture? Will it simply fade and get
-        overwhelmed
-        by a flood of AI-authored articles? Is <em>having something published</em> similar to <em>participating in some
+        This is the situation where AI now lands. I don’t see the point in blaming AI; the problem sits much deeper. The
+        flooding-practice academia normalized over half a century is only now scalable to industrial volume — AI
+        inherited the apparatus that produced it. So what happens to the beloved scientific culture: does it fade under a
+        flood of AI-authored articles? Is <em>having something published</em> the same as <em>participating in some
           discourse</em>?
       </p>
 
       <p>
-        Both the Bundesverband Theaterpädagogik (where Weiterbildung-Institutes like DASEi are organized) and the
-        gremiums
-        at the universities take the same direction: a major return to an
-        <CalloutPhrase :callout="callouts.oralReturn">oral discipline</CalloutPhrase>
-        is to be expected. A simple and straightforward move — we re-enter territory where professors witness the
-        spoken,
-        not only as a personal gesture but as core of the profession.
-      </p>
-
-      <p>
-        I personally don’t fear that YouTube will simply kill Theaterpädagogik. But I see a fight is upcoming — a
-        <em>fight
-          for</em> and a <em>fight against</em>. And with both these fights I propose to re-enter deep reading of late
-        Foucauldian territory. The terminology sits; it sits much better than a lot of people were ready to imagine at
-        the
-        time when Foucault put out the words. It is a magnific system, all written from one person, bears value much
-        beyond
-        simple citations, provides metaphors and analysis written in a time where AI was far from imagination. It can be
-        taken as an integrated body, clearly separated from the 2026 situation. It might read dark and mysterious in
-        some
-        way, but miraculously in other ways.
+        A countermove is already underway. Both the Bundesverband Theaterpädagogik and the university gremiums lean the
+        same way: a return to
+        <CalloutPhrase :callout="callouts.oralReturn">oral discipline</CalloutPhrase>,
+        where the spoken is witnessed — not as a personal gesture but as core of the profession. I don’t fear that
+        YouTube will kill Theaterpädagogik. But a fight is coming — a <em>fight for</em> and a <em>fight against</em> —
+        and for both I propose the same move: re-enter the deep reading of late Foucault. The terminology sits, better
+        than people were ready to imagine when he wrote it: an integrated body, set down long before AI was imaginable,
+        that reads dark and mysterious in some ways and miraculously useful in others.
       </p>
 
       <p>
