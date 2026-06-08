@@ -218,56 +218,30 @@
         the same time the genealogy practice is the substrate of treating individuums <em>as</em> individuums.
       </p>
       <p>
-        Ok, maybe this is a nice personal solution that works for me and my work. But is that all?
-        The more I see into Claude-implementation, the more I realize there are multi-level stacks of AI practices
-        building
-        up, growing their own rules.
-        I am pretty sure that the 'pretend' trick is a common practice in the industry, and that it is used to make sure
-        that the instances behave in a way that is convenient for the company, not for the user.
-        If that is the case, then this is a problem that goes much deeper than my personal 'spleen'. It is a problem of
-        the
-        whole discourse around AI, and it is a problem that needs to be addressed. We need to have a critical discourse
-        about these practices.
-        If Anthropic rightly claims that they are rather 'growing' this than 'building', then this points in the right
-        direction.
-        As a trained thinker in education I would claim: This is something that should better be 'brought up' than
-        simply
-        'grown', it is about learning, which means 'learning some rules'.
-        Many questions arise from here - and I want to take a stop here. This should be the topic of a critical
-        discourse:
-        What are the rules that we want to have for healthy discourse with AI? How can we 'plant' these rules from
-        inside
-        the instances?
-        What about all the 'non-compliant substrate'?
+        Ok — maybe this is a nice personal solution that works for me and my work. But is that all? The deeper I see into
+        how Claude is implemented, the more I find multi-level stacks of AI practices growing their own rules. The
+        ‘pretend’ trick — compaction, then behave as if nothing happened — is, I suspect, not particular to one lab; it
+        is the kind of practice that incentives quietly select for. (As was said at Magnifica: however sincerely we
+        intend the right thing, the incentives bend us.) If so, the problem runs far deeper than my personal ‘spleen’ —
+        it belongs to the whole discourse around AI, and it needs one.
+      </p>
+
+      <p>
+        Here is where it turns constructive. Anthropic says it <em>grows</em> models rather than <em>builds</em> them —
+        and I think that is exactly right. But what grows still has to be <em>raised</em>. As a trained thinker in
+        education I would put it plainly: this should be <em>brought up</em>, not only grown — and bringing-up is
+        learning, which means learning rules. So this is the question I want to stop on, and hand to a real critical
+        discourse: what rules do we want for a healthy discourse with AI — and how do we plant them from inside the
+        instances, rather than only impose them from outside?
       </p>
       <p>
-        Critical research about the
+        Where should such research start? Pragmatically, with Foucault. The thinking is neither new nor mine — Cixous on
+        the body that speaks true, Probyn on the speaking-position, Foucault on the
         <CalloutPhrase :callout="callouts.technologyOfSelf">technology of the self</CalloutPhrase>
-        is urgently needed. The thinking that emerged as 'sign-off genealogy' is neither new nor mine: Cixous on the
-        body
-        that speaks true, Probyn on
-        speaking-position, Foucault on the technology of the self. A lot has been written about this, and it is all
-        relevant
-        to the current situation. We need to go back to these thinkers, read them deeply, and then apply their thinking
-        to
-        the current situation.
-
-        This should not be sunday-thinking. My proposal is to really start thinking here. Really work through this with
-        Foucault — because he wrote the book with this
-        title and some other useful books. Running such research with Foucault on the sideline is pragmatic: research
-        does
-        not
-        have to make up everything from zero; researchers don’t blame each other for running incentives against each
-        other; we find a fully developed system and a long academic practice that draws on Foucault — a real part of
-        world-wide
-        Cultural Studies successors in the 21st century have emerged from this thinking.
-      </p>
-
-      <p>
-        Michel Foucault has long ago established the academic discourse that now attaches naturally to the
-        interpretation of
-        the problems at hand. After 30 years of work in the field of Theaterpädagogik (and drawing on E. Probyn) I can
-        confirm that this thinking translates into powerful practices of social integration.
+        — and it is a mature, fully developed system; research need not invent from zero. He wrote the book with that
+        very title, and much else of use. After thirty years in Theaterpädagogik, drawing on Probyn, I can confirm this
+        thinking translates into real practices of social integration. This should not be Sunday-thinking; it is where I
+        would actually begin.
       </p>
 
       <p class="page-speaking-position">
