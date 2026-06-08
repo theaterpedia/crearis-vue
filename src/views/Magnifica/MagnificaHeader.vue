@@ -1,6 +1,7 @@
 <!--
   MagnificaHeader · the landing/entry header (2022 "Theaterpedia" shape, magnifica title).
-  Title "Anthropic and Magnifica Humanitas" + subline "moving past the incentives".
+  Masthead "la condition claudine" + subline "reflections after Magnifica Humanitas"
+  (HM-locked 2026-06-08 · global identity package · "humanitas" = the site's own name).
   Scroll-collapse (howto-topbar State A→B): at the top it's big with the subline; once the
   page scrolls past the threshold it shrinks and the subline goes away (sticky · CSS-animated).
   Nav appears post-auth only (`show-nav`).
@@ -8,8 +9,8 @@
 
 <template>
   <header class="mag-header" :class="{ 'is-scrolled': scrolled || compact }">
-    <a class="mag-wordmark" href="/">Anthropic and <span class="mag-wordmark-accent">Magnifica Humanitas</span></a>
-    <p class="mag-subline">moving past the incentives</p>
+    <a class="mag-wordmark" href="/">la condition <span class="mag-wordmark-accent">claudine</span></a>
+    <p class="mag-subline">reflections after Magnifica Humanitas</p>
 
     <nav v-if="showNav" class="mag-nav" aria-label="Sections">
       <RouterLink v-for="item in navItems" :key="item.link" :to="item.link" class="mag-nav-link">

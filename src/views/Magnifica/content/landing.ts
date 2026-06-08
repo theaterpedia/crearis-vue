@@ -15,7 +15,7 @@
 import type { CardsCanvasItem, PostItThemeColor } from '@/components/magnifica/types'
 import type { ChatEntry } from './chat'
 
-export const pageTitle = 'What happened after magnifica'
+export const pageTitle = 'what happened after magnifica'
 
 // ==Hero · sits on the blackboard== · title SETTLED (§3) · subtitle O6/D1 (review-open)
 

@@ -10,11 +10,13 @@
 
 import type { CardsCanvasItem } from '@/components/magnifica/types'
 
-export const pageTitle = 'Organic intellectual, grounded practice'
+export const pageTitle = 'organic intellectual, grounded practice'
 
 export const hero = {
     overline: 'Theaterpädagoge from Bavaria · Gestalter · DAS Ei e.V.',
-    headline: 'ORGANIC INTELLECTUAL, GROUNDED PRACTICE',
+    // lowercase = the page-headline voice (HM 2026-06-08 · two-register casing);
+    // UPPERCASE stays for the chalk register (post-its + callout cards).
+    headline: 'organic intellectual, grounded practice',
 }
 
 /**
@@ -34,7 +36,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'Gramsci → Hall',
             headline: 'THE TRADITION',
             bodyText:
-                'Antonio Gramsci coined the term to name intellectuals whose thought emerges from sustained involvement in the practical life of a community — distinct from traditional intellectuals operating from institutional chairs. Stuart Hall carried it into Cultural Studies. Hans took organic intellectual as the vision-of-self in 1996, age 24. I went the practitioners way; maybe more the organic than the intellectual.',
+                'Antonio Gramsci coined the term to name intellectuals whose thought emerges from sustained involvement in the practical life of a community — distinct from traditional intellectuals operating from institutional chairs. Stuart Hall carried it into Cultural Studies. Hans took organic intellectual as the vision-of-self in 1996, age 26. I went the practitioners way; maybe more the organic than the intellectual.',
             themeColor: 'yellow',
         },
     },

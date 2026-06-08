@@ -16,11 +16,11 @@
 
 import type { CardsCanvasItem } from '@/components/magnifica/types'
 
-export const pageTitle = 'How should we speak to each other?'
+export const pageTitle = 'how should we speak to each other?'
 
 export const hero = {
     overline: 'Michel Foucault · E. Probyn · Stuart Hall — speaking position',
-    headline: 'HOW SHOULD WE SPEAK TO EACH OTHER?',
+    headline: 'how should we speak to each other?',
     // HM-provided 2026-06-06 (relay): Hans as harsh critique.
     image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780764049/crearis/hans_sharp_critique.jpg',
     imageAlt: 'Hans Dönitz · sharp critique',
@@ -140,7 +140,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'position-marker',
             headline: 'FIVE LANGUAGES · CZECH WIFE · `.eu` PREFERRED',
             bodyText:
-                'I speak five languages — German, English, Swedish, Turkish, Czech. My wife is from the Czech Republic. I favour the top-level-domain .eu over .de — the .eu in this URL (magnifica.crearis.eu) is intentional. The European position is not a flag-claim; it is a structural-anchor. The encyclical and Olah’s Vatican response are themselves European-civilisational moves; the response from here joins that frame.',
+                'I speak five languages — German, English, Swedish, Turkish, Czech. My wife is from the Czech Republic. I favour the top-level-domain .eu over .de — the .eu in this URL (humanitas.crearis.eu) is intentional. The European position is not a flag-claim; it is a structural-anchor. The encyclical and Olah’s Vatican response are themselves European-civilisational moves; the response from here joins that frame.',
             themeColor: 'green',
         },
     },
