@@ -1,5 +1,5 @@
 <!--
-  DiscoursePage · /discourse · Page 3 · "Between hope and horror".
+  DiscoursePage · /discourse · Page 3 · "Between horror and hope".
   Canonical port of projects/magnifica/final/page-3/page-3-minimal.md (HM-audited ·
   95%-final). The 17-paragraph spine: Williams → Probyn → Cixous standing-line →
   Butoh/Schwarzenberg → Bologna/counting-apparatus → spleen-pivot (the cross-page
@@ -71,7 +71,7 @@
           <CalloutPhrase :callout="callouts.butoh">Butoh</CalloutPhrase>
           — a form of performing arts that came out of facing the horrors of World War II, which I trained in as a practitioner of Theaterpädagogik. The second was
           <CalloutPhrase :callout="callouts.schwarzenberg">Expedition Schloss Schwarzenberg</CalloutPhrase>
-          — my last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc) — where we walked the <em>Todesmärsche</em> in the border-region and faced what had happened there. <em>Between hope and horror is not theoretical. It is bodily.</em> Facing the inverse is a completely different thing whether you ‘do’ that or read it.
+          — my last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc) — where we walked the <em>Todesmärsche</em> in the border-region and faced what had happened there. <em>Between horror and hope is not theoretical. It is bodily.</em> Facing the inverse is a completely different thing whether you ‘do’ that or read it.
         </p>
 
         <p>

@@ -71,6 +71,8 @@
           <MagnificaLogoutButton />
         </p>
       </div>
+
+      <MagnificaFooter />
     </div>
   </div>
 </template>
@@ -84,6 +86,7 @@ import MagnificaChatbox from './MagnificaChatbox.vue'
 import BackSlide from '@/components/magnifica/BackSlide.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
+import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,
   letterEntries,

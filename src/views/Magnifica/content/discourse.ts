@@ -16,11 +16,11 @@
 
 import type { CardsCanvasItem } from '@/components/magnifica/types'
 
-export const pageTitle = 'Between hope and horror'
+export const pageTitle = 'Between horror and hope'
 
 export const hero = {
     overline: 'Michel Foucault · E. Probyn · Stuart Hall — speaking position',
-    headline: 'BETWEEN HOPE AND HORROR',
+    headline: 'BETWEEN HORROR AND HOPE',
     // HM-provided 2026-06-06 (relay): Hans as harsh critique.
     image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780764049/crearis/hans_sharp_critique.jpg',
     imageAlt: 'Hans Dönitz · sharp critique',
@@ -122,7 +122,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'post-war Japan',
             headline: 'FACING THE HORRORS, IN BODY',
             bodyText:
-                'Butoh emerged in Japan after World War II, founded by Tatsumi Hijikata and Kazuo Ohno. It is a form of performing arts that arose from facing the horrors of the war directly through movement — slow, raw, anti-aesthetic, embodied. I trained in Butoh as a practitioner of Theaterpädagogik. Facing the inverse — encountering what culture wants to forget — is part of what the form does in the body. This is one of the two anchors for the between hope and horror is not theoretical, it is bodily line.',
+                'Butoh emerged in Japan after World War II, founded by Tatsumi Hijikata and Kazuo Ohno. It is a form of performing arts that arose from facing the horrors of the war directly through movement — slow, raw, anti-aesthetic, embodied. I trained in Butoh as a practitioner of Theaterpädagogik. Facing the inverse — encountering what culture wants to forget — is part of what the form does in the body. This is one of the two anchors for the between horror and hope is not theoretical, it is bodily line.',
             themeColor: 'green',
         },
     },
@@ -131,7 +131,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'cojc · German-Czech youth-exchange',
             headline: 'WALKING THE TODESMÄRSCHE',
             bodyText:
-                'My last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc · http://cojc.eu) was Expedition Schloss Schwarzenberg — where we walked the Todesmärsche (death-march routes) of the German-Czech border-region and faced what had happened there in WWII. The biographical anchor for between hope and horror is bodily. The teenagers walked the routes. The substrate Foucault and Bourdieu and Adorno worked from is the substrate this generation now works with from the other side of the temporal arc.',
+                'My last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc · http://cojc.eu) was Expedition Schloss Schwarzenberg — where we walked the Todesmärsche (death-march routes) of the German-Czech border-region and faced what had happened there in WWII. The biographical anchor for between horror and hope is bodily. The teenagers walked the routes. The substrate Foucault and Bourdieu and Adorno worked from is the substrate this generation now works with from the other side of the temporal arc.',
             themeColor: 'green',
         },
     },
