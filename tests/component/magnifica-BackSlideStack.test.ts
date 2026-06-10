@@ -69,4 +69,27 @@ describe('BackSlideStack assembler', () => {
         expect(root.element.tagName).toBe('DIV')
         expect(root.element.children.length).toBe(2)
     })
+
+    it('propagates a stack-default scroll-over with ascending z-index per slide', () => {
+        const w = mount(BackSlideStack, { props: { slides, transition: 'scroll-over' } })
+        const sl = w.findAll('.panel-slide')
+        sl.forEach((s) => expect(s.classes()).toContain('panel-slide--scroll-over'))
+        expect(sl[0].attributes('style')).toContain('--slide-z: 0')
+        expect(sl[1].attributes('style')).toContain('--slide-z: 1')
+    })
+
+    it('lets a per-slide transition override the stack default', () => {
+        const w = mount(BackSlideStack, {
+            props: {
+                slides: [
+                    { image: '/a.jpg' },
+                    { image: '/b.jpg', transition: 'uncover' },
+                ],
+                transition: 'scroll-over',
+            },
+        })
+        const sl = w.findAll('.panel-slide')
+        expect(sl[0].classes()).toContain('panel-slide--scroll-over')
+        expect(sl[1].classes()).not.toContain('panel-slide--scroll-over')
+    })
 })

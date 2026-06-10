@@ -144,4 +144,18 @@ describe('BackSlide component', () => {
         const w = mount(BackSlide, { props: { image: '/x.jpg', panelMode: 'lane' } })
         expect(w.find('.panel-slide').classes()).toContain('panel-slide--mode-lane')
     })
+
+    // Choreography · transition (backslide-thread §4 · §9.5 step 5)
+    it('defaults to uncover (no scroll-over class · default path unchanged)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg' } })
+        expect(w.find('.panel-slide').classes()).not.toContain('panel-slide--scroll-over')
+    })
+
+    it('adds the scroll-over class + the ascending z-index var when transition="scroll-over"', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', transition: 'scroll-over', stackIndex: 3 },
+        })
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--scroll-over')
+        expect(w.find('.panel-slide').attributes('style')).toContain('--slide-z: 3')
+    })
 })

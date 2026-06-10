@@ -11,6 +11,8 @@
             :panel-mode="slide.panelMode"
             :image-right="slide.imageRight"
             :theme-color="slide.theme"
+            :transition="slide.transition"
+            :stack-index="slide.key"
             :bounded="bounded"
         />
     </div>
@@ -54,6 +56,8 @@ interface Props {
     theme?: PostItThemeColor
     /** Stack-default side-flip · each slide may override. */
     imageRight?: boolean
+    /** Stack-default choreography · `uncover` (default) or `scroll-over` · each slide may override. */
+    transition?: 'uncover' | 'scroll-over'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -77,6 +81,7 @@ const resolvedSlides = computed(() =>
         panelMode: s.panelMode ?? props.panelMode,
         imageRight: s.imageRight ?? props.imageRight,
         theme: s.theme ?? props.theme,
+        transition: s.transition ?? props.transition,
     })),
 )
 </script>

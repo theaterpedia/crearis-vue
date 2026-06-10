@@ -102,6 +102,8 @@ export interface BackSlideSpec {
     imageRight?: boolean
     /** Panel color · falls back to the stack default, then 'yellow'. */
     theme?: PostItThemeColor
+    /** Choreography · `uncover` (default) or `scroll-over`. Falls back to the stack default. */
+    transition?: 'uncover' | 'scroll-over'
 }
 
 /**

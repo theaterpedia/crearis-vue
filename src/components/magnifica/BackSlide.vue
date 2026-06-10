@@ -82,6 +82,13 @@ interface Props {
      *  (≥96rem · canon 'wide' 1536px), aligning it with the magnifica page-shell + Hero.
      *  Default false → full-bleed (unchanged for the Demo / any non-magnifica use). */
     bounded?: boolean
+    /** Choreography (backslide-thread §4). `uncover`=parallax + sticky-bottom panel (default,
+     *  unchanged) · `scroll-over`=the slide pins at top:0 and rises *over* the previous one
+     *  (pure-CSS sticky-siblings · §9.1). Set by the stack; from the 2nd slide. */
+    transition?: 'uncover' | 'scroll-over'
+    /** Stack position · supplies the ascending z-index for `scroll-over` layering (later
+     *  slides rise over earlier ones). Set by BackSlideStack; ignored for `uncover`. */
+    stackIndex?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -91,12 +98,15 @@ const props = withDefaults(defineProps<Props>(), {
     themeColor: 'yellow',
     imageRight: false,
     bounded: false,
+    transition: 'uncover',
+    stackIndex: 0,
 })
 
 const slideClasses = computed(() => {
     const classes = ['panel-slide', `panel-slide--mode-${props.panelMode}`]
     if (props.imageRight) classes.push('panel-slide--image-right')
     if (props.bounded) classes.push('panel-slide--bounded')
+    if (props.transition === 'scroll-over') classes.push('panel-slide--scroll-over')
     return classes
 })
 
@@ -105,6 +115,7 @@ const showPanelText = computed(() => props.panelMode === 'panel' || props.panelM
 
 const slideStyle = computed<Record<string, string>>(() => ({
     '--panel-image': `url('${props.image}')`,
+    '--slide-z': String(props.stackIndex),
 }))
 
 /**
@@ -263,6 +274,23 @@ const panelClasses = computed(() => {
         max-width: 90rem;
         margin-inline: auto;
     }
+}
+
+/* `transition: scroll-over` (opt-in · from the 2nd slide · backslide-thread §4/§9.1).
+   Pure-CSS sticky-siblings + ascending z-index: each scroll-over slide pins at top:0 and,
+   being later in the DOM with a higher z, rises *over* the pinned earlier slide as you
+   scroll (the Theatervorhang the blackboard / CardsCanvas already proves). The image scrolls
+   *with* the slide here — it's one moving card, not the viewport-fixed parallax of `uncover`.
+   Load-bearing: requires ancestor-purity (no transform/filter/overflow/contain/will-change
+   on any ancestor · §12) — BackSlideStack + its mounting page stay plain blocks in flow. */
+.panel-slide--scroll-over {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    z-index: var(--slide-z, 0);
+}
+.panel-slide--scroll-over .panel-image {
+    background-attachment: scroll;
 }
 
 /* Accessibility · respect reduced-motion · drop parallax */
