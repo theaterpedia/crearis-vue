@@ -20,6 +20,7 @@
       :image="portrait.image"
       :image-alt="portrait.imageAlt"
       theme-color="green"
+      img-tmp-align-y="top"
       bounded
     >
       <p class="bio-hero-overline">{{ hero.overline }}</p>
@@ -93,10 +94,9 @@ import { hero, portrait, callouts } from './content/context'
    Only the portrait-hero + a couple page-specific overrides remain here. */
 
 /* ==Portrait BackSlide hero== · face anchored top (north-cropped source) so cover
-   never clips Hans's head, regardless of the image-window ratio. */
-.bio-portrait :deep(.panel-image) {
-  background-position: center top;
-}
+   never clips Hans's head. Focal declared via BackSlide's `img-tmp-align-y="top"` prop
+   (the aspect-engine vocab) — the old `:deep(.panel-image)` background-position override
+   no longer works now that the focal is an inline computed style (inline > scoped). */
 
 .bio-hero-overline {
   font-size: 0.875rem;
