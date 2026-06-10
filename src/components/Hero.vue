@@ -3,6 +3,7 @@
     target === 'page' ? `hero-${heightTmp}` : 'hero-mini card-hero',
     `hero-align-content-${contentAlignY}`,
     bottomline ? 'hero-bottomline' : '',
+    magnifica ? 'hero--magnifica' : '',
   ]" :style="contentType === 'left' ? 'padding-left: 0rem' : ''">
     <!-- Hidden canvas for BlurHash decoding -->
     <canvas ref="canvasRef" style="display: none;" />
@@ -37,7 +38,7 @@
       </div>
     </div>
 
-    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">`
+    <div class="hero-content" :class="[`hero-content-${contentWidth}`, `hero-content-${contentType}`]">
       <Container>
         <slot />
       </Container>
@@ -238,6 +239,17 @@ const props = defineProps({
   image_blur: {
     type: String,
     default: undefined,
+  },
+
+  /**
+   * Magnifica mode (opt-in · default false). Above ~1450px, container BOTH the cover
+   * image and the content to a centered 90rem box (left/right margins), instead of the
+   * full-bleed cover — so 1:1-optimised images don't over-stretch on wide viewports and
+   * the banner stays aligned to the image. Default path is untouched.
+   */
+  magnifica: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -760,6 +772,35 @@ const computedOverlay = computed(() => {
   .hero-content-left .container {
     padding-left: 0;
     padding-right: 1rem;
+  }
+}
+
+/* Magnifica mode (opt-in) · above ~1450px container BOTH the cover image and the content
+   to a centered 90rem box, so they share left/right margins (the banner stays aligned to
+   the image · 1:1 images stop over-stretching on wide viewports). Centering is via
+   left/right + margin-inline (NOT transform) so the cover's translate3d parallax is intact.
+   Below the breakpoint, and for all non-magnifica heroes, nothing changes.
+   Gate = 96rem (90rem content + 2×3rem gutters · canon 'wide' 1536px) — the bound as its
+   geometry, not a magic literal (LAYOUT-STANDARDS §6 · the 1456-drift cure). CSS @media can't
+   read var(), so the token lives as this rem-geometry, not a custom-prop. */
+@media (min-width: 96rem) {
+  .hero--magnifica {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .hero--magnifica .hero-cover {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: 90rem;
+    margin-inline: auto;
+  }
+
+  .hero--magnifica .hero-content {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
   }
 }
 </style>

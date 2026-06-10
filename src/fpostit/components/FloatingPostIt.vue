@@ -1,10 +1,14 @@
 <template>
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isStaticBoard">
         <Transition name="fpostit-fade">
-            <div v-if="isOpen" :class="['floating-postit', `bg-${data.color}`, data.rotation]" :style="positionStyle"
-                role="dialog" aria-modal="false" :aria-labelledby="`fpostit-title-${data.key}`">
-                <!-- Close button -->
-                <button class="fpostit-close" @click="handleClose" aria-label="Close" type="button">
+            <div v-if="isOpen"
+                :class="['floating-postit', `bg-${data.color}`, data.rotation, data.hlogic ? `fp-h-${data.hlogic}` : '', { 'floating-postit--board': isStaticBoard }]"
+                :style="positionStyle"
+                :role="isStaticBoard ? 'note' : 'dialog'"
+                :aria-modal="isStaticBoard ? undefined : 'false'"
+                :aria-labelledby="`fpostit-title-${data.key}`">
+                <!-- Close button · pinned board cards are not dismissable -->
+                <button v-if="!isStaticBoard" class="fpostit-close" @click="handleClose" aria-label="Close" type="button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
@@ -50,8 +54,22 @@ const emit = defineEmits<{
     close: []
 }>()
 
+// Pinned board-mode: render in-place inside a positioned board container.
+const isStaticBoard = computed(() => props.data.hlogic === 'static-board')
+
 // Calculate position based on trigger element and hlogic
 const positionStyle = computed(() => {
+    // Static-board mode: pin at authored top/left percentages within the board.
+    if (isStaticBoard.value) {
+        return {
+            position: 'absolute',
+            top: props.data.top ?? '0',
+            left: props.data.left ?? '0',
+            maxWidth: '20rem',
+            zIndex: '1'
+        }
+    }
+
     if (!props.data.triggerElement) {
         // Fallback position if no trigger element
         return {
@@ -114,11 +132,19 @@ onUnmounted(() => {
 .floating-postit {
     position: absolute;
     padding: 1.5rem;
-    border-radius: 0.5rem;
+    /* Theme-overridable corner radius · magnifica/Theme-7 sets --fpostit-radius:0
+       (square) at :root; unset elsewhere falls back to the default 0.5rem. */
+    border-radius: var(--fpostit-radius, 0.5rem);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     word-wrap: break-word;
     transition: transform 0.2s ease-out;
+}
+
+/* Pinned board-mode card · consistent blackboard width, lighter elevation */
+.floating-postit--board {
+    width: 20rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* Rotation classes (matching PostIt component) */
@@ -350,5 +376,22 @@ onUnmounted(() => {
     .fpostit-action {
         width: 100%;
     }
+}
+
+/* Scientific right-lane glosses (hlogic 'right' · /discourse) · responsive sizing
+   (HM 2026-06-07). #5: below 1450px the typography is one level smaller. #6: the width
+   grows +10% above 1450px and +20% above 1800px (overrides the 400px inline maxWidth).
+   NB · general fpostit infra — backport to alpha/fpostit-extend for the mainline PR. */
+@media (max-width: 1450px) {
+    .fp-h-right .fpostit-title { font-size: 1.0625rem; }
+    .fp-h-right .fpostit-content { font-size: 0.875rem; }
+}
+
+@media (min-width: 1451px) {
+    .fp-h-right { max-width: 460px !important; } /* +15% of 400px */
+}
+
+@media (min-width: 1651px) {
+    .fp-h-right { max-width: 520px !important; } /* +30% of 400px */
 }
 </style>
