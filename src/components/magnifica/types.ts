@@ -74,6 +74,38 @@ export function parseRotateDeg(input: number | string | undefined): number {
     return Number.isFinite(num) ? num : 0
 }
 
+/** Focal vocab · Hero's aspect-engine, verbatim (one vocabulary across the family). */
+export type BackSlideAlignX = 'left' | 'right' | 'center' | 'stretch' | 'cover'
+export type BackSlideAlignY = 'top' | 'bottom' | 'center' | 'stretch' | 'cover'
+/** Panel shape · backslide-thread §3. */
+export type BackSlidePanelMode = 'panel' | 'none' | 'handle' | 'lane'
+
+/**
+ * One slide in a BackSlideStack · the cutter's per-beat output (backslide-thread §5).
+ * `image` + focal are per-instance (HP: image-control right away); the rest may be left
+ * to the stack-default. Mirrors BackSlide's own props (assembler binds these through).
+ */
+export interface BackSlideSpec {
+    /** Image URL · always per-instance. */
+    image: string
+    /** Image alt-text · a11y. */
+    imageAlt?: string
+    /** Horizontal focal · falls back to the stack default, then BackSlide's 'cover'. */
+    imgTmpAlignX?: BackSlideAlignX
+    /** Vertical focal · falls back to the stack default, then BackSlide's 'bottom'. */
+    imgTmpAlignY?: BackSlideAlignY
+    /** Panel md ("overline **headline** subline") → HeadingParser→Heading. */
+    panel?: string
+    /** Panel shape · falls back to the stack default, then 'panel'. */
+    panelMode?: BackSlidePanelMode
+    /** Side-flip · image-right / panel-left. Falls back to the stack default. */
+    imageRight?: boolean
+    /** Panel color · falls back to the stack default, then 'yellow'. */
+    theme?: PostItThemeColor
+    /** Choreography · `uncover` (default) or `scroll-over`. Falls back to the stack default. */
+    transition?: 'uncover' | 'scroll-over'
+}
+
 /**
  * Shape of an item in CardsCanvas's `items` array · mirrors the 2022
  * JSON-items pattern but type-checked here.

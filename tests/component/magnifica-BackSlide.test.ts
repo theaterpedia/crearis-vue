@@ -77,4 +77,85 @@ describe('BackSlide component', () => {
         const imageDiv = w.find('.panel-image')
         expect(imageDiv.attributes('aria-label')).toBe('')
     })
+
+    // Focal vocab · Hero's aspect-engine mapping verbatim (backslide-thread §6 · §9.5 step 2)
+    // (the X/Y axes serialize to the `background-position` shorthand "<x> <y>")
+    it('defaults the image focal to cover/bottom (center bottom · cover-sized · no hardcoded left)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg' } })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*center bottom/)
+        expect(style).toMatch(/background-size:\s*cover/)
+    })
+
+    it('maps a literal focal (left/top) through as the background-position', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', imgTmpAlignX: 'left', imgTmpAlignY: 'top' },
+        })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*left top/)
+        expect(style).toMatch(/background-size:\s*cover/)
+    })
+
+    it('maps stretch to edge-position + 100% size on that axis (fill, not cover)', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', imgTmpAlignX: 'stretch', imgTmpAlignY: 'stretch' },
+        })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*left top/)
+        expect(style).toMatch(/background-size:\s*100%\s+100%/)
+    })
+
+    // Panel + panelMode · HeadingParser path + the four shapes (backslide-thread §3 · §9.5 step 3)
+    it('renders the panel heading from the `panel` md prop via HeadingParser (default panelMode)', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', panel: 'Anfang der Digitalisierung **GUTE WEBSITES**' },
+        })
+        expect(w.find('.panel-side').exists()).toBe(true)
+        const html = w.find('.panel-text').html()
+        expect(html).toContain('GUTE WEBSITES')
+        expect(html).toContain('Anfang der Digitalisierung')
+    })
+
+    it('keeps the raw <slot/> escape-hatch when `panel` is omitted', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg' },
+            slots: { default: '<h2>Raw heading</h2>' },
+        })
+        expect(w.find('.panel-text').html()).toContain('Raw heading')
+    })
+
+    it('omits the panel entirely for panelMode="none" (image only)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg', panelMode: 'none' } })
+        expect(w.find('.panel-side').exists()).toBe(false)
+        expect(w.find('.panel-image').exists()).toBe(true)
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--mode-none')
+    })
+
+    it('renders a text-less colored strip for panelMode="handle"', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', panelMode: 'handle' },
+            slots: { default: '<h2>should not render</h2>' },
+        })
+        expect(w.find('.panel-side').exists()).toBe(true)
+        expect(w.find('.panel-text').exists()).toBe(false)
+    })
+
+    it('applies the panelMode modifier class (lane)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg', panelMode: 'lane' } })
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--mode-lane')
+    })
+
+    // Choreography · transition (backslide-thread §4 · §9.5 step 5)
+    it('defaults to uncover (no scroll-over class · default path unchanged)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg' } })
+        expect(w.find('.panel-slide').classes()).not.toContain('panel-slide--scroll-over')
+    })
+
+    it('adds the scroll-over class + the ascending z-index var when transition="scroll-over"', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', transition: 'scroll-over', stackIndex: 3 },
+        })
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--scroll-over')
+        expect(w.find('.panel-slide').attributes('style')).toContain('--slide-z: 3')
+    })
 })

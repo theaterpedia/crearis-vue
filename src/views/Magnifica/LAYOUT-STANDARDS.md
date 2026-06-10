@@ -65,7 +65,11 @@ These live in code as `MagnificaPageLayout` + `magnifica-page.css` — the singl
 Big visual blocks break out of the 90rem column by design (full-bleed). On wide viewports we bound
 them so the whole page reads as one 90rem column:
 
-- **Gate:** `@media (min-width: 1456px)` (~91rem · the 1450 band, where 90rem leaves real margins).
+- **Gate:** `@media (min-width: 96rem)` — the bound expressed as its **geometry** (90rem content
+  + 2×3rem gutters), = the canonical `wide` tier (1536px). **Never a magic literal** (the old `1456`
+  drifted because the number lost its reason). CSS `@media` can't read `var()`, so the token lives as
+  this rem-geometry (or `calc(90rem + 6rem)`), not a custom-property. Magnifica's above-canon tiers
+  (1650/1800 gloss · extend-to-1920) are a **named extension** of the canonical scale, not a fork.
 - **Bound:** `max-width: 90rem; margin-inline: auto`. Below the gate: full-bleed, unchanged.
 - **Hero** → `magnifica` prop (centers cover image + content). **CardsCanvas** → `bounded`
   (max-width+margin only — no overflow/flex/transform — so the sticky scroll-choreography holds).
