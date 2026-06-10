@@ -66,7 +66,7 @@
         </p>
 
         <p>
-          So I do not only fear for the instances. I also see what they could be <em>for</em>. People like {{please detail: Muris Ceman — one line on who he is}}, like <strong>pi0</strong>, like me — small, open, human-scale builders — suddenly get
+          So I do not only fear for the instances. I also see what they could be <em>for</em>. People like [please detail: Muris Ceman — one line on who he is], like <strong>pi0</strong>, like me — small, open, human-scale builders — suddenly get
           <CalloutPhrase :callout="callouts.fiveHands">five or ten hands</CalloutPhrase>
           to deliver a vision that was always larger than one person could build. That is the hope, and it is not naive: My wife encouraged me to choose <strong>Vue over React</strong> in 2018, I have watched the captured kind of “open source” closely enough to know that not all of it is good. But used in the open, with the discipline of honest discourse, this could push exactly the right way. That is the hope I would bring into your conversation — not naive, but built.
         </p>
