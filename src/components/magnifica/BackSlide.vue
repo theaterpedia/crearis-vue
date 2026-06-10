@@ -3,11 +3,12 @@
         :class="slideClasses"
         :style="slideStyle"
     >
-        <!-- Image-window · renders the parallax-anchored background -->
+        <!-- Image-window · renders the parallax-anchored background · focal via aspect-engine -->
         <div
             class="panel-image"
             role="img"
             :aria-label="imageAlt ?? ''"
+            :style="imageStyle"
         />
 
         <!-- Colored panel side with sticky-bottom text -->
@@ -44,6 +45,13 @@ interface Props {
     image: string
     /** Image alt-text · accessibility (ARIA-label on the image-window div). */
     imageAlt?: string
+    /** Horizontal focal of the image-window · Hero's aspect-engine vocab verbatim
+     *  (`cover`=center · `stretch`=fill-width · `left`/`center`/`right`). Default 'cover'.
+     *  Declare the focal so the crop never cuts the claim (backslide-thread §6 · argument-region). */
+    imgTmpAlignX?: 'left' | 'right' | 'center' | 'stretch' | 'cover'
+    /** Vertical focal of the image-window · Hero's aspect-engine vocab verbatim
+     *  (`cover`=center · `stretch`=fill-height · `top`/`center`/`bottom`). Default 'bottom'. */
+    imgTmpAlignY?: 'top' | 'bottom' | 'center' | 'stretch' | 'cover'
     /** Theme color (new naming OR 2022 alias). Default 'yellow'. */
     themeColor?: PostItThemeColor
     /** Image on the right instead of the left (per howto §5.1). Default false (image-left). */
@@ -55,6 +63,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    imgTmpAlignX: 'cover',
+    imgTmpAlignY: 'bottom',
     themeColor: 'yellow',
     imageRight: false,
     bounded: false,
@@ -70,6 +80,25 @@ const slideClasses = computed(() => {
 const slideStyle = computed<Record<string, string>>(() => ({
     '--panel-image': `url('${props.image}')`,
 }))
+
+/**
+ * Focal of the image-window · Hero's aspect-engine mapping, verbatim (one vocabulary
+ * across the family · backslide-thread Q2/§12). `cover`→center · `stretch`→edge+100%;
+ * any literal (`left`/`bottom`/…) passes through as the background-position. The window
+ * fills via `cover` unless an axis is `stretch`. Replaces the old hardcoded `left bottom`.
+ */
+const imageStyle = computed<Record<string, string>>(() => {
+    const ax = props.imgTmpAlignX
+    const ay = props.imgTmpAlignY
+    const usesCover = ax !== 'stretch' && ay !== 'stretch'
+    return {
+        backgroundPositionX: ax === 'stretch' ? 'left' : ax === 'cover' ? 'center' : ax,
+        backgroundPositionY: ay === 'stretch' ? 'top' : ay === 'cover' ? 'center' : ay,
+        backgroundSize: usesCover
+            ? 'cover'
+            : `${ax === 'stretch' ? '100%' : 'auto'} ${ay === 'stretch' ? '100%' : 'auto'}`,
+    }
+})
 
 const panelClasses = computed(() => {
     const theme = normalizeTheme(props.themeColor)
@@ -100,8 +129,7 @@ const panelClasses = computed(() => {
     width: 100%;
     min-height: 600px;
     background-image: var(--panel-image);
-    background-size: cover;
-    background-position: left bottom;
+    /* background-size + background-position are inline (computed) · the aspect-engine focal */
     background-repeat: no-repeat;
     background-attachment: scroll;
 }

@@ -77,4 +77,31 @@ describe('BackSlide component', () => {
         const imageDiv = w.find('.panel-image')
         expect(imageDiv.attributes('aria-label')).toBe('')
     })
+
+    // Focal vocab · Hero's aspect-engine mapping verbatim (backslide-thread §6 · §9.5 step 2)
+    // (the X/Y axes serialize to the `background-position` shorthand "<x> <y>")
+    it('defaults the image focal to cover/bottom (center bottom · cover-sized · no hardcoded left)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg' } })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*center bottom/)
+        expect(style).toMatch(/background-size:\s*cover/)
+    })
+
+    it('maps a literal focal (left/top) through as the background-position', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', imgTmpAlignX: 'left', imgTmpAlignY: 'top' },
+        })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*left top/)
+        expect(style).toMatch(/background-size:\s*cover/)
+    })
+
+    it('maps stretch to edge-position + 100% size on that axis (fill, not cover)', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', imgTmpAlignX: 'stretch', imgTmpAlignY: 'stretch' },
+        })
+        const style = w.find('.panel-image').attributes('style') ?? ''
+        expect(style).toMatch(/background-position:\s*left top/)
+        expect(style).toMatch(/background-size:\s*100%\s+100%/)
+    })
 })
