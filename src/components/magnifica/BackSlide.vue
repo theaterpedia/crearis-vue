@@ -49,8 +49,8 @@ interface Props {
     /** Image on the right instead of the left (per howto §5.1). Default false (image-left). */
     imageRight?: boolean
     /** Opt-in: bound the full-bleed slide to the 90rem content-column on wide viewports
-     *  (≥1456px), aligning it with the magnifica page-shell + Hero. Default false →
-     *  full-bleed (unchanged for the Demo / any non-magnifica use). */
+     *  (≥96rem · canon 'wide' 1536px), aligning it with the magnifica page-shell + Hero.
+     *  Default false → full-bleed (unchanged for the Demo / any non-magnifica use). */
     bounded?: boolean
 }
 
@@ -173,16 +173,19 @@ const panelClasses = computed(() => {
 }
 
 /* opt-in (`bounded`) · align the full-bleed slide with the 90rem content-column on wide
-   viewports (same 1456px gate + 90rem as Hero `magnifica`). The image switches to
-   element-anchored (scroll) in this state so it tracks the now-narrower bounded panel
-   instead of the viewport-fixed window — same fallback the reduced-motion rule uses. */
-@media (min-width: 1456px) {
+   viewports, sharing the one gate with Hero `magnifica` + CardsCanvas `bounded`.
+   §9.4/§13 (HP-blessed · backslide-thread): keep `background-attachment: fixed` when
+   bounded — the focal-control (imgTmpAlignX/Y) frames the viewport-fixed image inside the
+   90rem window. The earlier `→ scroll` fallback killed the wide-screen uncover
+   (crearis-vue@5642740) and is removed; only mobile (<768px · the rule above) + reduced-
+   motion still fall back to scroll.
+   Gate = 96rem (90rem content + 2×3rem gutters · canon 'wide' 1536px) — the bound as its
+   geometry, not a magic literal (LAYOUT-STANDARDS §6 · the 1456-drift cure). CSS @media
+   can't read var(), so the token lives as this rem-geometry, not a custom-prop. */
+@media (min-width: 96rem) {
     .panel-slide--bounded {
         max-width: 90rem;
         margin-inline: auto;
-    }
-    .panel-slide--bounded .panel-image {
-        background-attachment: scroll;
     }
 }
 
