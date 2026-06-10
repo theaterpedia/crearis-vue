@@ -11,10 +11,23 @@
             :style="imageStyle"
         />
 
-        <!-- Colored panel side with sticky-bottom text -->
-        <div :class="panelClasses">
-            <div class="panel-text">
-                <slot />
+        <!-- Colored panel side · panelMode shapes (panel · lane · handle); `none` omits it.
+             Text path = HeadingParser→Heading from the md `panel` prop (no paragraph slot ·
+             the structural cure for over-texting); raw <slot/> kept as the escape-hatch. -->
+        <div
+            v-if="panelMode !== 'none'"
+            :class="panelClasses"
+        >
+            <div
+                v-if="showPanelText"
+                class="panel-text"
+            >
+                <HeadingParser
+                    v-if="panel"
+                    :content="panel"
+                    as="h2"
+                />
+                <slot v-else />
             </div>
         </div>
     </section>
@@ -38,6 +51,7 @@
  * Per CV@wsl dispatch #4 (TO (website) 2026-06-02 DI · meta-feed).
  */
 import { computed } from 'vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 import { normalizeTheme, type PostItThemeColor } from './types'
 
 interface Props {
@@ -52,6 +66,14 @@ interface Props {
     /** Vertical focal of the image-window · Hero's aspect-engine vocab verbatim
      *  (`cover`=center · `stretch`=fill-height · `top`/`center`/`bottom`). Default 'bottom'. */
     imgTmpAlignY?: 'top' | 'bottom' | 'center' | 'stretch' | 'cover'
+    /** Panel content as crearis-md ("overline **headline** subline") → HeadingParser→Heading.
+     *  Overline-headline only — no paragraph slot (the structural cure for over-texting ·
+     *  backslide-thread §6). Omit for panelMode none/handle, or to use the raw <slot/> hatch. */
+    panel?: string
+    /** Panel shape (backslide-thread §3). `panel`=colored ~40% panel with heading (default) ·
+     *  `none`=image only, no panel · `handle`=thin color strip, no text · `lane`=narrow color
+     *  panel (typically no text). */
+    panelMode?: 'panel' | 'none' | 'handle' | 'lane'
     /** Theme color (new naming OR 2022 alias). Default 'yellow'. */
     themeColor?: PostItThemeColor
     /** Image on the right instead of the left (per howto §5.1). Default false (image-left). */
@@ -65,17 +87,21 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     imgTmpAlignX: 'cover',
     imgTmpAlignY: 'bottom',
+    panelMode: 'panel',
     themeColor: 'yellow',
     imageRight: false,
     bounded: false,
 })
 
 const slideClasses = computed(() => {
-    const classes = ['panel-slide']
+    const classes = ['panel-slide', `panel-slide--mode-${props.panelMode}`]
     if (props.imageRight) classes.push('panel-slide--image-right')
     if (props.bounded) classes.push('panel-slide--bounded')
     return classes
 })
+
+/** Text renders only in the text-bearing modes (`panel`, `lane`); `handle` is a bare strip. */
+const showPanelText = computed(() => props.panelMode === 'panel' || props.panelMode === 'lane')
 
 const slideStyle = computed<Record<string, string>>(() => ({
     '--panel-image': `url('${props.image}')`,
@@ -136,9 +162,24 @@ const panelClasses = computed(() => {
 
 @media (min-width: 768px) {
     .panel-image {
-        width: 60%;
         min-height: auto;
         background-attachment: fixed;
+    }
+
+    /* panelMode shapes · row layout · image/panel split (backslide-thread §3).
+       Defaults: panel 60/40 (current) · lane 78/22 (narrow panel) · handle thin color
+       strip · none = image-only. */
+    .panel-slide--mode-panel .panel-image {
+        width: 60%;
+    }
+    .panel-slide--mode-lane .panel-image {
+        width: 78%;
+    }
+    .panel-slide--mode-handle .panel-image {
+        width: calc(100% - 2.5rem);
+    }
+    .panel-slide--mode-none .panel-image {
+        width: 100%;
     }
 }
 
@@ -151,8 +192,15 @@ const panelClasses = computed(() => {
 }
 
 @media (min-width: 768px) {
-    .panel-side {
+    .panel-slide--mode-panel .panel-side {
         width: 40%;
+    }
+    .panel-slide--mode-lane .panel-side {
+        width: 22%;
+    }
+    .panel-slide--mode-handle .panel-side {
+        width: 2.5rem;
+        padding: 0;
     }
 }
 

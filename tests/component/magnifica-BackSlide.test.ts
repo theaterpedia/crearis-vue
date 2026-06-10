@@ -104,4 +104,44 @@ describe('BackSlide component', () => {
         expect(style).toMatch(/background-position:\s*left top/)
         expect(style).toMatch(/background-size:\s*100%\s+100%/)
     })
+
+    // Panel + panelMode · HeadingParser path + the four shapes (backslide-thread §3 · §9.5 step 3)
+    it('renders the panel heading from the `panel` md prop via HeadingParser (default panelMode)', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', panel: 'Anfang der Digitalisierung **GUTE WEBSITES**' },
+        })
+        expect(w.find('.panel-side').exists()).toBe(true)
+        const html = w.find('.panel-text').html()
+        expect(html).toContain('GUTE WEBSITES')
+        expect(html).toContain('Anfang der Digitalisierung')
+    })
+
+    it('keeps the raw <slot/> escape-hatch when `panel` is omitted', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg' },
+            slots: { default: '<h2>Raw heading</h2>' },
+        })
+        expect(w.find('.panel-text').html()).toContain('Raw heading')
+    })
+
+    it('omits the panel entirely for panelMode="none" (image only)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg', panelMode: 'none' } })
+        expect(w.find('.panel-side').exists()).toBe(false)
+        expect(w.find('.panel-image').exists()).toBe(true)
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--mode-none')
+    })
+
+    it('renders a text-less colored strip for panelMode="handle"', () => {
+        const w = mount(BackSlide, {
+            props: { image: '/x.jpg', panelMode: 'handle' },
+            slots: { default: '<h2>should not render</h2>' },
+        })
+        expect(w.find('.panel-side').exists()).toBe(true)
+        expect(w.find('.panel-text').exists()).toBe(false)
+    })
+
+    it('applies the panelMode modifier class (lane)', () => {
+        const w = mount(BackSlide, { props: { image: '/x.jpg', panelMode: 'lane' } })
+        expect(w.find('.panel-slide').classes()).toContain('panel-slide--mode-lane')
+    })
 })
