@@ -779,8 +779,11 @@ const computedOverlay = computed(() => {
    to a centered 90rem box, so they share left/right margins (the banner stays aligned to
    the image · 1:1 images stop over-stretching on wide viewports). Centering is via
    left/right + margin-inline (NOT transform) so the cover's translate3d parallax is intact.
-   Below the breakpoint, and for all non-magnifica heroes, nothing changes. */
-@media (min-width: 1456px) {
+   Below the breakpoint, and for all non-magnifica heroes, nothing changes.
+   Gate = 96rem (90rem content + 2×3rem gutters · canon 'wide' 1536px) — the bound as its
+   geometry, not a magic literal (LAYOUT-STANDARDS §6 · the 1456-drift cure). CSS @media can't
+   read var(), so the token lives as this rem-geometry, not a custom-prop. */
+@media (min-width: 96rem) {
   .hero--magnifica {
     padding-left: 0;
     padding-right: 0;

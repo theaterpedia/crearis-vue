@@ -122,9 +122,10 @@ function postitStyle(card: BoardCard): Record<string, string> {
 }
 
 /* opt-in (`bounded`) · align the canvas with the 90rem content-column on wide viewports
-   (same 1456px gate + 90rem as Hero `magnifica`). max-width + margin only — no overflow/
-   flex/transform — so the sticky scroll-choreography (§6 invariant) stays intact. */
-@media (min-width: 1456px) {
+   (same gate + 90rem as Hero `magnifica`). max-width + margin only — no overflow/flex/
+   transform — so the sticky scroll-choreography (§6 invariant) stays intact.
+   Gate = 96rem (90rem content + 2×3rem gutters · canon 'wide' 1536px · LAYOUT-STANDARDS §6). */
+@media (min-width: 96rem) {
     .bb-canvas--bounded {
         max-width: 90rem;
         margin-inline: auto;
