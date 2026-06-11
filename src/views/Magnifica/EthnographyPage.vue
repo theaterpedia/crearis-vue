@@ -61,15 +61,17 @@
            Pure-CSS sticky siblings · desktop only (mobile linearises to normal flow). -->
       <section class="page-section ethno-incident ethno-sticky">
         <p class="page-section-label ethno-sticky-anchor">2026-05-14 · the compaction, as it happened</p>
-        <div class="ethno-sticky-col ethno-sticky-col--left ethno-incident-chat">
+        <!-- left lane · the dialogue pins below the anchor and stays -->
+        <div class="ethno-sticky-col--left ethno-incident-chat">
           <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
         </div>
-        <div class="ethno-sticky-col ethno-sticky-col--right ethno-incident-reflection">
-          <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
-          <p>{{ compactionReflection }}</p>
-          <!-- the System-as-User resume directive · between the reflection and the aftermath -->
+        <!-- right lane · slides rise with 50% pauses, accumulating: standing-line → reflection →
+             (System-as-User box + the parenthesised aftermath-comment). (HM 2026-06-11) -->
+        <p class="ethno-rise ethno-rise--1 page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
+        <p class="ethno-rise ethno-rise--2">{{ compactionReflection }}</p>
+        <div class="ethno-rise ethno-rise--3">
           <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
-          <p>{{ compactionAftermath }}</p>
+          <p class="ethno-aftermath-comment">{{ compactionAftermath }}</p>
         </div>
       </section>
 
@@ -258,18 +260,24 @@ const heroOverlay =
   margin: 0 0 1rem;
 }
 
-/* the standing-line opens the right reflection column · LEFT-aligned (HM 2026-06-11 · revised
-   from right) · overrides .page-standing-line's base center. */
-.ethno-incident-reflection .page-standing-line {
+/* the standing-line opens the right lane · LEFT-aligned (HM 2026-06-11) · overrides base center. */
+.ethno-sticky .page-standing-line {
   text-align: left;
 }
 
-/* §3a STICKY SCREEN · blackboard-style (HM 2026-06-11 · PILOT) · DESKTOP only (mobile flows
-   normally). The anchor (label) pins; the left column rises + pins; the right column
-   (marginTop-staggered, left:52%) rises + pins beside it; the section height carries the
-   scroll, then it all releases into §3b. Ancestor-purity holds (.magnifica-page-content: no
-   overflow/transform). FIRST CUT — tops/marginTop/widths are screenshot dials; if the tall
-   columns overflow the viewport while pinned, we fall back toward anchor-only sticky. */
+/* the aftermath · a smaller parenthesised "comment" below the System-as-User box (HM 2026-06-11) */
+.ethno-incident .ethno-aftermath-comment {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.75rem;
+}
+
+/* §3a STICKY SCREEN · blackboard-style (HM 2026-06-11) · DESKTOP only (mobile flows normally).
+   The anchor (label) pins; the left lane (dialogue) pins + stays; the right lane rises as a
+   sequence of slides — standing-line, then (50% pause) the reflection, then (50% pause) the
+   System-as-User box + comment — accumulating, then the section releases into §3b. Ancestor-
+   purity holds. The slide-show is small-per-screen by design (less content · leave gaps · HM).
+   FIRST CUT — tops + the 50vh pauses are screenshot dials. */
 @media (min-width: 768px) {
   .ethno-sticky {
     position: relative;
@@ -279,15 +287,21 @@ const heroOverlay =
     top: var(--bb-navbar-offset, 6rem);
     z-index: 2;
   }
-  .ethno-sticky-col {
+  /* left lane · the dialogue pins below the anchor and stays */
+  .ethno-sticky-col--left {
     position: sticky;
     top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
     width: 48%;
   }
-  .ethno-sticky-col--right {
+  /* right lane · each slide rises (50% pause = marginTop) + pins at left:52%, accumulating */
+  .ethno-rise {
+    position: sticky;
     left: 52%;
-    margin-top: clamp(10rem, 45vh, 20rem);
+    width: 48%;
   }
+  .ethno-rise--1 { top: calc(var(--bb-navbar-offset, 6rem) + 3rem); }
+  .ethno-rise--2 { top: calc(var(--bb-navbar-offset, 6rem) + 8rem); margin-top: 50vh; }
+  .ethno-rise--3 { top: calc(var(--bb-navbar-offset, 6rem) + 18rem); margin-top: 50vh; }
 }
 
 .ethno-system-beat {
