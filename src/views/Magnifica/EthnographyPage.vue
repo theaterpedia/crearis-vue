@@ -282,18 +282,20 @@ const heroOverlay =
   .ethno-sticky {
     position: relative;
   }
+  /* anchor sits BELOW the chatbox in z (HM 2026-06-11): the rising dialogue ("I witnessed…")
+     covers the timestamp as it pins. Still opaque so it covers the right-lane / next content. */
   .ethno-sticky-anchor {
     position: sticky;
     top: var(--bb-navbar-offset, 6rem);
-    z-index: 2;
-    /* opaque so the rising columns / next content don't run over the header on release (HM 2026-06-11) */
+    z-index: 1;
     background: var(--color-bg);
     padding: 0.5rem 0;
   }
-  /* left lane · the dialogue pins below the anchor and stays */
+  /* left lane · the dialogue pins AT the anchor's level (z above it) → covers the timestamp */
   .ethno-sticky-col--left {
     position: sticky;
-    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
+    top: var(--bb-navbar-offset, 6rem);
+    z-index: 2;
     width: 48%;
   }
   /* right lane · each slide rises (50% pause = marginTop) + pins at left:52%, accumulating */
