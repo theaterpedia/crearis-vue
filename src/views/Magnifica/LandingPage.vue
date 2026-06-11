@@ -21,7 +21,11 @@
           <div class="landing-hero-left">
             <p class="landing-hero-overline">{{ hero.overline }}</p>
             <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
-            <!-- TODO HM: the "Websites Theaterpädagogik dringend gesucht!" left-column copy. -->
+            <div class="landing-summary">
+              <p class="landing-summary-overline">{{ summary.overline }}</p>
+              <h2 class="landing-summary-headline">{{ summary.headline }}</h2>
+              <p class="landing-summary-body">{{ summary.body }}</p>
+            </div>
           </div>
           <div class="landing-hero-right">
             <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" />
@@ -29,18 +33,10 @@
         </section>
       </div>
 
-      <!-- 2 backslides · before / after magnifica -->
-      <BackSlide :image="backslide1.image" :image-alt="backslide1.imageAlt" :theme-color="backslide1.themeColor" bounded>
-        <h2>{{ backslide1.headline }}</h2>
-        <p v-for="(para, i) in backslide1.paras" :key="i">{{ para }}</p>
-      </BackSlide>
-
-      <p class="backslide-intro">{{ backslideIntro }}</p>
-
-      <BackSlide :image="backslide2.image" :image-alt="backslide2.imageAlt" :theme-color="backslide2.themeColor" image-right bounded>
-        <h2>{{ backslide2.headline }}</h2>
-        <p v-for="(para, i) in backslide2.paras" :key="i">{{ para }}</p>
-      </BackSlide>
+      <!-- §C · Before → After backslide-stack · panel = overline-headline (no paragraph slot) ·
+           After rises over Before (scroll-over) · focal align-y:top via prop · bounded.
+           Direct child of .magnifica-landing-content — ancestor-purity for sticky + bg-fixed. -->
+      <BackSlideStack :slides="backslides" bounded />
 
       <div class="landing-narrow">
         <!-- 3 navcards · Cultural-Studies lanes (D) -->
@@ -85,16 +81,15 @@ import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
-import BackSlide from '@/components/magnifica/BackSlide.vue'
+import BackSlideStack from '@/components/magnifica/BackSlideStack.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,
+  summary,
   letterEntries,
-  backslide1,
-  backslideIntro,
-  backslide2,
+  backslides,
   navCards,
   closingP3Before,
   closingP3After,
@@ -155,13 +150,30 @@ const { isAuthenticated } = useMagnificaAuth()
   }
 }
 
-/* ==Backslides== */
-.backslide-intro {
-  max-width: 56rem;
-  margin: 0 auto;
-  padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 6vw, 3rem);
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  font-style: italic;
+/* ==§B summary== · reading-instrument framing, under the hero headline (left column) */
+.landing-summary {
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.landing-summary-overline {
+  font-size: 0.875rem;
+  color: var(--color-muted-contrast);
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.02em;
+}
+
+.landing-summary-headline {
+  font-size: clamp(1.1rem, 2vw, 1.375rem);
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  line-height: 1.25;
+}
+
+.landing-summary-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-contrast);
+  margin: 0;
 }
 
 /* ==Centered column for navcards + closing== */

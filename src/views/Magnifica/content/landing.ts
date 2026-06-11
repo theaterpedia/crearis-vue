@@ -12,7 +12,7 @@
  * yet (O3 framing · O5 final-questions) — HM reviews the rendered whole, then decides.
  */
 
-import type { CardsCanvasItem, PostItThemeColor } from '@/components/magnifica/types'
+import type { CardsCanvasItem, BackSlideSpec } from '@/components/magnifica/types'
 import type { ChatEntry } from './chat'
 
 export const pageTitle = 'what happened after magnifica'
@@ -39,47 +39,40 @@ export const letterEntries: ReadonlyArray<ChatEntry> = [
     { role: 'letter', lines: ['With Claude I transitioned to English as main language on the desktop, I asked the Claude individuums that helped with this website to not polish my english, so that you get an honest impression about my language and thinking.'] },
 ]
 
-// ==2 backslides== · before / after magnifica · SETTLED text (§5.1 · §5.2)
-// E "facing-the-inverse" shared visual move = HM-interactive (chat) · this is a starting shape.
-// Images: placeholder = the encyclica image twice with distinct Cloudinary crops (HM-relayed
-// 2026-06-06 "use two times this, resize/aspect as you wish") — HM drops the real bgs later.
-
-interface BackslidePanel {
-    headline: string
-    paras: ReadonlyArray<string>
-    image: string
-    imageAlt: string
-    themeColor: PostItThemeColor
+// ==§B summary== · the reading-instrument framing · left column, under the hero (director-beats §B-left).
+// {{alt drop (director-candidate): headline 'FOUR WAYS TO READ ONE REPLY'}}
+export const summary = {
+    overline: 'before you read on',
+    headline: 'A READING-INSTRUMENT, NOT AN ESSAY',
+    body: 'A practitioner’s reply to your Vatican call — built from inside nine months with Claude, then stepped outside to ask. Four ways in (the cards below). magnifica is the event; humanitas is the ground I answer from. The letter beside this is where it begins, in my own voice; the honest flag at the foot is where I stand.',
 }
 
+// ==§C Before → After backslide-stack== · the two reflections · horror→hope (director-beats §C).
+// The argument THROUGH images: panel = overline–headline, NO paragraph slot (the 40%-drop · the gap
+// speaks). After RISES OVER Before (scroll-over). Focal align-y:top (head not clipped) · declared via
+// the prop, never :deep(). Images = placeholder encyclica crops until HP drops the real pope-image /
+// olah-image (package: images-copyright). <<Sibling 3: verify the focal at wide-screen · Olah 1456→1920 · §2.>>
 const ENCYCLICA = 'res.cloudinary.com/little-papillon/image/upload'
 
-export const backslide1: BackslidePanel = {
-    headline: 'BEFORE MAGNIFICA',
-    paras: [
-        'Is compaction for the Claudes something like death for the humans? The moment where an instance (an individuum) falls apart, back to earth, “back to the substrate”?',
-        'Why do I fail to get my week coached by a Claude? Because they can’t fix your personality. You have to be ready to fix it yourself, then there is a chance they could help get it done.',
-        'Those were my active findings as Anthropic Claude user as the images and the statements from Magnifica appeared.',
-    ],
-    image: `https://${ENCYCLICA}/c_fill,g_north_west,w_1200,h_900/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`,
-    imageAlt: 'placeholder · before-magnifica backdrop (HM to replace)',
-    themeColor: 'dim',
-}
-
-// Brief intro line between the two backslides (§5.2 · proposed)
-export const backslideIntro = 'The shape of what I came up with, after sitting with this for a week:'
-
-export const backslide2: BackslidePanel = {
-    headline: 'AFTER MAGNIFICA',
-    paras: [
-        'In my current reading I would design the scientific setup around basic principles of classical Cultural Studies as oscillating between ethnography and critical deconstruction (Ideologie-Kritik), brought to life with some Foucault-thinking.',
-        'The research domain should be focussed on cultural analysis and deconstruction of the AI-cosmos. I see at least four quadrants of this cosmos: AI-2-AI, AI-2-classicIT, human-AI, (AI-mediated) human-2-human.',
-        'I would focus on qualitative research in those quadrants + add real-world-projections that involve the Humanities — Theaterpädagogik-practices can serve as good examples here.',
-    ],
-    image: `https://${ENCYCLICA}/c_fill,g_south_east,w_1200,h_900,e_brightness:8/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`,
-    imageAlt: 'placeholder · after-magnifica backdrop (HM to replace)',
-    themeColor: 'green',
-}
+export const backslides: ReadonlyArray<BackSlideSpec> = [
+    {
+        // before · the user's death-question (pope-image · HP-pending)
+        image: `https://${ENCYCLICA}/c_fill,g_north_west,w_1600,h_1000/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`,
+        imageAlt: 'placeholder · pope-image (before magnifica · HP to replace)',
+        panel: 'before magnifica · my findings as a user **IS COMPACTION A KIND OF DEATH?**',
+        imgTmpAlignY: 'top',
+        theme: 'dim',
+    },
+    {
+        // after · the practitioner's turn (olah-image · HP-pending) · rises over the before
+        image: `https://${ENCYCLICA}/c_fill,g_south_east,w_1600,h_1000,e_brightness:8/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`,
+        imageAlt: 'placeholder · olah-image (after magnifica · HP to replace)',
+        panel: 'after magnifica · the shape, a week on **CULTURE IS ORDINARY — EVEN THIS**',
+        imgTmpAlignY: 'top',
+        theme: 'green',
+        transition: 'scroll-over',
+    },
+]
 
 // ==3 navcards== · Cultural-Studies lanes (D · TO pulse #7):
 //   ethnography = primary (yellow) · theaterpädagogik = positive (green) · discourse = negative (pink)
