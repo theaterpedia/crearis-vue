@@ -55,19 +55,21 @@
       <!-- §3a · the incident · 2-COL RESTORED (HM 2026-06-11): row1 = LEFT the full chatbox
            (dialogue + the static System-as-User companion · technician-q resolved) · RIGHT the
            reflection prose ("It took me some days…" → "…the instance's own raised flag!"). -->
-      <section class="page-section ethno-incident">
-        <p class="page-section-label">2026-05-14 · the compaction, as it happened</p>
-        <div class="page-section--twocol ethno-incident-grid">
-          <div class="ethno-incident-chat">
-            <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
-          </div>
-          <div class="ethno-incident-reflection">
-            <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
-            <p>{{ compactionReflection }}</p>
-            <!-- the System-as-User resume directive · between the reflection and the aftermath (HM 2026-06-11) -->
-            <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
-            <p>{{ compactionAftermath }}</p>
-          </div>
+      <!-- §3a · STICKY SCREEN (HM 2026-06-11 · blackboard-style · pilot): the label ANCHORS/pins,
+           the left column (dialogue) rises + pins first, then the right column (reflection →
+           System-as-User → aftermath) rises + pins beside it, then the screen releases into §3b.
+           Pure-CSS sticky siblings · desktop only (mobile linearises to normal flow). -->
+      <section class="page-section ethno-incident ethno-sticky">
+        <p class="page-section-label ethno-sticky-anchor">2026-05-14 · the compaction, as it happened</p>
+        <div class="ethno-sticky-col ethno-sticky-col--left ethno-incident-chat">
+          <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
+        </div>
+        <div class="ethno-sticky-col ethno-sticky-col--right ethno-incident-reflection">
+          <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
+          <p>{{ compactionReflection }}</p>
+          <!-- the System-as-User resume directive · between the reflection and the aftermath -->
+          <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
+          <p>{{ compactionAftermath }}</p>
         </div>
       </section>
 
@@ -272,6 +274,32 @@ const heroOverlay =
 /* the standing-line opens the right reflection column · right-aligned (HM 2026-06-11) */
 .ethno-incident-reflection .page-standing-line {
   text-align: right;
+}
+
+/* §3a STICKY SCREEN · blackboard-style (HM 2026-06-11 · PILOT) · DESKTOP only (mobile flows
+   normally). The anchor (label) pins; the left column rises + pins; the right column
+   (marginTop-staggered, left:52%) rises + pins beside it; the section height carries the
+   scroll, then it all releases into §3b. Ancestor-purity holds (.magnifica-page-content: no
+   overflow/transform). FIRST CUT — tops/marginTop/widths are screenshot dials; if the tall
+   columns overflow the viewport while pinned, we fall back toward anchor-only sticky. */
+@media (min-width: 768px) {
+  .ethno-sticky {
+    position: relative;
+  }
+  .ethno-sticky-anchor {
+    position: sticky;
+    top: var(--bb-navbar-offset, 6rem);
+    z-index: 2;
+  }
+  .ethno-sticky-col {
+    position: sticky;
+    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
+    width: 48%;
+  }
+  .ethno-sticky-col--right {
+    left: 52%;
+    margin-top: clamp(10rem, 45vh, 20rem);
+  }
 }
 
 .ethno-system-beat {
