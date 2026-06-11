@@ -213,10 +213,14 @@ const heroOverlay =
     0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-/* after the last post-it · a longer pause before the canvas releases into §3 (HM "after it
-   pause 60% then it goes on"). */
+/* almost no empty space after the last post-it (it sticks 20% from bottom · HM 2026-06-11) —
+   bb-end stays minimal; the separation from §3 is a static MARGIN after the blackboard. */
 .ethno-board :deep(.bb-end) {
-  height: clamp(12rem, 60vh, 28rem);
+  height: 1rem;
+}
+
+.ethno-board {
+  margin-bottom: clamp(3rem, 8vh, 6rem);
 }
 
 /* push the (bottom-aligned) hero banner lower · the overline was floating mid-space. */
