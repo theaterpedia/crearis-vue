@@ -286,6 +286,9 @@ const heroOverlay =
     position: sticky;
     top: var(--bb-navbar-offset, 6rem);
     z-index: 2;
+    /* opaque so the rising columns / next content don't run over the header on release (HM 2026-06-11) */
+    background: var(--color-bg);
+    padding: 0.5rem 0;
   }
   /* left lane · the dialogue pins below the anchor and stays */
   .ethno-sticky-col--left {
@@ -298,6 +301,8 @@ const heroOverlay =
     position: sticky;
     left: 52%;
     width: 48%;
+    /* opaque · the rising slide rolls over the one before it cleanly (HM 2026-06-11) */
+    background: var(--color-bg);
   }
   .ethno-rise--1 { top: calc(var(--bb-navbar-offset, 6rem) + 3rem); }
   .ethno-rise--2 { top: calc(var(--bb-navbar-offset, 6rem) + 8rem); margin-top: 50vh; }

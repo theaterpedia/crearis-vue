@@ -28,7 +28,7 @@
             </div>
           </div>
           <div class="landing-hero-right">
-            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="60" />
+            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" />
           </div>
         </section>
       </div>
