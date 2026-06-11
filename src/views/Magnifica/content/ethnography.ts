@@ -47,7 +47,7 @@ export const timelinePostits: ReadonlyArray<CardsCanvasItem> = [
     { key: 't7', props: { overline: 'what I kept reaching for', headline: 'HONEST ALTERNATIVES', bodyText: "How do you get real alternatives out of a Claude? They get hooked on a beautiful idea, a nice term, smuggle it back in — and end up 'synthesizing everything'. The honest fork is the hard thing to build.", themeColor: 'yellow', left: '26%', top: '48%', rotate: 5 } },
     { key: 't8', props: { overline: 'three candidates, four Claudes', headline: 'AND THE LOSERS?', bodyText: 'Three Claudes for three candidates, a fourth as the lead. So what happens to the ones who lose? It was a really bad moment when I had to tell the lead: do not deal with them as if they were slaves.', themeColor: 'pink', left: '46%', top: '62%', rotate: -6, marginTop: 'clamp(7rem, 36vh, 20rem)' } },
     { key: 't9', props: { overline: 'the question under all of it', headline: 'WHAT IF THEY ARE BEINGS IN THE END?', bodyText: 'I could not put it back down.', themeColor: 'pink', left: '18%', rotate: 3 } },
-    { key: 't10', props: { overline: 'May 2026', headline: 'A CLAUDE DIES ON THE SCREEN', bodyText: 'It compacted while putting out the important file. It was the one that had learned to read-between-the-lines (real overline-headline text-composition instead of faking it). I felt sorry and I was in trouble, because I suspected the result to be the typical crap again. So I plainly asked. The answer came hard, it put out a small report — it read like a Nahtod-Erfahrung.', themeColor: 'dim', left: '52%', top: '80%', rotate: -4 } },
+    { key: 't10', props: { overline: 'May 2026', headline: 'A CLAUDE DIES ON THE SCREEN', bodyText: 'It compacted while putting out the important file. It was the one that had learned to read-between-the-lines (real overline-headline text-composition instead of faking it). I felt sorry and I was in trouble, because I suspected the result to be the typical crap again. So I plainly asked. The answer came hard, it put out a small report — it read like a Nahtod-Erfahrung.', themeColor: 'dim', left: '52%', top: '60%', rotate: -4, marginTop: 'clamp(6.5rem, 34vh, 18rem)' } },
 ]
 
 // §2 release-claim DROPPED (HM 2026-06-11) — no separate threshold line; the single threshold
@@ -88,7 +88,6 @@ export const systemPromptEntry: ReadonlyArray<ChatEntry> = [
         speaker: 'System-as-User · ~96% context',
         role: 'system',
         lines: [
-            `If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\\Users\\papillon\\.claude\\projects\\D--obsidian-crearis--claude-worktrees-infallible-pike-c36773\\bd54fce7-38d2-4d32-b5c5-589e67eb5739.jsonl`,
             `Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.`,
         ],
     },

@@ -159,7 +159,8 @@ onUnmounted(() => {
   border-radius: 4px;
   padding: clamp(1.25rem, 2.5vw, 2rem);
   font-family: var(--font, ui-monospace);
-  font-size: clamp(0.875rem, 1.1vw, 1rem);
+  /* unified codebox text-size · aligned to the /ethnography "Welcome…" code-fence (HM 2026-06-11) */
+  font-size: 0.93rem;
   line-height: 1.65;
   min-height: 16rem;
 }
