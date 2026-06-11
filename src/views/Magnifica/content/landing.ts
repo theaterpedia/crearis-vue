@@ -64,11 +64,14 @@ export const backslides: ReadonlyArray<BackSlideSpec> = [
         theme: 'dim',
     },
     {
-        // after · the practitioner's turn (olah-image · HP-pending) · rises over the before
+        // after · the practitioner's turn (olah-image · HP-pending) · rises over the before ·
+        // FLIPPED (image-right / panel-left) so it mirrors the Before. Crop gravitates to Olah
+        // (g_south_east); "Olah alone" tightening awaits HP's real olah-image (images-copyright).
         image: `https://${ENCYCLICA}/c_fill,g_south_east,w_1600,h_1000,e_brightness:8/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`,
         imageAlt: 'placeholder · olah-image (after magnifica · HP to replace)',
         panel: 'after magnifica · the science I’d build — ethnography and its critique **CULTURE IS ORDINARY — EVEN THIS**',
         imgTmpAlignY: 'top',
+        imageRight: true,
         theme: 'green',
         transition: 'scroll-over',
     },

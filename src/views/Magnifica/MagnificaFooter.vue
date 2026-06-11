@@ -15,6 +15,8 @@
       <a class="mag-footer-link" href="https://theaterpedia.org" target="_blank" rel="noopener">theaterpedia.org</a>
       <span class="mag-footer-sep" aria-hidden="true">·</span>
       <a class="mag-footer-link" href="https://cojc.eu" target="_blank" rel="noopener">cojc.eu</a>
+      <!-- optional close/action gesture (landing) · sits at the right of the footer row -->
+      <span v-if="$slots.action" class="mag-footer-action"><slot name="action" /></span>
     </nav>
   </footer>
 </template>
@@ -56,5 +58,11 @@ import { RouterLink } from 'vue-router'
 .mag-footer-sep {
   color: var(--color-muted-contrast);
   opacity: 0.5;
+}
+
+/* slotted action (e.g. the landing close-gesture) · pushed to the right of the row,
+   wraps to its own line on narrow. Footer is unchanged when no action slot is passed. */
+.mag-footer-action {
+  margin-left: auto;
 }
 </style>

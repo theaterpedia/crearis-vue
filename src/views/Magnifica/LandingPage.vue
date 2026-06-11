@@ -64,13 +64,14 @@
             <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
           </div>
         </section>
-
-        <p class="magnifica-landing-actions">
-          <MagnificaLogoutButton />
-        </p>
       </div>
 
-      <MagnificaFooter />
+      <!-- close-gesture lives with the page-end footer (Impressum · dasei.eu · …) -->
+      <MagnificaFooter>
+        <template #action>
+          <MagnificaLogoutButton />
+        </template>
+      </MagnificaFooter>
     </div>
   </div>
 </template>
@@ -117,7 +118,8 @@ const { isAuthenticated } = useMagnificaAuth()
 .landing-container {
   max-width: 90rem;
   margin: 0 auto;
-  padding: 0 clamp(1rem, 6vw, 3rem) clamp(2rem, 5vh, 4rem);
+  /* top breathing-room at the page-top (most needed on big-desktop · 1920×1080) */
+  padding: clamp(1rem, 4vh, 3rem) clamp(1rem, 6vw, 3rem) clamp(2rem, 5vh, 4rem);
 }
 
 /* 2022 hero · left text · right promptbox */
@@ -270,11 +272,14 @@ const { isAuthenticated } = useMagnificaAuth()
   color: var(--color-contrast);
 }
 
-/* ==Close-and-reopen actions== */
-.magnifica-landing-actions {
-  text-align: center;
-  margin: 0;
-  padding: 2rem 1rem 4rem;
+/* ==Backslide panel heading · bottom-weighted== · push the overline-headline lower so the
+   image breathes above and the headline lands as a drop (both landing backslides). Scoped to
+   the stack via :deep — NOT global, so ContextPage's portrait BackSlide is untouched. Margin
+   (not background-position) so :deep is correct here. Exact drop is a visual dial (verifier). */
+@media (min-width: 768px) {
+  .magnifica-landing :deep(.backslide-stack .panel-text) {
+    margin-top: clamp(24rem, 55vh, 44rem);
+  }
 }
 
 @media (max-width: 640px) {
