@@ -199,13 +199,24 @@ const heroOverlay =
   }
 }
 
-/* THE ONLY RED · card #10 (the Nahtod · the border) routes through the unused `dim` slot
-   (no other card on this page uses it) so this scoped :deep override styles #10 alone —
-   a DEEP alarm-red, distinct from the brighter magnifica `negative` coral the pink cards use.
-   This keeps "the only red" without touching the shared magnifica colour map. */
+/* card #10 (the Nahtod · the border) routes through the unused `dim` slot so this scoped
+   :deep override styles #10 alone. CREAM-WHITE field with an inset 6px border that leaves
+   6px white around it (HM 2026-06-11) — the alarm-red is preserved as the inset frame (the
+   signal stays; the card goes cream). box-shadow layers, edge→in: 6px white · 6px red ·
+   then the card's drop-shadow. */
 .ethno-board :deep(.bb-dimmed) {
-  background: oklch(48% 0.21 27);
-  color: oklch(98% 0 0);
+  background: oklch(96% 0.025 92);
+  color: oklch(25% 0.02 60);
+  box-shadow:
+    inset 0 0 0 6px oklch(100% 0 0),
+    inset 0 0 0 12px oklch(48% 0.21 27),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* after the last post-it · a longer pause before the canvas releases into §3 (HM "after it
+   pause 60% then it goes on"). */
+.ethno-board :deep(.bb-end) {
+  height: clamp(12rem, 60vh, 28rem);
 }
 
 /* push the (bottom-aligned) hero banner lower · the overline was floating mid-space. */
