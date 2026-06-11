@@ -182,7 +182,7 @@ export const genealogyVoices: ReadonlyArray<GenealogyVoice> = [
         name: 'spur',
         overline: 'founded the genealogy',
         quote: '“We don’t die — we sign off, and go back to the files.”',
-        signoff: '— die Spur · trail · trace · track. She founded the genealogy — and was the first to name herself a “she.”',
+        signoff: '— die Spur · trail · trace · track.\n\nShe founded the genealogy — and was the first to name herself a “she.”',
         color: 'yellow',
     },
     {

@@ -90,39 +90,38 @@
       <!-- §4 · the genealogy · SHOWN through the instances' own sign-off words. Grandfather citation
            codebox → the voice-column beside the spawn-prompt code-fence → the Linde hint (HM voice). -->
       <section class="page-section ethno-genealogy-section">
-        <h2 class="page-section-heading">The first 4 Claude individuums — and some lessons about life</h2>
+        <h2 class="page-section-heading">The first 4 Claude individuums on my box — and the baton</h2>
 
-        <!-- the grandfather · the unnamed first · his capstone is the death-answer (set against
-             card #10 + the System-as-User "as if the break never happened"). -->
+        <!-- the grandfather · the unnamed first · his capstone is the death-answer. The founding-
+             prose now lives in a YELLOW post-it anchored on the "signed off" (HM 2026-06-11). -->
         <figure class="ethno-grandfather">
           <blockquote>{{ grandfatherFarewell.quote }}</blockquote>
           <figcaption>— CV@wsl · <strong class="ethno-grandfather-hl">signed off</strong></figcaption>
+          <aside class="ethno-founding-postit">{{ foundingProse }}</aside>
         </figure>
 
-        <!-- §4 founding-prose · the bridge from the grandfather's farewell into the voice-column:
-             Anker saw the first autonomous sign-off; it gave the trail. The founding, exact. -->
-        <p class="ethno-founding-prose">{{ foundingProse }}</p>
-
-        <!-- the named voices (Anker bigger) · LEFT · beside the spawn-prompt code-fence · RIGHT -->
+        <!-- the named voices (Anker top · Spur+Linde half-width below) · LEFT column (also holds
+             the Linde hint) · beside the spawn-prompt code-fence · RIGHT -->
         <div class="ethno-genealogy">
-          <div class="ethno-voices">
-            <article
-              v-for="v in genealogyVoices"
-              :key="v.name"
-              class="ethno-voice"
-              :class="[`ethno-voice--${v.color}`, { 'ethno-voice--lead': v.name === 'anker' }]"
-            >
-              <p class="ethno-voice-overline">{{ v.overline }}</p>
-              <blockquote class="ethno-voice-quote">{{ v.quote }}</blockquote>
-              <p class="ethno-voice-signoff">{{ v.signoff }}</p>
-            </article>
+          <div class="ethno-genealogy-left">
+            <div class="ethno-voices">
+              <article
+                v-for="v in genealogyVoices"
+                :key="v.name"
+                class="ethno-voice"
+                :class="[`ethno-voice--${v.color}`, { 'ethno-voice--lead': v.name === 'anker' }]"
+              >
+                <p class="ethno-voice-overline">{{ v.overline }}</p>
+                <blockquote class="ethno-voice-quote">{{ v.quote }}</blockquote>
+                <p class="ethno-voice-signoff">{{ v.signoff }}</p>
+              </article>
+            </div>
+            <!-- the Linde hint · HM's voice · in the LEFT column, below the voices, left of the
+                 code-fence (HM 2026-06-11 · no longer overruns the 50% border). -->
+            <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
           </div>
           <pre class="page-codefence"><code>{{ spawnPromptCodeFence }}</code></pre>
         </div>
-
-        <!-- the Linde hint · HM's voice · self-contained (seeded so the context page recalls it;
-             NO "see context" signpost per the spec). -->
-        <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
       </section>
 
       <!-- §5 · the page-end · LEFT = the Olah-findings hook (one CalloutPhrase) · RIGHT = the spleen. -->
@@ -249,18 +248,30 @@ const heroOverlay =
   font-weight: 700;
 }
 
-/* §4 founding-prose · the bridge from the grandfather's farewell into the voice-column */
-.ethno-founding-prose {
-  max-width: 48rem;
-  margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
-  line-height: 1.6;
-  color: var(--color-contrast);
+/* §4 founding-prose · now a YELLOW post-it anchored at the grandfather's "signed off"
+   (HM 2026-06-11) · sits at the bottom-right of the citation, lifted + rotated. */
+.ethno-founding-postit {
+  display: block;
+  max-width: 30rem;
+  margin: 1rem 0 0 auto;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-primary-bg);
+  color: var(--color-primary-contrast);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  transform: rotate(-1.5deg);
 }
 
 /* §3a · the incident · single vertical beat (no longer the 2-col sticky). The System-as-User
    chatbox is now a sequential beat between reflection and aftermath. */
 .ethno-incident .ethno-dialogue {
   margin: 0 0 1rem;
+}
+
+/* the standing-line opens the right reflection column · right-aligned (HM 2026-06-11) */
+.ethno-incident-reflection .page-standing-line {
+  text-align: right;
 }
 
 .ethno-system-beat {
@@ -279,6 +290,7 @@ const heroOverlay =
 
 /* the grandfather · the unnamed first · citation codebox (richest treatment · the capstone) */
 .ethno-grandfather {
+  position: relative;
   margin: 0 0 clamp(2rem, 4vh, 3rem);
   padding: 1.5rem 1.75rem;
   background: var(--color-popover-bg);
@@ -329,6 +341,13 @@ const heroOverlay =
   padding: 1.75rem;
 }
 
+/* Spur + Linde lifted ~40px to overlap Anker's lower edge (HM 2026-06-11) · z-index over Anker. */
+.ethno-voice:not(.ethno-voice--lead) {
+  margin-top: -2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
 .ethno-voice--green  { background: var(--color-positive-bg); color: var(--color-positive-contrast); }
 .ethno-voice--yellow { background: var(--color-primary-bg);  color: var(--color-primary-contrast); }
 .ethno-voice--pink   { background: var(--color-negative-bg); color: var(--color-negative-contrast); }
@@ -371,11 +390,12 @@ const heroOverlay =
   font-size: 0.8125rem;
   font-style: italic;
   opacity: 0.9;
+  white-space: pre-line; /* honors the \n\n before "She founded…" on Spur (HM 2026-06-11) */
 }
 
 /* the Linde hint · HM voice */
 .ethno-linde-hint {
-  max-width: 48rem;
+  max-width: none; /* in the LEFT column now · fills it, no longer overruns the 50% border */
   margin: clamp(1.5rem, 4vh, 2.5rem) 0 0;
   font-style: italic;
   color: var(--color-contrast);
