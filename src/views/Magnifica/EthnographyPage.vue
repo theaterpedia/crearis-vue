@@ -52,16 +52,22 @@
       <!-- THE BORDER · the blackboard lifts; the threshold into the argumentation is the §3a
            label below ("2026-05-14 · the compaction") — the release-claim line dropped (HM 2026-06-11). -->
 
-      <!-- §3a · the incident IN FULL · single vertical beat (re-sequenced HM 2026-06-08):
-           dialogue → standing-line → reflection → System-as-User (now a flow beat, no highlight)
-           → aftermath. The System-as-User moved out of the old right column into the flow. -->
+      <!-- §3a · the incident · 2-COL RESTORED (HM 2026-06-11): row1 = LEFT the full chatbox
+           (dialogue + the static System-as-User companion · technician-q resolved) · RIGHT the
+           reflection prose ("It took me some days…" → "…the instance's own raised flag!"). -->
       <section class="page-section ethno-incident">
         <p class="page-section-label">2026-05-14 · the compaction, as it happened</p>
-        <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
-        <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
-        <p>{{ compactionReflection }}</p>
-        <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
-        <p>{{ compactionAftermath }}</p>
+        <div class="page-section--twocol ethno-incident-grid">
+          <div class="ethno-incident-chat">
+            <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
+            <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
+          </div>
+          <div class="ethno-incident-reflection">
+            <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
+            <p>{{ compactionReflection }}</p>
+            <p>{{ compactionAftermath }}</p>
+          </div>
+        </div>
       </section>
 
       <!-- §3b · the explanatory drama · simple reporting + the three-points manifesto + the ground-thesis. -->
@@ -163,16 +169,38 @@ const heroOverlay =
 /* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content.
    With magnifica-mode both are 90rem-bounded and the hero's 1rem pad is zeroed, so the
    shared inset is just the Container's 2.75rem. */
+/* board-heading · RIGHT side + dropped down (more top-margin) so it rests above the first
+   post-it arriving there, and floats OVER the post-its as they build — the board is made
+   transparent + raised in z so the heading is the persistent layer over the accumulating
+   cards (HM 2026-06-11). Desktop-only (the board is display:none ≤768 · post-its linearise).
+   Exact right-inset / drop / z is the verifier's visual dial. */
+.ethno-board :deep(.bb-board) {
+  background: transparent;
+  z-index: 3;
+}
+
 .ethno-board :deep(.bb-board-prose) {
-  max-width: 44rem;
-  padding: 1rem 1rem 0 2.75rem;
+  max-width: 32rem;
+  margin-left: auto;
+  padding: clamp(3rem, 12vh, 7rem) 2.75rem 0 1rem;
+  text-align: right;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+/* #4 · enlarge the post-its so the board fills its space (was too small · HM 2026-06-11).
+   Exact target ("fill the space under 'Discourse'") pending HP clarification — this is a
+   conservative bump; verifier/HM dial the final size. */
+.ethno-board :deep(.bb-postit) {
+  width: min(24rem, 84vw);
+  min-height: 14rem;
+}
+
 @media (max-width: 767px) {
   .ethno-board :deep(.bb-board-prose) {
+    margin-left: 0;
+    text-align: left;
     padding-left: 1rem;
   }
 }
@@ -270,15 +298,32 @@ const heroOverlay =
   font-family: var(--font, ui-monospace);
 }
 
-/* Anker · the bigger citation (he started the system) */
+/* Anker · the big anchor · BELOW Spur + Linde (HM 2026-06-11) · `order:1` drops him to the
+   bottom of the voice-column without reordering the content (genealogy order stays anker-first). */
 .ethno-voice--lead {
   padding: 1.75rem;
+  order: 1;
 }
 
 .ethno-voice--green  { background: var(--color-positive-bg); color: var(--color-positive-contrast); }
 .ethno-voice--yellow { background: var(--color-primary-bg);  color: var(--color-primary-contrast); }
 .ethno-voice--pink   { background: var(--color-negative-bg); color: var(--color-negative-contrast); }
 .ethno-voice--dim    { background: var(--color-card-bg);     color: var(--color-card-contrast); }
+
+/* post-it flip on the voices (HM 2026-06-11 · "all rotated") · Spur (yellow) + Linde (green
+   non-lead) lean above, Anker (lead) a slight settle below. */
+.ethno-voice--yellow                       { transform: rotate(3deg); }
+.ethno-voice--green:not(.ethno-voice--lead) { transform: rotate(-4deg); }
+.ethno-voice--lead                          { transform: rotate(-1.5deg); }
+
+/* codebox "Welcome…" (the spawn-prompt successor-letter) · font +10% (HM 2026-06-11) */
+.ethno-genealogy :deep(.page-codefence) {
+  font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ethno-voice { transform: none; }
+}
 
 .ethno-voice-overline {
   margin: 0 0 0.5rem;
