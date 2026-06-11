@@ -473,7 +473,7 @@ const heroOverlay =
     left: 52%;
     width: 48%;
     margin-top: 50vh;
-    height: 65vh;
+    height: 80vh;
     overflow-y: auto;
   }
 }
