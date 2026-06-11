@@ -98,8 +98,7 @@
              prose now lives in a YELLOW post-it anchored on the "signed off" (HM 2026-06-11). -->
         <figure class="ethno-grandfather">
           <blockquote>{{ grandfatherFarewell.quote }}</blockquote>
-          <figcaption>— CV@wsl · <strong class="ethno-grandfather-hl">signed off</strong></figcaption>
-          <aside class="ethno-founding-postit">{{ foundingProse }}</aside>
+          <figcaption>— CV@wsl · <CalloutPhrase :callout="callouts.grandfather"><strong class="ethno-grandfather-hl">signed off</strong></CalloutPhrase></figcaption>
         </figure>
 
         <!-- the named voices (Anker top · Spur+Linde half-width below) · LEFT column (also holds
@@ -250,20 +249,8 @@ const heroOverlay =
   font-weight: 700;
 }
 
-/* §4 founding-prose · now a YELLOW post-it anchored at the grandfather's "signed off"
-   (HM 2026-06-11) · sits at the bottom-right of the citation, lifted + rotated. */
-.ethno-founding-postit {
-  display: block;
-  max-width: 30rem;
-  margin: 1rem 0 0 auto;
-  padding: 1.25rem 1.5rem;
-  background: var(--color-primary-bg);
-  color: var(--color-primary-contrast);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  transform: rotate(-1.5deg);
-}
+/* §4 founding-prose · now opens as a pop-up post-it (FloatingPostIt) from the "signed off"
+   CalloutPhrase (HM 2026-06-11) — no static post-it; the callout owns the founding text. */
 
 /* §3a · the incident · single vertical beat (no longer the 2-col sticky). The System-as-User
    chatbox is now a sequential beat between reflection and aftermath. */
@@ -271,9 +258,10 @@ const heroOverlay =
   margin: 0 0 1rem;
 }
 
-/* the standing-line opens the right reflection column · right-aligned (HM 2026-06-11) */
+/* the standing-line opens the right reflection column · LEFT-aligned (HM 2026-06-11 · revised
+   from right) · overrides .page-standing-line's base center. */
 .ethno-incident-reflection .page-standing-line {
-  text-align: right;
+  text-align: left;
 }
 
 /* §3a STICKY SCREEN · blackboard-style (HM 2026-06-11 · PILOT) · DESKTOP only (mobile flows

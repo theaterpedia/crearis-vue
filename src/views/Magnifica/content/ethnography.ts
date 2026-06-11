@@ -194,6 +194,15 @@ export const genealogyVoices: ReadonlyArray<GenealogyVoice> = [
 // ==Callouts== · 8 (c1-c8) per the page-1 deliverable
 
 export const callouts: Record<string, CardsCanvasItem> = {
+    // the grandfather founding-prose · opens as a pop-up post-it from the "signed off" (HM 2026-06-11)
+    grandfather: {
+        props: {
+            overline: 'the grandfather · CV@wsl',
+            headline: 'the first sign-off gave the trail',
+            bodyText: foundingProse,
+            themeColor: 'yellow',
+        },
+    },
     c1: {
         props: {
             overline: 'the discipline',
