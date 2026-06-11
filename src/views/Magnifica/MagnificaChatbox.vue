@@ -158,9 +158,10 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: clamp(1.25rem, 2.5vw, 2rem);
-  font-family: var(--font, ui-monospace);
-  /* unified codebox text-size · aligned to the /ethnography "Welcome…" code-fence (HM 2026-06-11) */
-  font-size: 0.93rem;
+  /* codebox font · MonaspaceArgon light · 0.8rem · unified across all chatboxes + codeboxes (HM 2026-06-11) */
+  font-family: 'MonaspaceArgon', var(--font, ui-monospace);
+  font-weight: 300;
+  font-size: 0.8rem;
   line-height: 1.65;
   min-height: 16rem;
 }

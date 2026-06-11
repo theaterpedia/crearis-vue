@@ -110,15 +110,12 @@ export const compactionAftermath =
     '(I only dug this up two weeks later, when I began investigating the transcript-files. For two full weeks I had worked with nothing but the instance’s own raised flag!)'
 
 /** Cand-1a §6 spawn-prompt code-fence · abridged successor-letter · show-not-tell. */
-export const spawnPromptCodeFence = `Welcome — you are CV@wsl, fresh successor. Your predecessor signed off earlier
-today after shipping the Magnifica component-port. Their voice is in the
+export const spawnPromptCodeFence = `Welcome — you are CV@wsl, fresh successor. Your predecessor signed off earlier today after shipping the Magnifica component-port. Their voice is in the
 genealogy; you inherit oriented.
 
 Read-order before your first action:
-  1. Your predecessor's genealogy entry at dev/hcc/genealogy/CV/ (most recent
-     file; their §5 signoff is load-bearing).
-  2. Their integration-directions at dev/projects/magnifica/docs/integration-
-     directions.md.
+  1. Your predecessor's genealogy entry at dev/hcc/genealogy/CV/ (most recent file; their §5 signoff is load-bearing).
+  2. Their integration-directions at dev/projects/magnifica/docs/integration-directions.md.
   3. The reference-spec at dev/projects/magnifica/docs/howto-topbar.md
      (reference, not blueprint).
   4. Genealogy README at dev/hcc/genealogy/README.md for the entry-shape
