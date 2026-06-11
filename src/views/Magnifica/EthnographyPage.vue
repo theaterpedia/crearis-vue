@@ -169,16 +169,10 @@ const heroOverlay =
 /* blackboard board-prose (the timeline heading) · left-inset MATCHES the hero content.
    With magnifica-mode both are 90rem-bounded and the hero's 1rem pad is zeroed, so the
    shared inset is just the Container's 2.75rem. */
-/* board-heading · RIGHT side + dropped down (more top-margin) so it rests above the first
-   post-it arriving there, and floats OVER the post-its as they build — the board is made
-   transparent + raised in z so the heading is the persistent layer over the accumulating
-   cards (HM 2026-06-11). Desktop-only (the board is display:none ≤768 · post-its linearise).
-   Exact right-inset / drop / z is the verifier's visual dial. */
-.ethno-board :deep(.bb-board) {
-  background: transparent;
-  z-index: 3;
-}
-
+/* board-heading · RIGHT side + dropped down (more top-margin) · "placement is perfect" (HM
+   2026-06-11). The heading sits ON the board at the normal layer — the post-its pass in
+   FRONT of it as they build (real-blackboard grammar: notes are stuck over the written
+   heading, NOT the reverse). Desktop-only (the board is display:none ≤768 · post-its linearise). */
 .ethno-board :deep(.bb-board-prose) {
   max-width: 32rem;
   margin-left: auto;
