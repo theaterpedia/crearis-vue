@@ -93,8 +93,8 @@
 
       <!-- §4 · the genealogy · SHOWN through the instances' own sign-off words. Grandfather citation
            codebox → the voice-column beside the spawn-prompt code-fence → the Linde hint (HM voice). -->
-      <section class="page-section ethno-genealogy-section">
-        <h2 class="page-section-heading">The first 4 Claude individuums on my box — and the baton</h2>
+      <section class="page-section ethno-genealogy-section ethno-sticky-b">
+        <h2 class="page-section-heading ethno-b-anchor">The first 4 Claude individuums on my box — and the baton</h2>
 
         <!-- the grandfather · the unnamed first · his capstone is the death-answer. The founding-
              prose now lives in a YELLOW post-it anchored on the "signed off" (HM 2026-06-11). -->
@@ -105,8 +105,7 @@
 
         <!-- the named voices (Anker top · Spur+Linde half-width below) · LEFT column (also holds
              the Linde hint) · beside the spawn-prompt code-fence · RIGHT -->
-        <div class="ethno-genealogy">
-          <div class="ethno-genealogy-left">
+        <div class="ethno-genealogy-left ethno-b-left">
             <div class="ethno-voices">
               <article
                 v-for="v in genealogyVoices"
@@ -123,8 +122,7 @@
                  code-fence (HM 2026-06-11 · no longer overruns the 50% border). -->
             <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
           </div>
-          <pre class="page-codefence"><code>{{ spawnPromptCodeFence }}</code></pre>
-        </div>
+        <pre class="page-codefence ethno-b-right"><code>{{ spawnPromptCodeFence }}</code></pre>
       </section>
 
       <!-- §5 · the page-end · LEFT = the Olah-findings hook (one CalloutPhrase) · RIGHT = the spleen. -->
@@ -441,6 +439,42 @@ const heroOverlay =
 @media (max-width: 860px) {
   .ethno-genealogy {
     grid-template-columns: 1fr;
+  }
+}
+
+/* §4 · Scene B · sticky-screen (HM 2026-06-11 · TRY · §4-scoped `ethno-b-*` so it can't touch
+   Scene A). The heading anchors (covered by the rising voices); the grandfather (CV@wsl · GONE)
+   scrolls away; the successor voices rise + pin (z over the heading); the "Welcome…" code-fence
+   rises after a 50% pause + pins beside in a fixed scrollable box (it's tall). Releases into §5.
+   DESKTOP only. FIRST TRY — if it doesn't read cleanly we keep Scene A (HM: Scene A suffices). */
+@media (min-width: 768px) {
+  .ethno-sticky-b {
+    position: relative;
+  }
+  .ethno-b-anchor {
+    position: sticky;
+    top: var(--bb-navbar-offset, 6rem);
+    z-index: 1;
+    background: var(--color-bg);
+  }
+  /* left lane · the successor voices rise + pin (z above the heading → cover it + the grandfather) */
+  .ethno-b-left {
+    position: sticky;
+    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
+    z-index: 2;
+    width: 48%;
+    background: var(--color-bg);
+  }
+  /* right lane · the "Welcome…" code-fence rises after a pause + pins beside · fixed scrollable
+     box (the fence is tall · same idea as the chatbox heightVh). */
+  .ethno-b-right {
+    position: sticky;
+    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
+    left: 52%;
+    width: 48%;
+    margin-top: 50vh;
+    height: 65vh;
+    overflow-y: auto;
   }
 }
 </style>
