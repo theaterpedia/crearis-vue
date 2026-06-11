@@ -63,7 +63,7 @@
         <p class="page-section-label ethno-sticky-anchor">2026-05-14 · the compaction, as it happened</p>
         <!-- left lane · the dialogue pins below the anchor and stays -->
         <div class="ethno-sticky-col--left ethno-incident-chat">
-          <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" />
+          <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" :height-vh="80" />
         </div>
         <!-- right lane · slides rise with 50% pauses, accumulating: standing-line → reflection →
              (System-as-User box + the parenthesised aftermath-comment). (HM 2026-06-11) -->

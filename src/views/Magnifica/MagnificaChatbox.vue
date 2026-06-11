@@ -8,7 +8,7 @@
 -->
 
 <template>
-  <div ref="rootEl" class="chatbox" aria-live="polite">
+  <div ref="rootEl" class="chatbox" :style="rootStyle" aria-live="polite">
     <template v-for="(entry, i) in entries" :key="i">
       <div
         v-if="rank[i] <= step"
@@ -37,7 +37,16 @@ const props = withDefaults(defineProps<{
   instantPortion?: number
   /** Render everything at once, no typewriter / no in-view wait (the static system-prompt box). */
   noAnimation?: boolean
+  /** Fixed height in vh (relative to viewport) + internal scroll · for the dynamically-typing
+   *  boxes, so their growth doesn't push the scroll-sensitive content below up too early
+   *  (HM 2026-06-11). Omit → auto height (min-height grows · the static boxes). */
+  heightVh?: number
 }>(), { instantPortion: 0, noAnimation: false })
+
+// Fixed viewport-height + internal scrollbar when heightVh is set (the dynamic boxes).
+const rootStyle = computed(() =>
+  props.heightVh ? { height: `${props.heightVh}vh`, overflowY: 'auto' as const } : undefined,
+)
 
 const WORD_MS = 45 // word-by-word cadence
 const PAUSE_MS = 320 // pause between entries
@@ -158,10 +167,10 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: clamp(1.25rem, 2.5vw, 2rem);
-  /* codebox font · MonaspaceArgon light · 0.8rem · unified across all chatboxes + codeboxes (HM 2026-06-11) */
+  /* codebox font · MonaspaceArgon light · 0.87rem default · unified across all chatboxes + codeboxes (HM 2026-06-11) */
   font-family: 'MonaspaceArgon', var(--font, ui-monospace);
   font-weight: 300;
-  font-size: 0.8rem;
+  font-size: 0.87rem;
   line-height: 1.65;
   min-height: 16rem;
 }

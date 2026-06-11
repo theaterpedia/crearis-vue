@@ -150,11 +150,11 @@
   padding: 1.5rem;
   border-radius: 4px;
   overflow-x: auto;
-  /* codebox font · MonaspaceArgon light · 0.8rem · explicit family fixes the <pre> Consolas
+  /* codebox font · MonaspaceArgon light · 0.87rem · explicit family fixes the <pre> Consolas
      fallback (UA monospace ignores the inherited var(--font)) (HM 2026-06-11) */
   font-family: 'MonaspaceArgon', var(--font, ui-monospace);
   font-weight: 300;
-  font-size: 0.8rem;
+  font-size: 0.87rem;
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
