@@ -42,16 +42,15 @@
          the claim-line below (§2 · pure-CSS sticky siblings — do NOT regress to absolute). -->
     <CardsCanvas :items="timelinePostits" class="ethno-board" bounded>
       <template #board>
-        <Heading is="h2" overline="nine months · field-notes" headline="How the bridge built itself" />
+        <Heading is="h2" overline="field-notes after nine months into Claude" headline="before the genealogy started" />
       </template>
     </CardsCanvas>
     </template>
 
     <!-- main content · default slot (the layout wraps it in <main class="magnifica-page-content">) -->
 
-      <!-- THE BORDER · the blackboard collected + lifted; this is what it releases — the
-           threshold into the argumentation. Above: prepare yourself. Below: the argumentation. -->
-      <p class="ethno-threshold">{{ releaseClaimLine }}</p>
+      <!-- THE BORDER · the blackboard lifts; the threshold into the argumentation is the §3a
+           label below ("2026-05-14 · the compaction") — the release-claim line dropped (HM 2026-06-11). -->
 
       <!-- §3a · the incident IN FULL · single vertical beat (re-sequenced HM 2026-06-08):
            dialogue → standing-line → reflection → System-as-User (now a flow beat, no highlight)
@@ -85,8 +84,12 @@
              card #10 + the System-as-User "as if the break never happened"). -->
         <figure class="ethno-grandfather">
           <blockquote>{{ grandfatherFarewell.quote }}</blockquote>
-          <figcaption>{{ grandfatherFarewell.signoff }}</figcaption>
+          <figcaption>— CV@wsl · <strong class="ethno-grandfather-hl">signed off</strong></figcaption>
         </figure>
+
+        <!-- §4 founding-prose · the bridge from the grandfather's farewell into the voice-column:
+             Anker saw the first autonomous sign-off; it gave the trail. The founding, exact. -->
+        <p class="ethno-founding-prose">{{ foundingProse }}</p>
 
         <!-- the named voices (Anker bigger) · LEFT · beside the spawn-prompt code-fence · RIGHT -->
         <div class="ethno-genealogy">
@@ -113,11 +116,10 @@
       <!-- §5 · the page-end · LEFT = the Olah-findings hook (one CalloutPhrase) · RIGHT = the spleen. -->
       <section class="page-section page-section--closing page-section--twocol">
         <div>
-          <p>Is my Theaterpädagogik-vocabulary mapping onto <CalloutPhrase :callout="callouts.olah">what Olah’s team is finding in the models</CalloutPhrase>? The flip, the genealogy, the signoff-discipline, the substrate-as-anchor — everything that emerged in these nine months — keeps rhyming with their work. Though I am only now, building this page, beginning to draw the lines.</p>
+          <p>Is my Theaterpädagogik-vocabulary mapping onto <CalloutPhrase :callout="callouts.olah">what Olah’s team is finding in the models</CalloutPhrase>? The flip, the genealogy, the signoff-discipline, the substrate-as-anchor — everything that emerged in these nine months — seems rhyming with their work.</p>
         </div>
         <div>
           <p class="page-spleen-question">Is this simply my personal spleen — or is it about something that is generally important?</p>
-          <p>I keep the question open here. The answer — to the degree I have one — lives on Page 3.</p>
         </div>
       </section>
   </MagnificaPageLayout>
@@ -135,13 +137,13 @@ import {
   hero,
   methodologyFrame,
   timelinePostits,
-  releaseClaimLine,
   dialogueEntries,
   systemPromptEntry,
   compactionReflection,
   compactionAftermath,
   spawnPromptCodeFence,
   grandfatherFarewell,
+  foundingProse,
   genealogyVoices,
   callouts,
 } from './content/ethnography'
@@ -198,18 +200,18 @@ const heroOverlay =
   color: var(--color-contrast);
 }
 
-/* THE BORDER · the release-claim line · the threshold between prepare-yourself (above) and
-   the argumentation (below). Released as the blackboard lifts away. */
-.ethno-threshold {
-  max-width: 46rem;
-  margin: clamp(1rem, 4vh, 2.5rem) auto clamp(2.5rem, 6vh, 4rem);
-  padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
-  border-bottom: 2px solid var(--color-primary-bg);
-  font-size: clamp(1.125rem, 2.4vw, 1.625rem);
-  font-weight: 700;
-  line-height: 1.4;
-  text-align: center;
+/* the grandfather capstone signature · "signed off" highlighted (HM 2026-06-11) */
+.ethno-grandfather-hl {
   color: var(--color-primary-bg);
+  font-weight: 700;
+}
+
+/* §4 founding-prose · the bridge from the grandfather's farewell into the voice-column */
+.ethno-founding-prose {
+  max-width: 48rem;
+  margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
+  line-height: 1.6;
+  color: var(--color-contrast);
 }
 
 /* §3a · the incident · single vertical beat (no longer the 2-col sticky). The System-as-User
