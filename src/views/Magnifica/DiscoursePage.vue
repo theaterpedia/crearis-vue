@@ -115,8 +115,8 @@
         But what happened to the other discourse — the world of written scientific culture? In Germany the whole
         practice was reformatted during the
         <CalloutPhrase :callout="callouts.bologna">Bologna-process</CalloutPhrase>,
-        the old five-year Diplom collapsing to 3+2; classical Cultural Studies fragmented into a hydra of ‘X-studies’
-        and lost any center. I never fully detached — I published, and many in the DASEi Weiterbildung were students or
+        the old five-year Diplom collapsing to 3+2; classical Cultural Studies transitioned into a hydra of ‘X-studies’
+        but lost any center. I never fully detached — I published once or twice, and many in the DASEi Weiterbildung were students or
         academics — but mostly I watched close friends struggle toward professorships. The clear reading: Bologna
         coincided with
         <CalloutPhrase :callout="callouts.countingApparatus">quantitative practices</CalloutPhrase>

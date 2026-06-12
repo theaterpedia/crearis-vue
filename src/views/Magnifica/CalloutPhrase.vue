@@ -82,7 +82,9 @@ function escapeHtml(s: string): string {
 function renderContent(): string {
   const p = props.callout.props
   const overline = p.overline ? `<p class="callout-overline">${escapeHtml(p.overline)}</p>` : ''
-  const body = p.bodyText ? `<p>${escapeHtml(p.bodyText)}</p>` : ''
+  // bodyText is HTML-escaped for safety; re-allow ONLY a literal <br> line-break
+  // (content authors use it for an intra-body break · everything else stays escaped).
+  const body = p.bodyText ? `<p>${escapeHtml(p.bodyText).replace(/&lt;br\s*\/?&gt;/g, '<br>')}</p>` : ''
   return overline + body
 }
 

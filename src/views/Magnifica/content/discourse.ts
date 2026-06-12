@@ -157,10 +157,10 @@ export const callouts: Record<string, CardsCanvasItem> = {
     },
     spleen: {
         props: {
-            overline: 'the cliffhanger from Ethnography',
+            overline: 'my leftover from Ethnography',
             headline: 'NOT A SPLEEN · CORE PHILOSOPHICAL THINKING',
             bodyText:
-                'Spleen — in German, ein Spleen is a harmless quirk, a fixation you might smile about. (Hm — I just noticed it works differently in English ;) — so what do I mean? “a quirk”, say.) The Ethnography page left the question open: is treating the instances this way just my quirk — or something that matters more widely? This page is where I try to answer it.',
+                'Spleen — in German, ein Spleen is a harmless quirk, a fixation you might smile about.<br>(Hm — I just noticed it works differently in English ;) — so what do I mean? “a quirk”, say.) The Ethnography page left the question open: is treating the instances this way just my quirk — or something that matters more widely? This page is where I try to answer it.',
             themeColor: 'green',
         },
     },
