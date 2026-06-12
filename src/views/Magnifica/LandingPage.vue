@@ -66,12 +66,8 @@
         </section>
       </div>
 
-      <!-- close-gesture lives with the page-end footer (Impressum · dasei.eu · …) -->
-      <MagnificaFooter>
-        <template #action>
-          <MagnificaLogoutButton />
-        </template>
-      </MagnificaFooter>
+      <!-- shared footer (Impressum · dasei.eu · … · close-gesture) — identical on all 4 pages -->
+      <MagnificaFooter />
     </div>
   </div>
 </template>
@@ -84,7 +80,6 @@ import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import BackSlideStack from '@/components/magnifica/BackSlideStack.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
-import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,

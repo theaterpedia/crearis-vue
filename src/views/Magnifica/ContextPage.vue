@@ -10,7 +10,7 @@
 <template>
   <MagnificaPageLayout variant="standard">
     <!-- topbar · same compact sticky header as ethnography/discourse (fixes the stray
-         TopNav "pedia" logo). Logout lives on the landing (close-and-reopen), not here. -->
+         TopNav "pedia" logo). The close-gesture lives in the shared footer, not the header. -->
     <template #header><MagnificaHeader show-nav compact /></template>
 
     <template #hero>

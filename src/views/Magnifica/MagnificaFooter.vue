@@ -15,14 +15,15 @@
       <a class="mag-footer-link" href="https://theaterpedia.org" target="_blank" rel="noopener">theaterpedia.org</a>
       <span class="mag-footer-sep" aria-hidden="true">·</span>
       <a class="mag-footer-link" href="https://cojc.eu" target="_blank" rel="noopener">cojc.eu</a>
-      <!-- optional close/action gesture (landing) · sits at the right of the footer row -->
-      <span v-if="$slots.action" class="mag-footer-action"><slot name="action" /></span>
+      <!-- close-gesture · same footer on every magnifica page (landing + the PageLayout pages) -->
+      <span class="mag-footer-action"><MagnificaLogoutButton /></span>
     </nav>
   </footer>
 </template>
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import MagnificaLogoutButton from './MagnificaLogoutButton.vue'
 </script>
 
 <style scoped>
