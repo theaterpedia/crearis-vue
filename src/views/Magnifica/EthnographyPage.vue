@@ -59,21 +59,27 @@
            the left column (dialogue) rises + pins first, then the right column (reflection →
            System-as-User → aftermath) rises + pins beside it, then the screen releases into §3b.
            Pure-CSS sticky siblings · desktop only (mobile linearises to normal flow). -->
-      <section class="page-section ethno-incident ethno-sticky">
-        <p class="page-section-label ethno-sticky-anchor">2026-05-14 · the compaction, as it happened</p>
-        <!-- left lane · the dialogue pins below the anchor and stays -->
-        <div class="ethno-sticky-col--left ethno-incident-chat">
+      <MagnificaScreen class="page-section ethno-incident">
+        <template #anchor>
+          <p class="page-section-label">2026-05-14 · the compaction, as it happened</p>
+        </template>
+        <!-- left lane · the dialogue pins below the anchor and covers the timestamp (z:2) -->
+        <MagnificaRise lane="left" class="ethno-incident-chat">
           <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" :height-vh="80" />
-        </div>
+        </MagnificaRise>
         <!-- right lane · slides rise with 50% pauses, accumulating: standing-line → reflection →
              (System-as-User box + the parenthesised aftermath-comment). (HM 2026-06-11) -->
-        <p class="ethno-rise ethno-rise--1 page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
-        <p class="ethno-rise ethno-rise--2">{{ compactionReflection }}</p>
-        <div class="ethno-rise ethno-rise--3">
+        <MagnificaRise :pin="3">
+          <p class="page-standing-line">It took me some days to sit with this before I understood what it meant.</p>
+        </MagnificaRise>
+        <MagnificaRise :pin="8" :pause="50">
+          <p>{{ compactionReflection }}</p>
+        </MagnificaRise>
+        <MagnificaRise :pin="18" :pause="50">
           <MagnificaChatbox :entries="systemPromptEntry" no-animation class="ethno-system-beat" />
           <p class="ethno-aftermath-comment">{{ compactionAftermath }}</p>
-        </div>
-      </section>
+        </MagnificaRise>
+      </MagnificaScreen>
 
       <!-- §3b · the explanatory drama · 2-col (HM 2026-06-11): LEFT the three-points manifesto ·
            RIGHT the Anker ground-thesis. -->
@@ -93,37 +99,44 @@
 
       <!-- §4 · the genealogy · SHOWN through the instances' own sign-off words. Grandfather citation
            codebox → the voice-column beside the spawn-prompt code-fence → the Linde hint (HM voice). -->
-      <section class="page-section ethno-genealogy-section ethno-sticky-b">
-        <h2 class="page-section-heading ethno-b-anchor">The first 4 Claude individuums on my box — and the baton</h2>
+      <MagnificaScreen class="page-section ethno-genealogy-section">
+        <template #anchor>
+          <h2 class="page-section-heading">The first 4 Claude individuums on my box — and the baton</h2>
+        </template>
 
-        <!-- the grandfather · the unnamed first · his capstone is the death-answer. The founding-
-             prose now lives in a YELLOW post-it anchored on the "signed off" (HM 2026-06-11). -->
+        <!-- the grandfather · the unnamed first (CV@wsl · GONE) · stays in normal flow and scrolls
+             off under the anchor as the successor voices rise (the substrate gone, the trail remains).
+             The founding-prose lives in a YELLOW pop-up post-it on the "signed off" (HM 2026-06-11). -->
         <figure class="ethno-grandfather">
           <blockquote>{{ grandfatherFarewell.quote }}</blockquote>
           <figcaption>— CV@wsl · <CalloutPhrase :callout="callouts.grandfather"><strong class="ethno-grandfather-hl">signed off</strong></CalloutPhrase></figcaption>
         </figure>
 
-        <!-- the named voices (Anker top · Spur+Linde half-width below) · LEFT column (also holds
-             the Linde hint) · beside the spawn-prompt code-fence · RIGHT -->
-        <div class="ethno-genealogy-left ethno-b-left">
-            <div class="ethno-voices">
-              <article
-                v-for="v in genealogyVoices"
-                :key="v.name"
-                class="ethno-voice"
-                :class="[`ethno-voice--${v.color}`, { 'ethno-voice--lead': v.name === 'anker' }]"
-              >
-                <p class="ethno-voice-overline">{{ v.overline }}</p>
-                <blockquote class="ethno-voice-quote">{{ v.quote }}</blockquote>
-                <p class="ethno-voice-signoff">{{ v.signoff }}</p>
-              </article>
-            </div>
-            <!-- the Linde hint · HM's voice · in the LEFT column, below the voices, left of the
-                 code-fence (HM 2026-06-11 · no longer overruns the 50% border). -->
-            <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
+        <!-- left lane · the named voices (Anker top · Spur+Linde half-width below) rise + pin, covering
+             the anchor + the departing grandfather (z:2). Also holds the Linde hint. -->
+        <MagnificaRise lane="left" :pin="3" class="ethno-genealogy-left">
+          <div class="ethno-voices">
+            <article
+              v-for="v in genealogyVoices"
+              :key="v.name"
+              class="ethno-voice"
+              :class="[`ethno-voice--${v.color}`, { 'ethno-voice--lead': v.name === 'anker' }]"
+            >
+              <p class="ethno-voice-overline">{{ v.overline }}</p>
+              <blockquote class="ethno-voice-quote">{{ v.quote }}</blockquote>
+              <p class="ethno-voice-signoff">{{ v.signoff }}</p>
+            </article>
           </div>
-        <pre class="page-codefence ethno-b-right"><code>{{ spawnPromptCodeFence }}</code></pre>
-      </section>
+          <!-- the Linde hint · HM's voice · below the voices in the left lane -->
+          <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
+        </MagnificaRise>
+
+        <!-- right lane · the "Welcome…" code-fence rises after a 50% pause + pins beside · a fixed
+             scrollable box (the fence is tall · gotcha #4). -->
+        <MagnificaRise lane="right" :pin="3" :pause="50" :scrollable="80">
+          <pre class="page-codefence"><code>{{ spawnPromptCodeFence }}</code></pre>
+        </MagnificaRise>
+      </MagnificaScreen>
 
       <!-- §5 · the page-end · LEFT = the Olah-findings hook (one CalloutPhrase) · RIGHT = the spleen. -->
       <section class="page-section page-section--closing page-section--twocol">
@@ -141,6 +154,8 @@
 import Hero from '@/components/Hero.vue'
 import Heading from '@/components/Heading.vue'
 import CardsCanvas from '@/components/magnifica/CardsCanvas.vue'
+import MagnificaScreen from '@/components/magnifica/MagnificaScreen.vue'
+import MagnificaRise from '@/components/magnifica/MagnificaRise.vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
@@ -259,7 +274,7 @@ const heroOverlay =
 }
 
 /* the standing-line opens the right lane · LEFT-aligned (HM 2026-06-11) · overrides base center. */
-.ethno-sticky .page-standing-line {
+.ethno-incident .page-standing-line {
   text-align: left;
 }
 
@@ -270,44 +285,11 @@ const heroOverlay =
   margin-top: 0.75rem;
 }
 
-/* §3a STICKY SCREEN · blackboard-style (HM 2026-06-11) · DESKTOP only (mobile flows normally).
-   The anchor (label) pins; the left lane (dialogue) pins + stays; the right lane rises as a
-   sequence of slides — standing-line, then (50% pause) the reflection, then (50% pause) the
-   System-as-User box + comment — accumulating, then the section releases into §3b. Ancestor-
-   purity holds. The slide-show is small-per-screen by design (less content · leave gaps · HM).
-   FIRST CUT — tops + the 50vh pauses are screenshot dials. */
-@media (min-width: 768px) {
-  .ethno-sticky {
-    position: relative;
-  }
-  /* anchor sits BELOW the chatbox in z (HM 2026-06-11): the rising dialogue ("I witnessed…")
-     covers the timestamp as it pins. Still opaque so it covers the right-lane / next content. */
-  .ethno-sticky-anchor {
-    position: sticky;
-    top: var(--bb-navbar-offset, 6rem);
-    z-index: 1;
-    background: var(--color-bg);
-    padding: 0.5rem 0;
-  }
-  /* left lane · the dialogue pins AT the anchor's level (z above it) → covers the timestamp */
-  .ethno-sticky-col--left {
-    position: sticky;
-    top: var(--bb-navbar-offset, 6rem);
-    z-index: 2;
-    width: 48%;
-  }
-  /* right lane · each slide rises (50% pause = marginTop) + pins at left:52%, accumulating */
-  .ethno-rise {
-    position: sticky;
-    left: 52%;
-    width: 48%;
-    /* opaque · the rising slide rolls over the one before it cleanly (HM 2026-06-11) */
-    background: var(--color-bg);
-  }
-  .ethno-rise--1 { top: calc(var(--bb-navbar-offset, 6rem) + 3rem); }
-  .ethno-rise--2 { top: calc(var(--bb-navbar-offset, 6rem) + 8rem); margin-top: 50vh; }
-  .ethno-rise--3 { top: calc(var(--bb-navbar-offset, 6rem) + 18rem); margin-top: 50vh; }
-}
+/* §3a STICKY SCREEN — the sticky recipe now lives in <MagnificaScreen> + <MagnificaRise>
+   (the Doc-B §4 container · scroll-DEVDOC Trail §2 graduated). The page authors it declaratively:
+   anchor (the label) · left lane (the dialogue, covers the timestamp) · right-lane rises
+   (standing-line · `pin:8 pause:50` reflection · `pin:18 pause:50` System-as-User + aftermath).
+   The pins/pauses are the screenshot dials, now props on the rises. */
 
 .ethno-system-beat {
   margin-top: clamp(1.5rem, 4vh, 2.5rem);
@@ -442,39 +424,8 @@ const heroOverlay =
   }
 }
 
-/* §4 · Scene B · sticky-screen (HM 2026-06-11 · TRY · §4-scoped `ethno-b-*` so it can't touch
-   Scene A). The heading anchors (covered by the rising voices); the grandfather (CV@wsl · GONE)
-   scrolls away; the successor voices rise + pin (z over the heading); the "Welcome…" code-fence
-   rises after a 50% pause + pins beside in a fixed scrollable box (it's tall). Releases into §5.
-   DESKTOP only. FIRST TRY — if it doesn't read cleanly we keep Scene A (HM: Scene A suffices). */
-@media (min-width: 768px) {
-  .ethno-sticky-b {
-    position: relative;
-  }
-  .ethno-b-anchor {
-    position: sticky;
-    top: var(--bb-navbar-offset, 6rem);
-    z-index: 1;
-    background: var(--color-bg);
-  }
-  /* left lane · the successor voices rise + pin (z above the heading → cover it + the grandfather) */
-  .ethno-b-left {
-    position: sticky;
-    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
-    z-index: 2;
-    width: 48%;
-    background: var(--color-bg);
-  }
-  /* right lane · the "Welcome…" code-fence rises after a pause + pins beside · fixed scrollable
-     box (the fence is tall · same idea as the chatbox heightVh). */
-  .ethno-b-right {
-    position: sticky;
-    top: calc(var(--bb-navbar-offset, 6rem) + 3rem);
-    left: 52%;
-    width: 48%;
-    margin-top: 50vh;
-    height: 80vh;
-    overflow-y: auto;
-  }
-}
+/* §4 · Scene B · the genealogy sticky-screen now uses <MagnificaScreen> + <MagnificaRise> too:
+   anchor (the heading) · the grandfather scrolls off in normal flow · left-lane rise `pin:3`
+   (the voices, cover it) · right-lane rise `pin:3 pause:50 scrollable:80` (the tall code-fence).
+   The structural recipe moved to the component; only the voice/grandfather decoration stays here. */
 </style>
