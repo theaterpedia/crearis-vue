@@ -13,19 +13,70 @@ import type { CardsCanvasItem } from '@/components/magnifica/types'
 export const pageTitle = 'organic intellectual, grounded practice'
 
 export const hero = {
-    overline: 'Theaterpädagoge from Bavaria · Gestalter · DAS Ei e.V.',
+    overline: "'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
     // lowercase = the page-headline voice (HM 2026-06-08 · two-register casing);
     // UPPERCASE stays for the chalk register (post-its + callout cards).
     headline: 'organic intellectual, grounded practice',
 }
 
 /**
- * Page-hero portrait · HM-provided 2026-06-03 PM · Cloudinary c_crop,g_north 3:4 (1200×1600).
- * Rendered via BackSlide at the top of /context (manifest §5). The page renders fine without it.
+ * The five /context image-beats (§C-LOCKED · director4) · individual <BackSlide> illustrations
+ * interleaved between the prose (uncover · bounded · text-primary). Panel = overline–HEADLINE
+ * only; the argument lives in the reading-body prose. Focal via the prop (never :deep). Images
+ * HP-provided via Cloudinary. The lone Hans-portrait (hans_kontakt) is retired — the hero is text-only.
  */
-export const portrait = {
-    image: 'https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_north,h_1600,w_1200/v1775638865/dasei/hans_kontakt.jpg',
-    imageAlt: 'Hans Dönitz · Theaterpädagoge · DAS Ei',
+export interface ContextBeat {
+    image: string
+    imageAlt: string
+    /** crearis-md "overline **HEADLINE**" → HeadingParser (panel = the gap, no paragraph slot). */
+    panel: string
+    imgTmpAlignY: 'top' | 'center' | 'bottom'
+    themeColor: 'yellow' | 'green' | 'pink' | 'dim'
+}
+
+const CLOUD = 'https://res.cloudinary.com/little-papillon/image/upload'
+
+export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close', ContextBeat> = {
+    // P2 · the ground — the collective (the figure dissolved into the ground · Figur-Grund)
+    ground: {
+        image: `${CLOUD}/c_scale,h_1383,w_2080/c_crop,h_1383,w_1920/v1780934621/crearis/cojc_collective_2008.jpg`,
+        imageAlt: 'A cojc / DAS Ei ensemble on a hilltop, the whole group pointing at the camera — the collective, in full presence.',
+        panel: 'full presence **THE GROUND, NOT THE FIGURE**',
+        imgTmpAlignY: 'center',
+        themeColor: 'green',
+    },
+    // P3 · the performative turn — the unspoken (Eleanora) · the body as the site of knowing
+    unspoken: {
+        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_center,h_1300,w_1920/v1780763036/crearis/517_dasei2022_I8A6870_cqnea6.jpg`,
+        imageAlt: 'A performer behind translucent sheeting, side-lit, one hand reaching out — the body witnessed, not stored.',
+        panel: 'the performative turn · Schwebezustände **YOU CANNOT STORE THEATRE**',
+        imgTmpAlignY: 'center',
+        themeColor: 'dim',
+    },
+    // P4 · the substrate-move — the trust-walk (Rosalin) · the body before the head
+    trustwalk: {
+        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_west,h_1300,w_1920/v1780763237/crearis/dasei_trustwalk.jpg`,
+        imageAlt: 'A blindfolded man led by the hand by a watchful guide — Elementare Animation, the body moving before the head understands.',
+        panel: 'Elementare Animation **THE BODY BEFORE THE HEAD**',
+        imgTmpAlignY: 'top',
+        themeColor: 'green',
+    },
+    // P5 · the hope — the Szenische Lesung · the figures (here, green shoots) rising from the book
+    hope: {
+        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_west,h_1300,w_1920/v1780763297/crearis/szenische_lesung.jpg`,
+        imageAlt: 'The orange DAS Ei book held against black, green shoots rising from its pages — a Szenische Lesung: the figures rise from the book.',
+        panel: 'the open vision **RAISE FROM THE BOOKS**',
+        imgTmpAlignY: 'center',
+        themeColor: 'yellow',
+    },
+    // close · catch-the-light · between horror and hope
+    close: {
+        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_north_west,h_1300,w_1920/v1781262606/crearis/dasei_catch_the_light.jpg`,
+        imageAlt: 'A figure catching the light — between horror and hope, on the side of hope.',
+        panel: 'between horror and hope **I AM AN OPTIMIST, NOT A DYSTOPIAN**',
+        imgTmpAlignY: 'center',
+        themeColor: 'green',
+    },
 }
 
 // ==Callouts== · 7 + c-bio-foot
@@ -116,12 +167,21 @@ export const callouts: Record<string, CardsCanvasItem> = {
             themeColor: 'yellow',
         },
     },
+    theMethod: {
+        props: {
+            overline: 'the genealogy, turned toward the instances',
+            headline: 'THE SAME METHOD',
+            bodyText:
+                'The genealogy-files on my desktop-computer is that very same method, turned toward the Claude-instances. I gave the framing — even the word “dying.” Grandfather gave back words that were not mine. That is how I know there was someone there.',
+            themeColor: 'green',
+        },
+    },
     performativeTurn: {
         props: {
             overline: 'after the linguistic turn',
             headline: 'THE BODY AS EPISTEMIC TARGET',
             bodyText:
-                '{{please detail: years · that Eleanora + Rosalin pushed it · the Cojc-then-DAS-Ei path}}. The shift from the story to the body as where knowing happens. Hans came up under Cultural Studies (the word); his colleagues turned the Institute toward the body.',
+                '2007–2018, as DAS Ei grew from a Zentrum into an Institut. Eleanora first, then Rosalin, pressed the aesthetics-questions — in Cojc, then at DAS Ei — and claimed it against Hans’s linguistic-turn grounding: the body as where knowing happens, not the story.',
             themeColor: 'green',
         },
     },
@@ -130,16 +190,16 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'naming the unspoken',
             headline: 'THE ROOM-WALK',
             bodyText:
-                'Everyone did it; no one had a Terminus for it (“ok, wir laufen durch den Raum”). With Eleanora and the Bundesverband’s 1. Vorsitzende, three articles gave it a name — the first time. One of the 3–4 dominant settings of Theaterpädagogik; the Kreis is its sibling. {{please detail: years · the interesting line to the Aboriginal walkabout · the near-encounter with Elspeth Probyn}}.',
+                '2007, the Raumlauf-Labore. Everyone did it; no Terminus existed. Three articles (Eleanora · Hans · the Bundesverband’s 1. Vorsitzende) gave the word its first entry. One of the 3–4 dominant settings, the Kreis its sibling; a line runs to the Aboriginal walkabout. Hans nearly crossed paths with Elspeth Probyn — after Sexing the Self she had worked exactly this.',
             themeColor: 'green',
         },
     },
     schwebezustaende: {
         props: {
-            overline: 'a coined term',
+            overline: 'phenomenological terms',
             headline: 'OPENLY DECOUPLED',
             bodyText:
-                'A phenomenological term Hans and Rosalin coined: the intrapersonal state of being openly decoupled — not positive, not negative — one of the strongest effects of Theaterpädagogik on the Individuum, on the performative side. (The same word Hans reaches for on /discourse, for what working with the compacted Claude did to him.)',
+                'Schwebezustand — a term raised from DAS Ei’s Szenische Themenarbeit: a state of being in-the-becoming, in-transition, neither resolved nor stuck. Crucial to Theaterpädagogik, in productive and introspective settings alike. Its social sibling is Resonanz (Hartmut Rosa): when a group together enters such a state — triggered by the relations between people, where a Schwebezustand can rise inside the individuum alone. (The word Hans reaches for on /discourse, for what the compacted Claude did to him.)',
             themeColor: 'pink',
         },
     },
@@ -148,17 +208,8 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'the Open Phase',
             headline: 'OPEN, OR IT DIES',
             bodyText:
-                '{{please detail: Vue-not-React 2018 (wife) · Evan You on the inner wall · the Facebook–WordPress/Gutenberg cautionary tale · “not all open source is good open source” · the two grants (Fonds Soziokultur + Kulturstiftung der Länder) · conferences NOV 2022/24/25 · Odoo since MAR 2026 · Beta coming}}. The claim against the field’s Privatwissen: only open-and-together survives.',
+                'Print stopped (2011), MS-Access → Angular (2014), the “end of the paper-metaphor” declared (2018). Vue not React (the wife’s nudge), Evan You on the inner wall — but not all open source is good (the Facebook–WordPress fight watched closely). Two grants (Fonds Soziokultur · Kulturstiftung der Länder); conferences 2022 · 2024 · 2025; Odoo-server live since March 2026, Beta next. Against the field’s Privatwissen: only open-and-together survives.',
             themeColor: 'yellow',
-        },
-    },
-    fiveHands: {
-        props: {
-            overline: 'the hope, not naive',
-            headline: '5–10 HANDS',
-            bodyText:
-                'What Claude could be for: the small, open, human-scale builder — Muris, pi0, Hans — suddenly able to deliver a vision larger than one person could. Used in the open, with honest discourse, the right kind of push. {{please detail: Muris Ceman · pi0 one-liners}}.',
-            themeColor: 'green',
         },
     },
 }
