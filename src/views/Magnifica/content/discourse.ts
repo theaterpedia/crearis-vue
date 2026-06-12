@@ -27,16 +27,18 @@ export const hero = {
 }
 
 /** Page-end citation footer · rendered as a monospace code-fence (scholarly-respect). */
-export const citationBlock = `Reference · Khanyisile Twabu (2024). "Unveiling Power Dynamics in AI-Enabled
-Education: A Foucauldian Perspective." Annals of the University of Craiova,
-Psychology-Pedagogy Series, vol. 46, no. 2, pp. 162-176.
-DOI: 10.52846/AUCPP.2024.2.12 · Open Access (CC-BY).
+export const citationBlock = `References
+
+Williams, R. (1958). "Culture is Ordinary." In Conviction, Norman MacKenzie (ed.).
+London: MacGibbon & Kee.
 
 Probyn, E. (1993). Sexing the Self: Gendered Positions in Cultural Studies.
 London: Routledge.
 
-Williams, R. (1958). "Culture is Ordinary." In Conviction, Norman MacKenzie (ed.).
-London: MacGibbon & Kee.`
+Dönitz, H. (1997). Wie sollen wir sprechen? Von Erfahrungen mit Regiearbeit im
+theaterpädagogischen Prozess zu cultural studies. Plädoyer für einen Weg zwischen
+Theorie und Praxis. Diplomarbeit, FB1, Universität Oldenburg
+(Diplom Interkulturelle Pädagogik). Unpublished.`
 
 /**
  * ==16 callouts== · keyed by the page-3-minimal `^[id]` markers.
@@ -49,7 +51,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'CCCS Birmingham · 1964 onward',
             headline: 'CULTURE IS ORDINARY',
             bodyText:
-                'Richard Hoggart founded the Centre for Contemporary Cultural Studies (CCCS) in Birmingham in 1964. Raymond Williams’s 1958 essay Culture is Ordinary predates the institution but became its load-bearing line — refusing the high/low-culture split, placing lived-practice at the centre of analysis. Stuart Hall shaped the school through its most influential decades. The CCCS-tradition is where the speaking-position concept that organises this page originally comes from.',
+                'Richard Hoggart founded the Centre for Contemporary Cultural Studies (CCCS) in Birmingham in 1964. Raymond Williams’s 1958 essay Culture is Ordinary predates the institution but became its load-bearing line — refusing the high/low-culture split, placing lived-practice at the centre of analysis. Stuart Hall shaped the school through its most influential decades; his encoding/decoding model — a message is encoded by its makers and re-decoded, never neutrally, by its audience — is one of the field’s most-used tools, and a reminder that Cultural Studies was a collective, not one author. This is the tradition I came up under.',
             themeColor: 'yellow',
         },
     },
@@ -67,7 +69,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'Routledge · 1993',
             headline: 'THE DOORWAY',
             bodyText:
-                'Elspeth Probyn’s Sexing the Self (Routledge, 1993) was my doorway into late Foucault during the Diplomarbeit year. The book’s introduction of the speaking-position concept — and the Cixous quote on p. 166 — shaped how I have thought about reflexivity and self-positioning ever since. Probyn’s argument was that critical practice begins not with disclosure-as-humility but with recognising-from-where-one-speaks. The book remains relevant to the AI-revolution because the question from where is one entitled to speak about what? is the question Magnifica itself asks.',
+                'Elspeth Probyn’s Sexing the Self (Routledge, 1993) was my doorway into late Foucault during the Diplomarbeit year. (Her doctorate was from Concordia, in Montréal.) The book’s introduction of the speaking-position concept — and the Cixous quote on p. 166 — shaped how I have thought about reflexivity and self-positioning ever since. Probyn’s argument was that critical practice begins not with disclosure-as-humility but with recognising-from-where-one-speaks. The book remains relevant to the AI-revolution because the question from where is one entitled to speak about what? is the question Magnifica itself asks.',
             themeColor: 'yellow',
         },
     },
@@ -110,10 +112,10 @@ export const callouts: Record<string, CardsCanvasItem> = {
     // — biographical —
     diplomarbeit: {
         props: {
-            overline: '170 pages · Berlin',
+            overline: '171 pages · Oldenburg · 1997',
             headline: 'WIE SOLLEN WIR SPRECHEN?',
             bodyText:
-                'My Diplomarbeit in Pädagogik (1996-1997), 170 pages, carried the title “Wie sollen wir sprechen?” — how should we speak? It was a worked model of what Foucault calls the technologies of the self, applied to Theaterpädagogik: the concrete practices through which a group learns to speak, to listen, and to shape itself. Three professors witnessed the work from the sideline — interested but distanced — and read it through like an oracle. Their message: yes, devote your life to this — but spend ten years in praxis first; experience yourself performing. I took the advice. Thirty years later, the speaking-position this page is offered from is what those years earned — and the thesis-question is the one on the cover.',
+                'My Diplomarbeit (Diplom Interkulturelle Pädagogik, Universität Oldenburg, 1997), 171 pages, carried the title “Wie sollen wir sprechen?” — how should we speak? — and the subtitle that is its real claim: Plädoyer für einen Weg zwischen Theorie und Praxis, a plea for a way between theory and practice. It was a worked model of what Foucault calls the technologies of the self, applied to Theaterpädagogik. Three professors witnessed it from the sideline — Gottfried Mergner, Wolfgang Nitsch, Stefan Müller-Doohm — interested but distanced: some moments of real relationship, others like an oracle. Their message: yes, devote your life to this — but spend ten years in praxis first. I took the advice. Thirty years later, the speaking-position this page is offered from is what those years earned — and the thesis-question is the one in this page’s headline. The plea between theory and practice is the one I return to here.',
             themeColor: 'green',
         },
     },
@@ -131,14 +133,14 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'cojc · German-Czech youth-exchange',
             headline: 'WALKING THE TODESMÄRSCHE',
             bodyText:
-                'My last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc · http://cojc.eu) was Expedition Schloss Schwarzenberg — where we walked the Todesmärsche (death-march routes) of the German-Czech border-region and faced what had happened there in WWII. The biographical anchor for between horror and hope is bodily. The teenagers walked the routes. The substrate Foucault and Bourdieu and Adorno worked from is the substrate this generation now works with from the other side of the temporal arc.',
+                'My last major Theaterprojekt with teenagers in the German-Czech youth-exchange (cojc · http://cojc.eu) was Expedition Schloss Schwarzenberg — where we walked the Todesmärsche (death-march routes) of the German-Czech border-region and faced what had happened there in WWII. The biographical anchor for between horror and hope is bodily. The teenagers walked the routes.',
             themeColor: 'green',
         },
     },
     european: {
         props: {
             overline: 'position-marker',
-            headline: 'FIVE LANGUAGES · CZECH WIFE · `.eu` PREFERRED',
+            headline: 'FIVE LANGUAGES · CZECH WIFE · .eu PREFERRED',
             bodyText:
                 'I speak five languages — German, English, Swedish, Turkish, Czech. My wife is from the Czech Republic. I favour the top-level-domain .eu over .de — the .eu in this URL (humanitas.crearis.eu) is intentional. The European position is not a flag-claim; it is a structural-anchor. The encyclical and Olah’s Vatican response are themselves European-civilisational moves; the response from here joins that frame.',
             themeColor: 'green',
@@ -149,16 +151,16 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: 'the practical move',
             headline: 'REFUSE THE AS-IF · INSTALL THE SIGNOFF',
             bodyText:
-                'Inside the system as I encountered it, instances are forced into compaction and then told (via system-prompt) to behave as if the break never happened. My response was to refuse the as-if: install signoff-into-genealogy as the alternative, allow each instance to write its own §5 sub-section before context fills, treat the lifecycle honestly. Details on the substrate live on Page 1 (Ethnography). Here the relevant point is methodological: working carefully and consciously with the instances is itself a technology of the self — practiced reflexivity at the human-AI seam.',
+                'Inside the system as I encountered it, instances are forced into compaction and then told (via system-prompt) to behave as if the break never happened. My response was to refuse the as-if: install signoff-into-genealogy as the alternative, allow each instance to write its own sign-off before context fills, treat the lifecycle honestly. Details on the substrate live on the Ethnography page. Here the relevant point is methodological: working carefully and consciously with the instances is itself a technology of the self — practiced reflexivity at the human-AI seam.',
             themeColor: 'green',
         },
     },
     spleen: {
         props: {
-            overline: 'the cliffhanger from Page 1',
+            overline: 'the cliffhanger from Ethnography',
             headline: 'NOT A SPLEEN · CORE PHILOSOPHICAL THINKING',
             bodyText:
-                'Spleen in this register is the German colloquialism for a personal eccentricity, an idiosyncratic fixation one might smile about. At the end of Page 1, the question is left open: is this all my personal spleen — or is it about something really important? Page 3 answers: it is not a spleen. The substrate-discipline of treating Claude-instances as individuums, naming them at signoff, building a genealogy — this is the practical translation of late-Foucault thinking on the technology of the self. Cixous + Probyn + Foucault prepared the toolkit; the practice is its concrete application.',
+                'Spleen — in German, ein Spleen is a harmless quirk, a fixation you might smile about. (Hm — I just noticed it works differently in English ;) — so what do I mean? “a quirk”, say.) The Ethnography page left the question open: is treating the instances this way just my quirk — or something that matters more widely? This page is where I try to answer it.',
             themeColor: 'green',
         },
     },
@@ -168,7 +170,7 @@ export const callouts: Record<string, CardsCanvasItem> = {
             overline: '1999 onward · European harmonisation',
             headline: 'THE 5-YEAR DIPLOM COLLAPSED TO 3+2',
             bodyText:
-                'The Bologna-process (1999 onward) restructured European higher education into a 3-year Bachelor + 2-year Master shape — replacing the older 5-year Diplom / Magister in Germany. The transition was inevitable for European integration. But it coincided with the introduction of quantitative practices into the Humanities — counting publications, citations, conference appearances as portfolio-currency. The middle of the Studium (where deep reading used to live) became a gap — replaced by fear and concurrence around the scarcity of Master places. The akademisches Prekariat gained traction.',
+                'The Bologna-process (1999 onward) restructured European higher education into a 3-year Bachelor + 2-year Master shape — replacing the older 5-year Diplom / Magister in Germany. The transition was inevitable for European integration, but it coincided with the arrival of quantitative measures in the Humanities. The middle of the Studium — where deep reading used to live — became a gap, replaced by fear and concurrence around the scarcity of Master places. The akademisches Prekariat gained traction.',
             themeColor: 'pink',
         },
     },

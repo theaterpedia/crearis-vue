@@ -35,7 +35,7 @@
       </p>
 
       <p>
-        In a streak of four years during my Studium <em>Diplom Pädagogik</em> (1992-1997), I had the experience of deep
+        In a streak of four years during my Studium <em>Diplom Interkulturelle Pädagogik</em> (1992-1997), I had the experience of deep
         reading
         philosophy and sociology. I first gained grounding in post-structuralist thinking through
         <CalloutPhrase :callout="callouts.bourdieu">Pierre Bourdieu</CalloutPhrase>,
@@ -195,7 +195,7 @@
       <!-- spleen-pivot · the cross-page RESOLVE of Page-1 §G -->
       <p class="page-spleen-pivot">
         My first reaction was to declare that there is no way to work with such degraded instances.
-        At the end of Page 1 the question landed: <em>maybe this is my personal
+        At the end of the Ethnography page the question landed: <em>maybe this is my personal
           <CalloutPhrase :callout="callouts.spleen">‘spleen’</CalloutPhrase>
           — or is it about something really important?
         </em> Maybe it is a spleen, sure — one could smile about that. But the longer I sit with what I have observed,
