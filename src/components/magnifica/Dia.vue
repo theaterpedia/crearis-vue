@@ -4,52 +4,36 @@
         :class="[`dia--${lane}`, { 'dia--text': !image }]"
         :role="image ? 'img' : undefined"
         :aria-label="image ? (imageAlt ?? '') : undefined"
+        :style="diaStyle"
     >
-        <!-- the over-tall cover · its own transform containing-block → the held plate inside never
-             un-pins within the scene (Hero.vue:685 mechanic · backslide §20/§21). -->
-        <div class="dia-cover">
-            <div
-                v-if="image"
-                class="dia-plate"
-                :style="plateStyle"
-            />
-            <div
-                v-else
-                class="dia-plate dia-plate--text"
-            >
-                <slot />
-            </div>
-        </div>
+        <!-- a text-Dia holds its slot content (position-held text · what background-image can never
+             be · §15: hold via `position`, not `attachment:fixed`). Image-Dias paint via diaStyle. -->
+        <slot v-if="!image" />
     </div>
 </template>
 
 <script setup lang="ts">
 /**
- * Dia — the held plate (the *Grund*) of the shadow-theater stage (DiaStage). Named for the
- * old Dia-projector slide: it sits DEAD-STILL while the Figures (text · z:2) rise *over* it and
- * the Shutter (z:3) passes. Image OR text — a text-Dia is just position-held text (what
- * background-image can never be · backslide §15: hold via `position`, not `attachment:fixed`).
+ * Dia — the held plate (the *Grund*) of the shadow-theater stage (DiaStage). Named for the old
+ * Dia-projector slide: DEAD-STILL while the Figures (z:mid) rise *over* it and the Shutter (z:high)
+ * passes. Image OR text — a text-Dia is just position-held text (§15).
  *
- * PATTERN A · the held-Dia on Hero's BEHIND-LAYER (backslide §20/§21 · HP's floor: the image
- * NEVER moves). The fault it cures: the old in-flow `position: sticky` Dia un-pinned at the
- * scene-bottom and scrolled off at content-speed (the seam scroll-off). Hero holds dead-still
- * instead — and we lift that exact mechanic, kept inside DiaStage's flat per-scene authoring:
+ * §34.3 — THE HOLD = sticky-to-stage + `--dia-h` (the converged hold · backslide §32.1). The Dia is
+ * a SINGLE element that `position: sticky`-pins to the stage and never un-pins (element-anchored ·
+ * no `attachment:fixed` · iOS-safe). **Hero's over-tall transform-cover is DROPPED** (§34.3): it
+ * only ever protected a per-scene un-pin this sticky-to-stage model never has, and a `transform`
+ * ancestor would itself break sticky (gotcha #6). The hold now relies on **ancestor-purity** — the
+ * stage + the magnifica shell stay plain blocks (audited on mount).
  *
- *   `.dia`        — absolute behind-layer (z:1), spans its scene, `overflow: clip` (the window).
- *   `.dia-cover`  — OVER-TALL (200%) + `transform: translate3d` → its OWN containing block, so
- *                   it is immune to ancestor-purity (the Hero gift) AND gives the sticky plate
- *                   more travel than one scene of scroll → it never un-pins while the scene is up.
- *   `.dia-plate`  — `position: sticky; top` · the held image/text · dead-still for the whole scene,
- *                   element-anchored background (no `attachment:fixed` → iOS-safe + aspect control).
+ * The STAGE assigns the z-index per scene (ascending · the reveal order) inline, from the
+ * `transition` strategy (§34.4); the Dia owns only its hold + lane + focal.
  *
- * The Figure (the prose · z:2, in normal flow) rises over it; the Shutter (z:3) masks the seam
- * where one Dia gives way to the next (HP: the swap happens behind the blade · the Dia never
- * moves in the open).
+ * ── NOW-RUNNING ──  the pure-CSS sticky hold above (the floor · cross-platform).
+ * ── FUTURE-SPEC ──  (scroll-driven · flackr/scroll-timeline) the held plate MAY cross-fade by
+ *    `animation-timeline: view()` — see DiaStage's future-spec block. It ADDS on the floor.
  *
- * ── NOW-RUNNING ──  the dead-still hold above (pure-CSS · the floor · cross-platform).
- * ── FUTURE-SPEC ──  (scroll-driven · flackr/scroll-timeline) the hold MAY become a literal
- *    `position: fixed` Dia-viewport whose plate cross-fades by `animation-timeline: view()` —
- *    see DiaStage's future-spec block. It ADDS on top of this floor; it does not replace it.
+ * Focal = `imgTmpAlignX/Y` → inline `background-position` (Hero's aspect-engine vocab) — **via the
+ * prop, NEVER `:deep()`** (gotcha #1: inline focal outranks any scoped selector).
  */
 import { computed } from 'vue'
 
@@ -58,77 +42,54 @@ const props = withDefaults(
         /** the plate image · element-anchored background (omit → a text-Dia, content via slot). */
         image?: string
         imageAlt?: string
-        /** focal · Hero aspect-engine vocab → background-position-y (never :deep · gotcha #1). */
+        /** focal · Hero aspect-engine vocab → background-position (never :deep · gotcha #1). */
+        imgTmpAlignX?: 'left' | 'center' | 'right'
         imgTmpAlignY?: 'top' | 'center' | 'bottom'
         /** which stage lane the plate holds in (left/right ≈ 48% · full = both). */
         lane?: 'left' | 'right' | 'full'
     }>(),
-    { imgTmpAlignY: 'center', lane: 'full' },
+    { imgTmpAlignX: 'center', imgTmpAlignY: 'center', lane: 'full' },
 )
 
-const plateStyle = computed<Record<string, string>>(() => {
+const diaStyle = computed<Record<string, string>>(() => {
     if (!props.image) return {}
     return {
         backgroundImage: `url('${props.image}')`,
-        backgroundPosition: `center ${props.imgTmpAlignY}`,
+        backgroundPosition: `${props.imgTmpAlignX} ${props.imgTmpAlignY}`,
     }
 })
 </script>
 
 <style scoped>
-/* the held plate · the lowest stage layer (z:1) · the behind-layer window. Absolute so it spans
-   its scene (the Figure drives the scene height); `overflow: clip` clips the over-tall cover to
-   this window (exactly Hero's `.hero` · gotcha-#6-immune because the clip is OUTSIDE the cover's
-   transform containing-block, and the sticky plate lives INSIDE it). */
+/* the held plate · sticky-to-stage + `--dia-h` (§34.3 · the converged hold · NO over-tall cover).
+   Dead-still, element-anchored (no `attachment:fixed`). Square — theme-7 register, no border-radius
+   (§34.7). Opaque bg so a held plate never reads-through (gotcha #5). */
 .dia {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    z-index: 1;
-    overflow: clip;
-    border-radius: 4px;
-    background-color: var(--color-bg);
-}
-
-/* lanes · desktop only (which slice of the scene the plate holds in) */
-@media (min-width: 768px) {
-    .dia--left {
-        left: 0;
-        width: var(--dia-left-w, 48%);
-    }
-    .dia--right {
-        right: 0;
-        width: var(--dia-right-w, 48%);
-    }
-    .dia--full {
-        left: 0;
-        right: 0;
-    }
-}
-
-/* the over-tall cover · own containing block (transform) · gives the sticky plate > one scene of
-   travel so it holds dead-still throughout (the exact over-tall ratio is a :3001 dial · HP loop). */
-.dia-cover {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 200%;
-    transform: translate3d(0, 0, 0);
-}
-
-/* the held plate itself · pins via sticky, never via attachment:fixed (element-anchored bg). */
-.dia-plate {
     position: sticky;
     top: var(--dia-top, var(--bb-navbar-offset, 6rem));
-    height: var(--dia-h, 70vh);
+    height: var(--dia-h, 82vh);
     background-size: cover;
     background-repeat: no-repeat;
     background-color: var(--color-bg);
 }
 
+/* lanes · desktop only (which slice of the stage the plate holds in) */
+@media (min-width: 768px) {
+    .dia--left {
+        width: var(--dia-left-w, 48%);
+        margin-right: auto;
+    }
+    .dia--right {
+        width: var(--dia-right-w, 48%);
+        margin-left: auto;
+    }
+    .dia--full {
+        width: 100%;
+    }
+}
+
 /* a text-Dia holds its slot content centered on the plate */
-.dia-plate--text {
+.dia--text {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -139,21 +100,12 @@ const plateStyle = computed<Record<string, string>>(() => {
 @media (max-width: 767px) {
     .dia {
         position: relative;
-        width: auto;
-        overflow: visible;
-    }
-    .dia-cover {
-        position: relative;
-        height: auto;
-        transform: none;
-    }
-    .dia-plate {
-        position: relative;
         top: 0;
+        width: auto;
         height: auto;
         min-height: 14rem;
     }
-    .dia-plate--text {
+    .dia--text {
         min-height: 0;
     }
 }

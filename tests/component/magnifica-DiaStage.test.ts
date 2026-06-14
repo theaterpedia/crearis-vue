@@ -34,11 +34,9 @@ describe('Dia (the held plate)', () => {
         expect(el.classes()).toContain('dia--left')
         expect(el.attributes('role')).toBe('img')
         expect(el.attributes('aria-label')).toBe('a held plate')
-        // Pattern A · behind-layer: the focal bg lives on the inner sticky `.dia-plate` (Hero's
-        // .hero-cover-image), held inside the over-tall `.dia-cover`; `.dia` is the clip-window.
-        expect(w.find('.dia-cover').exists()).toBe(true)
-        const plate = w.find('.dia-plate')
-        const style = plate.attributes('style') ?? ''
+        // §34.3 · the Dia is a SINGLE held element (the over-tall transform-cover is DROPPED) — the
+        // focal background lives on the `.dia` root itself; held via sticky-to-stage + --dia-h.
+        const style = el.attributes('style') ?? ''
         expect(style).toContain('/i.jpg')
         expect(style).toContain('background-position: center top')
     })
@@ -49,8 +47,7 @@ describe('Dia (the held plate)', () => {
         expect(el.classes()).toContain('dia--text')
         expect(el.classes()).toContain('dia--full')
         expect(el.attributes('role')).toBeUndefined()
-        // the held text lives in the sticky text-plate (the behind-layer)
-        expect(w.find('.dia-plate--text').exists()).toBe(true)
+        // §34.3 · the held text lives directly in the single `.dia` element (no inner plate)
         expect(el.find('p').text()).toBe('held text')
     })
 })
