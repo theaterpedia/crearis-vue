@@ -1,88 +1,117 @@
 <!--
   /proto · PATTERN-B candidate (branch alpha/magnifica-dia-patternB · HM 2026-06-12).
 
-  THE MECHANIC (HP · grounded in i11→i12→i13): the held image NEVER moves. A SHUTTER sweeps:
-  it rises to COVER the current held image, then LIFTS OFF to UNCOVER the next held image that
-  was pinned behind it. So every image is revealed by a shutter lifting, and covered by the next
-  shutter rising. The no-glue replacement for background-attachment:fixed.
+  IO-DRIVEN scene-state · "JS configures, CSS runs" (HP-approved). The sync bug (a shutter lifting
+  before the next image is in place, re-revealing img1) is killed by NOT guessing scroll-%:
 
-      held images : position:sticky;top:0 · stacked · ascending z (img1 z1 < img2 z2). They pin
-                    and stay (containing-block = the whole stage) — never released/scrolled-off.
-      shutters    : sticky sweeps ABOVE the images (z5/z6) · scroll-driven translateY
-                    (100% → 0 cover → -100% lift) driven by a view-timeline on each shutter's
-                    track. A shutter covers the image below it, then lifts to uncover the image
-                    pinned behind it (which is revealed IN PLACE — it didn't rise into view).
+    • held images do pure-CSS sticky scroll-over (img1 z1 < img2 z2): each arrives, pins, and the
+      next covers it by rising over — none ever scroll off (the no-glue replacement for fixed).
+    • a pinned OVERLAY FRAME (margin-bottom:-100vh trick → it overlaps the scroll-over images)
+      holds the shutters + the opening as absolute layers.
+    • an IntersectionObserver watches sentinels; when one crosses viewport-CENTRE it sets
+      `data-scene` on the stage. NO scroll listener, no scroll-polling — just threshold callbacks.
+    • CSS transitions sweep each shutter by scene (rise 100% → cover 0 → lift -100%). A shutter
+      LIFTS only at its image's scene — i.e. only once IO confirms that image is in place.
 
-  Sequence: [opening shutter covers img1 on load → lifts → img1] → [shutter2 rises over img1,
-  covers it → lifts → img2 uncovered] → [shutter3 rises over img2, covers it]. Sweep timings
-  (track heights + ranges) are the dials.
+  Sequence: open (opening covers img1) → img1 (opening lifts) → seam (shutter-12 covers img1 while
+  img2 pins behind) → img2 (shutter-12 lifts → trustwalk uncovered IN PLACE) → close (shutter-2x
+  covers img2). Per-image shutters; sentinel positions + scene transition timing are the dials.
 -->
 
 <template>
   <MagnificaPageLayout variant="standard">
     <template #header><MagnificaHeader compact /></template>
 
-    <div class="proto-stage">
-      <!-- ═══ IMAGE 1 · held (z1) · uncovered by the opening shutter, covered by shutter2 ═══ -->
-      <section class="pimg pimg--1" :style="{ backgroundImage: `url('${beats.unspoken.image}')` }">
-        <div class="ppanel">
-          <p class="pover">the body, witnessed</p>
-          <h2 class="phead">NOT STORED — PERFORMED</h2>
-          <p>Held dead-still. A shutter rises to cover it, then lifts to uncover the next image — it never scrolls off.</p>
-        </div>
-        <div class="popening">
-          <p class="popening-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
-          <h1 class="popening-head">The image does not move</h1>
-          <p class="popening-lead">
-            Each photograph is held <strong>dead-still</strong>. A black shutter rises to
-            <strong>cover</strong> it, then lifts to <strong>uncover</strong> the next one held
-            behind it. Nothing scrolls off; only the shutters sweep.
+    <div
+      ref="stageRef"
+      class="proto-stage"
+      data-scene="open"
+    >
+      <!-- ░░ the pinned OVERLAY FRAME · shutters + opening (absolute layers, swept by [data-scene]) ░░ -->
+      <div class="poverlay">
+        <!-- opening · covers img1 on load · lifts once you reach img1 -->
+        <div class="pshutter popening">
+          <p class="ps-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
+          <h1 class="ps-head">The image does not move</h1>
+          <p class="ps-lead">
+            Each photograph is held <strong>dead-still</strong>. A shutter rises to <strong>cover</strong>
+            it, then lifts to <strong>uncover</strong> the next one held behind it. The shutters'
+            timing is set by where you are on the page — not by guessed scroll maths.
           </p>
           <span class="pline" aria-hidden="true" />
         </div>
-      </section>
-
-      <!-- ═══ SHUTTER 2 · sweeps: rises over img1 (covers) → lifts to uncover img2 (z5) ═══ -->
-      <div class="psweep-track psweep-track--2">
-        <div class="psweep psweep--2">
-          <p class="psweep-over">between horror and hope</p>
-          <p class="psweep-text">— the black between —</p>
+        <!-- shutter-12 · rises to cover img1 (seam), lifts to uncover img2 (img2 scene) -->
+        <div class="pshutter pshutter--12">
+          <p class="ps-over">between horror and hope</p>
+          <p class="ps-text">— the black between —</p>
+          <span class="pline" aria-hidden="true" />
+        </div>
+        <!-- shutter-2x · rises to cover img2 (close) -->
+        <div class="pshutter pshutter--2x">
+          <p class="ps-over">and the next plate waits</p>
+          <p class="ps-text">— covered again —</p>
           <span class="pline" aria-hidden="true" />
         </div>
       </div>
 
-      <!-- ═══ IMAGE 2 · trustwalk (DISTINCT image · clearly not img1) · held (z2) · pinned behind
-           shutter2, uncovered as shutter2 lifts ═══ -->
+      <!-- ░░ the held IMAGES · sticky scroll-over · behind the overlay (z1 < z2) ░░ -->
+      <section class="pimg pimg--1" :style="{ backgroundImage: `url('${beats.unspoken.image}')` }">
+        <div class="ppanel">
+          <p class="pp-over">the body, witnessed</p>
+          <h2 class="pp-head">NOT STORED — PERFORMED</h2>
+        </div>
+      </section>
+      <!-- scroll-regions = the scene sentinels: while one spans the viewport-centre, its scene is
+           active (IO). img1 holds (opening lifted), then seam (shutter-12 covers as img2 pins). -->
+      <div class="pscroll" data-scene="img1" aria-hidden="true"></div>
+      <div class="pscroll pscroll--short" data-scene="seam" aria-hidden="true"></div>
+
       <section class="pimg pimg--2" :style="{ backgroundImage: `url('${beats.trustwalk.image}')` }">
         <div class="ppanel">
-          <p class="pover">Elementare Animation</p>
-          <h2 class="phead">THE BODY BEFORE THE HEAD</h2>
-          <p>A clearly different image — held behind shutter2, uncovered in place as it lifted. If you see the sheeting here instead, the lift fired before this was in place (the sync bug).</p>
+          <p class="pp-over">Elementare Animation · trustwalk</p>
+          <h2 class="pp-head">THE BODY BEFORE THE HEAD</h2>
         </div>
       </section>
-
-      <!-- ═══ SHUTTER 3 · rises over img2 and covers it (z6) ═══ -->
-      <div class="psweep-track psweep-track--3">
-        <div class="psweep psweep--3">
-          <p class="psweep-over">and the next plate waits</p>
-          <p class="psweep-text">— covered again —</p>
-          <span class="pline" aria-hidden="true" />
-        </div>
-      </div>
+      <!-- img2 now pinned in place → shutter-12 lifts (uncover) · then close (shutter-2x covers) -->
+      <div class="pscroll" data-scene="img2" aria-hidden="true"></div>
+      <div class="pscroll" data-scene="close" aria-hidden="true"></div>
     </div>
   </MagnificaPageLayout>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import { beats } from './content/context'
+
+const stageRef = ref<HTMLElement>()
+let io: IntersectionObserver | undefined
+
+onMounted(() => {
+  const stage = stageRef.value
+  if (!stage || typeof IntersectionObserver === 'undefined') return
+  const sentinels = stage.querySelectorAll<HTMLElement>('.pscroll[data-scene]')
+  // root = a 0-height line at the viewport centre (rootMargin -50%/-50%); a sentinel "intersects"
+  // exactly when it crosses the centre → set the scene. Pure threshold callback, no scroll listener.
+  io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        const el = e.target as HTMLElement
+        if (e.isIntersecting && el.dataset.scene) stage.dataset.scene = el.dataset.scene
+      }
+    },
+    { rootMargin: '-50% 0px -50% 0px', threshold: 0 },
+  )
+  sentinels.forEach((s) => io!.observe(s))
+})
+onUnmounted(() => io?.disconnect())
 </script>
 
 <style scoped>
 .proto-stage { position: relative; }
 
-/* mobile (<768): linearise — plates + shutters are normal stacked blocks. */
+/* mobile (<768): linearise — images + shutters are normal stacked blocks (no held/cover). */
 .pimg {
   position: relative;
   min-height: 18rem;
@@ -100,12 +129,11 @@ import { beats } from './content/context'
   color: var(--color-card-contrast, #f4f4f4);
   border-radius: 4px;
 }
-.pover { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
-.phead { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.6rem; }
-.ppanel p:last-child { margin-bottom: 0; }
+.pp-over { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
+.pp-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0; }
 
-.popening,
-.psweep {
+.poverlay { display: contents; }   /* mobile: shutters flow as blocks */
+.pshutter {
   background: #0b0b0c;
   color: #f4f4f4;
   display: flex;
@@ -115,25 +143,24 @@ import { beats } from './content/context'
   text-align: center;
   gap: 0.5rem;
   padding: 2rem;
+  min-height: 40vh;
   border-radius: 4px;
+  margin-bottom: 1.25rem;
 }
-.popening { margin-top: 1.25rem; }
-.psweep-track { margin-bottom: 1.25rem; }
-.psweep { min-height: 14rem; }
-.popening-over,
-.psweep-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
-.popening-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
-.popening-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
-.psweep-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
+.ps-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.ps-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
+.ps-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
+.ps-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
 .pline { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
+.pscroll { display: none; }
 
-/* ════ DESKTOP · held images (sticky, stacked) + shutters that sweep ABOVE them ════ */
+/* ════ DESKTOP · sticky scroll-over images + a pinned overlay of IO-swept shutters ════ */
 @media (min-width: 768px) {
-  /* held images · pinned dead-still · stay pinned the whole stage (never scroll off) */
+  /* held images · sticky · stacked · arrive + cover the previous · never scroll off */
   .pimg {
     position: sticky;
     top: 0;
-    min-height: 100vh;
+    min-height: 100vh;        /* the image = one viewport (the scroll-regions give the hold) */
     margin-bottom: 0;
     overflow: clip;
     display: flex;
@@ -141,94 +168,66 @@ import { beats } from './content/context'
     justify-content: flex-end;
   }
   .pimg--1 { z-index: 1; }
-  .pimg--2 { z-index: 2; }    /* once uncovered, covers img1 (held behind, never gone) */
+  .pimg--2 { z-index: 2; }     /* rises over img1 and covers it (held behind) */
 
+  /* scroll-regions · transparent flow that gives the hold-scroll + carries the scene (the pinned
+     image shows through them). Each holds its scene while it spans the viewport-centre. */
+  .pscroll { display: block; height: 130vh; }
+  .pscroll--short { height: 90vh; }
   .ppanel {
     background: transparent;
     max-width: 30rem;
     margin: 2.5rem;
     padding: 0;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
-    pointer-events: none;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.75);
   }
 
-  /* a shutter's TRACK gives the sweep its scroll-length + a clean view-timeline; the shutter
-     inside is sticky and translateY-sweeps over that progress, ABOVE the images. */
-  .psweep-track {
-    position: relative;
-    height: 170vh;
-    margin-bottom: 0;
-  }
-  .psweep {
+  /* the pinned overlay frame · margin-bottom:-100vh so it overlaps the scroll-over images (it does
+     not consume flow). z above the images. Holds the shutters as absolute, viewport-filling layers. */
+  .poverlay {
+    display: block;
     position: sticky;
     top: 0;
     height: 100vh;
+    margin-bottom: -100vh;
+    z-index: 9;
+    pointer-events: none;
+  }
+  .pshutter {
+    position: absolute;
+    inset: 0;
     min-height: 0;
     margin: 0;
     border-radius: 0;
-  }
-  .psweep--2 { z-index: 5; }
-  .psweep--3 { z-index: 6; }
-
-  @supports (animation-timeline: view()) {
-    .psweep-track--2 { view-timeline: --s2 block; }
-    .psweep-track--3 { view-timeline: --s3 block; }
-
-    /* shutter2 · rise to COVER img1 (mask), brief hold, then LIFT OFF to uncover img2 behind it */
-    .psweep--2 {
-      animation: psweep-cover-lift linear both;
-      animation-timeline: --s2;
-      animation-range: cover 0% cover 100%;
-    }
-    @keyframes psweep-cover-lift {
-      from { transform: translateY(100%); }
-      38% { transform: translateY(0); }
-      55% { transform: translateY(0); }
-      to { transform: translateY(-100%); }
-    }
-
-    /* shutter3 · rise to COVER img2 and stay covering (the next plate waits behind it) */
-    .psweep--3 {
-      animation: psweep-cover linear both;
-      animation-timeline: --s3;
-      animation-range: cover 0% cover 70%;
-    }
-    @keyframes psweep-cover {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
+    transition: transform 0.55s ease;
+    will-change: transform;     /* leaf overlay · not a stage ancestor */
   }
 
-  /* the OPENING shutter · overlays img1 (covers on LOAD) · wipes up to uncover it.
-     scroll(root) is 0 at page-top — the right timeline for a load-time cover. */
-  .popening {
-    position: absolute;
-    inset: 0;
-    z-index: 9;
-    margin: 0;
-    border-radius: 0;
-    padding: 2rem clamp(2rem, 6vw, 5rem);
-    align-items: flex-start;
-    text-align: left;
-  }
-  @supports (animation-timeline: scroll()) {
-    .popening {
-      animation: popening-wipe linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0 80vh;
-    }
-    @keyframes popening-wipe {
-      from { transform: translateY(0); }
-      to { transform: translateY(-100%); }
-    }
-  }
+  /* default rest-states + the per-scene sweeps (rise 100% → cover 0 → lift -100%). A shutter LIFTS
+     only at its image's scene, so it never reveals the wrong (un-pinned) image. */
+  .popening { transform: translateY(0); }                 /* covers on load (scene open) */
+  .pshutter--12 { transform: translateY(100%); }          /* waits below */
+  .pshutter--2x { transform: translateY(100%); }          /* waits below */
+
+  /* opening lifts once we leave the load scene */
+  [data-scene="img1"] .popening,
+  [data-scene="seam"] .popening,
+  [data-scene="img2"] .popening,
+  [data-scene="close"] .popening { transform: translateY(-100%); }
+
+  /* shutter-12 · cover at the seam, lift at img2 (uncovers the by-then-pinned trustwalk) */
+  [data-scene="seam"] .pshutter--12 { transform: translateY(0); }
+  [data-scene="img2"] .pshutter--12,
+  [data-scene="close"] .pshutter--12 { transform: translateY(-100%); }
+
+  /* shutter-2x · cover img2 at the close scene (the next plate waits behind) */
+  [data-scene="close"] .pshutter--2x { transform: translateY(0); }
 }
 
-/* reduced-motion / no scroll-driven · no sweeps; the opening drops to a normal block so the page
-   is never trapped behind an un-moving cover. The shutters become normal between-blocks. */
+/* reduced-motion · no sweeps; the opening is a normal top block so the page is never trapped. */
 @media (prefers-reduced-motion: reduce) {
-  .popening { position: relative; inset: auto; animation: none !important; transform: none !important; }
-  .psweep { animation: none !important; transform: none !important; position: relative; height: auto; min-height: 14rem; }
-  .psweep-track { height: auto; }
+  .pshutter { transition: none !important; }
+  .popening, .pshutter--12, .pshutter--2x { position: relative; inset: auto; transform: none !important; }
+  .poverlay { position: static; height: auto; margin-bottom: 0; }
 }
 </style>
