@@ -2,10 +2,10 @@
   /proto · DiaStage HINGE — Pattern A · "SHUTTER LIFTS TO REVEAL" variant (HM 2026-06-12 · fork).
   Sibling variant ("next plate rises over previous") lives on alpha/magnifica-dia-patternA (cv-diaA).
 
-  A's reason to exist (Blende review · protect both): PURE-CSS — NO JS IN THE LOOP (no scroll
-  listener, no IntersectionObserver, no per-frame JS) — and a flat .vue authoring. The ONLY JS is
-  configure(): on mount/resize it writes ONE height var (--dia-h · a viewport proportion). That is
-  JS *configuring*, not *driving* — the scroll choreography is 100% CSS.
+  A's reason to exist (Blende review · protect both): PURE-CSS — ZERO JS (no scroll listener, no
+  IntersectionObserver, no per-frame JS, no config hook) — and a flat .vue authoring. --dia-h is a
+  pure CSS `vh` var → viewport-proportional + predictable, resize/zoom handled by the browser. The
+  whole scroll choreography is 100% CSS; the timing is fully proportional to vertical position.
 
   THE MECHANISM — "the height does the timing", kept drift-free by keying every motion to LAYOUT +
   the uniform --dia-h (never a guessed scroll-% state · §24-B's trap):
@@ -29,10 +29,7 @@
   <MagnificaPageLayout variant="standard">
     <template #header><MagnificaHeader compact /></template>
 
-    <div
-      ref="stageEl"
-      class="proto-stage"
-    >
+    <div class="proto-stage">
       <!-- the OPENING shutter · covers plate-1 at load · overlaps it (margin = -1·--dia-h) so the
            image is already there; lifts up to uncover (scroll-driven · no plate to sync). -->
       <div class="proto-shutter proto-shutter--open">
@@ -113,31 +110,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+/* PURE CSS · ZERO JS — the script carries content only (no scroll listener, no IntersectionObserver,
+   no per-frame JS, no config hook). --dia-h is a CSS `vh` var (viewport-proportional, browser-
+   recomputed on resize/zoom); the whole choreography is sticky + z + scroll-driven wipe (all CSS).
+   That is A's distinctive value (Blende review · protect it). */
 import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import { beats } from './content/context'
-
-/**
- * THE ONLY JS — configure() · "JS configures, CSS runs" (NOT in the loop · no scroll listener, no
- * IO, no per-frame JS). On mount + resize it writes the SINGLE height var every plate + shutter
- * shares (--dia-h · a viewport proportion). The scroll choreography is 100% CSS (sticky + z +
- * scroll-driven wipe) — that is A's distinctive value (Blende review · protect it).
- */
-const stageEl = ref<HTMLElement>()
-const HEIGHT_FRACTION = 0.82
-
-function configure(): void {
-  if (!stageEl.value) return
-  stageEl.value.style.setProperty('--dia-h', `${Math.round(window.innerHeight * HEIGHT_FRACTION)}px`)
-}
-
-onMounted(() => {
-  configure()
-  window.addEventListener('resize', configure, { passive: true })
-})
-
-onUnmounted(() => window.removeEventListener('resize', configure))
 </script>
 
 <style scoped>
@@ -145,6 +124,9 @@ onUnmounted(() => window.removeEventListener('resize', configure))
    held light pins to the STAGE and never un-pins. */
 .proto-stage {
   position: relative;
+  /* the ONE height · pure CSS vh → viewport-proportional + predictable · zero JS (resize/zoom
+     handled by the browser). Every plate + shutter + the overlap margins are keyed to it. */
+  --dia-h: 82vh;
   --dia-top: var(--bb-navbar-offset, 6rem);
 }
 
@@ -204,7 +186,9 @@ onUnmounted(() => window.removeEventListener('resize', configure))
   /* the scenes · the scroll-RANGE each plate holds across + where the figures rise. The clean
      scene (plate-2) is just scroll-length (no figures). */
   .proto-scene { position: relative; min-height: 120vh; }
-  .proto-scene--clean { min-height: 90vh; }
+  /* the clean (trust-walk) scene holds as long as the others, so the 3rd shutter doesn't come
+     early (was 90vh → plate-2 held less than scenes 1 & 3 · HP visual). */
+  .proto-scene--clean { min-height: 120vh; }
 
   /* the figures · rise into the RIGHT lane over their plate (z6 · above plates, below shutters) */
   .proto-fig {
