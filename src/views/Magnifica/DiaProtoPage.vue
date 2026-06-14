@@ -1,21 +1,25 @@
 <!--
-  /proto · PATTERN-B candidate (branch alpha/magnifica-dia-patternB · HM 2026-06-12).
+  /proto · PATTERN-B candidate — "the scroll-wiped projector" (branch alpha/magnifica-dia-patternB).
 
-  IO-DRIVEN scene-state · "JS configures, CSS runs" (HP-approved). The sync bug (a shutter lifting
-  before the next image is in place, re-revealing img1) is killed by NOT guessing scroll-%:
+  EMERGENT B-family (HP 2026-06-14 · "let it emerge · concentrate on the scroll-animation options
+  B + 2-blade unlock"): the held plate NEVER moves (Hero's behind-layer cover · ancestor-immune)
+  and the SHUTTER does all the work. B's bet = the blade-wipe is SCROLL-DRIVEN — scroll-driven's
+  "follows-the-finger, both directions" is exactly what kills the reverse-peek IO+transition can't.
 
-    • held images do pure-CSS sticky scroll-over (img1 z1 < img2 z2): each arrives, pins, and the
-      next covers it by rising over — none ever scroll off (the no-glue replacement for fixed).
-    • a pinned OVERLAY FRAME (margin-bottom:-100vh trick → it overlaps the scroll-over images)
-      holds the shutters + the opening as absolute layers.
-    • an IntersectionObserver watches sentinels; when one crosses viewport-CENTRE it sets
-      `data-scene` on the stage. NO scroll listener, no scroll-polling — just threshold callbacks.
-    • CSS transitions sweep each shutter by scene (rise 100% → cover 0 → lift -100%). A shutter
-      LIFTS only at its image's scene — i.e. only once IO confirms that image is in place.
+  THIS COMMIT = the FLOOR (no-polyfill · all browsers):
+    • dead-still behind-layer plates — fixes the reverse-peek (#3) AT THE ROOT: a plate that never
+      travels can't peek (the old bare-sticky `.pimg` un-pinned in reverse → img1 showed through).
+    • scene-observed IO sets [data-scene]; an "open" region re-asserts scene=open at the top (#2).
+    • a mount-time scroll-top guard + manual scrollRestoration (#1 · opens-at-bottom).
+  NEXT COMMIT = the scroll-DRIVEN 2-blade seam (B's unique reversible wipe · @supports-guarded,
+  IO-transition floor underneath).
 
-  Sequence: open (opening covers img1) → img1 (opening lifts) → seam (shutter-12 covers img1 while
-  img2 pins behind) → img2 (shutter-12 lifts → trustwalk uncovered IN PLACE) → close (shutter-2x
-  covers img2). Per-image shutters; sentinel positions + scene transition timing are the dials.
+  THE HOLD (lifted from Pattern A §22 / Hero.vue:685 · the proven dead-still floor):
+    .pdia        absolute behind-layer window (z1) · overflow:clip (clips the over-tall cover)
+    .pdia-cover  absolute · height:200% · transform:translate3d → its OWN containing block
+                 (ancestor-purity-IMMUNE · gives the sticky plate >1 scene of travel)
+    .pdia-plate  position:sticky · element-anchored bg (NO attachment:fixed · §15) · DEAD-STILL
+  The Figure (z2) rises over in the right lane. Blades (z9 overlay) cover/lift by [data-scene].
 -->
 
 <template>
@@ -27,54 +31,73 @@
       class="proto-stage"
       data-scene="open"
     >
-      <!-- ░░ the pinned OVERLAY FRAME · shutters + opening (absolute layers, swept by [data-scene]) ░░ -->
+      <!-- ░░ pinned blade overlay (z9) · IO-swept · the scroll-driven wipe is the next commit ░░ -->
       <div class="poverlay">
-        <!-- opening · covers img1 on load · lifts once you reach img1 -->
-        <div class="pshutter popening">
-          <p class="ps-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
+        <div class="pblade pblade--open">
+          <p class="ps-over">DiaStage · hinge prototype · Pattern B</p>
           <h1 class="ps-head">The image does not move</h1>
           <p class="ps-lead">
-            Each photograph is held <strong>dead-still</strong>. A shutter rises to <strong>cover</strong>
-            it, then lifts to <strong>uncover</strong> the next one held behind it. The shutters'
-            timing is set by where you are on the page — not by guessed scroll maths.
+            Each photograph is held <strong>dead-still</strong> — a behind-layer cover (Hero's
+            mechanic), never glued to the viewport. A shutter covers it, then lifts to uncover the
+            next one held behind it. The timing is set by where you are on the page.
           </p>
           <span class="pline" aria-hidden="true" />
         </div>
-        <!-- shutter-12 · rises to cover img1 (seam), lifts to uncover img2 (img2 scene) -->
-        <div class="pshutter pshutter--12">
+        <div class="pblade pblade--12">
           <p class="ps-over">between horror and hope</p>
           <p class="ps-text">— the black between —</p>
           <span class="pline" aria-hidden="true" />
         </div>
-        <!-- shutter-2x · rises to cover img2 (close) -->
-        <div class="pshutter pshutter--2x">
+        <div class="pblade pblade--2x">
           <p class="ps-over">and the next plate waits</p>
           <p class="ps-text">— covered again —</p>
           <span class="pline" aria-hidden="true" />
         </div>
       </div>
 
-      <!-- ░░ the held IMAGES · sticky scroll-over · behind the overlay (z1 < z2) ░░ -->
-      <section class="pimg pimg--1" :style="{ backgroundImage: `url('${beats.unspoken.image}')` }">
-        <div class="ppanel">
+      <!-- the OPEN region · tall enough to span the viewport-centre at the top, so scrolling back
+           up re-asserts scene=open (the opening blade re-covers · #2). -->
+      <div class="pseam pseam--intro" data-scene="open" aria-hidden="true"></div>
+
+      <!-- ░░ SCENE 1 · img1 held dead-still (behind-layer) · the figure rises in the right lane ░░ -->
+      <section class="pscene" data-scene="img1">
+        <div class="pdia pdia--left" role="img" aria-label="the body, witnessed">
+          <div class="pdia-cover">
+            <div class="pdia-plate" :style="{ backgroundImage: `url('${beats.unspoken.image}')` }" />
+          </div>
+        </div>
+        <div class="pfigure">
           <p class="pp-over">the body, witnessed</p>
           <h2 class="pp-head">NOT STORED — PERFORMED</h2>
+          <p class="pp-body">
+            The plate is held; the reading rises beside it. Scroll — the figure climbs over the
+            dead-still image. The image never travels with it (that is the whole floor).
+          </p>
         </div>
       </section>
-      <!-- scroll-regions = the scene sentinels: while one spans the viewport-centre, its scene is
-           active (IO). img1 holds (opening lifted), then seam (shutter-12 covers as img2 pins). -->
-      <div class="pscroll" data-scene="img1" aria-hidden="true"></div>
-      <div class="pscroll pscroll--short" data-scene="seam" aria-hidden="true"></div>
 
-      <section class="pimg pimg--2" :style="{ backgroundImage: `url('${beats.trustwalk.image}')` }">
-        <div class="ppanel">
+      <!-- SEAM 1→2 · the blade covers here while img2 takes its place behind -->
+      <div class="pseam" data-scene="seam" aria-hidden="true"></div>
+
+      <!-- ░░ SCENE 2 · img2 held dead-still ░░ -->
+      <section class="pscene" data-scene="img2">
+        <div class="pdia pdia--left" role="img" aria-label="Elementare Animation · trustwalk">
+          <div class="pdia-cover">
+            <div class="pdia-plate" :style="{ backgroundImage: `url('${beats.trustwalk.image}')` }" />
+          </div>
+        </div>
+        <div class="pfigure">
           <p class="pp-over">Elementare Animation · trustwalk</p>
           <h2 class="pp-head">THE BODY BEFORE THE HEAD</h2>
+          <p class="pp-body">
+            The shutter covered the seam while this plate took its place behind it — then lifted.
+            No wrong-image, no peek: this plate was already here, dead-still, the whole time.
+          </p>
         </div>
       </section>
-      <!-- img2 now pinned in place → shutter-12 lifts (uncover) · then close (shutter-2x covers) -->
-      <div class="pscroll" data-scene="img2" aria-hidden="true"></div>
-      <div class="pscroll" data-scene="close" aria-hidden="true"></div>
+
+      <!-- the CLOSE region · the closing blade covers img2 (the next plate waits) -->
+      <div class="pseam pseam--close" data-scene="close" aria-hidden="true"></div>
     </div>
   </MagnificaPageLayout>
 </template>
@@ -89,10 +112,19 @@ const stageRef = ref<HTMLElement>()
 let io: IntersectionObserver | undefined
 
 onMounted(() => {
+  // #1 · opens-at-bottom guard: take scroll-restoration off auto, force the top on mount.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+  window.scrollTo(0, 0)
+
   const stage = stageRef.value
   if (!stage || typeof IntersectionObserver === 'undefined') return
-  const sentinels = stage.querySelectorAll<HTMLElement>('.pscroll[data-scene]')
-  // root = a 0-height line at the viewport centre (rootMargin -50%/-50%); a sentinel "intersects"
+  // observe the scenes + seam-regions directly (each is a normal-flow block that spans the
+  // viewport-centre during its scroll-range · the behind-layer plate is sticky INSIDE its scene,
+  // so the scene itself is the honest sentinel). NOT the stage (it carries the default scene).
+  const sentinels = stage.querySelectorAll<HTMLElement>(
+    '.pscene[data-scene], .pseam[data-scene]',
+  )
+  // root = a 0-height line at the viewport-centre (rootMargin -50%/-50%); a region "intersects"
   // exactly when it crosses the centre → set the scene. Pure threshold callback, no scroll listener.
   io = new IntersectionObserver(
     (entries) => {
@@ -111,29 +143,30 @@ onUnmounted(() => io?.disconnect())
 <style scoped>
 .proto-stage { position: relative; }
 
-/* mobile (<768): linearise — images + shutters are normal stacked blocks (no held/cover). */
-.pimg {
+/* ════ MOBILE (<768) · linearise: plates are normal-flow illustrations, blades flow as blocks ════ */
+.pscene { position: relative; margin-bottom: 1.25rem; }
+.pdia {
   position: relative;
-  min-height: 18rem;
+  border-radius: 6px;
+  overflow: clip;
+  margin-bottom: 1rem;
+}
+.pdia-cover { position: relative; height: auto; transform: none; }
+.pdia-plate {
+  position: relative;
+  min-height: 16rem;
   background-size: cover;
   background-position: center;
   background-color: var(--color-bg);
   border-radius: 6px;
-  margin-bottom: 1.25rem;
 }
-.ppanel {
-  position: relative;
-  z-index: 1;
-  padding: 1.25rem 1.5rem;
-  background: var(--color-card-bg, #1d1b1a);
-  color: var(--color-card-contrast, #f4f4f4);
-  border-radius: 4px;
-}
+.pfigure { position: relative; z-index: 2; }
 .pp-over { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
-.pp-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0; }
+.pp-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.5rem; }
+.pp-body { font-size: 0.9375rem; line-height: 1.6; margin: 0; }
 
-.poverlay { display: contents; }   /* mobile: shutters flow as blocks */
-.pshutter {
+.poverlay { display: contents; }
+.pblade {
   background: #0b0b0c;
   color: #f4f4f4;
   display: flex;
@@ -152,38 +185,55 @@ onUnmounted(() => io?.disconnect())
 .ps-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
 .ps-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
 .pline { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
-.pscroll { display: none; }
+.pseam { display: none; }
 
-/* ════ DESKTOP · sticky scroll-over images + a pinned overlay of IO-swept shutters ════ */
+/* ════ DESKTOP (≥768) · behind-layer dead-still plates + a pinned IO-swept blade overlay ════ */
 @media (min-width: 768px) {
-  /* held images · sticky · stacked · arrive + cover the previous · never scroll off */
-  .pimg {
+  /* the scene · a plain block (ancestor-purity) · min-height gives the held plate its travel */
+  .pscene { position: relative; min-height: 130vh; margin-bottom: 0; }
+
+  /* the held plate · Hero's behind-layer (A §22): window(clip) > cover(own transform CB) > plate(sticky) */
+  .pdia {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 48%;
+    overflow: clip;
+    margin-bottom: 0;
+    border-radius: 6px;
+  }
+  .pdia-cover {
+    position: absolute;
+    inset: 0;
+    height: 200%;                  /* > one scene of travel → the plate never un-pins while up */
+    transform: translate3d(0, 0, 0); /* own containing block → ancestor-purity-immune (Hero) */
+  }
+  .pdia-plate {
     position: sticky;
     top: 0;
-    min-height: 100vh;        /* the image = one viewport (the scroll-regions give the hold) */
-    margin-bottom: 0;
-    overflow: clip;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-  }
-  .pimg--1 { z-index: 1; }
-  .pimg--2 { z-index: 2; }     /* rises over img1 and covers it (held behind) */
-
-  /* scroll-regions · transparent flow that gives the hold-scroll + carries the scene (the pinned
-     image shows through them). Each holds its scene while it spans the viewport-centre. */
-  .pscroll { display: block; height: 130vh; }
-  .pscroll--short { height: 90vh; }
-  .ppanel {
-    background: transparent;
-    max-width: 30rem;
-    margin: 2.5rem;
-    padding: 0;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.75);
+    height: 100vh;                 /* dead-still: pins at the viewport-top for the scene's range */
+    min-height: 0;
+    border-radius: 0;
   }
 
-  /* the pinned overlay frame · margin-bottom:-100vh so it overlaps the scroll-over images (it does
-     not consume flow). z above the images. Holds the shutters as absolute, viewport-filling layers. */
+  /* the rising Figure · right lane · z above the plate · normal flow (climbs over the held plate) */
+  .pfigure {
+    position: relative;
+    z-index: 2;
+    width: 44%;
+    margin-left: 52%;
+    padding: 2.5rem 0;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+  }
+
+  /* the seam/intro/close regions · transparent travel that carries the scene-state (the pinned
+     plate shows through them); each holds its scene while it spans the viewport-centre. */
+  .pseam { display: block; height: 90vh; }
+  .pseam--intro { height: 100vh; }   /* tall enough to own the centre at scrollTop 0 (#2) */
+  .pseam--close { height: 100vh; }
+
+  /* the pinned overlay · sticky + margin-bottom:-100vh so it overlaps the scenes without
+     consuming flow. z above the plates + figures. Holds the blades as viewport-filling layers. */
   .poverlay {
     display: block;
     position: sticky;
@@ -193,41 +243,38 @@ onUnmounted(() => io?.disconnect())
     z-index: 9;
     pointer-events: none;
   }
-  .pshutter {
+  .pblade {
     position: absolute;
     inset: 0;
     min-height: 0;
     margin: 0;
     border-radius: 0;
     transition: transform 0.55s ease;
-    will-change: transform;     /* leaf overlay · not a stage ancestor */
+    will-change: transform;        /* leaf overlay · NOT a stage ancestor (purity safe) */
   }
 
-  /* default rest-states + the per-scene sweeps (rise 100% → cover 0 → lift -100%). A shutter LIFTS
-     only at its image's scene, so it never reveals the wrong (un-pinned) image. */
-  .popening { transform: translateY(0); }                 /* covers on load (scene open) */
-  .pshutter--12 { transform: translateY(100%); }          /* waits below */
-  .pshutter--2x { transform: translateY(100%); }          /* waits below */
+  /* rest-states + the per-scene sweeps. The blade lifts only at its image's scene → it never
+     reveals the wrong image. (Scroll-driven reversible wipe replaces these next commit.) */
+  .pblade--open { transform: translateY(0); }       /* covers on open */
+  .pblade--12   { transform: translateY(100%); }    /* waits below */
+  .pblade--2x   { transform: translateY(100%); }    /* waits below */
 
-  /* opening lifts once we leave the load scene */
-  [data-scene="img1"] .popening,
-  [data-scene="seam"] .popening,
-  [data-scene="img2"] .popening,
-  [data-scene="close"] .popening { transform: translateY(-100%); }
+  [data-scene="img1"] .pblade--open,
+  [data-scene="seam"] .pblade--open,
+  [data-scene="img2"] .pblade--open,
+  [data-scene="close"] .pblade--open { transform: translateY(-100%); }   /* opening lifts off img1 */
 
-  /* shutter-12 · cover at the seam, lift at img2 (uncovers the by-then-pinned trustwalk) */
-  [data-scene="seam"] .pshutter--12 { transform: translateY(0); }
-  [data-scene="img2"] .pshutter--12,
-  [data-scene="close"] .pshutter--12 { transform: translateY(-100%); }
+  [data-scene="seam"] .pblade--12 { transform: translateY(0); }          /* covers the seam */
+  [data-scene="img2"] .pblade--12,
+  [data-scene="close"] .pblade--12 { transform: translateY(-100%); }     /* lifts off img2 */
 
-  /* shutter-2x · cover img2 at the close scene (the next plate waits behind) */
-  [data-scene="close"] .pshutter--2x { transform: translateY(0); }
+  [data-scene="close"] .pblade--2x { transform: translateY(0); }         /* covers img2 (close) */
 }
 
-/* reduced-motion · no sweeps; the opening is a normal top block so the page is never trapped. */
+/* reduced-motion · no sweeps; blades flow as normal blocks so the page is never trapped. */
 @media (prefers-reduced-motion: reduce) {
-  .pshutter { transition: none !important; }
-  .popening, .pshutter--12, .pshutter--2x { position: relative; inset: auto; transform: none !important; }
+  .pblade { transition: none !important; }
+  .pblade--open, .pblade--12, .pblade--2x { position: relative; inset: auto; transform: none !important; }
   .poverlay { position: static; height: auto; margin-bottom: 0; }
 }
 </style>
