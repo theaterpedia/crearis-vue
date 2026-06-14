@@ -76,4 +76,11 @@ describe('Shutter (the cover/blade)', () => {
         const w = mount(Shutter, { props: { heightVh: 36 } })
         expect(w.find('.shutter').attributes('style') ?? '').toContain('--shutter-h: 36vh')
     })
+
+    it('marks a between-scenes seam with the transition-keyed class (shutter-lift default · §34.4)', () => {
+        const w = mount(Shutter, { props: { seam: true } })
+        const el = w.find('.shutter')
+        expect(el.classes()).toContain('shutter--seam')
+        expect(el.classes()).toContain('shutter--shutter-lift')
+    })
 })
