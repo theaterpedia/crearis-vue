@@ -225,7 +225,16 @@ import { beats } from './content/context'
 .proto-blade-line { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.5rem; }
 
 @media (min-width: 768px) {
-  .proto-blade-act { height: 140vh; }
+  /* the blade OVERLAPS the previous act's tail (negative margin-top) so it covers the held light
+     BEFORE that light's sticky un-pins — the element-anchored replacement for attachment:fixed's
+     "never moves" (the cover comes before the un-pin · i11→i13: the box rises, the image holds).
+     The negative margin-bottom pulls the NEXT act up under the blade, so its light is already
+     pinned behind the blade before the wipe reveals it. (Overlap amounts = :3001 dials.) */
+  .proto-blade-act {
+    height: 140vh;
+    margin-top: -90vh;
+    margin-bottom: -30vh;
+  }
   .proto-blade {
     position: sticky;
     top: 0;
