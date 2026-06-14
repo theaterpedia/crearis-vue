@@ -1,20 +1,20 @@
 <!--
   /proto · PATTERN-B candidate (branch alpha/magnifica-dia-patternB · HM 2026-06-12).
 
-  THE CORRECT DOM ORDER (HP 2026-06-12): the held image must already BE there, behind the shutter,
-  and get UNCOVERED as the shutter lifts — it must NOT scroll in from below. So each act STACKS its
-  layers in one place (a single-cell CSS grid · `grid-area:1/1`):
-        z1  the held image  (position:sticky · DEAD-STILL · present on load / on arrival)
-        z2  the panel        (the overline-headline · rises/sits over the held image)
-        z6  the shutter      (covers the held image · wipes UP to uncover it)
-  The grid-stack is what puts the shutter OVER the already-present image (not after it). The image
-  is held via `position:sticky` (no glue-to-viewport · cross-platform · aspect via bg-size/pos);
-  Hero's over-tall self-contained cover is the production hardening for ancestor-immunity (the
-  stage here is a plain ancestor, so plain sticky holds).
+  THE MECHANIC (HP · grounded in the i11→i12→i13 originals): the held image NEVER scrolls off.
+  The NEXT image (and, optionally, the shutter) rises OVER it and COVERS it; the previous stays
+  pinned, behind, never moving. This is the no-glue replacement for `background-attachment:fixed`:
 
-  Act 1 · the OPENING: the shutter covers the image on LOAD (scroll(root) timeline · 0 = page-top),
-          carries the intro, wipes up to uncover. Act 2 · the BETWEEN: the shutter covers on
-          ARRIVAL (view-timeline on the act) and wipes up to uncover the next held image.
+      sticky-stacking / scroll-over — ALL layers are siblings in ONE stage, each
+      `position:sticky; top:0` with an ASCENDING z-index. A later sibling rises from below and
+      covers the earlier pinned one; the earlier stays pinned (its sticky containing-block is the
+      whole stage), so it is hidden behind the cover — it does NOT release/scroll-off in view.
+
+  Layer order (ascending z · each covers the previous):
+      z1  image 1 (held)   →   z2  the black shutter (rises over img1)   →   z3  image 2 (held, rises over the shutter)
+  Spacers between give each held image its hold-duration WITHOUT over-cropping the image (the
+  image stays viewport-proportioned · cover + background-position = aspect control · no glue-to-
+  viewport · cross-platform). The opening shutter overlays img1 and wipes up to UNCOVER it on load.
 -->
 
 <template>
@@ -22,52 +22,56 @@
     <template #header><MagnificaHeader compact /></template>
 
     <div class="proto-stage">
-      <!-- ═══ ACT 1 · held image (you cannot store theatre) · UNCOVERED by the opening shutter ═══ -->
-      <div class="proto-act proto-act--open">
-        <div
-          class="proto-held"
-          role="img"
-          aria-label="A performer behind translucent sheeting — the body witnessed, held."
-          :style="{ backgroundImage: `url('${beats.unspoken.image}')` }"
-        />
-        <div class="proto-panel">
-          <p class="proto-over">the body, witnessed</p>
-          <h2 class="proto-head">NOT STORED — PERFORMED</h2>
-          <p>The image was here all along — the shutter lifted off it. It does not move; only the cover did.</p>
+      <!-- ═══ IMAGE 1 · held · gets COVERED by what rises next · never scrolls off (z1) ═══ -->
+      <section
+        class="pslide pslide--img1"
+        :style="{ backgroundImage: `url('${beats.unspoken.image}')` }"
+      >
+        <div class="pslide-panel">
+          <p class="pslide-over">the body, witnessed</p>
+          <h2 class="pslide-head">NOT STORED — PERFORMED</h2>
+          <p>This image is held. The next image rises over it and covers it — it never scrolls off; it is covered.</p>
         </div>
-        <!-- the opening shutter · covers on load · wipes up to uncover the held image behind it -->
-        <div class="proto-shutter proto-shutter--open">
-          <p class="proto-shutter-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
-          <h1 class="proto-shutter-head">The image does not move</h1>
-          <p class="proto-shutter-lead">
-            Scroll slowly: this shutter lifts to <strong>uncover</strong> a photograph that is
-            already there, held <strong>dead-still</strong>. Between the plates another shutter wipes
-            and a new held image is revealed behind it. The image never scrolls; only covers pass over it.
+        <!-- the opening shutter · covers img1 on LOAD · wipes up to uncover it -->
+        <div class="popening">
+          <p class="popening-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
+          <h1 class="popening-head">The image does not move</h1>
+          <p class="popening-lead">
+            Scroll slowly: this lifts to <strong>uncover</strong> a photograph already held
+            <strong>dead-still</strong>. Then a black shutter rises and covers it, and a new image
+            rises over the shutter. Nothing scrolls off — each plate is covered by the next.
           </p>
-          <span class="proto-shutter-line" aria-hidden="true" />
+          <span class="pline" aria-hidden="true" />
         </div>
-      </div>
+      </section>
 
-      <!-- ═══ ACT 2 · a NEW held image (raise from the books) · UNCOVERED by the between shutter ═══ -->
-      <div class="proto-act proto-act--between">
-        <div
-          class="proto-held"
-          role="img"
-          aria-label="The orange book against black, green shoots rising — a Szenische Lesung."
-          :style="{ backgroundImage: `url('${beats.hope.image}')` }"
-        />
-        <div class="proto-panel">
-          <p class="proto-over">the figures rise</p>
-          <h2 class="proto-head">RAISE FROM THE BOOKS</h2>
-          <p>This image was already held behind the blade — the blade wiped up and revealed it. Same uncover, between the acts.</p>
+      <!-- spacer · holds img1 (pinned behind) for a longer read before the shutter covers it -->
+      <div class="pspacer" aria-hidden="true" />
+
+      <!-- ═══ THE SHUTTER · rises OVER img1 and covers it (z2) ═══ -->
+      <section class="pslide pslide--shutter">
+        <p class="pshutter-over">between horror and hope</p>
+        <p class="pshutter-text">— the black between —</p>
+        <span class="pline" aria-hidden="true" />
+      </section>
+
+      <!-- spacer · the black-between holds briefly before img2 covers the shutter -->
+      <div class="pspacer pspacer--short" aria-hidden="true" />
+
+      <!-- ═══ IMAGE 2 · held · rises OVER the shutter and covers it (z3) ═══ -->
+      <section
+        class="pslide pslide--img2"
+        :style="{ backgroundImage: `url('${beats.hope.image}')` }"
+      >
+        <div class="pslide-panel">
+          <p class="pslide-over">the figures rise</p>
+          <h2 class="pslide-head">RAISE FROM THE BOOKS</h2>
+          <p>This rose over the shutter and covered it — the new held plate. img1 is still pinned, hidden underneath; it never left.</p>
         </div>
-        <!-- the between shutter · covers on arrival · wipes up to uncover the held image behind it -->
-        <div class="proto-shutter proto-shutter--between">
-          <p class="proto-shutter-over">between horror and hope</p>
-          <p class="proto-shutter-text">— the black between —</p>
-          <span class="proto-shutter-line" aria-hidden="true" />
-        </div>
-      </div>
+      </section>
+
+      <!-- spacer · img2 holds at the end -->
+      <div class="pspacer" aria-hidden="true" />
     </div>
   </MagnificaPageLayout>
 </template>
@@ -81,28 +85,45 @@ import { beats } from './content/context'
 <style scoped>
 .proto-stage { position: relative; }
 
-/* ── shared layer styles (mobile-first: the layers just stack in normal flow) ── */
-.proto-held {
-  width: 100%;
-  min-height: 16rem;
+/* mobile (<768): linearise — plates and shutters are normal stacked blocks (no held/cover). */
+.pslide {
+  position: relative;
+  min-height: 18rem;
   background-size: cover;
   background-position: center;
   background-color: var(--color-bg);
   border-radius: 6px;
+  margin-bottom: 1.25rem;
 }
-.proto-panel {
-  margin: 1.25rem 0 0;
+.pslide--shutter {
+  background: #0b0b0c;
+  color: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+.pspacer { display: none; }
+
+.pslide-panel {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
   background: var(--color-card-bg, #1d1b1a);
   color: var(--color-card-contrast, #f4f4f4);
-  padding: 1.25rem 1.5rem;
   border-radius: 4px;
 }
-.proto-over { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
-.proto-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.6rem; }
-.proto-panel p:last-child { margin-bottom: 0; }
+.pslide-over { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
+.pslide-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.6rem; }
+.pslide-panel p:last-child { margin-bottom: 0; }
 
-.proto-shutter {
-  margin: 1.25rem 0 0;
+.popening {
+  position: relative;
+  z-index: 9;
+  margin-top: 1.25rem;
   background: #0b0b0c;
   color: #f4f4f4;
   display: flex;
@@ -112,112 +133,77 @@ import { beats } from './content/context'
   text-align: center;
   gap: 0.6rem;
   padding: 2rem;
-  min-height: 60vh;
   border-radius: 4px;
 }
-.proto-shutter-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
-.proto-shutter-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
-.proto-shutter-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
-.proto-shutter-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
-.proto-shutter-line { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
+.popening-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.popening-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
+.popening-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
+.pshutter-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.pshutter-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
+.pline { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
 
-/* ════ DESKTOP · the stack (held image · panel · shutter all in ONE grid cell → they overlap) ════ */
+/* ════ DESKTOP · the sticky-stack · each plate is HELD and COVERED by the next (never scrolls off) ════ */
 @media (min-width: 768px) {
-  .proto-act {
-    position: relative;
-    display: grid;
-    height: 220vh;            /* the act's scroll-length = the shutter-wipe + the held-image hold */
-  }
-  .proto-act > * {
-    grid-area: 1 / 1;         /* STACK every layer in the same cell → the shutter sits OVER the image */
-    align-self: start;
-  }
-
-  /* z1 · the HELD image · pinned dead-still · present behind the shutter from the first frame */
-  .proto-held {
+  /* every plate/shutter pins at top:0 and stays pinned (its containing-block is the whole stage);
+     a later sibling with higher z rises from below and covers it. */
+  .pslide {
     position: sticky;
     top: 0;
-    height: 100vh;
-    min-height: 0;
-    z-index: 1;
-    margin: 0;
-    border-radius: 0;
-  }
-  /* z2 · the panel · sticks near the bottom, over the held image (visible after the uncover) */
-  .proto-panel {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    z-index: 2;
-    margin: 0;
-    background: transparent;
-    color: var(--color-card-contrast, #f4f4f4);
+    min-height: 100vh;
+    margin-bottom: 0;
+    overflow: clip;            /* clip (not hidden — keeps no scrollport, the inner overlay stays sticky-able) */
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    align-items: flex-start;
-    padding: 2.5rem;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  }
+  .pslide--img1 { z-index: 1; }
+  .pslide--shutter { z-index: 2; justify-content: center; align-items: center; }
+  .pslide--img2 { z-index: 3; }
+
+  /* the spacers give each HELD image its hold-duration (the pinned plate shows through them)
+     WITHOUT over-cropping — the plate stays a clean 100vh. */
+  .pspacer { display: block; height: 110vh; }
+  .pspacer--short { height: 60vh; }
+
+  /* the panel rides over its own held image, bottom-left, legible over the photo */
+  .pslide-panel {
+    background: transparent;
+    max-width: 30rem;
+    margin: 2.5rem;
+    padding: 0;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
     pointer-events: none;
   }
-  .proto-panel > * { max-width: 30rem; }
 
-  /* z6 · the SHUTTER · covers the held image, wipes UP to uncover it */
-  .proto-shutter {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    min-height: 0;
-    z-index: 6;
+  /* the OPENING shutter · overlays img1 (covers on load) · wipes UP to uncover the held image.
+     scroll(root) is 0 at the page-top — the right timeline for a load-time cover (view() reads
+     mid-progress at load). The wipe-distance is a dial. */
+  .popening {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
     margin: 0;
     border-radius: 0;
+    padding: 2rem clamp(2rem, 6vw, 5rem);
+    align-items: flex-start;
+    text-align: left;
   }
-
-  /* the OPENING shutter · covers on LOAD (scroll(root) is 0 at page-top), wipes up over the first
-     ~90vh of scroll. scroll() is the right timeline for a top-of-page cover (view() reads
-     mid-progress at load). */
   @supports (animation-timeline: scroll()) {
-    .proto-shutter--open {
-      animation: proto-uncover-open linear both;
+    .popening {
+      animation: popening-wipe linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0 90vh;
+      animation-range: 0 80vh;
     }
-    @keyframes proto-uncover-open {
+    @keyframes popening-wipe {
       from { transform: translateY(0); }
-      to { transform: translateY(-100%); }
-    }
-  }
-
-  /* the BETWEEN shutter · driven by ITS act's view-progress (named view-timeline on the act, a
-     clean non-sticky box). Covers as the act arrives + the image pins behind it, holds briefly,
-     then wipes up to uncover. The range/hold are dials. */
-  .proto-act--between { view-timeline: --act2 block; }
-  @supports (animation-timeline: view()) {
-    .proto-shutter--between {
-      animation: proto-uncover-between linear both;
-      animation-timeline: --act2;
-      animation-range: cover 8% cover 55%;
-    }
-    @keyframes proto-uncover-between {
-      from { transform: translateY(0); }
-      40% { transform: translateY(0); }
       to { transform: translateY(-100%); }
     }
   }
 }
 
-/* reduced-motion · no wipes · the shutters become normal scroll-past blocks (never sticky-trap) */
+/* reduced-motion / no scroll-driven · keep the opening from trapping the page: drop the overlay
+   to a normal top block so img1 is reachable (no wipe). The sticky-stack itself is motion-free. */
 @media (prefers-reduced-motion: reduce) {
-  .proto-act { display: block; height: auto; }
-  .proto-held,
-  .proto-panel,
-  .proto-shutter {
-    position: static;
-    height: auto;
-    min-height: 16rem;
-    animation: none !important;
-    transform: none !important;
-  }
-  .proto-panel { background: var(--color-card-bg, #1d1b1a); }
+  .popening { position: relative; inset: auto; animation: none !important; transform: none !important; }
 }
 </style>
