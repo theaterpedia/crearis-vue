@@ -107,6 +107,38 @@ export interface BackSlideSpec {
 }
 
 /**
+ * One scene of a DiaStage (the shadow-theater stage · §34.5) — a held Dia + its rising Figure.
+ * The editor's `v-for` target. ONE spec: editorial (figure · theme) + OPTIONAL timeline fields
+ * (id/date/href · the dashboard/internal timeline use · omitted for editorial /context). `status`
+ * is a carrier that maps the SYSREG — no invented enum (Foundation · deferred to the sysreg-owner).
+ */
+export interface DiaSceneSpec {
+    /** the held plate · omit `image` → a text-Dia (content via the `#dia-N` slot). */
+    dia: {
+        image?: string
+        imageAlt?: string
+        /** focal · Hero aspect-engine vocab → background-position (never :deep · gotcha #1). */
+        imgTmpAlignX?: 'left' | 'center' | 'right'
+        imgTmpAlignY?: 'top' | 'center' | 'bottom'
+    }
+    /** crearis-md "overline **HEADLINE** subline" → HeadingParser (the gap · the quick path). For
+     *  rich Figures (CalloutPhrase/strong/em · /context) use the `#figure-N` slot instead. */
+    figure?: string
+    /** which lane the held Dia pins into; the Figure rises in the opposite lane. */
+    lane?: 'left' | 'right' | 'full'
+    theme?: 'yellow' | 'green' | 'pink' | 'dim'
+    // ── timeline-use (OPTIONAL · §30 dashboard stakes · omitted for editorial /context) ──
+    /** anchor target + timeline-marker. */
+    id?: string
+    /** the timeline spine. */
+    date?: string
+    /** link to the project / course / workshop. */
+    href?: string
+    /** 🚩 reads/maps the SYSREG — no invented enum (Foundation · deferred to the sysreg-owner). */
+    status?: string
+}
+
+/**
  * Shape of an item in CardsCanvas's `items` array · mirrors the 2022
  * JSON-items pattern but type-checked here.
  */

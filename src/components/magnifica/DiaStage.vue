@@ -2,44 +2,119 @@
     <section
         ref="stageEl"
         class="dia-stage"
+        :class="[`dia-stage--${transition}`, { 'dia-stage--bounded': bounded }]"
         :style="stageVars"
     >
-        <slot />
+        <template
+            v-for="(scene, i) in scenes"
+            :key="scene.id ?? i"
+        >
+            <!-- the held Dia (the Grund · sticky-to-stage · ascending z from the transition strategy) -->
+            <Dia
+                class="dia-stage-plate"
+                :image="scene.dia.image"
+                :image-alt="scene.dia.imageAlt"
+                :img-tmp-align-x="scene.dia.imgTmpAlignX"
+                :img-tmp-align-y="scene.dia.imgTmpAlignY"
+                :lane="scene.lane ?? 'left'"
+                :style="{ zIndex: plateZ(i) }"
+            >
+                <!-- text-Dia content (held text · the #dia-N slot · rich authoring) -->
+                <slot
+                    :name="`dia-${i}`"
+                    :scene="scene"
+                    :index="i"
+                />
+            </Dia>
+
+            <!-- the scene scroll-range + the rising Figure (the Figur · opposite lane · z:mid) -->
+            <div class="dia-stage-scene">
+                <div
+                    class="dia-stage-figure"
+                    :class="figureLaneClass(scene)"
+                    :style="{ zIndex: figureZ(i) }"
+                >
+                    <!-- rich authoring via the #figure-N slot (CalloutPhrase/strong/em · /context);
+                         the `figure` md-prop → HeadingParser is the editor-friendly quick path. -->
+                    <slot
+                        :name="`figure-${i}`"
+                        :scene="scene"
+                        :index="i"
+                    >
+                        <HeadingParser
+                            v-if="scene.figure"
+                            :content="scene.figure"
+                            as="h2"
+                            class="dia-stage-figure-head"
+                        />
+                    </slot>
+                </div>
+            </div>
+
+            <!-- the seam Shutter masks the join INTO the next scene (none after the last) -->
+            <Shutter
+                v-if="i < scenes.length - 1"
+                class="dia-stage-seam"
+                seam
+                separator
+                :transition="transition"
+                :style="{ zIndex: seamZ(i) }"
+            />
+        </template>
     </section>
 </template>
 
 <script setup lang="ts">
 /**
- * DiaStage — the shadow-theater stage (the page-level / main-container feature · HM 2026-06-12).
- * A held Dia (the Grund · z:1) · Figures that rise·stick·leave (z:2) · a Shutter that passes over
- * between scenes (z:3). The stage is the scroll region; its two lanes (left/right, fixed widths)
- * are where everything swims. Mounts in the body (MagnificaPageLayout content · later the core
- * PageLayout `<main class="main-content">`). NOT for the 3-col / aside layouts — the aside stays
- * OUTSIDE the stage (dasei.eu shows the shape: a left nav that does not join the theater).
+ * DiaStage — the shadow-theater stage · the Dia-family assembler (§34 · CandA·shutter-lifts). ONE
+ * component, a `transition` prop (NOT three siblings · §34.1·1). Data-driven: a `v-for` over
+ * `:scenes` (the editor's target · §34.5) renders, per scene, a flat interleave —
+ *     held Dia (z-low · ascending)  ·  scroll-range + rising Figure (z-mid)  ·  seam Shutter (z-high)
+ * folding the proven /proto shutter-lift mechanism into the family. Mounts in the magnifica shell
+ * (MagnificaPageLayout content). NOT for the 3-col / aside layouts — the aside stays OUTSIDE the
+ * stage (dasei.eu shows the shape · a left nav that does not join the theater).
  *
- * THE Z-STACK (the i5 fix — the image must never run over the shutter):
- *     z1 Dia      — the held ground (Dia.vue · element-anchored, never viewport-glued)
- *     z2 Figure   — the rising content (the prose · text-led)
- *     z3 Shutter  — the cover/blade between scenes (Shutter.vue · hero-shaped)
+ * THE TRANSITION (§34.4) drives TWO things, both from the prop:
+ *   · the seam-CSS module — owned by Shutter.vue (shutter-lift overlap+view()-lift · rise-over
+ *     passive · wipe later by ②·CandB).
+ *   · the z-strategy — shutter-lift/wipe: plates ascending, Figures above, Shutters HELD ABOVE;
+ *     rise-over: ALL layers ascending (the next plate rises over the seam). Assigned per-layer
+ *     inline, below (the one non-trivial branch · §32/§33·a).
  *
- * ANCESTOR-PURITY (load-bearing · backslide §9.1/§12): the stage + EVERY ancestor stay plain
- * blocks — NO transform / filter / overflow(non-visible) / contain / will-change. They create a
- * containing block / scroll-context that kills `position: sticky` AND scroll-driven timelines.
+ * THE HOLD = sticky-to-stage + `--dia-h` (§34.3 · the over-tall transform-cover is dropped). Relies
+ * on ANCESTOR-PURITY (load-bearing · backslide §9.1/§12): the stage + EVERY ancestor stay plain
+ * blocks — NO transform / filter / overflow(non-visible) / contain / will-change (they create a
+ * containing block / scroll-context that kills `position: sticky` AND scroll-driven timelines).
  *
- * JS CONFIGURES · CSS RUNS: the only JS seat is measuring the viewport on mount/resize to write
- * the CSS vars the parts read (--dia-h · lane widths). JS never drives the scroll — the choreography
- * is the parts' pure-CSS sticky (now-running) / scroll-driven-animation (future-spec, in <style>).
+ * JS CONFIGURES · CSS RUNS (§34.3 · CandA's value): the ONLY JS is the mount/resize measure-hook
+ * writing `--dia-h` (px · responsive) — config, never a scroll-driver (no scroll-listener / IO /
+ * per-frame). The choreography is the parts' pure-CSS sticky + z + the `view()` lift. A CSS `vh`
+ * fallback keeps it working JS-off / pre-hydrate.
+ *
+ * Figure authoring = slot + md-fallback (§34.6): per-scene scoped slots `#figure-N` (rich) / `#dia-N`
+ * (text-Dia), with `scene.figure` md → HeadingParser the quick path. The stage choreography is
+ * SCOPED; slot-content reaches via the consumer's own `:deep()`; focal stays a prop (gotcha #1).
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Dia from './Dia.vue'
+import Shutter from './Shutter.vue'
+import HeadingParser from '@/components/HeadingParser.vue'
+import type { DiaSceneSpec } from './types'
 
 const props = withDefaults(
     defineProps<{
-        /** the held-plate / act height, as a fraction of the viewport (the Dia + Shutter height). */
+        /** the ordered scene-list (the editor's v-for target · §34.5). */
+        scenes: DiaSceneSpec[]
+        /** the seam mechanic + z-strategy (§34.4) · default the reference motion (§35). */
+        transition?: 'shutter-lift' | 'rise-over' | 'wipe'
+        /** bound the stage to the 90rem column on wide viewports (the --mag-bound/96rem gate). */
+        bounded?: boolean
+        /** the held-plate height as a fraction of the viewport (the Dia + Shutter height · proto 82). */
         heightVh?: number
-        /** the left (Dia) lane width in %; the right (Figure) lane takes the rest. */
+        /** the held-Dia lane width in %; the Figure lane takes the rest. */
         leftWidth?: number
     }>(),
-    { heightVh: 70, leftWidth: 48 },
+    { transition: 'shutter-lift', bounded: false, heightVh: 82, leftWidth: 48 },
 )
 
 const stageEl = ref<HTMLElement>()
@@ -47,12 +122,29 @@ const stageEl = ref<HTMLElement>()
 const stageVars = computed<Record<string, string>>(() => ({
     '--dia-left-w': `${props.leftWidth}%`,
     '--dia-right-w': `${100 - props.leftWidth}%`,
+    '--dia-right-off': `${props.leftWidth + 4}%`,
 }))
 
-/** Measure the viewport → set --dia-h (a real px, so the held plate fills the stage cleanly across
- *  sizes; the parts' `70vh` default is the no-JS fallback). This is the slidev-borrow seam (Trail
- *  §3.1): config → the parts read it. Extend here for per-item config / an IntersectionObserver
- *  active-predicate when a scene needs JS-fired enter-effects. */
+/* the z-strategy · transition-keyed (§34.4). shutter-lift/wipe: plates ascending (the reveal order)
+   · Figures above all plates · Shutters held high (they pass over). rise-over: ALL ascending so the
+   next plate rises over the prior seam (§27 · the rise-over instance ③ refines its exact tuning). */
+function plateZ(i: number): number {
+    return props.transition === 'rise-over' ? (i + 1) * 10 : 1 + i
+}
+function figureZ(i: number): number {
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 1 : 1000
+}
+function seamZ(i: number): number {
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 2 : 2000 + i
+}
+
+/** the Figure rises in the lane OPPOSITE the held Dia (Dia left → Figure right · the default). */
+function figureLaneClass(scene: DiaSceneSpec): string {
+    return scene.lane === 'right' ? 'dia-stage-figure--left' : 'dia-stage-figure--right'
+}
+
+/** Measure the viewport → set `--dia-h` in px (the held plate fills the stage cleanly across sizes;
+ *  the CSS `82vh` default is the no-JS fallback). The ONLY JS — config, never a scroll-driver. */
 function configure(): void {
     if (!stageEl.value) return
     const h = Math.round((window.innerHeight * props.heightVh) / 100)
@@ -67,29 +159,68 @@ onUnmounted(() => window.removeEventListener('resize', configure))
 </script>
 
 <style scoped>
-/* the stage · a plain block in normal flow (ancestor-purity · see script). The parts self-place
-   into the lanes (Dia/Figure widths) — no grid, so the Shutter is naturally full-stage-width. */
+/* the stage · a plain block in normal flow (ancestor-purity · see script) · the sticky containing
+   block, so a held Dia pins to the STAGE and never un-pins. The parts self-place into the lanes. */
 .dia-stage {
     position: relative;
     --dia-top: var(--bb-navbar-offset, 6rem);
 }
 
+/* bounded · align the stage to the 90rem column on wide viewports (the --mag-bound/96rem gate ·
+   shared geometry-token with Hero/CardsCanvas/BackSlide · max-width self-activates above the bound). */
+.dia-stage--bounded {
+    max-width: var(--mag-bound, 90rem);
+    margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+    /* the scene · the scroll-RANGE the held plate holds across + where the Figure rises. Uniform
+       length (incl. clean/text scenes) so a seam never comes early (the proto 3rd-shutter fix). */
+    .dia-stage-scene {
+        position: relative;
+        min-height: var(--dia-scene-h, 120vh);
+    }
+
+    /* the rising Figure · sticky in its lane, opaque (gotcha #5), lifts off the held plate via an
+       OKLCH shadow (not rgba · standards-floor §34.7). z assigned inline (transition-keyed). */
+    .dia-stage-figure {
+        position: sticky;
+        top: calc(var(--dia-top) + 3rem);
+        width: var(--dia-right-w, 48%);
+        background: var(--color-bg);
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 12px 32px oklch(0 0 0 / 0.3);
+    }
+    .dia-stage-figure--right {
+        margin-left: var(--dia-right-off, 52%);
+    }
+    .dia-stage-figure--left {
+        margin-right: var(--dia-right-off, 52%);
+    }
+}
+
+.dia-stage-figure-head {
+    margin: 0 0 0.75rem;
+}
+
+/* <768 · the stage linearises: the parts are normal-flow blocks, top to bottom (the Dia/Shutter
+   components carry their own mobile reset · here the Figure goes full-width below its plate). */
+@media (max-width: 767px) {
+    .dia-stage-figure {
+        margin: 1.25rem 0 0;
+        width: auto;
+    }
+}
+
 /* ── FUTURE-SPEC · scroll-driven refactor (flackr/scroll-timeline polyfill) ─────────────────────
-   Now-running = the parts pin via `position: sticky`. The refactor makes the transitions
-   scroll-LINKED (JS-free), so the Dia truly never moves and the Shutter WIPES like a Dia-blade:
-
-     .dia-stage      { view-timeline: --stage block; }     // or per-scene subjects, anonymous view(block)
-     @keyframes shutter-wipe { from { transform: translateY(100%) } 50% { transform: none }
-                               to   { transform: translateY(-100%) } }
-     .shutter { animation: shutter-wipe linear both; animation-timeline: --stage;
-                animation-range: cover 0% cover 100%; }     // the full overlap window
-     .dia     { animation: dia-crossfade linear both; animation-timeline: --stage; }
-
-   `view()` tracks a subject's progress through the scrollport; `scroll()` tracks a scroller's
-   progress; named `view-timeline`/`scroll-timeline` decouple subject ↔ animated element. Engine
-   support (2026): Chromium + Safari 26 ship unprefixed; **Firefox-stable still needs the polyfill**
-   — `import 'scroll-timeline-polyfill'` (npm · a third-party republish of flackr's code), or the
-   canonical `flackr.github.io/scroll-timeline/dist/scroll-timeline.js`. The polyfill ALSO parses
-   this CSS (declarative authoring survives) — but cross-origin stylesheets are skipped, so keep
-   the scroll-timeline CSS same-origin / inline. JS still only CONFIGURES (the vars above). ───────── */
+   Now-running = the parts pin via `position: sticky` + the Shutter's `view()` lift (Chromium +
+   Safari 26). The deeper refactor makes the held Dia itself a scroll-linked cross-fade and the
+   `wipe` transition a reversible blade:
+     .dia-stage  { view-timeline: --stage block; }       // or per-scene anonymous view(block)
+     .dia-stage-seam[wipe] { animation: shutter-wipe linear both; animation-timeline: --stage;
+                             animation-range: cover 0% cover 100%; }   // reversible both-ways (②)
+   Engine support 2026: Chromium + Safari 26 ship unprefixed; Firefox-stable needs the polyfill
+   (`import 'scroll-timeline-polyfill'`, or flackr's canonical dist/scroll-timeline.js · it parses
+   this CSS so authoring stays declarative · keep the scroll-timeline CSS same-origin). JS still
+   only CONFIGURES (--dia-h above) · never drives the scroll. ─────────────────────────────────── */
 </style>
