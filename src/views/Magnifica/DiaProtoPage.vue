@@ -141,9 +141,9 @@ import { beats } from './content/context'
   align-items: flex-start;
   justify-content: center;
   gap: 0.5rem;
-  background: #0b0b0c;
-  color: #f4f4f4;
-  border-radius: 4px;
+  /* the black-between blade · theme tokens (token, #fallback) · square (theme-7 register · no radius) */
+  background: var(--color-card-bg, #1d1b1a);
+  color: var(--color-card-contrast, #f4f4f4);
   padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
 }
 .proto-blade-over { font-size: 0.8125rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
@@ -159,7 +159,6 @@ import { beats } from './content/context'
   background-size: cover;
   background-position: center;
   background-color: var(--color-bg);
-  border-radius: 4px;
 }
 .proto-fig { margin-top: 1.5rem; }
 .proto-shutter--seam { margin-top: 1.5rem; min-height: 12rem; }
@@ -199,8 +198,9 @@ import { beats } from './content/context'
     z-index: 6;
     background: var(--color-bg);
     padding: 1.25rem 1.5rem;
-    border-radius: 4px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    /* square (theme-7 · no radius) · the rising-figure lifts off the plate via an OKLCH shadow
+       (not rgb · standards-floor §30.3) */
+    box-shadow: 0 12px 32px oklch(0 0 0 / 0.3);
   }
   .proto-fig--2 { top: calc(var(--dia-top) + 9rem); margin-top: 48vh; }
 
