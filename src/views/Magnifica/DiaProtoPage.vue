@@ -124,7 +124,6 @@ import { beats } from './content/context'
     /* the window · CLIP (not hidden — clip keeps no scrollport, so the inner sticky lives) */
     overflow: clip;
     min-height: 100vh;
-    margin-bottom: clamp(2rem, 6vh, 4rem);
     display: flex;
     align-items: flex-end;
   }
@@ -179,7 +178,15 @@ import { beats } from './content/context'
 .proto-blade-line { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.5rem; }
 
 @media (min-width: 768px) {
-  .proto-blade-act { height: 140vh; }
+  /* the blade-act OVERLAPS Dia A's tail (negative margin-top) so the blade rises to cover WHILE
+     Dia A is still held — no dead-black gap at the seam. z-index lifts the track over Dia A.
+     (The overlap depth + the wipe range below are the seam-timing dials · tune to taste.) */
+  .proto-blade-act {
+    height: 150vh;
+    margin-top: -60vh;
+    margin-bottom: -30vh;
+    z-index: 5;
+  }
   .proto-blade {
     position: sticky;
     top: 0;
@@ -193,10 +200,12 @@ import { beats } from './content/context'
       animation-timeline: view(block);
       animation-range: cover 0% cover 100%;
     }
+    /* rise to full cover EARLY (mask Dia A's exit) · HOLD the black-between · then wipe up to
+       reveal Dia B. The long 0%-cover hold means there is never a frame of empty dark. */
     @keyframes proto-blade-wipe {
-      from { transform: translateY(105%); }
-      42%, 58% { transform: translateY(0); }
-      to { transform: translateY(-105%); }
+      from { transform: translateY(100%); }
+      26%, 74% { transform: translateY(0); }
+      to { transform: translateY(-100%); }
     }
   }
 }
