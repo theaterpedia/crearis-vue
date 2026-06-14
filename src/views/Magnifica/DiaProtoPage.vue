@@ -51,12 +51,13 @@
         </div>
       </div>
 
-      <!-- ═══ IMAGE 2 · held (z2) · pinned behind shutter2 · uncovered as shutter2 lifts ═══ -->
-      <section class="pimg pimg--2" :style="{ backgroundImage: `url('${beats.hope.image}')` }">
+      <!-- ═══ IMAGE 2 · trustwalk (DISTINCT image · clearly not img1) · held (z2) · pinned behind
+           shutter2, uncovered as shutter2 lifts ═══ -->
+      <section class="pimg pimg--2" :style="{ backgroundImage: `url('${beats.trustwalk.image}')` }">
         <div class="ppanel">
-          <p class="pover">the figures rise</p>
-          <h2 class="phead">RAISE FROM THE BOOKS</h2>
-          <p>This was held behind the shutter — uncovered in place as it lifted. It never rose into view; the cover left.</p>
+          <p class="pover">Elementare Animation</p>
+          <h2 class="phead">THE BODY BEFORE THE HEAD</h2>
+          <p>A clearly different image — held behind shutter2, uncovered in place as it lifted. If you see the sheeting here instead, the lift fired before this was in place (the sync bug).</p>
         </div>
       </section>
 
