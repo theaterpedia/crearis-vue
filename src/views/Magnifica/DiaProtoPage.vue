@@ -1,22 +1,26 @@
 <!--
-  /proto · DiaStage HINGE PROTOTYPE — the held light, three plates, shutter-masked seams.
-  (HM 2026-06-12 · grounded in backslide §24 — the scroll-mechanism research.)
+  /proto · DiaStage HINGE — Pattern A · "SHUTTER LIFTS TO REVEAL" variant (HM 2026-06-12 · fork).
+  Sibling variant ("next plate rises over previous") lives on alpha/magnifica-dia-patternA (cv-diaA).
 
-  TWO mechanisms, NOT conflated (§24's core warning):
-   · THE HEIGHT does the WITHIN-scene timing — every plate + shutter is the SAME --dia-h (a
-     viewport proportion, set centrally in TS onMounted/resize · JS configures, CSS runs).
-   · A STATE-TRIGGER does the SEAM-sync — an IntersectionObserver sets `data-scene` (the active
-     plate); CSS TRANSITIONS move the shutters. NOT scroll-% (the §24 B sync-bug: scroll-driven
-     is progress, not state — it lifts before the next plate is in place → wrong image). JS only
-     observes + sets state; it never drives the scroll.
+  A's reason to exist (Blende review · protect both): PURE-CSS — NO JS IN THE LOOP (no scroll
+  listener, no IntersectionObserver, no per-frame JS) — and a flat .vue authoring. The ONLY JS is
+  configure(): on mount/resize it writes ONE height var (--dia-h · a viewport proportion). That is
+  JS *configuring*, not *driving* — the scroll choreography is 100% CSS.
 
-  THE LAYERS (§24 D · "never scrolls, only things pass over it"):
-   · plates (the held lights · z1–3) — sticky to the STAGE → they NEVER un-pin (the i11→i13 floor,
-     element-anchored · the iOS-safe replacement for attachment:fixed). Ascending z.
+  THE MECHANISM — "the height does the timing", kept drift-free by keying every motion to LAYOUT +
+  the uniform --dia-h (never a guessed scroll-% state · §24-B's trap):
+   · plates (z1–3) — the held lights · `position: sticky` to the STAGE → they NEVER un-pin (the
+     i11→i13 floor · element-anchored · no attachment:fixed · iOS-safe). Ascending z.
    · figures (z6) — rise+cover in the right lane over a plate (scene 1 & 3 · scene 2 is a CLEAN dia).
-   · shutters (z20+) — high above the plates. The opening wipes up to UNCOVER plate-1; each seam
-     shutter RISES THROUGH (covers) on the `data-scene` flip → masks the plate-swap behind it,
-     synced (no drift). The image is covered, never scrolled.
+   · shutters (z20+) — high above the plates. Each seam shutter RISES from below (covers the
+     previous plate · the black-between) then LIFTS off the top to UNCOVER the held plate behind it
+     — a scroll-driven wipe (animation-timeline: view · PURE CSS) keyed to the shutter's OWN
+     view-pass + the uniform --dia-h, so the lift completes as the next plate pins. Adjacent +
+     uniform-height → the shutter↔next-plate sync is LOCAL, independent of the preceding Figure's
+     length → drift-free across scroll-speed + Figure-length. The image is covered/uncovered, never
+     scrolled — only the shutter moves.
+   Fallback (no scroll-driven · Firefox-stable): the seam shutter scrolls away in flow and still
+   reveals the held plate — degraded (no double-speed lift), never broken. Chromium/Safari ship it.
 
   ANCESTOR-PURITY: the stage + every ancestor stay plain blocks. Desktop-first; <768 linearises.
 -->
@@ -28,18 +32,17 @@
     <div
       ref="stageEl"
       class="proto-stage"
-      :data-scene="activeScene"
     >
-      <!-- the OPENING shutter · covers plate-1 at load · overlaps it (negative margin = -1·--dia-h)
-           so the image is already there; wipes up to uncover (no next-plate to sync → scroll-driven ok). -->
+      <!-- the OPENING shutter · covers plate-1 at load · overlaps it (margin = -1·--dia-h) so the
+           image is already there; lifts up to uncover (scroll-driven · no plate to sync). -->
       <div class="proto-shutter proto-shutter--open">
-        <p class="proto-blade-over">DiaStage · hinge prototype</p>
+        <p class="proto-blade-over">DiaStage · hinge · shutter-lifts</p>
         <p class="proto-blade-head">The image does not move.</p>
         <p class="proto-blade-lead">
           Three held plates, two shutters. Each image is <strong>already there</strong> and never
-          moves — a shutter wipes up to <strong>uncover</strong> it, the reading rises over it, then
-          the next shutter <strong>rises to cover</strong> it and a new plate is behind the blade.
-          Only the shutters move.
+          moves — a shutter rises to <strong>cover</strong> it (the black between), then
+          <strong>lifts off</strong> to <strong>uncover the held plate behind it</strong>. Only the
+          shutters move; the light holds.
         </p>
         <span class="proto-blade-line" aria-hidden="true" />
       </div>
@@ -51,11 +54,8 @@
         aria-label="A performer behind translucent sheeting — the body witnessed, held."
         :style="{ backgroundImage: `url('${beats.unspoken.image}')` }"
       />
-      <!-- SCENE 1 · the reading rises over plate-1 (right lane) · this block is the scroll-range + IO sentinel -->
-      <div
-        class="proto-scene"
-        data-scene-range="1"
-      >
+      <!-- SCENE 1 · the reading rises over plate-1 (right lane) · the scroll-range -->
+      <div class="proto-scene">
         <div class="proto-fig proto-fig--1">
           <p class="proto-fig-over">the body, witnessed</p>
           <h2 class="proto-fig-head">NOT STORED — PERFORMED</h2>
@@ -68,25 +68,22 @@
         </div>
       </div>
 
-      <!-- SEAM 1 → covers plate-1, reveals plate-2 · IO-state-triggered (rises through on the flip) -->
+      <!-- SEAM 1 · rises over plate-1 (covers) then LIFTS off to reveal plate-2 (held behind) -->
       <div class="proto-shutter proto-shutter--seam proto-shutter--seam1">
         <p class="proto-blade-text">— the black between —</p>
         <span class="proto-blade-line" aria-hidden="true" />
       </div>
 
-      <!-- PLATE 2 · a CLEAN dia (no figures) · the trust-walk · uncovered by seam-1, covered by seam-2 -->
+      <!-- PLATE 2 · a CLEAN dia (no figures) · the trust-walk · uncovered as seam-1 lifts -->
       <div
         class="proto-light proto-light--2"
         role="img"
         aria-label="A trust-walk — one led blind by another, the room held open."
         :style="{ backgroundImage: `url('${beats.trustwalk.image}')` }"
       />
-      <div
-        class="proto-scene proto-scene--clean"
-        data-scene-range="2"
-      />
+      <div class="proto-scene proto-scene--clean" />
 
-      <!-- SEAM 2 → covers plate-2, reveals plate-3 -->
+      <!-- SEAM 2 · covers plate-2 then lifts to reveal plate-3 -->
       <div class="proto-shutter proto-shutter--seam proto-shutter--seam2">
         <p class="proto-blade-text">— the black between —</p>
         <span class="proto-blade-line" aria-hidden="true" />
@@ -99,10 +96,7 @@
         aria-label="The orange book against black, green shoots rising — a Szenische Lesung."
         :style="{ backgroundImage: `url('${beats.hope.image}')` }"
       />
-      <div
-        class="proto-scene"
-        data-scene-range="3"
-      >
+      <div class="proto-scene">
         <div class="proto-fig proto-fig--1">
           <p class="proto-fig-over">the figures rise</p>
           <h2 class="proto-fig-head">RAISE FROM THE BOOKS</h2>
@@ -125,18 +119,13 @@ import MagnificaHeader from './MagnificaHeader.vue'
 import { beats } from './content/context'
 
 /**
- * JS CONFIGURES · CSS RUNS (backslide §24 C(a)/F).
- *  · configure(): the SINGLE height every plate + shutter shares (--dia-h · a viewport
- *    proportion) — the WITHIN-scene timing. Set on mount + resize.
- *  · IntersectionObserver → activeScene → `data-scene`: the SEAM-sync STATE (which plate is
- *    active). CSS transitions the shutters off it. JS never drives the scroll; it observes + sets
- *    state. This is the fix for the scroll-% drift (§24 B) — the shutter moves when the plate IS
- *    the scene, not at a guessed scroll-position.
+ * THE ONLY JS — configure() · "JS configures, CSS runs" (NOT in the loop · no scroll listener, no
+ * IO, no per-frame JS). On mount + resize it writes the SINGLE height var every plate + shutter
+ * shares (--dia-h · a viewport proportion). The scroll choreography is 100% CSS (sticky + z +
+ * scroll-driven wipe) — that is A's distinctive value (Blende review · protect it).
  */
 const stageEl = ref<HTMLElement>()
-const activeScene = ref(1)
 const HEIGHT_FRACTION = 0.82
-let io: IntersectionObserver | undefined
 
 function configure(): void {
   if (!stageEl.value) return
@@ -146,26 +135,9 @@ function configure(): void {
 onMounted(() => {
   configure()
   window.addEventListener('resize', configure, { passive: true })
-  if (!stageEl.value) return
-  // a thin centre-band: the scene whose range crosses the viewport-centre is the active one.
-  io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          const n = Number((e.target as HTMLElement).dataset.sceneRange)
-          if (n) activeScene.value = n
-        }
-      }
-    },
-    { rootMargin: '-48% 0px -48% 0px', threshold: 0 },
-  )
-  stageEl.value.querySelectorAll<HTMLElement>('[data-scene-range]').forEach((el) => io!.observe(el))
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', configure)
-  io?.disconnect()
-})
+onUnmounted(() => window.removeEventListener('resize', configure))
 </script>
 
 <style scoped>
@@ -212,8 +184,8 @@ onUnmounted(() => {
 .proto-scene--clean { min-height: 1px; }
 
 @media (min-width: 768px) {
-  /* THE UNIFORM HEIGHT · every plate + every shutter is the SAME --dia-h, sticky at the SAME top.
-     (Issue-1 fix: min-height too, so a shutter is NEVER shorter than a plate.) */
+  /* THE UNIFORM HEIGHT · every plate + every shutter is the SAME --dia-h, sticky at the SAME top
+     (issue-1 fix: min-height too → a shutter is NEVER shorter than a plate). */
   .proto-light,
   .proto-shutter {
     position: sticky;
@@ -229,8 +201,8 @@ onUnmounted(() => {
   .proto-light--2 { z-index: 2; }
   .proto-light--3 { z-index: 3; }
 
-  /* the scenes · the scroll-RANGE that each plate holds across + where the figures rise. The
-     clean scene (plate-2) is just scroll-length (no figures). */
+  /* the scenes · the scroll-RANGE each plate holds across + where the figures rise. The clean
+     scene (plate-2) is just scroll-length (no figures). */
   .proto-scene { position: relative; min-height: 120vh; }
   .proto-scene--clean { min-height: 90vh; }
 
@@ -248,8 +220,8 @@ onUnmounted(() => {
   }
   .proto-fig--2 { top: calc(var(--dia-top) + 9rem); margin-top: 48vh; }
 
-  /* THE OPENING SHUTTER · z20 · overlaps plate-1 (margin = -1·--dia-h · the same central height)
-     so the image is already there; wipes up to uncover (scroll-driven · no plate to sync). */
+  /* THE OPENING SHUTTER · z20 · overlaps plate-1 (margin = -1·--dia-h) so the image is already
+     there; lifts up to uncover (scroll-driven · no plate to sync). */
   .proto-shutter--open {
     width: 100%;
     z-index: 20;
@@ -267,27 +239,40 @@ onUnmounted(() => {
     }
   }
 
-  /* THE SEAM SHUTTERS · z21/22 · full-width · STATE-TRIGGERED (§24 C(a)). Default = waiting below
-     (translateY 110%, hidden). When `data-scene` advances past the seam, the shutter transitions
-     to lifted (−110%, hidden above) — passing THROUGH translateY(0) = covering. The CSS transition
-     (fixed-duration) is the rise-through that masks the plate-swap; it fires on the IO state-flip,
-     so it is synced to "the next plate IS the scene" — not a scroll-% (no drift · the §24 fix). */
-  .proto-shutter--seam {
-    width: 100%;
-    transform: translateY(110%);
-    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+  /* THE SEAM SHUTTERS · z21/22 · full-width. The "shutter lifts to reveal" choreography, PURE-CSS:
+     rise from below (cover the previous plate · the black between) → LIFT off the top (uncover the
+     held plate behind). Scroll-driven, keyed to the shutter's OWN view-pass + the uniform --dia-h —
+     so the lift completes as the next plate pins (layout-keyed · drift-free across scroll-speed and
+     Figure-length · the §24-B trap avoided by keying to layout, not a guessed scroll-%). */
+  .proto-shutter--seam { width: 100%; }
   .proto-shutter--seam1 { z-index: 21; }
   .proto-shutter--seam2 { z-index: 22; }
 
-  /* seam-1 covers/reveals at scene 1→2; seam-2 at 2→3 (lifted once its seam is crossed) */
-  .proto-stage[data-scene='2'] .proto-shutter--seam1,
-  .proto-stage[data-scene='3'] .proto-shutter--seam1 { transform: translateY(-110%); }
-  .proto-stage[data-scene='3'] .proto-shutter--seam2 { transform: translateY(-110%); }
+  @supports (animation-timeline: view()) {
+    .proto-shutter--seam {
+      animation: proto-seam-wipe linear both;
+      animation-timeline: view(block);
+      animation-range: cover 0% cover 100%;
+    }
+    @keyframes proto-seam-wipe {
+      from { transform: translateY(105%); }    /* below the fold · the previous plate is visible */
+      48%, 52% { transform: translateY(0); }   /* a BRIEF cover · the black between (no long dwell) */
+      to { transform: translateY(-110%); }     /* lifted off the top · the held plate behind is revealed */
+    }
+  }
+
+  /* fallback (no scroll-driven · Firefox-stable) · the seam shutter is a normal-flow block that
+     scrolls away, still revealing the held plate — degraded (no double-speed lift), never broken. */
+  @supports not (animation-timeline: view()) {
+    .proto-shutter--seam {
+      position: relative;
+      top: auto;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .proto-shutter--open { animation: none !important; }
-  .proto-shutter--seam { transition: none; }
+  .proto-shutter--open,
+  .proto-shutter--seam { animation: none !important; }
 }
 </style>
