@@ -19,23 +19,26 @@
   <MagnificaPageLayout variant="standard">
     <template #header><MagnificaHeader compact /></template>
 
-    <template #hero>
-      <header class="proto-hero">
-        <p class="proto-overline">DiaStage · hinge prototype</p>
-        <h1 class="proto-headline">Does the held light hold?</h1>
-        <p class="proto-lead">
-          Scroll slowly. Watch for three things the demos miss: <strong>the image holds still</strong>
-          while several text-figures <strong>rise and cover</strong> each other over it; then a
-          <strong>black blade wipes up</strong> across the whole stage; and behind it a
-          <strong>new plate of light</strong> has opened. That sweep is the Shutter — the shadow-theater
-          gap made literal.
-        </p>
-      </header>
-    </template>
-
     <div class="proto-stage">
       <!-- ═══ ACT 1 · the held light (you cannot store theatre) ═══ -->
-      <section class="proto-act">
+      <section class="proto-act proto-act--opening">
+        <!-- THE OPENING SHUTTER · the page opens BEHIND this blade. It overlaps the held light
+             below it (negative margin · NOT a preceding flow-block) so the image is ALREADY THERE,
+             pinned, behind it — never scrolled in. The blade wipes UP to UNCOVER it, carrying the
+             intro (the dropped page-text). Base: scrolls away (all browsers). scroll-driven: the
+             double-speed wipe. -->
+        <div class="proto-opening">
+          <p class="proto-opening-over">DiaStage · hinge prototype</p>
+          <h1 class="proto-opening-head">The image does not move.</h1>
+          <p class="proto-opening-lead">
+            Scroll slowly and watch the photograph. The image behind this blade is
+            <strong>already there</strong> — it does not move. As the blade wipes up it is
+            <strong>uncovered</strong>; the reading then rises and covers it; and between two plates
+            the black blade wipes again — a new held image behind it. The image never scrolls;
+            only things pass over it.
+          </p>
+          <span class="proto-blade-line" aria-hidden="true" />
+        </div>
         <div
           class="proto-light"
           role="img"
@@ -103,11 +106,25 @@ import { beats } from './content/context'
   position: relative;
 }
 
-/* ==Overview header== */
-.proto-hero { padding-top: clamp(1rem, 4vh, 2.5rem); }
-.proto-overline { font-size: 0.875rem; margin: 0 0 0.5rem; letter-spacing: 0.02em; opacity: 0.85; }
-.proto-headline { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0 0 1rem; line-height: 1.2; }
-.proto-lead { max-width: 46rem; font-size: 0.9375rem; line-height: 1.6; color: var(--color-muted-contrast); margin: 0; }
+/* ==The opening shutter== · the page opens BEHIND it · carries the dropped intro text. On desktop
+   it OVERLAPS the held light (negative margin · not a preceding flow-block) so the image is already
+   there, pinned, behind it — then wipes/scrolls up to uncover it (the image never scrolls in). */
+.proto-opening {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #0b0b0c;
+  color: #f4f4f4;
+  border-radius: 4px;
+  padding: 2rem clamp(1.5rem, 5vw, 4rem);
+}
+.proto-opening-over { font-size: 0.8125rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.proto-opening-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
+.proto-opening-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
 
 /* mobile (<768): linearise — the light is a normal illustration, figures flow below it. */
 .proto-light {
@@ -119,6 +136,34 @@ import { beats } from './content/context'
   border-radius: 4px;
 }
 .proto-fig { margin-top: 1.5rem; }
+
+/* the opening shutter · desktop = overlap the held light + the double-speed wipe */
+@media (min-width: 768px) {
+  .proto-opening {
+    height: 90vh;
+    margin-bottom: -90vh;        /* overlap the held light below · NOT a preceding flow-block */
+    padding: 2rem clamp(2rem, 6vw, 5rem);
+  }
+
+  /* scroll-driven · starts covering (translateY 0) and wipes up · NO dwell (the swept gap, not a
+     held black) · Chromium + Safari 26; Firefox-stable → flackr polyfill. Base (no support):
+     the blade scrolls away normally and still uncovers the held light. */
+  @supports (animation-timeline: view()) {
+    .proto-opening {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      margin-bottom: -100vh;
+      animation: proto-opening-wipe linear both;
+      animation-timeline: view(block);
+      animation-range: cover 0% cover 30%;
+    }
+    @keyframes proto-opening-wipe {
+      from { transform: translateY(0); }
+      to { transform: translateY(-105%); }
+    }
+  }
+}
 
 @media (min-width: 768px) {
   .proto-act { position: relative; }
@@ -201,7 +246,8 @@ import { beats } from './content/context'
     }
     @keyframes proto-blade-wipe {
       from { transform: translateY(105%); }   /* waiting below the fold */
-      42%, 58% { transform: translateY(0); }  /* full cover — the black between */
+      48%, 52% { transform: translateY(0); }  /* a BRIEF full-cover — the black between (was 42–58%,
+                                                 which dwelt too long · scroll felt dead · HM) */
       to { transform: translateY(-105%); }    /* swept up and gone · the new plate is revealed */
     }
   }
