@@ -74,4 +74,9 @@ describe('Shutter (the cover/blade)', () => {
         expect(style).toContain('/blade.jpg')
         expect(style).toContain('background-size: cover')
     })
+
+    it('writes a brief seam-blade height via heightVh (--shutter-h · keeps the cadence slight)', () => {
+        const w = mount(Shutter, { props: { heightVh: 36 } })
+        expect(w.find('.shutter').attributes('style') ?? '').toContain('--shutter-h: 36vh')
+    })
 })

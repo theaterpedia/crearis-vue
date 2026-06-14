@@ -38,6 +38,9 @@ const props = withDefaults(
         image?: string
         /** show the dasei-style separator line (the gap-player). */
         separator?: boolean
+        /** blade height in vh · a BRIEF seam-blade (keeps the cadence slight) vs the full held
+         *  plate. Omit → the stage's --dia-h (a full-act cover). */
+        heightVh?: number
     }>(),
     { separator: false },
 )
@@ -50,6 +53,7 @@ const shutterStyle = computed<Record<string, string>>(() => {
         s.backgroundSize = 'cover'
         s.backgroundPosition = 'center'
     }
+    if (props.heightVh) s['--shutter-h'] = `${props.heightVh}vh`
     return s
 })
 </script>
@@ -60,7 +64,7 @@ const shutterStyle = computed<Record<string, string>>(() => {
 .shutter {
     position: sticky;
     top: var(--dia-top, var(--bb-navbar-offset, 6rem));
-    height: var(--dia-h, 70vh);
+    height: var(--shutter-h, var(--dia-h, 70vh));
     z-index: 3;
     /* break out of the lane to cover both (the stage sets --stage-gutter to the lane offset) */
     margin-inline: calc(-1 * var(--stage-gutter, 0px));

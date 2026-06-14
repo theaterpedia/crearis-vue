@@ -34,6 +34,9 @@
         </div>
       </div>
 
+      <!-- the Shutter masks the seam · the Dia-swap happens behind the blade (HP-decided) -->
+      <Shutter separator :height-vh="36" />
+
       <!-- P2 · the ground -->
       <div class="dia-scene">
         <Dia lane="left" :image="beats.ground.image" :image-alt="beats.ground.imageAlt" :img-tmp-align-y="beats.ground.imgTmpAlignY" />
@@ -50,6 +53,8 @@
           </p>
         </div>
       </div>
+
+      <Shutter separator :height-vh="36" />
 
       <!-- P3 · the performative turn -->
       <div class="dia-scene">
@@ -68,6 +73,8 @@
         </div>
       </div>
 
+      <Shutter separator :height-vh="36" />
+
       <!-- P4 · the substrate-move -->
       <div class="dia-scene">
         <Dia lane="left" :image="beats.trustwalk.image" :image-alt="beats.trustwalk.imageAlt" :img-tmp-align-y="beats.trustwalk.imgTmpAlignY" />
@@ -83,6 +90,8 @@
         </div>
       </div>
 
+      <Shutter separator :height-vh="36" />
+
       <!-- P5 · the hope -->
       <div class="dia-scene">
         <Dia lane="left" :image="beats.hope.image" :image-alt="beats.hope.imageAlt" :img-tmp-align-y="beats.hope.imgTmpAlignY" />
@@ -95,7 +104,7 @@
       </div>
 
       <!-- the Shutter wipes the gap (between horror and hope) → a new Dia opens -->
-      <Shutter separator />
+      <Shutter separator :height-vh="36" />
 
       <!-- the close · catch-the-light held · closing prose rises (the optimist-line is the headline) -->
       <div class="dia-scene">
