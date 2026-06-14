@@ -32,6 +32,8 @@ const router = createRouter({
     { path: '/demo2', component: () => import('@/views/Magnifica/Demo2Page.vue') },
     // the shadow-theater HINGE prototype (held light + rising/covering figures + the scroll-driven wipe)
     { path: '/proto', component: () => import('@/views/Magnifica/DiaProtoPage.vue') },
+    // Pattern C hinge · the distinct dead-still hold (one fixed projector · bounded lane · cross-fade)
+    { path: '/protoc', component: () => import('@/views/Magnifica/DiaProtoCPage.vue') },
     // Catch-all · any other path redirects to landing (the gate is at /)
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
