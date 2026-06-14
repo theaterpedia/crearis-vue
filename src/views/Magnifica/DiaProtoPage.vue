@@ -1,20 +1,21 @@
 <!--
   /proto · PATTERN-B candidate (branch alpha/magnifica-dia-patternB · HM 2026-06-12).
 
-  THE MECHANIC (HP · grounded in the i11→i12→i13 originals): the held image NEVER scrolls off.
-  The NEXT image (and, optionally, the shutter) rises OVER it and COVERS it; the previous stays
-  pinned, behind, never moving. This is the no-glue replacement for `background-attachment:fixed`:
+  THE MECHANIC (HP · grounded in i11→i12→i13): the held image NEVER moves. A SHUTTER sweeps:
+  it rises to COVER the current held image, then LIFTS OFF to UNCOVER the next held image that
+  was pinned behind it. So every image is revealed by a shutter lifting, and covered by the next
+  shutter rising. The no-glue replacement for background-attachment:fixed.
 
-      sticky-stacking / scroll-over — ALL layers are siblings in ONE stage, each
-      `position:sticky; top:0` with an ASCENDING z-index. A later sibling rises from below and
-      covers the earlier pinned one; the earlier stays pinned (its sticky containing-block is the
-      whole stage), so it is hidden behind the cover — it does NOT release/scroll-off in view.
+      held images : position:sticky;top:0 · stacked · ascending z (img1 z1 < img2 z2). They pin
+                    and stay (containing-block = the whole stage) — never released/scrolled-off.
+      shutters    : sticky sweeps ABOVE the images (z5/z6) · scroll-driven translateY
+                    (100% → 0 cover → -100% lift) driven by a view-timeline on each shutter's
+                    track. A shutter covers the image below it, then lifts to uncover the image
+                    pinned behind it (which is revealed IN PLACE — it didn't rise into view).
 
-  Layer order (ascending z · each covers the previous):
-      z1  image 1 (held)   →   z2  the black shutter (rises over img1)   →   z3  image 2 (held, rises over the shutter)
-  Spacers between give each held image its hold-duration WITHOUT over-cropping the image (the
-  image stays viewport-proportioned · cover + background-position = aspect control · no glue-to-
-  viewport · cross-platform). The opening shutter overlays img1 and wipes up to UNCOVER it on load.
+  Sequence: [opening shutter covers img1 on load → lifts → img1] → [shutter2 rises over img1,
+  covers it → lifts → img2 uncovered] → [shutter3 rises over img2, covers it]. Sweep timings
+  (track heights + ranges) are the dials.
 -->
 
 <template>
@@ -22,56 +23,51 @@
     <template #header><MagnificaHeader compact /></template>
 
     <div class="proto-stage">
-      <!-- ═══ IMAGE 1 · held · gets COVERED by what rises next · never scrolls off (z1) ═══ -->
-      <section
-        class="pslide pslide--img1"
-        :style="{ backgroundImage: `url('${beats.unspoken.image}')` }"
-      >
-        <div class="pslide-panel">
-          <p class="pslide-over">the body, witnessed</p>
-          <h2 class="pslide-head">NOT STORED — PERFORMED</h2>
-          <p>This image is held. The next image rises over it and covers it — it never scrolls off; it is covered.</p>
+      <!-- ═══ IMAGE 1 · held (z1) · uncovered by the opening shutter, covered by shutter2 ═══ -->
+      <section class="pimg pimg--1" :style="{ backgroundImage: `url('${beats.unspoken.image}')` }">
+        <div class="ppanel">
+          <p class="pover">the body, witnessed</p>
+          <h2 class="phead">NOT STORED — PERFORMED</h2>
+          <p>Held dead-still. A shutter rises to cover it, then lifts to uncover the next image — it never scrolls off.</p>
         </div>
-        <!-- the opening shutter · covers img1 on LOAD · wipes up to uncover it -->
         <div class="popening">
           <p class="popening-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
           <h1 class="popening-head">The image does not move</h1>
           <p class="popening-lead">
-            Scroll slowly: this lifts to <strong>uncover</strong> a photograph already held
-            <strong>dead-still</strong>. Then a black shutter rises and covers it, and a new image
-            rises over the shutter. Nothing scrolls off — each plate is covered by the next.
+            Each photograph is held <strong>dead-still</strong>. A black shutter rises to
+            <strong>cover</strong> it, then lifts to <strong>uncover</strong> the next one held
+            behind it. Nothing scrolls off; only the shutters sweep.
           </p>
           <span class="pline" aria-hidden="true" />
         </div>
       </section>
 
-      <!-- spacer · holds img1 (pinned behind) for a longer read before the shutter covers it -->
-      <div class="pspacer" aria-hidden="true" />
+      <!-- ═══ SHUTTER 2 · sweeps: rises over img1 (covers) → lifts to uncover img2 (z5) ═══ -->
+      <div class="psweep-track psweep-track--2">
+        <div class="psweep psweep--2">
+          <p class="psweep-over">between horror and hope</p>
+          <p class="psweep-text">— the black between —</p>
+          <span class="pline" aria-hidden="true" />
+        </div>
+      </div>
 
-      <!-- ═══ THE SHUTTER · rises OVER img1 and covers it (z2) ═══ -->
-      <section class="pslide pslide--shutter">
-        <p class="pshutter-over">between horror and hope</p>
-        <p class="pshutter-text">— the black between —</p>
-        <span class="pline" aria-hidden="true" />
-      </section>
-
-      <!-- spacer · the black-between holds briefly before img2 covers the shutter -->
-      <div class="pspacer pspacer--short" aria-hidden="true" />
-
-      <!-- ═══ IMAGE 2 · held · rises OVER the shutter and covers it (z3) ═══ -->
-      <section
-        class="pslide pslide--img2"
-        :style="{ backgroundImage: `url('${beats.hope.image}')` }"
-      >
-        <div class="pslide-panel">
-          <p class="pslide-over">the figures rise</p>
-          <h2 class="pslide-head">RAISE FROM THE BOOKS</h2>
-          <p>This rose over the shutter and covered it — the new held plate. img1 is still pinned, hidden underneath; it never left.</p>
+      <!-- ═══ IMAGE 2 · held (z2) · pinned behind shutter2 · uncovered as shutter2 lifts ═══ -->
+      <section class="pimg pimg--2" :style="{ backgroundImage: `url('${beats.hope.image}')` }">
+        <div class="ppanel">
+          <p class="pover">the figures rise</p>
+          <h2 class="phead">RAISE FROM THE BOOKS</h2>
+          <p>This was held behind the shutter — uncovered in place as it lifted. It never rose into view; the cover left.</p>
         </div>
       </section>
 
-      <!-- spacer · img2 holds at the end -->
-      <div class="pspacer" aria-hidden="true" />
+      <!-- ═══ SHUTTER 3 · rises over img2 and covers it (z6) ═══ -->
+      <div class="psweep-track psweep-track--3">
+        <div class="psweep psweep--3">
+          <p class="psweep-over">and the next plate waits</p>
+          <p class="psweep-text">— covered again —</p>
+          <span class="pline" aria-hidden="true" />
+        </div>
+      </div>
     </div>
   </MagnificaPageLayout>
 </template>
@@ -85,8 +81,8 @@ import { beats } from './content/context'
 <style scoped>
 .proto-stage { position: relative; }
 
-/* mobile (<768): linearise — plates and shutters are normal stacked blocks (no held/cover). */
-.pslide {
+/* mobile (<768): linearise — plates + shutters are normal stacked blocks. */
+.pimg {
   position: relative;
   min-height: 18rem;
   background-size: cover;
@@ -95,7 +91,20 @@ import { beats } from './content/context'
   border-radius: 6px;
   margin-bottom: 1.25rem;
 }
-.pslide--shutter {
+.ppanel {
+  position: relative;
+  z-index: 1;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-card-bg, #1d1b1a);
+  color: var(--color-card-contrast, #f4f4f4);
+  border-radius: 4px;
+}
+.pover { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
+.phead { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.6rem; }
+.ppanel p:last-child { margin-bottom: 0; }
+
+.popening,
+.psweep {
   background: #0b0b0c;
   color: #f4f4f4;
   display: flex;
@@ -104,69 +113,36 @@ import { beats } from './content/context'
   justify-content: center;
   text-align: center;
   gap: 0.5rem;
-}
-.pspacer { display: none; }
-
-.pslide-panel {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  padding: 1.25rem 1.5rem;
-  background: var(--color-card-bg, #1d1b1a);
-  color: var(--color-card-contrast, #f4f4f4);
-  border-radius: 4px;
-}
-.pslide-over { font-size: 0.8125rem; opacity: 0.85; margin: 0 0 0.35rem; letter-spacing: 0.02em; }
-.pslide-head { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 0.6rem; }
-.pslide-panel p:last-child { margin-bottom: 0; }
-
-.popening {
-  position: relative;
-  z-index: 9;
-  margin-top: 1.25rem;
-  background: #0b0b0c;
-  color: #f4f4f4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.6rem;
   padding: 2rem;
   border-radius: 4px;
 }
-.popening-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.popening { margin-top: 1.25rem; }
+.psweep-track { margin-bottom: 1.25rem; }
+.psweep { min-height: 14rem; }
+.popening-over,
+.psweep-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
 .popening-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
 .popening-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
-.pshutter-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
-.pshutter-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
+.psweep-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
 .pline { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
 
-/* ════ DESKTOP · the sticky-stack · each plate is HELD and COVERED by the next (never scrolls off) ════ */
+/* ════ DESKTOP · held images (sticky, stacked) + shutters that sweep ABOVE them ════ */
 @media (min-width: 768px) {
-  /* every plate/shutter pins at top:0 and stays pinned (its containing-block is the whole stage);
-     a later sibling with higher z rises from below and covers it. */
-  .pslide {
+  /* held images · pinned dead-still · stay pinned the whole stage (never scroll off) */
+  .pimg {
     position: sticky;
     top: 0;
     min-height: 100vh;
     margin-bottom: 0;
-    overflow: clip;            /* clip (not hidden — keeps no scrollport, the inner overlay stays sticky-able) */
+    overflow: clip;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
   }
-  .pslide--img1 { z-index: 1; }
-  .pslide--shutter { z-index: 2; justify-content: center; align-items: center; }
-  .pslide--img2 { z-index: 3; }
+  .pimg--1 { z-index: 1; }
+  .pimg--2 { z-index: 2; }    /* once uncovered, covers img1 (held behind, never gone) */
 
-  /* the spacers give each HELD image its hold-duration (the pinned plate shows through them)
-     WITHOUT over-cropping — the plate stays a clean 100vh. */
-  .pspacer { display: block; height: 110vh; }
-  .pspacer--short { height: 60vh; }
-
-  /* the panel rides over its own held image, bottom-left, legible over the photo */
-  .pslide-panel {
+  .ppanel {
     background: transparent;
     max-width: 30rem;
     margin: 2.5rem;
@@ -175,9 +151,55 @@ import { beats } from './content/context'
     pointer-events: none;
   }
 
-  /* the OPENING shutter · overlays img1 (covers on load) · wipes UP to uncover the held image.
-     scroll(root) is 0 at the page-top — the right timeline for a load-time cover (view() reads
-     mid-progress at load). The wipe-distance is a dial. */
+  /* a shutter's TRACK gives the sweep its scroll-length + a clean view-timeline; the shutter
+     inside is sticky and translateY-sweeps over that progress, ABOVE the images. */
+  .psweep-track {
+    position: relative;
+    height: 170vh;
+    margin-bottom: 0;
+  }
+  .psweep {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+  .psweep--2 { z-index: 5; }
+  .psweep--3 { z-index: 6; }
+
+  @supports (animation-timeline: view()) {
+    .psweep-track--2 { view-timeline: --s2 block; }
+    .psweep-track--3 { view-timeline: --s3 block; }
+
+    /* shutter2 · rise to COVER img1 (mask), brief hold, then LIFT OFF to uncover img2 behind it */
+    .psweep--2 {
+      animation: psweep-cover-lift linear both;
+      animation-timeline: --s2;
+      animation-range: cover 0% cover 100%;
+    }
+    @keyframes psweep-cover-lift {
+      from { transform: translateY(100%); }
+      38% { transform: translateY(0); }
+      55% { transform: translateY(0); }
+      to { transform: translateY(-100%); }
+    }
+
+    /* shutter3 · rise to COVER img2 and stay covering (the next plate waits behind it) */
+    .psweep--3 {
+      animation: psweep-cover linear both;
+      animation-timeline: --s3;
+      animation-range: cover 0% cover 70%;
+    }
+    @keyframes psweep-cover {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  }
+
+  /* the OPENING shutter · overlays img1 (covers on LOAD) · wipes up to uncover it.
+     scroll(root) is 0 at page-top — the right timeline for a load-time cover. */
   .popening {
     position: absolute;
     inset: 0;
@@ -201,9 +223,11 @@ import { beats } from './content/context'
   }
 }
 
-/* reduced-motion / no scroll-driven · keep the opening from trapping the page: drop the overlay
-   to a normal top block so img1 is reachable (no wipe). The sticky-stack itself is motion-free. */
+/* reduced-motion / no scroll-driven · no sweeps; the opening drops to a normal block so the page
+   is never trapped behind an un-moving cover. The shutters become normal between-blocks. */
 @media (prefers-reduced-motion: reduce) {
   .popening { position: relative; inset: auto; animation: none !important; transform: none !important; }
+  .psweep { animation: none !important; transform: none !important; position: relative; height: auto; min-height: 14rem; }
+  .psweep-track { height: auto; }
 }
 </style>
