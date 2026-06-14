@@ -144,10 +144,21 @@ import { hero, beats, callouts } from './content/context'
   line-height: 1.2;
 }
 
-/* ==A scene== · a plain block (ancestor-purity) holding a held Dia (left) + a rising Figure. */
+/* ==A scene== · a plain block (ancestor-purity) holding a held Dia (behind-layer · left) + a
+   rising Figure. `position: relative` is the Dia's absolute containing block; the min-height
+   guarantees ≥ one held-window of travel so the plate shows fully + holds dead-still even on the
+   short §C-LOCKED scenes (the Figure drives longer scenes). overflow stays visible — the Dia
+   clips itself; the Figure's CalloutPhrase popovers must escape. */
 .dia-scene {
   position: relative;
+  min-height: calc(var(--dia-h, 70vh) + var(--dia-top, 6rem));
   margin-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+@media (max-width: 767px) {
+  .dia-scene {
+    min-height: 0;
+  }
 }
 
 /* ==The rising Figure== · the primary reading · the right lane, z:2 (above the held Dia z:1),
