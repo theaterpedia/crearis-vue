@@ -30,6 +30,7 @@
       ref="stageRef"
       class="proto-stage"
       data-scene="open"
+      :data-wipe="wipe"
     >
       <!-- ░░ pinned blade overlay (z9) · IO-swept · the scroll-driven wipe is the next commit ░░ -->
       <div class="poverlay">
@@ -77,7 +78,7 @@
       </section>
 
       <!-- SEAM 1→2 · the blade covers here while img2 takes its place behind -->
-      <div class="pseam" data-scene="seam" aria-hidden="true"></div>
+      <div class="pseam pseam--mid" data-scene="seam" aria-hidden="true"></div>
 
       <!-- ░░ SCENE 2 · img2 held dead-still ░░ -->
       <section class="pscene" data-scene="img2">
@@ -110,8 +111,13 @@ import { beats } from './content/context'
 
 const stageRef = ref<HTMLElement>()
 let io: IntersectionObserver | undefined
+/** wipe mode · `io` (default · the proven floor) vs `css` (B's scroll-driven reversible blade ·
+ *  /proto?wipe=css). Read once on mount (proto · not reactive-by-design). */
+const wipe = ref<'io' | 'css'>('io')
 
 onMounted(() => {
+  if (new URLSearchParams(location.search).get('wipe') === 'css') wipe.value = 'css'
+
   // #1 · opens-at-bottom guard: take scroll-restoration off auto, force the top on mount.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
   window.scrollTo(0, 0)
@@ -269,6 +275,49 @@ onUnmounted(() => io?.disconnect())
   [data-scene="close"] .pblade--12 { transform: translateY(-100%); }     /* lifts off img2 */
 
   [data-scene="close"] .pblade--2x { transform: translateY(0); }         /* covers img2 (close) */
+}
+
+/* ════ B's UNIQUE LAYER · scroll-DRIVEN reversible blade-wipe (opt-in · /proto?wipe=css) ════
+   The bench's bet: the blade-wipe is the ONE place scroll-driven is the RIGHT tool — it is pure
+   PROGRESS (not a state-decision · §24-B), and "follows-the-finger, both directions" is exactly
+   what kills the reverse-peek IO+transition can't (it cannot lag · it IS the scroll position).
+   Each seam region carries a named view-timeline; the overlay blades (a different subtree) read it
+   via a timeline-scope hoist on the stage. @supports-guarded; the IO floor (default ?wipe=io) is
+   untouched. Engine 2026: Chromium + Safari 26 ship unprefixed; Firefox needs the flackr polyfill.
+   ⚠ :3001 DIALS — (a) does timeline-scope resolve cross-subtree (§23 risk · else falls to no-anim)?
+   (b) animation-range per blade is the timing knob — tune so a blade is DOWN through the whole
+   transition zone, BOTH directions (§24-E). */
+@keyframes pblade-cover-lift { from { transform: translateY(100%); } 50% { transform: translateY(0); } to { transform: translateY(-100%); } }
+@keyframes pblade-lift       { from { transform: translateY(0); }    to  { transform: translateY(-100%); } }
+@keyframes pblade-cover      { from { transform: translateY(100%); } to  { transform: translateY(0); } }
+
+@supports (animation-timeline: view()) {
+  @media (min-width: 768px) {
+    /* hoist the seam timelines so the overlay blades (sibling subtree) can reference them */
+    .proto-stage[data-wipe="css"] { timeline-scope: --tl-open, --tl-12, --tl-2x; }
+    [data-wipe="css"] .pseam--intro { view-timeline: --tl-open block; }
+    [data-wipe="css"] .pseam--mid   { view-timeline: --tl-12 block; }
+    [data-wipe="css"] .pseam--close { view-timeline: --tl-2x block; }
+
+    /* scroll-driven owns the transform in this mode → drop the IO transition */
+    [data-wipe="css"] .pblade { transition: none; }
+
+    [data-wipe="css"] .pblade--open {
+      animation: pblade-lift linear both;
+      animation-timeline: --tl-open;
+      animation-range: cover 40% cover 100%;   /* dial */
+    }
+    [data-wipe="css"] .pblade--12 {
+      animation: pblade-cover-lift linear both;
+      animation-timeline: --tl-12;
+      animation-range: cover 0% cover 100%;     /* dial */
+    }
+    [data-wipe="css"] .pblade--2x {
+      animation: pblade-cover linear both;
+      animation-timeline: --tl-2x;
+      animation-range: cover 0% cover 60%;      /* dial */
+    }
+  }
 }
 
 /* reduced-motion · no sweeps; blades flow as normal blocks so the page is never trapped. */
