@@ -119,9 +119,8 @@ import { beats } from './content/context'
   align-items: flex-start;
   justify-content: center;
   gap: 0.5rem;
-  background: #0b0b0c;
-  color: #f4f4f4;
-  border-radius: 4px;
+  background: var(--color-card-bg, #1d1b1a);
+  color: var(--color-card-contrast, #f4f4f4);
   padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
 }
 .proto-blade-text { font-size: 1.1rem; margin: 0; letter-spacing: 0.06em; }
@@ -134,7 +133,6 @@ import { beats } from './content/context'
   background-size: cover;
   background-position: center;
   background-color: var(--color-bg);
-  border-radius: 4px;
 }
 .proto-fig { margin-top: 1.5rem; }
 .proto-shutter { margin-top: 1.5rem; min-height: 12rem; }
@@ -178,8 +176,7 @@ import { beats } from './content/context'
     z-index: 15;
     background: var(--color-bg);
     padding: 1.25rem 1.5rem;
-    border-radius: 4px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 32px oklch(0 0 0 / 0.3);
   }
   .proto-fig--2 { top: calc(var(--dia-top) + 9rem); margin-top: 48vh; z-index: 16; }
   /* scene-3's figures ride above plate-3 (z50) → lift their lane above it */
