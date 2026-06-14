@@ -30,6 +30,8 @@ const router = createRouter({
     // DiaStage documentation (gallery pages · gated like the rest): basics + edge-cases
     { path: '/demo1', component: () => import('@/views/Magnifica/Demo1Page.vue') },
     { path: '/demo2', component: () => import('@/views/Magnifica/Demo2Page.vue') },
+    // the shadow-theater HINGE prototype (held light + rising/covering figures + the scroll-driven wipe)
+    { path: '/proto', component: () => import('@/views/Magnifica/DiaProtoPage.vue') },
     // Catch-all · any other path redirects to landing (the gate is at /)
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
