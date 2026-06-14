@@ -21,21 +21,24 @@
   <MagnificaPageLayout variant="standard">
     <template #header><MagnificaHeader compact /></template>
 
-    <template #hero>
-      <header class="proto-hero">
-        <p class="proto-overline">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
-        <h1 class="proto-headline">The image does not move</h1>
-        <p class="proto-lead">
-          Scroll slowly and watch the photograph: it <strong>holds dead-still</strong> while the
-          panel rises over it and, between the two plates, the <strong>black blade wipes</strong> —
-          then a new held image is behind it. The image never scrolls; only things pass over it.
-          (Held via Hero's over-tall self-contained cover — no glue-to-viewport, cross-platform,
-          aspect-controllable.)
-        </p>
-      </header>
-    </template>
-
     <div class="proto-stage">
+      <!-- ═══ OPENING SHUTTER · covers the first image on load (it is NOT seen) · carries the
+           intro · wipes UP on scroll to reveal Dia A ═══ -->
+      <div class="proto-open-act">
+        <div class="proto-open">
+          <p class="proto-open-over">DiaStage · hinge prototype · Pattern B (Hero-mechanic)</p>
+          <h1 class="proto-open-head">The image does not move</h1>
+          <p class="proto-open-lead">
+            Scroll slowly and watch the photograph: it holds <strong>dead-still</strong> while the
+            panel rises over it and, between the plates, this <strong>black blade wipes</strong> —
+            then a new held image is behind it. The image never scrolls; only things pass over it.
+            (Held via Hero's over-tall self-contained cover — no glue-to-viewport, cross-platform,
+            aspect-controllable.)
+          </p>
+          <span class="proto-open-line" aria-hidden="true" />
+        </div>
+      </div>
+
       <!-- ═══ DIA A · held image (you cannot store theatre) ═══ -->
       <section class="bhero">
         <div class="bhero-cover">
@@ -91,11 +94,50 @@ import { beats } from './content/context'
 <style scoped>
 .proto-stage { position: relative; }
 
-/* ==Overview header== */
-.proto-hero { padding-top: clamp(1rem, 4vh, 2.5rem); }
-.proto-overline { font-size: 0.875rem; margin: 0 0 0.5rem; letter-spacing: 0.02em; opacity: 0.85; }
-.proto-headline { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0 0 1rem; line-height: 1.2; }
-.proto-lead { max-width: 46rem; font-size: 0.9375rem; line-height: 1.6; color: var(--color-muted-contrast); margin: 0; }
+/* ==Opening shutter== · the black plate that covers the first image on load; it carries the
+   intro and wipes UP as you scroll, revealing Dia A. (mobile: a normal block above the image) */
+.proto-open {
+  background: #0b0b0c;
+  color: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  min-height: 70vh;
+  border-radius: 4px;
+}
+.proto-open-over { font-size: 0.875rem; opacity: 0.7; margin: 0; letter-spacing: 0.04em; }
+.proto-open-head { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin: 0; line-height: 1.2; }
+.proto-open-lead { max-width: 42rem; font-size: 0.9375rem; line-height: 1.6; opacity: 0.92; margin: 0; }
+.proto-open-line { width: 2px; height: 3rem; background: var(--color-primary-bg); margin-top: 0.25rem; }
+
+@media (min-width: 768px) {
+  .proto-open-act { position: relative; height: 160vh; }
+  .proto-open {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 0;
+    z-index: 6;
+  }
+  /* covers on load (translateY 0 at scroll-top), wipes up over the first ~90vh of page scroll.
+     scroll(root) is 0 at the page-top — the right timeline for a top-of-page cover (view() would
+     read mid-progress at load). The wipe-distance is a dial. */
+  @supports (animation-timeline: scroll()) {
+    .proto-open {
+      animation: proto-open-wipe linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 90vh;
+    }
+    @keyframes proto-open-wipe {
+      from { transform: translateY(0); }
+      to { transform: translateY(-100%); }
+    }
+  }
+}
 
 /* ════ THE HELD DIA · Hero.vue's mechanic, verbatim ════ */
 /* mobile (<768): linearise — the image is a normal illustration, the panel below it. */
@@ -182,7 +224,7 @@ import { beats } from './content/context'
      Dia A is still held — no dead-black gap at the seam. z-index lifts the track over Dia A.
      (The overlap depth + the wipe range below are the seam-timing dials · tune to taste.) */
   .proto-blade-act {
-    height: 150vh;
+    height: 120vh;
     margin-top: -60vh;
     margin-bottom: -30vh;
     z-index: 5;
@@ -204,13 +246,27 @@ import { beats } from './content/context'
        reveal Dia B. The long 0%-cover hold means there is never a frame of empty dark. */
     @keyframes proto-blade-wipe {
       from { transform: translateY(100%); }
-      26%, 74% { transform: translateY(0); }
+      30%, 48% { transform: translateY(0); }
       to { transform: translateY(-100%); }
     }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .proto-blade { animation: none !important; }
+  /* no scroll-wipes · the shutters become normal blocks you scroll past (never sticky-trap the
+     page behind a cover that won't move). */
+  .proto-open,
+  .proto-blade {
+    position: static;
+    height: auto;
+    min-height: 60vh;
+    animation: none !important;
+    transform: none !important;
+  }
+  .proto-open-act,
+  .proto-blade-act {
+    height: auto;
+    margin: 0;
+  }
 }
 </style>
