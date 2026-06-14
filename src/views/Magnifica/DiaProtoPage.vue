@@ -244,20 +244,23 @@ onUnmounted(() => window.removeEventListener('resize', configure))
      held plate behind). Scroll-driven, keyed to the shutter's OWN view-pass + the uniform --dia-h —
      so the lift completes as the next plate pins (layout-keyed · drift-free across scroll-speed and
      Figure-length · the §24-B trap avoided by keying to layout, not a guessed scroll-%). */
-  .proto-shutter--seam { width: 100%; }
+  .proto-shutter--seam {
+    width: 100%;
+    /* OVERLAP the NEXT plate (margin = -1·--dia-h · same trick as the opening shutter) so the next
+       plate pins BEHIND the shutter — hidden, no early peek — and is revealed only when the shutter
+       lifts. Without this the next plate sat one --dia-h below in flow and rose into the lane early. */
+    margin-bottom: calc(-1 * var(--dia-h, 82vh));
+  }
   .proto-shutter--seam1 { z-index: 21; }
   .proto-shutter--seam2 { z-index: 22; }
 
   @supports (animation-timeline: view()) {
+    /* cover → lift (the same keyframe as the opening) · the next plate is held BEHIND via the
+       overlap above, so the cover is the black-between and the lift uncovers the held plate. */
     .proto-shutter--seam {
-      animation: proto-seam-wipe linear both;
+      animation: proto-open-wipe linear both;
       animation-timeline: view(block);
-      animation-range: cover 0% cover 100%;
-    }
-    @keyframes proto-seam-wipe {
-      from { transform: translateY(105%); }    /* below the fold · the previous plate is visible */
-      48%, 52% { transform: translateY(0); }   /* a BRIEF cover · the black between (no long dwell) */
-      to { transform: translateY(-110%); }     /* lifted off the top · the held plate behind is revealed */
+      animation-range: cover 0% cover 50%;
     }
   }
 
