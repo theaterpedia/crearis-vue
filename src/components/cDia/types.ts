@@ -41,6 +41,14 @@ export interface DiaBildSpec {
      *  in the opposite Gasse. */
     lane?: 'left' | 'right' | 'full'
     theme?: 'yellow' | 'green' | 'pink' | 'dim'
+    /** content for the seam-Shutter that PRECEDES this Bild (the §39 `chapterStart` · the
+     *  chronology-at-the-seam · §40·2/§45). `text` = md (`## overline **headline**` + prose →
+     *  HeadingParser + ProseInline). Omit → a plain seam (the line only). Bild 0 has no preceding
+     *  seam. The seam-render is DiaStage's (the technician's lane); content is authored here. */
+    seam?: {
+        text?: string
+        preset?: 'spearhead' | 'timeline'
+    }
     // ── timeline-use (OPTIONAL · §30 dashboard stakes · omitted for editorial /context) ──
     /** anchor target + timeline-marker. */
     id?: string

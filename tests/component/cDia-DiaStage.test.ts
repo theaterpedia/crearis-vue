@@ -42,6 +42,17 @@ describe('DiaStage', () => {
         expect(w.find('.shutter--seam').classes()).toContain('shutter--static')
     })
 
+    it('feeds the next Bild seam content into the seam Shutter (timeline-at-the-seam · §39/§45)', () => {
+        const bilder: DiaBildSpec[] = [
+            { dia: {} },
+            { dia: {}, seam: { text: '## 2008 **the institute**\nfounded in Bayern' } },
+        ]
+        const seam = mount(DiaStage, { props: { bilder } }).find('.shutter--seam')
+        expect(seam.classes()).toContain('shutter--timeline') // the default seam preset
+        expect(seam.html()).toContain('the institute') // ## → HeadingParser
+        expect(seam.html()).toContain('founded in Bayern') // prose
+    })
+
     it('zeroes the last Bild trailing range by default (last Dia holds dead-still · no rise-with-footer)', () => {
         const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
         const on = mount(DiaStage, { props: { bilder } }).findAll('.dia-stage-bild')

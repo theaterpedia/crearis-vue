@@ -55,13 +55,18 @@
                 </div>
             </div>
 
-            <!-- the seam Shutter masks the join INTO the next Bild (none after the last) -->
+            <!-- the seam Shutter masks the join INTO the next Bild (none after the last). The seam
+                 carries the NEXT Bild's `seam` content (its chapterStart · §39 · the chronology-at-
+                 the-seam · §40·2/§45): a timeline-marker text, distributed by the preset (default
+                 `timeline`). Omit `seam` → a plain seam (the line only). -->
             <Shutter
                 v-if="i < bilder.length - 1"
                 class="dia-stage-seam"
                 seam
                 :transition="transition"
                 :reduced-motion="reducedMotion"
+                :text="bilder[i + 1]?.seam?.text"
+                :preset="bilder[i + 1]?.seam?.preset ?? 'timeline'"
                 :style="{ zIndex: seamZ(i) }"
             />
         </template>
