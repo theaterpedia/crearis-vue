@@ -108,25 +108,29 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import DiaStage from '@/components/cDia/DiaStage.vue'
 import type { DiaBildSpec } from '@/components/cDia/types'
 import { hero, beats, callouts } from './content/context'
+import { daseiTimeline } from './content/dasei-timeline'
 
 /**
  * The 6 /context Bilder (the editor's v-for · §34.5/§38·1). Bild 0 is a text-Dia (the method · its
  * held text comes via the #dia-0 slot); Bilder 1–5 are image-Dias (beats · the image is the held
  * plate). All Figures are rich (CalloutPhrase) → authored as #figure-N slots. theme is carried per
- * Bild (visual application is a :3001 dial · HP loop). The seam shutter-lift is the stage's.
+ * Bild (visual application is a :3001 dial · HP loop). Each image-Bild's `seam` carries a
+ * `daseiTimeline` marker (the chronology-at-the-seam · the DAS-Ei timeline surfaced AT the
+ * Scene→Scene Blende · §40·2/§45/§47): ground←S0(1997-2010) · unspoken←S1(2008) · trustwalk←S2(2014)
+ * · hope←S3(2018) · close←S4(2022). The seam-Shutter renders it (HeadingParser + ProseInline · timeline preset).
  */
 const bilder: DiaBildSpec[] = [
   // method · text-Dia (held thesis via #dia-0)
   { dia: {}, lane: 'left', theme: 'green' },
   // ground · the FIRST image — NOT 1:1 (HM: "except for the first") → cover, its own focal
-  { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor },
+  { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor, seam: { text: daseiTimeline[0].text } },
   // the 1:1 photos · contain + top → shown whole (no crop), the default bg at the bottom (HP 2026-06-14).
   // 🚩 content/Innenkreis: the Cloudinary crops in content/context.ts are still 1920×1300 — set them
   // to a 1:1 (square) crop so contain renders the intended square (else they letterbox ~1.48:1).
-  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.unspoken.themeColor },
-  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.trustwalk.themeColor },
-  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.hope.themeColor },
-  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.close.themeColor },
+  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.unspoken.themeColor, seam: { text: daseiTimeline[1].text } },
+  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.trustwalk.themeColor, seam: { text: daseiTimeline[2].text } },
+  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.hope.themeColor, seam: { text: daseiTimeline[3].text } },
+  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.close.themeColor, seam: { text: daseiTimeline[4].text } },
 ]
 </script>
 

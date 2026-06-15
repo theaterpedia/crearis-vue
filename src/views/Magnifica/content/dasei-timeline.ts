@@ -6,10 +6,10 @@
  * ProseInline · bold + autolink · `inlineMd.ts`). The `**bold**` (Zentrum Nürnberg · Institut Bayern)
  * + the `https://dasei.eu` autolink now read correctly through the parser.
  *
- * PLACEMENT (HP 2026-06-14): these feed the **/context seams** (the chronology-at-the-seam · §40·2/
- * §45) — the 5 entries map to /context's 5 seams (Bild0→1 … Bild4→5). That needs the technician's
- * DiaStage per-seam content (`#seam-N` slot / a seam field · §45 · the technician's lane · coordinated
- * in the thread). Until that lands, the content is ready here; ContextPage authors it then.
+ * PLACEMENT (HP 2026-06-14): these feed the /context seams (the chronology-at-the-seam · §40·2/§45)
+ * — the 5 entries map to /context's 5 seams (Bild0→1 … Bild4→5). DiaStage feeds each seam from
+ * `bilder[i+1].seam` (§47 · the technician's seam-render landed · `b95c6bf`); ContextPage authors
+ * the per-Bild `seam: { text }` from these (ground←[0] … close←[4]).
  */
 
 export interface TimelineShutter {
