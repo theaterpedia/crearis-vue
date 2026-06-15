@@ -34,6 +34,10 @@
  *
  * Focal = `imgTmpAlignX/Y` → inline `background-position` (Hero's aspect-engine vocab) — **via the
  * prop, NEVER `:deep()`** (gotcha #1: inline focal outranks any scoped selector).
+ *
+ * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
+ *   BLENDE · code — gate-checked: hold dead-still · element-anchored · standards-floor · gap-test 🌒
+ *   SCHWELLE · epistemology — the gap held: the Dia IS a Bild · the-hold (Standbild) · the Grund (§38/§39)
  */
 import { computed } from 'vue'
 

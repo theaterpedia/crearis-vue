@@ -96,6 +96,10 @@
  * Figure authoring = slot + md-fallback (§34.6): per-Bild scoped slots `#figure-N` (rich) / `#dia-N`
  * (text-Dia), with `bild.figure` md → HeadingParser the quick path. The stage choreography is
  * SCOPED; slot-content renders in the CONSUMER scope (no `:deep()` needed); focal stays a prop (#1).
+ *
+ * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
+ *   BLENDE · code — gate-checked: hold dead-still · seam-mask · ancestor-purity · standards-floor · gap-test 🌒
+ *   SCHWELLE · epistemology — the gap held: Scene>Bild (§39 2.5-level) · the-hold · Figur-Grund made to move
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Dia from './Dia.vue'
@@ -206,7 +210,10 @@ onUnmounted(() => window.removeEventListener('resize', configure))
 }
 
 /* <768 · the stage linearises: the parts are normal-flow blocks, top to bottom (the Dia/Shutter
-   components carry their own mobile reset · here the Figure goes full-width below its plate). */
+   components carry their own mobile reset · here the Figure goes full-width below its plate).
+   ★ HP-screentest 2026-06-14: mobile has NO scroll-effect AT ALL, by design — the choreography
+   (hold · sticky · seam-lift) is desktop-scoped (§41·2/§41·3 · the slide-show law). Mobile = the
+   plain stacked Bild-filmstrip (Dia image, Figure below). Intentional, not a gap. */
 @media (max-width: 767px) {
     .dia-stage-figure {
         margin: 1.25rem 0 0;

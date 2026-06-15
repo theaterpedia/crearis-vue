@@ -32,6 +32,10 @@
  * ── FUTURE-SPEC ──  the `wipe` value adds a reversible scroll-linked blade (flackr/scroll-timeline
  *    polyfill for Firefox-stable · `import 'scroll-timeline-polyfill'` or the canonical dist · the
  *    polyfill parses this CSS, so authoring stays declarative · same-origin stylesheet required).
+ *
+ * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
+ *   BLENDE · code — gate-checked: hold dead-still · seam-mask · ancestor-purity · standards-floor · gap-test 🌒
+ *   SCHWELLE · epistemology — the gap held: Bild · the-hold · the Blende as the aperture (§38/§39)
  */
 import { computed } from 'vue'
 
@@ -148,7 +152,10 @@ const shutterStyle = computed<Record<string, string>>(() => {
    the animation AND neutralise the overlap (position:relative · margin-bottom:0) so the seam scrolls
    away in flow and the held plate is revealed — NOT `animation:none` alone, which would strand the
    next plate behind the still-overlapping seam (no lift to uncover it). Same shape as the no-view()
-   fallback above. */
+   fallback above.
+   ★ HP-screentest 2026-06-14: this static-reveal reads as the BEST experience so far (near
+   magnifica-production). Keep it strong — it is the floor AND a first-class reading, not merely a
+   fallback. (The Außenkreis/tweaking phase may consider making it the default feel.) */
 @media (prefers-reduced-motion: reduce) {
     .shutter--seam.shutter--shutter-lift {
         animation: none !important;

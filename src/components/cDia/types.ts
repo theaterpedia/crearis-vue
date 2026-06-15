@@ -3,6 +3,10 @@
  * (the *Grund* · ein *Bild*) · the rising Figure (the *Figur*) · the Shutter (the seam-blade ·
  * *Blende* in the whitepaper-etymology). ONE DiaStage with a `transition` prop — three views of one
  * data (§37). NOT magnifica-local: hero.vue-powerlevel, view-agnostic; magnifica consumes it.
+ *
+ * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
+ *   BLENDE · code — the editor's contract: the flat Bild-list, additively-groupable (Scene/Chapter deferred) 🌒
+ *   SCHWELLE · epistemology — Bild (Dia+Figure · §38·1) · the 2.5-level (§39) · timeline-Bild = AgendaLine (§38·4)
  */
 
 /** focal · Hero aspect-engine vocab → background-position (never :deep · gotcha #1). */
