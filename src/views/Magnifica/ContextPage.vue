@@ -20,8 +20,8 @@
     <!-- Hero · TEXT-ONLY (no image · outside the stage) · left-inset to match the content column -->
     <template #hero>
       <header class="context-hero">
+        <p class="context-hero-overline">{{ hero.overline }}</p>
         <h1 class="context-hero-headline">{{ hero.headline }}</h1>
-        <p class="context-hero-subline">{{ hero.subline }}</p>
       </header>
     </template>
 
@@ -140,7 +140,15 @@ const bilder: DiaBildSpec[] = [
 .context-hero {
   max-width: 90rem;
   margin-inline: auto;
-  padding: clamp(1rem, 4vh, 2.5rem) clamp(1rem, 5vw, 2rem) 0;
+  /* ~40px breathing space above the overline (HM 2026-06-14) + the content-column left inset */
+  padding: 2.5rem clamp(1rem, 5vw, 2rem) 0;
+}
+
+.context-hero-overline {
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
 }
 
 .context-hero-headline {
@@ -148,13 +156,6 @@ const bilder: DiaBildSpec[] = [
   font-weight: 700;
   margin: 0;
   line-height: 1.2;
-}
-
-.context-hero-subline {
-  font-size: 1rem;
-  margin: 0.5rem 0 0;
-  letter-spacing: 0.02em;
-  opacity: 0.85;
 }
 
 /* the method thesis-Dia · the teaser · the held text plate (bigger · the spoken-centre) */
