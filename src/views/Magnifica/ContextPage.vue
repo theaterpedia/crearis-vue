@@ -114,12 +114,17 @@ import { hero, beats, callouts } from './content/context'
  * Bild (visual application is a :3001 dial · HP loop). The seam shutter-lift is the stage's.
  */
 const bilder: DiaBildSpec[] = [
+  // method · text-Dia (held thesis via #dia-0)
   { dia: {}, lane: 'left', theme: 'green' },
+  // ground · the FIRST image — NOT 1:1 (HM: "except for the first") → cover, its own focal
   { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor },
-  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: beats.unspoken.imgTmpAlignY }, lane: 'left', theme: beats.unspoken.themeColor },
-  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: beats.trustwalk.imgTmpAlignY }, lane: 'left', theme: beats.trustwalk.themeColor },
-  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: beats.hope.imgTmpAlignY }, lane: 'left', theme: beats.hope.themeColor },
-  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: beats.close.imgTmpAlignY }, lane: 'left', theme: beats.close.themeColor },
+  // the 1:1 photos · contain + top → shown whole (no crop), the default bg at the bottom (HP 2026-06-14).
+  // 🚩 content/Innenkreis: the Cloudinary crops in content/context.ts are still 1920×1300 — set them
+  // to a 1:1 (square) crop so contain renders the intended square (else they letterbox ~1.48:1).
+  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.unspoken.themeColor },
+  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.trustwalk.themeColor },
+  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.hope.themeColor },
+  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.close.themeColor },
 ]
 </script>
 

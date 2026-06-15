@@ -62,6 +62,18 @@ describe('Dia (the held plate)', () => {
         // §34.3 · the held text lives directly in the single `.dia` element (no inner plate)
         expect(el.find('p').text()).toBe('held text')
     })
+
+    it('uses background-size:contain for fit="contain" (1:1 · bg shows through · Außenkreis-r1)', () => {
+        const w = mount(Dia, { props: { image: '/i.jpg', fit: 'contain', imgTmpAlignY: 'top' } })
+        const style = w.find('.dia').attributes('style') ?? ''
+        expect(style).toContain('background-size: contain')
+        expect(style).toContain('background-position: center top')
+    })
+
+    it('defaults to background-size:cover (fill + crop)', () => {
+        const w = mount(Dia, { props: { image: '/i.jpg' } })
+        expect(w.find('.dia').attributes('style') ?? '').toContain('background-size: cover')
+    })
 })
 
 describe('Shutter (the cover/blade)', () => {

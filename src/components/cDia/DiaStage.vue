@@ -16,6 +16,7 @@
                 :image-alt="bild.dia.imageAlt"
                 :img-tmp-align-x="bild.dia.imgTmpAlignX"
                 :img-tmp-align-y="bild.dia.imgTmpAlignY"
+                :fit="bild.dia.fit"
                 :lane="bild.lane ?? 'left'"
                 :style="{ zIndex: plateZ(i) }"
             >

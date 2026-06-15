@@ -30,6 +30,9 @@ export interface DiaBildSpec {
         imageAlt?: string
         imgTmpAlignX?: DiaAlignX
         imgTmpAlignY?: DiaAlignY
+        /** `cover` (fill+crop · default) or `contain` (preserve aspect, no crop · 1:1 photo shown
+         *  whole, bg through the uncovered space · pair with imgTmpAlignY:'top'). */
+        fit?: 'cover' | 'contain'
     }
     /** crearis-md "overline **HEADLINE** subline" → HeadingParser (the gap · the quick path). For
      *  rich Figures (CalloutPhrase/strong/em · /context) use the `#figure-N` slot instead. */

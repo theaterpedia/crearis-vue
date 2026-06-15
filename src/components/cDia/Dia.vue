@@ -51,8 +51,12 @@ const props = withDefaults(
         imgTmpAlignY?: 'top' | 'center' | 'bottom'
         /** which stage lane the plate holds in (left/right ≈ 48% · full = both). */
         lane?: 'left' | 'right' | 'full'
+        /** image sizing · `cover` (fill+crop · default) or `contain` (preserve aspect · NO crop ·
+         *  e.g. a 1:1 photo shown whole, the default bg shining through the uncovered space ·
+         *  pair with `imgTmpAlignY: 'top'` → image at top, bg at the bottom). */
+        fit?: 'cover' | 'contain'
     }>(),
-    { imgTmpAlignX: 'center', imgTmpAlignY: 'center', lane: 'full' },
+    { imgTmpAlignX: 'center', imgTmpAlignY: 'center', lane: 'full', fit: 'cover' },
 )
 
 const diaStyle = computed<Record<string, string>>(() => {
@@ -60,6 +64,7 @@ const diaStyle = computed<Record<string, string>>(() => {
     return {
         backgroundImage: `url('${props.image}')`,
         backgroundPosition: `${props.imgTmpAlignX} ${props.imgTmpAlignY}`,
+        backgroundSize: props.fit === 'contain' ? 'contain' : 'cover',
     }
 })
 </script>
@@ -72,7 +77,8 @@ const diaStyle = computed<Record<string, string>>(() => {
     position: sticky;
     top: var(--dia-top, var(--bb-navbar-offset, 6rem));
     height: var(--dia-h, 82vh);
-    background-size: cover;
+    /* background-size is inline (the `fit` prop · cover|contain) · the bg-color shows through the
+       uncovered space when fit=contain (a 1:1 photo · the default background at the bottom). */
     background-repeat: no-repeat;
     background-color: var(--color-bg);
 }
