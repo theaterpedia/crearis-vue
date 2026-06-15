@@ -140,8 +140,18 @@ const bilder: DiaBildSpec[] = [
 .context-hero {
   max-width: 90rem;
   margin-inline: auto;
-  /* breathing space above the overline (HM 2026-06-14 · "more space") + content-column left inset */
-  padding: clamp(3rem, 8vh, 5rem) clamp(1rem, 5vw, 2rem) 0;
+  /* breathing space above the overline (HM 2026-06-14 · "more space") + the content-column inset
+     (48px desktop / 23px mobile · matches the content box below so the overline/headline don't
+     stick out left) */
+  padding: clamp(3rem, 8vh, 5rem) clamp(23px, 5vw, 48px) 0;
+}
+
+/* the content column L/R inset · 48px desktop / 23px mobile (HM 2026-06-14 · was 32/19). Scoped to
+   /context via :deep (the shell default stays for ethnography/discourse · promote to
+   magnifica-page.css if it should be site-wide). The hero + the teaser align to this. */
+:deep(.magnifica-page-content.is-standard) {
+  padding-left: clamp(23px, 5vw, 48px);
+  padding-right: clamp(23px, 5vw, 48px);
 }
 
 .context-hero-overline {
@@ -178,7 +188,10 @@ const bilder: DiaBildSpec[] = [
   .context-method-stage :deep(.dia--text) {
     justify-content: flex-start;
     padding-top: var(--ctx-method-top);
-    padding-left: calc(1.5rem + 10px);
+    /* no extra L/R padding — the teaser aligns flush to the content-column inset (HM 2026-06-14 ·
+       "take out the extra padding left and right of the teaser") */
+    padding-left: 0;
+    padding-right: 0;
   }
   /* the definition Figure · Bild 0 = the FIRST .dia-stage-bild = the stage's 2nd child (the flat
      order is Dia · bild · shutter · Dia · bild …), so :nth-child(2) — NOT :first-of-type (all the
