@@ -41,6 +41,12 @@ describe('DiaStage', () => {
         const w = mount(DiaStage, { props: { bilder } })
         expect(w.find('.shutter--seam').classes()).toContain('shutter--static')
     })
+
+    it('holds the last Dia by default (the trailing hold · no rise-with-footer)', () => {
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        expect(mount(DiaStage, { props: { bilder } }).find('.dia-stage').classes()).toContain('dia-stage--hold-last')
+        expect(mount(DiaStage, { props: { bilder, holdLast: false } }).find('.dia-stage').classes()).not.toContain('dia-stage--hold-last')
+    })
 })
 
 describe('Dia (the held plate)', () => {

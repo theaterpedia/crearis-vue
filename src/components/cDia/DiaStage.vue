@@ -2,7 +2,10 @@
     <section
         ref="stageEl"
         class="dia-stage"
-        :class="[`dia-stage--${transition}`, { 'dia-stage--bounded': bounded }]"
+        :class="[
+            `dia-stage--${transition}`,
+            { 'dia-stage--bounded': bounded, 'dia-stage--hold-last': holdLast },
+        ]"
         :style="stageVars"
     >
         <template
@@ -123,8 +126,19 @@ const props = withDefaults(
         /** the family DEFAULT · static reveal (no view()-lift · HP's best experience · §41·3) ·
          *  Magnifica runs this. Set false to opt the seams into the scroll-driven lift. */
         reducedMotion?: boolean
+        /** the last Dia (no seam after) HOLDS to the page-end instead of un-pinning + rising with the
+         *  footer (HP 2026-06-14 · family-setting · default true). A trailing stage hold keeps it
+         *  pinned through the end. Set false → the last Dia releases (the old behaviour). */
+        holdLast?: boolean
     }>(),
-    { transition: 'shutter-lift', bounded: false, heightVh: 82, leftWidth: 48, reducedMotion: true },
+    {
+        transition: 'shutter-lift',
+        bounded: false,
+        heightVh: 82,
+        leftWidth: 48,
+        reducedMotion: true,
+        holdLast: true,
+    },
 )
 
 const stageEl = ref<HTMLElement>()
@@ -189,6 +203,14 @@ onUnmounted(() => window.removeEventListener('resize', configure))
     .dia-stage-bild {
         position: relative;
         min-height: var(--dia-bild-h, 120vh);
+    }
+
+    /* holdLast (default · §Außenkreis · HP) · a trailing hold so the LAST Dia (sticky-to-stage) stays
+       pinned to the page-end instead of un-pinning + rising as the footer (the next sibling) enters.
+       The last Figure has already released (it doesn't rise · HP); the held Dia lingers as the close,
+       then the footer follows — no cross. [dial · HP: the hold amount.] Desktop-only (mobile linearises). */
+    .dia-stage--hold-last {
+        padding-bottom: var(--dia-hold-last, var(--dia-h, 82vh));
     }
 
     /* the rising Figure · sticky in its Gasse, opaque (gotcha #5), lifts off the held plate via an
