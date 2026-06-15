@@ -101,6 +101,20 @@
   margin-bottom: 0.75rem;
 }
 
+/* DiaStage Figure prose · STANDARD body text (HP 2026-06-14). The Figure paragraphs sit OUTSIDE
+   .page-section, so they were falling to the browser-default (narrow) line-height — give them the
+   same prose as the page body (no special/narrow typography on the right lane). The Figure's
+   overline-headline keeps its own Heading style (.dia-stage-figure-head · good as-is). cDia core
+   stays prose-agnostic; this opinion lives in the magnifica layer. */
+.dia-stage-figure p {
+  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+.dia-stage-figure p:last-child {
+  margin-bottom: 0;
+}
+
 .page-flip-hinge {
   font-weight: 700;
   color: var(--color-primary-bg) !important;

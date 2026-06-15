@@ -17,7 +17,7 @@
   <MagnificaPageLayout variant="standard">
     <template #header><MagnificaHeader show-nav compact /></template>
 
-    <!-- Hero · TEXT-ONLY (no image · outside the stage) -->
+    <!-- Hero · TEXT-ONLY (no image · outside the stage) · left-inset to match the content column -->
     <template #hero>
       <header class="context-hero">
         <p class="context-hero-overline">{{ hero.overline }}</p>
@@ -26,18 +26,20 @@
     </template>
 
     <DiaStage
+      class="context-method-stage"
       :bilder="bilder"
       bounded
     >
-      <!-- scene 0 · the method · a held text-Dia (the thesis) · the hedge rises as the Figure -->
+      <!-- Bild 0 · the method · the held text-Dia (teaser) · the definition rises as the Figure -->
       <template #dia-0>
         <div class="context-thesis">
-          <p>This is the page where I can finally say the thing the other two only practice. In Theaterpädagogik the work begins the day you stop hearing your own instructions come back. You give the animation, the first framing — and then something will return that was not yours</p>
-          <p class="context-aside">— or it was only <em>Regie</em>.</p>
+          <p>In Theaterpädagogik the work begins the day you stop hearing your own instructions come back. You give the animation, the first framing — and then something will return that was not yours.</p>
         </div>
       </template>
       <template #figure-0>
-        <p>It is the same ground qualitative social research stands on, the ground ethnography stands on: open the conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask what touched you that was not just yourself in a mirror. That is the whole <CalloutPhrase :callout="callouts.theMethod">method</CalloutPhrase>. Whether the language for what returns is functional or more-than-functional is a question this tradition has held for thirty years — without collapsing it in either direction.</p>
+        <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in the room, between people, not inside one head.</p>
+        <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
+        <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has held for thirty years — without collapsing it in either direction.</p>
       </template>
 
       <!-- scene 1 · the ground -->
@@ -58,7 +60,7 @@
       <template #figure-2>
         <HeadingParser :content="beats.unspoken.panel" as="h2" class="dia-stage-figure-head" />
         <p>
-          The deepest shift was not mine to make. As DAS Ei became a real Institute, my colleagues — Eleanora first, then Rosalin — claimed the
+          Performative turn! The deepest shift was not mine to make. As DAS Ei became a real Institute, my colleagues — Eleanora first, then Rosalin — claimed the
           <CalloutPhrase :callout="callouts.performativeTurn">performative turn</CalloutPhrase>
           against me: the body as the core epistemic target, not the stories any more. I had come up under the linguistic turn, under Cultural Studies, under the word. They turned me toward the body. Together we named the things the field did but could not say — the
           <CalloutPhrase :callout="callouts.raumlauf">Raumlauf</CalloutPhrase>
@@ -106,20 +108,29 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import DiaStage from '@/components/cDia/DiaStage.vue'
 import type { DiaBildSpec } from '@/components/cDia/types'
 import { hero, beats, callouts } from './content/context'
+import { daseiTimeline } from './content/dasei-timeline'
 
 /**
  * The 6 /context Bilder (the editor's v-for · §34.5/§38·1). Bild 0 is a text-Dia (the method · its
  * held text comes via the #dia-0 slot); Bilder 1–5 are image-Dias (beats · the image is the held
  * plate). All Figures are rich (CalloutPhrase) → authored as #figure-N slots. theme is carried per
- * Bild (visual application is a :3001 dial · HP loop). The seam shutter-lift is the stage's.
+ * Bild (visual application is a :3001 dial · HP loop). Each image-Bild's `seam` carries a
+ * `daseiTimeline` marker (the chronology-at-the-seam · the DAS-Ei timeline surfaced AT the
+ * Scene→Scene Blende · §40·2/§45/§47): ground←S0(1997-2010) · unspoken←S1(2008) · trustwalk←S2(2014)
+ * · hope←S3(2018) · close←S4(2022). The seam-Shutter renders it (HeadingParser + ProseInline · timeline preset).
  */
 const bilder: DiaBildSpec[] = [
+  // method · text-Dia (held thesis via #dia-0)
   { dia: {}, lane: 'left', theme: 'green' },
-  { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor },
-  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: beats.unspoken.imgTmpAlignY }, lane: 'left', theme: beats.unspoken.themeColor },
-  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: beats.trustwalk.imgTmpAlignY }, lane: 'left', theme: beats.trustwalk.themeColor },
-  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: beats.hope.imgTmpAlignY }, lane: 'left', theme: beats.hope.themeColor },
-  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: beats.close.imgTmpAlignY }, lane: 'left', theme: beats.close.themeColor },
+  // ground · the FIRST image — NOT 1:1 (HM: "except for the first") → cover, its own focal
+  { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor, seam: { text: daseiTimeline[0].text } },
+  // the 1:1 photos · contain + top → shown whole (no crop), the default bg at the bottom (HP 2026-06-14).
+  // 🚩 content/Innenkreis: the Cloudinary crops in content/context.ts are still 1920×1300 — set them
+  // to a 1:1 (square) crop so contain renders the intended square (else they letterbox ~1.48:1).
+  { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.unspoken.themeColor, seam: { text: daseiTimeline[1].text } },
+  { dia: { image: beats.trustwalk.image, imageAlt: beats.trustwalk.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.trustwalk.themeColor, seam: { text: daseiTimeline[2].text } },
+  { dia: { image: beats.hope.image, imageAlt: beats.hope.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.hope.themeColor, seam: { text: daseiTimeline[3].text } },
+  { dia: { image: beats.close.image, imageAlt: beats.close.imageAlt, imgTmpAlignY: 'top', fit: 'contain' }, lane: 'left', theme: beats.close.themeColor, seam: { text: daseiTimeline[4].text } },
 ]
 </script>
 
@@ -128,9 +139,23 @@ const bilder: DiaBildSpec[] = [
    (the method thesis-Dia + the rising Figures). The stage z-stack + sticky recipe is in DiaStage;
    slot content renders in THIS scope, so these styles reach it without :deep() (§34.6). */
 
-/* ==Text-only hero== */
+/* ==Text-only hero== · left-inset to match the content column (clamp(1rem,5vw,2rem) · "like the
+   rest" · the hero sits outside .magnifica-page-content, so it carries its own matching inset). */
 .context-hero {
-  padding-top: clamp(1rem, 4vh, 2.5rem);
+  max-width: 90rem;
+  margin-inline: auto;
+  /* breathing space above the overline (HM 2026-06-14 · "more space") + the content-column inset
+     (48px desktop / 23px mobile · matches the content box below so the overline/headline don't
+     stick out left) */
+  padding: clamp(3rem, 8vh, 5rem) clamp(23px, 5vw, 48px) 0;
+}
+
+/* the content column L/R inset · 48px desktop / 23px mobile (HM 2026-06-14 · was 32/19). Scoped to
+   /context via :deep (the shell default stays for ethnography/discourse · promote to
+   magnifica-page.css if it should be site-wide). The hero + the teaser align to this. */
+:deep(.magnifica-page-content.is-standard) {
+  padding-left: clamp(23px, 5vw, 48px);
+  padding-right: clamp(23px, 5vw, 48px);
 }
 
 .context-hero-overline {
@@ -147,15 +172,38 @@ const bilder: DiaBildSpec[] = [
   line-height: 1.2;
 }
 
-/* the method thesis-Dia · the held text plate (bigger · the spoken-centre) */
+/* the method thesis-Dia · the teaser · the held text plate (bigger · the spoken-centre · +10% HM) */
 .context-thesis {
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.15rem, 1.75vw, 1.45rem);
   line-height: 1.55;
 }
 
-.context-aside {
-  font-size: 0.9rem;
-  margin-top: 0.75rem;
-  opacity: 0.8;
+/* ==Bild 0 · the method · vertical alignment (HM 2026-06-14)== — raise the teaser ~150px + rise the
+   definition Figure to EXACTLY the same top. A /context-specific layout dial via :deep (the page
+   tunes cDia's defaults for its one text-Dia); couples to cDia's .dia--text / .dia-stage-figure
+   classes — flag if the family restructures. The exact rise is a :3001 dial (--ctx-method-top). */
+.context-method-stage {
+  --ctx-method-top: clamp(2rem, 14vh, 9rem);
+}
+
+@media (min-width: 768px) {
+  /* the teaser (the only text-Dia) · top-align its held text + raise to the shared top, + ~10px
+     left padding so it lines up with the hero's left inset (HM 2026-06-14) */
+  .context-method-stage :deep(.dia--text) {
+    justify-content: flex-start;
+    padding-top: var(--ctx-method-top);
+    /* no extra L/R padding — the teaser aligns flush to the content-column inset (HM 2026-06-14 ·
+       "take out the extra padding left and right of the teaser") */
+    padding-left: 0;
+    padding-right: 0;
+  }
+  /* the definition Figure · Bild 0 = the FIRST .dia-stage-bild = the stage's 2nd child (the flat
+     order is Dia · bild · shutter · Dia · bild …), so :nth-child(2) — NOT :first-of-type (all the
+     children are <div>, so that matched the Dia, i.e. nothing). Pin so the figure's text-top lands
+     exactly on the teaser's first line (−1.25rem = the figure's own padding-top). Coupled to cDia's
+     flat child order — flag if the family restructures. */
+  .context-method-stage :deep(.dia-stage-bild:nth-child(2) .dia-stage-figure) {
+    top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) - 1.25rem);
+  }
 }
 </style>

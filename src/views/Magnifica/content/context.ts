@@ -13,10 +13,9 @@ import type { CardsCanvasItem } from '@/components/magnifica/types'
 export const pageTitle = 'organic intellectual, grounded practice'
 
 export const hero = {
-    overline: "'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
-    // lowercase = the page-headline voice (HM 2026-06-08 · two-register casing);
-    // UPPERCASE stays for the chalk register (post-its + callout cards).
-    headline: 'organic intellectual, grounded practice',
+    // HM 2026-06-14 · overline = the tenure + role line; headline = the claim.
+    overline: "30 years 'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
+    headline: 'grounded practice & organic intellectual',
 }
 
 /**
@@ -41,21 +40,21 @@ export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close
     ground: {
         image: `${CLOUD}/c_scale,h_1383,w_2080/c_crop,h_1383,w_1920/v1780934621/crearis/cojc_collective_2008.jpg`,
         imageAlt: 'A cojc / DAS Ei ensemble on a hilltop, the whole group pointing at the camera — the collective, in full presence.',
-        panel: 'full presence **THE GROUND, NOT THE FIGURE**',
+        panel: '**Mit Theater Grenzen bewegen**',
         imgTmpAlignY: 'center',
         themeColor: 'green',
     },
     // P3 · the performative turn — the unspoken (Eleanora) · the body as the site of knowing
     unspoken: {
-        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_center,h_1300,w_1920/v1780763036/crearis/517_dasei2022_I8A6870_cqnea6.jpg`,
+        image: `${CLOUD}/c_fill,g_center,w_661,h_661/v1780763036/crearis/517_dasei2022_I8A6870_cqnea6.jpg`,
         imageAlt: 'A performer behind translucent sheeting, side-lit, one hand reaching out — the body witnessed, not stored.',
-        panel: 'the performative turn · Schwebezustände **YOU CANNOT STORE THEATRE**',
+        panel: '**YOU CANNOT STORE THEATRE**',
         imgTmpAlignY: 'center',
         themeColor: 'dim',
     },
     // P4 · the substrate-move — the trust-walk (Rosalin) · the body before the head
     trustwalk: {
-        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_west,h_1300,w_1920/v1780763237/crearis/dasei_trustwalk.jpg`,
+        image: `${CLOUD}/c_fill,g_west,w_661,h_661/v1780763237/crearis/dasei_trustwalk.jpg`,
         imageAlt: 'A blindfolded man led by the hand by a watchful guide — Elementare Animation, the body moving before the head understands.',
         panel: 'Elementare Animation **THE BODY BEFORE THE HEAD**',
         imgTmpAlignY: 'top',
@@ -63,7 +62,7 @@ export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close
     },
     // P5 · the hope — the Szenische Lesung · the figures (here, green shoots) rising from the book
     hope: {
-        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_west,h_1300,w_1920/v1780763297/crearis/szenische_lesung.jpg`,
+        image: `${CLOUD}/c_fill,g_west,w_661,h_661/v1780763297/crearis/szenische_lesung.jpg`,
         imageAlt: 'The orange DAS Ei book held against black, green shoots rising from its pages — a Szenische Lesung: the figures rise from the book.',
         panel: 'the open vision **RAISE FROM THE BOOKS**',
         imgTmpAlignY: 'center',
@@ -71,7 +70,7 @@ export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close
     },
     // close · catch-the-light · between horror and hope
     close: {
-        image: `${CLOUD}/c_scale,h_1920,w_1920/c_crop,g_north_west,h_1300,w_1920/v1781262606/crearis/dasei_catch_the_light.jpg`,
+        image: `${CLOUD}/c_fill,g_north_west,w_661,h_661/v1781262606/crearis/dasei_catch_the_light.jpg`,
         imageAlt: 'A figure catching the light — between horror and hope, on the side of hope.',
         panel: 'between horror and hope **I AM AN OPTIMIST, NOT A DYSTOPIAN**',
         imgTmpAlignY: 'center',

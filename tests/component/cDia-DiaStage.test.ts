@@ -35,6 +35,31 @@ describe('DiaStage', () => {
         const w = mount(DiaStage, { props: { bilder, transition: 'rise-over' } })
         expect(w.find('.dia-stage').classes()).toContain('dia-stage--rise-over')
     })
+
+    it('defaults the family to reduced-motion (the seam is static · no view()-lift · §41·3)', () => {
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        const w = mount(DiaStage, { props: { bilder } })
+        expect(w.find('.shutter--seam').classes()).toContain('shutter--static')
+    })
+
+    it('feeds the next Bild seam content into the seam Shutter (timeline-at-the-seam · §39/§45)', () => {
+        const bilder: DiaBildSpec[] = [
+            { dia: {} },
+            { dia: {}, seam: { text: '## 2008 **the institute**\nfounded in Bayern' } },
+        ]
+        const seam = mount(DiaStage, { props: { bilder } }).find('.shutter--seam')
+        expect(seam.classes()).toContain('shutter--timeline') // the default seam preset
+        expect(seam.html()).toContain('the institute') // ## → HeadingParser
+        expect(seam.html()).toContain('founded in Bayern') // prose
+    })
+
+    it('zeroes the last Bild trailing range by default (last Dia holds dead-still · no rise-with-footer)', () => {
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        const on = mount(DiaStage, { props: { bilder } }).findAll('.dia-stage-bild')
+        expect(on[on.length - 1].classes()).toContain('dia-stage-bild--last')
+        const off = mount(DiaStage, { props: { bilder, holdLast: false } }).findAll('.dia-stage-bild')
+        expect(off[off.length - 1].classes()).not.toContain('dia-stage-bild--last')
+    })
 })
 
 describe('Dia (the held plate)', () => {
@@ -62,19 +87,42 @@ describe('Dia (the held plate)', () => {
         // §34.3 · the held text lives directly in the single `.dia` element (no inner plate)
         expect(el.find('p').text()).toBe('held text')
     })
+
+    it('uses background-size:contain for fit="contain" (1:1 · bg shows through · Außenkreis-r1)', () => {
+        const w = mount(Dia, { props: { image: '/i.jpg', fit: 'contain', imgTmpAlignY: 'top' } })
+        const style = w.find('.dia').attributes('style') ?? ''
+        expect(style).toContain('background-size: contain')
+        expect(style).toContain('background-position: center top')
+    })
+
+    it('defaults to background-size:cover (fill + crop)', () => {
+        const w = mount(Dia, { props: { image: '/i.jpg' } })
+        expect(w.find('.dia').attributes('style') ?? '').toContain('background-size: cover')
+    })
 })
 
 describe('Shutter (the cover/blade)', () => {
-    it('renders the cover with a flat colour', () => {
-        // hex (jsdom drops oklch() as unparseable · the component takes any CSS colour)
-        const w = mount(Shutter, { props: { color: '#101010' } })
-        expect(w.find('.shutter').exists()).toBe(true)
-        expect(w.find('.shutter').attributes('style') ?? '').toContain('background')
+    it('maps the bg colour-token to its var (default = the page bg)', () => {
+        expect(mount(Shutter, { props: { bg: 'primary' } }).find('.shutter').attributes('style') ?? '')
+            .toContain('var(--color-primary-bg)')
+        expect(mount(Shutter).find('.shutter').attributes('style') ?? '').toContain('var(--color-bg)')
     })
 
-    it('shows the separator modifier when separator=true (the gap-line)', () => {
-        const w = mount(Shutter, { props: { separator: true } })
-        expect(w.find('.shutter').classes()).toContain('shutter--separator')
+    it('sizes the line via the geometry formula + maps the line colour', () => {
+        const w = mount(Shutter, { props: { vSize: 'medium', hSize: 'thinline', lineColor: 'primary' } })
+        const style = w.find('.shutter').attributes('style') ?? ''
+        expect(style).toContain('--line-v-len: 40%') // medium(2) v-line on full-height(cap 5) → 2/5
+        expect(style).toContain('--line-h-wt: 1px') // thinline = 1px weight (h-line width-based)
+        expect(style).toContain('--line-color: var(--color-primary-bg)')
+    })
+
+    it('parses the text md into headings (HeadingParser) + prose, per preset', () => {
+        const w = mount(Shutter, { props: { preset: 'timeline', text: '## 10:30 **OPENING**\nThe room holds.' } })
+        const el = w.find('.shutter')
+        expect(el.classes()).toContain('shutter--timeline')
+        const html = el.html()
+        expect(html).toContain('OPENING') // ## → HeadingParser
+        expect(html).toContain('The room holds.') // prose
     })
 
     it('renders a full-bleed blade image', () => {
@@ -84,9 +132,18 @@ describe('Shutter (the cover/blade)', () => {
         expect(style).toContain('background-size: cover')
     })
 
-    it('writes a brief seam-blade height via heightVh (--shutter-h · keeps the cadence slight)', () => {
-        const w = mount(Shutter, { props: { heightVh: 36 } })
-        expect(w.find('.shutter').attributes('style') ?? '').toContain('--shutter-h: 36vh')
+    it('computes --shutter-h from the height scale off --dia-h (no hardcoded vh)', () => {
+        const w = mount(Shutter, { props: { height: 'medium' } })
+        expect(w.find('.shutter').attributes('style') ?? '').toMatch(/--shutter-h:\s*calc\(var\(--dia-h.*0\.5\)/)
+    })
+
+    it('height-clamps the v-line (the one formula · small-height auto-corrects a prominent v-line)', () => {
+        // full height (cap 5) + prominent v-line (3) → 3/5 = 60%
+        const full = mount(Shutter, { props: { height: 'full', vSize: 'prominent' } })
+        expect(full.find('.shutter').attributes('style') ?? '').toContain('--line-v-len: 60%')
+        // small height (cap 2) + prominent (3) → clamped to 2 (medium) → 2/2 = 100% (spans the shutter)
+        const small = mount(Shutter, { props: { height: 'small', vSize: 'prominent' } })
+        expect(small.find('.shutter').attributes('style') ?? '').toContain('--line-v-len: 100%')
     })
 
     it('marks a between-scenes seam with the transition-keyed class (shutter-lift default · §34.4)', () => {

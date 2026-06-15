@@ -16,6 +16,7 @@
                 :image-alt="bild.dia.imageAlt"
                 :img-tmp-align-x="bild.dia.imgTmpAlignX"
                 :img-tmp-align-y="bild.dia.imgTmpAlignY"
+                :fit="bild.dia.fit"
                 :lane="bild.lane ?? 'left'"
                 :style="{ zIndex: plateZ(i) }"
             >
@@ -28,7 +29,10 @@
             </Dia>
 
             <!-- the Bild scroll-range + the rising Figure (the Figur · opposite Gasse · z:mid) -->
-            <div class="dia-stage-bild">
+            <div
+                class="dia-stage-bild"
+                :class="{ 'dia-stage-bild--last': holdLast && i === bilder.length - 1 }"
+            >
                 <div
                     class="dia-stage-figure"
                     :class="figureLaneClass(bild)"
@@ -51,13 +55,18 @@
                 </div>
             </div>
 
-            <!-- the seam Shutter masks the join INTO the next Bild (none after the last) -->
+            <!-- the seam Shutter masks the join INTO the next Bild (none after the last). The seam
+                 carries the NEXT Bild's `seam` content (its chapterStart · §39 · the chronology-at-
+                 the-seam · §40·2/§45): a timeline-marker text, distributed by the preset (default
+                 `timeline`). Omit `seam` → a plain seam (the line only). -->
             <Shutter
                 v-if="i < bilder.length - 1"
                 class="dia-stage-seam"
                 seam
-                separator
                 :transition="transition"
+                :reduced-motion="reducedMotion"
+                :text="bilder[i + 1]?.seam?.text"
+                :preset="bilder[i + 1]?.seam?.preset ?? 'timeline'"
                 :style="{ zIndex: seamZ(i) }"
             />
         </template>
@@ -119,8 +128,22 @@ const props = withDefaults(
         heightVh?: number
         /** the held-Dia Gasse width in %; the Figure Gasse takes the rest. */
         leftWidth?: number
+        /** the family DEFAULT · static reveal (no view()-lift · HP's best experience · §41·3) ·
+         *  Magnifica runs this. Set false to opt the seams into the scroll-driven lift. */
+        reducedMotion?: boolean
+        /** the last Dia (no seam after) HOLDS to the page-end instead of un-pinning + rising with the
+         *  footer (HP 2026-06-14 · family-setting · default true). A trailing stage hold keeps it
+         *  pinned through the end. Set false → the last Dia releases (the old behaviour). */
+        holdLast?: boolean
     }>(),
-    { transition: 'shutter-lift', bounded: false, heightVh: 82, leftWidth: 48 },
+    {
+        transition: 'shutter-lift',
+        bounded: false,
+        heightVh: 82,
+        leftWidth: 48,
+        reducedMotion: true,
+        holdLast: true,
+    },
 )
 
 const stageEl = ref<HTMLElement>()
@@ -133,15 +156,18 @@ const stageVars = computed<Record<string, string>>(() => ({
 
 /* the z-strategy · transition-keyed (§34.4). shutter-lift/wipe: plates ascending (the reveal order)
    · Figures above all plates · Shutters held high (they pass over). rise-over: ALL ascending so the
-   next plate rises over the prior seam (§27 · the rise-over instance ③ refines its exact tuning). */
+   next plate rises over the prior seam (§27 · the rise-over instance ③ refines its exact tuning).
+   ⚠️ The WHOLE stack stays BELOW the overlay band — the glosses (FloatingPostIt z:1000) + the
+   topbar (.mag-header z:1100) run OVER all content (HP 2026-06-14: the shutter must NOT cover the
+   top-nav). So: plates 1..N · Figures 500 · Shutters 600+i — all < 1000. */
 function plateZ(i: number): number {
     return props.transition === 'rise-over' ? (i + 1) * 10 : 1 + i
 }
 function figureZ(i: number): number {
-    return props.transition === 'rise-over' ? (i + 1) * 10 + 1 : 1000
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 1 : 500
 }
 function seamZ(i: number): number {
-    return props.transition === 'rise-over' ? (i + 1) * 10 + 2 : 2000 + i
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 2 : 600 + i
 }
 
 /** the Figure rises in the Gasse OPPOSITE the held Dia (Dia left → Figure right · the default). */
@@ -187,12 +213,24 @@ onUnmounted(() => window.removeEventListener('resize', configure))
         min-height: var(--dia-bild-h, 120vh);
     }
 
+    /* holdLast (default · §Außenkreis · HP 2026-06-14) · the LAST Bild (no seam after) gets NO trailing
+       scroll-range — so the last held Dia is the terminus and stays dead-still: there is nothing to
+       scroll past it, no empty space, the footer sits directly below. (The earlier padding-bottom did
+       the OPPOSITE — it added empty scroll below, so the Dia released + rose before the footer.) */
+    .dia-stage-bild--last {
+        min-height: 0;
+    }
+
     /* the rising Figure · sticky in its Gasse, opaque (gotcha #5), lifts off the held plate via an
        OKLCH shadow (not rgba · standards-floor §34.7). z assigned inline (transition-keyed). */
     .dia-stage-figure {
         position: sticky;
         top: calc(var(--dia-top) + 3rem);
-        width: var(--dia-right-w, 48%);
+        /* the lane WIDTH (--dia-left-w · 48%), NOT the right-region (--dia-right-w · 52%): with a
+           52% margin-left, a 52% width = 104% → the ~4% overflow past the page's right margin (the
+           right lane stuck out · HP 2026-06-14). 48% + 52% offset = 100% → ends at the content-right,
+           symmetric with the left lane's respect for the standard page margin. */
+        width: var(--dia-left-w, 48%);
         background: var(--color-bg);
         padding: 1.25rem 1.5rem;
         box-shadow: 0 12px 32px oklch(0 0 0 / 0.3);
@@ -209,11 +247,13 @@ onUnmounted(() => window.removeEventListener('resize', configure))
     margin: 0 0 0.75rem;
 }
 
-/* <768 · the stage linearises: the parts are normal-flow blocks, top to bottom (the Dia/Shutter
-   components carry their own mobile reset · here the Figure goes full-width below its plate).
-   ★ HP-screentest 2026-06-14: mobile has NO scroll-effect AT ALL, by design — the choreography
-   (hold · sticky · seam-lift) is desktop-scoped (§41·2/§41·3 · the slide-show law). Mobile = the
-   plain stacked Bild-filmstrip (Dia image, Figure below). Intentional, not a gap. */
+/* <768 · the stage currently linearises to plain stacked blocks (the Dia/Shutter components carry
+   their own mobile reset · here the Figure goes full-width below its plate).
+   🚩 HP-correction 2026-06-14: mobile having NO scroll-effect is a GAP, NOT by design — to be
+   worked on in a dedicated round. The target: the SAME choreography (hold · sticky · seam-lift)
+   runs on mobile too — NO separate mobile logic — only the PLACEMENT of Dia + Figure on screen
+   adapts (they share the viewport instead of side-by-side Gassen). This linearize-reset is the
+   accident; it stays for now (this round is desktop-only · "no mobile") and is the next round's. */
 @media (max-width: 767px) {
     .dia-stage-figure {
         margin: 1.25rem 0 0;
