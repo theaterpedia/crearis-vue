@@ -192,7 +192,11 @@ onUnmounted(() => window.removeEventListener('resize', configure))
     .dia-stage-figure {
         position: sticky;
         top: calc(var(--dia-top) + 3rem);
-        width: var(--dia-right-w, 48%);
+        /* the lane WIDTH (--dia-left-w · 48%), NOT the right-region (--dia-right-w · 52%): with a
+           52% margin-left, a 52% width = 104% → the ~4% overflow past the page's right margin (the
+           right lane stuck out · HP 2026-06-14). 48% + 52% offset = 100% → ends at the content-right,
+           symmetric with the left lane's respect for the standard page margin. */
+        width: var(--dia-left-w, 48%);
         background: var(--color-bg);
         padding: 1.25rem 1.5rem;
         box-shadow: 0 12px 32px oklch(0 0 0 / 0.3);
@@ -209,11 +213,13 @@ onUnmounted(() => window.removeEventListener('resize', configure))
     margin: 0 0 0.75rem;
 }
 
-/* <768 · the stage linearises: the parts are normal-flow blocks, top to bottom (the Dia/Shutter
-   components carry their own mobile reset · here the Figure goes full-width below its plate).
-   ★ HP-screentest 2026-06-14: mobile has NO scroll-effect AT ALL, by design — the choreography
-   (hold · sticky · seam-lift) is desktop-scoped (§41·2/§41·3 · the slide-show law). Mobile = the
-   plain stacked Bild-filmstrip (Dia image, Figure below). Intentional, not a gap. */
+/* <768 · the stage currently linearises to plain stacked blocks (the Dia/Shutter components carry
+   their own mobile reset · here the Figure goes full-width below its plate).
+   🚩 HP-correction 2026-06-14: mobile having NO scroll-effect is a GAP, NOT by design — to be
+   worked on in a dedicated round. The target: the SAME choreography (hold · sticky · seam-lift)
+   runs on mobile too — NO separate mobile logic — only the PLACEMENT of Dia + Figure on screen
+   adapts (they share the viewport instead of side-by-side Gassen). This linearize-reset is the
+   accident; it stays for now (this round is desktop-only · "no mobile") and is the next round's. */
 @media (max-width: 767px) {
     .dia-stage-figure {
         margin: 1.25rem 0 0;

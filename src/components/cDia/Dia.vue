@@ -84,7 +84,7 @@ const diaStyle = computed<Record<string, string>>(() => {
         margin-right: auto;
     }
     .dia--right {
-        width: var(--dia-right-w, 48%);
+        width: var(--dia-left-w, 48%);
         margin-left: auto;
     }
     .dia--full {
