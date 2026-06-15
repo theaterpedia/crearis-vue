@@ -42,10 +42,12 @@ describe('DiaStage', () => {
         expect(w.find('.shutter--seam').classes()).toContain('shutter--static')
     })
 
-    it('holds the last Dia by default (the trailing hold · no rise-with-footer)', () => {
+    it('zeroes the last Bild trailing range by default (last Dia holds dead-still · no rise-with-footer)', () => {
         const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
-        expect(mount(DiaStage, { props: { bilder } }).find('.dia-stage').classes()).toContain('dia-stage--hold-last')
-        expect(mount(DiaStage, { props: { bilder, holdLast: false } }).find('.dia-stage').classes()).not.toContain('dia-stage--hold-last')
+        const on = mount(DiaStage, { props: { bilder } }).findAll('.dia-stage-bild')
+        expect(on[on.length - 1].classes()).toContain('dia-stage-bild--last')
+        const off = mount(DiaStage, { props: { bilder, holdLast: false } }).findAll('.dia-stage-bild')
+        expect(off[off.length - 1].classes()).not.toContain('dia-stage-bild--last')
     })
 })
 

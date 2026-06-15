@@ -2,10 +2,7 @@
     <section
         ref="stageEl"
         class="dia-stage"
-        :class="[
-            `dia-stage--${transition}`,
-            { 'dia-stage--bounded': bounded, 'dia-stage--hold-last': holdLast },
-        ]"
+        :class="[`dia-stage--${transition}`, { 'dia-stage--bounded': bounded }]"
         :style="stageVars"
     >
         <template
@@ -32,7 +29,10 @@
             </Dia>
 
             <!-- the Bild scroll-range + the rising Figure (the Figur · opposite Gasse · z:mid) -->
-            <div class="dia-stage-bild">
+            <div
+                class="dia-stage-bild"
+                :class="{ 'dia-stage-bild--last': holdLast && i === bilder.length - 1 }"
+            >
                 <div
                     class="dia-stage-figure"
                     :class="figureLaneClass(bild)"
@@ -205,12 +205,12 @@ onUnmounted(() => window.removeEventListener('resize', configure))
         min-height: var(--dia-bild-h, 120vh);
     }
 
-    /* holdLast (default · §Außenkreis · HP) · a trailing hold so the LAST Dia (sticky-to-stage) stays
-       pinned to the page-end instead of un-pinning + rising as the footer (the next sibling) enters.
-       The last Figure has already released (it doesn't rise · HP); the held Dia lingers as the close,
-       then the footer follows — no cross. [dial · HP: the hold amount.] Desktop-only (mobile linearises). */
-    .dia-stage--hold-last {
-        padding-bottom: var(--dia-hold-last, var(--dia-h, 82vh));
+    /* holdLast (default · §Außenkreis · HP 2026-06-14) · the LAST Bild (no seam after) gets NO trailing
+       scroll-range — so the last held Dia is the terminus and stays dead-still: there is nothing to
+       scroll past it, no empty space, the footer sits directly below. (The earlier padding-bottom did
+       the OPPOSITE — it added empty scroll below, so the Dia released + rose before the footer.) */
+    .dia-stage-bild--last {
+        min-height: 0;
     }
 
     /* the rising Figure · sticky in its Gasse, opaque (gotcha #5), lifts off the held plate via an
