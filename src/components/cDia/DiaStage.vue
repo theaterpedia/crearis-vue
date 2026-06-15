@@ -151,15 +151,18 @@ const stageVars = computed<Record<string, string>>(() => ({
 
 /* the z-strategy · transition-keyed (§34.4). shutter-lift/wipe: plates ascending (the reveal order)
    · Figures above all plates · Shutters held high (they pass over). rise-over: ALL ascending so the
-   next plate rises over the prior seam (§27 · the rise-over instance ③ refines its exact tuning). */
+   next plate rises over the prior seam (§27 · the rise-over instance ③ refines its exact tuning).
+   ⚠️ The WHOLE stack stays BELOW the overlay band — the glosses (FloatingPostIt z:1000) + the
+   topbar (.mag-header z:1100) run OVER all content (HP 2026-06-14: the shutter must NOT cover the
+   top-nav). So: plates 1..N · Figures 500 · Shutters 600+i — all < 1000. */
 function plateZ(i: number): number {
     return props.transition === 'rise-over' ? (i + 1) * 10 : 1 + i
 }
 function figureZ(i: number): number {
-    return props.transition === 'rise-over' ? (i + 1) * 10 + 1 : 1000
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 1 : 500
 }
 function seamZ(i: number): number {
-    return props.transition === 'rise-over' ? (i + 1) * 10 + 2 : 2000 + i
+    return props.transition === 'rise-over' ? (i + 1) * 10 + 2 : 600 + i
 }
 
 /** the Figure rises in the Gasse OPPOSITE the held Dia (Dia left → Figure right · the default). */
