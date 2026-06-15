@@ -13,10 +13,9 @@ import type { CardsCanvasItem } from '@/components/magnifica/types'
 export const pageTitle = 'organic intellectual, grounded practice'
 
 export const hero = {
-    overline: "'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
-    // lowercase = the page-headline voice (HM 2026-06-08 · two-register casing);
-    // UPPERCASE stays for the chalk register (post-its + callout cards).
-    headline: 'organic intellectual, grounded practice',
+    // HM 2026-06-14 · the institutional line is now the headline; the claim is the subline.
+    headline: "'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
+    subline: 'grounded practice & organic intellectual',
 }
 
 /**
