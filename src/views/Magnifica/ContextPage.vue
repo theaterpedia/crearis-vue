@@ -170,20 +170,23 @@ const bilder: DiaBildSpec[] = [
    classes — flag if the family restructures. The exact rise is a :3001 dial (--ctx-method-top). */
 .context-method-stage {
   --ctx-method-top: clamp(2rem, 14vh, 9rem);
-  /* the definition was sticking ~2 lines too high vs the teaser (HM screentest) — drop it to land
-     on the teaser's first line. A :3001 dial. */
-  --ctx-fig-drop: 2.75rem;
 }
 
 @media (min-width: 768px) {
-  /* the teaser (the only text-Dia) · top-align its held text, raised to the shared top */
+  /* the teaser (the only text-Dia) · top-align its held text + raise to the shared top, + ~10px
+     left padding so it lines up with the hero's left inset (HM 2026-06-14) */
   .context-method-stage :deep(.dia--text) {
     justify-content: flex-start;
     padding-top: var(--ctx-method-top);
+    padding-left: calc(1.5rem + 10px);
   }
-  /* the definition Figure (Bild 0) · pin to the teaser's first line (+ the ~2-line drop) */
-  .context-method-stage :deep(.dia-stage-bild:first-of-type .dia-stage-figure) {
-    top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) + var(--ctx-fig-drop));
+  /* the definition Figure · Bild 0 = the FIRST .dia-stage-bild = the stage's 2nd child (the flat
+     order is Dia · bild · shutter · Dia · bild …), so :nth-child(2) — NOT :first-of-type (all the
+     children are <div>, so that matched the Dia, i.e. nothing). Pin so the figure's text-top lands
+     exactly on the teaser's first line (−1.25rem = the figure's own padding-top). Coupled to cDia's
+     flat child order — flag if the family restructures. */
+  .context-method-stage :deep(.dia-stage-bild:nth-child(2) .dia-stage-figure) {
+    top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) - 1.25rem);
   }
 }
 </style>
