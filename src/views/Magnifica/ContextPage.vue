@@ -140,8 +140,8 @@ const bilder: DiaBildSpec[] = [
 .context-hero {
   max-width: 90rem;
   margin-inline: auto;
-  /* ~40px breathing space above the overline (HM 2026-06-14) + the content-column left inset */
-  padding: 2.5rem clamp(1rem, 5vw, 2rem) 0;
+  /* breathing space above the overline (HM 2026-06-14 · "more space") + content-column left inset */
+  padding: clamp(3rem, 8vh, 5rem) clamp(1rem, 5vw, 2rem) 0;
 }
 
 .context-hero-overline {
@@ -158,9 +158,9 @@ const bilder: DiaBildSpec[] = [
   line-height: 1.2;
 }
 
-/* the method thesis-Dia · the teaser · the held text plate (bigger · the spoken-centre) */
+/* the method thesis-Dia · the teaser · the held text plate (bigger · the spoken-centre · +10% HM) */
 .context-thesis {
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.15rem, 1.75vw, 1.45rem);
   line-height: 1.55;
 }
 
@@ -170,6 +170,9 @@ const bilder: DiaBildSpec[] = [
    classes — flag if the family restructures. The exact rise is a :3001 dial (--ctx-method-top). */
 .context-method-stage {
   --ctx-method-top: clamp(2rem, 14vh, 9rem);
+  /* the definition was sticking ~2 lines too high vs the teaser (HM screentest) — drop it to land
+     on the teaser's first line. A :3001 dial. */
+  --ctx-fig-drop: 2.75rem;
 }
 
 @media (min-width: 768px) {
@@ -178,10 +181,9 @@ const bilder: DiaBildSpec[] = [
     justify-content: flex-start;
     padding-top: var(--ctx-method-top);
   }
-  /* the definition Figure (Bild 0) · pin so its text-top lands at the teaser's (−1.25rem = the
-     figure's own padding-top, so the two text-tops align exactly) */
+  /* the definition Figure (Bild 0) · pin to the teaser's first line (+ the ~2-line drop) */
   .context-method-stage :deep(.dia-stage-bild:first-of-type .dia-stage-figure) {
-    top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) - 1.25rem);
+    top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) + var(--ctx-fig-drop));
   }
 }
 </style>

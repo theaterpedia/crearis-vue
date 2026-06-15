@@ -13,9 +13,9 @@ import type { CardsCanvasItem } from '@/components/magnifica/types'
 export const pageTitle = 'organic intellectual, grounded practice'
 
 export const hero = {
-    // HM 2026-06-14 · overline = the tenure line; headline = role + claim, merged.
-    overline: '30 years at Theaterpädagogisches Institut Bayern e.V. and beyond',
-    headline: "'Gestalter' - grounded practice & organic intellectual",
+    // HM 2026-06-14 · overline = the tenure + role line; headline = the claim.
+    overline: "30 years 'Gestalter' at Theaterpädagogisches Institut Bayern e.V.",
+    headline: 'grounded practice & organic intellectual',
 }
 
 /**
