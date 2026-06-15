@@ -57,7 +57,6 @@
                 v-if="i < bilder.length - 1"
                 class="dia-stage-seam"
                 seam
-                separator
                 :transition="transition"
                 :style="{ zIndex: seamZ(i) }"
             />

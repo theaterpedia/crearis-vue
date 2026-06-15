@@ -77,16 +77,27 @@ describe('Dia (the held plate)', () => {
 })
 
 describe('Shutter (the cover/blade)', () => {
-    it('renders the cover with a flat colour', () => {
-        // hex (jsdom drops oklch() as unparseable · the component takes any CSS colour)
-        const w = mount(Shutter, { props: { color: '#101010' } })
-        expect(w.find('.shutter').exists()).toBe(true)
-        expect(w.find('.shutter').attributes('style') ?? '').toContain('background')
+    it('maps the bg colour-token to its var (default = the page bg)', () => {
+        expect(mount(Shutter, { props: { bg: 'primary' } }).find('.shutter').attributes('style') ?? '')
+            .toContain('var(--color-primary-bg)')
+        expect(mount(Shutter).find('.shutter').attributes('style') ?? '').toContain('var(--color-bg)')
     })
 
-    it('shows the separator modifier when separator=true (the gap-line)', () => {
-        const w = mount(Shutter, { props: { separator: true } })
-        expect(w.find('.shutter').classes()).toContain('shutter--separator')
+    it('sizes the line via vSize/hSize (length×weight vars) + maps the line colour', () => {
+        const w = mount(Shutter, { props: { vSize: 'medium', hSize: 'thinline', lineColor: 'primary' } })
+        const style = w.find('.shutter').attributes('style') ?? ''
+        expect(style).toContain('--line-v-len: 60%') // medium = 60% length
+        expect(style).toContain('--line-h-wt: 1px') // thinline = 1px weight
+        expect(style).toContain('--line-color: var(--color-primary-bg)')
+    })
+
+    it('parses the text md into headings (HeadingParser) + prose, per preset', () => {
+        const w = mount(Shutter, { props: { preset: 'timeline', text: '## 10:30 **OPENING**\nThe room holds.' } })
+        const el = w.find('.shutter')
+        expect(el.classes()).toContain('shutter--timeline')
+        const html = el.html()
+        expect(html).toContain('OPENING') // ## → HeadingParser
+        expect(html).toContain('The room holds.') // prose
     })
 
     it('renders a full-bleed blade image', () => {
