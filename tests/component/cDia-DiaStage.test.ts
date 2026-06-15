@@ -35,6 +35,12 @@ describe('DiaStage', () => {
         const w = mount(DiaStage, { props: { bilder, transition: 'rise-over' } })
         expect(w.find('.dia-stage').classes()).toContain('dia-stage--rise-over')
     })
+
+    it('defaults the family to reduced-motion (the seam is static · no view()-lift · §41·3)', () => {
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        const w = mount(DiaStage, { props: { bilder } })
+        expect(w.find('.shutter--seam').classes()).toContain('shutter--static')
+    })
 })
 
 describe('Dia (the held plate)', () => {
@@ -83,11 +89,11 @@ describe('Shutter (the cover/blade)', () => {
         expect(mount(Shutter).find('.shutter').attributes('style') ?? '').toContain('var(--color-bg)')
     })
 
-    it('sizes the line via vSize/hSize (length×weight vars) + maps the line colour', () => {
+    it('sizes the line via the geometry formula + maps the line colour', () => {
         const w = mount(Shutter, { props: { vSize: 'medium', hSize: 'thinline', lineColor: 'primary' } })
         const style = w.find('.shutter').attributes('style') ?? ''
-        expect(style).toContain('--line-v-len: 60%') // medium = 60% length
-        expect(style).toContain('--line-h-wt: 1px') // thinline = 1px weight
+        expect(style).toContain('--line-v-len: 40%') // medium(2) v-line on full-height(cap 5) → 2/5
+        expect(style).toContain('--line-h-wt: 1px') // thinline = 1px weight (h-line width-based)
         expect(style).toContain('--line-color: var(--color-primary-bg)')
     })
 
@@ -107,9 +113,18 @@ describe('Shutter (the cover/blade)', () => {
         expect(style).toContain('background-size: cover')
     })
 
-    it('writes a brief seam-blade height via heightVh (--shutter-h · keeps the cadence slight)', () => {
-        const w = mount(Shutter, { props: { heightVh: 36 } })
-        expect(w.find('.shutter').attributes('style') ?? '').toContain('--shutter-h: 36vh')
+    it('computes --shutter-h from the height scale off --dia-h (no hardcoded vh)', () => {
+        const w = mount(Shutter, { props: { height: 'medium' } })
+        expect(w.find('.shutter').attributes('style') ?? '').toMatch(/--shutter-h:\s*calc\(var\(--dia-h.*0\.5\)/)
+    })
+
+    it('height-clamps the v-line (the one formula · small-height auto-corrects a prominent v-line)', () => {
+        // full height (cap 5) + prominent v-line (3) → 3/5 = 60%
+        const full = mount(Shutter, { props: { height: 'full', vSize: 'prominent' } })
+        expect(full.find('.shutter').attributes('style') ?? '').toContain('--line-v-len: 60%')
+        // small height (cap 2) + prominent (3) → clamped to 2 (medium) → 2/2 = 100% (spans the shutter)
+        const small = mount(Shutter, { props: { height: 'small', vSize: 'prominent' } })
+        expect(small.find('.shutter').attributes('style') ?? '').toContain('--line-v-len: 100%')
     })
 
     it('marks a between-scenes seam with the transition-keyed class (shutter-lift default · §34.4)', () => {

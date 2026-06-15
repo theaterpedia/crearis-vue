@@ -1,11 +1,16 @@
 <template>
     <div
         class="shutter"
-        :class="[`shutter--${transition}`, `shutter--${preset}`, { 'shutter--seam': seam }]"
+        :class="[
+            `shutter--${transition}`,
+            `shutter--${preset}`,
+            { 'shutter--seam': seam, 'shutter--static': reducedMotion },
+        ]"
         :style="shutterStyle"
     >
         <!-- the LINE (the neutral divider/axis · a vertical divider in `spearhead`, the timeline-axis
-             in `timeline`) · sized length×weight by vSize/hSize · ::before = vertical, ::after = horizontal -->
+             in `timeline`) · sized by ONE formula off the shutter height · ::before = vertical (height-
+             clamped), ::after = horizontal (width-based). -->
         <!-- content · the md `text` minimally parsed (## → HeadingParser · prose → <p>) + the slot
              escape-hatch · distributed by the `preset`. -->
         <div
@@ -43,38 +48,33 @@
 /**
  * Shutter — the seam-blade between scenes (the Dia-projector's shutter · the *black between* ·
  * "Blende" in the whitepaper-etymology). Container-width (covers BOTH lanes), assigned the HIGHEST
- * z by the stage for `shutter-lift`/`wipe` (it passes OVER the held Dias + Figures). hero-shaped:
- * a flat colour OR a full-bleed image, with **the line** — the neutral divider/axis that plays the
- * gap (the dasei yellow line · UI_dasei_eu_slideOver_Hero). Named `line` (not "splitter"): it is a
- * divider in `spearhead` and the timeline-axis in `timeline` — one neutral word for both (HM).
+ * z by the stage for `shutter-lift`/`wipe`. hero-shaped: a flat colour OR a full-bleed image, with
+ * **the line** — the neutral divider/axis (a divider in `spearhead`, the timeline-axis in `timeline`).
  *
- * §34.4 — the `transition` (passed from the stage) drives this blade's seam-CSS:
- *  · `shutter-lift` (DEFAULT) — a `seam` shutter OVERLAPS the next plate (`margin-bottom:-1·--dia-h`
- *    · so the next Dia pins BEHIND it · no early peek) then `animation-timeline: view()` LIFTS it off
- *    the top to uncover the held next plate. Zero-JS-in-loop · `@supports`-guarded + a scroll-away
- *    fallback (Firefox-stable · degraded, never broken). The proven /proto mechanism, folded in.
- *  · `rise-over` — the blade is PASSIVE (a sticky plate the next Dia rises over · ascending-z · §27).
- *  · `wipe` — (②·CandB) the scroll-driven reversible blade (added later).
+ * §Außenkreis-r2 — ONE GEOMETRY FORMULA (HM 2026-06-14) owns height ↔ line:
+ *  · `height` (the shutter's own height · the SAME family height-scale): `full` (= --dia-h · DEFAULT)
+ *    · `prominent` · `medium` · `small` · `none` (auto · content-height) — computed off `--dia-h`,
+ *    NO hardcoded vh.
+ *  · the LINE rides the SAME ordinal scale (full=4 · prominent=3 · medium=2 · small=1 · none=0). The
+ *    V-LINE is HEIGHT-CLAMPED — effective level = `min(vSize, height + 1)`; its length = `effective /
+ *    (height+1)` of the shutter height (→ 100% "runs all through" at the cap). So a small-height
+ *    shutter auto-corrects a `prominent` v-line down to `medium` (the cap). The H-LINE is WIDTH-based
+ *    (its length is % of width · NOT height-clamped) — a small h-line on any height is allowed.
+ *    `thick/thin/hairline` set the WEIGHT (full length); `none` = off. hSize defaults `none`.
+ *  · content needs ≥ `medium` height for most presets (author's call · the formula keeps the line sane).
  *
- * CONTENT presets (§Außenkreis-r1 · HM):
- *  · `spearhead` (DEFAULT · cand-B's bridge) — text centered, sitting above + on the line (the
- *    text-container top ≈ the line top, so varying content all reads centred to the shutter).
- *  · `timeline` (magnifica default for content-shutters) — heading LEFT of the line, prose RIGHT.
- *    Repeatable (3–4 timeline-rows in one shutter) is the FORWARD step — see the parser note below.
+ * CONTENT presets: `spearhead` (text centered on the line · DEFAULT) · `timeline` (heading-left/
+ * prose-right · magnifica content-default · multi-row v-for = forward). `text` = md (`##`/`###`/`####`
+ * → HeadingParser · prose → `<p>`) · the MINIMAL parse + slot hatch (the richer parser + the time-
+ * presets are a dedicated component to come · refs: Catalog.vue · useTemplateCode.ts · DateTime*).
  *
- * `text` = an md fragment (H2/H3/H4 + a paragraph): `##`/`###`/`####` → HeadingParser (the level sets
- * the size), the rest → prose. This is the MINIMAL parse (HM-chosen · slots-now); the RICHER parser
- * (shortcodes · structured distribution · the in-day / multi-day time-presets · one shutter = one
- * time-slot) is a DEDICATED component to come — pattern refs: `src/components/Catalog.vue` +
- * `src/composables/useTemplateCode.ts` (parsing) · `DateTimeEdit.vue` / `DateRangeEdit.vue` /
- * `DateTimeExamples.vue` (time formatting). First ideas → the thread; don't build them here yet.
+ * MOTION — the family DEFAULTS to reduced-motion (`reducedMotion: true` · HP: the static reveal is the
+ * best experience · §41·3 · Magnifica runs this default): the seam scrolls away + uncovers, NO
+ * view()-lift. Set `reducedMotion: false` to opt INTO the scroll-driven lift (the OS
+ * prefers-reduced-motion still forces static for accessibility regardless).
  *
- * The STAGE assigns the z-index inline (the z-strategy is `transition`-keyed · §34.4).
- *
- * ── NOW-RUNNING ──  sticky cover + the `view()` lift (Chromium + Safari 26 · pure-CSS).
- * ── FUTURE-SPEC ──  the `wipe` value adds a reversible scroll-linked blade (flackr/scroll-timeline
- *    polyfill for Firefox-stable · `import 'scroll-timeline-polyfill'` or the canonical dist · the
- *    polyfill parses this CSS, so authoring stays declarative · same-origin stylesheet required).
+ * §34.4 — the `transition` (from the stage) drives the seam-CSS: `shutter-lift` (default · overlap +
+ * view()-lift · @supports-guarded + scroll-away fallback) · `rise-over` (passive) · `wipe` (②·later).
  *
  * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
  *   BLENDE · code — gate-checked: hold dead-still · seam-mask · ancestor-purity · standards-floor · gap-test 🌒
@@ -92,6 +92,7 @@ type LineSize =
     | 'thinline'
     | 'hairline'
     | 'none'
+type HeightSize = 'full' | 'prominent' | 'medium' | 'small' | 'none'
 
 const props = withDefaults(
     defineProps<{
@@ -99,10 +100,11 @@ const props = withDefaults(
         bg?: string
         /** optional full-bleed blade image (element-anchored · the hero-rented mechanics). */
         image?: string
-        /** the LINE · vertical size (length×weight · `full|prominent|medium|small`=length ·
-         *  `thickline|thinline|hairline`=weight · `none`=off). Default `medium`. */
+        /** the shutter's OWN height · the family height-scale · `full` (= --dia-h · default). */
+        height?: HeightSize
+        /** the LINE · vertical size (height-clamped · `min(vSize, height+1)`). Default `medium`. */
         vSize?: LineSize
-        /** the LINE · horizontal size (same scale). Default `thinline`. */
+        /** the LINE · horizontal size (width-based · not clamped). Default `none`. */
         hSize?: LineSize
         /** the line colour-token (default `primary`). */
         lineColor?: string
@@ -114,24 +116,62 @@ const props = withDefaults(
         seam?: boolean
         /** the stage transition · drives the seam-CSS (§34.4). */
         transition?: 'shutter-lift' | 'rise-over' | 'wipe'
-        /** blade height in vh · a BRIEF seam-blade vs the full plate. Omit → the stage's --dia-h. */
-        heightVh?: number
+        /** the family default · static reveal (no view()-lift · HP's best experience). false → opt into the lift. */
+        reducedMotion?: boolean
     }>(),
-    { vSize: 'medium', hSize: 'thinline', preset: 'spearhead', seam: false, transition: 'shutter-lift' },
+    {
+        height: 'full',
+        vSize: 'medium',
+        hSize: 'none',
+        preset: 'spearhead',
+        seam: false,
+        transition: 'shutter-lift',
+        reducedMotion: true,
+    },
 )
 
-/* the line scale · [length, weight] · length-prominence (full→small · default 2px weight) OR a
-   weight (thick/thin/hairline · full length) · none → 0 (invisible). HM-confirmed length×weight. */
-const LINE: Record<LineSize, [string, string]> = {
-    full: ['100%', '2px'],
-    prominent: ['76%', '2px'],
-    medium: ['60%', '2px'],
-    small: ['40%', '2px'],
-    thickline: ['100%', '4px'],
-    thinline: ['100%', '1px'],
-    hairline: ['100%', '0.5px'],
-    none: ['0', '0'],
+/* ── THE ONE GEOMETRY FORMULA (height ↔ line · §Außenkreis-r2) ───────────────────────────────── */
+const HEIGHT_LEVEL: Record<HeightSize, number> = { full: 4, prominent: 3, medium: 2, small: 1, none: 0 }
+// shutter height · computed off --dia-h (the family height) · NO hardcoded vh · 'none' = auto (content).
+const HEIGHT_CSS: Record<HeightSize, string> = {
+    full: 'var(--dia-h, 82vh)',
+    prominent: 'calc(var(--dia-h, 82vh) * 0.72)',
+    medium: 'calc(var(--dia-h, 82vh) * 0.5)',
+    small: 'calc(var(--dia-h, 82vh) * 0.3)',
+    none: 'auto',
 }
+// a line value's LENGTH-level (full/prominent/medium/small) + WEIGHT (thick/thin/hairline → full length).
+const LINE_LEN_LEVEL: Record<LineSize, number> = {
+    full: 4, prominent: 3, medium: 2, small: 1, thickline: 4, thinline: 4, hairline: 4, none: 0,
+}
+const LINE_WEIGHT: Record<LineSize, string> = {
+    full: '2px', prominent: '2px', medium: '2px', small: '2px',
+    thickline: '4px', thinline: '1px', hairline: '0.5px', none: '0',
+}
+// width-based length % (the h-line · unclamped) · index by level 0..4.
+const LEN_PCT = ['0', '40%', '60%', '80%', '100%']
+
+const geometry = computed(() => {
+    const hLvl = HEIGHT_LEVEL[props.height]
+    const cap = hLvl + 1 // the v-line can run one notch above the height → "all through" at the cap
+
+    // V-LINE · HEIGHT-CLAMPED: effective level = min(requested, cap); length = effective/cap of height.
+    const vLvl = LINE_LEN_LEVEL[props.vSize]
+    let vLen = '0'
+    let vWt = '0'
+    if (vLvl > 0) {
+        const eff = Math.min(vLvl, cap)
+        vLen = `${Math.min(100, Math.round((eff / cap) * 100))}%`
+        vWt = LINE_WEIGHT[props.vSize]
+    }
+
+    // H-LINE · WIDTH-based, NOT clamped.
+    const hLineLvl = LINE_LEN_LEVEL[props.hSize]
+    const hLen = hLineLvl > 0 ? LEN_PCT[Math.min(hLineLvl, 4)] : '0'
+    const hWt = hLineLvl > 0 ? LINE_WEIGHT[props.hSize] : '0'
+
+    return { shutterH: HEIGHT_CSS[props.height], vLen, vWt, hLen, hWt }
+})
 
 /** a colour-token → its CSS var (`bg` → --color-bg · else → --color-{token}-bg). */
 function colorVar(token: string | undefined, fallback: string): string {
@@ -140,24 +180,22 @@ function colorVar(token: string | undefined, fallback: string): string {
 }
 
 const shutterStyle = computed<Record<string, string>>(() => {
-    const [vLen, vWt] = LINE[props.vSize]
-    const [hLen, hWt] = LINE[props.hSize]
+    const g = geometry.value
     const s: Record<string, string> = {
-        // backgroundColor (longhand · NOT the `background` shorthand, which would clobber the
-        // backgroundImage set below for an image-blade)
+        // backgroundColor (longhand · NOT the `background` shorthand, which would clobber backgroundImage)
         backgroundColor: colorVar(props.bg, 'var(--color-bg)'),
         '--line-color': colorVar(props.lineColor, 'var(--color-primary-bg)'),
-        '--line-v-len': vLen,
-        '--line-v-wt': vWt,
-        '--line-h-len': hLen,
-        '--line-h-wt': hWt,
+        '--shutter-h': g.shutterH,
+        '--line-v-len': g.vLen,
+        '--line-v-wt': g.vWt,
+        '--line-h-len': g.hLen,
+        '--line-h-wt': g.hWt,
     }
     if (props.image) {
         s.backgroundImage = `url('${props.image}')`
         s.backgroundSize = 'cover'
         s.backgroundPosition = 'center'
     }
-    if (props.heightVh) s['--shutter-h'] = `${props.heightVh}vh`
     return s
 })
 
@@ -182,8 +220,8 @@ const hasContent = computed(() => parsed.value.headings.length > 0 || parsed.val
 
 <style scoped>
 /* the blade · full experience-width (breaks out of the lane via the stage's negative-margin gutter
-   var), sized by the stage CSS vars. Square — theme-7 register, no border-radius (§34.7). z-index
-   is assigned by the stage inline (the transition-keyed z-strategy · §34.4). bg default = page bg. */
+   var). Height = --shutter-h (the geometry formula · off --dia-h). Square — no border-radius (§34.7).
+   z-index assigned by the stage inline (the transition-keyed z-strategy · §34.4). bg = page bg. */
 .shutter {
     position: sticky;
     top: var(--dia-top, var(--bb-navbar-offset, 6rem));
@@ -199,8 +237,8 @@ const hasContent = computed(() => parsed.value.headings.length > 0 || parsed.val
     padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
 }
 
-/* the LINE · vertical (::before) + horizontal (::after) · sized length×weight, centered, coloured.
-   0-size (vSize/hSize = 'none') → invisible. The neutral divider/axis. */
+/* the LINE · vertical (::before · height %, height-clamped) + horizontal (::after · width %) ·
+   sized by the geometry vars, centered, coloured. 0-size (none / clamped-off) → invisible. */
 .shutter::before,
 .shutter::after {
     content: '';
@@ -236,8 +274,8 @@ const hasContent = computed(() => parsed.value.headings.length > 0 || parsed.val
     margin-bottom: 0;
 }
 
-/* spearhead · centered column (heading + prose stacked) · reads centred to the shutter (the line is
-   the bridge it sits on). [dial · HP: the exact text-top↔line-top alignment.] */
+/* spearhead · centered column (heading + prose stacked) · reads centred on the line (the bridge it
+   sits on). [dial · HP: the exact text-top↔line-top alignment.] */
 .shutter--spearhead .shutter-content {
     max-width: 42rem;
     margin-inline: auto;
@@ -245,7 +283,7 @@ const hasContent = computed(() => parsed.value.headings.length > 0 || parsed.val
 }
 
 /* timeline · heading LEFT of the line, prose RIGHT (the 2-Gasse split at centre). Multi-row (3–4
-   rows in one shutter via v-for) is the FORWARD step (see the parser note · the time-presets). */
+   rows in one shutter via v-for) is the FORWARD step (the parser note · the time-presets). */
 @media (min-width: 768px) {
     .shutter--timeline .shutter-content {
         display: grid;
@@ -313,14 +351,18 @@ const hasContent = computed(() => parsed.value.headings.length > 0 || parsed.val
     }
 }
 
-/* reduced-motion (§41·3) · a user-setting, not a device. The lift drops to a STATIC reveal: kill
-   the animation AND neutralise the overlap (position:relative · margin-bottom:0) so the seam scrolls
-   away in flow and the held plate is revealed — NOT `animation:none` alone, which would strand the
-   next plate behind the still-overlapping seam (no lift to uncover it). Same shape as the no-view()
-   fallback above.
-   ★ HP-screentest 2026-06-14: this static-reveal reads as the BEST experience so far (near
-   magnifica-production). Keep it strong — it is the floor AND a first-class reading, not merely a
-   fallback. (The Außenkreis/tweaking phase may consider making it the default feel.) */
+/* family default · the STATIC reveal (HP: the best experience · §41·3 · the family defaults to
+   reduced-motion · Magnifica runs this · `reducedMotion: true`): kill the lift + neutralise the
+   overlap so the seam scrolls away + uncovers. Opt into the lift with `reducedMotion: false`. */
+.shutter--static.shutter--seam.shutter--shutter-lift {
+    animation: none !important;
+    position: relative;
+    top: auto;
+    margin-bottom: 0;
+}
+
+/* reduced-motion · the OS user-setting · forces the static reveal regardless of `reducedMotion`
+   (accessibility · §41·3 · NOT `animation:none` alone, which would strand the next plate). */
 @media (prefers-reduced-motion: reduce) {
     .shutter--seam.shutter--shutter-lift {
         animation: none !important;

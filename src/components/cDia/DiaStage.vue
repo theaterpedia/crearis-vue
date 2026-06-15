@@ -58,6 +58,7 @@
                 class="dia-stage-seam"
                 seam
                 :transition="transition"
+                :reduced-motion="reducedMotion"
                 :style="{ zIndex: seamZ(i) }"
             />
         </template>
@@ -119,8 +120,11 @@ const props = withDefaults(
         heightVh?: number
         /** the held-Dia Gasse width in %; the Figure Gasse takes the rest. */
         leftWidth?: number
+        /** the family DEFAULT · static reveal (no view()-lift · HP's best experience · §41·3) ·
+         *  Magnifica runs this. Set false to opt the seams into the scroll-driven lift. */
+        reducedMotion?: boolean
     }>(),
-    { transition: 'shutter-lift', bounded: false, heightVh: 82, leftWidth: 48 },
+    { transition: 'shutter-lift', bounded: false, heightVh: 82, leftWidth: 48, reducedMotion: true },
 )
 
 const stageEl = ref<HTMLElement>()
