@@ -37,7 +37,7 @@
                     v-for="(p, i) in parsed.prose"
                     :key="`p${i}`"
                     class="shutter-prose"
-                >{{ p }}</p>
+                ><ProseInline :text="p" /></p>
             </div>
             <slot />
         </div>
@@ -65,8 +65,9 @@
  *
  * CONTENT presets: `spearhead` (text centered on the line · DEFAULT) · `timeline` (heading-left/
  * prose-right · magnifica content-default · multi-row v-for = forward). `text` = md (`##`/`###`/`####`
- * → HeadingParser · prose → `<p>`) · the MINIMAL parse + slot hatch (the richer parser + the time-
- * presets are a dedicated component to come · refs: Catalog.vue · useTemplateCode.ts · DateTime*).
+ * → HeadingParser · prose → `<p><ProseInline>` · inline-md: bold + autolink · `inlineMd.ts`) + slot
+ * hatch. The richer prose-parser landed (§timeline · `5b425a0`); the TIME-presets are still to come
+ * (refs: Catalog.vue · useTemplateCode.ts · DateTime* · the in-day/multi-day schedule · §37.3/§38·4).
  *
  * MOTION — the family DEFAULTS to reduced-motion (`reducedMotion: true` · HP: the static reveal is the
  * best experience · §41·3 · Magnifica runs this default): the seam scrolls away + uncovers, NO
@@ -82,6 +83,7 @@
  */
 import { computed } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
+import ProseInline from './ProseInline.vue'
 
 type LineSize =
     | 'full'
