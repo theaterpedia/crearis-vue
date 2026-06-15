@@ -40,7 +40,7 @@ export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close
     ground: {
         image: `${CLOUD}/c_scale,h_1383,w_2080/c_crop,h_1383,w_1920/v1780934621/crearis/cojc_collective_2008.jpg`,
         imageAlt: 'A cojc / DAS Ei ensemble on a hilltop, the whole group pointing at the camera — the collective, in full presence.',
-        panel: 'full presence **THE GROUND, NOT THE FIGURE**',
+        panel: '**Mit Theater Grenzen bewegen**',
         imgTmpAlignY: 'center',
         themeColor: 'green',
     },
@@ -48,7 +48,7 @@ export const beats: Record<'ground' | 'unspoken' | 'trustwalk' | 'hope' | 'close
     unspoken: {
         image: `${CLOUD}/c_fill,g_center,w_661,h_661/v1780763036/crearis/517_dasei2022_I8A6870_cqnea6.jpg`,
         imageAlt: 'A performer behind translucent sheeting, side-lit, one hand reaching out — the body witnessed, not stored.',
-        panel: 'the performative turn · Schwebezustände **YOU CANNOT STORE THEATRE**',
+        panel: '**YOU CANNOT STORE THEATRE**',
         imgTmpAlignY: 'center',
         themeColor: 'dim',
     },

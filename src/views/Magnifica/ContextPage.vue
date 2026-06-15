@@ -60,7 +60,7 @@
       <template #figure-2>
         <HeadingParser :content="beats.unspoken.panel" as="h2" class="dia-stage-figure-head" />
         <p>
-          The deepest shift was not mine to make. As DAS Ei became a real Institute, my colleagues — Eleanora first, then Rosalin — claimed the
+          Performative turn! The deepest shift was not mine to make. As DAS Ei became a real Institute, my colleagues — Eleanora first, then Rosalin — claimed the
           <CalloutPhrase :callout="callouts.performativeTurn">performative turn</CalloutPhrase>
           against me: the body as the core epistemic target, not the stories any more. I had come up under the linguistic turn, under Cultural Studies, under the word. They turned me toward the body. Together we named the things the field did but could not say — the
           <CalloutPhrase :callout="callouts.raumlauf">Raumlauf</CalloutPhrase>
