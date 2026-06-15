@@ -26,7 +26,7 @@
     </template>
 
     <DiaStage
-      :scenes="scenes"
+      :bilder="bilder"
       bounded
     >
       <!-- scene 0 · the method · a held text-Dia (the thesis) · the hedge rises as the Figure -->
@@ -103,17 +103,17 @@ import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import DiaStage from '@/components/magnifica/DiaStage.vue'
-import type { DiaSceneSpec } from '@/components/magnifica/types'
+import DiaStage from '@/components/cDia/DiaStage.vue'
+import type { DiaBildSpec } from '@/components/cDia/types'
 import { hero, beats, callouts } from './content/context'
 
 /**
- * The 6 /context scenes (the editor's v-for · §34.5). Scene 0 is a text-Dia (the method · its held
- * text comes via the #dia-0 slot); scenes 1–5 are image-Dias (beats · the image is the held plate).
- * All Figures are rich (CalloutPhrase) → authored as #figure-N slots. theme is carried per scene
- * (visual application is a :3001 dial · HP loop). The seam shutter-lift between scenes is the stage's.
+ * The 6 /context Bilder (the editor's v-for · §34.5/§38·1). Bild 0 is a text-Dia (the method · its
+ * held text comes via the #dia-0 slot); Bilder 1–5 are image-Dias (beats · the image is the held
+ * plate). All Figures are rich (CalloutPhrase) → authored as #figure-N slots. theme is carried per
+ * Bild (visual application is a :3001 dial · HP loop). The seam shutter-lift is the stage's.
  */
-const scenes: DiaSceneSpec[] = [
+const bilder: DiaBildSpec[] = [
   { dia: {}, lane: 'left', theme: 'green' },
   { dia: { image: beats.ground.image, imageAlt: beats.ground.imageAlt, imgTmpAlignY: beats.ground.imgTmpAlignY }, lane: 'left', theme: beats.ground.themeColor },
   { dia: { image: beats.unspoken.image, imageAlt: beats.unspoken.imageAlt, imgTmpAlignY: beats.unspoken.imgTmpAlignY }, lane: 'left', theme: beats.unspoken.themeColor },

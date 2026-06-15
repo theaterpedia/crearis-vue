@@ -144,7 +144,17 @@ const shutterStyle = computed<Record<string, string>>(() => {
     }
 }
 
+/* reduced-motion (§41·3) · a user-setting, not a device. The lift drops to a STATIC reveal: kill
+   the animation AND neutralise the overlap (position:relative · margin-bottom:0) so the seam scrolls
+   away in flow and the held plate is revealed — NOT `animation:none` alone, which would strand the
+   next plate behind the still-overlapping seam (no lift to uncover it). Same shape as the no-view()
+   fallback above. */
 @media (prefers-reduced-motion: reduce) {
-    .shutter--seam { animation: none !important; }
+    .shutter--seam.shutter--shutter-lift {
+        animation: none !important;
+        position: relative;
+        top: auto;
+        margin-bottom: 0;
+    }
 }
 </style>

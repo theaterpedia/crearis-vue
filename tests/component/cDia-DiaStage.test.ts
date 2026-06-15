@@ -6,33 +6,33 @@
 
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import DiaStage from '../../src/components/magnifica/DiaStage.vue'
-import Dia from '../../src/components/magnifica/Dia.vue'
-import Shutter from '../../src/components/magnifica/Shutter.vue'
-import type { DiaSceneSpec } from '../../src/components/magnifica/types'
+import DiaStage from '../../src/components/cDia/DiaStage.vue'
+import Dia from '../../src/components/cDia/Dia.vue'
+import Shutter from '../../src/components/cDia/Shutter.vue'
+import type { DiaBildSpec } from '../../src/components/cDia/types'
 
 describe('DiaStage', () => {
-    it('renders one held Dia + Figure per scene + a seam between, with the lane vars (§34)', () => {
-        const scenes: DiaSceneSpec[] = [
+    it('renders one held Dia + Figure per Bild + a seam between, with the Gasse vars (§34/§38·1)', () => {
+        const bilder: DiaBildSpec[] = [
             { dia: { image: '/a.jpg', imageAlt: 'a' }, figure: 'over **HEAD-A**', lane: 'left' },
             { dia: {}, figure: 'two **HEAD-B**', lane: 'left' },
         ]
-        const w = mount(DiaStage, { props: { scenes, leftWidth: 40 } })
+        const w = mount(DiaStage, { props: { bilder, leftWidth: 40 } })
         const stage = w.find('.dia-stage')
         expect(stage.exists()).toBe(true)
         expect(stage.classes()).toContain('dia-stage--shutter-lift') // the default transition (§35)
         const style = stage.attributes('style') ?? ''
         expect(style).toContain('--dia-left-w: 40%')
         expect(style).toContain('--dia-right-w: 60%')
-        expect(w.findAll('.dia').length).toBe(2) // one held Dia per scene
+        expect(w.findAll('.dia').length).toBe(2) // one held Dia per Bild
         expect(w.findAll('.shutter--seam').length).toBe(1) // one seam between two scenes
         expect(w.html()).toContain('HEAD-A') // figure md → HeadingParser
         expect(w.html()).toContain('HEAD-B')
     })
 
     it('switches the transition (z-strategy + seam-CSS keyed to the prop · §34.4)', () => {
-        const scenes: DiaSceneSpec[] = [{ dia: {} }, { dia: {} }]
-        const w = mount(DiaStage, { props: { scenes, transition: 'rise-over' } })
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        const w = mount(DiaStage, { props: { bilder, transition: 'rise-over' } })
         expect(w.find('.dia-stage').classes()).toContain('dia-stage--rise-over')
     })
 })
