@@ -106,6 +106,9 @@ export interface BackSlideSpec {
     transition?: 'uncover' | 'scroll-over'
 }
 
+/* DiaSceneSpec moved → `@/components/cDia/types` as `DiaBildSpec` (Scene→Bild · §38·1 · the
+   primitives relocated to the core `cDia/` home · §41·1). */
+
 /**
  * Shape of an item in CardsCanvas's `items` array · mirrors the 2022
  * JSON-items pattern but type-checked here.
