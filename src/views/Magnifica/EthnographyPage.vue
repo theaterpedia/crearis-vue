@@ -136,9 +136,9 @@
         <div class="ethno-rise ethno-rise--rLate">
           <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
         </div>
-        <!-- a "…" arrives even later, below the Linde-hint (the Dia-3 cliffhanger · HM round-3) -->
+        <!-- a blank spacer arrives even later, below the Linde-hint (the Dia-3 breath · HM round-3) -->
         <div class="ethno-rise ethno-rise--rLate2">
-          <p class="ethno-dots"><br /><br /><br />…</p>
+          <p class="ethno-dots"><br /><br /><br />&nbsp;</p>
         </div>
 
         <!-- ── BORDER 3 ── -->
@@ -155,9 +155,9 @@
         <div class="ethno-rise ethno-rise--rRight ethno-rise--r2">
           <p class="page-spleen-question">Is this simply my personal spleen — or is it about something that is generally important?</p>
         </div>
-        <!-- the cliffhanger · a last "…" rises + sticks below the spleen (Page-3 resolves it) -->
+        <!-- the cliffhanger · a last blank breath rises + sticks below the spleen (Page-3 resolves it) -->
         <div class="ethno-rise ethno-rise--rRight ethno-rise--dots">
-          <p class="ethno-dots">…</p>
+          <p class="ethno-dots"><br /><br /><br />&nbsp;</p>
         </div>
       </div>
   </MagnificaPageLayout>
@@ -349,6 +349,11 @@ const heroOverlay =
   .ethno-rise--spur .ethno-voice,
   .ethno-rise--linden .ethno-voice { width: 50%; }
   .ethno-rise--linden .ethno-voice { margin-left: auto; }
+  /* …and their rise carries NO opaque bg — else the lane-wide black rectangle behind the 50%
+     post-it reads as "the post-it takes full width" (HM round-3 · the real cause, not the shadow).
+     Only the coloured 50% post-it shows; the rest of the lane stays clear. */
+  .ethno-rise--spur,
+  .ethno-rise--linden { background: transparent; }
 
   /* the Linde-hint · inside the Figure (RIGHT lane · base width) · arrives LATE + STICKS at 60vh (HM) */
   .ethno-rise--rLate {
