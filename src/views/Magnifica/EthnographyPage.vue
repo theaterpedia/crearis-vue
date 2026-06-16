@@ -142,6 +142,10 @@
         <div class="ethno-rise ethno-rise--rRight ethno-rise--r2">
           <p class="page-spleen-question">Is this simply my personal spleen — or is it about something that is generally important?</p>
         </div>
+        <!-- the cliffhanger · a last "…" rises + sticks below the spleen (Page-3 resolves it) -->
+        <div class="ethno-rise ethno-rise--rRight ethno-rise--dots">
+          <p class="ethno-dots">…</p>
+        </div>
       </div>
   </MagnificaPageLayout>
 </template>
@@ -270,6 +274,24 @@ const heroOverlay =
 .ethno-stage .ethno-dialogue { margin: 0 0 1rem; }
 .ethno-stage .ethno-aftermath-comment { font-size: 0.8rem; opacity: 0.8; margin-top: 0.75rem; }
 
+/* standard prose line-height for the stage paragraphs · they sit OUTSIDE .page-section (like the
+   family's .dia-stage-figure p · HP 2026-06-14), so re-apply the page prose here. */
+.ethno-stage p {
+  font-size: clamp(0.95rem, 1.5vw, 1.0625rem);
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+.ethno-stage p:last-child { margin-bottom: 0; }
+
+/* Dia-2 "Then…" · left-side padding + the numbered list FORCED visible (markers in text-colour ·
+   a reset had hidden them). */
+.ethno-dia--2 { padding-left: 1.5rem; }
+.ethno-stage .page-flip-list { list-style: decimal outside; }
+.ethno-stage .page-flip-list li::marker { color: var(--color-contrast); }
+
+/* the cliffhanger "…" (Dia-4 · after the spleen) */
+.ethno-dots { font-size: 1.5rem; letter-spacing: 0.1em; opacity: 0.8; }
+
 @media (min-width: 768px) {
   /* the held Dia · LEFT lane · sticky-to-stage → never un-pins · opaque (covers cleanly when behind) */
   .ethno-dia {
@@ -291,12 +313,12 @@ const heroOverlay =
   .ethno-rise--r2,
   .ethno-rise--r3 { margin-top: 50vh; }
   .ethno-rise--r3 { margin-top: 60vh; }
-  /* the Linde-hint · arrives LATE + sticks BELOW (full-width · HM "arrives later and sticks below") */
+  /* the spleen question (Dia-4 · rRight+r2) · arrives late, STICKS at 50vh (HM) */
+  .ethno-rise--rRight.ethno-rise--r2 { top: 50vh; }
+  /* the Linde-hint · inside the Figure (RIGHT lane · base width) · arrives LATE + STICKS at 70vh (HM) */
   .ethno-rise--rLate {
-    width: 100%;
-    margin-left: 0;
     margin-top: 70vh;
-    top: calc(var(--dia-top) + 6rem);
+    top: 70vh;
   }
 
   /* the held Welcome code-fence (Dia-4 · tall → a fixed scrollable box · gotcha #4) */
@@ -312,9 +334,9 @@ const heroOverlay =
     position: sticky;
     top: var(--dia-top);
     width: 100%;
-    min-height: 48vh;
+    min-height: 90vh;
     margin: 6vh 0;
-    background: var(--color-card-bg, #1d1b1a);
+    background: var(--color-bg);   /* oklch black in theme-7 (inverted) · the black-between */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,7 +368,7 @@ const heroOverlay =
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-card-bg, #1d1b1a);
+    background: var(--color-bg);
   }
   .ethno-seam-line { width: 2px; height: 3rem; background: var(--color-primary-bg); }
 }
