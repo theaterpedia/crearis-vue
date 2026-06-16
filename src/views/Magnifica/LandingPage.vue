@@ -39,7 +39,15 @@
            · real fpostit fast-follow · A2). A 50vH cross-hair seam sweeps over the held grid, revealing
            the bottom row (q3+q4) then the top row (q1+q2). Direct child of .magnifica-landing-content
            — ancestor-purity for the sticky hold (the §14 audit: this shell is clean). -->
-      <QuadrantStage :quadrants="quadrants" bounded :top-offset="96" seam-line-color="primary">
+      <QuadrantStage
+        :quadrants="quadrants"
+        bounded
+        :top-offset="96"
+        seam-line-color="primary"
+        seam-v-size="small"
+        seam-preset="split"
+        :seam-text="quadrantSeamText"
+      >
         <!-- q2 · discourse · q3 · context · q4 · ethnography (faked route post-its · in-place · A3) -->
         <template #q-2>
           <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[0].theme}`" :to="quadrantCards[0].to">
@@ -101,6 +109,7 @@ import {
   letterEntries,
   quadrants,
   quadrantCards,
+  quadrantSeamText,
   closingP3Before,
   closingP3After,
   honestFlag,

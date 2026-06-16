@@ -141,6 +141,15 @@ export const quadrantCards: ReadonlyArray<RouteCard> = [
     navCards.find((c) => c.to === '/ethnography')!,
 ]
 
+/** Shutter SPLIT-text (change 3) · "left | right" split by the vertical line · [lower-row (q3|q4),
+ *  upper-row (q1|q2)] — labels the row the curtain is over, switching as it crosses into the
+ *  viewport's upper half. q3=context · q4=ethnography (bottom) · q1=image (—) · q2=discourse (top).
+ *  Content-dial (HP authors the final wording). */
+export const quadrantSeamText: string[] = [
+    'context | ethnography',
+    ' | discourse',
+]
+
 // ==Page-bottom · Hans-voice closing== · SETTLED §7 (HM-audit · "all near compaction" · Wege CUT)
 // Carries the organic-intellectual + individuums + back-to-the-substrate resurfacing terms
 // (Q3 accent is a later cross-page pass).
