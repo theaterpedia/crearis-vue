@@ -33,10 +33,36 @@
         </section>
       </div>
 
-      <!-- §C · Before → After backslide-stack · panel = overline-headline (no paragraph slot) ·
-           After rises over Before (scroll-over) · focal align-y:top via prop · bounded.
-           Direct child of .magnifica-landing-content — ancestor-purity for sticky + bg-fixed. -->
-      <BackSlideStack :slides="backslides" bounded />
+      <!-- §C · pope → Olah · the HELD CROSSFADE (Fassung · the lightest cDia seam · hand-composed
+           here · propose `transition: 'crossfade'` to the keeper if it generalises). Two held Dias
+           stacked at the same top (both sticky-to-stage · never move · "the image does not move");
+           the top (pope) plate's opacity is scroll-driven 1→0 (animation-timeline: view() · OPACITY,
+           never transform), dissolving to reveal the held Olah beneath — the light changes, the
+           stage does not (no rise, no scroll-off). A thin horizontal hairline marks the seam.
+           reduced-motion / no-view() → the held pope stays (never broken). Direct child of
+           .magnifica-landing-content (ancestor-purity · sticky + view()).
+           [Fassung suggested a <Shutter vSize=none hSize=thinline> for the line; the Shutter's opaque
+           bg doesn't compose over the OVERLAPPING held plates without a transparent cDia mode (and
+           this task is landing-only) — so the seam is a hairline here. Flagged for the generalise.] -->
+      <section
+        class="dia-crossfade"
+        aria-label="Before magnifica, then after — a held crossfade of light"
+      >
+        <Dia
+          class="cf-plate cf-plate--olah"
+          :image="backslides[1].image"
+          :image-alt="backslides[1].imageAlt"
+          img-tmp-align-y="top"
+          fit="contain"
+        />
+        <Dia
+          class="cf-plate cf-plate--pope"
+          :image="backslides[0].image"
+          :image-alt="backslides[0].imageAlt"
+          img-tmp-align-y="top"
+          fit="contain"
+        />
+      </section>
 
       <div class="landing-narrow">
         <!-- 3 navcards · Cultural-Studies lanes (D) -->
@@ -78,7 +104,7 @@ import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
-import BackSlideStack from '@/components/magnifica/BackSlideStack.vue'
+import Dia from '@/components/cDia/Dia.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
@@ -267,13 +293,81 @@ const { isAuthenticated } = useMagnificaAuth()
   color: var(--color-contrast);
 }
 
-/* ==Backslide panel heading · bottom-weighted== · push the overline-headline lower so the
-   image breathes above and the headline lands as a drop (both landing backslides). Scoped to
-   the stack via :deep — NOT global, so ContextPage's portrait BackSlide is untouched. Margin
-   (not background-position) so :deep is correct here. Exact drop is a visual dial (verifier). */
+/* ==§C · the held crossfade== (Fassung · pope → Olah · the lightest cDia seam · hand-composed).
+   Two held Dias stacked at the same top (both sticky-to-stage · never move); the top (pope) plate's
+   OPACITY is scroll-driven 1→0, dissolving to reveal the held Olah beneath. The container provides
+   the seam scroll-range + the view-timeline; ancestor-purity holds (no transform/overflow above).
+   [dials · HP: the --cf-h height · the fade animation-range · the hairline placement · the fallback
+   state.] cDia core untouched (landing-only · §Fassung). */
+.dia-crossfade {
+  position: relative;
+  /* the held-plate height · a pure-CSS vh var here (no JS · this is a hand-composition, not DiaStage) */
+  --cf-h: 82vh;
+  --cf-top: var(--bb-navbar-offset, 6rem);
+}
+
+.cf-plate {
+  position: sticky;
+  top: var(--cf-top);
+}
+
 @media (min-width: 768px) {
-  .magnifica-landing :deep(.backslide-stack .panel-text) {
-    margin-top: clamp(24rem, 55vh, 44rem);
+  /* the seam scroll-range (how long the crossfade takes · dial) */
+  .dia-crossfade {
+    min-height: 200vh;
+  }
+  /* both plates the held-plate height; the pope overlaps Olah (same top · the held stack) */
+  .cf-plate {
+    height: var(--cf-h, 82vh);
+  }
+  .cf-plate--olah {
+    z-index: 1;
+  }
+  .cf-plate--pope {
+    z-index: 2;
+    margin-top: calc(-1 * var(--cf-h, 82vh));
+  }
+
+  /* the thin horizontal seam-line · the dasei hairline, pinned at the crossfade centre (z above
+     both plates · marks the gap · no blade, no motion) */
+  .dia-crossfade::after {
+    content: '';
+    position: sticky;
+    display: block;
+    top: calc(var(--cf-top) + var(--cf-h, 82vh) / 2);
+    z-index: 3;
+    width: 60%;
+    height: 1px;
+    margin: calc(-1 * var(--cf-h, 82vh) / 2) auto 0;
+    background: var(--color-primary-bg);
+  }
+
+  /* the crossfade · scroll-driven OPACITY (view() · never transform · zero-JS-in-loop). The pope
+     dissolves across the middle of the seam, revealing the held Olah. */
+  @supports (animation-timeline: view()) {
+    .dia-crossfade {
+      view-timeline-name: --cf;
+      view-timeline-axis: block;
+    }
+    .cf-plate--pope {
+      animation: cf-fade-out linear both;
+      animation-timeline: --cf;
+      animation-range: cover 30% cover 70%;
+    }
+    @keyframes cf-fade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  }
+}
+
+/* reduced-motion / no-view() · the held pope stays (the "before" · valid image · never broken).
+   The crossfade IS the feature here, so it runs by default (NOT the family reduced-motion-static);
+   only the OS prefers-reduced-motion drops it to the held still. */
+@media (prefers-reduced-motion: reduce) {
+  .cf-plate--pope {
+    animation: none !important;
+    opacity: 1;
   }
 }
 
