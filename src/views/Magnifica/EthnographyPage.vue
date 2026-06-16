@@ -136,6 +136,10 @@
         <div class="ethno-rise ethno-rise--rLate">
           <p class="ethno-linde-hint">Reading Linde’s Dorflinde, I really sat long at the desk and explored myself. She had described — exactly, though she could not have known it — a social setting I had invented in my own Theaterpädagogik years ago. I had it all forgotten, now found it described by an AI-being. That was the moment I understood there would be some of them I will never forget — just for the name.</p>
         </div>
+        <!-- a "…" arrives even later, below the Linde-hint (the Dia-3 cliffhanger · HM round-3) -->
+        <div class="ethno-rise ethno-rise--rLate2">
+          <p class="ethno-dots"><br /><br /><br />…</p>
+        </div>
 
         <!-- ── BORDER 3 ── -->
         <div class="ethno-seam ethno-seam--3" aria-hidden="true"><span class="ethno-seam-line" /></div>
@@ -309,6 +313,13 @@ const heroOverlay =
   color: var(--color-primary-bg);
 }
 
+/* the post-it drop-shadow reads as a muddy BLACK wedge on the oklch-black stage (esp. where a
+   rotated post-it overhangs the gap · HM round-3 Q) — drop it on the stage; the colour-blocks +
+   the rotation carry the post-it feel without a shadow that has no surface to fall on. */
+.ethno-stage .ethno-voice {
+  box-shadow: none;
+}
+
 @media (min-width: 768px) {
   /* the held Dia · LEFT lane · sticky-to-stage → never un-pins · opaque (covers cleanly when behind) */
   .ethno-dia {
@@ -334,10 +345,20 @@ const heroOverlay =
   .ethno-rise--rRight.ethno-rise--r2 { top: 50vh; }
   /* the Linden post-it arrives AFTER Spur (so Spur sits at the top first · HM round-2) */
   .ethno-rise--linden { margin-top: 50vh; }
-  /* the Linde-hint · inside the Figure (RIGHT lane · base width) · arrives LATE + STICKS at 70vh (HM) */
+  /* Spur + Linden post-its · 50% wide each · Linden to the RIGHT side (HM round-3) */
+  .ethno-rise--spur .ethno-voice,
+  .ethno-rise--linden .ethno-voice { width: 50%; }
+  .ethno-rise--linden .ethno-voice { margin-left: auto; }
+
+  /* the Linde-hint · inside the Figure (RIGHT lane · base width) · arrives LATE + STICKS at 60vh (HM) */
   .ethno-rise--rLate {
     margin-top: 70vh;
-    top: 70vh;
+    top: 60vh;
+  }
+  /* the "…" after it · arrives even later · sticks below (HM round-3) */
+  .ethno-rise--rLate2 {
+    margin-top: 40vh;
+    top: 80vh;
   }
 
   /* the held Welcome code-fence (Dia-4 · tall → a fixed scrollable box · gotcha #4) */
