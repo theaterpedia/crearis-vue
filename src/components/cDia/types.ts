@@ -13,6 +13,18 @@
 export type DiaAlignX = 'left' | 'center' | 'right'
 export type DiaAlignY = 'top' | 'center' | 'bottom'
 
+/** the Shutter LINE scale (length×weight · §Außenkreis-r2) · shared so DiaStage can type its
+ *  per-stage seam-line props (`seamVSize`/`seamHSize`) that forward to the generated seam-Shutters. */
+export type LineSize =
+    | 'full'
+    | 'prominent'
+    | 'medium'
+    | 'small'
+    | 'thickline'
+    | 'thinline'
+    | 'hairline'
+    | 'none'
+
 /**
  * One **Bild** — the beat (a Dia + its Figure). §38·1: *Bild* is the truer *Composita* — the
  * projected plate, the *Standbild* (the held tableau · the-hold), and the Figur-Grund gestalt, in
