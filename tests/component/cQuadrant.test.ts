@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Quadrant from '../../src/components/cQuadrant/Quadrant.vue'
+import QuadrantSeam from '../../src/components/cQuadrant/QuadrantSeam.vue'
 import QuadrantStage from '../../src/components/cQuadrant/QuadrantStage.vue'
 import { crossGeometry } from '../../src/components/cQuadrant/types'
 import type { QuadrantSpec } from '../../src/components/cQuadrant/types'
@@ -40,10 +41,20 @@ describe('cQuadrant · Quadrant (the cell)', () => {
         expect(el.classes()).not.toContain('quadrant--revealed')
     })
 
-    it('flips the reveal modifier when :revealed', () => {
-        const w = mount(Quadrant, { props: { theme: 'green', heading: '**Q**', revealed: true } })
-        expect(w.find('.quadrant').classes()).toContain('quadrant--revealed')
-        expect(w.find('.quadrant').classes()).toContain('quadrant--green')
+    it('heading is ALWAYS rendered; only the sub-element is reveal-gated (change 1)', () => {
+        const hidden = mount(Quadrant, {
+            props: { theme: 'green', heading: '**Q**', revealed: false },
+            slots: { default: '<a class="probe">postit</a>' },
+        })
+        expect(hidden.find('.quadrant-heading').exists()).toBe(true) // heading shown regardless
+        expect(hidden.find('.quadrant-sub').classes()).not.toContain('quadrant-sub--revealed')
+        expect(hidden.find('.quadrant').classes()).toContain('quadrant--green')
+
+        const shown = mount(Quadrant, {
+            props: { theme: 'green', heading: '**Q**', revealed: true },
+            slots: { default: '<a class="probe">postit</a>' },
+        })
+        expect(shown.find('.quadrant-sub').classes()).toContain('quadrant-sub--revealed')
     })
 
     it('image-only cell (no heading, no slot) renders no content layer (q1 · "nothing appears")', () => {
@@ -57,6 +68,26 @@ describe('cQuadrant · Quadrant (the cell)', () => {
             slots: { default: '<a class="probe">postit</a>' },
         })
         expect(w.find('.quadrant-sub .probe').exists()).toBe(true)
+    })
+})
+
+describe('cQuadrant · QuadrantSeam (the opaque curtain · split preset · change 3)', () => {
+    it('split preset splits "left | right" by the vertical line', () => {
+        const w = mount(QuadrantSeam, { props: { preset: 'split', text: 'context | ethnography' } })
+        expect(w.find('.quadrant-seam-split').exists()).toBe(true)
+        expect(w.find('.quadrant-seam-split-cell--left').text()).toBe('context')
+        expect(w.find('.quadrant-seam-split-cell--right').text()).toBe('ethnography')
+    })
+
+    it('split with an empty left side renders the right label only (the q1 image cell)', () => {
+        const w = mount(QuadrantSeam, { props: { preset: 'split', text: ' | discourse' } })
+        expect(w.find('.quadrant-seam-split-cell--left').text()).toBe('')
+        expect(w.find('.quadrant-seam-split-cell--right').text()).toBe('discourse')
+    })
+
+    it('no text → no split content', () => {
+        const w = mount(QuadrantSeam, { props: { preset: 'split' } })
+        expect(w.find('.quadrant-seam-split').exists()).toBe(false)
     })
 })
 

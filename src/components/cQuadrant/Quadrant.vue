@@ -6,9 +6,10 @@
         :role="image ? 'img' : undefined"
         :aria-label="image ? (imageAlt ?? '') : undefined"
     >
-        <!-- the CONTENT layer · heading + the in-place sub-element. Placed on its real position on
-             load but visibility-gated (HP-A3) — `visibility:hidden` RESERVES the layout (the "real
-             position"), the reveal flips it visible. q1 (image-only · no content) renders nothing. -->
+        <!-- the CONTENT layer. The HEADING is visible by DEFAULT (HP 2026-06-16 · change 1) — only
+             the SUB-ELEMENT is reveal-gated: placed on its real position on load, `visibility:hidden`
+             RESERVES the layout, the reveal (the curtain lifting off its half) flips it visible. q1
+             (image-only · no heading, no sub-element) renders nothing. -->
         <div
             v-if="hasContent"
             class="quadrant-content"
@@ -20,9 +21,13 @@
                 :as="headingAs"
                 class="quadrant-heading"
             />
-            <!-- the sub-element (one now · a list later · HP-spec). Faked card-code today; a real
-                 fpostit (discourse/context/ethnography) is the fast-follow (thread §4 · A2). -->
-            <div v-if="$slots.default" class="quadrant-sub">
+            <!-- the sub-element (one now · a list later · HP-spec) · reveal-gated. Faked card-code
+                 today; a real fpostit (discourse/context/ethnography) is the fast-follow (§4 · A2). -->
+            <div
+                v-if="$slots.default"
+                class="quadrant-sub"
+                :class="{ 'quadrant-sub--revealed': revealed }"
+            >
                 <slot />
             </div>
         </div>
@@ -95,9 +100,7 @@ const bgStyle = computed<Record<string, string>>(() => {
 .quadrant--pink   { background-color: var(--color-negative-bg); color: var(--color-negative-contrast); }
 .quadrant--dim    { background-color: var(--color-card-bg);     color: var(--color-card-contrast); }
 
-/* the reveal-gated content · placed on its real position, invisible on load (visibility KEEPS the
-   layout · HP-A3) · toggled visible INSTANTLY while the opaque shutter covers this half, so finished
-   content is revealed as the curtain lifts (no fade · the curtain IS the reveal motion · A1). */
+/* the content layer · ALWAYS visible (the heading reads from the start · change 1). */
 .quadrant-content {
     position: relative;
     z-index: 1;
@@ -106,10 +109,6 @@ const bgStyle = computed<Record<string, string>>(() => {
     gap: 0.75rem;
     padding: clamp(1rem, 2.5vw, 2rem);
     height: 100%;
-    visibility: hidden;
-}
-.quadrant--revealed .quadrant-content {
-    visibility: visible;
 }
 
 /* heading side · left (default · top-left) or right (top-right) */
@@ -126,7 +125,14 @@ const bgStyle = computed<Record<string, string>>(() => {
     margin: 0;
 }
 
+/* the sub-element (the post-it) · the ONLY reveal-gated part (change 1) · placed on its real
+   position, invisible on load (visibility KEEPS the layout · HP-A3), toggled visible INSTANTLY while
+   the opaque shutter covers this half → revealed as the curtain lifts (the curtain IS the motion). */
 .quadrant-sub {
     margin-top: auto; /* the sub-element settles toward the cell's lower region by default */
+    visibility: hidden;
+}
+.quadrant-sub--revealed {
+    visibility: visible;
 }
 </style>

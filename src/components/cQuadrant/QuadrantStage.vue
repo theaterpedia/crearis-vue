@@ -34,6 +34,8 @@
                 :v-size="seamVSize"
                 :h-size="seamHSize"
                 :line-color="seamLineColor"
+                :preset="seamPreset"
+                :text="activeSeamText"
             />
         </div>
 
@@ -79,9 +81,15 @@ const props = withDefaults(
         /** the opaque curtain colour-token + cross arms/colour (forwarded to the shutter). */
         seamBg?: string
         seamHeight?: ShutterHeightSize
+        /** the cross arms · default the VERTICAL line only (change 2). */
         seamVSize?: LineSize
         seamHSize?: LineSize
         seamLineColor?: string
+        /** the shutter text-preset (`split` = "left | right" around the line) + the two-item text:
+         *  [lower-row labels, upper-row labels]. The active item switches when the shutter crosses
+         *  into the viewport's UPPER half (HP 2026-06-16 · change 3). */
+        seamPreset?: 'split' | 'spearhead'
+        seamText?: string[]
         /** show the (normally invisible) brush · debugging the release point on the screentest. */
         debugBrush?: boolean
         /** opt the reveal OFF → everything visible immediately (also forced by OS reduced-motion). */
@@ -94,8 +102,9 @@ const props = withDefaults(
         seamBg: 'bg',
         seamHeight: 'full',
         seamVSize: 'full',
-        seamHSize: 'full',
+        seamHSize: 'none', // default = the vertical line only (change 2)
         seamLineColor: 'primary',
+        seamPreset: 'spearhead',
         debugBrush: false,
         reducedMotion: false,
     },
@@ -108,6 +117,10 @@ const cells = computed(() => props.quadrants.slice(0, 4))
 /* ── reveal state · per row · toggled WHILE the opaque shutter covers that half (A1) ───────────── */
 const topRowRevealed = ref(false) // q1 + q2 (upper half)
 const bottomRowRevealed = ref(false) // q3 + q4 (lower half)
+// split-text active item · 0 = lower-row labels · 1 = upper-row labels · switches when the shutter
+// crosses into the viewport's UPPER half (change 3).
+const activeSeamIndex = ref(0)
+const activeSeamText = computed(() => props.seamText?.[activeSeamIndex.value])
 let motionOff = false
 
 /** q1,q2 (0,1) = top row · q3,q4 (2,3) = bottom row. */
@@ -173,6 +186,11 @@ function setupObservers(): void {
     }
     observers.push(make(quadrantMid, (v) => (bottomRowRevealed.value = v)))
     observers.push(make(quadrantTop, (v) => (topRowRevealed.value = v)))
+
+    // split-text · switch the active item when the shutter crosses the viewport MID-line (change 3).
+    if (props.seamPreset === 'split' && props.seamText?.length) {
+        observers.push(make(vh / 2, (v) => (activeSeamIndex.value = v ? 1 : 0)))
+    }
 }
 
 onMounted(() => {

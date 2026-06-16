@@ -26,7 +26,7 @@ const props = withDefaults(
         /** the line colour-token (default `primary` · the dasei-yellow motif). */
         lineColor?: string
     }>(),
-    { vSize: 'full', hSize: 'full', height: 'full', lineColor: 'primary' },
+    { vSize: 'full', hSize: 'none', height: 'full', lineColor: 'primary' },
 )
 
 const lineStyle = computed<Record<string, string>>(() => {
