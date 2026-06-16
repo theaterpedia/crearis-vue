@@ -1,116 +1,75 @@
 <template>
-    <div ref="seamEl" class="quadrant-seam" :style="{ height }">
-        <!-- zero-height edge-sentinels · the IO measures THESE crossing the viewport edges -->
-        <span ref="topEl" class="quadrant-seam-sentinel quadrant-seam-sentinel--top" aria-hidden="true" />
-        <!-- the CROSS-HAIR · the 2×2 divider made visible (the dasei line that plays the gap) -->
-        <SeamLine :v-size="vSize" :h-size="hSize" :line-color="lineColor" />
-        <span ref="bottomEl" class="quadrant-seam-sentinel quadrant-seam-sentinel--bottom" aria-hidden="true" />
+    <div class="quadrant-seam" :class="{ 'quadrant-seam--spearhead': $slots.default }" :style="seamStyle">
+        <!-- the CROSS-HAIR · the 2×2 divider, sized by the cDia height↔line math (SeamLine). -->
+        <SeamLine :v-size="vSize" :h-size="hSize" :height="height" :line-color="lineColor" />
+        <!-- content layer · PREPARED for the later cDia-style heading/text on the shutter (HP · A2);
+             empty today. Centred (the spearhead bridge) when present. -->
+        <div v-if="$slots.default" class="quadrant-seam-content">
+            <slot />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 /**
- * QuadrantSeam — the 50vH blade that sweeps (bottom→top) over the HELD quadrant, carrying the
- * cross-hair (the 2×2 divider · SeamLine). Transparent surface (the §52 "a line that plays OVER
- * held layers needs a transparent surface" gene), so the held grid reads through it.
+ * QuadrantSeam — the OPAQUE curtain (the shutter). It scrolls UP across the FIXED quadrant, MASKING
+ * it: when it covers a half, the stage toggles that row's content visible BEHIND the curtain, so the
+ * eye sees finished content as the curtain lifts off (no pop-in · HP-recalibration 2026-06-16). NOT
+ * a transparent blade (the first draft's error) — opaque, it covers.
  *
- * It OWNS its scroll-edge detection (HP-spec: "a shutter is controlled by scroll and releases an
- * event when its bottom enters the viewport + when its top exits") and EMITS:
- *   · @reveal-bottom(true)  when the seam's BOTTOM edge has entered the viewport → stage shows q3+q4
- *   · @reveal-top(true)     when the seam's TOP edge has exited above the viewport → stage shows q1+q2
- * Both are RE-EMITTED with the reversed value on scroll-up (the spec's "the other way around").
+ * It carries the cross-hair (SeamLine) sized by the cDia/Shutter height↔line math (§Außenkreis-r2),
+ * so it aligns with the cDia family and is PREPARED to host a heading/text layer later (the #default
+ * slot · the spearhead centring · A2). It does NOT own the scroll-detection anymore — the STAGE
+ * watches THIS element cross the fixed quadrant's half-lines (it knows the grid geometry).
  *
- * Mechanism = a BOUNDED IntersectionObserver on two zero-height edge-sentinels — NOT a per-frame
- * scroll-driver (the sanctioned divergence from cDia's "CSS runs" · thread §2). The callback only
- * fires at viewport-edge crossings; we recompute both booleans from the live rects and emit. No-IO
- * floor (SSR / ancient engine) = emit both true on mount (everything visible · never a hidden trap).
+ * Height = `--q-shutter-h` (the stage writes the real px = a held cell-row, below 50vH after the
+ * top/bottom offset corrections · A4); the `height` ordinal gives the no-JS fallback + the line-clamp.
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import SeamLine from './SeamLine.vue'
-import type { LineSize } from './types'
+import { SHUTTER_HEIGHT_CSS, colorVar, type LineSize, type ShutterHeightSize } from './types'
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
-        /** the blade height (HP-spec: mostly 50vH · stays 50vH on mobile too). */
-        height?: string
+        /** the curtain colour-token (`bg` = page bg · default · opaque · it MASKS). */
+        bg?: string
+        /** the shutter height-ordinal · scales --q-shutter-h + clamps the cross (the cDia math). */
+        height?: ShutterHeightSize
+        /** the cross arms (default a full cross · the divider) + colour. */
         vSize?: LineSize
         hSize?: LineSize
         lineColor?: string
     }>(),
-    { height: '50vh', vSize: 'medium', hSize: 'medium', lineColor: 'primary' },
+    { bg: 'bg', height: 'full', vSize: 'full', hSize: 'full', lineColor: 'primary' },
 )
 
-const emit = defineEmits<{
-    (e: 'reveal-bottom', visible: boolean): void
-    (e: 'reveal-top', visible: boolean): void
-}>()
-
-const seamEl = ref<HTMLElement>()
-const topEl = ref<HTMLElement>()
-const bottomEl = ref<HTMLElement>()
-
-let observer: IntersectionObserver | null = null
-let lastTop: boolean | null = null
-let lastBottom: boolean | null = null
-
-/** Recompute the two reveal-booleans from the live sentinel rects + viewport, emit on change. */
-function measureAndEmit(): void {
-    const top = topEl.value
-    const bottom = bottomEl.value
-    if (!top || !bottom) return
-    const vh = window.innerHeight
-    // BOTTOM edge has entered the viewport once it sits above the viewport's bottom line.
-    const revealBottom = bottom.getBoundingClientRect().top < vh
-    // TOP edge has exited once it sits above the viewport's top line.
-    const revealTop = top.getBoundingClientRect().top < 0
-    if (revealBottom !== lastBottom) {
-        lastBottom = revealBottom
-        emit('reveal-bottom', revealBottom)
-    }
-    if (revealTop !== lastTop) {
-        lastTop = revealTop
-        emit('reveal-top', revealTop)
-    }
-}
-
-onMounted(() => {
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
-        // no-JS / ancient-engine floor — reveal everything (never a hidden-forever trap)
-        emit('reveal-bottom', true)
-        emit('reveal-top', true)
-        return
-    }
-    // IO fires at the viewport-edge crossings (the "when to recompute" trigger); the rects do the rest.
-    observer = new IntersectionObserver(() => measureAndEmit(), { threshold: [0, 1] })
-    if (topEl.value) observer.observe(topEl.value)
-    if (bottomEl.value) observer.observe(bottomEl.value)
-    measureAndEmit() // initial state (before any crossing)
-})
-
-onUnmounted(() => observer?.disconnect())
+const seamStyle = computed<Record<string, string>>(() => ({
+    // backgroundColor longhand (opaque · the curtain) · NOT the shorthand
+    backgroundColor: colorVar(props.bg, 'var(--color-bg)'),
+    height: SHUTTER_HEIGHT_CSS[props.height],
+}))
 </script>
 
 <style scoped>
-/* the blade · TRANSPARENT (the held grid reads through · §52) · plain block in normal flow so it
-   SWEEPS (does not pin · the stage positions it over the sticky grid via z + margin). Square. */
+/* the curtain · OPAQUE, square, full content-width · plain block in normal flow so it SWEEPS (does
+   not pin) · the stage gives it the z above the held grid + the scroll-travel. */
 .quadrant-seam {
     position: relative;
     width: 100%;
-    background: transparent;
-    pointer-events: none; /* never traps clicks meant for the held grid beneath */
+    min-height: var(--q-shutter-h, 50vh);
+    color: var(--color-contrast);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-/* zero-height edge markers · the IO watches these cross the viewport top/bottom */
-.quadrant-seam-sentinel {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 1px;
-}
-.quadrant-seam-sentinel--top {
-    top: 0;
-}
-.quadrant-seam-sentinel--bottom {
-    bottom: 0;
+/* content (later · heading/text) · centred on the cross (the spearhead bridge · cDia parity) */
+.quadrant-seam--spearhead .quadrant-seam-content {
+    position: relative;
+    z-index: 1;
+    max-width: 42rem;
+    margin-inline: auto;
+    padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
+    text-align: center;
 }
 </style>

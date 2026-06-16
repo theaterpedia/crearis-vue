@@ -48,7 +48,25 @@ export type LineSize =
     | 'hairline'
     | 'none'
 
-/* ── the line formula (ported from cDia/Shutter.vue · the cross is two of these) ───────────────── */
+/**
+ * The shutter's OWN height-scale (the cDia/Shutter §Außenkreis-r2 ordinal · `full` = the full
+ * shutter, down to `none`). The v-line is HEIGHT-CLAMPED against this so a short shutter never grows
+ * a too-tall line — the SAME math as cDia/Shutter, so the two components align visually + the spec
+ * (and a future heading/text layer) stays reusable across the family (HP 2026-06-16 · A2).
+ */
+export type ShutterHeightSize = 'full' | 'prominent' | 'medium' | 'small' | 'none'
+
+/* ── the line formula · ported VERBATIM from cDia/Shutter.vue (§Außenkreis-r2) ─────────────────── */
+const HEIGHT_LEVEL: Record<ShutterHeightSize, number> = { full: 4, prominent: 3, medium: 2, small: 1, none: 0 }
+/** the shutter's pixel height per ordinal, off the held cell-row height (--q-shutter-h · the stage
+ *  writes the real px · this is the no-JS fallback ladder). */
+export const SHUTTER_HEIGHT_CSS: Record<ShutterHeightSize, string> = {
+    full: 'var(--q-shutter-h, 50vh)',
+    prominent: 'calc(var(--q-shutter-h, 50vh) * 0.72)',
+    medium: 'calc(var(--q-shutter-h, 50vh) * 0.5)',
+    small: 'calc(var(--q-shutter-h, 50vh) * 0.3)',
+    none: 'auto',
+}
 const LINE_LEN_LEVEL: Record<LineSize, number> = {
     full: 4, prominent: 3, medium: 2, small: 1, thickline: 4, thinline: 4, hairline: 4, none: 0,
 }
@@ -56,19 +74,41 @@ const LINE_WEIGHT: Record<LineSize, string> = {
     full: '2px', prominent: '2px', medium: '2px', small: '2px',
     thickline: '4px', thinline: '1px', hairline: '0.5px', none: '0',
 }
-/** length as % of the box dimension, indexed by level 0..4. */
+/** width-based length % (the h-line · unclamped), indexed by level 0..4. */
 const LEN_PCT = ['0', '40%', '60%', '80%', '100%'] as const
 
-/** A drawn line: its length (% of the box) + its weight (px). `none` → both 0 (invisible). */
-export interface LineGeometry {
-    len: string
-    weight: string
+/** The drawn cross: vertical arm (height-clamped) + horizontal arm (width-based) · each len + weight. */
+export interface CrossGeometry {
+    vLen: string
+    vWt: string
+    hLen: string
+    hWt: string
 }
 
-export function lineGeometry(size: LineSize): LineGeometry {
-    const lvl = LINE_LEN_LEVEL[size]
-    if (lvl <= 0) return { len: '0', weight: '0' }
-    return { len: LEN_PCT[Math.min(lvl, 4)] as string, weight: LINE_WEIGHT[size] }
+/**
+ * The cross-hair geometry · the cDia/Shutter formula. The V-LINE is HEIGHT-CLAMPED — effective level
+ * = `min(vSize, heightLevel + 1)`; its length = `effective / (heightLevel+1)` of the shutter height
+ * (→ 100% "runs all through" at the cap). The H-LINE is WIDTH-based (% of width · not clamped).
+ * `thick/thin/hairline` set the weight (full length); `none` = off.
+ */
+export function crossGeometry(vSize: LineSize, hSize: LineSize, height: ShutterHeightSize): CrossGeometry {
+    const hLvl = HEIGHT_LEVEL[height]
+    const cap = hLvl + 1
+
+    const vLvl = LINE_LEN_LEVEL[vSize]
+    let vLen = '0'
+    let vWt = '0'
+    if (vLvl > 0) {
+        const eff = Math.min(vLvl, cap)
+        vLen = `${Math.min(100, Math.round((eff / cap) * 100))}%`
+        vWt = LINE_WEIGHT[vSize]
+    }
+
+    const hLineLvl = LINE_LEN_LEVEL[hSize]
+    const hLen = hLineLvl > 0 ? (LEN_PCT[Math.min(hLineLvl, 4)] as string) : '0'
+    const hWt = hLineLvl > 0 ? LINE_WEIGHT[hSize] : '0'
+
+    return { vLen, vWt, hLen, hWt }
 }
 
 /** A colour-token → its CSS var (`bg` → --color-bg · else → --color-{token}-bg). */

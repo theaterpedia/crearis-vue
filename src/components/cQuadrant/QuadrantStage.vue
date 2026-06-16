@@ -4,8 +4,9 @@
         class="quadrant-stage"
         :class="{ 'quadrant-stage--bounded': bounded }"
     >
-        <!-- the HELD grid · sticky-to-stage (the 2×2 · top-left anchor known · q1 q2 / q3 q4).
-             Backgrounds always painted; CONTENT reveal-gated per row by the seam (HP-A1). -->
+        <!-- the FIXED grid · sticky-to-stage (pins · "does not scroll" · HP-A1) · the 2×2 (q1 q2 /
+             q3 q4 · top-left anchor known). Backgrounds always painted; CONTENT toggled visible per
+             row WHILE the opaque shutter covers that half (revealed as the curtain lifts). -->
         <div class="quadrant-grid">
             <Quadrant
                 v-for="(q, i) in cells"
@@ -20,47 +21,50 @@
                 :heading-side="q.headingSide"
                 :revealed="isRevealed(i)"
             >
-                <!-- per-cell sub-element slot (#q-1 … #q-4 · the in-place post-it · HP-A3) -->
                 <slot :name="`q-${i + 1}`" :quadrant="q" :index="i" />
             </Quadrant>
         </div>
 
-        <!-- the sweeping cross-hair blade · scrolls UP over the pinned grid (z above it), its edges
-             driving the row-reveals. Transparent (the grid reads through). -->
-        <QuadrantSeam
-            class="quadrant-stage-seam"
-            :height="seamHeight"
-            :v-size="seamVSize"
-            :h-size="seamHSize"
-            :line-color="seamLineColor"
-            @reveal-bottom="onRevealBottom"
-            @reveal-top="onRevealTop"
-        />
+        <!-- the OPAQUE shutter · scrolls UP over the fixed grid (z above it), masking it. The stage
+             watches THIS element cross the grid's half-lines → toggles the row behind it. -->
+        <div ref="seamWrapEl" class="quadrant-stage-seam">
+            <QuadrantSeam
+                :bg="seamBg"
+                :height="seamHeight"
+                :v-size="seamVSize"
+                :h-size="seamHSize"
+                :line-color="seamLineColor"
+            />
+        </div>
+
+        <!-- the BRUSH · invisible release-trigger, 150vH below the shutter (50vH shutter + a full
+             free viewport) · its arrival releases the grid + lets the honest-flag board wipe (A3). -->
+        <QuadrantBrush class="quadrant-stage-brush" :visible="debugBrush" @arrive="onBrushArrive" />
     </section>
 </template>
 
 <script setup lang="ts">
 /**
- * QuadrantStage — the cQuadrant assembler (= DiaStage's role · between CardsCanvas + cDia). A HELD
- * 2×2 grid (q1/q2 top · q3/q4 bottom) that a 50vH cross-hair seam sweeps over, revealing the cells'
- * content row-by-row (bottom row as the seam-bottom enters · top row as the seam-top exits · HP-A1).
+ * QuadrantStage — the cQuadrant assembler (between CardsCanvas + cDia). The 2×2 grid FIXES (sticky)
+ * when fully in view and holds still; the OPAQUE shutter scrolls up across it (HP-recalibration
+ * 2026-06-16 · A1). As the shutter covers the LOWER half it toggles q3+q4 visible (behind the
+ * curtain), as it covers the UPPER half it toggles q1+q2 — so finished content is revealed as the
+ * curtain lifts (no pop-in). Then the (invisible) brush arrives 150vH below and the grid releases.
  *
- * JS CONFIGURES the geometry (HP-spec · the ONLY layout-JS): on mount/resize it computes the cell
- * box (height vH + width vW) from the held height + the cell-aspect, clamped to the magnifica
- * content-bound, and writes --q-cell-w/h + --q-total-w/h. The KNOWN TOP-LEFT is the centred grid's
- * origin; CSS grid lays q1..q4 out from there. (The reveal-toggle is the seam's bounded IO · §2.)
+ * JS CONFIGURES the geometry (the only layout-JS · A4): on mount/resize it sets the held height to
+ * the viewport MINUS px top/bottom offset-corrections (a fixed top-nav and/or footer), the square-ish
+ * cells (each a half-row), and the shutter height = a half (so it covers exactly a half · below 50vH
+ * once corrected). The REVEAL = two BOUNDED line-region IntersectionObservers watching the shutter
+ * cross the fixed grid's mid/top lines (the sanctioned JS · not a per-frame scroll-driver).
  *
  * ── ANCESTOR-PURITY (load-bearing · backslide §9.1) ── the stage + EVERY ancestor stay plain blocks
- * (no transform/filter/overflow-non-visible/contain/will-change) or the grid's sticky hold dies. The
- * mounting page must honor this (the landing's .magnifica-landing-content is clean · audited).
- *
- * The honest-flag content is the NEXT sibling on the page (a CardsCanvas blackboard): as the stage
- * ends and the grid releases, the blackboard rises OVER it — the wipe (HP-spec · Theatervorhang).
+ * (no transform/filter/overflow-non-visible/contain/will-change) or the sticky pin dies.
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Quadrant from './Quadrant.vue'
 import QuadrantSeam from './QuadrantSeam.vue'
-import type { QuadrantSpec, LineSize } from './types'
+import QuadrantBrush from './QuadrantBrush.vue'
+import type { QuadrantSpec, LineSize, ShutterHeightSize } from './types'
 
 const props = withDefaults(
     defineProps<{
@@ -68,57 +72,61 @@ const props = withDefaults(
         quadrants: QuadrantSpec[]
         /** bound the held grid to the 90rem column on wide viewports (the --mag-bound/96rem gate). */
         bounded?: boolean
-        /** the held grid's total height as a fraction of the viewport (the held-plate feel). */
-        heightVh?: number
-        /** each cell's aspect (w/h · HP-A4 default 1 = square grid). */
-        cellAspect?: number
-        /** the seam blade height (HP-spec · mostly 50vH). */
-        seamHeight?: string
-        /** the cross-hair line sizes/colour (forwarded to the seam · the dasei-yellow motif). */
+        /** px offset-correction off the TOP (a fixed top-nav) · the held grid + shutter shrink by it (A4). */
+        topOffset?: number
+        /** px offset-correction off the BOTTOM (a footer) · the held grid + shutter shrink by it (A4). */
+        bottomOffset?: number
+        /** the opaque curtain colour-token + cross arms/colour (forwarded to the shutter). */
+        seamBg?: string
+        seamHeight?: ShutterHeightSize
         seamVSize?: LineSize
         seamHSize?: LineSize
         seamLineColor?: string
-        /** opt the reveal-choreography OFF → everything visible immediately (also forced by the OS
-         *  prefers-reduced-motion · the no-trap floor). Default false → the reveal runs (the point). */
+        /** show the (normally invisible) brush · debugging the release point on the screentest. */
+        debugBrush?: boolean
+        /** opt the reveal OFF → everything visible immediately (also forced by OS reduced-motion). */
         reducedMotion?: boolean
     }>(),
     {
         bounded: false,
-        heightVh: 82,
-        cellAspect: 1,
-        seamHeight: '50vh',
-        seamVSize: 'medium',
-        seamHSize: 'medium',
+        topOffset: 96, // ≈ --bb-navbar-offset (6rem) · the magnifica sticky header
+        bottomOffset: 0,
+        seamBg: 'bg',
+        seamHeight: 'full',
+        seamVSize: 'full',
+        seamHSize: 'full',
         seamLineColor: 'primary',
+        debugBrush: false,
         reducedMotion: false,
     },
 )
 
 const stageEl = ref<HTMLElement>()
+const seamWrapEl = ref<HTMLElement>()
 const cells = computed(() => props.quadrants.slice(0, 4))
 
-/* ── the reveal state · per row · driven by the seam's edge-events (HP-A1) ─────────────────────── */
-const topRowRevealed = ref(false) // q1 + q2
-const bottomRowRevealed = ref(false) // q3 + q4
+/* ── reveal state · per row · toggled WHILE the opaque shutter covers that half (A1) ───────────── */
+const topRowRevealed = ref(false) // q1 + q2 (upper half)
+const bottomRowRevealed = ref(false) // q3 + q4 (lower half)
 let motionOff = false
 
-function onRevealBottom(v: boolean): void {
-    if (!motionOff) bottomRowRevealed.value = v
-}
-function onRevealTop(v: boolean): void {
-    if (!motionOff) topRowRevealed.value = v
-}
-/** q1,q2 (indices 0,1) = top row · q3,q4 (indices 2,3) = bottom row. */
+/** q1,q2 (0,1) = top row · q3,q4 (2,3) = bottom row. */
 function isRevealed(i: number): boolean {
     return i < 2 ? topRowRevealed.value : bottomRowRevealed.value
+}
+function onBrushArrive(_arrived: boolean): void {
+    // The sticky grid releases positionally (stage-end ≈ the brush) — the wipe is layout-driven.
+    // Hook kept for any future JS on the release (e.g. pausing the reveal); intentionally a no-op now.
 }
 
 /* ── JS geometry · the ONLY layout-JS (config, not a scroll-driver) ───────────────────────────── */
 // magnifica-responsive bound (the --mag-bound geometry-token · 90rem content + gutters).
-// TODO(step-2 / system-rescue · backslide §10.5): migrate this width-source to useResponsive +
+// TODO(step-2 / system-rescue · backslide §10.5): migrate the width-source to useResponsive +
 // 04-dense + the canonical scale instead of the literal bound + gutter px (the magnifica drift-fix).
 const BOUND_PX = 90 * 16
 const GUTTER_PX = 48
+
+let observers: IntersectionObserver[] = []
 
 function configure(): void {
     if (!stageEl.value || typeof window === 'undefined') return
@@ -126,29 +134,45 @@ function configure(): void {
     const vh = window.innerHeight
     const avail = Math.min(vw - GUTTER_PX * 2, BOUND_PX)
 
-    let cellH: number
-    let cellW: number
-    if (vw < 768) {
-        // mobile · cells stack vertically, full content-width, 1:1 (always-fill · HP-spec mobile).
-        // 🚩 screentest-dial: the held-sticky hold + the sweep on mobile want HP's eyes (cDia treats
-        // mobile as its own round · here "all other behaviour remains" per spec — reveals do work).
-        cellW = avail
-        cellH = cellW / props.cellAspect
-    } else {
-        // desktop · start from the held height, derive the square cell, clamp to the content-bound.
-        let totalH = Math.round((vh * props.heightVh) / 100)
-        cellH = totalH / 2
-        cellW = cellH * props.cellAspect
-        if (cellW * 2 > avail) {
-            cellW = avail / 2
-            cellH = cellW / props.cellAspect
-        }
-    }
+    // the held grid fills the viewport MINUS the offset-corrections (A4); each cell = a half-row;
+    // the shutter = a half so it covers exactly a half (below 50vH once corrected).
+    const H = Math.max(0, vh - props.topOffset - props.bottomOffset)
+    const cellH = H / 2
+    const cellW = vw < 768 ? avail : avail / 2 // mobile: full-width stacked cells (the seam stays · A4)
+
     const el = stageEl.value
+    el.style.setProperty('--q-top', `${props.topOffset}px`)
     el.style.setProperty('--q-cell-w', `${Math.round(cellW)}px`)
     el.style.setProperty('--q-cell-h', `${Math.round(cellH)}px`)
     el.style.setProperty('--q-total-w', `${Math.round(cellW * 2)}px`)
-    el.style.setProperty('--q-total-h', `${Math.round(cellH * 2)}px`)
+    el.style.setProperty('--q-total-h', `${Math.round(H)}px`)
+    el.style.setProperty('--q-shutter-h', `${Math.round(cellH)}px`) // a half · = a cell-row
+}
+
+/** Two line-region observers watch the opaque shutter cross the FIXED grid's half-lines. The root is
+ *  extended far UP (so a row stays revealed after the shutter exits the top) and shrunk at the bottom
+ *  to the threshold line: intersecting ⇔ the shutter's top has risen to/above that line. */
+function setupObservers(): void {
+    observers.forEach((o) => o.disconnect())
+    observers = []
+    if (motionOff || typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+    const wrap = seamWrapEl.value
+    if (!wrap) return
+    const vh = window.innerHeight
+    const quadrantTop = props.topOffset
+    const quadrantMid = props.topOffset + (vh - props.topOffset - props.bottomOffset) / 2
+
+    // LOWER-half line (= grid mid) → q3+q4 ; UPPER-half line (= grid top) → q1+q2.
+    const make = (lineY: number, set: (v: boolean) => void): IntersectionObserver => {
+        const o = new IntersectionObserver(
+            (entries) => entries.forEach((e) => set(e.isIntersecting)),
+            { rootMargin: `100000px 0px ${-(vh - lineY)}px 0px`, threshold: 0 },
+        )
+        o.observe(wrap)
+        return o
+    }
+    observers.push(make(quadrantMid, (v) => (bottomRowRevealed.value = v)))
+    observers.push(make(quadrantTop, (v) => (topRowRevealed.value = v)))
 }
 
 onMounted(() => {
@@ -161,55 +185,74 @@ onMounted(() => {
         bottomRowRevealed.value = true
     }
     configure()
-    window.addEventListener('resize', configure, { passive: true })
+    setupObservers()
+    window.addEventListener('resize', onResize, { passive: true })
 })
-onUnmounted(() => window.removeEventListener('resize', configure))
+function onResize(): void {
+    configure()
+    setupObservers() // mid/top lines moved → rebuild the line-region roots
+}
+onUnmounted(() => {
+    window.removeEventListener('resize', onResize)
+    observers.forEach((o) => o.disconnect())
+})
 </script>
 
 <style scoped>
 /* the stage · a plain block in normal flow (ancestor-purity · see script) · the sticky containing
-   block for the held grid. Stage height = grid + seam (so the grid pins while the seam sweeps). */
+   block for the held grid. Its height (grid + shutter + the 100vH brush-gap) keeps the grid pinned
+   through the shutter sweep, then releases it ≈ when the brush arrives. */
 .quadrant-stage {
     position: relative;
     --q-top: var(--bb-navbar-offset, 6rem);
 }
 
-/* the held 2×2 · sticky-to-stage (never un-pins · element-anchored) · centred (the known top-left
-   anchor = this centred origin). Square tracks from the JS vars; gap 0 (the cell colours + the
-   moving cross define the divide · no static grid-lines · standards-floor: square, no radius). */
 @media (min-width: 768px) {
+    /* the held 2×2 · sticky-to-stage (the "fixed" hold · never un-pins until release) · centred
+       (the known top-left = this centred origin). Square-ish tracks from the JS vars; gap 0 (the
+       cell colours + the moving cross define the divide · standards-floor: square, no radius). */
     .quadrant-grid {
         position: sticky;
         top: var(--q-top);
         z-index: 1;
         width: var(--q-total-w, 80vmin);
-        height: var(--q-total-h, 80vmin);
+        height: var(--q-total-h, 90vh);
         margin-inline: auto;
         display: grid;
         grid-template-columns: var(--q-cell-w, 40vmin) var(--q-cell-w, 40vmin);
-        grid-template-rows: var(--q-cell-h, 40vmin) var(--q-cell-h, 40vmin);
+        grid-template-rows: var(--q-cell-h, 45vh) var(--q-cell-h, 45vh);
         gap: 0;
     }
 
-    /* the seam sweeps UP over the pinned grid · z above the grid · pulled up to overlap the grid
-       region so the cross rides over the held cells (the §50·2 "the line slides past the held
-       plate"). 🚩 screentest-dial (HP · the cross-sweep timing/overlap · the §14 "wants eyes"). */
+    /* the opaque curtain · z ABOVE the pinned grid · centred to the grid width · in normal flow so
+       it SWEEPS up over the held grid (the rise-over: a later sibling rises over the pinned earlier).
+       🚩 screentest-dial (HP · the "wait" gap before it enters + the sweep feel · §14 "wants eyes"). */
     .quadrant-stage-seam {
         position: relative;
         z-index: 2;
-        margin-top: calc(-1 * var(--q-total-h, 80vmin));
+        width: var(--q-total-w, 80vmin);
+        margin-inline: auto;
     }
 }
 
-/* mobile · stack the 4 cells vertically, each full content-width 1:1; the seam stays (50vH ·
-   HP-spec). No sticky hold (the stacked grid exceeds the viewport · the desktop hold is the round's
-   focus · cDia-style mobile-as-its-own-round · flagged in script). Reveals still run. */
+/* the brush · 150vH below the shutter = a full free viewport (100vH) after the 50vH shutter (A3) ·
+   so the held grid shows alone for a viewport, then the brush arrives + the grid releases. */
+.quadrant-stage-brush {
+    margin-top: 100vh;
+}
+
+/* mobile · stack the 4 cells vertically, each full content-width; the seam stays (HP-spec). No
+   sticky hold (the stacked grid exceeds the viewport · the desktop hold is this round's focus ·
+   cDia-style mobile-as-its-own-round · flagged). The reveal observers still run. */
 @media (max-width: 767px) {
     .quadrant-grid {
         display: grid;
         grid-template-columns: 1fr;
         grid-auto-rows: var(--q-cell-h, 90vw);
         gap: 0;
+    }
+    .quadrant-stage-brush {
+        margin-top: 50vh;
     }
 }
 </style>

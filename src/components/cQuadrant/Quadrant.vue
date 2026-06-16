@@ -95,8 +95,9 @@ const bgStyle = computed<Record<string, string>>(() => {
 .quadrant--pink   { background-color: var(--color-negative-bg); color: var(--color-negative-contrast); }
 .quadrant--dim    { background-color: var(--color-card-bg);     color: var(--color-card-contrast); }
 
-/* the reveal-gated content · placed on its real position, invisible on load (visibility keeps the
-   layout · HP-A3), flips visible + fades in on reveal. Reduced-motion kills the fade (below). */
+/* the reveal-gated content · placed on its real position, invisible on load (visibility KEEPS the
+   layout · HP-A3) · toggled visible INSTANTLY while the opaque shutter covers this half, so finished
+   content is revealed as the curtain lifts (no fade · the curtain IS the reveal motion · A1). */
 .quadrant-content {
     position: relative;
     z-index: 1;
@@ -106,12 +107,9 @@ const bgStyle = computed<Record<string, string>>(() => {
     padding: clamp(1rem, 2.5vw, 2rem);
     height: 100%;
     visibility: hidden;
-    opacity: 0;
-    transition: opacity 360ms ease;
 }
 .quadrant--revealed .quadrant-content {
     visibility: visible;
-    opacity: 1;
 }
 
 /* heading side · left (default · top-left) or right (top-right) */
@@ -130,11 +128,5 @@ const bgStyle = computed<Record<string, string>>(() => {
 
 .quadrant-sub {
     margin-top: auto; /* the sub-element settles toward the cell's lower region by default */
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .quadrant-content {
-        transition: none;
-    }
 }
 </style>

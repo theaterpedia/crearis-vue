@@ -8,20 +8,21 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Quadrant from '../../src/components/cQuadrant/Quadrant.vue'
 import QuadrantStage from '../../src/components/cQuadrant/QuadrantStage.vue'
-import { lineGeometry } from '../../src/components/cQuadrant/types'
+import { crossGeometry } from '../../src/components/cQuadrant/types'
 import type { QuadrantSpec } from '../../src/components/cQuadrant/types'
 
-describe('cQuadrant · lineGeometry (the cross-hair formula · lifted from cDia/Shutter)', () => {
-    it('none → both 0 (invisible arm)', () => {
-        expect(lineGeometry('none')).toEqual({ len: '0', weight: '0' })
+describe('cQuadrant · crossGeometry (the cross-hair formula · ported from cDia/Shutter §Außenkreis-r2)', () => {
+    it('none → every arm 0 (invisible)', () => {
+        expect(crossGeometry('none', 'none', 'full')).toEqual({ vLen: '0', vWt: '0', hLen: '0', hWt: '0' })
     })
-    it('length-levels map to the %-scale; weight stays 2px', () => {
-        expect(lineGeometry('medium')).toEqual({ len: '60%', weight: '2px' })
-        expect(lineGeometry('full')).toEqual({ len: '100%', weight: '2px' })
+    it('full/full on a full shutter · v-arm = 4/5 (cap), h-arm width-based 100%', () => {
+        expect(crossGeometry('full', 'full', 'full')).toEqual({ vLen: '80%', vWt: '2px', hLen: '100%', hWt: '2px' })
+    })
+    it('the v-arm is HEIGHT-CLAMPED · a full v-line on a small shutter runs 100% (the cap)', () => {
+        expect(crossGeometry('full', 'none', 'small')).toEqual({ vLen: '100%', vWt: '2px', hLen: '0', hWt: '0' })
     })
     it('weight tokens run full-length at their weight', () => {
-        expect(lineGeometry('hairline')).toEqual({ len: '100%', weight: '0.5px' })
-        expect(lineGeometry('thinline')).toEqual({ len: '100%', weight: '1px' })
+        expect(crossGeometry('hairline', 'thinline', 'full')).toEqual({ vLen: '80%', vWt: '0.5px', hLen: '100%', hWt: '1px' })
     })
 })
 

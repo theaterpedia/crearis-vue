@@ -1,40 +1,42 @@
 <template>
-    <!-- the CROSS · a vertical line (::before · height %) + a horizontal line (::after · width %),
-         centred, coloured. Either size `none` → that arm is invisible. Square grammar, no radius. -->
+    <!-- the CROSS · a vertical arm (::before · height %, height-clamped) + a horizontal arm
+         (::after · width %), centred, coloured. Either arm `none` → invisible. Square, no radius. -->
     <div class="seam-line" :style="lineStyle" aria-hidden="true" />
 </template>
 
 <script setup lang="ts">
 /**
- * SeamLine — the cross-hair sub-element (the 2×2 divider made visible · the dasei line that "plays
- * the gap"). The line-geometry is lifted from cDia/Shutter.vue (§Außenkreis-r2 · the ONE formula),
- * NOT the whole Shutter (HP-spec: don't reuse the main Shutter, borrow a sub-element). Pure CSS,
- * transparent surface (it plays OVER held layers · the §50·3/§52 "cover is a role" gene).
+ * SeamLine — the cross-hair sub-element (the 2×2 divider · the dasei line that "plays the gap"). The
+ * geometry is the cDia/Shutter formula (§Außenkreis-r2) — the v-arm is HEIGHT-CLAMPED to the shutter
+ * height, the h-arm is width-based — so the cross aligns visually with the cDia family + the spec
+ * (and a later heading/text layer) stays reusable (HP 2026-06-16 · A2). Lifted as a sub-element, NOT
+ * the whole Shutter (per the original spec).
  */
 import { computed } from 'vue'
-import { lineGeometry, colorVar, type LineSize } from './types'
+import { crossGeometry, colorVar, type LineSize, type ShutterHeightSize } from './types'
 
 const props = withDefaults(
     defineProps<{
         /** the vertical arm (the q1|q2 / q3|q4 column divider). */
         vSize?: LineSize
-        /** the horizontal arm (the q1q2 / q3q4 row divider). */
+        /** the horizontal arm (the q1q2 / q3q4 row divider · the moving scan-line). */
         hSize?: LineSize
+        /** the host shutter's height-ordinal · clamps the v-arm (the cDia math). */
+        height?: ShutterHeightSize
         /** the line colour-token (default `primary` · the dasei-yellow motif). */
         lineColor?: string
     }>(),
-    { vSize: 'medium', hSize: 'medium', lineColor: 'primary' },
+    { vSize: 'full', hSize: 'full', height: 'full', lineColor: 'primary' },
 )
 
 const lineStyle = computed<Record<string, string>>(() => {
-    const v = lineGeometry(props.vSize)
-    const h = lineGeometry(props.hSize)
+    const g = crossGeometry(props.vSize, props.hSize, props.height)
     return {
         '--line-color': colorVar(props.lineColor, 'var(--color-primary-bg)'),
-        '--line-v-len': v.len,
-        '--line-v-wt': v.weight,
-        '--line-h-len': h.len,
-        '--line-h-wt': h.weight,
+        '--line-v-len': g.vLen,
+        '--line-v-wt': g.vWt,
+        '--line-h-len': g.hLen,
+        '--line-h-wt': g.hWt,
     }
 })
 </script>
@@ -54,12 +56,12 @@ const lineStyle = computed<Record<string, string>>(() => {
     transform: translate(-50%, -50%);
     background: var(--line-color, var(--color-primary-bg));
 }
-/* vertical arm · height % of the box */
+/* vertical arm · height % of the shutter */
 .seam-line::before {
     width: var(--line-v-wt, 0);
     height: var(--line-v-len, 0);
 }
-/* horizontal arm · width % of the box */
+/* horizontal arm · width % of the shutter */
 .seam-line::after {
     width: var(--line-h-len, 0);
     height: var(--line-h-wt, 0);
