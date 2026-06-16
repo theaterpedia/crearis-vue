@@ -15,7 +15,7 @@
     <template #hero>
       <header class="context-hero">
         <p class="context-hero-overline">30 years at <span class="hero-dasei">DAS Ei</span> – Theaterpädagogisches Institut Bayern e.V.</p>
-        <h1 class="context-hero-headline">{{ hero.headline }}</h1>
+        <h1 class="context-hero-headline">grounded practice & organic intellectual</h1>
       </header>
     </template>
 
