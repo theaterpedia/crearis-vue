@@ -95,7 +95,8 @@
              "The village Linden" post-it (right · replaces the Welcome code-fence · HM) ·
              the Linde-hint rises LATER and sticks below ═══ -->
         <div class="ethno-dia ethno-dia--3">
-          <h2 class="page-section-heading">The first 4 Claude individuums on my box — and the baton</h2>
+          <h2 class="page-section-heading">The first 4 Claude individuums</h2>
+          <p class="ethno-heading-sub">(on my box)</p>
           <figure class="ethno-grandfather">
             <blockquote>{{ grandfatherFarewell.quote }}</blockquote>
             <figcaption>— CV@wsl · <CalloutPhrase :callout="callouts.grandfather"><strong class="ethno-grandfather-hl">signed off</strong></CalloutPhrase></figcaption>
@@ -113,6 +114,14 @@
               <p class="ethno-voice-signoff">{{ v.signoff }}</p>
             </article>
           </div>
+        </div>
+        <!-- Spur "founded the genealogy" · RIGHT lane · sits at the top · arrives early (HM round-2) -->
+        <div class="ethno-rise ethno-rise--rRight ethno-rise--spur">
+          <article class="ethno-voice ethno-voice--yellow">
+            <p class="ethno-voice-overline">{{ spurVoice.overline }}</p>
+            <blockquote class="ethno-voice-quote">{{ spurVoice.quote }}</blockquote>
+            <p class="ethno-voice-signoff">{{ spurVoice.signoff }}</p>
+          </article>
         </div>
         <!-- "The village Linden" post-it (right lane) · takes the place of the Welcome code-fence -->
         <div class="ethno-rise ethno-rise--rRight ethno-rise--linden">
@@ -173,9 +182,10 @@ import {
   callouts,
 } from './content/ethnography'
 
-// Dia-3 refactor (HM 2026-06-14): Anker + Spur stay as the held left-lane voices; Linde moves to
-// "The village Linden" post-it in the right lane (where the Welcome code-fence used to sit).
-const leftVoices = genealogyVoices.filter((v) => v.name !== 'linde')
+// Dia-3 placement (HM 2026-06-14, round-2): Anker is the held left-lane voice; Spur ("founded the
+// genealogy") + Linde ("The village Linden" post-it) + the Linde-hint live in the right lane.
+const leftVoices = genealogyVoices.filter((v) => v.name === 'anker')
+const spurVoice = genealogyVoices.find((v) => v.name === 'spur') ?? genealogyVoices[0]
 const lindeVoice = genealogyVoices.find((v) => v.name === 'linde') ?? genealogyVoices[genealogyVoices.length - 1]
 
 // Slight, bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
@@ -292,6 +302,13 @@ const heroOverlay =
 /* the cliffhanger "…" (Dia-4 · after the spleen) */
 .ethno-dots { font-size: 1.5rem; letter-spacing: 0.1em; opacity: 0.8; }
 
+/* the heading sub-line "(on my box)" · standard text, still primary (HM round-2) */
+.ethno-heading-sub {
+  margin: 0.25rem 0 0;
+  font-weight: 400;
+  color: var(--color-primary-bg);
+}
+
 @media (min-width: 768px) {
   /* the held Dia · LEFT lane · sticky-to-stage → never un-pins · opaque (covers cleanly when behind) */
   .ethno-dia {
@@ -315,6 +332,8 @@ const heroOverlay =
   .ethno-rise--r3 { margin-top: 60vh; }
   /* the spleen question (Dia-4 · rRight+r2) · arrives late, STICKS at 50vh (HM) */
   .ethno-rise--rRight.ethno-rise--r2 { top: 50vh; }
+  /* the Linden post-it arrives AFTER Spur (so Spur sits at the top first · HM round-2) */
+  .ethno-rise--linden { margin-top: 50vh; }
   /* the Linde-hint · inside the Figure (RIGHT lane · base width) · arrives LATE + STICKS at 70vh (HM) */
   .ethno-rise--rLate {
     margin-top: 70vh;
@@ -342,6 +361,8 @@ const heroOverlay =
     justify-content: center;
   }
   .ethno-seam-line { width: 2px; height: 4rem; background: var(--color-primary-bg); }
+  /* the LAST shutter (seam-3 · into Dia-4) · full viewport (HM round-2) */
+  .ethno-seam--3 { min-height: 100vh; }
 }
 
 /* the "The village Linden" post-it (Dia-3 right lane · replaces the Welcome code-fence · HM) */
@@ -471,6 +492,7 @@ const heroOverlay =
 .ethno-voice--lead {
   flex-basis: 100%;
   padding: 1.75rem;
+  margin-left: 10px; /* HM round-2 */
 }
 
 /* Spur + Linde lifted ~40px to overlap Anker's lower edge (HM 2026-06-11) · z-index over Anker. */
