@@ -396,8 +396,8 @@ const heroOverlay =
     justify-content: center;
   }
   .ethno-seam-line { width: 2px; height: 4rem; background: var(--color-primary-bg); }
-  /* the LAST shutter (seam-3 · into Dia-4) · full viewport (HM round-2) */
-  .ethno-seam--3 { min-height: 100vh; }
+  /* the LAST shutter (seam-3 · into Dia-4) · 90vh (100vh overlapped the footer · HM) */
+  .ethno-seam--3 { min-height: 90vh; }
 }
 
 /* the "The village Linden" post-it (Dia-3 right lane · replaces the Welcome code-fence · HM) */
