@@ -155,7 +155,7 @@ onMounted(() => {
     motionOff =
         props.reducedMotion ||
         (typeof window !== 'undefined' &&
-            window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+            window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true)
     if (motionOff) {
         topRowRevealed.value = true
         bottomRowRevealed.value = true
