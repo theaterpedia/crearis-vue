@@ -33,20 +33,20 @@
         </section>
       </div>
 
-      <!-- §C · pope → Olah · the 2022 held-image back-slide effect (HM 2026-06-16 · NO shutter ·
-           element-anchored, NOT viewport-fixed). The 2022 pattern translated to the cDia floor: two
-           HELD Bilder (50/50 image|panel · sticky-to-STAGE — the IMAGE DOESN'T MOVE · element-
-           anchored, never `attachment:fixed`/viewport-glued · 1:1 contain). pope img-left/panel-right
-           (dim); then the olah Bild (panel-left/img-right · green · z2, opaque) RISES UP and covers it
-           — the before/after mirror, the next held slide scrolling over the first (the 2022
-           scroll-over · no blade between). Each panel carries its overline-headline (the gap · no
-           paragraph). Mobile / reduced-motion → the Bilder linearise (never broken). Direct child of
-           .magnifica-landing-content (ancestor-purity).
-           [dials · :3001 — --ss-h plate height · the scroll-over read · the panel colours/text.
+      <!-- §C · pope → Olah · the 2022 held-image effect with a 90vH line-shutter (HM 2026-06-16).
+           Two HELD Bilder (50/50 image|panel · sticky-to-STAGE — the IMAGE DOESN'T MOVE · element-
+           anchored, never `attachment:fixed`/viewport-glued · 1:1 contain · the "much better" layout):
+           pope img-left/panel-right (dim), olah panel-left/img-right (green · the mirror). Between
+           them a ~90vH SHUTTER (the cDia Shutter, reused · line-only, no text) rises to COVER the
+           held pope (the black-between), with olah pinned BEHIND it (overlap · no early peek), then
+           LIFTS off (animation-timeline: view()) → olah uncovers. pope held → shutter covers → shutter
+           lifts → olah revealed. Each panel carries its overline-headline (the gap · no paragraph).
+           Mobile / reduced-motion / no-view() → the shutter scrolls away + still reveals (never
+           broken). Direct child of .magnifica-landing-content (ancestor-purity · sticky + view()).
+           [dials · :3001 — --ss-h/--dia-h plate+shutter height (90vh · the 200px-too-short fix) ·
+           the lift-range (cover 0% cover 50%) · the overlap · the line weight (hSize) · panel text.
            FLAG (cDia generalise): the held-50/50-Bild-row isn't a cDia preset yet — hand-built here;
-           candidate to graduate. If HP wants the 2022 TEXT-RISE (panel scrolling over the held
-           image), the refinement is image-held + panel-in-flow (the DiaStage Dia+Figure / rise-over
-           model) — flagged.] -->
+           candidate to graduate (with the line-only shutter-between).] -->
       <section class="shutter-stack">
         <!-- Bild 1 · pope · image LEFT (1:1) + panel RIGHT · held -->
         <div class="ss-bild ss-bild--pope">
@@ -61,8 +61,23 @@
           </div>
         </div>
 
-        <!-- Bild 2 · olah · panel LEFT (green) + image RIGHT (1:1) · rises OVER pope (the mirror) ·
-             no shutter — the next held slide scrolls up over the first (the 2022 scroll-over) -->
+        <!-- the 90vH line-shutter (HM 2026-06-16 · the cDia Shutter, reused) · rises to COVER the
+             held pope (the black-between · just a horizontal hairline, no text), olah pinned BEHIND it
+             via the overlap (no early peek), then LIFTS off (view()) → olah uncovers. The transition
+             between the two held Bilder. reduced-motion / no-view() → it scrolls away + still reveals. -->
+        <Shutter
+          class="ss-seam"
+          height="full"
+          seam
+          transition="shutter-lift"
+          v-size="none"
+          h-size="thinline"
+          :reduced-motion="false"
+          :style="{ zIndex: 3 }"
+        />
+
+        <!-- Bild 2 · olah · panel LEFT (green) + image RIGHT (1:1) · held BEHIND the shutter (z2),
+             uncovered as the shutter lifts (the before/after mirror) -->
         <div class="ss-bild ss-bild--olah">
           <div class="ss-panel ss-panel--green">
             <HeadingParser :content="backslides[1].panel" as="h2" class="ss-head" />
@@ -117,6 +132,7 @@ import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
+import Shutter from '@/components/cDia/Shutter.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
@@ -312,8 +328,12 @@ const { isAuthenticated } = useMagnificaAuth()
    :3001 dials.] */
 .shutter-stack {
   position: relative;
-  --ss-h: 82vh; /* the held-Bild height (pure-CSS vh · this is a hand-composition, not DiaStage) */
+  /* the held-Bild + shutter height · 90vH (HM 2026-06-16 · tall enough to cover · the 200px-fix).
+     --dia-h is what the cDia Shutter reads (height="full" → var(--dia-h) · + its overlap = -1·--dia-h). */
+  --ss-h: 90vh;
+  --dia-h: 90vh;
   --ss-top: var(--bb-navbar-offset, 6rem);
+  --dia-top: var(--bb-navbar-offset, 6rem);
 }
 
 .ss-head {
