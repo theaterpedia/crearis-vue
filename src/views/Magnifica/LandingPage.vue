@@ -33,38 +33,52 @@
         </section>
       </div>
 
-      <!-- §C · Before → After backslide-stack · panel = overline-headline (no paragraph slot) ·
-           After rises over Before (scroll-over) · focal align-y:top via prop · bounded.
-           Direct child of .magnifica-landing-content — ancestor-purity for sticky + bg-fixed. -->
-      <BackSlideStack :slides="backslides" bounded />
-
-      <div class="landing-narrow">
-        <!-- 3 navcards · Cultural-Studies lanes (D) -->
-        <nav class="route-cards" aria-label="Three routes">
-          <RouterLink
-            v-for="card in navCards"
-            :key="card.to"
-            :to="card.to"
-            class="route-card"
-            :class="`route-card--${card.theme}`"
-          >
-            <span class="route-card-overline">{{ card.overline }}</span>
-            <span class="route-card-headline">{{ card.headline }}</span>
-            <span class="route-card-subline">{{ card.subline }}</span>
+      <!-- §C · the QUADRANT (cQuadrant · the held 2×2 · 2026-06_quadrant.md · HP-spec 2026-06-16) —
+           replaces the BackSlideStack + navcards body. q1 = pope-and-olah (nothing appears); q2/q3/q4
+           carry the magnifica question + the two follow-ons, each with a route post-it (faked card now
+           · real fpostit fast-follow · A2). A 50vH cross-hair seam sweeps over the held grid, revealing
+           the bottom row (q3+q4) then the top row (q1+q2). Direct child of .magnifica-landing-content
+           — ancestor-purity for the sticky hold (the §14 audit: this shell is clean). -->
+      <QuadrantStage :quadrants="quadrants" bounded :height-vh="82" seam-line-color="primary">
+        <!-- q2 · discourse · q3 · context · q4 · ethnography (faked route post-its · in-place · A3) -->
+        <template #q-2>
+          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[0].theme}`" :to="quadrantCards[0].to">
+            <span class="q-postit-overline">{{ quadrantCards[0].overline }}</span>
+            <span class="q-postit-headline">{{ quadrantCards[0].headline }}</span>
+            <span class="q-postit-subline">{{ quadrantCards[0].subline }}</span>
           </RouterLink>
-        </nav>
+        </template>
+        <template #q-3>
+          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[1].theme}`" :to="quadrantCards[1].to">
+            <span class="q-postit-overline">{{ quadrantCards[1].overline }}</span>
+            <span class="q-postit-headline">{{ quadrantCards[1].headline }}</span>
+            <span class="q-postit-subline">{{ quadrantCards[1].subline }}</span>
+          </RouterLink>
+        </template>
+        <template #q-4>
+          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[2].theme}`" :to="quadrantCards[2].to">
+            <span class="q-postit-overline">{{ quadrantCards[2].overline }}</span>
+            <span class="q-postit-headline">{{ quadrantCards[2].headline }}</span>
+            <span class="q-postit-subline">{{ quadrantCards[2].subline }}</span>
+          </RouterLink>
+        </template>
+      </QuadrantStage>
 
-        <!-- Page-bottom · Hans-voice closing · genealogy-nod → honest-flag (the page ends here) -->
-        <section class="landing-closing">
-          <p>
-            {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
-          </p>
-          <div class="landing-honest-flag">
-            <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
-            <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
-          </div>
-        </section>
-      </div>
+      <!-- the WIPING BOARD · the honest-flag below the quadrant, on an opaque board that rises OVER
+           the held grid as the stage releases (the wipe · HP-spec · Theatervorhang · z above the seam). -->
+      <section class="landing-board">
+        <div class="landing-narrow">
+          <section class="landing-closing">
+            <p>
+              {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
+            </p>
+            <div class="landing-honest-flag">
+              <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
+              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
+            </div>
+          </section>
+        </div>
+      </section>
 
       <!-- shared footer (Impressum · dasei.eu · … · close-gesture) — identical on all 4 pages -->
       <MagnificaFooter />
@@ -78,15 +92,15 @@ import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
-import BackSlideStack from '@/components/magnifica/BackSlideStack.vue'
+import QuadrantStage from '@/components/cQuadrant/QuadrantStage.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,
   summary,
   letterEntries,
-  backslides,
-  navCards,
+  quadrants,
+  quadrantCards,
   closingP3Before,
   closingP3After,
   honestFlag,
@@ -180,59 +194,59 @@ const { isAuthenticated } = useMagnificaAuth()
   padding: clamp(2.5rem, 6vh, 4rem) clamp(1rem, 6vw, 3rem) 0;
 }
 
-/* ==Route-cards== */
-.route-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: clamp(2.5rem, 6vh, 4rem);
-}
-
-.route-card {
-  flex: 1 1 14rem;
+/* ==The faked route post-its== · the in-place sub-element on q2/q3/q4 (discourse/context/ethnography).
+   Square post-it look (the fpostit grammar) · contrast-tinted so it reads over the cell's theme-colour.
+   🚩 fast-follow (A2): swap for a real fpostit (FloatingPostIt-rendered in-place). */
+.q-postit {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.5rem 1.25rem;
-  border-radius: 6px;
+  gap: 0.4rem;
+  max-width: 22rem;
+  padding: 1.1rem 1.25rem;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  transform: rotate(-1deg);
+  border-radius: 0; /* square · standards-floor */
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.3);
+  transform: rotate(-1.5deg);
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
-
-.route-card:nth-child(2) { transform: rotate(1.5deg); }
-.route-card:nth-child(3) { transform: rotate(-2deg); }
-
-.route-card:hover,
-.route-card:focus-visible {
+.q-postit:hover,
+.q-postit:focus-visible {
   transform: rotate(0deg) translateY(-3px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 28px oklch(0 0 0 / 0.4);
   outline: none;
 }
-
-.route-card:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px rgba(0, 0, 0, 0.4);
+.q-postit:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px oklch(0 0 0 / 0.4);
+}
+/* the post-it sits ON the cell · use the page bg as the note-surface so it lifts off every theme */
+.q-postit--yellow,
+.q-postit--green,
+.q-postit--pink {
+  background: var(--color-bg);
+  color: var(--color-contrast);
 }
 
-.route-card--yellow { background: var(--color-primary-bg);  color: var(--color-primary-contrast); }
-.route-card--green  { background: var(--color-positive-bg); color: var(--color-positive-contrast); }
-.route-card--pink   { background: var(--color-negative-bg); color: var(--color-negative-contrast); }
-
-.route-card-overline {
+.q-postit-overline {
   font-size: 0.8125rem;
   opacity: 0.85;
 }
-
-.route-card-headline {
-  font-size: 1.375rem;
+.q-postit-headline {
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
-
-.route-card-subline {
-  font-size: 0.875rem;
+.q-postit-subline {
+  font-size: 0.8125rem;
   line-height: 1.5;
+  opacity: 0.9;
+}
+
+/* ==The wiping board== · the honest-flag's opaque board · rises OVER the released held quadrant as
+   the stage ends (the wipe · HP-spec). z above the stage's seam (z:2) + grid (z:1). */
+.landing-board {
+  position: relative;
+  z-index: 3;
+  background: var(--color-bg);
 }
 
 /* ==Closing block== */
@@ -267,24 +281,14 @@ const { isAuthenticated } = useMagnificaAuth()
   color: var(--color-contrast);
 }
 
-/* ==Backslide panel heading · bottom-weighted== · push the overline-headline lower so the
-   image breathes above and the headline lands as a drop (both landing backslides). Scoped to
-   the stack via :deep — NOT global, so ContextPage's portrait BackSlide is untouched. Margin
-   (not background-position) so :deep is correct here. Exact drop is a visual dial (verifier). */
-@media (min-width: 768px) {
-  .magnifica-landing :deep(.backslide-stack .panel-text) {
-    margin-top: clamp(24rem, 55vh, 44rem);
-  }
-}
-
 @media (max-width: 640px) {
-  .route-card {
+  .q-postit {
     transform: none !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-card {
+  .q-postit {
     transition: none;
     transform: none;
   }
