@@ -33,18 +33,20 @@
         </section>
       </div>
 
-      <!-- §C · pope → Olah · the CandA SHUTTER (HM 2026-06-16 · the 2022 held-image pattern). Two
-           HELD Bilder (sticky-to-stage · the IMAGES DON'T MOVE · 1:1 `contain` · 50/50 image|panel ·
-           pope img-left/panel-right, olah panel-left/img-right · the mirror), sequential; between
-           them a ~200px SHUTTER that rises over the pope-Bild and LIFTS off (animation-timeline:
-           view()), so the olah-Bild comes to view. Two simplified headlines sit above + below the
-           shutter's hairline (HM Q2 · craft first, tweak later). reduced-motion / no-view() → the
-           shutter scrolls away (never broken). Direct child of .magnifica-landing-content
-           (ancestor-purity · sticky + view()).
-           [first craft · :3001 dials — --ss-h plate height · the 200px shutter height + lift-range ·
-           the headline text. FLAG (cDia generalise): the held-50/50-Bild-row + the shutter's
-           above/below-the-line layout aren't cDia presets yet — hand-built here (like §52's
-           transparent-line); candidates to graduate to the family.] -->
+      <!-- §C · pope → Olah · the 2022 held-image back-slide effect (HM 2026-06-16 · NO shutter ·
+           element-anchored, NOT viewport-fixed). The 2022 pattern translated to the cDia floor: two
+           HELD Bilder (50/50 image|panel · sticky-to-STAGE — the IMAGE DOESN'T MOVE · element-
+           anchored, never `attachment:fixed`/viewport-glued · 1:1 contain). pope img-left/panel-right
+           (dim); then the olah Bild (panel-left/img-right · green · z2, opaque) RISES UP and covers it
+           — the before/after mirror, the next held slide scrolling over the first (the 2022
+           scroll-over · no blade between). Each panel carries its overline-headline (the gap · no
+           paragraph). Mobile / reduced-motion → the Bilder linearise (never broken). Direct child of
+           .magnifica-landing-content (ancestor-purity).
+           [dials · :3001 — --ss-h plate height · the scroll-over read · the panel colours/text.
+           FLAG (cDia generalise): the held-50/50-Bild-row isn't a cDia preset yet — hand-built here;
+           candidate to graduate. If HP wants the 2022 TEXT-RISE (panel scrolling over the held
+           image), the refinement is image-held + panel-in-flow (the DiaStage Dia+Figure / rise-over
+           model) — flagged.] -->
       <section class="shutter-stack">
         <!-- Bild 1 · pope · image LEFT (1:1) + panel RIGHT · held -->
         <div class="ss-bild ss-bild--pope">
@@ -54,22 +56,16 @@
             :aria-label="backslides[0].imageAlt"
             :style="{ backgroundImage: `url('${backslides[0].image}')` }"
           />
-          <div class="ss-panel">
-            <p class="ss-overline">before magnifica</p>
+          <div class="ss-panel ss-panel--dim">
+            <HeadingParser :content="backslides[0].panel" as="h2" class="ss-head" />
           </div>
         </div>
 
-        <!-- the ~200px shutter · 2 headlines above + below the hairline · lifts over pope → olah -->
-        <div class="ss-shutter">
-          <HeadingParser :content="shutterSeam.before" as="h2" class="ss-head" />
-          <span class="ss-line" aria-hidden="true" />
-          <HeadingParser :content="shutterSeam.after" as="h2" class="ss-head" />
-        </div>
-
-        <!-- Bild 2 · olah · panel LEFT + image RIGHT (1:1) · held -->
+        <!-- Bild 2 · olah · panel LEFT (green) + image RIGHT (1:1) · rises OVER pope (the mirror) ·
+             no shutter — the next held slide scrolls up over the first (the 2022 scroll-over) -->
         <div class="ss-bild ss-bild--olah">
-          <div class="ss-panel">
-            <p class="ss-overline">after magnifica</p>
+          <div class="ss-panel ss-panel--green">
+            <HeadingParser :content="backslides[1].panel" as="h2" class="ss-head" />
           </div>
           <div
             class="ss-img"
@@ -137,12 +133,6 @@ import {
 
 const { isAuthenticated } = useMagnificaAuth()
 
-/** §C · the CandA shutter's two simplified seam-headlines (above + below the line · HM Q2 · a FIRST
- *  CRAFT — the text gets tweaked after the structure reads). crearis-md "overline **HEADLINE**". */
-const shutterSeam = {
-  before: 'my findings as a user **IS COMPACTION A KIND OF DEATH?**',
-  after: 'the practitioner I’d be **CULTURE IS ORDINARY**',
-}
 </script>
 
 <style scoped>
@@ -326,22 +316,17 @@ const shutterSeam = {
   --ss-top: var(--bb-navbar-offset, 6rem);
 }
 
-.ss-overline {
-  font-size: 0.8125rem;
-  letter-spacing: 0.04em;
-  color: var(--color-muted-contrast);
-  margin: 0;
-}
 .ss-head {
   margin: 0;
 }
-.ss-line {
-  display: block;
-  width: 60%;
-  max-width: 32rem;
-  height: 1px;
-  margin: 0.9rem auto;
-  background: var(--color-primary-bg);
+/* the coloured panels (the 2022 green/yellow · here dim → green across the pope → olah mirror) */
+.ss-panel--dim {
+  background: var(--color-card-bg, #1d1b1a);
+  color: var(--color-card-contrast, #f4f4f4);
+}
+.ss-panel--green {
+  background: var(--color-positive-bg);
+  color: var(--color-positive-contrast);
 }
 
 /* mobile (<768) · linearise: the Bilder + shutter are normal-flow blocks (the held/lift choreography
@@ -356,15 +341,6 @@ const shutterSeam = {
 }
 .ss-panel {
   padding: 1.25rem 0;
-}
-.ss-shutter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: var(--color-bg);
-  padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
 }
 
 @media (min-width: 768px) {
@@ -390,45 +366,6 @@ const shutterSeam = {
     flex-direction: column;
     justify-content: flex-end;
     padding: 2rem clamp(1.5rem, 3vw, 2.5rem) 3rem;
-  }
-
-  /* the ~200px shutter · sticky · the highest z · rises to cover the pope-Bild, then LIFTS off
-     (view()) so the held olah-Bild comes to view. Overlaps olah (margin) so it pins behind. */
-  .ss-shutter {
-    position: sticky;
-    top: var(--ss-top);
-    height: 200px;
-    min-height: 200px;
-    z-index: 3;
-    margin-bottom: calc(-1 * var(--ss-h, 82vh));
-  }
-  @supports (animation-timeline: view()) {
-    .ss-shutter {
-      animation: ss-lift linear both;
-      animation-timeline: view(block);
-      animation-range: cover 0% cover 50%;
-    }
-    @keyframes ss-lift {
-      from { transform: translateY(0); }
-      to { transform: translateY(-110%); }
-    }
-  }
-  /* fallback (no scroll-driven · Firefox-stable) · the shutter scrolls away in flow · still reveals */
-  @supports not (animation-timeline: view()) {
-    .ss-shutter {
-      position: relative;
-      top: auto;
-    }
-  }
-}
-
-/* reduced-motion · the shutter holds static + scrolls away (no lift · never broken) */
-@media (prefers-reduced-motion: reduce) and (min-width: 768px) {
-  .ss-shutter {
-    animation: none !important;
-    position: relative;
-    top: auto;
-    margin-bottom: 0;
   }
 }
 
