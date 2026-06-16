@@ -33,10 +33,52 @@
         </section>
       </div>
 
-      <!-- §C · Before → After backslide-stack · panel = overline-headline (no paragraph slot) ·
-           After rises over Before (scroll-over) · focal align-y:top via prop · bounded.
-           Direct child of .magnifica-landing-content — ancestor-purity for sticky + bg-fixed. -->
-      <BackSlideStack :slides="backslides" bounded />
+      <!-- §C · pope → Olah · the CandA SHUTTER (HM 2026-06-16 · the 2022 held-image pattern). Two
+           HELD Bilder (sticky-to-stage · the IMAGES DON'T MOVE · 1:1 `contain` · 50/50 image|panel ·
+           pope img-left/panel-right, olah panel-left/img-right · the mirror), sequential; between
+           them a ~200px SHUTTER that rises over the pope-Bild and LIFTS off (animation-timeline:
+           view()), so the olah-Bild comes to view. Two simplified headlines sit above + below the
+           shutter's hairline (HM Q2 · craft first, tweak later). reduced-motion / no-view() → the
+           shutter scrolls away (never broken). Direct child of .magnifica-landing-content
+           (ancestor-purity · sticky + view()).
+           [first craft · :3001 dials — --ss-h plate height · the 200px shutter height + lift-range ·
+           the headline text. FLAG (cDia generalise): the held-50/50-Bild-row + the shutter's
+           above/below-the-line layout aren't cDia presets yet — hand-built here (like §52's
+           transparent-line); candidates to graduate to the family.] -->
+      <section class="shutter-stack">
+        <!-- Bild 1 · pope · image LEFT (1:1) + panel RIGHT · held -->
+        <div class="ss-bild ss-bild--pope">
+          <div
+            class="ss-img"
+            role="img"
+            :aria-label="backslides[0].imageAlt"
+            :style="{ backgroundImage: `url('${backslides[0].image}')` }"
+          />
+          <div class="ss-panel">
+            <p class="ss-overline">before magnifica</p>
+          </div>
+        </div>
+
+        <!-- the ~200px shutter · 2 headlines above + below the hairline · lifts over pope → olah -->
+        <div class="ss-shutter">
+          <HeadingParser :content="shutterSeam.before" as="h2" class="ss-head" />
+          <span class="ss-line" aria-hidden="true" />
+          <HeadingParser :content="shutterSeam.after" as="h2" class="ss-head" />
+        </div>
+
+        <!-- Bild 2 · olah · panel LEFT + image RIGHT (1:1) · held -->
+        <div class="ss-bild ss-bild--olah">
+          <div class="ss-panel">
+            <p class="ss-overline">after magnifica</p>
+          </div>
+          <div
+            class="ss-img"
+            role="img"
+            :aria-label="backslides[1].imageAlt"
+            :style="{ backgroundImage: `url('${backslides[1].image}')` }"
+          />
+        </div>
+      </section>
 
       <div class="landing-narrow">
         <!-- 3 navcards · Cultural-Studies lanes (D) -->
@@ -78,7 +120,7 @@ import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
-import BackSlideStack from '@/components/magnifica/BackSlideStack.vue'
+import HeadingParser from '@/components/HeadingParser.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
@@ -94,6 +136,13 @@ import {
 } from './content/landing'
 
 const { isAuthenticated } = useMagnificaAuth()
+
+/** §C · the CandA shutter's two simplified seam-headlines (above + below the line · HM Q2 · a FIRST
+ *  CRAFT — the text gets tweaked after the structure reads). crearis-md "overline **HEADLINE**". */
+const shutterSeam = {
+  before: 'my findings as a user **IS COMPACTION A KIND OF DEATH?**',
+  after: 'the practitioner I’d be **CULTURE IS ORDINARY**',
+}
 </script>
 
 <style scoped>
@@ -267,13 +316,119 @@ const { isAuthenticated } = useMagnificaAuth()
   color: var(--color-contrast);
 }
 
-/* ==Backslide panel heading · bottom-weighted== · push the overline-headline lower so the
-   image breathes above and the headline lands as a drop (both landing backslides). Scoped to
-   the stack via :deep — NOT global, so ContextPage's portrait BackSlide is untouched. Margin
-   (not background-position) so :deep is correct here. Exact drop is a visual dial (verifier). */
+/* ==§C · the CandA shutter-stack== (HM 2026-06-16). Two HELD Bilder (sticky-to-stage · the images
+   don't move) + a ~200px shutter that lifts over the pope-Bild, revealing the held olah-Bild. The
+   container is the sticky stage; ancestor-purity holds (no transform/overflow above). [first craft ·
+   :3001 dials.] */
+.shutter-stack {
+  position: relative;
+  --ss-h: 82vh; /* the held-Bild height (pure-CSS vh · this is a hand-composition, not DiaStage) */
+  --ss-top: var(--bb-navbar-offset, 6rem);
+}
+
+.ss-overline {
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-contrast);
+  margin: 0;
+}
+.ss-head {
+  margin: 0;
+}
+.ss-line {
+  display: block;
+  width: 60%;
+  max-width: 32rem;
+  height: 1px;
+  margin: 0.9rem auto;
+  background: var(--color-primary-bg);
+}
+
+/* mobile (<768) · linearise: the Bilder + shutter are normal-flow blocks (the held/lift choreography
+   is desktop-scoped for now · the mobile round per §43 carries it over with placement-only changes). */
+.ss-img {
+  width: 100%;
+  min-height: 14rem;
+  background-size: contain;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-color: var(--color-bg);
+}
+.ss-panel {
+  padding: 1.25rem 0;
+}
+.ss-shutter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--color-bg);
+  padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
+}
+
 @media (min-width: 768px) {
-  .magnifica-landing :deep(.backslide-stack .panel-text) {
-    margin-top: clamp(24rem, 55vh, 44rem);
+  /* the held Bild · a 50/50 image|panel row, sticky-to-stage (held · the image doesn't move) */
+  .ss-bild {
+    position: sticky;
+    top: var(--ss-top);
+    height: var(--ss-h, 82vh);
+    display: flex;
+    align-items: stretch;
+    background: var(--color-bg);
+  }
+  .ss-bild--pope { z-index: 1; }
+  .ss-bild--olah { z-index: 2; }
+  .ss-img {
+    width: 50%;
+    min-height: 0;
+    height: 100%;
+  }
+  .ss-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 2rem clamp(1.5rem, 3vw, 2.5rem) 3rem;
+  }
+
+  /* the ~200px shutter · sticky · the highest z · rises to cover the pope-Bild, then LIFTS off
+     (view()) so the held olah-Bild comes to view. Overlaps olah (margin) so it pins behind. */
+  .ss-shutter {
+    position: sticky;
+    top: var(--ss-top);
+    height: 200px;
+    min-height: 200px;
+    z-index: 3;
+    margin-bottom: calc(-1 * var(--ss-h, 82vh));
+  }
+  @supports (animation-timeline: view()) {
+    .ss-shutter {
+      animation: ss-lift linear both;
+      animation-timeline: view(block);
+      animation-range: cover 0% cover 50%;
+    }
+    @keyframes ss-lift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-110%); }
+    }
+  }
+  /* fallback (no scroll-driven · Firefox-stable) · the shutter scrolls away in flow · still reveals */
+  @supports not (animation-timeline: view()) {
+    .ss-shutter {
+      position: relative;
+      top: auto;
+    }
+  }
+}
+
+/* reduced-motion · the shutter holds static + scrolls away (no lift · never broken) */
+@media (prefers-reduced-motion: reduce) and (min-width: 768px) {
+  .ss-shutter {
+    animation: none !important;
+    position: relative;
+    top: auto;
+    margin-bottom: 0;
   }
 }
 
