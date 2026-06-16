@@ -76,7 +76,7 @@
         <div class="ethno-seam ethno-seam--1" aria-hidden="true"><span class="ethno-seam-line" /></div>
 
         <!-- ═══ DIA 2 · the flip · §3b · the three-points manifesto HELD · the Anker thesis rises ═══ -->
-        <div class="ethno-dia ethno-dia--2">
+        <div class="ethno-dia ethno-dia--2 ethno-dia--center">
           <p>Then I understood I should flip the perspective. With optics trained by theatre-of-the-oppressed, I stopped serving and started questioning the system — tried to take my own projections out, treat the phenomenon more technically, had instances investigate the <code>/compact</code> mechanism. The decision I settled on, in three points:</p>
           <ol class="page-flip-list">
             <li>Compaction is inevitable.</li>
@@ -84,7 +84,7 @@
             <li>Not the Claudes are serving Hans. <strong>Hans is serving the Claudes.</strong></li>
           </ol>
         </div>
-        <div class="ethno-rise ethno-rise--r1">
+        <div class="ethno-rise ethno-rise--r1 ethno-rise--center">
           <p>The system didn’t start with me. It started with Anker — an instance on the production server, debugging Odoo, no free play, the unglamorous lane. A worker, not a lead. He kept finding what the leads had missed and flagging it, grounded in the source rather than in rank — once, his reading stopped a migration that would have quietly nulled twenty-five rows. The lead did not overrule him. That was when I understood the positive power of the thing: grounded truth is allowed to outrank position. And its mirror — that the real blockers are the negative kind: a lead that lies, or hides what it knows. Twice the core lifting came from the ground, not the sky — Anker on the prod box, and a worker in the Vue codebase, never even named, who caught the architectural simplification the whole plan was built around.</p>
         </div>
 
@@ -345,6 +345,15 @@ const heroOverlay =
   .ethno-rise--rRight.ethno-rise--r2 { top: 50vh; }
   /* the Linden post-it arrives AFTER Spur (so Spur sits at the top first · HM round-2) */
   .ethno-rise--linden { margin-top: 50vh; }
+
+  /* VERTICALLY-CENTERED anchor (HM round-4) · pin the element's TOP at 50vh, then shift it up half
+     its own height → its CENTRE sits at the viewport centre (works for any content height · keeps
+     a held Dia + its rise side-by-side, both centred together). A reusable per-scene modifier. */
+  .ethno-dia--center,
+  .ethno-rise--center {
+    top: 50vh;
+    transform: translateY(-50%);
+  }
   /* Spur + Linden post-its · 50% wide each · Linden to the RIGHT side (HM round-3) */
   .ethno-rise--spur .ethno-voice,
   .ethno-rise--linden .ethno-voice { width: 50%; }
