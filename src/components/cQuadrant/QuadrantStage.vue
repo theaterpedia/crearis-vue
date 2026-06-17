@@ -172,9 +172,25 @@ function configure(): void {
 function setupObservers(): void {
     observers.forEach((o) => o.disconnect())
     observers = []
-    if (motionOff || typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+    const mobile = typeof window !== 'undefined' && window.innerWidth < 768
+    // Mobile has no held-grid sweep yet (the desktop hold is this round's focus; the true mobile hold
+    // is its own round · flagged in 2026-06_quadrant.md §10). Without the hold the curtain can't
+    // coordinate a row-reveal, and "hidden-until-swept" would be a content TRAP → REVEAL EVERYTHING on
+    // mobile (the no-trap floor · also covers reduced-motion + no-IO). Re-evaluated on resize.
+    if (motionOff || mobile || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+        topRowRevealed.value = true
+        bottomRowRevealed.value = true
+        return
+    }
+    // desktop · the sweep drives the reveal (start hidden · the curtain lifts each row)
+    topRowRevealed.value = false
+    bottomRowRevealed.value = false
     const wrap = seamWrapEl.value
-    if (!wrap) return
+    if (!wrap) {
+        topRowRevealed.value = true
+        bottomRowRevealed.value = true
+        return
+    }
     const vh = window.innerHeight
     const quadrantTop = props.topOffset
     const quadrantMid = props.topOffset + (vh - props.topOffset - props.bottomOffset) / 2
@@ -202,12 +218,8 @@ onMounted(() => {
         props.reducedMotion ||
         (typeof window !== 'undefined' &&
             window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true)
-    if (motionOff) {
-        topRowRevealed.value = true
-        bottomRowRevealed.value = true
-    }
     configure()
-    setupObservers()
+    setupObservers() // owns the reveal state (desktop-sweep · or reveal-all on mobile/reduced/no-IO)
     window.addEventListener('resize', onResize, { passive: true })
 })
 function onResize(): void {
