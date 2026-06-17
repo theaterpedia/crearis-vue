@@ -329,10 +329,14 @@ const heroOverlay =
     background: var(--color-bg);
   }
 
-  /* the rising Figure · RIGHT lane · rises + pins beside/over the held Dia · staggered pauses */
+  /* the rising Figure · RIGHT lane · rises + pins beside/over the held Dia · staggered pauses.
+     §4·2 (HP): the right rise pins at the SAME top as the left Dia so the lanes MEET (was
+     +3rem · the right stopped 3rem below the left's top). Page-scoped-proper alignment — the
+     /context d6e3b43 precedent (pin at the aligned top · NOT a spacer). The staggered/special-top
+     rises (--center · --rLate @50/60vh · rRight.r2) override this base + keep their intentional pins. */
   .ethno-rise {
     position: sticky;
-    top: calc(var(--dia-top) + 3rem);
+    top: var(--dia-top);
     width: 46%;
     margin-left: 52%;
     background: var(--color-bg);
