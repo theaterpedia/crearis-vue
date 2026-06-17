@@ -34,6 +34,11 @@
         <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in the room, between people, not inside one head.</p>
         <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
         <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has held for thirty years — without collapsing it in either direction.</p>
+        <!-- brush · invisible riser after the last line · extends the figure's rise-travel so its
+             top reaches the teaser's top ("In Theaterpädagogik…"). The figure pins via the calc
+             below, but the stage needs the extra scroll-length to carry it there (HM 2026-06-18 ·
+             Task1). Height is a :3001 dial (--ctx-figure-brush). -->
+        <div class="context-figure-brush" aria-hidden="true" />
       </template>
     </DiaStage>
   </MagnificaPageLayout>
@@ -106,6 +111,14 @@ const bilder: DiaBildSpec[] = [
    restructures. The exact rise is a :3001 dial (--ctx-method-top). */
 .context-method-stage {
   --ctx-method-top: clamp(2rem, 14vh, 9rem);
+}
+
+/* the figure-brush · invisible riser extending the rise so the figure reaches its pinned top
+   (alignment with the teaser). Desktop-only (the rise is desktop · mobile linearises). Dial. */
+@media (min-width: 768px) {
+  .context-method-stage .context-figure-brush {
+    height: var(--ctx-figure-brush, 40vh);
+  }
 }
 
 @media (min-width: 768px) {
