@@ -118,15 +118,14 @@ export const navCards: ReadonlyArray<RouteCard> = [
 // navcards (2026-06_quadrant.md · HP-spec 2026-06-16). q1 = the pope-and-olah image (nothing
 // appears) · q2/q3/q4 = the magnifica question + the two follow-on questions, each carrying a route
 // post-it (discourse/context/ethnography · faked card-code now · real fpostit fast-follow · A2).
-// 🚩 colour-dial: q2 wants "orange" — mapped to `yellow` (primary · the warm token) for now; a true
-// orange would be a new --color token (HP's call · flagged in the thread).
+// q2 uses the `orange` magnifica special color (HP-approved 2026-06-17 · --color-orange-* in 00-theme).
 const POPE_OLAH = `https://${ENCYCLICA}/c_fill,w_1600,h_1000/v1780762597/crearis/alamy_pope-leo_chris-olah.jpg`
 
 export const quadrants: QuadrantSpec[] = [
     // q1 · pope-and-olah · image only · nothing appears (no heading, no sub-element)
-    { id: 'q1', image: POPE_OLAH, imageAlt: 'placeholder · pope + Olah (HP to replace · images-copyright)', imgTmpAlignY: 'top' },
+    { id: 'q1', image: POPE_OLAH, imageAlt: 'Pope Leo and Christopher Olah', imgTmpAlignY: 'top' },
     // q2 · orange · the magnifica question → discourse post-it
-    { id: 'q2', theme: 'yellow', heading: 'the magnifica question **How can the humanities relate in a sustainable way to high-level AI?**' },
+    { id: 'q2', theme: 'orange', heading: 'the magnifica question **How can the humanities relate in a sustainable way to high-level AI?**' },
     // q3 · green · the follow-on question → context post-it
     { id: 'q3', theme: 'green', heading: 'from mid-May onwards **my own question**' },
     // q4 · muted · the user-finding question → ethnography post-it
