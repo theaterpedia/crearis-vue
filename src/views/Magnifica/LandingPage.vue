@@ -87,7 +87,7 @@
             </p>
             <div class="landing-honest-flag">
               <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
-              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
+              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }} <br/><br/></p>
             </div>
           </section>
         </div>
