@@ -23,7 +23,8 @@
    sticky zero travel). Apply the 90rem centered inset the old wrapper provided.
    `header.mag-header` outranks MagnificaHeader's scoped `.mag-header` so the horizontal
    inset wins; vertical padding + the scroll/compact states stay owned by MagnificaHeader.
-   Scoped to `.magnifica-page >` so the landing header (in .landing-container) is untouched. */
+   Scoped to `.magnifica-page >` so the landing header is untouched (the landing applies the
+   same inset in its own scoped styles — this stylesheet only loads via MagnificaPageLayout). */
 .magnifica-page > header.mag-header {
   max-width: 90rem;
   margin-left: auto;

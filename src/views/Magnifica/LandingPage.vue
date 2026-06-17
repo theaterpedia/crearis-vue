@@ -13,9 +13,13 @@
     <EntryHero v-if="!isAuthenticated" />
 
     <div v-if="isAuthenticated" class="magnifica-landing-content">
-      <div class="landing-container">
-        <MagnificaHeader show-nav />
+      <!-- topbar · DIRECT child of the page root so position:sticky pins WHOLE-PAGE (over the
+           quadrant + the close), not just within .landing-container (issue 2a · SATZ 2026-06-18).
+           90rem inset comes from magnifica-page.css. show-nav (no `compact`) keeps the big
+           State-A→B collapse the landing wants. -->
+      <MagnificaHeader show-nav />
 
+      <div class="landing-container">
         <!-- 2022 hero shape · left headline + right promptbox -->
         <section class="landing-hero">
           <div class="landing-hero-left">
@@ -132,6 +136,17 @@ const { isAuthenticated } = useMagnificaAuth()
 .magnifica-landing-content {
   background: var(--color-bg);
   color: var(--color-contrast);
+}
+
+/* topbar inset · the header is a direct child here (hoisted · issue 2a) so it pins whole-page;
+   mirror the .magnifica-page > header inset from magnifica-page.css (that sheet only loads via
+   MagnificaPageLayout, not on the landing). Vue applies this page's scope to the child root. */
+.magnifica-landing-content > header.mag-header {
+  max-width: 90rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 6vw, 3rem);
+  padding-right: clamp(1rem, 6vw, 3rem);
 }
 
 .landing-container {
