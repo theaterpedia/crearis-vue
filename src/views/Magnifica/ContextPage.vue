@@ -131,9 +131,15 @@ const bilder: DiaBildSpec[] = [
     padding-right: 0;
   }
   /* the definition Figure · Bild 0 = the first .dia-stage-bild = the stage's 2nd child (Dia · bild),
-     so :nth-child(2). Pin so the figure's text-top lands on the teaser's first line (−1.25rem = the
-     figure's own padding-top). Coupled to cDia's flat child order — flag if the family restructures. */
+     so :nth-child(2). The cDia figure rises-over by design (position: static) — for /context's
+     method we PIN it: `position: sticky` so it rises, then STICKS at the aligned top and holds
+     (with the held teaser) instead of scrolling past (HM 2026-06-18 screentest). The brush below
+     gives the hold its scroll-length. top = the teaser's first line (−1.25rem = the figure's own
+     padding-top). align-self:start so the sticky box isn't stretched to the row. Page-scoped via
+     :deep (only .context-method-stage · the cDia component's rise-over stays the family default). */
   .context-method-stage :deep(.dia-stage-bild:nth-child(2) .dia-stage-figure) {
+    position: sticky;
+    align-self: start;
     top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) - 1.25rem);
   }
 }
