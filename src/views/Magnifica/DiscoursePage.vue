@@ -17,12 +17,18 @@
 
     <template #hero>
       <!-- Hero · HM-provided image (Hans as harsh critique). Framework <Heading> (overline-
-         headline), magnifica-bounded. No overlay (HM: discourse hero stays clean). -->
-      <Hero magnifica height-tmp="full" :img-tmp="hero.image" img-tmp-align-x="cover" img-tmp-align-y="cover"
-        content-align-y="bottom">
-        <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
-        <p class="discourse-hero-frame">This is critical thinking, first attempt — a practitioner’s, not a scholar’s. The question on this page is the one I wrote my thesis on in 1996: <em>wie sollen wir sprechen</em> — how should we speak to each other? Thirty years of theatre work later, the AI-moment puts it to me again. What follows is how I am trying to answer it — from the body up.</p>
-      </Hero>
+         headline), magnifica-bounded. No overlay (HM: discourse hero stays clean).
+         HELD + scrolled-over (§4·1 · the cDia pattern, page-scoped): the wrapper pins the banner
+         (sticky · z-low · the held Dia) and the article (z-higher · opaque · the rising Figure)
+         scrolls OVER it instead of pushing it off. No cDia component / no layout change — element-
+         anchored sticky (§9.4 · no attachment:fixed). The topbar (z:1100) + glosses stay above. -->
+      <div class="discourse-held-hero">
+        <Hero magnifica height-tmp="full" :img-tmp="hero.image" img-tmp-align-x="cover" img-tmp-align-y="cover"
+          content-align-y="bottom">
+          <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
+          <p class="discourse-hero-frame">This is critical thinking, first attempt — a practitioner’s, not a scholar’s. The question on this page is the one I wrote my thesis on in 1996: <em>wie sollen wir sprechen</em> — how should we speak to each other? Thirty years of theatre work later, the AI-moment puts it to me again. What follows is how I am trying to answer it — from the body up.</p>
+        </Hero>
+      </div>
     </template>
 
     <!-- main content · default slot (the layout wraps it in <main class="magnifica-page-content is-scientific">) -->
@@ -301,6 +307,24 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 /* Shared shell + prose live in magnifica-page.css (via MagnificaPageLayout · scientific
    variant: 90rem container, 56rem left .page-body lane, right gloss-lane). Only the
    page-3-unique decorations remain here. */
+
+/* ==Held banner (§4·1 · the cDia pattern, page-scoped)== · the hero pins below the topbar and the
+   article scrolls OVER it (the held Dia · rising Figure). Element-anchored sticky — works because
+   .magnifica-page (the containing block) stays ancestor-pure (no transform/overflow). */
+.discourse-held-hero {
+  position: sticky;
+  top: var(--bb-navbar-offset, 6rem);
+  z-index: 0; /* held behind · below the article (which lifts to z:1), the topbar (z:1100), glosses (z:1000) */
+}
+
+/* the article rises OVER the held hero: a positioned sticky hero would otherwise paint above a
+   static <main>, so lift the content (relative + z:1) and make it opaque so it covers as it scrolls
+   up. Page-scoped via :deep into this page's MagnificaPageLayout instance (no shared-layout change). */
+:deep(.magnifica-page-content) {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
+}
 
 /* hero subtext · the "first attempt" frame under the headline (mirrors ethnography's
    hero-frame · the discourse hero has no overlay, so this sits on the bottom-dark image). */
