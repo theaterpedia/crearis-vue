@@ -48,27 +48,17 @@
         seam-preset="split"
         :seam-text="quadrantSeamText"
       >
-        <!-- q2 · discourse · q3 · context · q4 · ethnography (faked route post-its · in-place · A3) -->
+        <!-- q2 · discourse · q3 · context · q4 · ethnography · REAL fpostit notes (A2), rendered
+             in-place via FloatingPostIt static-board mode (in-flow · non-dismissable · reveal-gated
+             by the cell's .quadrant-sub). The action navigates the route (SPA · router.push). -->
         <template #q-2>
-          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[0].theme}`" :to="quadrantCards[0].to">
-            <span class="q-postit-overline">{{ quadrantCards[0].overline }}</span>
-            <span class="q-postit-headline">{{ quadrantCards[0].headline }}</span>
-            <span class="q-postit-subline">{{ quadrantCards[0].subline }}</span>
-          </RouterLink>
+          <div class="q-note"><FloatingPostIt :data="quadrantNotes[0]" :is-open="true" /></div>
         </template>
         <template #q-3>
-          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[1].theme}`" :to="quadrantCards[1].to">
-            <span class="q-postit-overline">{{ quadrantCards[1].overline }}</span>
-            <span class="q-postit-headline">{{ quadrantCards[1].headline }}</span>
-            <span class="q-postit-subline">{{ quadrantCards[1].subline }}</span>
-          </RouterLink>
+          <div class="q-note"><FloatingPostIt :data="quadrantNotes[1]" :is-open="true" /></div>
         </template>
         <template #q-4>
-          <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[2].theme}`" :to="quadrantCards[2].to">
-            <span class="q-postit-overline">{{ quadrantCards[2].overline }}</span>
-            <span class="q-postit-headline">{{ quadrantCards[2].headline }}</span>
-            <span class="q-postit-subline">{{ quadrantCards[2].subline }}</span>
-          </RouterLink>
+          <div class="q-note"><FloatingPostIt :data="quadrantNotes[2]" :is-open="true" /></div>
         </template>
       </QuadrantStage>
 
@@ -95,12 +85,16 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMagnificaAuth } from '@/composables/useMagnificaAuth'
 import EntryHero from './EntryHero.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import QuadrantStage from '@/components/cQuadrant/QuadrantStage.vue'
+import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
+import { magnificaToFpostitColor } from '@/components/magnifica/types'
+import type { FpostitData, PostitRotation } from '@/fpostit/types'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
@@ -117,6 +111,23 @@ import {
 } from './content/landing'
 
 const { isAuthenticated } = useMagnificaAuth()
+const router = useRouter()
+
+// The q2/q3/q4 route post-its as REAL fpostit notes (A2 · in-place via FloatingPostIt static-board).
+// Content from quadrantCards (single-source); the action navigates via SPA router-push (the handler
+// path · not an href reload). Colour maps the route theme → the fpostit OKLCH token.
+const NOTE_ROTATIONS: PostitRotation[] = ['-rotate-2', 'rotate-1', '-rotate-1']
+const quadrantNotes = computed<FpostitData[]>(() =>
+  quadrantCards.map((c, i) => ({
+    key: `q-note-${i + 2}`,
+    title: c.headline,
+    content: `<p>${c.subline}</p>`,
+    color: magnificaToFpostitColor(c.theme),
+    rotation: NOTE_ROTATIONS[i],
+    hlogic: 'static-board',
+    actions: [{ label: `enter ${c.headline.toLowerCase()} →`, handler: () => { router.push(c.to) } }],
+  })),
+)
 </script>
 
 <style scoped>
@@ -203,51 +214,23 @@ const { isAuthenticated } = useMagnificaAuth()
   padding: clamp(2.5rem, 6vh, 4rem) clamp(1rem, 6vw, 3rem) 0;
 }
 
-/* ==The faked route post-its== · the in-place sub-element on q2/q3/q4 (discourse/context/ethnography).
-   Square post-it look (the fpostit grammar) · contrast-tinted so it reads over the cell's theme-colour.
-   🚩 fast-follow (A2): swap for a real fpostit (FloatingPostIt-rendered in-place). */
-.q-postit {
+/* ==The route post-its (A2 · REAL fpostit)== · q2/q3/q4 render a FloatingPostIt in static-board mode
+   in-place. static-board ships `position:absolute; top/left` inline (for pinned boards with authored
+   coords); the cell is a flex layout, not a coord-board, so we re-flow it to STATIC (the cell owns the
+   placement · `!important` beats the component's inline style) and keep it square (standards-floor).
+   The note is reveal-gated by the cell's .quadrant-sub (it sits inside that slot). */
+.q-note {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  justify-content: flex-start;
+}
+.q-note :deep(.floating-postit) {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  --fpostit-radius: 0; /* square · standards-floor */
+  width: auto !important;
   max-width: 22rem;
-  padding: 1.1rem 1.25rem;
-  text-decoration: none;
-  border-radius: 0; /* square · standards-floor */
   box-shadow: 0 4px 16px oklch(0 0 0 / 0.3);
-  transform: rotate(-1.5deg);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-.q-postit:hover,
-.q-postit:focus-visible {
-  transform: rotate(0deg) translateY(-3px);
-  box-shadow: 0 10px 28px oklch(0 0 0 / 0.4);
-  outline: none;
-}
-.q-postit:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px oklch(0 0 0 / 0.4);
-}
-/* the post-it sits ON the cell · use the page bg as the note-surface so it lifts off every theme */
-.q-postit--yellow,
-.q-postit--green,
-.q-postit--pink {
-  background: var(--color-bg);
-  color: var(--color-contrast);
-}
-
-.q-postit-overline {
-  font-size: 0.8125rem;
-  opacity: 0.85;
-}
-.q-postit-headline {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.q-postit-subline {
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  opacity: 0.9;
 }
 
 /* ==The wiping board== · the honest-flag's opaque board · rises OVER the released held quadrant as
@@ -290,16 +273,4 @@ const { isAuthenticated } = useMagnificaAuth()
   color: var(--color-contrast);
 }
 
-@media (max-width: 640px) {
-  .q-postit {
-    transform: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .q-postit {
-    transition: none;
-    transform: none;
-  }
-}
 </style>
