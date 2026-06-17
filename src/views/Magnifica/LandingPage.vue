@@ -21,9 +21,10 @@
           <div class="landing-hero-left">
             <p class="landing-hero-overline">{{ hero.overline }}</p>
             <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
+            <!-- a quiet lead, not a second headline (issue 0 · the summary `headline` no longer
+                 renders so it can't compete with the page title above · SATZ 2026-06-18). -->
             <div class="landing-summary">
               <p class="landing-summary-overline">{{ summary.overline }}</p>
-              <h2 class="landing-summary-headline">{{ summary.headline }}</h2>
               <p class="landing-summary-body">{{ summary.body }}</p>
             </div>
           </div>
@@ -182,12 +183,6 @@ const { isAuthenticated } = useMagnificaAuth()
   letter-spacing: 0.02em;
 }
 
-.landing-summary-headline {
-  font-size: clamp(1.1rem, 2vw, 1.375rem);
-  font-weight: 700;
-  margin: 0 0 0.75rem;
-  line-height: 1.25;
-}
 
 .landing-summary-body {
   font-size: 0.9375rem;
