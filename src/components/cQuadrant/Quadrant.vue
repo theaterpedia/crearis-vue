@@ -99,6 +99,8 @@ const bgStyle = computed<Record<string, string>>(() => {
 .quadrant--green  { background-color: var(--color-positive-bg); color: var(--color-positive-contrast); }
 .quadrant--pink   { background-color: var(--color-negative-bg); color: var(--color-negative-contrast); }
 .quadrant--dim    { background-color: var(--color-card-bg);     color: var(--color-card-contrast); }
+/* orange · the magnifica special color (q2 · HP-approved 2026-06-17) */
+.quadrant--orange { background-color: var(--color-orange-bg);   color: var(--color-orange-contrast); }
 
 /* the content layer · ALWAYS visible (the heading reads from the start · change 1). */
 .quadrant-content {

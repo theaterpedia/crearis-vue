@@ -40,6 +40,12 @@
   --color-warning-bg: oklch(84.67% 0.1867 88.36);
   --color-warning-contrast: oklch(0% 0 0);
 
+  /* Orange · magnifica special color (the Quadrant q2 · HP-approved 2026-06-17). Additive, NOT a
+     semantic-palette member — the locked grammar (concept→primary · biographical→positive ·
+     critique→negative) is untouched; this is a distinct named accent for the held quadrant. */
+  --color-orange-bg: oklch(70.5% 0.1903 52);
+  --color-orange-contrast: oklch(0% 0 0);
+
   /* Positive */
   --color-positive-bg: oklch(68.87% 0.1715 141.94);
   --color-positive-contrast: oklch(0% 0 0);
