@@ -156,10 +156,13 @@ const { isAuthenticated } = useMagnificaAuth()
   padding: clamp(1rem, 4vh, 3rem) clamp(1rem, 6vw, 3rem) clamp(2rem, 5vh, 4rem);
 }
 
-/* 2022 hero · left text · right promptbox */
+/* 2022 hero · left text · right promptbox. Equal halves so the chatbox occupies the
+   RIGHT half of the content column — aligning to the quadrant's right column below it
+   (the quadrant is two equal halves bounded to this same column · issue B · HM 2026-06-18).
+   Was 1fr/1.25fr → the chatbox ran left across the middle. */
 .landing-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 4rem);
   align-items: start;
   padding-top: clamp(1rem, 4vh, 3rem);
