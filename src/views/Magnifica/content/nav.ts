@@ -10,6 +10,6 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 
 export const navItems: ReadonlyArray<TopnavParentItem> = [
     { label: 'Ethnography', link: '/ethnography' },
-    { label: 'Context', link: '/context' },
     { label: 'Discourse', link: '/discourse' },
+    { label: 'Context', link: '/context' },
 ]
