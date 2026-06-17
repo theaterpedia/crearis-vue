@@ -145,7 +145,11 @@ function configure(): void {
     if (!stageEl.value || typeof window === 'undefined') return
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const avail = Math.min(vw - GUTTER_PX * 2, BOUND_PX)
+    // The grid must equal the page's content column (.landing-container: max-width 90rem
+    // MINUS 2×3rem inline-padding). Subtract the gutter CONSISTENTLY — incl. at the bound-cap —
+    // else on wide (≥1536) the grid stays the full 90rem while the column is 90rem−gutters (was
+    // `min(vw − 2·gutter, BOUND)`, which dropped the gutter once capped → ~6rem too wide · HM).
+    const avail = Math.min(vw, BOUND_PX) - GUTTER_PX * 2
 
     // the held grid fills the viewport MINUS the offset-corrections (A4); each cell = a half-row;
     // the shutter = a half so it covers exactly a half (below 50vH once corrected).
