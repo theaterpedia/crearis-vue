@@ -18,6 +18,25 @@
   color: var(--color-contrast);
 }
 
+/* ===== the topbar offset · the one definition (HM 2026-06-18 · SATZ) =====
+   Every magnifica sticky-stage pins BELOW the compact topbar via var(--bb-navbar-offset)
+   — Hero(.hero--magnifica) · CardsCanvas · MagnificaScreen · MagnificaRise · cDia
+   (Dia/DiaStage/Shutter) · QuadrantStage. The token was NEVER defined anywhere, so all 12
+   consumers fell back to 6rem ≈ 1.5rem MORE than the real bar (a dead gap under the topbar).
+   Define it once here, to the real compact-bar height as deterministic rem-geometry:
+     padding-top 1.25 + collapsed wordmark (≈2rem × 1.05) + padding-bottom 0.75 ≈ 4.1rem
+     (measured ~4.4–4.7rem) → 4.5rem.
+   Deterministic: the collapsed wordmark caps at 2rem on desktop (clamp 3vw ≥ 2rem above
+   ~1067px = the Olah-desktop band); magnifica mobile linearises (no precise pinning).
+   Magnifica-SCOPED (both roots) — core Hero's non-magnifica consumers keep the 6rem fallback
+   (additive · no regress). 🚩 PAIRED JS twin (cQuadrant lane · not mine): QuadrantStage's
+   `topOffset` (96px default + the landing's :top-offset="96") must move to ~72px (= 4.5rem)
+   when the quadrant lands, or its JS height/observer geometry stays tuned to the old 6rem. */
+.magnifica-page,
+.magnifica-landing {
+  --bb-navbar-offset: 4.5rem;
+}
+
 /* topbar · the header (position:sticky in MagnificaHeader) is a DIRECT child of
    .magnifica-page so it pins across the whole page (a height-limited wrapper would give
    sticky zero travel). Apply the 90rem centered inset the old wrapper provided.
