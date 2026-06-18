@@ -26,7 +26,7 @@
             <div
                 v-if="$slots.default"
                 class="quadrant-sub"
-                :class="{ 'quadrant-sub--revealed': revealed }"
+                :class="[`quadrant-sub--${postitSize}`, { 'quadrant-sub--revealed': revealed }]"
             >
                 <slot />
             </div>
@@ -46,7 +46,7 @@
  */
 import { computed, useSlots } from 'vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import type { QuadrantAlignX, QuadrantAlignY, QuadrantTheme, HeadingSide } from './types'
+import type { QuadrantAlignX, QuadrantAlignY, QuadrantTheme, HeadingSide, PostitSize } from './types'
 
 const props = withDefaults(
     defineProps<{
@@ -58,10 +58,12 @@ const props = withDefaults(
         heading?: string
         headingAs?: 'h3' | 'h4'
         headingSide?: HeadingSide
+        /** the sub-element (post-it) size tier (HP 2026-06-17 · small default · fit-to-cell). */
+        postitSize?: PostitSize
         /** the stage's scroll-reveal state for this cell's row (HP-A1 · default false = invisible on load). */
         revealed?: boolean
     }>(),
-    { imgTmpAlignX: 'center', imgTmpAlignY: 'center', headingAs: 'h3', headingSide: 'left', revealed: false },
+    { imgTmpAlignX: 'center', imgTmpAlignY: 'center', headingAs: 'h3', headingSide: 'left', postitSize: 'small', revealed: false },
 )
 
 const slots = useSlots()
@@ -91,7 +93,10 @@ const bgStyle = computed<Record<string, string>>(() => {
     height: 100%;
     overflow: hidden; /* clip the cover-cut image — LOCAL only (not an ancestor of the sticky stage) */
     background-color: var(--color-bg);
-    color: var(--color-contrast);
+    /* base ink · the text-inverted toggle (--q-ink · the stage sets it: true→contrast, false→black ·
+       change 1). A THEMED cell overrides below with its token-contrast (chosen for its bg) — so the
+       toggle governs the NON-themed cells (image / transparent) + the heading on them. */
+    color: var(--q-ink, var(--color-contrast));
 }
 
 /* theme palette · OKLCH token pairs (the magnifica grammar · same map as CardsCanvas) */
@@ -99,6 +104,8 @@ const bgStyle = computed<Record<string, string>>(() => {
 .quadrant--green  { background-color: var(--color-positive-bg); color: var(--color-positive-contrast); }
 .quadrant--pink   { background-color: var(--color-negative-bg); color: var(--color-negative-contrast); }
 .quadrant--dim    { background-color: var(--color-card-bg);     color: var(--color-card-contrast); }
+/* orange · the magnifica special color (q2 · HP-approved 2026-06-17) */
+.quadrant--orange { background-color: var(--color-orange-bg);   color: var(--color-orange-contrast); }
 
 /* the content layer · ALWAYS visible (the heading reads from the start · change 1). */
 .quadrant-content {
@@ -123,6 +130,9 @@ const bgStyle = computed<Record<string, string>>(() => {
 
 .quadrant-heading {
     margin: 0;
+    /* the heading is the text the inverted-toggle governs (change 1) · --q-ink overrides a themed
+       cell's token-contrast, so text-inverted=false → near-black headings on light-ish theme cells. */
+    color: var(--q-ink, var(--color-contrast));
 }
 
 /* the sub-element (the post-it) · the ONLY reveal-gated part (change 1) · placed on its real
@@ -130,9 +140,17 @@ const bgStyle = computed<Record<string, string>>(() => {
    the opaque shutter covers this half → revealed as the curtain lifts (the curtain IS the motion). */
 .quadrant-sub {
     margin-top: auto; /* the sub-element settles toward the cell's lower region by default */
+    width: 100%;
     visibility: hidden;
 }
 .quadrant-sub--revealed {
     visibility: visible;
 }
+
+/* post-it SIZE tiers (change 2 · HP 2026-06-17) · cap the sub-element width; the slotted post-it
+   fills it (consumer sets the note to max-width:100%). `min(_, 100%)` keeps it inside the cell.
+   medium ≈ the ethnography blackboard post-it · large ≈ the "CO @ prod" sign-off citation. */
+.quadrant-sub--small  { max-width: min(20rem, 100%); } /* ≈ the current note */
+.quadrant-sub--medium { max-width: min(24rem, 100%); } /* ≈ the blackboard post-it */
+.quadrant-sub--large  { max-width: min(30rem, 100%); } /* ≈ the "CO @ prod" sign-off citation */
 </style>
