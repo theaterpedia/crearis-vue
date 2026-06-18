@@ -130,6 +130,9 @@ const bgStyle = computed<Record<string, string>>(() => {
 
 .quadrant-heading {
     margin: 0;
+    /* the heading is the text the inverted-toggle governs (change 1) · --q-ink overrides a themed
+       cell's token-contrast, so text-inverted=false → near-black headings on light-ish theme cells. */
+    color: var(--q-ink, var(--color-contrast));
 }
 
 /* the sub-element (the post-it) · the ONLY reveal-gated part (change 1) · placed on its real

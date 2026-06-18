@@ -70,7 +70,10 @@ const seamStyle = computed<Record<string, string>>(() => ({
     position: relative;
     width: 100%;
     min-height: var(--q-shutter-h, 50vh);
-    color: var(--q-ink, var(--color-contrast)); /* the text-inverted toggle (stage sets --q-ink) */
+    /* the shutter's ink is its OWN bg's contrast (the curtain bg = the page bg by default · dark in
+       theme-7), so it stays readable regardless of the text-inverted toggle (which governs the cell
+       headings · a black-on-dark shutter would be invisible). */
+    color: var(--color-contrast);
     display: flex;
     flex-direction: column;
     justify-content: center;
