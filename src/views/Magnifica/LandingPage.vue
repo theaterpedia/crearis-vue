@@ -43,6 +43,7 @@
         :quadrants="quadrants"
         bounded
         :top-offset="96"
+        :text-inverted="false"
         seam-line-color="primary"
         seam-v-size="small"
         seam-preset="split"
@@ -93,8 +94,7 @@ import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import QuadrantStage from '@/components/cQuadrant/QuadrantStage.vue'
 import FloatingPostIt from '@/fpostit/components/FloatingPostIt.vue'
-import { magnificaToFpostitColor } from '@/components/magnifica/types'
-import type { FpostitData, PostitRotation } from '@/fpostit/types'
+import type { FpostitData, PostitRotation, PostitColor } from '@/fpostit/types'
 import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
@@ -115,14 +115,16 @@ const router = useRouter()
 
 // The q2/q3/q4 route post-its as REAL fpostit notes (A2 · in-place via FloatingPostIt static-board).
 // Content from quadrantCards (single-source); the action navigates via SPA router-push (the handler
-// path · not an href reload). Colour maps the route theme → the fpostit OKLCH token.
+// path · not an href reload). Colours set explicitly from theme (HP 2026-06-17 · feature 4):
+// q2 → negative · q3 → muted · q4 → positive (quadrantCards order = discourse · context · ethnography).
+const NOTE_COLORS: PostitColor[] = ['negative', 'muted', 'positive']
 const NOTE_ROTATIONS: PostitRotation[] = ['-rotate-2', 'rotate-1', '-rotate-1']
 const quadrantNotes = computed<FpostitData[]>(() =>
   quadrantCards.map((c, i) => ({
     key: `q-note-${i + 2}`,
     title: c.headline,
     content: `<p>${c.subline}</p>`,
-    color: magnificaToFpostitColor(c.theme),
+    color: NOTE_COLORS[i],
     rotation: NOTE_ROTATIONS[i],
     hlogic: 'static-board',
     actions: [{ label: `enter ${c.headline.toLowerCase()} →`, handler: () => { router.push(c.to) } }],
