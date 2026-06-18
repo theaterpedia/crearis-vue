@@ -63,7 +63,7 @@
         <!-- held plate (z10) · the label + the witnessed-compaction dialogue · sticks dead-still -->
         <div class="ethno-dia ethno-dia--1">
           <p class="page-section-label">2026-05-14 · the compaction, as it happened</p>
-          <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" :height-vh="72" />
+          <MagnificaChatbox :entries="dialogueEntries" class="ethno-dialogue" :height-vh="72" play-once once-key="ethno-dialogue" />
         </div>
         <!-- the reading rises over the held dialogue (right lane · staggered) -->
         <div class="ethno-rise ethno-rise--r1">
