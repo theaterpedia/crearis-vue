@@ -86,9 +86,9 @@ const props = withDefaults(
         seamVSize?: LineSize
         seamHSize?: LineSize
         seamLineColor?: string
-        /** the shutter text-preset (`split` = "left | right" around the line) + the two-item text:
-         *  [lower-row labels, upper-row labels]. The active item switches when the shutter crosses
-         *  into the viewport's UPPER half (HP 2026-06-16 · change 3). */
+        /** the shutter text-preset (`split` = "left | right" around the line) + the text:
+         *  TWO items [lower-row, upper-row] → the active item switches when the shutter crosses into
+         *  the viewport's UPPER half. ONE item → no switch · it shows in BOTH phases (HP · change 3). */
         seamPreset?: 'split' | 'spearhead'
         seamText?: string[]
         /** text-inverted toggle (change 1 · HP 2026-06-17). true (default) = the inverted/contrast ink
@@ -131,7 +131,9 @@ const bottomRowRevealed = ref(false) // q3 + q4 (lower half)
 // split-text active item · 0 = lower-row labels · 1 = upper-row labels · switches when the shutter
 // crosses into the viewport's UPPER half (change 3).
 const activeSeamIndex = ref(0)
-const activeSeamText = computed(() => props.seamText?.[activeSeamIndex.value])
+// A single-item seamText configures NO switch → show it in BOTH phases (fall back to [0] when the
+// active index has no entry · HP 2026-06-17). Two items → the switch picks [0]/[1] per half.
+const activeSeamText = computed(() => props.seamText?.[activeSeamIndex.value] ?? props.seamText?.[0])
 let motionOff = false
 
 /** q1,q2 (0,1) = top row · q3,q4 (2,3) = bottom row. */
@@ -219,7 +221,8 @@ function setupObservers(): void {
     observers.push(make(quadrantTop, (v) => (topRowRevealed.value = v)))
 
     // split-text · switch the active item when the shutter crosses the viewport MID-line (change 3).
-    if (props.seamPreset === 'split' && props.seamText?.length) {
+    // Only when TWO items are configured — a single item shows in both phases (no switch · HP).
+    if (props.seamPreset === 'split' && (props.seamText?.length ?? 0) > 1) {
         observers.push(make(vh / 2, (v) => (activeSeamIndex.value = v ? 1 : 0)))
     }
 }
