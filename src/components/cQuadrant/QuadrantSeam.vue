@@ -70,7 +70,7 @@ const seamStyle = computed<Record<string, string>>(() => ({
     position: relative;
     width: 100%;
     min-height: var(--q-shutter-h, 50vh);
-    color: var(--color-contrast);
+    color: var(--q-ink, var(--color-contrast)); /* the text-inverted toggle (stage sets --q-ink) */
     display: flex;
     flex-direction: column;
     justify-content: center;

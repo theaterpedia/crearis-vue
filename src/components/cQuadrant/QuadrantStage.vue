@@ -2,7 +2,7 @@
     <section
         ref="stageEl"
         class="quadrant-stage"
-        :class="{ 'quadrant-stage--bounded': bounded }"
+        :class="{ 'quadrant-stage--bounded': bounded, 'quadrant-stage--ink-dark': !textInverted }"
     >
         <!-- the FIXED grid · sticky-to-stage (pins · "does not scroll" · HP-A1) · the 2×2 (q1 q2 /
              q3 q4 · top-left anchor known). Backgrounds always painted; CONTENT toggled visible per
@@ -19,6 +19,7 @@
                 :heading="q.heading"
                 :heading-as="q.headingAs"
                 :heading-side="q.headingSide"
+                :postit-size="q.postitSize ?? postitSize"
                 :revealed="isRevealed(i)"
             >
                 <slot :name="`q-${i + 1}`" :quadrant="q" :index="i" />
@@ -66,7 +67,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Quadrant from './Quadrant.vue'
 import QuadrantSeam from './QuadrantSeam.vue'
 import QuadrantBrush from './QuadrantBrush.vue'
-import type { QuadrantSpec, LineSize, ShutterHeightSize } from './types'
+import type { QuadrantSpec, LineSize, ShutterHeightSize, PostitSize } from './types'
 
 const props = withDefaults(
     defineProps<{
@@ -90,6 +91,14 @@ const props = withDefaults(
          *  into the viewport's UPPER half (HP 2026-06-16 · change 3). */
         seamPreset?: 'split' | 'spearhead'
         seamText?: string[]
+        /** text-inverted toggle (change 1 · HP 2026-06-17). true (default) = the inverted/contrast ink
+         *  (the current magnifica look · light on the dark shell); false = near-black ink for a light
+         *  context (e.g. the ethnography quadrant). Governs the base/non-themed text + the shutter;
+         *  themed cells keep their token-contrast. */
+        textInverted?: boolean
+        /** the sub-element (post-it) size default · small | medium | large (change 2). Per-cell
+         *  `QuadrantSpec.postitSize` overrides this. */
+        postitSize?: PostitSize
         /** show the (normally invisible) brush · debugging the release point on the screentest. */
         debugBrush?: boolean
         /** opt the reveal OFF → everything visible immediately (also forced by OS reduced-motion). */
@@ -105,6 +114,8 @@ const props = withDefaults(
         seamHSize: 'none', // default = the vertical line only (change 2)
         seamLineColor: 'primary',
         seamPreset: 'spearhead',
+        textInverted: true,
+        postitSize: 'small',
         debugBrush: false,
         reducedMotion: false,
     },
@@ -239,6 +250,13 @@ onUnmounted(() => {
 .quadrant-stage {
     position: relative;
     --q-top: var(--bb-navbar-offset, 6rem);
+    /* text-inverted toggle (change 1) · default true = the contrast ink (current · light on the dark
+       magnifica shell). Inherited by the cells + the shutter; themed cells override with their token. */
+    --q-ink: var(--color-contrast);
+}
+/* text-inverted=false · near-black ink for a light context (e.g. the ethnography quadrant). */
+.quadrant-stage--ink-dark {
+    --q-ink: var(--color-black, oklch(0% 0 0));
 }
 
 @media (min-width: 768px) {
