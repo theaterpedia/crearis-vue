@@ -168,7 +168,7 @@ const { isAuthenticated } = useMagnificaAuth()
 .landing-hero-headline {
   font-size: clamp(1.25rem, 3vw, 2rem);
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 0.5rem;
   line-height: 1.15;
   color: var(--color-primary-bg);
 }
@@ -181,6 +181,13 @@ const { isAuthenticated } = useMagnificaAuth()
 @media (max-width: 860px) {
   .landing-hero {
     grid-template-columns: 1fr;
+  }
+}
+
+/* desktop only · drop the left column down (HM 2026-06-18) */
+@media (min-width: 861px) {
+  .landing-hero-left {
+    margin-top: 4rem;
   }
 }
 
