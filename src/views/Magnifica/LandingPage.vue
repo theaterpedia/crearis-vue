@@ -173,10 +173,8 @@ const quadrantNotes = computed<FpostitData[]>(() =>
 .landing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(2rem, 5vw, 4rem);
   align-items: start;
-  margin-top: clamp(2rem, 5vh, 4rem);
-  padding-top: clamp(1rem, 4vh, 3rem);
+  padding-top: clamp(1rem, 4vh, 2rem);
 }
 
 .landing-hero-overline {
@@ -208,7 +206,7 @@ const quadrantNotes = computed<FpostitData[]>(() =>
 /* desktop only · drop the left column down (HM 2026-06-18) */
 @media (min-width: 861px) {
   .landing-hero-left {
-    margin-top: 2.4rem;
+    margin-top: 4rem;
   }
 }
 

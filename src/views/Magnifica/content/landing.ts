@@ -89,7 +89,7 @@ export const navCards: ReadonlyArray<RouteCard> = [
         to: '/ethnography',
         overline: 'the personal side',
         headline: 'ETHNOGRAPHY',
-        subline: 'nine months with the instances · introspection and Einfühlung · thick description',
+        subline: 'nine months with the instances · introspection and empathy · thick description',
         theme: 'yellow',
     },
     {

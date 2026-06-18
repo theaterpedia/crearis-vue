@@ -9,31 +9,35 @@
 
 <template>
   <MagnificaPageLayout variant="standard">
-    <template #header><MagnificaHeader show-nav compact /></template>
+    <template #header>
+      <MagnificaHeader show-nav compact />
+    </template>
 
     <!-- Hero · TEXT-ONLY (no image · outside the stage) · left-inset to match the content column -->
     <template #hero>
       <header class="context-hero">
-        <p class="context-hero-overline">30 years at <span class="hero-dasei">DAS Ei</span> – Theaterpädagogisches Institut Bayern e.V.</p>
+        <p class="context-hero-overline">30 years at <span class="hero-dasei">DAS Ei</span> – Theaterpädagogisches
+          Institut Bayern e.V.</p>
         <h1 class="context-hero-headline">grounded practice & organic intellectual</h1>
       </header>
     </template>
 
-    <DiaStage
-      class="context-method-stage"
-      :bilder="bilder"
-      bounded
-    >
+    <DiaStage class="context-method-stage" :bilder="bilder" bounded>
       <!-- Bild 0 · the method · the held text-Dia (teaser) · the definition rises as the Figure -->
       <template #dia-0>
         <div class="context-thesis">
-          <p>In Theaterpädagogik the work begins the day you stop hearing your own instructions come back. You give the animation, the first framing — and then something will return that was not yours.</p>
+          <p>In Theaterpädagogik the work begins the day you stop hearing your own instructions come back. You give the
+            animation, the first framing — and then something will return that was not yours.</p>
         </div>
       </template>
       <template #figure-0>
-        <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in the room, between people, not inside one head.</p>
-        <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
-        <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has held for thirty years — without collapsing it in either direction.</p>
+        <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in
+          the room, between people, not inside one head.</p>
+        <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the
+          conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask
+          what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
+        <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has
+          held for thirty years — without collapsing it in either direction.</p>
         <!-- brush · invisible riser after the last line · extends the figure's rise-travel so its
              top reaches the teaser's top ("In Theaterpädagogik…"). The figure pins via the calc
              below, but the stage needs the extra scroll-length to carry it there (HM 2026-06-18 ·
@@ -122,11 +126,12 @@ const bilder: DiaBildSpec[] = [
    (alignment with the teaser). Desktop-only (the rise is desktop · mobile linearises). Dial. */
 @media (min-width: 768px) {
   .context-method-stage .context-figure-brush {
-    height: var(--ctx-figure-brush, 40vh);
+    height: var(--ctx-figure-brush, 16.5vh);
   }
 }
 
 @media (min-width: 768px) {
+
   /* the teaser (the only text-Dia) · top-align its held text + raise to the shared top; flush to
      the content-column inset (no extra L/R padding). */
   .context-method-stage :deep(.dia--text) {
@@ -135,6 +140,7 @@ const bilder: DiaBildSpec[] = [
     padding-left: 0;
     padding-right: 0;
   }
+
   /* the definition Figure · Bild 0 = the first .dia-stage-bild = the stage's 2nd child (Dia · bild),
      so :nth-child(2). The cDia figure rises-over by design (position: static) — for /context's
      method we PIN it: `position: sticky` so it rises, then STICKS at the aligned top and holds
