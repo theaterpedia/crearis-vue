@@ -21,16 +21,11 @@
 
       <div class="landing-container">
         <!-- 2022 hero shape · left headline + right promptbox -->
-        <section class="landing-hero">
+        <section class="landig-hero">
           <div class="landing-hero-left">
             <p class="landing-hero-overline">{{ hero.overline }}</p>
-            <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
-            <!-- a quiet lead, not a second headline (issue 0 · the summary `headline` no longer
-                 renders so it can't compete with the page title above · SATZ 2026-06-18). -->
-            <div class="landing-summary">
-              <p class="landing-summary-overline">{{ summary.overline }}</p>
-              <p class="landing-summary-body">{{ summary.body }}</p>
-            </div>
+            <h2 class="landing-hero-headline">{{ hero.headline }}</h2>
+            <p class="landing-hero-teaser">{{ hero.teaser }}</p>
           </div>
           <div class="landing-hero-right">
             <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" />
@@ -44,15 +39,8 @@
            · real fpostit fast-follow · A2). A 50vH cross-hair seam sweeps over the held grid, revealing
            the bottom row (q3+q4) then the top row (q1+q2). Direct child of .magnifica-landing-content
            — ancestor-purity for the sticky hold (the §14 audit: this shell is clean). -->
-      <QuadrantStage
-        :quadrants="quadrants"
-        bounded
-        :top-offset="96"
-        seam-line-color="primary"
-        seam-v-size="small"
-        seam-preset="split"
-        :seam-text="quadrantSeamText"
-      >
+      <QuadrantStage :quadrants="quadrants" bounded :top-offset="96" seam-line-color="primary" seam-v-size="small"
+        seam-preset="split" :seam-text="quadrantSeamText">
         <!-- q2 · discourse · q3 · context · q4 · ethnography (faked route post-its · in-place · A3) -->
         <template #q-2>
           <RouterLink class="q-postit" :class="`q-postit--${quadrantCards[0].theme}`" :to="quadrantCards[0].to">
@@ -83,11 +71,13 @@
         <div class="landing-narrow">
           <section class="landing-closing">
             <p>
-              {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
+              {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums
+              </CalloutPhrase>{{
+              closingP3After }}
             </p>
             <div class="landing-honest-flag">
               <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
-              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }} <br/><br/></p>
+              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }} <br /><br /></p>
             </div>
           </section>
         </div>
@@ -110,7 +100,6 @@ import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,
-  summary,
   letterEntries,
   quadrants,
   quadrantCards,
@@ -141,7 +130,7 @@ const { isAuthenticated } = useMagnificaAuth()
 /* topbar inset · the header is a direct child here (hoisted · issue 2a) so it pins whole-page;
    mirror the .magnifica-page > header inset from magnifica-page.css (that sheet only loads via
    MagnificaPageLayout, not on the landing). Vue applies this page's scope to the child root. */
-.magnifica-landing-content > header.mag-header {
+.magnifica-landing-content>header.mag-header {
   max-width: 90rem;
   margin-left: auto;
   margin-right: auto;
@@ -165,6 +154,7 @@ const { isAuthenticated } = useMagnificaAuth()
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 4rem);
   align-items: start;
+  margin-top: clamp(2rem, 5vh, 4rem);
   padding-top: clamp(1rem, 4vh, 3rem);
 }
 
@@ -226,20 +216,24 @@ const { isAuthenticated } = useMagnificaAuth()
   max-width: 22rem;
   padding: 1.1rem 1.25rem;
   text-decoration: none;
-  border-radius: 0; /* square · standards-floor */
+  border-radius: 0;
+  /* square · standards-floor */
   box-shadow: 0 4px 16px oklch(0 0 0 / 0.3);
   transform: rotate(-1.5deg);
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
+
 .q-postit:hover,
 .q-postit:focus-visible {
   transform: rotate(0deg) translateY(-3px);
   box-shadow: 0 10px 28px oklch(0 0 0 / 0.4);
   outline: none;
 }
+
 .q-postit:focus-visible {
   box-shadow: 0 0 0 3px var(--color-primary-bg), 0 10px 28px oklch(0 0 0 / 0.4);
 }
+
 /* the post-it sits ON the cell · use the page bg as the note-surface so it lifts off every theme */
 .q-postit--yellow,
 .q-postit--green,
@@ -252,11 +246,13 @@ const { isAuthenticated } = useMagnificaAuth()
   font-size: 0.8125rem;
   opacity: 0.85;
 }
+
 .q-postit-headline {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
+
 .q-postit-subline {
   font-size: 0.8125rem;
   line-height: 1.5;

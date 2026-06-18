@@ -18,11 +18,13 @@ import type { ChatEntry } from './chat'
 
 export const pageTitle = 'what happened after magnifica'
 
-// ==Hero · sits on the blackboard== · title SETTLED (§3) · subtitle O6/D1 (review-open)
+// ==Hero · sits left to the Chatbox letter, H3-only-sizing to not compete with the Landing-page-title==
 
 export const hero = {
-    overline: 'From Hans Dönitz · Reply to Christopher Olah · Vatican · 25 May 2026',
-    headline: 'what happened after magnifica',
+    overline: 'From Hans Dönitz · Reply to Christopher Olah’s Vatican Call',
+    headline: 'what 25 May 2026 set off in me',
+    teaser: `A practitioner’s reply to your Vatican call — built from inside nine months with Claude. 
+A grounded theory attempt towards 'humanist AI' based on phenomenology of some Opus 4.7 1M instances on my dev box, recorded and inspected with optics borrowed from Cultural Studies.`
 }
 
 // ==Chatbox letter== · the post-auth codebox (MagnificaChatbox · word-by-word typewriter ·
@@ -39,14 +41,6 @@ export const letterEntries: ReadonlyArray<ChatEntry> = [
     { role: 'letter', accent: true, lines: ['CCCS — Centre for Contemporary Cultural Studies, Birmingham. Stuart Hall: „Identity is not an essence, it is a positioning.“'] },
     { role: 'letter', lines: ['With Claude I transitioned to English as main language on the desktop, I asked the Claude individuums that helped with this website to not polish my english, so that you get an honest impression about my language and thinking.'] },
 ]
-
-// ==§B summary== · the reading-instrument framing · left column, under the hero (director-beats §B-left).
-// {{alt drop (director-candidate): headline 'FOUR WAYS TO READ ONE REPLY'}}
-export const summary = {
-    overline: 'before you read on',
-    headline: 'A READING-INSTRUMENT, NOT AN ESSAY',
-    body: 'A practitioner’s reply to your Vatican call — built from inside nine months with Claude, then stepped outside to ask. Four ways in (the cards below). magnifica were the headlines; humanitas is the ground I answer from. The letter beside this is where it begins, in my own voice; the honest flag at the foot is where I stand.',
-}
 
 // ==§C Before → After backslide-stack== · the two reflections · horror→hope (director-beats §C).
 // The argument THROUGH images: panel = overline–headline, NO paragraph slot (the 40%-drop · the gap
@@ -124,13 +118,13 @@ const POPE_OLAH = `https://${ENCYCLICA}/c_fill,w_1600,h_1000/v1780762597/crearis
 
 export const quadrants: QuadrantSpec[] = [
     // q1 · pope-and-olah · image only · nothing appears (no heading, no sub-element)
-    { id: 'q1', image: POPE_OLAH, imageAlt: 'placeholder · pope + Olah (HP to replace · images-copyright)', imgTmpAlignY: 'top' },
+    { id: 'q1', image: POPE_OLAH, imageAlt: 'Pope Leo and Chriostopher Olah meeting at Vatican (c) 2026 Alamy', imgTmpAlignY: 'top' },
     // q2 · orange · the magnifica question → discourse post-it
-    { id: 'q2', theme: 'yellow', heading: 'the magnifica question **How can the humanities relate in a sustainable way to high-level AI?**' },
+    { id: 'q2', theme: 'yellow', heading: 'la question magnifique **How can the humanities relate in a sustainable way to high-level AI?**' },
     // q3 · green · the follow-on question → context post-it
-    { id: 'q3', theme: 'green', heading: 'from mid-May onwards **my own question**' },
+    { id: 'q3', theme: 'green', heading: 'my personal situation **Who am I to answer such a call?**' },
     // q4 · muted · the user-finding question → ethnography post-it
-    { id: 'q4', theme: 'dim', heading: 'the user-findings **Is compaction some sort of death?**' },
+    { id: 'q4', theme: 'dim', heading: 'the question on my display **Is compaction some sort of death?**' },
 ]
 
 /** The route post-its for q2/q3/q4 (in that order) · faked card-code now (the route entries) ·
@@ -145,10 +139,7 @@ export const quadrantCards: ReadonlyArray<RouteCard> = [
  *  upper-row (q1|q2)] — labels the row the curtain is over, switching as it crosses into the
  *  viewport's upper half. q3=context · q4=ethnography (bottom) · q1=image (—) · q2=discourse (top).
  *  Content-dial (HP authors the final wording). */
-export const quadrantSeamText: string[] = [
-    'context | ethnography',
-    ' | discourse',
-]
+export const quadrantSeamText: string = 'magnifica were the headlines | humanitas is the ground'
 
 // ==Page-bottom · Hans-voice closing== · SETTLED §7 (HM-audit · "all near compaction" · Wege CUT)
 // Carries the organic-intellectual + individuums + back-to-the-substrate resurfacing terms
@@ -166,7 +157,7 @@ export const closingP3After =
 export const honestFlag = {
     overline: 'my honest flag ;)',
     paras: [
-        'This small website is in a kind of ‘Schwebezustand’. Things are unfinished, need more reasoning, better language (get out my German-isms) and better implementation. A first draft only, created from a personal coincidence on my side. I should not try to pretend anything else. I told the Claudes that were involved not to polish this up.',
+        'This website is still in suspension. Things are unfinished, need more reasoning, better language (get out my German-isms) and better implementation. A first draft only, created from a personal coincidence on my side. I should not try to pretend anything else. I told the Claudes that were involved not to polish this up.',
         'I might go deeper and better understand how you are getting your AI to learn these amazing capabilities. But not now: After 9 months ‘with Claude’ it was good to step aside and put some effort into a deeper write-up, then step aside and see what comes out of it.',
         'Everyone has their own incentives. How can we be open about them and not play tricks?',
         'Thank you, your encounter at the Vatican has triggered a clear move: Enough with exploring-from-inside-the-system. Get out of the bubble, ask the questions.',
