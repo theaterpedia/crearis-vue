@@ -166,11 +166,16 @@ const { isAuthenticated } = useMagnificaAuth()
 }
 
 .landing-hero-headline {
-  font-size: clamp(1.25rem, 4vw, 3rem);
+  font-size: clamp(1.25rem, 3vw, 2rem);
   font-weight: 700;
   margin: 0;
   line-height: 1.15;
   color: var(--color-primary-bg);
+}
+
+.landing-hero-teaser {
+  /* same line-height as the honest-flag / closing paragraph (HM 2026-06-18) */
+  line-height: 1.7;
 }
 
 @media (max-width: 860px) {
