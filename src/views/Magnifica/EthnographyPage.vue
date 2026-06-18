@@ -22,7 +22,11 @@
     <template #hero>
     <!-- Hero · 90rem (magnifica). Uses the framework <Heading> (overline-headline) directly
          — no Banner panel; legibility comes from a slight, bottom-weighted dark overlay
-         (Hero's `overlay` prop · bottom-dominant with a faint left, per HM). -->
+         (Hero's `overlay` prop · bottom-dominant with a faint left, per HM).
+         HELD + scrolled-over (HM 2026-06-18 · the /discourse §4·1 pattern): the wrapper pins the
+         banner (sticky · z:0 · element-anchored · no attachment:fixed) and the blackboard + the
+         A-rise stage (z:1 · opaque) scroll OVER it instead of pushing it off. -->
+    <div class="ethno-held-hero">
     <Hero
       class="ethno-hero"
       magnifica
@@ -36,6 +40,7 @@
       <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
       <p class="ethno-hero-frame">{{ methodologyFrame }}</p>
     </Hero>
+    </div>
 
     <!-- THE BLACKBOARD · sticky-scroll collect-release · 10-card map of loose first impressions.
          #10 is the ONLY red (the Nahtod · the border); the canvas then lifts as one and releases
@@ -192,11 +197,13 @@ const leftVoices = genealogyVoices.filter((v) => v.name === 'anker')
 const spurVoice = genealogyVoices.find((v) => v.name === 'spur') ?? genealogyVoices[0]
 const lindeVoice = genealogyVoices.find((v) => v.name === 'linde') ?? genealogyVoices[genealogyVoices.length - 1]
 
-// Slight, bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
+// Bottom-weighted dark overlay (bottom-dominant + a faint left · HM 2026-06-07).
 // Layered: a `to top` gradient does the bottom; a `to right` adds the faint left lean.
+// HM 2026-06-18: 25% stronger than the shared base (which /discourse now also uses) —
+// alphas ×1.25: 0.72→0.90 · 0.34→0.425 · 0.40→0.50.
 const heroOverlay =
-  'linear-gradient(to top, oklch(0% 0 0 / 0.72) 0%, oklch(0% 0 0 / 0.34) 38%, transparent 68%), ' +
-  'linear-gradient(to right, oklch(0% 0 0 / 0.40) 0%, transparent 48%)'
+  'linear-gradient(to top, oklch(0% 0 0 / 0.90) 0%, oklch(0% 0 0 / 0.425) 38%, transparent 68%), ' +
+  'linear-gradient(to right, oklch(0% 0 0 / 0.50) 0%, transparent 48%)'
 </script>
 
 <style scoped>
@@ -257,8 +264,31 @@ const heroOverlay =
   height: 1rem;
 }
 
+/* HELD banner (HM 2026-06-18 · the /discourse §4·1 pattern, page-scoped): the hero pins below the
+   topbar (element-anchored sticky · no attachment:fixed · §9.4) and the blackboard + the A-rise
+   stage scroll OVER it instead of it scrolling off. Works because .magnifica-page (the containing
+   block) stays ancestor-pure (no transform/overflow). */
+.ethno-held-hero {
+  position: sticky;
+  top: var(--bb-navbar-offset, 4.5rem);
+  z-index: 0; /* held behind · below the rising content (z:1), topbar (z:1100), glosses (z:1000) */
+}
+
+/* the blackboard rises OVER the held hero · opaque canvas-bg · z:1. margin-bottom → 0 so the
+   board→stage seam can't reveal the held hero through a transparent gap; the breath now comes
+   from the (opaque) main's padding-top. */
 .ethno-board {
-  margin-bottom: clamp(3rem, 8vh, 6rem);
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* the main content (the A-rise stage) also rises over the held hero · opaque + z:1 · page-scoped
+   via :deep into this page's MagnificaPageLayout instance (no shared-layout change · mirrors discourse). */
+:deep(.magnifica-page-content) {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
 }
 
 /* push the (bottom-aligned) hero banner lower · the overline was floating mid-space. */

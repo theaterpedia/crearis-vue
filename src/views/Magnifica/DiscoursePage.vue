@@ -17,14 +17,15 @@
 
     <template #hero>
       <!-- Hero · HM-provided image (Hans as harsh critique). Framework <Heading> (overline-
-         headline), magnifica-bounded. No overlay (HM: discourse hero stays clean).
+         headline), magnifica-bounded. Bottom-left dark overlay (HM 2026-06-18 · the same setting
+         ethnography uses, run 25% milder here — see heroOverlay).
          HELD + scrolled-over (§4·1 · the cDia pattern, page-scoped): the wrapper pins the banner
          (sticky · z-low · the held Dia) and the article (z-higher · opaque · the rising Figure)
          scrolls OVER it instead of pushing it off. No cDia component / no layout change — element-
          anchored sticky (§9.4 · no attachment:fixed). The topbar (z:1100) + glosses stay above. -->
       <div class="discourse-held-hero">
         <Hero magnifica height-tmp="full" :img-tmp="hero.image" img-tmp-align-x="cover" img-tmp-align-y="cover"
-          content-align-y="bottom">
+          content-align-y="bottom" :overlay="heroOverlay">
           <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
           <p class="discourse-hero-frame">This is critical thinking, first attempt — a practitioner’s, not a scholar’s. The question on this page is the one I wrote my thesis on in 1996: <em>wie sollen wir sprechen</em> — how should we speak to each other? Thirty years of theatre work later, the AI-moment puts it to me again. What follows is how I am trying to answer it — from the body up.</p>
         </Hero>
@@ -297,6 +298,12 @@ import FpostitGlossary from '@/fpostit/components/FpostitGlossary.vue'
 import { hero, citationBlock, callouts } from './content/discourse'
 import { MAGNIFICA_POSTIT_MODE } from './content/postit-mode'
 
+// Bottom-left dark overlay · the SAME setting as ethnography's base (HM 2026-06-18) — legibility
+// for the held banner's overline-headline + frame on the photo. (ethnography runs this 25% stronger.)
+const heroOverlay =
+  'linear-gradient(to top, oklch(0% 0 0 / 0.72) 0%, oklch(0% 0 0 / 0.34) 38%, transparent 68%), ' +
+  'linear-gradient(to right, oklch(0% 0 0 / 0.40) 0%, transparent 48%)'
+
 // /discourse runs the glossary strategy (Q2): its 16 callouts route through the
 // fpostit controller, so opened glosses persist + stack (right-lane on wide
 // viewports) and the reader builds a reading-trail (the <FpostitGlossary/> rail).
@@ -327,7 +334,7 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
 }
 
 /* hero subtext · the "first attempt" frame under the headline (mirrors ethnography's
-   hero-frame · the discourse hero has no overlay, so this sits on the bottom-dark image). */
+   hero-frame · sits on the bottom-left overlay-darkened image). */
 .discourse-hero-frame {
   max-width: 44rem;
   margin: 1rem 0 0;
