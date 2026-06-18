@@ -111,6 +111,11 @@ const bilder: DiaBildSpec[] = [
    restructures. The exact rise is a :3001 dial (--ctx-method-top). */
 .context-method-stage {
   --ctx-method-top: clamp(2rem, 14vh, 9rem);
+  /* HOLD the sticky definition-Figure (right) in place — it was releasing early (scrolling
+     higher) when the bild's containing-block ended. The figure stays pinned until the bild's
+     bottom reaches its sticky-top, so extend the bild on this one-bild page (HM 2026-06-18).
+     🚩 :3001 dial — tune so the right content holds through the read without dead scroll. */
+  --dia-bild-h: 180vh;
 }
 
 /* the figure-brush · invisible riser extending the rise so the figure reaches its pinned top
