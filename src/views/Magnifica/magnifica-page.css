@@ -19,22 +19,19 @@
 }
 
 /* ===== the topbar offset · the one definition (HM 2026-06-18 · SATZ) =====
-   Every magnifica sticky-stage pins BELOW the compact topbar via var(--bb-navbar-offset)
-   — Hero(.hero--magnifica) · CardsCanvas · MagnificaScreen · MagnificaRise · cDia
-   (Dia/DiaStage/Shutter) · QuadrantStage. The token was NEVER defined anywhere, so all 12
-   consumers fell back to 6rem ≈ 1.5rem MORE than the real bar (a dead gap under the topbar).
-   Define it once here, to the real compact-bar height as deterministic rem-geometry:
-     padding-top 1.25 + collapsed wordmark (≈2rem × 1.05) + padding-bottom 0.75 ≈ 4.1rem
-     (measured ~4.4–4.7rem) → 4.5rem.
-   Deterministic: the collapsed wordmark caps at 2rem on desktop (clamp 3vw ≥ 2rem above
-   ~1067px = the Olah-desktop band); magnifica mobile linearises (no precise pinning).
-   Magnifica-SCOPED (both roots) — core Hero's non-magnifica consumers keep the 6rem fallback
-   (additive · no regress). 🚩 PAIRED JS twin (cQuadrant lane · not mine): QuadrantStage's
-   `topOffset` (96px default + the landing's :top-offset="96") must move to ~72px (= 4.5rem)
-   when the quadrant lands, or its JS height/observer geometry stays tuned to the old 6rem. */
+   The compact topbar is 70px tall (HM-measured) → defined here as rem-geometry: 70/16 = 4.375rem.
+   Every magnifica sticky-stage pins BELOW it via var(--bb-navbar-offset): Hero(.hero--magnifica) ·
+   CardsCanvas · MagnificaScreen · MagnificaRise · cDia (Dia/DiaStage/Shutter) · QuadrantStage.
+   This token = the TRUE bar height only; do NOT inflate it to mask other bugs (6rem over-shot →
+   it pushed the held heroes lower · HM 2026-06-18).
+   Magnifica-SCOPED — core Hero's non-magnifica consumers keep their 6rem fallback (additive).
+   🚩 SOLVE WHERE THEY ARISE (not by this token):
+   (1) /ethnography blackboard "runs under the bar" — a per-stage pin bug, fix in the stage.
+   (2) cQuadrant JS twin: QuadrantStage `topOffset` (96px · landing :top-offset="96") no longer
+       matches 70px — align it to 70 in the quadrant's own lane (sibling). */
 .magnifica-page,
 .magnifica-landing {
-  --bb-navbar-offset: 4.5rem;
+  --bb-navbar-offset: 4.375rem;
 }
 
 /* topbar · the header (position:sticky in MagnificaHeader) is a DIRECT child of
