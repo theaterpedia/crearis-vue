@@ -15,26 +15,14 @@
         <form class="entry-form" method="POST" action="/__auth" novalidate @submit="onSubmit">
           <label class="entry-label" for="magnifica-password">Password</label>
           <div class="entry-row">
-            <input
-              id="magnifica-password"
-              v-model="password"
-              name="password"
-              type="password"
-              autocomplete="current-password"
-              required
-              autofocus
-              class="entry-input"
-            />
-            <button
-              type="submit"
-              class="entry-submit"
-              :class="{ 'entry-submit--ready': ready }"
-              :disabled="!ready"
-            >Enter</button>
+            <input id="magnifica-password" v-model="password" name="password" type="password"
+              autocomplete="current-password" required autofocus class="entry-input" />
+            <button type="submit" class="entry-submit" :class="{ 'entry-submit--ready': ready }"
+              :disabled="!ready">Enter</button>
           </div>
 
           <p v-if="ready" class="entry-disclaimer">
-            © all images M. Farkas 2022–2026 · they show H. Dönitz and the team of dasei; used only to present this website.
+            Landing-page image © Alamy 2026. Other images © M. Farkas 2022–2026 (they show H. Dönitz).
           </p>
           <p v-if="error" class="entry-error" role="alert">{{ error }}</p>
         </form>

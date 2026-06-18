@@ -73,7 +73,7 @@
             <p>
               {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums
               </CalloutPhrase>{{
-              closingP3After }}
+                closingP3After }}
             </p>
             <div class="landing-honest-flag">
               <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
@@ -166,7 +166,7 @@ const { isAuthenticated } = useMagnificaAuth()
 }
 
 .landing-hero-headline {
-  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-size: clamp(1.25rem, 4vw, 3rem);
   font-weight: 700;
   margin: 0;
   line-height: 1.15;
