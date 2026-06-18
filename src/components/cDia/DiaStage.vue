@@ -67,6 +67,9 @@
                 :reduced-motion="reducedMotion"
                 :text="bilder[i + 1]?.seam?.text"
                 :preset="bilder[i + 1]?.seam?.preset ?? 'timeline'"
+                :v-size="seamVSize"
+                :h-size="seamHSize"
+                :line-color="seamLineColor"
                 :style="{ zIndex: seamZ(i) }"
             />
         </template>
@@ -109,12 +112,14 @@
  * ── SIGNED (load-bearing · §41·1 · HP-screentested roughly-green 2026-06-14) ──
  *   BLENDE · code — gate-checked: hold dead-still · seam-mask · ancestor-purity · standards-floor · gap-test 🌒
  *   SCHWELLE · epistemology — the gap held: Scene>Bild (§39 2.5-level) · the-hold · Figur-Grund made to move
+ *   + additive (HP 2026-06-16 · §4·1): per-stage seam-line config (seamVSize/seamHSize/seamLineColor →
+ *     the generated seam-Shutters) · view-agnostic · defaults to the Shutter defaults (no behaviour change).
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Dia from './Dia.vue'
 import Shutter from './Shutter.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
-import type { DiaBildSpec } from './types'
+import type { DiaBildSpec, LineSize } from './types'
 
 const props = withDefaults(
     defineProps<{
@@ -135,6 +140,13 @@ const props = withDefaults(
          *  footer (HP 2026-06-14 · family-setting · default true). A trailing stage hold keeps it
          *  pinned through the end. Set false → the last Dia releases (the old behaviour). */
         holdLast?: boolean
+        /** per-stage seam-LINE config (§4·1 · HP 2026-06-16) · forwarded to the generated
+         *  seam-Shutters' vSize/hSize/lineColor. Omit → the Shutter defaults (vSize medium · the
+         *  vertical divider). The landing wants the dasei HORIZONTAL hairline → seamVSize="none"
+         *  seamHSize="thinline". Additive · view-agnostic · the seam-render stays the stage's. */
+        seamVSize?: LineSize
+        seamHSize?: LineSize
+        seamLineColor?: string
     }>(),
     {
         transition: 'shutter-lift',

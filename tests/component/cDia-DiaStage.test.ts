@@ -60,6 +60,14 @@ describe('DiaStage', () => {
         const off = mount(DiaStage, { props: { bilder, holdLast: false } }).findAll('.dia-stage-bild')
         expect(off[off.length - 1].classes()).not.toContain('dia-stage-bild--last')
     })
+
+    it('forwards the per-stage seam-line config to the generated seam-Shutters (§4·1)', () => {
+        const bilder: DiaBildSpec[] = [{ dia: {} }, { dia: {} }]
+        const w = mount(DiaStage, { props: { bilder, seamVSize: 'none', seamHSize: 'thinline' } })
+        const style = w.find('.shutter--seam').attributes('style') ?? ''
+        expect(style).toContain('--line-v-len: 0') // vSize none → no vertical line
+        expect(style).toContain('--line-h-wt: 1px') // hSize thinline → horizontal hairline
+    })
 })
 
 describe('Dia (the held plate)', () => {

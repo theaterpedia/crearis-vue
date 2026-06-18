@@ -22,7 +22,7 @@ export const hero = {
     overline: 'Michel Foucault · E. Probyn · Stuart Hall — speaking position',
     headline: 'how should we speak to each other?',
     // HM-provided 2026-06-06 (relay): Hans as harsh critique.
-    image: 'https://res.cloudinary.com/little-papillon/image/upload/v1780764049/crearis/hans_sharp_critique.jpg',
+    image: 'https://res.cloudinary.com/little-papillon/image/upload/c_crop,g_north_east,w_1910/v1781677405/crearis/hans_discourse_lehrer_laempel.webp',
     imageAlt: 'Hans Dönitz · sharp critique',
 }
 

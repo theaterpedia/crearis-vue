@@ -13,22 +13,22 @@
     <EntryHero v-if="!isAuthenticated" />
 
     <div v-if="isAuthenticated" class="magnifica-landing-content">
-      <div class="landing-container">
-        <MagnificaHeader show-nav />
+      <!-- topbar · DIRECT child of the page root so position:sticky pins WHOLE-PAGE (over the
+           quadrant + the close), not just within .landing-container (issue 2a · SATZ 2026-06-18).
+           90rem inset comes from magnifica-page.css. show-nav (no `compact`) keeps the big
+           State-A→B collapse the landing wants. -->
+      <MagnificaHeader show-nav />
 
+      <div class="landing-container">
         <!-- 2022 hero shape · left headline + right promptbox -->
         <section class="landing-hero">
           <div class="landing-hero-left">
             <p class="landing-hero-overline">{{ hero.overline }}</p>
-            <h1 class="landing-hero-headline">{{ hero.headline }}</h1>
-            <div class="landing-summary">
-              <p class="landing-summary-overline">{{ summary.overline }}</p>
-              <h2 class="landing-summary-headline">{{ summary.headline }}</h2>
-              <p class="landing-summary-body">{{ summary.body }}</p>
-            </div>
+            <h2 class="landing-hero-headline">{{ hero.headline }}</h2>
+            <p class="landing-hero-teaser">{{ hero.teaser }}</p>
           </div>
           <div class="landing-hero-right">
-            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" />
+            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" play-once once-key="landing-letter" />
           </div>
         </section>
       </div>
@@ -69,11 +69,13 @@
         <div class="landing-narrow">
           <section class="landing-closing">
             <p>
-              {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums</CalloutPhrase>{{ closingP3After }}
+              {{ closingP3Before }}<CalloutPhrase :callout="callouts.claudeIndividuums">Claude individuums
+              </CalloutPhrase>{{
+                closingP3After }}
             </p>
             <div class="landing-honest-flag">
               <p class="landing-honest-flag-overline">{{ honestFlag.overline }}</p>
-              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }}</p>
+              <p v-for="(para, i) in honestFlag.paras" :key="i">{{ para }} <br /><br /></p>
             </div>
           </section>
         </div>
@@ -99,7 +101,6 @@ import CalloutPhrase from './CalloutPhrase.vue'
 import MagnificaFooter from './MagnificaFooter.vue'
 import {
   hero,
-  summary,
   letterEntries,
   quadrants,
   quadrantCards,
@@ -146,6 +147,17 @@ const quadrantNotes = computed<FpostitData[]>(() =>
   color: var(--color-contrast);
 }
 
+/* topbar inset · the header is a direct child here (hoisted · issue 2a) so it pins whole-page;
+   mirror the .magnifica-page > header inset from magnifica-page.css (that sheet only loads via
+   MagnificaPageLayout, not on the landing). Vue applies this page's scope to the child root. */
+.magnifica-landing-content>header.mag-header {
+  max-width: 90rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 6vw, 3rem);
+  padding-right: clamp(1rem, 6vw, 3rem);
+}
+
 .landing-container {
   max-width: 90rem;
   margin: 0 auto;
@@ -153,12 +165,16 @@ const quadrantNotes = computed<FpostitData[]>(() =>
   padding: clamp(1rem, 4vh, 3rem) clamp(1rem, 6vw, 3rem) clamp(2rem, 5vh, 4rem);
 }
 
-/* 2022 hero · left text · right promptbox */
+/* 2022 hero · left text · right promptbox. Equal halves so the chatbox occupies the
+   RIGHT half of the content column — aligning to the quadrant's right column below it
+   (the quadrant is two equal halves bounded to this same column · issue B · HM 2026-06-18).
+   Was 1fr/1.25fr → the chatbox ran left across the middle. */
 .landing-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 4rem);
   align-items: start;
+  margin-top: clamp(2rem, 5vh, 4rem);
   padding-top: clamp(1rem, 4vh, 3rem);
 }
 
@@ -170,16 +186,28 @@ const quadrantNotes = computed<FpostitData[]>(() =>
 }
 
 .landing-hero-headline {
-  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-size: clamp(1.25rem, 3vw, 2rem);
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 0.5rem;
   line-height: 1.15;
   color: var(--color-primary-bg);
+}
+
+.landing-hero-teaser {
+  /* same line-height as the honest-flag / closing paragraph (HM 2026-06-18) */
+  line-height: 1.7;
 }
 
 @media (max-width: 860px) {
   .landing-hero {
     grid-template-columns: 1fr;
+  }
+}
+
+/* desktop only · drop the left column down (HM 2026-06-18) */
+@media (min-width: 861px) {
+  .landing-hero-left {
+    margin-top: 4rem;
   }
 }
 
@@ -195,12 +223,6 @@ const quadrantNotes = computed<FpostitData[]>(() =>
   letter-spacing: 0.02em;
 }
 
-.landing-summary-headline {
-  font-size: clamp(1.1rem, 2vw, 1.375rem);
-  font-weight: 700;
-  margin: 0 0 0.75rem;
-  line-height: 1.25;
-}
 
 .landing-summary-body {
   font-size: 0.9375rem;

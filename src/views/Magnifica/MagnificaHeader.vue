@@ -75,10 +75,11 @@ onUnmounted(() => {
   transition: padding 300ms ease, box-shadow 300ms ease;
 }
 
-/* collapsed (State B) · compact bar · subline gone · shadow separates from content */
+/* collapsed (State B) · compact bar · subline gone · shadow separates from content.
+   Top-margin > bottom so the masthead + nav aren't glued to the viewport top (HM 2026-06-18). */
 .mag-header.is-scrolled {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding-top: 1.25rem;
+  padding-bottom: 0.75rem;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
 }
 

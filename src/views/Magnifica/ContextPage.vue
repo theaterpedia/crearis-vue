@@ -34,6 +34,11 @@
         <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in the room, between people, not inside one head.</p>
         <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
         <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has held for thirty years — without collapsing it in either direction.</p>
+        <!-- brush · invisible riser after the last line · extends the figure's rise-travel so its
+             top reaches the teaser's top ("In Theaterpädagogik…"). The figure pins via the calc
+             below, but the stage needs the extra scroll-length to carry it there (HM 2026-06-18 ·
+             Task1). Height is a :3001 dial (--ctx-figure-brush). -->
+        <div class="context-figure-brush" aria-hidden="true" />
       </template>
     </DiaStage>
   </MagnificaPageLayout>
@@ -108,6 +113,14 @@ const bilder: DiaBildSpec[] = [
   --ctx-method-top: clamp(2rem, 14vh, 9rem);
 }
 
+/* the figure-brush · invisible riser extending the rise so the figure reaches its pinned top
+   (alignment with the teaser). Desktop-only (the rise is desktop · mobile linearises). Dial. */
+@media (min-width: 768px) {
+  .context-method-stage .context-figure-brush {
+    height: var(--ctx-figure-brush, 40vh);
+  }
+}
+
 @media (min-width: 768px) {
   /* the teaser (the only text-Dia) · top-align its held text + raise to the shared top; flush to
      the content-column inset (no extra L/R padding). */
@@ -118,9 +131,15 @@ const bilder: DiaBildSpec[] = [
     padding-right: 0;
   }
   /* the definition Figure · Bild 0 = the first .dia-stage-bild = the stage's 2nd child (Dia · bild),
-     so :nth-child(2). Pin so the figure's text-top lands on the teaser's first line (−1.25rem = the
-     figure's own padding-top). Coupled to cDia's flat child order — flag if the family restructures. */
+     so :nth-child(2). The cDia figure rises-over by design (position: static) — for /context's
+     method we PIN it: `position: sticky` so it rises, then STICKS at the aligned top and holds
+     (with the held teaser) instead of scrolling past (HM 2026-06-18 screentest). The brush below
+     gives the hold its scroll-length. top = the teaser's first line (−1.25rem = the figure's own
+     padding-top). align-self:start so the sticky box isn't stretched to the row. Page-scoped via
+     :deep (only .context-method-stage · the cDia component's rise-over stays the family default). */
   .context-method-stage :deep(.dia-stage-bild:nth-child(2) .dia-stage-figure) {
+    position: sticky;
+    align-self: start;
     top: calc(var(--dia-top, 6rem) + var(--ctx-method-top) - 1.25rem);
   }
 }

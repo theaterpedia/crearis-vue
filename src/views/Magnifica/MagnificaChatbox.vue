@@ -27,6 +27,13 @@
   </div>
 </template>
 
+<script lang="ts">
+// Play-once memory · MODULE-level (a plain <script> runs ONCE · shared across all instances +
+// re-mounts) so a revisited page shows the chat instantly, no re-type. Survives SPA route-changes
+// (the "revisit" case), resets on a hard reload. Keyed by the `onceKey` prop. (HM 2026-06-18.)
+const playedKeys = new Set<string>()
+</script>
+
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { ChatEntry } from './content/chat'
@@ -41,15 +48,21 @@ const props = withDefaults(defineProps<{
    *  boxes, so their growth doesn't push the scroll-sensitive content below up too early
    *  (HM 2026-06-11). Omit → auto height (min-height grows · the static boxes). */
   heightVh?: number
-}>(), { instantPortion: 0, noAnimation: false })
+  /** Play the typewriter ONCE per session — on a revisit (SPA re-mount) it appears instantly,
+   *  no re-type (HM 2026-06-18 · used on /ethnography; landing omits it → it replays). Needs
+   *  `onceKey` (a stable id) to remember it ran. */
+  playOnce?: boolean
+  /** Stable id for the play-once memory (module-level · survives SPA navigation, resets on reload). */
+  onceKey?: string
+}>(), { instantPortion: 0, noAnimation: false, playOnce: false })
 
 // Fixed viewport-height + internal scrollbar when heightVh is set (the dynamic boxes).
 const rootStyle = computed(() =>
   props.heightVh ? { height: `${props.heightVh}vh`, overflowY: 'auto' as const } : undefined,
 )
 
-const WORD_MS = 45 // word-by-word cadence
-const PAUSE_MS = 320 // pause between entries
+const WORD_MS = 22 // word-by-word cadence · double speed (HM 2026-06-18 · was 45)
+const PAUSE_MS = 160 // pause between entries · double speed (was 320)
 
 interface Tok { t?: string; br?: boolean }
 
@@ -118,6 +131,8 @@ function typeEntry() {
 }
 
 function start() {
+  // play-once: remember this chat ran, so a later re-mount (revisit) skips straight to done.
+  if (props.playOnce && props.onceKey) playedKeys.add(props.onceKey)
   // landing: reveal ~`instantPortion` of the entries at once, then type the remainder.
   const instant = Math.floor(order.value.length * props.instantPortion)
   step.value = instant
@@ -127,6 +142,11 @@ function start() {
 onMounted(() => {
   if (props.noAnimation) {
     step.value = order.value.length // static · everything revealed, no typewriter, no observer
+    return
+  }
+  // play-once + already played this session (SPA revisit) → show instantly, no re-type.
+  if (props.playOnce && props.onceKey && playedKeys.has(props.onceKey)) {
+    step.value = order.value.length
     return
   }
   const reduce =

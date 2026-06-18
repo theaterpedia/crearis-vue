@@ -775,6 +775,17 @@ const computedOverlay = computed(() => {
   }
 }
 
+/* Magnifica mode · the hero sits BELOW the in-flow sticky topbar (MagnificaHeader), so its
+   sticky cover-image (base `top: 0`) rises ~topbar-height behind the bar on the first scroll —
+   the "hero-image jumps up" bug (HM 2026-06-18 · /discourse + /ethnography). Pin it at the
+   navbar offset instead, consistent with every other magnifica sticky-stage (CardsCanvas ·
+   MagnificaScreen · cDia), so it holds just below the bar and never rises under it. Opt-in
+   (only `.hero--magnifica`); non-magnifica heroes unchanged. The deeper hero.vue cover/parallax
+   review is queued (raise it in the finalisation thread). */
+.hero--magnifica .hero-cover-image {
+  top: var(--bb-navbar-offset, 6rem);
+}
+
 /* Magnifica mode (opt-in) · above ~1450px container BOTH the cover image and the content
    to a centered 90rem box, so they share left/right margins (the banner stays aligned to
    the image · 1:1 images stop over-stretching on wide viewports). Centering is via
