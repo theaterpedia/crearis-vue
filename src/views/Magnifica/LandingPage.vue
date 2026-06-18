@@ -21,14 +21,14 @@
 
       <div class="landing-container">
         <!-- 2022 hero shape · left headline + right promptbox -->
-        <section class="landig-hero">
+        <section class="landing-hero">
           <div class="landing-hero-left">
             <p class="landing-hero-overline">{{ hero.overline }}</p>
             <h2 class="landing-hero-headline">{{ hero.headline }}</h2>
             <p class="landing-hero-teaser">{{ hero.teaser }}</p>
           </div>
           <div class="landing-hero-right">
-            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" />
+            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" play-once once-key="landing-letter" />
           </div>
         </section>
       </div>
