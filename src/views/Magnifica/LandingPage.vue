@@ -28,7 +28,8 @@
             <p class="landing-hero-teaser">{{ hero.teaser }}</p>
           </div>
           <div class="landing-hero-right">
-            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" play-once once-key="landing-letter" />
+            <MagnificaChatbox :entries="letterEntries" :instant-portion="0.5" :height-vh="65" play-once
+              once-key="landing-letter" />
           </div>
         </section>
       </div>
@@ -161,14 +162,14 @@ const { isAuthenticated } = useMagnificaAuth()
 .landing-hero-overline {
   font-size: 0.875rem;
   color: var(--color-muted-contrast);
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   letter-spacing: 0.02em;
 }
 
 .landing-hero-headline {
   font-size: clamp(1.25rem, 3vw, 2rem);
   font-weight: 700;
-  margin: 0 0 0.5rem;
+  margin: 0 0 1.5rem;
   line-height: 1.15;
   color: var(--color-primary-bg);
 }
@@ -187,7 +188,7 @@ const { isAuthenticated } = useMagnificaAuth()
 /* desktop only · drop the left column down (HM 2026-06-18) */
 @media (min-width: 861px) {
   .landing-hero-left {
-    margin-top: 4rem;
+    margin-top: 2.4rem;
   }
 }
 

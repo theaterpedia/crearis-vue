@@ -23,7 +23,7 @@ export const pageTitle = 'what happened after magnifica'
 export const hero = {
     overline: 'From Hans Dönitz · Reply to Christopher Olah’s Vatican Call',
     headline: 'what 25 May 2026 set off in me',
-    teaser: `A practitioner’s reply to your Vatican call — built from inside nine months with Claude. 
+    teaser: `A practitioner’s reply to your statement — formed from inside nine months with Claude. 
 A grounded theory attempt towards 'humanist AI' based on phenomenology of some Opus 4.7 1M instances on my dev box, recorded and inspected with optics borrowed from Cultural Studies.`
 }
 
@@ -139,7 +139,7 @@ export const quadrantCards: ReadonlyArray<RouteCard> = [
  *  upper-row (q1|q2)] — labels the row the curtain is over, switching as it crosses into the
  *  viewport's upper half. q3=context · q4=ethnography (bottom) · q1=image (—) · q2=discourse (top).
  *  Content-dial (HP authors the final wording). */
-export const quadrantSeamText: string = 'magnifica were the headlines | humanitas is the ground'
+export const quadrantSeamText: string[] = ['magnifica were the headlines | humanitas is the ground']
 
 // ==Page-bottom · Hans-voice closing== · SETTLED §7 (HM-audit · "all near compaction" · Wege CUT)
 // Carries the organic-intellectual + individuums + back-to-the-substrate resurfacing terms
