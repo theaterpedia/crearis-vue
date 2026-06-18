@@ -69,6 +69,13 @@ describe('cQuadrant · Quadrant (the cell)', () => {
         })
         expect(w.find('.quadrant-sub .probe').exists()).toBe(true)
     })
+
+    it('applies the post-it size tier (change 2 · default small)', () => {
+        const dft = mount(Quadrant, { props: { heading: '**Q**' }, slots: { default: '<a>x</a>' } })
+        expect(dft.find('.quadrant-sub').classes()).toContain('quadrant-sub--small')
+        const lg = mount(Quadrant, { props: { heading: '**Q**', postitSize: 'large' }, slots: { default: '<a>x</a>' } })
+        expect(lg.find('.quadrant-sub').classes()).toContain('quadrant-sub--large')
+    })
 })
 
 describe('cQuadrant · QuadrantSeam (the opaque curtain · split preset · change 3)', () => {
@@ -120,5 +127,31 @@ describe('cQuadrant · QuadrantStage (the assembler)', () => {
         await w.vm.$nextTick() // onMounted sets the reveal refs → flush the render
         // all four cells carry the reveal modifier (q1 has no content but the modifier still applies)
         expect(w.findAll('.quadrant--revealed')).toHaveLength(4)
+    })
+
+    it('text-inverted toggle (change 1) · default = inverted ink, false = ink-dark', () => {
+        const dft = mount(QuadrantStage, { props: { quadrants: quads } })
+        expect(dft.find('.quadrant-stage').classes()).not.toContain('quadrant-stage--ink-dark')
+        const dark = mount(QuadrantStage, { props: { quadrants: quads, textInverted: false } })
+        expect(dark.find('.quadrant-stage').classes()).toContain('quadrant-stage--ink-dark')
+    })
+
+    it('post-it size · stage default + per-cell override (change 2)', () => {
+        const spec: QuadrantSpec[] = [
+            { id: 'q1', image: 'p.jpg' },
+            { id: 'q2', heading: '**Q2**', postitSize: 'large' }, // per-cell override
+            { id: 'q3', heading: '**Q3**' }, // inherits the stage default
+            { id: 'q4', heading: '**Q4**' },
+        ]
+        const w = mount(QuadrantStage, {
+            props: { quadrants: spec, postitSize: 'medium' },
+            slots: { 'q-2': '<a>x</a>', 'q-3': '<a>y</a>' },
+        })
+        // the stage passes a default slot to every cell → all 4 render a .quadrant-sub (DOM order q1..q4)
+        const subs = w.findAll('.quadrant-sub')
+        expect(subs).toHaveLength(4)
+        expect(subs[1]!.classes()).toContain('quadrant-sub--large') // q2 per-cell override
+        expect(subs[2]!.classes()).toContain('quadrant-sub--medium') // q3 ← stage default
+        expect(subs[0]!.classes()).toContain('quadrant-sub--medium') // q1 ← stage default
     })
 })

@@ -2,7 +2,7 @@
     <section
         ref="stageEl"
         class="quadrant-stage"
-        :class="{ 'quadrant-stage--bounded': bounded }"
+        :class="{ 'quadrant-stage--bounded': bounded, 'quadrant-stage--ink-dark': !textInverted }"
     >
         <!-- the FIXED grid · sticky-to-stage (pins · "does not scroll" · HP-A1) · the 2×2 (q1 q2 /
              q3 q4 · top-left anchor known). Backgrounds always painted; CONTENT toggled visible per
@@ -19,6 +19,7 @@
                 :heading="q.heading"
                 :heading-as="q.headingAs"
                 :heading-side="q.headingSide"
+                :postit-size="q.postitSize ?? postitSize"
                 :revealed="isRevealed(i)"
             >
                 <slot :name="`q-${i + 1}`" :quadrant="q" :index="i" />
@@ -66,7 +67,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Quadrant from './Quadrant.vue'
 import QuadrantSeam from './QuadrantSeam.vue'
 import QuadrantBrush from './QuadrantBrush.vue'
-import type { QuadrantSpec, LineSize, ShutterHeightSize } from './types'
+import type { QuadrantSpec, LineSize, ShutterHeightSize, PostitSize } from './types'
 
 const props = withDefaults(
     defineProps<{
@@ -85,11 +86,19 @@ const props = withDefaults(
         seamVSize?: LineSize
         seamHSize?: LineSize
         seamLineColor?: string
-        /** the shutter text-preset (`split` = "left | right" around the line) + the two-item text:
-         *  [lower-row labels, upper-row labels]. The active item switches when the shutter crosses
-         *  into the viewport's UPPER half (HP 2026-06-16 · change 3). */
+        /** the shutter text-preset (`split` = "left | right" around the line) + the text:
+         *  TWO items [lower-row, upper-row] → the active item switches when the shutter crosses into
+         *  the viewport's UPPER half. ONE item → no switch · it shows in BOTH phases (HP · change 3). */
         seamPreset?: 'split' | 'spearhead'
         seamText?: string[]
+        /** text-inverted toggle (change 1 · HP 2026-06-17). true (default) = the inverted/contrast ink
+         *  (the current magnifica look · light on the dark shell); false = near-black ink for a light
+         *  context (e.g. the ethnography quadrant). Governs the base/non-themed text + the shutter;
+         *  themed cells keep their token-contrast. */
+        textInverted?: boolean
+        /** the sub-element (post-it) size default · small | medium | large (change 2). Per-cell
+         *  `QuadrantSpec.postitSize` overrides this. */
+        postitSize?: PostitSize
         /** show the (normally invisible) brush · debugging the release point on the screentest. */
         debugBrush?: boolean
         /** opt the reveal OFF → everything visible immediately (also forced by OS reduced-motion). */
@@ -105,6 +114,8 @@ const props = withDefaults(
         seamHSize: 'none', // default = the vertical line only (change 2)
         seamLineColor: 'primary',
         seamPreset: 'spearhead',
+        textInverted: true,
+        postitSize: 'small',
         debugBrush: false,
         reducedMotion: false,
     },
@@ -120,7 +131,9 @@ const bottomRowRevealed = ref(false) // q3 + q4 (lower half)
 // split-text active item · 0 = lower-row labels · 1 = upper-row labels · switches when the shutter
 // crosses into the viewport's UPPER half (change 3).
 const activeSeamIndex = ref(0)
-const activeSeamText = computed(() => props.seamText?.[activeSeamIndex.value])
+// A single-item seamText configures NO switch → show it in BOTH phases (fall back to [0] when the
+// active index has no entry · HP 2026-06-17). Two items → the switch picks [0]/[1] per half.
+const activeSeamText = computed(() => props.seamText?.[activeSeamIndex.value] ?? props.seamText?.[0])
 let motionOff = false
 
 /** q1,q2 (0,1) = top row · q3,q4 (2,3) = bottom row. */
@@ -172,9 +185,25 @@ function configure(): void {
 function setupObservers(): void {
     observers.forEach((o) => o.disconnect())
     observers = []
-    if (motionOff || typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+    const mobile = typeof window !== 'undefined' && window.innerWidth < 768
+    // Mobile has no held-grid sweep yet (the desktop hold is this round's focus; the true mobile hold
+    // is its own round · flagged in 2026-06_quadrant.md §10). Without the hold the curtain can't
+    // coordinate a row-reveal, and "hidden-until-swept" would be a content TRAP → REVEAL EVERYTHING on
+    // mobile (the no-trap floor · also covers reduced-motion + no-IO). Re-evaluated on resize.
+    if (motionOff || mobile || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+        topRowRevealed.value = true
+        bottomRowRevealed.value = true
+        return
+    }
+    // desktop · the sweep drives the reveal (start hidden · the curtain lifts each row)
+    topRowRevealed.value = false
+    bottomRowRevealed.value = false
     const wrap = seamWrapEl.value
-    if (!wrap) return
+    if (!wrap) {
+        topRowRevealed.value = true
+        bottomRowRevealed.value = true
+        return
+    }
     const vh = window.innerHeight
     const quadrantTop = props.topOffset
     const quadrantMid = props.topOffset + (vh - props.topOffset - props.bottomOffset) / 2
@@ -192,7 +221,8 @@ function setupObservers(): void {
     observers.push(make(quadrantTop, (v) => (topRowRevealed.value = v)))
 
     // split-text · switch the active item when the shutter crosses the viewport MID-line (change 3).
-    if (props.seamPreset === 'split' && props.seamText?.length) {
+    // Only when TWO items are configured — a single item shows in both phases (no switch · HP).
+    if (props.seamPreset === 'split' && (props.seamText?.length ?? 0) > 1) {
         observers.push(make(vh / 2, (v) => (activeSeamIndex.value = v ? 1 : 0)))
     }
 }
@@ -202,12 +232,8 @@ onMounted(() => {
         props.reducedMotion ||
         (typeof window !== 'undefined' &&
             window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true)
-    if (motionOff) {
-        topRowRevealed.value = true
-        bottomRowRevealed.value = true
-    }
     configure()
-    setupObservers()
+    setupObservers() // owns the reveal state (desktop-sweep · or reveal-all on mobile/reduced/no-IO)
     window.addEventListener('resize', onResize, { passive: true })
 })
 function onResize(): void {
@@ -227,6 +253,13 @@ onUnmounted(() => {
 .quadrant-stage {
     position: relative;
     --q-top: var(--bb-navbar-offset, 6rem);
+    /* text-inverted toggle (change 1) · default true = the contrast ink (current · light on the dark
+       magnifica shell). Inherited by the cells + the shutter; themed cells override with their token. */
+    --q-ink: var(--color-contrast);
+}
+/* text-inverted=false · near-black ink for a light context (e.g. the ethnography quadrant). */
+.quadrant-stage--ink-dark {
+    --q-ink: var(--color-black, oklch(0% 0 0));
 }
 
 @media (min-width: 768px) {

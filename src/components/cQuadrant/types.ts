@@ -27,11 +27,17 @@
 export type QuadrantAlignX = 'left' | 'center' | 'right'
 export type QuadrantAlignY = 'top' | 'center' | 'bottom'
 
-/** bg-color token (the magnifica theme-palette · maps to the OKLCH --color-*-bg pairs). */
-export type QuadrantTheme = 'yellow' | 'green' | 'pink' | 'dim'
+/** bg-color token (the magnifica theme-palette · maps to the OKLCH --color-*-bg pairs).
+ *  `orange` = the magnifica special color (HP-approved 2026-06-17 · the Quadrant q2). */
+export type QuadrantTheme = 'yellow' | 'green' | 'pink' | 'dim' | 'orange'
 
 /** which side the heading sits in the cell (the blackboard heading-left/right gene). */
 export type HeadingSide = 'left' | 'right'
+
+/** the sub-element (post-it) size tier (HP 2026-06-17). Calibrated off the ethnography references:
+ *  `medium` ≈ the blackboard post-it (~20rem) · `large` ≈ the "CO @ prod" sign-off citation. Each
+ *  is capped to the cell (`min(tier, 100%)`) so the post-it always fits the quadrant. */
+export type PostitSize = 'small' | 'medium' | 'large'
 
 /**
  * The LINE scale (length × weight) — lifted verbatim from cDia/Shutter's §Außenkreis-r2 ordinal
@@ -139,4 +145,6 @@ export interface QuadrantSpec {
     headingAs?: 'h3' | 'h4'
     /** which side the heading sits (the blackboard heading-left/right gene · default left). */
     headingSide?: HeadingSide
+    /** per-cell sub-element size override (else the stage's `postitSize` default · small). */
+    postitSize?: PostitSize
 }
