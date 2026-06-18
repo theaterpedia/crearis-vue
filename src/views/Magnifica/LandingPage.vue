@@ -222,14 +222,15 @@ const quadrantNotes = computed<FpostitData[]>(() =>
 .q-note {
   display: flex;
   justify-content: flex-start;
+  width: 100%; /* fill the cell's size-tiered .quadrant-sub (postit-size · the tier caps the width) */
 }
 .q-note :deep(.floating-postit) {
   position: static !important;
   top: auto !important;
   left: auto !important;
   --fpostit-radius: 0; /* square · standards-floor */
-  width: auto !important;
-  max-width: 22rem;
+  width: 100% !important; /* fill the size-tier wrapper (postit-size controls the width) */
+  max-width: 100% !important;
   box-shadow: 0 4px 16px oklch(0 0 0 / 0.3);
 }
 
