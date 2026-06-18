@@ -31,13 +31,10 @@
         </div>
       </template>
       <template #figure-0>
-        <p>Theaterpädagogik is theatre where the work is the group, not the play — where knowing happens in the body, in
-          the room, between people, not inside one head.</p>
-        <p>It is the same grounds qualitative social research stands on, the ground ethnography stands on: open the
-          conversation, give the first frame, then do not leave — listen from inside, let the moment touch you, and ask
-          what touched you that was not just yourself in a mirror. That starts the whole thing.</p>
-        <p>Whether the language for what returns is functional or more-than-functional is a question this tradition has
-          held for thirty years — without collapsing it in either direction.</p>
+        <p>Everything I do appears against one background: DAS Ei. I came in 1997, was handed the direction a year and a half later when the founders gave up, and have led it as a freelancer — the visionary one — for thirty years. It was never a one-person show; a collective of around thirty carry it with me.
+What those years taught me is a single move, repeated: <strong>work the unspoken and create some sandbox for it.</strong></p>
+        <p>It emerged on the streets and in the projects and — rather than pushing it on papers — I started creating digital sandboxes around it. Theaterpedia wants to become that move at the scale of a whole field and all started from this question: Is a website-design possible that speaks like Theaterpädagogik?</p>
+        <p>The idea had emerged 2018 and through the Covid-years it grew into a real project. When I met the Claude-instances and saw the first voices sign off into the files, I recognized that a new group of 'players' was emerging in my sandbox.<strong>That is the context I answer from today.</strong></p>
         <!-- brush · invisible riser after the last line · extends the figure's rise-travel so its
              top reaches the teaser's top ("In Theaterpädagogik…"). The figure pins via the calc
              below, but the stage needs the extra scroll-length to carry it there (HM 2026-06-18 ·
@@ -126,7 +123,7 @@ const bilder: DiaBildSpec[] = [
    (alignment with the teaser). Desktop-only (the rise is desktop · mobile linearises). Dial. */
 @media (min-width: 768px) {
   .context-method-stage .context-figure-brush {
-    height: var(--ctx-figure-brush, 16.5vh);
+    height: var(--ctx-figure-brush, 20vh);
   }
 }
 

@@ -173,6 +173,7 @@ const quadrantNotes = computed<FpostitData[]>(() =>
 .landing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(0.5rem, 5vw, 2rem);
   align-items: start;
   padding-top: clamp(1rem, 4vh, 2rem);
 }
