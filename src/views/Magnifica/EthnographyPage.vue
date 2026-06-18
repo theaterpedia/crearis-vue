@@ -26,7 +26,7 @@
          HELD + scrolled-over (HM 2026-06-18 · the /discourse §4·1 pattern): the wrapper pins the
          banner (sticky · z:0 · element-anchored · no attachment:fixed) and the blackboard + the
          A-rise stage (z:1 · opaque) scroll OVER it instead of pushing it off. -->
-    <div class="ethno-held-hero">
+    <div class="ethno-held-hero" :class="{ released }">
     <Hero
       class="ethno-hero"
       magnifica
@@ -176,6 +176,7 @@ import MagnificaPageLayout from './MagnificaPageLayout.vue'
 import MagnificaHeader from './MagnificaHeader.vue'
 import MagnificaChatbox from './MagnificaChatbox.vue'
 import CalloutPhrase from './CalloutPhrase.vue'
+import { useReleaseAfter } from './useReleaseAfter'
 import {
   hero,
   methodologyFrame,
@@ -190,6 +191,10 @@ import {
   genealogyVoices,
   callouts,
 } from './content/ethnography'
+
+// Temp hack (HM 2026-06-18): release the full-bleed held hero after ~1 screen so its image
+// stops bleeding left/right of the bounded content that scrolls over it.
+const { released } = useReleaseAfter(1)
 
 // Dia-3 placement (HM 2026-06-14, round-2): Anker is the held left-lane voice; Spur ("founded the
 // genealogy") + Linde ("The village Linden" post-it) + the Linde-hint live in the right lane.
@@ -272,6 +277,12 @@ const heroOverlay =
   position: sticky;
   top: var(--bb-navbar-offset, 4.5rem);
   z-index: 0; /* held behind · below the rising content (z:1), topbar (z:1100), glosses (z:1000) */
+}
+
+/* temp hack (HM 2026-06-18 · useReleaseAfter): once scrolled past ~1 screen, un-stick the
+   full-bleed hero so its image stops peeking left/right of the bounded content above it. */
+.ethno-held-hero.released {
+  position: static;
 }
 
 /* the blackboard rises OVER the held hero · opaque canvas-bg · z:1. margin-bottom → 0 so the

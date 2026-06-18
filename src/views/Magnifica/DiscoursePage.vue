@@ -23,7 +23,7 @@
          (sticky · z-low · the held Dia) and the article (z-higher · opaque · the rising Figure)
          scrolls OVER it instead of pushing it off. No cDia component / no layout change — element-
          anchored sticky (§9.4 · no attachment:fixed). The topbar (z:1100) + glosses stay above. -->
-      <div class="discourse-held-hero">
+      <div class="discourse-held-hero" :class="{ released }">
         <Hero magnifica height-tmp="full" :img-tmp="hero.image" img-tmp-align-x="cover" img-tmp-align-y="cover"
           content-align-y="bottom" :overlay="heroOverlay">
           <Heading is="h1" :overline="hero.overline" :headline="hero.headline" />
@@ -297,6 +297,7 @@ import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
 import FpostitGlossary from '@/fpostit/components/FpostitGlossary.vue'
 import { hero, citationBlock, callouts } from './content/discourse'
 import { MAGNIFICA_POSTIT_MODE } from './content/postit-mode'
+import { useReleaseAfter } from './useReleaseAfter'
 
 // Bottom-left dark overlay · the SAME setting as ethnography's base (HM 2026-06-18) — legibility
 // for the held banner's overline-headline + frame on the photo. (ethnography runs this 25% stronger.)
@@ -308,6 +309,10 @@ const heroOverlay =
 // fpostit controller, so opened glosses persist + stack (right-lane on wide
 // viewports) and the reader builds a reading-trail (the <FpostitGlossary/> rail).
 provide(MAGNIFICA_POSTIT_MODE, 'glossary')
+
+// Temp hack (HM 2026-06-18): release the full-bleed held hero after ~1 screen so its image
+// stops bleeding left/right of the bounded article scrolling over it.
+const { released } = useReleaseAfter(1)
 </script>
 
 <style scoped>
@@ -322,6 +327,12 @@ provide(MAGNIFICA_POSTIT_MODE, 'glossary')
   position: sticky;
   top: var(--bb-navbar-offset, 6rem);
   z-index: 0; /* held behind · below the article (which lifts to z:1), the topbar (z:1100), glosses (z:1000) */
+}
+
+/* temp hack (HM 2026-06-18 · useReleaseAfter): un-stick the full-bleed hero past ~1 screen
+   so its image stops peeking left/right of the bounded article above it. */
+.discourse-held-hero.released {
+  position: static;
 }
 
 /* the article rises OVER the held hero: a positioned sticky hero would otherwise paint above a
