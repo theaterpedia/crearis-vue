@@ -33,7 +33,20 @@
 
 <template>
     <div class="uia-page">
-        <PageLayout setSiteLayout="centered" :navItems="navItems" :navbarMode="navbarMode">
+        <!--
+          showLogo="no" · this is uia, not Theaterpedia. `Logo.vue` renders the
+          Theaterpedia wordmark inside an <h1>, so leaving it on put „Theaterpedia
+          Theaterpädagogik suchen und finden" in the uia topnav AND made it the
+          first h1 on every page, ahead of the real headline. uia's own logo ring
+          is a pending HP image (§8); until then no wordmark beats the wrong one.
+
+          allowActions="yes" · the landing runs navbarMode="home", and TopNav's
+          'home' default hides the actions-slot along with the logo — which hid
+          the theme switcher exactly where HP most wants it. §3 says leave it
+          reachable, so the two knobs are set independently of navbarMode.
+        -->
+        <PageLayout setSiteLayout="centered" :navItems="navItems" :navbarMode="navbarMode" showLogo="no"
+            allowActions="yes">
             <!-- Theme switcher · left reachable so HP can compare (§3) -->
             <template #topnav-actions>
                 <ThemeDropdown />

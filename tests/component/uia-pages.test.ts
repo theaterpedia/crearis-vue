@@ -102,6 +102,34 @@ describe('LandingPage', () => {
     })
 })
 
+describe('the topnav belongs to uia, not to Theaterpedia', () => {
+    // Caught in the browser, not by a build: `Logo.vue` renders the Theaterpedia
+    // wordmark inside an <h1>, so it was both the wrong brand in the uia topnav
+    // and the FIRST h1 on every page, ahead of the real headline. Fixed with
+    // showLogo="no" (see UiaPageFrame).
+    for (const [label, page] of [['LandingPage', LandingPage], ['AgendaPage', AgendaPage], ['StubPage', StubPage]] as const) {
+        it(`${label} shows no Theaterpedia wordmark`, async () => {
+            const wrapper = await mountPage(page)
+            expect(wrapper.find('.topnav-logo').exists()).toBe(false)
+            expect(wrapper.text()).not.toContain('Theaterpedia')
+        })
+
+        it(`${label} has exactly one h1, and it is the page's own headline`, async () => {
+            const headings = (await mountPage(page)).findAll('h1')
+            expect(headings).toHaveLength(1)
+            expect(headings[0]?.text()).not.toContain('Theaterpedia')
+        })
+    }
+
+    it('keeps the theme switcher reachable even on the landing (§3)', async () => {
+        // The landing runs navbarMode="home", and TopNav's 'home' default hides the
+        // actions-slot along with the logo — which hid the switcher exactly where HP
+        // most wants to compare themes. allowActions="yes" decouples the two.
+        expect((await mountPage(LandingPage)).find('.theme-toggle-btn').exists()).toBe(true)
+        expect((await mountPage(AgendaPage)).find('.theme-toggle-btn').exists()).toBe(true)
+    })
+})
+
 describe('AgendaPage', () => {
     it('mounts and renders the arc at full depth', async () => {
         const text = (await mountPage(AgendaPage)).text()

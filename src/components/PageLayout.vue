@@ -24,7 +24,8 @@
     <!-- Top Navigation -->
     <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }"
       v-show="!isSideNav">
-      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode">
+      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode"
+        :showLogo="showLogo" :allowActions="allowActions">
         <!-- Actions Slot -->
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
@@ -251,6 +252,14 @@ interface Props {
   // If not provided, uses the global layout from layoutSettings
   // Available options: 'default' | 'centered' | 'fullTwo' | 'fullThree' | 'sidebar' | 'fullSidebar'
   setSiteLayout?: SiteLayout
+  // Pass-throughs to TopNav. Both already existed there but had no way in from a
+  // page, which forced a choice between navbarMode's bundled defaults:
+  // 'home' hides the logo AND the actions-slot, 'page' shows both. A destructive
+  // content-site needs them decoupled — no Theaterpedia wordmark, but keep the
+  // actions-slot — so the two knobs are forwarded. Default 'default' on both, i.e.
+  // every existing caller keeps navbarMode-derived behaviour exactly as before.
+  showLogo?: 'default' | 'desktop' | 'yes' | 'no'
+  allowActions?: 'default' | 'yes' | 'no'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -259,7 +268,9 @@ const props = withDefaults(defineProps<Props>(), {
   navItems: undefined,
   navbarMode: 'default',
   alertBanner: undefined,
-  setSiteLayout: undefined
+  setSiteLayout: undefined,
+  showLogo: 'default',
+  allowActions: 'default'
 })
 
 // Computed: Use prop if provided, otherwise fall back to pageSettings
