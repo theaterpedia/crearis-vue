@@ -103,6 +103,29 @@ async function loadBundledTheme(id: number): Promise<{ vars: ThemeVars; inverted
     return { vars, inverted }
 }
 
+/**
+ * Bundled theme LIST · fallback when `/api/themes` is unavailable.
+ *
+ * `getThemeVars` already falls back to the bundled JSONs, so a backend-less
+ * deploy themes correctly — but the theme *switcher* also needs the list, and
+ * without this it renders an error instead of the eight themes. Mirrors
+ * `server/api/themes/index.get.ts`: `index.json` minus any entry that has no
+ * `theme-{id}.json` beside it, since `setTheme` would throw on those.
+ */
+async function loadBundledThemes(): Promise<Theme[] | null> {
+    const idxLoader = _bundledThemeIndex['/server/themes/index.json']
+    if (!idxLoader) return null
+    const idx = ((await idxLoader()) as { default: Array<Record<string, unknown>> }).default
+    return idx
+        .filter((t) => typeof t.id === 'number' && `/server/themes/theme-${t.id}.json` in _bundledThemes)
+        .map((t) => ({
+            id: t.id as number,
+            name: (t.name as string) ?? `Theme ${t.id}`,
+            description: (t.description as string) ?? '',
+            cimg: (t.cimg as string) ?? '',
+        }))
+}
+
 export function useTheme() {
     /**
      * Helper: Apply CSS variables to document root
@@ -272,9 +295,14 @@ export function useTheme() {
      * @returns Promise resolving to CSS variables object
      */
     const getThemeVars = async (id: number): Promise<ThemeVars> => {
-        // Check cache first
-        if (themeVarsCache.value.has(id)) {
-            return themeVarsCache.value.get(id)!
+        // Check cache first. The cache holds `{ vars, inverted }`, so unwrap it —
+        // the cache-hit path used to hand the whole wrapper back as if it were the
+        // vars, i.e. every call after the first returned a differently-shaped object
+        // than the first one did. Latent until now (`setTheme` re-reads the cache
+        // itself rather than using this return value) but a trap for the next caller.
+        const cached = themeVarsCache.value.get(id)
+        if (cached) {
+            return cached.vars
         }
 
         try {
@@ -336,6 +364,18 @@ export function useTheme() {
 
             return data.themes
         } catch (error) {
+            // Same fallback shape as getThemeVars: the API stays the primary path,
+            // this only fires on failure (no backend / no DB). Without it the theme
+            // switcher is dead on a static deploy even though the themes themselves work.
+            try {
+                const bundled = await loadBundledThemes()
+                if (bundled && bundled.length > 0) {
+                    themesCache.value = bundled
+                    return bundled
+                }
+            } catch (fallbackError) {
+                console.error('Themes bundled-fallback failed:', fallbackError)
+            }
             console.error('Failed to load themes:', error)
             throw error
         }
@@ -348,6 +388,9 @@ export function useTheme() {
      */
     const currentVars = computed((): ThemeVars | null => {
         const activeThemeId = contextThemeId.value ?? initialThemeId.value
+        // null = no theme active (site CSS) · Map.get would coerce it to a lookup miss
+        // anyway, but saying so keeps the "no theme" case explicit.
+        if (activeThemeId === null) return null
         const cached = themeVarsCache.value.get(activeThemeId)
         return cached?.vars || null
     })

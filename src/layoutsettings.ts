@@ -27,7 +27,14 @@ export const pageSettings = {
 // LAYOUT SETTINGS
 // ============================================================================
 
-export type SiteLayout = 'default' | 'sidebar' | 'fullSidebar' | 'fullTwo' | 'fullThree'
+/**
+ * `'centered'` was implemented but never declared: `PageLayout.vue` documents it
+ * in its `setSiteLayout` prop-comment, branches on it at `showRightSidebar`
+ * (centered → no aside), and three call-sites already pass it
+ * (`Home/HomePage.vue`, `images/cimgRegistry.vue`, `Uia/UiaPageFrame.vue`).
+ * The type was the thing out of date, not the usage.
+ */
+export type SiteLayout = 'default' | 'centered' | 'sidebar' | 'fullSidebar' | 'fullTwo' | 'fullThree'
 
 export const layoutSettings = {
   /**
