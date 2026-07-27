@@ -42,15 +42,14 @@ export const hero = {
 }
 
 // ==band-1== · section: default · col: left · shape: list · taxonomy: veranstaltungen
-// The agenda, above the vision-prose (HP 2026-07-27). Wire with:
-//   <pList entity="events" project="utopiainaction" size="small"
-//          width="inherit" columns="off" />
-// NOT the HomePage.vue:59 form (`type=` / `item-type=` / `project-domaincode=`
-// are not in pList's Props interface). Copy HomePage.vue:71.
+// The agenda, above the vision-prose (HP 2026-07-27).
+// FILE-BACKED, not DB-backed: uia deploys as its own pm2 process without a
+// database (the magnifica pattern), so this list renders from ./agenda.ts →
+// `live.dates`. Do NOT wire pList here — see ../_CUTTER-PROMPT.md §agenda-shape.
 export const agendaTeaser = {
     heading: 'nächste Termine',
-    entity: 'events' as const,
-    project: 'utopiainaction',
+    /** How many upcoming Mittwochs to show on the landing before „→ die ganze Agenda". */
+    limit: 3,
     link: { href: '/agenda', label: '→ die ganze Agenda' },
 }
 

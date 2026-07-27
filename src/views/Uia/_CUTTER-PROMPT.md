@@ -9,6 +9,44 @@ is mechanics: routes, layout, wiring, theme, images. Not words.
 
 ---
 
+## 0 · What you have, and what you deliberately do not
+
+You boot with the **CV memory** and this repo. You do **not** get the director
+packages (the typus-spawns, the HOWTO, the baton). That is correct — nothing below
+needs them. But four things would otherwise trip you, so they are stated here:
+
+1. **This is not SFR work.** `CLAUDE.md` orients the CV line to the SFR sprint
+   (Waves 0–3, `meta/sfr/HANDOFF_CV.md`). Ignore that framing for this task —
+   uia is a separate lane with its own branch and its own clock. Do not read
+   yourself into the SFR handoff or file SFR reports for this.
+2. **The cutter-command grammar in §6 is NOT the magnifica Cutter-Spec.** Your
+   memory carries `{element}·{lane}·{pause}·{pin}·{cover}` — that is the *scroll-
+   choreography* spec for sticky screens. uia's landing is **band-based**, no
+   scroll choreography, so it has its own smaller grammar. Do not conflate them;
+   do not apply pin/pause/cover here.
+3. **Screenshots referenced below live at `/mnt/d/crearis/dev/X_Assets/`** —
+   `UI_community_3colors_3taxonomies.png`, `UI_community_3colors_3taxonomies_3shapes.png`,
+   `UI_community_landing_with_agenda.png`, `UI_theaterpedia_homepage.png`, `UI_bahn_1.jpg`.
+   Look at them; §4 and §5 are descriptions of things already drawn.
+4. **`.pseudonyms.env` is gitignored and machine-local.** It exists in this
+   worktree. If you work in a different checkout, copy it across or
+   `scripts/pseudonyms.py` cannot run — and then you must not touch names at all.
+
+Standing CV rules that still apply: build in `~`/ext4, never under `/mnt`
+(`/mnt` is build-trees-only); reuse before rebuild; honest park over clever
+rationalisation; auto-commit when green.
+
+### Your views to create
+
+Nothing in `views/Uia/` exists yet except `content/` and this file. You create:
+
+- `src/views/Uia/LandingPage.vue` — the bands (§5)
+- `src/views/Uia/AgendaPage.vue` — the one content-page
+- `src/views/Uia/StubPage.vue` — the shared „in Arbeit" page, copy from `content/nav.ts` → `stub`
+- and wire `content/nav.ts` → `navItems` into `TopNav` (the type extends `TopnavParentItem`)
+
+---
+
 ## 1 · Scope this round — do less than you can
 
 **Build two pages. Leave three empty.**
@@ -175,34 +213,37 @@ Read [`src/views/Home/HomePage.vue`](../Home/HomePage.vue) and copy its structur
 `centered` — the landing's two columns live **inside each `Section`**, not in
 PageLayout's aside. Getting this wrong is the one mistake that costs a rebuild.
 
-### §agenda-shape
+### §agenda-shape — file-backed, NOT DB-backed
 
-The agenda list is the one DB-backed element:
+**Corrected 2026-07-27 after HP: uia deploys as its own pm2 process, like
+magnifica — no DB, and it does not know about domaincodes.** So do **not** wire
+`pList entity="events"`: it queries the database, and there is no database in this
+deployment. It would render an empty column forever.
 
-```vue
-<pList entity="events" project="utopiainaction" size="small" width="inherit" columns="off" />
-```
+**Render the agenda from `content/agenda.ts`.** Everything is already there:
+`live.dates` (all 15 Mittwochs), `live.time`, `live.venue`, `live.performance`,
+`live.highlight`, `live.beitrag`, and `closedArcs` for the finished ones. Write a
+small local list component; the row shape is in `UI_theaterpedia_homepage.png`
+(thumbnail + corner-triangle + overline date-line + bold headline).
 
-⚠ **Do not copy `HomePage.vue:59`** — it passes `type=` / `item-type=` /
-`project-domaincode=`, and **none of those exist in `pList`'s Props interface**.
-Copy `HomePage.vue:71`, which uses `entity` + `project`. `pList`'s real props are
-`entity` (`posts|events|partners|projects|images`), `project`, `size`, `width`,
-`columns`, `variant`, `anatomy`, `onActivate`, `statusLt/Eq/Gt`, `alphaPreview`.
+*Same discipline as magnifica: the `content/*.ts` files ARE the database.*
 
-**The project already exists**: `domaincode: 'utopiainaction'`, `STATUS.RELEASED`
-(`server/database/migrations/041_entity_status_values.ts:144`), with three event
-images already seeded as DRAFT (`utopiainaction.image_event.training_statuen_1..3`).
+**Two things to keep for later, not to build now:**
 
-🚩 **BLOCKING data task — the events are not seeded.** Needed: the 15 *Meine
-Grenzen* Mittwochs (all dates are in `content/agenda.ts` → `live.dates`) plus the
-Aufführung 22.01.27, and the two closed arcs. Use `statusGt`/`statusEq` (sysreg
-64 draft · 512 confirmed · 4096 released) so the list shows only confirmed and
-released; use `alphaPreview` while drafting. **Until this lands the landing has
-an empty agenda column — that is the critical path, do it first.**
+- **If uia ever joins the DB-backed side**, the call is
+  `<pList entity="events" project="utopiainaction" size="small" width="inherit" columns="off" />`
+  — and `utopiainaction` is the domaincode to use, because a project row already
+  exists with `STATUS.RELEASED` (`server/database/migrations/041_entity_status_values.ts:144`).
+  ⚠ Do not copy `HomePage.vue:59` if you get there — it passes `type=` /
+  `item-type=` / `project-domaincode=`, none of which exist in `pList`'s Props.
+  Copy `HomePage.vue:71` (`entity` + `project`).
+- **Promoted-next row** (bahn-grammar): the first upcoming Mittwoch gets its own
+  panel above the compact list. Build the plain list now; the promotion wants a
+  live status source, which this round does not have.
 
-**Promoted-next row** (bahn-grammar): the first upcoming date gets its own panel
-above the compact list. Deferred until the events carry a status source — build
-the plain list now, leave the promotion for the next round.
+Status colours (§4) are therefore **static this round** — derive them from the
+dates in the file (past = `abgeschlossen`, future = `findet statt`), not from a
+status field. Do not fake a threshold state you cannot know.
 
 ---
 
