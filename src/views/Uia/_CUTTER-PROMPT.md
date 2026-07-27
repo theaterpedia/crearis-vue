@@ -220,13 +220,40 @@ magnifica — no DB, and it does not know about domaincodes.** So do **not** wir
 `pList entity="events"`: it queries the database, and there is no database in this
 deployment. It would render an empty column forever.
 
-**Render the agenda from `content/agenda.ts`.** Everything is already there:
-`live.dates` (all 15 Mittwochs), `live.time`, `live.venue`, `live.performance`,
-`live.highlight`, `live.beitrag`, and `closedArcs` for the finished ones. Write a
-small local list component; the row shape is in `UI_theaterpedia_homepage.png`
-(thumbnail + corner-triangle + overline date-line + bold headline).
+**But do not hand-roll a list either — reuse `ItemList` directly.** `pList` is only
+the DB-fetching wrapper around it; `ItemList` itself takes
+**`items?: ListItem[]` ("Now optional")** and **every fetch branch inside it is
+gated on `props.entity`**. So pass `items` and omit `entity` and you get
+theaterpedia's exact row rendering with no network call:
+
+```vue
+<ItemList
+  :items="agendaItems"
+  size="small"
+  width="inherit"
+  :columns="'off'"
+  interaction="static"
+  :dataMode="false"
+/>
+```
+
+`ListItem` is `{ heading, cimg?, props?, slot? }`, and `heading` is a crearis-md
+string parsed by `HeadingParser`:
+
+```
+"overline **HEADLINE** subline"
+```
+
+— before `**` is the overline, between `** **` the headline (required), after it
+the subline. `content/agenda.ts` → **`agendaItems`** is already written in exactly
+this shape, paste-ready. `live.dates` (all 15 Mittwochs), `live.beitrag`,
+`live.highlight` and `closedArcs` carry the rest for the page body.
 
 *Same discipline as magnifica: the `content/*.ts` files ARE the database.*
+
+🚩 **Read the editorial flag under `agendaItems`** before you wire row 3 — the
+Kernprogramm and „Meine Grenzen" claim the same Wednesday slot, and that is an
+owners' question, not yours to resolve.
 
 **Two things to keep for later, not to build now:**
 

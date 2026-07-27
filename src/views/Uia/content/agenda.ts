@@ -90,6 +90,43 @@ export const live = {
     focal: 'center',
 }
 
+// ==agenda-rows== · shape: list · taxonomy: veranstaltungen
+// Paste-ready for `<ItemList :items>` — see ../_CUTTER-PROMPT.md §agenda-shape.
+// `heading` is a crearis-md string parsed by HeadingParser:
+//     "overline **HEADLINE** subline"
+//   → text before ** is overline · between ** ** is headline · after is subline.
+// Passing `items` and OMITTING `entity` means ItemList does not fetch — every
+// fetch branch in it is gated on `props.entity`. That is what makes this work
+// without a database.
+export interface UiaListItem {
+    heading: string
+    cimg?: string
+    props?: Record<string, unknown>
+}
+
+/** The dated things a visitor can act on. Landing shows the first `limit`. */
+export const agendaItems: ReadonlyArray<UiaListItem> = [
+    {
+        heading: 'ab MI 23.09.26 · 15 × mittwochs 19–21 Uhr · assemblé **Meine Grenzen** ein Tanztheater-Projekt · Anmeldung bis 10.09.26',
+        cimg: 'TODO HP', // updates/meine_grenzen1.jpg · square crop, the two hands
+    },
+    {
+        heading: 'FR 22.01.27 · Abschluss-Aufführung (vsl.) **Meine Grenzen · wir zeigen es** Ort wird noch bekannt gegeben',
+        cimg: 'TODO HP',
+    },
+    {
+        heading: 'immer mittwochs · 19–21 Uhr · assemblé **Unser Kernprogramm** Theater der Unterdrückten · offenes Theatertraining',
+        cimg: 'TODO HP',
+    },
+]
+
+// 🚩 EDITORIAL FLAG → HP → the owners. The Kernprogramm and „Meine Grenzen"
+// occupy the SAME slot: mittwochs 19–21 im assemblé. From 23.09.26 the Wednesday
+// is the project's for 15 weeks. So either the Kernprogramm pauses for the run,
+// or the two coexist somehow — and a newcomer reading both rows above will not
+// know which. Only the owners can answer. Until they do, row 3 stays but must
+// not claim a date the project owns. Do not resolve this by guessing.
+
 // ==kernprogramm== · section: default · col: full · shape: prose · taxonomy: arbeitsformen
 // The weekly rhythm underneath the projects. Green taxonomy.
 // ⚠ OPEN (HP → owners): the Kernprogramm Beitrag (drop-in vs. Reihe) is unknown.
