@@ -8,6 +8,21 @@ import type { DatabaseAdapter } from '../adapter'
 export async function seedAdminWatchTasks(db: DatabaseAdapter): Promise<void> {
     console.log('🌱 Seeding admin watch tasks...')
 
+    // Fresh-replay repair (CV@wsl 2026-07-10, HD-authorized): this seed targets the pre-sysreg
+    // schema (legacy `status` table + `status_id` column), both removed by the migration arc
+    // (023+). On a fresh sysreg DB neither exists, so skip gracefully rather than crash
+    // db:rebuild. Porting these two optional admin watch tasks to sysreg is a flagged follow-up.
+    const legacyStatus = await db.get(`
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'status'
+        ) as exists
+    `)
+    if (!(legacyStatus as any)?.exists) {
+        console.log('  ⚠️  Legacy `status` table absent (sysreg schema) — skipping admin watch tasks (flagged follow-up)')
+        return
+    }
+
     // Get status IDs for tasks
     const reopenStatus = await db.get(`SELECT id FROM status WHERE "table" = 'tasks' AND name = 'reopen' LIMIT 1`)
     const reopenStatusId = reopenStatus ? (reopenStatus as any).id : null

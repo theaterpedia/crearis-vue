@@ -64,7 +64,7 @@ export const migration = {
 
         const entityTablesWithStatus = [
             'projects', 'events', 'posts', 'participants', 'instructors',
-            'users', 'tasks', 'interactions'
+            'users', 'tasks', 'interactions', 'locations'
         ]
 
         for (const table of entityTablesWithStatus) {

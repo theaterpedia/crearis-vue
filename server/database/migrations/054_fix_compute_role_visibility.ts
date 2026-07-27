@@ -35,6 +35,10 @@ export const migration = {
         // ===================================================================
         console.log('\n📖 Chapter 1: Recreate compute_role_visibility(INTEGER, INTEGER)')
 
+        // Fresh-replay repair (CV@wsl 2026-07-10, HD-authorized): the return-type changes
+        // (r_owner → r_creator), which CREATE OR REPLACE cannot do — drop the old signature first.
+        await db.exec(`DROP FUNCTION IF EXISTS compute_role_visibility(INTEGER, INTEGER);`)
+
         await db.exec(`
             CREATE OR REPLACE FUNCTION compute_role_visibility(
                 p_entity_bits INTEGER,  -- Entity type bits (already shifted: post=32, image=48, project=8)

@@ -50,38 +50,39 @@ export const migration = {
             ) as exists
         `)
 
-        if (hasCtags?.exists) {
-            console.log('  ✓ Images table already has non-suffixed columns (ctags, rtags, ttags, dtags)')
-            console.log('  ℹ️  Skipping images table - no changes needed')
-        } else {
-            // Images needs conversion
-            console.log('  Dropping unused duplicate columns from images...')
-            await db.exec(`
-                ALTER TABLE images
-                DROP COLUMN IF EXISTS ctags_val,
-                DROP COLUMN IF EXISTS rtags_val;
-            `)
-            console.log('    ✓ Dropped ctags_val and rtags_val from images')
-
-            console.log('  Renaming ttags_val and dtags_val in images...')
-            await db.exec(`ALTER TABLE images RENAME COLUMN ttags_val TO ttags;`)
-            console.log('    ✓ Renamed ttags_val → ttags')
-
-            await db.exec(`ALTER TABLE images RENAME COLUMN dtags_val TO dtags;`)
-            console.log('    ✓ Renamed dtags_val → dtags')
-
-            // Drop old indexes
-            console.log('  Updating indexes for images...')
-            await db.exec(`DROP INDEX IF EXISTS idx_images_ctags_val;`)
-            await db.exec(`DROP INDEX IF EXISTS idx_images_rtags_val;`)
-            await db.exec(`DROP INDEX IF EXISTS idx_images_ttags_val;`)
-            await db.exec(`DROP INDEX IF EXISTS idx_images_dtags_val;`)
-
-            // Create new indexes
-            await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_ttags ON images USING hash(ttags);`)
-            await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_dtags ON images USING hash(dtags);`)
-            console.log('    ✓ Updated indexes for images')
+        // Fresh-replay repair (CV@wsl 2026-07-10, HD-authorized):
+        // images carries a MIX — non-suffixed ctags/rtags (production data) alongside
+        // leftover *_val columns (ctags_val/rtags_val duplicates, ttags_val/dtags_val only).
+        // The original code short-circuited on `ctags` existing and skipped ttags/dtags,
+        // leaving images without ttags/dtags (later breaks migration 036). Normalize all four
+        // tag columns idempotently: drop a _val column when its non-suffixed twin exists,
+        // otherwise rename it. hasCtags kept above for reference.
+        void hasCtags
+        console.log('  Normalizing images tag columns (ctags, rtags, ttags, dtags)...')
+        for (const tag of ['ctags', 'rtags', 'ttags', 'dtags']) {
+            const plain = await db.get(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'images' AND column_name = '${tag}') as exists`)
+            const suffixed = await db.get(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'images' AND column_name = '${tag}_val') as exists`)
+            if (suffixed?.exists && plain?.exists) {
+                await db.exec(`ALTER TABLE images DROP COLUMN ${tag}_val CASCADE;`)
+                console.log(`    ✓ images: dropped duplicate ${tag}_val`)
+            } else if (suffixed?.exists) {
+                await db.exec(`ALTER TABLE images RENAME COLUMN ${tag}_val TO ${tag};`)
+                console.log(`    ✓ images: renamed ${tag}_val → ${tag}`)
+            } else {
+                console.log(`    ✓ images: ${tag} already normalized`)
+            }
         }
+
+        // Refresh indexes to match the normalized column names
+        await db.exec(`DROP INDEX IF EXISTS idx_images_ctags_val;`)
+        await db.exec(`DROP INDEX IF EXISTS idx_images_rtags_val;`)
+        await db.exec(`DROP INDEX IF EXISTS idx_images_ttags_val;`)
+        await db.exec(`DROP INDEX IF EXISTS idx_images_dtags_val;`)
+        await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_ctags ON images USING hash(ctags);`)
+        await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_rtags ON images USING hash(rtags);`)
+        await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_ttags ON images USING hash(ttags);`)
+        await db.exec(`CREATE INDEX IF NOT EXISTS idx_images_dtags ON images USING hash(dtags);`)
+        console.log('    ✓ Updated indexes for images')
 
         // ===================================================================
         // CHAPTER 2: Full Entity Tables (6 columns each)
@@ -111,8 +112,14 @@ export const migration = {
                 await db.exec(`ALTER TABLE ${table} RENAME COLUMN status_val TO status;`)
                 console.log(`    ✓ Renamed status_val → status`)
             } else if (hasStatus?.exists && hasStatusVal?.exists) {
-                console.log(`    ⚠ Table already has both status and status_val, dropping status_val`)
-                await db.exec(`ALTER TABLE ${table} DROP COLUMN status_val;`)
+                // Fresh-replay: legacy TEXT `status` (from 000_base_schema) coexists with
+                // the sysreg `status_val`. Drop the legacy column (CASCADE clears its CHECK),
+                // then promote the sysreg column. The generated `status_label` depends on
+                // status_val and follows the rename automatically.
+                console.log(`    ⚠ Legacy 'status' + 'status_val' both present — dropping legacy, promoting sysreg`)
+                await db.exec(`ALTER TABLE ${table} DROP COLUMN status CASCADE;`)
+                await db.exec(`ALTER TABLE ${table} RENAME COLUMN status_val TO status;`)
+                console.log(`    ✓ Dropped legacy status, renamed status_val → status`)
             } else if (hasStatus?.exists) {
                 console.log(`    ✓ Already has status column`)
             }
@@ -120,13 +127,13 @@ export const migration = {
             // Check and rename config column if needed
             const hasConfig = await db.get(`
                 SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name = '${table}' AND column_name = 'config'
                 ) as exists
             `)
             const hasConfigVal = await db.get(`
                 SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name = '${table}' AND column_name = 'config_val'
                 ) as exists
             `)
@@ -136,7 +143,7 @@ export const migration = {
                 console.log(`    ✓ Renamed config_val → config`)
             } else if (hasConfig?.exists && hasConfigVal?.exists) {
                 console.log(`    ⚠ Table already has both config and config_val, dropping config_val`)
-                await db.exec(`ALTER TABLE ${table} DROP COLUMN config_val;`)
+                await db.exec(`ALTER TABLE ${table} DROP COLUMN config_val CASCADE;`)
             } else if (hasConfig?.exists) {
                 console.log(`    ✓ Already has config column`)
             }
@@ -220,8 +227,12 @@ export const migration = {
                 await db.exec(`ALTER TABLE ${table} RENAME COLUMN status_val TO status;`)
                 console.log(`    ✓ Renamed status_val → status`)
             } else if (hasStatus?.exists && hasStatusVal?.exists) {
-                console.log(`    ⚠ Table already has both, dropping status_val`)
-                await db.exec(`ALTER TABLE ${table} DROP COLUMN status_val;`)
+                // Fresh-replay: legacy TEXT `status` (from 000_base_schema) coexists with
+                // the sysreg `status_val`. Drop the legacy column, then promote the sysreg one.
+                console.log(`    ⚠ Legacy 'status' + 'status_val' both present — dropping legacy, promoting sysreg`)
+                await db.exec(`ALTER TABLE ${table} DROP COLUMN status CASCADE;`)
+                await db.exec(`ALTER TABLE ${table} RENAME COLUMN status_val TO status;`)
+                console.log(`    ✓ Dropped legacy status, renamed status_val → status`)
             } else if (hasStatus?.exists) {
                 console.log(`    ✓ Already has status column`)
             }
@@ -229,13 +240,13 @@ export const migration = {
             // Check and rename config column if needed
             const hasConfig = await db.get(`
                 SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name = '${table}' AND column_name = 'config'
                 ) as exists
             `)
             const hasConfigVal = await db.get(`
                 SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name = '${table}' AND column_name = 'config_val'
                 ) as exists
             `)
@@ -245,7 +256,7 @@ export const migration = {
                 console.log(`    ✓ Renamed config_val → config`)
             } else if (hasConfig?.exists && hasConfigVal?.exists) {
                 console.log(`    ⚠ Table already has both, dropping config_val`)
-                await db.exec(`ALTER TABLE ${table} DROP COLUMN config_val;`)
+                await db.exec(`ALTER TABLE ${table} DROP COLUMN config_val CASCADE;`)
             } else if (hasConfig?.exists) {
                 console.log(`    ✓ Already has config column`)
             }

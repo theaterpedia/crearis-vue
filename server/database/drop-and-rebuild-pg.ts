@@ -95,46 +95,28 @@ async function dropAllTables(options: DropOptions = {}): Promise<void> {
     })
 
     try {
-        // Get all table names in the public schema
-        const result = await pool.query(`
-            SELECT tablename 
-            FROM pg_tables 
-            WHERE schemaname = 'public'
-            ORDER BY tablename
-        `)
-
-        const tables = result.rows.map(row => row.tablename)
-
-        if (tables.length === 0) {
-            if (verbose) {
-                console.log('   ℹ️  No tables found in database\n')
-            }
-            return
+        // Fresh-replay repair (CV@wsl 2026-07-10): reset the WHOLE public schema, not just
+        // tables. The old table-only drop left functions/views/types behind, so a rebuild hit
+        // "cannot change return type / input parameter name" when migrations 030/054 re-ran
+        // CREATE OR REPLACE FUNCTION with changed signatures. Dropping+recreating the schema is
+        // a true reset equivalent to DROP DATABASE, but works without CREATE DATABASE privilege
+        // (the reason this script avoided dropping the database). `cascade` is implied.
+        void cascade
+        if (verbose) {
+            console.log('   Resetting public schema (drops all tables, functions, views, types)...')
         }
+
+        await pool.query(`DROP SCHEMA IF EXISTS public CASCADE`)
+        await pool.query(`CREATE SCHEMA public`)
+        await pool.query(`GRANT ALL ON SCHEMA public TO CURRENT_USER`)
+        await pool.query(`GRANT ALL ON SCHEMA public TO PUBLIC`)
 
         if (verbose) {
-            console.log(`   Found ${tables.length} tables:`)
-            tables.forEach(table => console.log(`      - ${table}`))
-            console.log()
-        }
-
-        // Drop all tables
-        for (const table of tables) {
-            const dropSQL = `DROP TABLE IF EXISTS "${table}" ${cascade ? 'CASCADE' : ''}`
-
-            if (verbose) {
-                console.log(`   Dropping table: ${table}`)
-            }
-
-            await pool.query(dropSQL)
-        }
-
-        if (verbose) {
-            console.log(`\n   ✅ Dropped ${tables.length} tables\n`)
+            console.log('   ✅ public schema reset (all objects dropped)\n')
         }
 
     } catch (error) {
-        console.error('   ❌ Error dropping tables:', error)
+        console.error('   ❌ Error resetting schema:', error)
         throw error
     } finally {
         await pool.end()

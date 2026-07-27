@@ -46,6 +46,19 @@ export const migration = {
         const sysregEntries = await db.all('SELECT * FROM sysreg ORDER BY id', [])
         console.log(`  ✓ Backed up ${(sysregEntries as any[]).length} sysreg entries`)
 
+        // Fresh-replay repair (CV@wsl 2026-07-10, HD-authorized):
+        // Drop the status_label generated columns up front. They depend on
+        // get_sysreg_label(bytea,...) and on the status/status_val source columns, which blocks
+        // the DROP FUNCTION below, the ALTER COLUMN ... TYPE INTEGER in Chapter 4, and the
+        // images.status_val drop in migration 039. No later migration recreates status_label,
+        // so the arc's end-state has none (app usage in StatusBadge.vue flagged in diagnosis doc).
+        console.log('\n  🔧 Dropping status_label generated columns (fresh-replay repair)...')
+        const statusLabelTables = ['posts', 'events', 'projects', 'participants', 'instructors', 'users', 'tasks', 'interactions', 'images']
+        for (const t of statusLabelTables) {
+            await db.exec(`ALTER TABLE ${t} DROP COLUMN IF EXISTS status_label;`)
+        }
+        console.log('    ✓ Dropped status_label from entity tables')
+
         // ===================================================================
         // CHAPTER 2: Alter sysreg Table Structure
         // ===================================================================
