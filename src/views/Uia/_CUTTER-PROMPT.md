@@ -295,6 +295,32 @@ If a block needs a knob that is not in this grammar: cut it by judgment, **add
 the knob to this list**, and pulse it back to me. Do not silently invent a
 parallel convention.
 
+### Added by the technician · 2026-07-27 (pulsed back per the rule above)
+
+- **`section: dark` resolves to `<Section background="accent">`.** `Section.vue`
+  takes `default | muted | accent` and has no `dark`. `accent` *is* the charcoal
+  band theaterpedia uses for its Pipeline block
+  (`Home/HomeComponents/ProjectsShowcaseSection.vue:10`), and in theme 3 with
+  `inverted: false` `accent-bg` computes to L≈0.28. A naming difference, not a
+  missing knob — `dark` stays the word in the content-files.
+- **`shape: prose+highlight` is a composition, not a fifth shape.** Both `==band-2==`
+  and `==live==` declare it; it cuts as the prose block followed by `UiaHighlight`.
+- **`shape: run`** — NEW. The 15 Mittwochs of one project rendered as a compact
+  date-run with a §4 status per date (`UiaDateList`). Distinct from `shape: list`,
+  which is now always `ItemList` fed from `agendaItems`. The distinction is load-
+  bearing: `list` says "N separate things you can act on", `run` says "one thing,
+  N dates". Feeding 15 near-identical rows through `ItemList` would state the
+  first when the truth is the second.
+- **`focal`** — already present per-image in the content-files but absent from this
+  grammar. It is an image knob, not a block knob, and binds to `object-position`
+  (`UiaImage`) or `background-position` (`UiaHero`).
+
+Two chrome labels were written where the content-files supply none, and they are
+mine to cut: **„Was schon war"** (the closed-arcs band, lifted from the agenda
+hero's own overline „was gerade läuft · und was schon war") and **„Was ansteht"**
+(the agenda rows). Also the footer's three column labels — **Ort · Kontakt ·
+Presse**, the last two taken from `nav.ts`'s own naming.
+
 ---
 
 ## 7 · Words — the part that is not yours
