@@ -40,9 +40,10 @@
                 <Columns>
                     <Column width="1/2">
                         <UiaTaxonomyBand :heading="agendaTeaser.heading" taxonomy="veranstaltungen" />
-                        <UiaDateList variant="teaser" :dates="live.dates" :title="live.headline" :time="live.time"
-                            :subline="liveProject.subline" :limit="agendaTeaser.limit" :image="live.image"
-                            :image-alt="live.imageAlt" :focal="live.focal" />
+                        <!-- theaterpedia's own row rendering, reused: `items` + no
+                             `entity` + dataMode false = no fetch. See ./uiaItems.ts. -->
+                        <ItemList :items="teaserItems" size="small" width="inherit" columns="off"
+                            interaction="static" :dataMode="false" headingLevel="h4" />
                         <p class="uia-more">
                             <router-link :to="agendaTeaser.link.href">{{ agendaTeaser.link.label }}</router-link>
                         </p>
@@ -137,18 +138,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import Prose from '@/components/Prose.vue'
+import ItemList from '@/components/clist/ItemList.vue'
 import UiaPageFrame from './UiaPageFrame.vue'
 import UiaHero from './UiaHero.vue'
 import UiaTaxonomyBand from './UiaTaxonomyBand.vue'
-import UiaDateList from './UiaDateList.vue'
 import UiaHighlight from './UiaHighlight.vue'
 import UiaArcCard from './UiaArcCard.vue'
 import UiaActors from './UiaActors.vue'
+import { toListItems } from './uiaItems'
 import {
     pageTitle,
     hero,
@@ -159,9 +162,12 @@ import {
     workingForms,
     actors,
 } from './content/landing'
-// The dates themselves live with the agenda, not duplicated into the landing —
-// `content/agenda.ts` is the single source for `live.dates` / `time` / `venue`.
-import { live } from './content/agenda'
+// The dated rows live with the agenda, not duplicated into the landing —
+// `content/agenda.ts` is the single source.
+import { agendaItems } from './content/agenda'
+
+/** The first `agendaTeaser.limit` rows, with the `TODO HP` cimg-markers stripped. */
+const teaserItems = computed(() => toListItems(agendaItems, agendaTeaser.limit))
 </script>
 
 <style scoped>

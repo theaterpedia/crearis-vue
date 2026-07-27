@@ -64,13 +64,22 @@
             </Container>
         </Section>
 
-        <!-- ==live-dates== · all 15 Mittwochs · the red Veranstaltungen row-list -->
+        <!-- ==agenda-rows== · what a visitor can act on · ItemList, reused -->
+        <Section background="default">
+            <Container>
+                <UiaTaxonomyBand heading="Was ansteht" taxonomy="veranstaltungen" />
+                <ItemList :items="rows" size="small" width="inherit" columns="off" interaction="static"
+                    :dataMode="false" headingLevel="h3" />
+            </Container>
+        </Section>
+
+        <!-- ==live-dates== · the 15 Mittwochs of the one project, as a run -->
         <Section background="default">
             <Container>
                 <Columns>
                     <Column width="1/2">
                         <UiaTaxonomyBand heading="Alle Termine" taxonomy="veranstaltungen" />
-                        <UiaDateList variant="compact" :dates="live.dates" :title="live.headline" :time="live.time" />
+                        <UiaDateList :dates="live.dates" :time="live.time" />
                         <!-- The public beat that closes the arc · not a Mittwoch, so
                              not run through the date-parser (`vsl.` is part of the date). -->
                         <p class="uia-performance">
@@ -153,11 +162,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import Columns from '@/components/Columns.vue'
 import Column from '@/components/Column.vue'
 import Prose from '@/components/Prose.vue'
+import ItemList from '@/components/clist/ItemList.vue'
 import UiaPageFrame from './UiaPageFrame.vue'
 import UiaHero from './UiaHero.vue'
 import UiaTaxonomyBand from './UiaTaxonomyBand.vue'
@@ -165,15 +176,28 @@ import UiaDateList from './UiaDateList.vue'
 import UiaHighlight from './UiaHighlight.vue'
 import UiaImage from './UiaImage.vue'
 import UiaArcCard from './UiaArcCard.vue'
+import { toListItems } from './uiaItems'
 import {
     pageTitle,
     hero,
     live,
+    agendaItems,
     kernprogramm,
     closedArcs,
     forumTheater,
     flinta,
 } from './content/agenda'
+
+/**
+ * Every agenda row, `TODO HP` cimg-markers stripped so ItemRow never gets a
+ * broken `<img src>`. No `limit` here — the landing teases, this page shows all.
+ *
+ * 🚩 Row 3 (the Kernprogramm) carries the editorial flag under `agendaItems`:
+ * it and „Meine Grenzen" claim the same Wednesday slot, and from 23.09.26 the
+ * project owns that Wednesday for 15 weeks. That is the owners' question. It is
+ * rendered as written and not resolved by guessing here.
+ */
+const rows = computed(() => toListItems(agendaItems))
 </script>
 
 <style scoped>

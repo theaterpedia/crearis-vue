@@ -28,7 +28,7 @@
     <div class="uia-actors" :style="vars">
         <ul v-if="shuffledPeople.length" class="uia-actors-grid">
             <li v-for="person in shuffledPeople" :key="person.code" class="uia-actor">
-                <UiaImage v-if="hasImage(person.image)" :src="person.image"
+                <UiaImage v-if="hasRealImage(person.image)" :src="person.image"
                     :alt="`${person.code} · ${person.role}`" ratio="banner" />
                 <div class="uia-actor-body">
                     <span class="uia-actor-avatar" aria-hidden="true">{{ initials(person.code) }}</span>
@@ -53,6 +53,7 @@
 import { computed, ref } from 'vue'
 import UiaImage from './UiaImage.vue'
 import { taxonomyVars } from './uiaTaxonomy'
+import { hasRealImage } from './uiaItems'
 
 interface UiaPerson {
     code: string
@@ -90,11 +91,6 @@ function shuffle<T>(items: ReadonlyArray<T>): T[] {
 
 const shuffledPeople = ref<UiaPerson[]>(shuffle(props.people))
 const shuffledOrgs = ref<UiaOrg[]>(shuffle(props.orgs))
-
-function hasImage(src?: string): boolean {
-    const trimmed = src?.trim()
-    return !!trimmed && !trimmed.toUpperCase().startsWith('TODO')
-}
 
 /** First two characters of the code — the pseudonym stands in for the portrait. */
 function initials(code: string): string {

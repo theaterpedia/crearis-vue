@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hasRealImage } from './uiaItems'
 
 const props = withDefaults(
     defineProps<{
@@ -55,12 +56,8 @@ const props = withDefaults(
     { focal: 'center', ratio: 'wide', framed: false },
 )
 
-/** `'TODO HP'` is a note to HP, not a URL. Treat every TODO-marker as "not yet". */
-const hasImage = computed(() => {
-    const src = props.src?.trim()
-    if (!src) return false
-    return !src.toUpperCase().startsWith('TODO')
-})
+/** `'TODO HP'` is a note to HP, not a URL — one shared rule, see ./uiaItems.ts. */
+const hasImage = computed(() => hasRealImage(props.src))
 </script>
 
 <style scoped>
