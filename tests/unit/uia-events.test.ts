@@ -5,9 +5,12 @@
  * behaviours here are load-bearing and easy to break later:
  *
  *   1. **Heading composition.** `ItemList` is given `items=`, so nothing composes
- *      the crearis-md `"overline **HEADLINE** subline"` for us. If this drifts,
- *      rows silently collapse to bare titles — which is exactly what the
+ *      the crearis-md `"overline **HEADLINE**"` for us. If this drifts, rows
+ *      silently collapse to bare titles — which is exactly what the
  *      `entity=`-fetch path does, and the reason A does not use it.
+ *      Note it is two parts, not three: `Heading.vue` gates
+ *      `hasSubline = !hasOverline && …`, so overline and subline are either/or
+ *      and a third part would vanish. Pinned below.
  *   2. **The fallback.** A failing endpoint must leave the authored agenda on
  *      screen, and must NOT pretend it came from the DB. A silent fallback would
  *      let the live agenda go stale unnoticed.
@@ -44,12 +47,23 @@ afterEach(() => {
 })
 
 describe('composeHeading · the crearis-md contract', () => {
-    it('builds "overline **HEADLINE** subline"', () => {
+    it('builds "overline **HEADLINE**" with the date-line leading', () => {
         const heading = composeHeading(odooRow())
         expect(heading).toContain('**Meine Grenzen**')
-        // date-line before the headline, teaser after it
         expect(heading.indexOf('MI 23.09.26')).toBeLessThan(heading.indexOf('**'))
-        expect(heading.endsWith('ein Tanztheater Projekt')).toBe(true)
+    })
+
+    it('emits NO third part — Heading.vue cannot render overline + subline together', () => {
+        // hasSubline = !hasOverline && (...) — so a three-part heading loses its
+        // third part silently. Verified in the browser. We do not pass data that vanishes.
+        const heading = composeHeading(odooRow())
+        expect(heading.endsWith('**')).toBe(true)
+        expect(heading).not.toContain('ein Tanztheater Projekt')
+    })
+
+    it('uses the teaser as the overline when there is no date-line to lead with', () => {
+        const heading = composeHeading(odooRow({ date_begin: null, schedule: null, teasertext: 'FLINTA*-Space' }))
+        expect(heading).toBe('FLINTA*-Space **Meine Grenzen**')
     })
 
     it('prints the date exactly as the file-backed path does', () => {
@@ -70,9 +84,8 @@ describe('composeHeading · the crearis-md contract', () => {
         expect(heading).not.toMatch(/\b(MO|DI|MI|DO|FR|SA|SO)\b/)
     })
 
-    it('omits the subline rather than padding it', () => {
+    it('joins the date and the time-range in the overline', () => {
         expect(composeHeading(odooRow({ teasertext: null }))).toBe('MI 23.09.26 · 19:00 – 21:00 Uhr **Meine Grenzen**')
-        expect(composeHeading(odooRow({ teasertext: '   ' }))).not.toMatch(/\*\*\s+$/)
     })
 })
 

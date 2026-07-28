@@ -86,21 +86,40 @@ function odooDateToUiaDay(dateBegin: string | null): string | null {
 }
 
 /**
- * Build the crearis-md heading `HeadingParser` expects.
+ * Build the crearis-md heading, as `overline **HEADLINE**`.
  *
- * The overline is the date-line; `**name**` is required by the parser; the subline
- * is the teaser. Every part is omitted rather than filled with a placeholder when
- * the row does not carry it — an undated row (uia's provisional Aufführung) leads
- * with its `schedule` text instead of a fabricated date.
+ * ── Why there is no subline, though the format documents one ─────────────────
+ * `HeadingParser` advertises `"overline **headline** subline"` and calls the
+ * three-part form supported. `Heading.vue` cannot render it:
+ *
+ *     hasSubline = !hasOverline && (subline || tags)
+ *
+ * — the subline is gated on there being NO overline, and its own prop-doc says
+ * "Only shows up, if no overline is provided". So overline and subline are
+ * either/or by design, and a three-part heading loses its third part silently.
+ * Verified in the browser: rows composed with all three rendered date + headline
+ * and dropped the teaser without a trace.
+ *
+ * Rather than pass data that vanishes, the teaser is used as the overline **only
+ * when there is no date-line to lead with**. Nothing is silently discarded, and
+ * the result is exactly the row shape the reference design specifies — thumbnail
+ * + overline date-line + bold headline (`X_Assets/UI_theaterpedia_homepage.png`,
+ * cited by §5). The teaser's home is the project band, not the row.
+ *
+ * The HeadingParser-vs-Heading contract mismatch is flagged upstream; it is not
+ * worked around here, and no shared component is touched for it.
  */
 export function composeHeading(row: OdooEventRow): string {
     const day = odooDateToUiaDay(row.date_begin)
-    const overlineParts = [day, row.schedule].filter((p): p is string => !!p && p !== day)
-    if (day) overlineParts.unshift(day)
-    const overline = overlineParts.filter(Boolean).join(' · ')
-    const subline = row.teasertext?.trim() ?? ''
-    // "overline **HEADLINE** subline" — parser contract per migration-069-era docs.
-    return `${overline ? `${overline} ` : ''}**${row.name}**${subline ? ` ${subline}` : ''}`
+    // Prefer the date-line. `schedule` joins it when it adds something (the
+    // time-range); on an undated row it stands in for the date entirely.
+    const dateLine = [day, row.schedule && row.schedule !== day ? row.schedule : null]
+        .filter(Boolean)
+        .join(' · ')
+    // Falls back to the teaser so an undated, unscheduled row still says something
+    // above its headline instead of leading with nothing.
+    const overline = dateLine || row.teasertext?.trim() || ''
+    return `${overline ? `${overline} ` : ''}**${row.name}**`
 }
 
 /** Map an Odoo row onto the `ListItem` shape `ItemList` renders. */
