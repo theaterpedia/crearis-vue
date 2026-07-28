@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import { POST_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import type { PostsTableFields } from '../../types/database'
 
 // POST /api/posts - Create new post
@@ -96,6 +97,12 @@ export default defineEventHandler(async (event) => {
         // Extract the new post ID from the result
         // PostgreSQL: result.rows[0].id, SQLite: result.lastID
         const newId = result.rows?.[0]?.id || result.lastID
+
+        // Odoo sync · fire-and-forget, no-op unless ODOO_SYNC_MOCK=1.
+        // ⚠ AHEAD: posts have no odoo_xmlid column (migration 060 added the sync
+        // stubs to events only), so POST_SYNC rides on CV's own `xmlid` as a devbox
+        // stand-in. See hcv/refs/2026-07_events_and-posts_devboxdoc.md.
+        if (newId) syncAfterWrite(POST_SYNC, Number(newId))
 
         if (!newId) {
             throw new Error('Failed to get new post ID')

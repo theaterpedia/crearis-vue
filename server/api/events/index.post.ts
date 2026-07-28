@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
+import { EVENT_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import type { EventsTableFields } from '../../types/database'
 
 // POST /api/events - Create new event
@@ -89,6 +90,11 @@ export default defineEventHandler(async (event) => {
         if (!newId) {
             throw new Error('Failed to get new event ID')
         }
+
+        // Odoo sync · fire-and-forget, no-op unless ODOO_SYNC_MOCK=1. Never blocks or
+        // fails the save: the write is the user's intent, the sync is bookkeeping that
+        // retries on the next write. Gated so prod behaviour is unchanged.
+        syncAfterWrite(EVENT_SYNC, Number(newId))
 
         // Get the created event with domaincode
         const created = await db.get(`
