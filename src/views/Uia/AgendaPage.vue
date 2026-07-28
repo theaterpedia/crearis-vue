@@ -64,12 +64,17 @@
             </Container>
         </Section>
 
-        <!-- ==agenda-rows== · what a visitor can act on · ItemList, reused -->
+        <!-- ==agenda-rows== · DB-backed (task A) · Odoo events through ItemList -->
         <Section background="default">
             <Container>
                 <UiaTaxonomyBand heading="Was ansteht" taxonomy="veranstaltungen" />
-                <ItemList :items="rows" size="small" width="inherit" columns="off" interaction="static"
-                    :dataMode="false" headingLevel="h3" />
+                <ItemList :items="agendaRows" size="small" width="inherit" columns="off"
+                    interaction="static" :dataMode="false" headingLevel="h3" />
+                <!-- Dev-only marker. The fallback keeps the page correct, but it must
+                     not be able to hide that the events endpoint stopped answering. -->
+                <p v-if="showSourceMarker" class="uia-source-marker">
+                    {{ sourceMarkerText }}
+                </p>
             </Container>
         </Section>
 
@@ -162,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import Columns from '@/components/Columns.vue'
@@ -176,12 +181,11 @@ import UiaDateList from './UiaDateList.vue'
 import UiaHighlight from './UiaHighlight.vue'
 import UiaImage from './UiaImage.vue'
 import UiaArcCard from './UiaArcCard.vue'
-import { toListItems } from './uiaItems'
+import { useUiaEvents } from './useUiaEvents'
 import {
     pageTitle,
     hero,
     live,
-    agendaItems,
     kernprogramm,
     closedArcs,
     forumTheater,
@@ -189,15 +193,43 @@ import {
 } from './content/agenda'
 
 /**
- * Every agenda row, `TODO HP` cimg-markers stripped so ItemRow never gets a
- * broken `<img src>`. No `limit` here — the landing teases, this page shows all.
+ * Task A · the agenda rows come from the DB now, via Odoo `event.event`
+ * (`/api/odoo/events?domain_code=utopiaxaction`), not from `content/agenda.ts`.
  *
- * 🚩 Row 3 (the Kernprogramm) carries the editorial flag under `agendaItems`:
- * it and „Meine Grenzen" claim the same Wednesday slot, and from 23.09.26 the
- * project owns that Wednesday for 15 weeks. That is the owners' question. It is
- * rendered as written and not resolved by guessing here.
+ * `useUiaEvents` seeds itself with the authored `agendaItems` synchronously, so
+ * this band is never empty, then swaps in the DB rows once they arrive. If the
+ * endpoint does not answer it keeps the authored rows — see the composable for
+ * why that is a deliberate fallback rather than a swallowed error.
+ *
+ * 🚩 The Wednesday-slot editorial flag under `agendaItems` still stands: the
+ * Kernprogramm and „Meine Grenzen" claim the same mittwochs 19–21 slot. Whether
+ * that shows up here now depends on what is in the DB — it is the owners'
+ * question either way, and is not resolved by guessing.
  */
-const rows = computed(() => toListItems(agendaItems))
+// Destructured so the refs are top-level template bindings and Vue auto-unwraps
+// them — `agenda.items.value` in a template would be a nested-ref trap.
+const {
+    items: agendaRows,
+    isFallback,
+    isMock,
+    error: agendaError,
+    load: loadAgenda,
+} = useUiaEvents()
+
+onMounted(() => {
+    loadAgenda()
+})
+
+/** Dev-only: never let the fallback silently mask a dead endpoint. */
+const showSourceMarker = computed(() => import.meta.env.DEV && (isFallback.value || isMock.value))
+
+const sourceMarkerText = computed(() => {
+    if (isFallback.value) {
+        return '⚠ dev · agenda from content/agenda.ts (fallback) — the Odoo events endpoint did not answer'
+            + `${agendaError.value ? `: ${agendaError.value}` : ''}`
+    }
+    return '⚠ dev · agenda from MOCKED Odoo events (ODOO_MOCK=1)'
+})
 </script>
 
 <style scoped>
@@ -311,5 +343,16 @@ const rows = computed(() => toListItems(agendaItems))
 .uia-flinta-note {
     font-size: 0.8125rem;
     color: var(--color-muted-contrast);
+}
+
+/* Dev-only source marker. Loud on purpose — it should be impossible to demo a
+   fallback-rendered agenda without noticing. */
+.uia-source-marker {
+    margin: 0.9rem 0 0;
+    padding: 0.4rem 0.7rem;
+    border-left: 4px solid var(--color-warning-bg);
+    background-color: color-mix(in oklch, var(--color-warning-bg) 12%, transparent);
+    font-size: 0.75rem;
+    line-height: 1.4;
 }
 </style>
