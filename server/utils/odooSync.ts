@@ -87,6 +87,16 @@ export type SyncAction =
     | 'pull-from-odoo'
     /** Only CV moved → push. */
     | 'push-to-odoo'
+    /**
+     * Both sides exist but there is no reconcile baseline, and they DISAGREE.
+     * Refuse — see the fail-closed note on `decideSync`.
+     */
+    | 'skip-unreconciled'
+    /**
+     * Both sides exist, no baseline, but nothing is at stake — record the baseline
+     * and transfer nothing.
+     */
+    | 'adopt-baseline'
     /** Nothing to do. */
     | 'noop'
 
@@ -144,6 +154,21 @@ export interface DecideSyncOptions {
     cvChangedAt?: string | null
     /** The last time these two were reconciled. Absent = never. */
     lastSyncedAt?: string | null
+    /**
+     * Do the syncable fields currently match on both sides?
+     *
+     * Computed by the caller, which knows the entity's field-list. Only consulted
+     * when there is no reconcile baseline: if the two sides already agree there is
+     * nothing to lose, so the baseline can be adopted instead of refused.
+     */
+    sidesAgree?: boolean
+    /**
+     * Operator override: treat the current state as reconciled, transferring nothing.
+     *
+     * The escape hatch out of `skip-unreconciled`, so a row can never be stuck
+     * forever. Declaring a baseline is a human's call, never the sync's.
+     */
+    assumeBaseline?: boolean
     /** Override the rubicon predicate (Foundation seam). */
     isSyncable?: (row: Pick<CvSyncRow, 'status'>) => boolean
 }
@@ -194,8 +219,47 @@ export function decideSync(
 
     // ── both sides exist · who moved since the last reconcile? ──────────────
     const since = opts.lastSyncedAt ?? null
-    const odooMoved = since ? odoo.write_date > since : true
-    const cvMoved = since ? !!opts.cvChangedAt && opts.cvChangedAt > since : !!opts.cvChangedAt
+
+    // ── FAIL CLOSED when there is no baseline ───────────────────────────────
+    // Without a reconcile record we cannot tell who moved. The old code defaulted
+    // to `odooMoved = true` / `cvMoved = false`, i.e. **pull, conflict: false** —
+    // which silently overwrote CV-side edits.
+    //
+    // On the devbox that was benign (the ledger and the mocked Odoo store die
+    // together, so `odoo` is null and the create-branch fires first). Against a
+    // PERSISTENT Odoo it is a data-loss path: ledger gone, Odoo intact ⇒ blind pull
+    // ⇒ any CV edit since the last sync is discarded and not even flagged.
+    //
+    // So: no baseline ⇒ refuse, unless there is demonstrably nothing to lose.
+    if (!since) {
+        if (opts.sidesAgree) {
+            return {
+                action: 'adopt-baseline',
+                reason: 'no reconcile baseline, but both sides already match — '
+                    + 'recording the baseline, transferring nothing',
+                conflict: false,
+            }
+        }
+        if (opts.assumeBaseline) {
+            return {
+                action: 'adopt-baseline',
+                reason: 'no reconcile baseline; operator declared the current state reconciled '
+                    + '— recording the baseline, transferring nothing',
+                conflict: false,
+            }
+        }
+        return {
+            action: 'skip-unreconciled',
+            reason: `no reconcile baseline for ${cv.odoo_xmlid} and the two sides differ — `
+                + 'refusing to pull, because a blind pull would discard any CV-side edit '
+                + 'without flagging it. Resolve by hand, or re-run with baseline=1 to declare '
+                + 'the current state reconciled.',
+            conflict: false,
+        }
+    }
+
+    const odooMoved = odoo.write_date > since
+    const cvMoved = !!opts.cvChangedAt && opts.cvChangedAt > since
 
     if (odooMoved && cvMoved) {
         // HD: Odoo always wins. The CV-side edit is discarded, so this is the one

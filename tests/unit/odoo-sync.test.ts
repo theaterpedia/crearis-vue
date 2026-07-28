@@ -169,9 +169,59 @@ describe('direction · who moved since the last reconcile', () => {
         expect(d.action).toBe('noop')
     })
 
-    it('treats a never-synced pair as Odoo-moved rather than no-op', () => {
-        // No lastSyncedAt: assume Odoo has something to give us.
-        const d = decideSync(cvRow(), odooRow(), {})
+})
+
+describe('FAIL CLOSED · no reconcile baseline must never silently pull', () => {
+    // The bug this replaced: with no ledger entry the code defaulted to
+    // odooMoved=true / cvMoved=false ⇒ pull-from-odoo, conflict:false. Benign on the
+    // devbox (ledger and mocked Odoo die together, so the create-branch fires), but
+    // against a PERSISTENT Odoo it is data loss: ledger gone, Odoo intact ⇒ blind
+    // pull ⇒ CV edits discarded and not even flagged.
+
+    it('refuses when there is no baseline and the sides differ', () => {
+        const d = decideSync(cvRow({ name: 'edited in CV' }), odooRow({ name: 'Odoo version' }), {
+            sidesAgree: false,
+        })
+        expect(d.action).toBe('skip-unreconciled')
+        expect(d.action).not.toBe('pull-from-odoo')
+        // The message has to tell an operator what to do about it.
+        expect(d.reason).toContain('baseline=1')
+        expect(d.reason).toContain('without flagging it')
+    })
+
+    it('adopts the baseline when both sides already agree — nothing at stake', () => {
+        // The common restart case: nothing changed while the ledger was gone.
+        const d = decideSync(cvRow(), odooRow(), { sidesAgree: true })
+        expect(d.action).toBe('adopt-baseline')
+        expect(d.conflict).toBe(false)
+    })
+
+    it('honours the operator escape hatch, so a row is never stuck forever', () => {
+        const d = decideSync(cvRow({ name: 'edited in CV' }), odooRow({ name: 'Odoo version' }), {
+            sidesAgree: false,
+            assumeBaseline: true,
+        })
+        expect(d.action).toBe('adopt-baseline')
+        expect(d.reason).toContain('operator declared')
+    })
+
+    it('the rubicon and archive guards still come FIRST, even with no baseline', () => {
+        expect(decideSync(cvRow({ status: STATUS.TRASH }), odooRow(), { sidesAgree: false }).action)
+            .toBe('skip-archived')
+        expect(decideSync(cvRow({ status: STATUS.DRAFT }), odooRow(), { sidesAgree: false }).action)
+            .toBe('skip-below-rubicon')
+    })
+
+    it('and a row Odoo does not know is still created, not refused', () => {
+        // No baseline AND no Odoo row is the normal first sync — must not fail closed.
+        expect(decideSync(cvRow(), null, {}).action).toBe('create-in-odoo')
+    })
+
+    it('once a baseline exists, direction resolves normally again', () => {
+        const d = decideSync(cvRow(), odooRow({ write_date: '2026-07-20T00:00:00Z' }), {
+            lastSyncedAt: '2026-07-15T00:00:00Z',
+            cvChangedAt: '2026-07-01T00:00:00Z',
+        })
         expect(d.action).toBe('pull-from-odoo')
     })
 })
