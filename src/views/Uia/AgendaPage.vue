@@ -64,7 +64,7 @@
             </Container>
         </Section>
 
-        <!-- ==agenda-rows== · DB-backed (task A) · Odoo events through ItemList -->
+        <!-- ==agenda-rows== · DB-backed (task A) · CV events through ItemList -->
         <Section background="default">
             <Container>
                 <UiaTaxonomyBand heading="Was ansteht" taxonomy="veranstaltungen" />
@@ -193,8 +193,11 @@ import {
 } from './content/agenda'
 
 /**
- * Task A · the agenda rows come from the DB now, via Odoo `event.event`
- * (`/api/odoo/events?domain_code=utopiaxaction`), not from `content/agenda.ts`.
+ * Task A · the agenda rows come from CV's own `events` table, via
+ * `/api/events?project=utopiaxaction` — the SAME endpoint `EventPanel` writes to,
+ * so an edit made while logged in shows up here. (The first cut read
+ * `/api/odoo/events`; that is an admin-only, unscoped, read-only surface — wrong
+ * road for uia. Odoo stays in the picture as a 2-way sync *behind* this endpoint.)
  *
  * `useUiaEvents` seeds itself with the authored `agendaItems` synchronously, so
  * this band is never empty, then swaps in the DB rows once they arrive. If the
@@ -211,7 +214,6 @@ import {
 const {
     items: agendaRows,
     isFallback,
-    isMock,
     error: agendaError,
     load: loadAgenda,
 } = useUiaEvents()
@@ -221,15 +223,12 @@ onMounted(() => {
 })
 
 /** Dev-only: never let the fallback silently mask a dead endpoint. */
-const showSourceMarker = computed(() => import.meta.env.DEV && (isFallback.value || isMock.value))
+const showSourceMarker = computed(() => import.meta.env.DEV && isFallback.value)
 
-const sourceMarkerText = computed(() => {
-    if (isFallback.value) {
-        return '⚠ dev · agenda from content/agenda.ts (fallback) — the Odoo events endpoint did not answer'
-            + `${agendaError.value ? `: ${agendaError.value}` : ''}`
-    }
-    return '⚠ dev · agenda from MOCKED Odoo events (ODOO_MOCK=1)'
-})
+const sourceMarkerText = computed(() =>
+    '⚠ dev · agenda from content/agenda.ts (fallback) — /api/events did not answer usefully'
+    + `${agendaError.value ? `: ${agendaError.value}` : ''}`,
+)
 </script>
 
 <style scoped>
