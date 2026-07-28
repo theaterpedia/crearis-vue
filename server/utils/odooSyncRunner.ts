@@ -100,6 +100,20 @@ export async function syncRow(
 
         switch (decision.action) {
             case 'create-in-odoo': {
+                // Refuse to invent an identity in a column the sync does not own.
+                // posts.xmlid is CV's routing key — writing a URL slug from here
+                // would be a data-integrity bug. Skip loudly instead.
+                if (!identity && !spec.ownsIdentityColumn) {
+                    const reason = `${spec.table}#${id} has no ${spec.identityColumn} and the sync `
+                        + `does not own that column — refusing to mint one. `
+                        + `${spec.table} needs its own odoo_xmlid (migration 060 added it to events only).`
+                    console.warn(`[odoo-sync] ${reason}`)
+                    return {
+                        table: spec.table, id, identity: null,
+                        decision: { ...decision, action: 'noop', reason },
+                        applied: 'nothing' as const,
+                    }
+                }
                 const minted = identity
                     ?? mintIdentity(spec, String(row.domaincode ?? 'unknown'), cv.name, id)
                 odooPut(spec, minted, fields, now)
