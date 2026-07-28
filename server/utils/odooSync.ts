@@ -34,9 +34,14 @@
  * cut compared the raw value, which would have misread any row carrying a scope
  * toggle. Fixed; see `lifecycleStatus()`.
  *
- * Also from that audit: the `posts-permissions.ts:116` "leak" I raised is
- * **test-oracle-only** — the live read path gates on the `r_*` trigger columns, not
- * on that comparison. Withdrawn.
+ * The audit also resolved the `posts-permissions.ts:116` concern I raised, and the
+ * nuance matters: it is **not a production leak** — the live read path
+ * (`api/posts/index.get.ts`) gates on the trigger-computed `r_*` columns, and
+ * `capabilities-lookup.ts` states plainly that posts-permissions is a TEST ORACLE
+ * only. So nothing is exposed. **But the oracle is genuinely wrong** in the same way
+ * my first cut was: raw `>=` over-admits archived/trash and scope-inflated rows.
+ * Bad as a spec — I nearly built the rubicon on it — and it can skew
+ * config-vs-oracle. CV-Schema patches it on HD's go; not mine to touch.
  *
  * The predicate is injectable (`opts.isSyncable`) so CV-Schema can replace it with
  * the authoritative one without this module changing.
@@ -94,19 +99,33 @@ export interface SyncDecision {
 }
 
 /**
- * Bits 0–16 of `status` — the ordinal workflow enum.
+ * Bits 0–16 · the ordinal workflow enum.
  *
- * `status` is a **hybrid** (CV-Schema audit, 2026-07-28): an ordinal lifecycle enum
- * in bits 0–16, plus *orthogonal* toggle flags above it (scope 17–21, admin 31).
- * So an ordinal `>=` is only valid **after masking the toggles off** — a row with
- * `scope_public` (2097152) set would otherwise compare above every threshold and
- * read as released.
+ * ⚠ Second definition of this constant. The first is
+ * `src/composables/usePostStatusV2.ts:109` — but it is a **non-exported local**
+ * inside a Vue composable, so server code cannot import it, and importing a
+ * composable here would be wrong anyway. Named identically so the two are findable
+ * together with one grep. Lifting it into a shared module would be the real fix.
+ */
+export const WORKFLOW_MASK = (1 << 17) - 1 // 0x1FFFF
+
+/**
+ * The ordinal part of `status`, with the toggles masked off.
  *
- * Not `& 7` either: that is `compute_role_visibility`'s sub-state extraction, a
- * different question. `& 0x1FFFF` is the sanctioned mask.
+ * `status` is a **hybrid** (CV-Schema audit, 2026-07-28), one INTEGER packing two
+ * regimes: bits 0–16 are an ordinal workflow ENUM (categories are powers of two,
+ * **subcategories are composite ordinals in the gaps** — `new_user=3`,
+ * `demo_project=24`), and bits 17–21 + 31 are *orthogonal* scope/admin TOGGLES.
+ *
+ * Rule of thumb from the audit: **ordinal-compare the low 17 bits; bitwise-test the
+ * high bits.** Never bit-test the workflow portion — the composite subcategory
+ * ordinals make that meaningless.
+ *
+ * Not `& 7`: that is `compute_role_visibility`'s low-3-bits hack, which collapses
+ * everything ≥ demo and is part of why that function misbehaves.
  */
 export function lifecycleStatus(status: number | null | undefined): number {
-    return (status ?? 0) & 0x1FFFF
+    return (status ?? 0) & WORKFLOW_MASK
 }
 
 /**
