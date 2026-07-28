@@ -210,6 +210,7 @@ import NavigationConfigPanel from '@/components/NavigationConfigPanel.vue'
 import PageBottom from '@/components/PageBottom.vue'
 import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import { useProjectAccess } from '@/composables/useProjectAccess'
+import { useAuth } from '@/composables/useAuth'
 import Prose from '@/components/Prose.vue'
 import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
@@ -244,6 +245,8 @@ const renderedBodyHtml = ref<string>('')
 
 // Alpha mode access control
 const projectAccess = useProjectAccess()
+// Only checkSession is taken — this view keeps its own `user` ref (see checkAuth).
+const { checkSession } = useAuth()
 const accessLoaded = ref(false)
 
 // Parse options for PageLayout using usePageOptions composable
@@ -477,6 +480,22 @@ async function handleSaveProject(data: EditPanelData) {
 }
 
 // Check authentication
+//
+// ⚠ Populates TWO stores on purpose, and the second one is not redundant.
+//
+// This view keeps its own local `user` ref (used all over the template), but
+// `useProjectAccess` — which decides `canAccess` and therefore whether
+// `ProjectNotPublished` renders — reads `useAuth()`'s user instead. That is a
+// module-level singleton (`useAuth.ts:43`) populated ONLY by an explicit
+// `checkSession()`. Nothing on the `/sites/:domaincode` route was calling it, so
+// `useProjectAccess.isOwner` hit its `if (!user.value …) return false` guard and
+// the project's own owner was shown "Projekt nicht veröffentlicht".
+//
+// Verified before the fix: session said authenticated as the owner and
+// `/api/projects/utopiaxaction` returned `_userRole: 'owner'`, `owner_id: 6` —
+// every field the gate needs was present. The gate simply could not see the user.
+// So this was two parallel auth-states in one view, NOT the Fork B / sysreg
+// `r_*` over-restriction it looked like from outside.
 async function checkAuth() {
     try {
         const response = await fetch('/api/auth/session')
@@ -486,6 +505,15 @@ async function checkAuth() {
         }
     } catch (error) {
         console.error('Auth check failed:', error)
+    }
+
+    // Share the session with useAuth()'s singleton so useProjectAccess can see it.
+    // Kept as its own try/catch: an access-gate that cannot resolve the user must
+    // not also break the local `user` ref the rest of this view depends on.
+    try {
+        await checkSession()
+    } catch (error) {
+        console.error('[ProjectSite] useAuth.checkSession failed:', error)
     }
 }
 

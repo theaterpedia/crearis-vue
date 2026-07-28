@@ -26,6 +26,7 @@ import {
     EVENT_SYNC,
     POST_SYNC,
     cvChangedSinceSync,
+    fingerprint,
     ledgerGet,
     ledgerRecord,
     mintIdentity,
@@ -59,7 +60,7 @@ export function isSyncMockEnabled(): boolean {
 export async function syncRow(
     spec: SyncEntitySpec,
     id: number,
-    opts: { now?: string } = {},
+    opts: { now?: string; assumeBaseline?: boolean } = {},
 ): Promise<SyncOutcome | null> {
     if (!isSyncMockEnabled()) return null
 
@@ -94,6 +95,11 @@ export async function syncRow(
             // Fingerprint comparison, not a timestamp — CV has no trustworthy
             // change-clock (events.updated_at is TEXT and not auto-maintained).
             cvChangedAt: cvChangedSinceSync(spec, identity, row) ? now : null,
+            // Same fingerprint function on both sides, so "do they agree?" is one
+            // comparison. Lets the no-baseline case self-heal when nothing is at stake
+            // instead of refusing every row after a restart.
+            sidesAgree: !!odoo && fingerprint(spec, row) === fingerprint(spec, odoo),
+            assumeBaseline: opts.assumeBaseline,
         })
 
         const fields = Object.fromEntries(spec.syncFields.map((f) => [f, row[f] ?? null]))
@@ -148,6 +154,22 @@ export async function syncRow(
                 ledgerRecord(spec, identity, after ?? row, now)
                 logOutcome(spec, id, identity, decision, 'pulled-into-cv')
                 return { table: spec.table, id, identity, decision, applied: 'pulled-into-cv' as const }
+            }
+
+            case 'adopt-baseline': {
+                // Record the reconcile point, transfer nothing. This is what makes a
+                // restart recoverable without any data crossing either way.
+                if (!identity) break
+                ledgerRecord(spec, identity, row, now)
+                logOutcome(spec, id, identity, decision, 'nothing')
+                return { table: spec.table, id, identity, decision, applied: 'nothing' as const }
+            }
+
+            case 'skip-unreconciled': {
+                // Fail-closed. Deliberately louder than the other skips: it needs a
+                // human, and silence would look identical to "nothing to do".
+                console.warn(`[odoo-sync] ⚠ ${spec.table}#${id} ${identity} NEEDS ATTENTION · ${decision.reason}`)
+                return { table: spec.table, id, identity, decision, applied: 'nothing' as const }
             }
 
             case 'push-to-odoo': {

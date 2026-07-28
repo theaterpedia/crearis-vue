@@ -11,9 +11,13 @@
  *
  * Actions:
  *   ?key=…                                  → dump what "Odoo" holds
- *   ?key=…&action=sync&table=events&id=3    → reconcile one row, return the decision
+ *   ?key=…&action=sync&table=events&id=3    → reconcile one row
+ *   ?key=…&action=sync&…&baseline=1         → declare the current state reconciled, return the decision
  *   ?key=…&action=odoo-edit&table=events&id=3&name=Changed%20in%20Odoo
  *                                           → simulate an Odoo-side edit
+ *   ?key=…&action=forget-ledger&table=events&id=3
+ *                                           → drop the reconcile baseline, keep Odoo
+ *                                             (reproduces the fail-closed case)
  *
  * Read-oriented (GET) so it is one paste in a browser. Acceptable because it is
  * dev-only, token-gated, and touches nothing but the in-memory mock plus the row
@@ -24,7 +28,7 @@ import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
 import { denyReason } from '../../utils/dev-login-guard'
 import { EVENT_SYNC, POST_SYNC, isSyncMockEnabled, syncRow } from '../../utils/odooSyncRunner'
-import { odooDump, odooSimulateEdit, type SyncEntitySpec } from '../../utils/odooSyncStore'
+import { forgetLedgerEntry, odooDump, odooSimulateEdit, type SyncEntitySpec } from '../../utils/odooSyncStore'
 
 function specFor(table: string): SyncEntitySpec {
     if (table === 'posts') return POST_SYNC
@@ -70,7 +74,9 @@ export default defineEventHandler(async (event) => {
     if (!id) throw createError({ statusCode: 400, message: 'id is required for this action' })
 
     if (action === 'sync') {
-        const outcome = await syncRow(spec, id)
+        // &baseline=1 · the operator escape hatch out of skip-unreconciled. Declares
+        // the current state reconciled and transfers nothing — a human's call.
+        const outcome = await syncRow(spec, id, { assumeBaseline: query.baseline === '1' })
         if (!outcome) throw createError({ statusCode: 404, message: `${table}#${id} not found` })
         return { success: true, outcome }
     }
@@ -103,5 +109,26 @@ export default defineEventHandler(async (event) => {
         return { success: true, message: `simulated an Odoo-side edit on ${identity}`, odoo: updated }
     }
 
-    throw createError({ statusCode: 400, message: `unknown action '${action}' — use dump | sync | odoo-edit` })
+    if (action === 'forget-ledger') {
+        // Simulates "persistent Odoo, lost reconcile baseline" — the asymmetry a real
+        // restart cannot produce here, and the whole reason the sync fails closed.
+        const row = await db.get<Record<string, unknown>>(
+            `SELECT ${spec.identityColumn} AS identity FROM ${table} WHERE id = ?`, [id],
+        )
+        const identity = row?.identity as string | null
+        if (!identity) throw createError({ statusCode: 400, message: `${table}#${id} has no identity yet` })
+        const forgotten = forgetLedgerEntry(spec, identity)
+        return {
+            success: true,
+            message: forgotten
+                ? `forgot the reconcile baseline for ${identity}; the Odoo side is untouched. `
+                  + 'The next sync must now REFUSE rather than pull.'
+                : `no baseline was recorded for ${identity}`,
+        }
+    }
+
+    throw createError({
+        statusCode: 400,
+        message: `unknown action '${action}' — use dump | sync | odoo-edit | forget-ledger`,
+    })
 })
