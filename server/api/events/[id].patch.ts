@@ -1,5 +1,6 @@
 import { defineEventHandler, getRouterParam, createError, readBody, getCookie } from 'h3'
 import { db } from '../../database/init'
+import { EVENT_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import { sessions } from '../../utils/session-store'
 
 // PATCH /api/events/:id - Update event fields
@@ -122,6 +123,11 @@ export default defineEventHandler(async (event) => {
             `UPDATE events SET ${updates.join(', ')} WHERE id = ?`,
             values
         )
+
+        // Odoo sync · fire-and-forget, no-op unless ODOO_SYNC_MOCK=1. See
+        // server/utils/odooSyncRunner.ts. Runs after the row is committed so the
+        // sync reads the saved state, not the pre-write state.
+        syncAfterWrite(EVENT_SYNC, Number(eventData.id))
 
         // Return updated event with domaincode and related names
         const updatedEvent = await db.get(`
