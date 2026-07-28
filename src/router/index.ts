@@ -24,6 +24,14 @@ const router = createRouter({
     // Events: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.event__{slug} or {domaincode}.event-{template}__{slug}
     { path: '/sites/:domaincode/events/:identifier', component: () => import('../views/EventPage.vue') },
+    // Intermediary content dashboard (HD 2026-07-28) — lists events + posts, add-new
+    // and delete, linking into the EventPage/PostPage editors above. Additive and
+    // temporary: it exists so content can be driven from a browser while the real
+    // dashboard's beta-implementation catches up. Deliberately NOT under /projects,
+    // which renders the project listing and is set up properly — per HD, "no other
+    // implementation may go there. Eventual parallel implementation should go to a
+    // new temp-route."
+    { path: '/sites/:domaincode/tempdashboard', component: () => import('../views/temp/TempDashboard.vue') },
 
     // Protected routes - User Home (cross-project overview)
     // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)
