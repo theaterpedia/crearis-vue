@@ -201,3 +201,55 @@ describe('useUiaEvents · the fallback keeps the page correct without hiding fai
         }
     })
 })
+
+describe('useUiaEvents · the „Was ansteht" band shows what is ahead', () => {
+    const TODAY = new Date('2026-07-28T10:00:00Z')
+
+    function rows() {
+        return [
+            odooRow({ id: 1, name: 'Meine Grenzen', date_begin: '2026-09-23 19:00:00' }),
+            // finished — has its own „Was schon war" band, must not appear here
+            odooRow({ id: 2, name: "Let's perform Utopia", date_begin: '2026-06-10 19:00:00' }),
+            odooRow({ id: 3, name: 'Ma(g)dalena-LAB', date_begin: '2026-06-04 10:00:00' }),
+            // genuinely ahead but with no firm date — 'vsl. 22.01.2027'
+            odooRow({ id: 4, name: 'Abschluss-Aufführung', date_begin: null, schedule: 'vsl. 22.01.2027' }),
+        ]
+    }
+
+    it('drops known-past rows so finished arcs are not listed as upcoming', async () => {
+        mockFetchOk(rows())
+        const { items, load } = useUiaEvents()
+        await load({ today: TODAY })
+        const headings = items.value.map((i) => i.heading).join(' | ')
+        expect(headings).toContain('Meine Grenzen')
+        expect(headings).not.toContain("Let's perform Utopia")
+        expect(headings).not.toContain('Ma(g)dalena-LAB')
+    })
+
+    it('KEEPS an undated row — unknown is not the same as past', async () => {
+        mockFetchOk(rows())
+        const { items, load } = useUiaEvents()
+        await load({ today: TODAY })
+        // The arc's climax carries no firm date; dropping it would hide it.
+        expect(items.value.map((i) => i.heading).join(' | ')).toContain('Abschluss-Aufführung')
+    })
+
+    it('keeps a row dated today — the Mittwoch is still on, on the Mittwoch', async () => {
+        mockFetchOk([odooRow({ date_begin: '2026-07-28 19:00:00' })])
+        const { items, load } = useUiaEvents()
+        await load({ today: TODAY })
+        expect(items.value).toHaveLength(1)
+    })
+
+    it('falls back when everything returned is already past', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {})
+        mockFetchOk([odooRow({ date_begin: '2026-06-10 19:00:00' })])
+        const { source, error, items, load } = useUiaEvents()
+        await load({ today: TODAY })
+        expect(source.value).toBe('content')
+        expect(error.value).toBe('no upcoming events returned')
+        // the count that explains WHY goes to the log, not the error field
+        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('none of them ahead'))
+        expect(items.value.length).toBeGreaterThan(0)
+    })
+})

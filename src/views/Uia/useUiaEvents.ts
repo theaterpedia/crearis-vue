@@ -122,6 +122,24 @@ export function composeHeading(row: OdooEventRow): string {
     return `${overline ? `${overline} ` : ''}**${row.name}**`
 }
 
+/**
+ * Is this row known to be in the past?
+ *
+ * Deliberately not the same as "not upcoming". A row with **no** date is unknown,
+ * not past — uia's Abschluss-Aufführung is genuinely ahead but carries no firm
+ * date ("vsl. 22.01.2027"), and dropping it would hide the climax of the arc.
+ *
+ * Filtering happens here rather than via the endpoint's `?upcoming=true` on
+ * purpose: that translates to Odoo's `['date_begin', '>=', now]`, which excludes
+ * NULL dates too. Doing it client-side keeps the mock and live-Odoo paths
+ * identical instead of quietly diverging on the undated row.
+ */
+function isKnownPast(row: OdooEventRow, today: Date): boolean {
+    if (!row.date_begin) return false
+    const todayStamp = today.toISOString().slice(0, 10)
+    return row.date_begin.slice(0, 10) < todayStamp
+}
+
 /** Map an Odoo row onto the `ListItem` shape `ItemList` renders. */
 function toItem(row: OdooEventRow): UiaListItem {
     const item: UiaListItem = { heading: composeHeading(row) }
@@ -151,7 +169,7 @@ export function useUiaEvents() {
         }
     }
 
-    async function load(options: { upcoming?: boolean; limit?: number } = {}) {
+    async function load(options: { upcoming?: boolean; limit?: number; today?: Date } = {}) {
         loading.value = true
         error.value = null
         const params = new URLSearchParams({ domain_code: UIA_DOMAIN_CODE })
@@ -173,7 +191,18 @@ export function useUiaEvents() {
                 return
             }
 
-            items.value = data.events.map(toItem)
+            // Finished arcs have their own band on the agenda page („Was schon
+            // war", rendered from `closedArcs`). Without this they appeared twice —
+            // once as cards there, and once as rows under „Was ansteht", which
+            // says the opposite of what they are.
+            const ahead = data.events.filter((row) => !isKnownPast(row, options.today ?? new Date()))
+            if (ahead.length === 0) {
+                error.value = 'no upcoming events returned'
+                useContentFallback(`${data.events.length} events, none of them ahead`)
+                return
+            }
+
+            items.value = ahead.map(toItem)
             source.value = 'odoo'
             isMock.value = !!data.mock
         } catch (cause) {
