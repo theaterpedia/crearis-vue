@@ -28,11 +28,15 @@
  * reversed — is exactly the kind of quiet damage this rubicon exists to prevent,
  * so they are excluded explicitly.
  *
- * ⚠ FLAG (Foundation · sysreg bit-semantics, per CLAUDE.md — diagnose, don't
- * decide): `posts-permissions.ts:116` gates PUBLIC visibility on
- * `status >= STATUS.RELEASED`, which by the same arithmetic makes ARCHIVED and
- * TRASH posts publicly visible. Either that is a latent leak or archived/trash are
- * filtered somewhere I have not found. Not touched here; raised for CV-Schema.
+ * AUDITED by CV-Schema 2026-07-28, and it corrected me on one point: `status` is a
+ * **hybrid** — ordinal enum in bits 0–16 plus orthogonal toggles (scope 17–21,
+ * admin 31) — so the ordinal comparison is valid only after `& 0x1FFFF`. My first
+ * cut compared the raw value, which would have misread any row carrying a scope
+ * toggle. Fixed; see `lifecycleStatus()`.
+ *
+ * Also from that audit: the `posts-permissions.ts:116` "leak" I raised is
+ * **test-oracle-only** — the live read path gates on the `r_*` trigger columns, not
+ * on that comparison. Withdrawn.
  *
  * The predicate is injectable (`opts.isSyncable`) so CV-Schema can replace it with
  * the authoritative one without this module changing.
@@ -90,12 +94,28 @@ export interface SyncDecision {
 }
 
 /**
+ * Bits 0–16 of `status` — the ordinal workflow enum.
+ *
+ * `status` is a **hybrid** (CV-Schema audit, 2026-07-28): an ordinal lifecycle enum
+ * in bits 0–16, plus *orthogonal* toggle flags above it (scope 17–21, admin 31).
+ * So an ordinal `>=` is only valid **after masking the toggles off** — a row with
+ * `scope_public` (2097152) set would otherwise compare above every threshold and
+ * read as released.
+ *
+ * Not `& 7` either: that is `compute_role_visibility`'s sub-state extraction, a
+ * different question. `& 0x1FFFF` is the sanctioned mask.
+ */
+export function lifecycleStatus(status: number | null | undefined): number {
+    return (status ?? 0) & 0x1FFFF
+}
+
+/**
  * Does this event belong on the Odoo side at all?
  *
  * Default per the reasoning in the file header. Replaceable via `opts.isSyncable`.
  */
 export function isSyncable(row: Pick<CvSyncRow, 'status'>): boolean {
-    const status = row.status ?? 0
+    const status = lifecycleStatus(row.status)
     if (status >= STATUS.ARCHIVED) return false // ARCHIVED · TRASH — never
     return status >= STATUS.CONFIRMED
 }
@@ -123,17 +143,21 @@ export function decideSync(
     const syncable = (opts.isSyncable ?? isSyncable)(cv)
 
     // ── the one-way door, guarded before anything else ──────────────────────
-    if ((cv.status ?? 0) >= STATUS.ARCHIVED) {
+    // Masked, not raw: a scope toggle would otherwise push a live row past
+    // ARCHIVED and get it wrongly skipped. See lifecycleStatus().
+    if (lifecycleStatus(cv.status) >= STATUS.ARCHIVED) {
         return {
             action: 'skip-archived',
-            reason: `status ${cv.status} is archived/trashed — never pushed through the one-way door`,
+            reason: `status ${cv.status} (lifecycle ${lifecycleStatus(cv.status)}) is archived/trashed`
+                + ' — never pushed through the one-way door',
             conflict: false,
         }
     }
     if (!syncable) {
         return {
             action: 'skip-below-rubicon',
-            reason: `status ${cv.status ?? 0} is below confirmed (${STATUS.CONFIRMED}) — local-only by design`,
+            reason: `lifecycle status ${lifecycleStatus(cv.status)} is below confirmed `
+                + `(${STATUS.CONFIRMED}) — local-only by design`,
             conflict: false,
         }
     }

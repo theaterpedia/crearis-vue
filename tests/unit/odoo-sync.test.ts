@@ -15,6 +15,7 @@ import {
     activeLockCount,
     decideSync,
     isSyncable,
+    lifecycleStatus,
     lockKey,
     withEventLock,
     type CvSyncRow,
@@ -60,6 +61,38 @@ describe('the rubicon · below confirmed stays local', () => {
     it('lets CONFIRMED and RELEASED through', () => {
         expect(isSyncable({ status: STATUS.CONFIRMED })).toBe(true)
         expect(isSyncable({ status: STATUS.RELEASED })).toBe(true)
+    })
+})
+
+describe('status is a HYBRID · toggles must be masked off before comparing', () => {
+    // CV-Schema audit 2026-07-28: ordinal enum in bits 0–16 PLUS orthogonal toggles
+    // (scope 17–21, admin 31). My first cut compared the raw value, which misreads
+    // every row carrying a toggle. These are the tests that would have caught it.
+    const SCOPE_PUBLIC = 2097152
+    const SCOPE_LOGIN = 262144
+
+    it('masks to bits 0–16', () => {
+        expect(lifecycleStatus(STATUS.DRAFT | SCOPE_PUBLIC)).toBe(STATUS.DRAFT)
+        expect(lifecycleStatus(STATUS.CONFIRMED | SCOPE_LOGIN)).toBe(STATUS.CONFIRMED)
+        expect(lifecycleStatus(null)).toBe(0)
+    })
+
+    it('a DRAFT row with scope_public is still below the rubicon', () => {
+        // Raw, this is 2097216 — above every threshold, and would have synced.
+        expect(isSyncable({ status: STATUS.DRAFT | SCOPE_PUBLIC })).toBe(false)
+        expect(decideSync(cvRow({ status: STATUS.DRAFT | SCOPE_PUBLIC }), odooRow()).action)
+            .toBe('skip-below-rubicon')
+    })
+
+    it('a CONFIRMED row with scope_public is still syncable, not mistaken for archived', () => {
+        expect(isSyncable({ status: STATUS.CONFIRMED | SCOPE_PUBLIC })).toBe(true)
+        expect(decideSync(cvRow({ status: STATUS.CONFIRMED | SCOPE_PUBLIC }), odooRow()).action)
+            .not.toBe('skip-archived')
+    })
+
+    it('a TRASH row with scope_public is still archived', () => {
+        expect(decideSync(cvRow({ status: STATUS.TRASH | SCOPE_PUBLIC }), odooRow()).action)
+            .toBe('skip-archived')
     })
 })
 
