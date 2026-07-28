@@ -258,12 +258,33 @@ owners' question, not yours to resolve.
 **Two things to keep for later, not to build now:**
 
 - **If uia ever joins the DB-backed side**, the call is
-  `<pList entity="events" project="utopiainaction" size="small" width="inherit" columns="off" />`
-  — and `utopiainaction` is the domaincode to use, because a project row already
-  exists with `STATUS.RELEASED` (`server/database/migrations/041_entity_status_values.ts:144`).
-  ⚠ Do not copy `HomePage.vue:59` if you get there — it passes `type=` /
-  `item-type=` / `project-domaincode=`, none of which exist in `pList`'s Props.
-  Copy `HomePage.vue:71` (`entity` + `project`).
+  `<ItemList entity="events" project="utopiaxaction" size="small" width="inherit" columns="off" />`
+
+  > ### ⚠ Correction · CV-Technician 2026-07-28 — the domaincode here was wrong
+  >
+  > This section said `utopiainaction`, citing the project row in
+  > `server/database/migrations/041_entity_status_values.ts:144`. **The ratified
+  > domaincode is `utopiaxaction`** — CO@prod ratified it 2026-05-20 per the
+  > CTO decision-record §2.5 standard-domain-class rule (13 chars ✓ · one word,
+  > lowercase ✓ · `x` as separator, encoding `utopia-in-action.de` by dropping
+  > `-in-` ✓ · matches HM's worked example verbatim). Source:
+  > `dev/sfr/archive/2026-05-20_CO@prod-response_stage-4c-website-row-prep-and-timing.md` §1.
+  >
+  > So migration 041 seeds a domaincode that contradicts the ratified convention,
+  > and `/api/events?project=` resolves by **exact** domaincode — it would return
+  > empty for `utopiaxaction` and match nothing real for `utopiainaction`.
+  > `tests/unit/auth-bridging-middleware.test.ts` already uses `utopiaxaction`.
+  >
+  > **Not fixed here.** Migrations are Foundation per `CLAUDE.md` concern-triage
+  > (don't touch), CV-Schema owns the migration chain, and this is also a
+  > cross-CV↔CO contract surface. Flagged to CV-Schema/CV-TDD and to HD; needs
+  > HD's go. Whoever wires the DB-bound agenda: use `utopiaxaction` and expect the
+  > project row to need correcting first.
+
+  ⚠ Also, `pList` is the DB-fetching wrapper and requires `entity`; §agenda-shape
+  above uses `ItemList` directly. Do not copy `HomePage.vue:59` — it passes
+  `type=` / `item-type=` / `project-domaincode=`, none of which exist in `pList`'s
+  Props. Copy `HomePage.vue:71` (`entity` + `project`).
 - **Promoted-next row** (bahn-grammar): the first upcoming Mittwoch gets its own
   panel above the compact list. Build the plain list now; the promotion wants a
   live status source, which this round does not have.
