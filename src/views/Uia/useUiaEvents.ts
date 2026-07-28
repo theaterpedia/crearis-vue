@@ -1,43 +1,50 @@
 /**
  * uia · the agenda's data source.
  *
- * Task A per HD 2026-07-28: the public agenda reads **Odoo** `event.event` through
- * `/api/odoo/events`, not CV's `events` table. That is the "events-spearhead" —
- * it launches uia now and lets the dashboard catch up later, instead of waiting on
- * the sysreg/status work (Fork B) that still blocks the CV-side project gate.
+ * Reads **CV's own `events` table** via `/api/events?project=utopiaxaction`.
  *
- * On the devbox that endpoint is mocked (`ODOO_MOCK=1`), because HD's decision is
- * that this box never reaches Odoo. The mock returns the real endpoint's output
- * shape field-for-field, so this composable is written against the contract, not
- * against the mock.
+ * ── Why this endpoint and not /api/odoo/events (HD 2026-07-28) ───────────────
+ * The first cut read `/api/odoo/events`. That was wrong: it is an older
+ * admin-only surface — XML-RPC under superuser credentials, unscoped by project,
+ * and read-only by design. Fine for `/admin/events`; not uia's road.
  *
- * ── Heading composition · why it happens HERE ────────────────────────────────
- * `ItemList` has two modes. Given `entity=`, it fetches and maps entities itself,
- * and that mapping sets `heading = entity.title || entity.name` — a bare title,
- * ignoring `teaser`. Given `items=`, it renders what you hand it.
+ * uia needs one store that the public page can READ and a logged-in editor can
+ * WRITE, because `EventPanel` writes to `/api/events`. Reading anywhere else
+ * would mean an edit never showing up on the agenda. So: same endpoint, both
+ * directions, one truth.
  *
- * We use `items=`. So the crearis-md heading — `"overline **HEADLINE** subline"`,
- * parsed by `HeadingParser` — is composed here, from the Odoo row's own fields:
+ * Odoo still matters — CV will 2-way-sync events with it — but that sync happens
+ * *behind* this endpoint, between the two stores. It is not something the view
+ * reaches across. `server/utils/odooEventsMock.ts` remains as the Odoo side of
+ * that sync once it is mocked; it is no longer in the agenda's read path.
  *
- *     date-line   ← date_begin (+ schedule for the time-range)
- *     HEADLINE    ← name
- *     subline     ← teasertext
+ * ── Field names differ from the Odoo shape ───────────────────────────────────
+ * `/api/events` returns raw `e.*` rows (plus `domaincode`), as a bare array with
+ * no envelope. So: `teaser` — not `teasertext`; `date_begin`/`date_end` as TEXT
+ * ISO; images in `img_thumb`/`img_square` JSONB rather than a `cimg` URL.
  *
- * This is worth being precise about, because I previously flagged the bare-title
- * collapse as something `ItemList` would have to learn. It does not, for A: that
- * gap only exists on the `entity=`-fetch path, which is the dashboard's road (B),
- * not this one. No shared component needs changing for the public agenda.
+ * ── Heading composition ──────────────────────────────────────────────────────
+ * `ItemList` gets `items=`, so the crearis-md heading is composed here:
+ *
+ *     date-line (+ time-range) → overline · name → **HEADLINE**
+ *
+ * Two parts, not three. `Heading.vue` gates `hasSubline = !hasOverline && …`, so
+ * overline and subline are either/or and a third part vanishes silently (verified
+ * in the browser). The teaser is therefore promoted to overline only when there is
+ * no date-line to lead with — nothing is passed that cannot render. The reference
+ * row shape (`X_Assets/UI_theaterpedia_homepage.png`, §5) is exactly this: overline
+ * date-line + bold headline.
  *
  * ── Fallback · deliberate, and deliberately visible ─────────────────────────
- * If the endpoint fails, the agenda falls back to `content/agenda.ts` →
- * `agendaItems` rather than rendering an error or an empty column. A public
- * agenda that goes blank because a backend hiccuped is worse than one showing the
- * authored truth — and the content files ARE the same authored data.
+ * On failure — or on an empty result — the agenda keeps `content/agenda.ts` →
+ * `agendaItems` rather than showing an error or a blank column. A public agenda
+ * that blanks because a backend hiccuped is worse than one showing the authored
+ * truth, and the content files ARE that truth.
  *
- * But a silent fallback would let the live agenda drift stale unnoticed, which is
- * the same failure-class as serving mock data in production. So `source` is
- * returned alongside the rows and the failure is logged loudly. Callers can
- * surface it; nothing hides it.
+ * Empty counts as failure on purpose: a project-scoping mistake and "no events"
+ * are indistinguishable from here, and rendering nothing is the worse of the two.
+ * But a silent fallback would let the live agenda drift stale unnoticed, so
+ * `source` is returned and the failure is logged loudly. Nothing hides it.
  */
 
 import { computed, ref } from 'vue'
@@ -48,36 +55,22 @@ import { agendaItems } from './content/agenda'
 /** The ratified domaincode · CO@prod 2026-05-20, decision-record §2.5. */
 export const UIA_DOMAIN_CODE = 'utopiaxaction'
 
-/** Where the rows came from. `'content'` means the endpoint did not answer. */
-export type UiaEventsSource = 'odoo' | 'content'
+/** Where the rows came from. `'content'` means the endpoint did not answer usefully. */
+export type UiaEventsSource = 'db' | 'content'
 
-/** The subset of `/api/odoo/events`'s row-shape this view actually consumes. */
-interface OdooEventRow {
+/** The subset of a CV `events` row this view consumes. `/api/events` returns `e.*`. */
+export interface CvEventRow {
     id: number
     name: string
-    date_begin: string | null
-    teasertext: string | null
-    schedule: string | null
-    cimg: string | null
-    stage_id: { id: number; name: string } | null
-    domain_code: { id: number; name: string } | null
+    teaser?: string | null
+    date_begin?: string | null
+    date_end?: string | null
+    cimg?: string | null
+    domaincode?: string | null
 }
 
-interface OdooEventsResponse {
-    success: boolean
-    mock?: boolean
-    events: OdooEventRow[]
-    total: number
-}
-
-/**
- * `'2026-09-23 19:00:00'` → `'MI 23.09.26'`.
- *
- * Routed through `formatUiaDay` so the DB path prints dates exactly as the
- * file-backed path does — same weekday abbreviations, same `DD.MM.YY`. If these
- * two ever disagreed, the fallback would be visibly a different site.
- */
-function odooDateToUiaDay(dateBegin: string | null): string | null {
+/** `'2026-09-23T19:00:00'` or `'2026-09-23 19:00:00'` → `'MI 23.09.26'`. */
+function toUiaDay(dateBegin: string | null | undefined): string | null {
     if (!dateBegin) return null
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateBegin)
     if (!match) return null
@@ -85,67 +78,51 @@ function odooDateToUiaDay(dateBegin: string | null): string | null {
     return formatUiaDay(`${day}.${month}.${year.slice(2)}`)
 }
 
-/**
- * Build the crearis-md heading, as `overline **HEADLINE**`.
- *
- * ── Why there is no subline, though the format documents one ─────────────────
- * `HeadingParser` advertises `"overline **headline** subline"` and calls the
- * three-part form supported. `Heading.vue` cannot render it:
- *
- *     hasSubline = !hasOverline && (subline || tags)
- *
- * — the subline is gated on there being NO overline, and its own prop-doc says
- * "Only shows up, if no overline is provided". So overline and subline are
- * either/or by design, and a three-part heading loses its third part silently.
- * Verified in the browser: rows composed with all three rendered date + headline
- * and dropped the teaser without a trace.
- *
- * Rather than pass data that vanishes, the teaser is used as the overline **only
- * when there is no date-line to lead with**. Nothing is silently discarded, and
- * the result is exactly the row shape the reference design specifies — thumbnail
- * + overline date-line + bold headline (`X_Assets/UI_theaterpedia_homepage.png`,
- * cited by §5). The teaser's home is the project band, not the row.
- *
- * The HeadingParser-vs-Heading contract mismatch is flagged upstream; it is not
- * worked around here, and no shared component is touched for it.
- */
-export function composeHeading(row: OdooEventRow): string {
-    const day = odooDateToUiaDay(row.date_begin)
-    // Prefer the date-line. `schedule` joins it when it adds something (the
-    // time-range); on an undated row it stands in for the date entirely.
-    const dateLine = [day, row.schedule && row.schedule !== day ? row.schedule : null]
-        .filter(Boolean)
-        .join(' · ')
-    // Falls back to the teaser so an undated, unscheduled row still says something
-    // above its headline instead of leading with nothing.
-    const overline = dateLine || row.teasertext?.trim() || ''
-    return `${overline ? `${overline} ` : ''}**${row.name}**`
+/** `'…T19:00:00'` + `'…T21:00:00'` → `'19:00 – 21:00 Uhr'`. En-dash, as the flyer prints it. */
+function toTimeRange(begin: string | null | undefined, end: string | null | undefined): string | null {
+    const clock = (value: string | null | undefined): string | null => {
+        const match = /[T ](\d{2}):(\d{2})/.exec(value ?? '')
+        return match ? `${match[1]}:${match[2]}` : null
+    }
+    const from = clock(begin)
+    if (!from) return null
+    const to = clock(end)
+    return to && to !== from ? `${from} – ${to} Uhr` : `${from} Uhr`
 }
 
 /**
  * Is this row known to be in the past?
  *
- * Deliberately not the same as "not upcoming". A row with **no** date is unknown,
- * not past — uia's Abschluss-Aufführung is genuinely ahead but carries no firm
- * date ("vsl. 22.01.2027"), and dropping it would hide the climax of the arc.
+ * Deliberately not "not upcoming". A row with **no** date is unknown, not past —
+ * uia's Abschluss-Aufführung is genuinely ahead but carries no firm date
+ * ("vsl. 22.01.2027"), and dropping it would hide the climax of the arc.
  *
- * Filtering happens here rather than via the endpoint's `?upcoming=true` on
- * purpose: that translates to Odoo's `['date_begin', '>=', now]`, which excludes
- * NULL dates too. Doing it client-side keeps the mock and live-Odoo paths
- * identical instead of quietly diverging on the undated row.
+ * Done client-side rather than by asking the endpoint for future events only:
+ * a SQL `date_begin >= now` excludes NULLs too, which would drop exactly that row.
  */
-function isKnownPast(row: OdooEventRow, today: Date): boolean {
+export function isKnownPast(row: CvEventRow, today: Date): boolean {
     if (!row.date_begin) return false
-    const todayStamp = today.toISOString().slice(0, 10)
-    return row.date_begin.slice(0, 10) < todayStamp
+    return row.date_begin.slice(0, 10) < today.toISOString().slice(0, 10)
 }
 
-/** Map an Odoo row onto the `ListItem` shape `ItemList` renders. */
-function toItem(row: OdooEventRow): UiaListItem {
+/** Build the crearis-md heading, as `overline **HEADLINE**`. */
+export function composeHeading(row: CvEventRow): string {
+    const day = toUiaDay(row.date_begin)
+    const time = toTimeRange(row.date_begin, row.date_end)
+    const dateLine = [day, day ? time : null].filter(Boolean).join(' · ')
+    // Falls back to the teaser so an undated row still says something above its
+    // headline rather than leading with nothing.
+    const overline = dateLine || row.teaser?.trim() || ''
+    return `${overline ? `${overline} ` : ''}**${row.name}**`
+}
+
+/** Map a CV event row onto the `ListItem` shape `ItemList` renders. */
+function toItem(row: CvEventRow): UiaListItem {
     const item: UiaListItem = { heading: composeHeading(row) }
-    // cimg is dropped when absent rather than passed empty — ItemRow renders
-    // `<img v-else-if="cimg">` unguarded, so an empty string would be a broken image.
-    if (row.cimg) item.cimg = row.cimg
+    // Dropped rather than emptied — ItemRow renders `<img v-else-if="cimg">`
+    // unguarded, so '' would be a broken image. img_thumb/img_square JSONB are
+    // not read here; every uia image is still 'TODO HP' (§8).
+    if (row.cimg && !row.cimg.trim().toUpperCase().startsWith('TODO')) item.cimg = row.cimg
     return item
 }
 
@@ -154,8 +131,6 @@ export function useUiaEvents() {
     const source = ref<UiaEventsSource>('content')
     const loading = ref(false)
     const error = ref<string | null>(null)
-    /** True when the endpoint answered with fabricated data (devbox `ODOO_MOCK=1`). */
-    const isMock = ref(false)
 
     /** The authored agenda — the fallback, and the pre-fetch initial state. */
     function useContentFallback(reason?: string) {
@@ -163,48 +138,43 @@ export function useUiaEvents() {
         source.value = 'content'
         if (reason) {
             console.warn(
-                `[uia] agenda fell back to content/agenda.ts — the Odoo events endpoint did not answer. `
-                + `Rows are the authored agenda, so the page is correct but will not reflect DB edits. Reason: ${reason}`,
+                '[uia] agenda fell back to content/agenda.ts — /api/events did not answer usefully. '
+                + `Rows are the authored agenda, so the page is correct but will NOT reflect DB edits. Reason: ${reason}`,
             )
         }
     }
 
-    async function load(options: { upcoming?: boolean; limit?: number; today?: Date } = {}) {
+    async function load(options: { limit?: number; today?: Date } = {}) {
         loading.value = true
         error.value = null
-        const params = new URLSearchParams({ domain_code: UIA_DOMAIN_CODE })
-        if (options.upcoming) params.set('upcoming', 'true')
-        if (options.limit) params.set('limit', String(options.limit))
+        const params = new URLSearchParams({ project: UIA_DOMAIN_CODE })
 
         try {
-            const response = await fetch(`/api/odoo/events?${params.toString()}`)
+            const response = await fetch(`/api/events?${params.toString()}`)
             if (!response.ok) throw new Error(`HTTP ${response.status}`)
-            const data = (await response.json()) as OdooEventsResponse
-            if (!data.success || !Array.isArray(data.events)) throw new Error('unexpected response shape')
+            const data = (await response.json()) as CvEventRow[]
+            // Bare array, no envelope — unlike /api/odoo/events.
+            if (!Array.isArray(data)) throw new Error('unexpected response shape')
 
-            if (data.events.length === 0) {
-                // An empty result is not an error, but for a live collective it is
-                // almost certainly wrong — a scoping mistake reads identically to
-                // "no events". Fall back rather than render an empty agenda.
+            if (data.length === 0) {
                 error.value = 'no events returned'
-                useContentFallback(`0 events for domain_code=${UIA_DOMAIN_CODE}`)
+                useContentFallback(`0 events for project=${UIA_DOMAIN_CODE}`)
                 return
             }
 
-            // Finished arcs have their own band on the agenda page („Was schon
-            // war", rendered from `closedArcs`). Without this they appeared twice —
-            // once as cards there, and once as rows under „Was ansteht", which
-            // says the opposite of what they are.
-            const ahead = data.events.filter((row) => !isKnownPast(row, options.today ?? new Date()))
+            // Finished arcs have their own band („Was schon war", from `closedArcs`).
+            // Without this they would appear twice — as cards there and as rows under
+            // „Was ansteht", which says the opposite of what they are.
+            const ahead = data.filter((row) => !isKnownPast(row, options.today ?? new Date()))
             if (ahead.length === 0) {
                 error.value = 'no upcoming events returned'
-                useContentFallback(`${data.events.length} events, none of them ahead`)
+                useContentFallback(`${data.length} events, none of them ahead`)
                 return
             }
 
-            items.value = ahead.map(toItem)
-            source.value = 'odoo'
-            isMock.value = !!data.mock
+            const scoped = options.limit ? ahead.slice(0, options.limit) : ahead
+            items.value = scoped.map(toItem)
+            source.value = 'db'
         } catch (cause) {
             error.value = cause instanceof Error ? cause.message : String(cause)
             useContentFallback(error.value)
@@ -213,14 +183,13 @@ export function useUiaEvents() {
         }
     }
 
-    // Render the authored agenda immediately, so the band is never empty while
-    // the request is in flight.
+    // Render the authored agenda immediately, so the band is never empty while the
+    // request is in flight.
     useContentFallback()
 
     return {
         items,
         source,
-        isMock,
         loading,
         error,
         load,
