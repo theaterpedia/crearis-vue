@@ -203,10 +203,25 @@ export function buildUiaMockEvents(): OdooEventShape[] {
     }))
 
     // ── the finished arcs ───────────────────────────────────────────────────
+    // Start-dates transcribed (not parsed, not invented) from each arc's own
+    // `overline` in content/agenda.ts, which states them as prose:
+    //   "7 × mittwochs · 10.06.26 – 22.07.26 · …"      → Let's perform Utopia
+    //   "4 Tage intensiv · 04.–07.06.26 · FLINTA*-Space" → Ma(g)dalena-LAB
+    // They need machine-readable dates because a row with no date cannot be told
+    // apart from a row whose date is merely unknown — and Odoo would hold real
+    // dates for events that actually happened.
+    const CLOSED_ARC_DATES: Record<string, { begin: string; end: string }> = {
+        "Let's perform Utopia": { begin: '2026-06-10 19:00:00', end: '2026-07-22 21:00:00' },
+        'Ma(g)dalena-LAB': { begin: '2026-06-04 10:00:00', end: '2026-06-07 19:00:00' },
+    }
+
     closedArcs.forEach((arc) => {
+        const dates = CLOSED_ARC_DATES[arc.headline]
         events.push(baseEvent({
             id: id++,
             name: arc.headline,
+            date_begin: dates?.begin ?? null,
+            date_end: dates?.end ?? null,
             stage_id: { id: 4, name: 'Ended' },
             event_type_id: { id: 31, name: 'Tanztheater-Projekt' },
             teasertext: arc.subline,

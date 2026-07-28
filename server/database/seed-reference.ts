@@ -51,14 +51,14 @@ const CONFIGROLE = { partner: 2, participant: 4, member: 8, creator: 16 } as con
 type Relation = 'anonym' | 'partner' | 'participant' | 'member' | 'creator'
 
 /** Maps a Theaterpädagogik DOMAIN role onto the sysreg relation model. */
-interface RoleDef {
+export interface RoleDef {
     key: string
     domainLabel: string      // what the project actually calls this role
     relation: Relation       // sysreg relation it resolves to
     configrole: number | null // project_members.configrole; null = owner (via owner_id)
 }
 
-interface UserDef {
+export interface UserDef {
     key: string
     username: string
     sysmail: string
@@ -67,7 +67,7 @@ interface UserDef {
 }
 
 /** A reference-website = one executable example. */
-interface ReferenceSite {
+export interface ReferenceSite {
     domaincode: string
     type: 'topic' | 'project' | 'regio' | 'special'
     heading: string
@@ -80,7 +80,7 @@ interface ReferenceSite {
 }
 
 /** Configurability seam (kept minimal for the PoC). */
-interface ContentOptions {
+export interface ContentOptions {
     /** Which status categories to generate posts for; default = all categories from sysreg. */
     statuses?: string[]
     /** Scope combo per status name (bit-OR of SCOPE.*); default assigned below. */
@@ -224,8 +224,15 @@ async function seedReferenceSite(site: ReferenceSite, categories: StatusCat[], r
         console.log(`   👥 ${u.username}: ${role.relation} (configrole=${role.configrole}) [${role.domainLabel}]`)
     }
 
-    // 4) content matrix: one post per status category, scope + author varied
-    const opts = site.content ?? {}
+    // 4) content matrix: one post per status category, scope + author varied.
+    //    Only for sites that declare a content spec (the PoC showcase). Real sites (uia/sfr)
+    //    omit it → project + cast only; real content (agenda-arc events) comes from the
+    //    website-implementer's content modules in a later pass.
+    if (!site.content) {
+        console.log('   (no content spec — seeded project + cast only)')
+        return
+    }
+    const opts = site.content
     const authorKeys = opts.authorKeys ?? [site.ownerKey]
     const wanted = opts.statuses
     let i = 0
@@ -252,24 +259,45 @@ async function main() {
     }
     const resetPasswords = process.argv.includes('--passwords')
 
-    console.log('🌱 Reference-data seeder (PoC)')
+    console.log('🌱 Reference-data seeder')
     const categories = await loadStatusCategories()
     console.log(`   taxonomy from sysreg: ${categories.map(c => `${c.name}(${c.value})`).join(', ')}`)
 
-    await seedReferenceSite(POC_SITE, categories, resetPasswords)
+    // Real sites carry PII (names/emails) and live in gitignored ./seed-data/*.local.ts,
+    // so they never enter the public repo. Built-in POC_SITE is the pseudonymous fallback.
+    const sites: ReferenceSite[] = []
+    try {
+        const mod = await import('./seed-data/uia.local')
+        if ((mod as any)?.UIA_SITE) sites.push((mod as any).UIA_SITE as ReferenceSite)
+    } catch {
+        console.log('   (no ./seed-data/uia.local.ts found — skipping real sites)')
+    }
+    if (sites.length === 0) {
+        console.log('   → falling back to the pseudonymous POC_SITE')
+        sites.push(POC_SITE)
+    }
 
-    // Verification: show the trigger-computed visibility flags — proves config-driven r_*.
-    console.log('\n📊 Post visibility (r_* computed by trigger from status + sysreg_config):')
-    const rows = (await db.all(
-        `SELECT xmlid, status, r_anonym, r_partner, r_participant, r_member, r_creator
-         FROM posts WHERE project_id = (SELECT id FROM projects WHERE domaincode = ?)
-         ORDER BY status`,
-        [POC_SITE.domaincode]
-    )) as Array<Record<string, any>>
-    for (const r of rows) {
-        const flags = ['anonym', 'partner', 'participant', 'member', 'creator']
-            .filter(f => r[`r_${f}`]).join(',') || '(none)'
-        console.log(`   ${r.xmlid.padEnd(24)} status=${String(r.status).padStart(7)}  visible→ ${flags}`)
+    for (const site of sites) {
+        await seedReferenceSite(site, categories, resetPasswords)
+    }
+
+    // Verification — projects + cast actually in the DB.
+    console.log('\n📊 Seeded projects:')
+    for (const site of sites) {
+        const proj = (await db.get(
+            `SELECT id, domaincode, type, status, owner_id FROM projects WHERE domaincode = ?`,
+            [site.domaincode]
+        )) as any
+        const members = (await db.all(
+            `SELECT u.username, u.sysmail, pm.configrole, pm.role
+             FROM project_members pm JOIN users u ON u.id = pm.user_id
+             WHERE pm.project_id = ? ORDER BY pm.configrole DESC`,
+            [proj.id]
+        )) as any[]
+        const owner = (await db.get(`SELECT username, sysmail FROM users WHERE id = ?`, [proj.owner_id])) as any
+        console.log(`   ${site.domaincode} (id=${proj.id}, type=${proj.type}, status=${proj.status})`)
+        console.log(`      👑 owner: ${owner?.username} <${owner?.sysmail}>`)
+        for (const m of members) console.log(`      · ${m.username} <${m.sysmail}> configrole=${m.configrole} (${m.role})`)
     }
 
     console.log('\n✅ Reference seed complete.')

@@ -95,3 +95,6 @@ docs/.vitepress/cache/
 
 # Pseudonymisation — clearnames stay local (scripts/pseudonyms.py)
 .pseudonyms.env
+
+# Local seed data with real identities (PII) — never commit to the public repo
+server/database/seed-data/*.local.ts
