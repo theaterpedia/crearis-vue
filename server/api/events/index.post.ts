@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { db } from '../../database/init'
 import { EVENT_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import type { EventsTableFields } from '../../types/database'
+import { assertRubiconWrite } from '../../utils/rubicon-guard'
 
 // POST /api/events - Create new event
 // After Migration 019 Chapter 3B:
@@ -31,6 +32,18 @@ export default defineEventHandler(async (event) => {
         }
 
         // Prepare data with only valid table fields
+        // D4 · the ownership line. Creating directly at/above sysreg 512 would have
+        // CV mint an entity Odoo should own from birth, skipping the below-Rubicon
+        // phase entirely. The *crossing* is CV's to make; the birth above it is not.
+        assertRubiconWrite({
+            kind: 'create',
+            currentStatus: null,
+            incomingStatus: body.status,
+            entity: 'events',
+            id: 'new',
+            createError,
+        })
+
         const eventData: Partial<EventsTableFields> = {
             xmlid: body.xmlid || body.id || null, // Store old id as xmlid
             name: body.name,

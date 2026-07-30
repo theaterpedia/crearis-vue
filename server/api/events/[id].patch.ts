@@ -2,6 +2,7 @@ import { defineEventHandler, getRouterParam, createError, readBody, getCookie } 
 import { db } from '../../database/init'
 import { EVENT_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import { sessions } from '../../utils/session-store'
+import { assertRubiconWrite } from '../../utils/rubicon-guard'
 
 // PATCH /api/events/:id - Update event fields
 // Supports updating: name, teaser, status, dtags, ctags, ttags, date_begin, date_end, etc.
@@ -71,6 +72,18 @@ export default defineEventHandler(async (event) => {
                 message: 'Not authorized to update this event'
             })
         }
+
+        // D4 · the ownership line. The check above answers "may THIS USER write?";
+        // this one answers "may CV write AT ALL?" — at/above sysreg 512 Odoo is the
+        // system of record and CV holds a read copy. Two different questions, and
+        // only the first was being asked. See server/utils/rubicon-guard.ts.
+        assertRubiconWrite({
+            kind: 'update',
+            currentStatus: eventData.status,
+            entity: 'events',
+            id: eventData.id,
+            createError,
+        })
 
         // Read update body
         const body = await readBody(event) as Record<string, any>
