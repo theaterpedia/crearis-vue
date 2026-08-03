@@ -254,3 +254,39 @@ describe('useUiaEvents · the „Was ansteht" band shows what is ahead', () => {
         expect(items.value.length).toBeGreaterThan(0)
     })
 })
+
+describe('venue time · the agenda must not print Odoo\'s UTC clock', () => {
+    // K4 (prod capture 2026-08-03): Odoo puts datetimes on the wire as
+    // 'YYYY-MM-DD HH:MM:SS+00:00' — explicit UTC, no date_tz field. uia reads the clock
+    // lexically, so before the fix a 09:00 Berlin event rendered as 07:00 for EVERY
+    // reader, including one standing in Augsburg. Venue time per HD 2026-08-03.
+    const WIRE: CvEventRow = {
+        id: 1, name: 'Odoo-shaped',
+        date_begin: '2026-09-12 07:00:00+00:00',   // = 09:00 Berlin (CEST)
+        date_end: '2026-09-12 09:00:00+00:00',     // = 11:00 Berlin
+    } as CvEventRow
+    const NAIVE: CvEventRow = {
+        id: 2, name: 'CV-shaped',
+        date_begin: '2026-09-12T09:00:00',         // already venue time
+        date_end: '2026-09-12T11:00:00',
+    } as CvEventRow
+
+    it('converts the offset-carrying wire format to the venue clock', () => {
+        expect(composeHeading(WIRE)).toContain('09:00 – 11:00 Uhr')
+    })
+
+    it('leaves naive CV rows alone — they are already venue time', () => {
+        expect(composeHeading(NAIVE)).toContain('09:00 – 11:00 Uhr')
+    })
+
+    it('renders both storage shapes identically — the pull must not change what the page says', () => {
+        expect(composeHeading(WIRE).replace('Odoo-shaped', 'X'))
+            .toBe(composeHeading(NAIVE).replace('CV-shaped', 'X'))
+    })
+
+    it('keeps the day right across the UTC midnight boundary', () => {
+        // 22:30 UTC on the 12th is 00:30 on the 13th in Berlin (CEST).
+        const late = { id: 3, name: 'late', date_begin: '2026-09-12 22:30:00+00:00' } as CvEventRow
+        expect(composeHeading(late)).toContain('13.09.26')
+    })
+})

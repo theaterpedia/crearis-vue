@@ -50,6 +50,7 @@
 import { computed, ref } from 'vue'
 import { toListItems, type UiaListItem } from './uiaItems'
 import { formatUiaDay } from './uiaDates'
+import { carriesOffset, parseToVenueWallClock } from '@/utils/displayTimezone'
 import { agendaItems } from './content/agenda'
 
 /** The ratified domaincode · CO@prod 2026-05-20, decision-record §2.5. */
@@ -70,9 +71,32 @@ export interface CvEventRow {
 }
 
 /** `'2026-09-23T19:00:00'` or `'2026-09-23 19:00:00'` → `'MI 23.09.26'`. */
+/**
+ * Normalise to the venue's wall-clock string, so the lexical readers below stay
+ * correct for both storage shapes.
+ *
+ * CV's own rows are naive (`2026-11-04T19:00:00`) and are ALREADY venue-time — reading
+ * them lexically is correct. Odoo's wire format carries an offset
+ * (`2026-11-04 18:00:00+00:00`, K4) and must be converted, or the UTC clock is printed
+ * as though it were the Augsburg clock. Measured before this fix: a 19:00 Berlin event
+ * rendered as `07:00 – 09:00 Uhr` in every browser, everywhere.
+ *
+ * The offset-vs-naive decision itself lives in `utils/displayTimezone` — one rule for
+ * the whole platform, not a second copy here. (Same lesson as WORKFLOW_MASK: a
+ * predicate two tiers both depend on cannot live in one of them.)
+ */
+function toVenueWallClock(value: string): string {
+    if (!carriesOffset(value)) return value
+    const zoned = parseToVenueWallClock(value)
+    if (Number.isNaN(zoned.getTime())) return value
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${zoned.getFullYear()}-${pad(zoned.getMonth() + 1)}-${pad(zoned.getDate())}`
+        + `T${pad(zoned.getHours())}:${pad(zoned.getMinutes())}:${pad(zoned.getSeconds())}`
+}
+
 function toUiaDay(dateBegin: string | null | undefined): string | null {
     if (!dateBegin) return null
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateBegin)
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(toVenueWallClock(dateBegin))
     if (!match) return null
     const [, year, month, day] = match as unknown as [string, string, string, string]
     return formatUiaDay(`${day}.${month}.${year.slice(2)}`)
@@ -81,7 +105,7 @@ function toUiaDay(dateBegin: string | null | undefined): string | null {
 /** `'…T19:00:00'` + `'…T21:00:00'` → `'19:00 – 21:00 Uhr'`. En-dash, as the flyer prints it. */
 function toTimeRange(begin: string | null | undefined, end: string | null | undefined): string | null {
     const clock = (value: string | null | undefined): string | null => {
-        const match = /[T ](\d{2}):(\d{2})/.exec(value ?? '')
+        const match = /[T ](\d{2}):(\d{2})/.exec(value ? toVenueWallClock(value) : '')
         return match ? `${match[1]}:${match[2]}` : null
     }
     const from = clock(begin)
