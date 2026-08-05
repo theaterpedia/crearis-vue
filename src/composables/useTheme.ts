@@ -21,12 +21,17 @@
 
 import { ref, computed, watch } from 'vue'
 import { createDebugger } from '@/utils/debug'
+import { getDomainThemeOverride, type DomainThemeOverride } from '@/utils/domainThemeOverrides'
 
 const debug = createDebugger('useTheme')
 import type { Router } from 'vue-router'
 
 // Singleton state - shared across all composable instances
 const initialThemeId = ref<number | null>(null)
+// Per-domaincode token override (HD 2026-08-06) · rides on top of whichever
+// theme is active — vars re-applied after every theme application, `inverted`
+// replacing the theme's own default. See src/utils/domainThemeOverrides.ts.
+const domainOverride = ref<DomainThemeOverride | null>(null)
 const contextThemeId = ref<number | null>(null)
 const contextScope = ref<'local' | 'timer' | 'site' | null>(null)
 const contextParam = ref<string | null>(null)
@@ -137,6 +142,25 @@ export function useTheme() {
         for (const [key, value] of Object.entries(vars)) {
             root.style.setProperty(key, value)
         }
+        // Domain override wins over the theme's own vars — applied last, on every
+        // theme application, so a theme switch cannot shed the site's tokens.
+        const overrideVars = domainOverride.value?.vars
+        if (overrideVars) {
+            for (const [key, value] of Object.entries(overrideVars)) {
+                root.style.setProperty(key, value)
+            }
+        }
+    }
+
+    /**
+     * Helper: Apply a cached theme (vars + inverted) as one act, honouring an
+     * active domain override. The override's `inverted` replaces the THEME's
+     * default only — a user's explicit setInverted/toggleInverted afterwards
+     * still wins until the next theme application.
+     */
+    const applyThemeToDocument = (cached: { vars: ThemeVars; inverted: boolean }): void => {
+        applyVarsToDocument(cached.vars)
+        setInverted(domainOverride.value?.inverted ?? cached.inverted)
     }
 
     /**
@@ -175,12 +199,11 @@ export function useTheme() {
         if (initialThemeId.value !== null) {
             const cached = themeVarsCache.value.get(initialThemeId.value)
             if (cached) {
-                applyVarsToDocument(cached.vars)
-                setInverted(cached.inverted)
+                applyThemeToDocument(cached)
             }
         } else {
             removeVarsFromDocument()
-            setInverted(false)
+            setInverted(domainOverride.value?.inverted ?? false)
         }
     }
 
@@ -238,8 +261,7 @@ export function useTheme() {
             if (contextThemeId.value === null) {
                 const cached = themeVarsCache.value.get(id)
                 if (cached) {
-                    applyVarsToDocument(cached.vars)
-                    setInverted(cached.inverted)
+                    applyThemeToDocument(cached)
                 }
             }
         } else if (scope === 'local') {
@@ -257,8 +279,7 @@ export function useTheme() {
             // Apply theme vars and inverted state immediately
             const cached = themeVarsCache.value.get(id)
             if (cached) {
-                applyVarsToDocument(cached.vars)
-                setInverted(cached.inverted)
+                applyThemeToDocument(cached)
             }
         } else if (scope === 'timer') {
             // Clear any existing timer
@@ -278,8 +299,7 @@ export function useTheme() {
             // Apply theme vars and inverted state immediately
             const cached = themeVarsCache.value.get(id)
             if (cached) {
-                applyVarsToDocument(cached.vars)
-                setInverted(cached.inverted)
+                applyThemeToDocument(cached)
             }
 
             // Set timeout to reset context
@@ -319,8 +339,8 @@ export function useTheme() {
                 inverted: data.inverted || false
             })
 
-            // Set inverted state for this theme
-            setInverted(data.inverted || false)
+            // Set inverted state for this theme (domain override replaces the default)
+            setInverted(domainOverride.value?.inverted ?? (data.inverted || false))
 
             return data.vars
         } catch (error) {
@@ -330,7 +350,7 @@ export function useTheme() {
                 const bundled = await loadBundledTheme(id)
                 if (bundled) {
                     themeVarsCache.value.set(id, { vars: bundled.vars, inverted: bundled.inverted })
-                    setInverted(bundled.inverted)
+                    setInverted(domainOverride.value?.inverted ?? bundled.inverted)
                     return bundled.vars
                 }
             } catch (fallbackError) {
@@ -631,8 +651,7 @@ export function useTheme() {
             if (initialThemeId.value !== null) {
                 const cached = themeVarsCache.value.get(initialThemeId.value)
                 if (cached) {
-                    applyVarsToDocument(cached.vars)
-                    setInverted(cached.inverted)
+                    applyThemeToDocument(cached)
                 }
             }
 
@@ -678,6 +697,49 @@ export function useTheme() {
     }
 
     /**
+     * Bind (or clear) the per-domaincode token override for this site.
+     *
+     * HD 2026-08-06: the base theme is never altered centrally — a site
+     * overwrites individual tokens (font now, colors later) for its domaincode.
+     * The override is applied immediately over the current state and re-asserts
+     * itself after every subsequent theme application (see applyVarsToDocument /
+     * applyThemeToDocument). Call with `null` to clear.
+     *
+     * Related seam: setTheme's not-yet-implemented `scope: 'site'` (param =
+     * domaincode) — this registry is the first concrete step toward it.
+     */
+    const setDomainThemeOverride = (domaincode: string | null): void => {
+        const previous = domainOverride.value
+        domainOverride.value = getDomainThemeOverride(domaincode)
+
+        if (typeof document === 'undefined') return
+        const root = document.documentElement
+
+        if (domainOverride.value) {
+            const { vars, inverted } = domainOverride.value
+            if (vars) {
+                for (const [key, value] of Object.entries(vars)) {
+                    root.style.setProperty(key, value)
+                }
+            }
+            if (inverted !== undefined) setInverted(inverted)
+            debug.log('Domain theme override applied', { domaincode })
+        } else if (previous) {
+            // Clearing: drop the override's keys, then re-assert the active theme
+            // so any token the override had shadowed is restored.
+            if (previous.vars) {
+                for (const key of Object.keys(previous.vars)) {
+                    root.style.removeProperty(key)
+                }
+            }
+            const activeId = contextThemeId.value ?? initialThemeId.value
+            const cached = activeId !== null ? themeVarsCache.value.get(activeId) : undefined
+            if (cached) applyThemeToDocument(cached)
+            debug.log('Domain theme override cleared')
+        }
+    }
+
+    /**
      * Setup route watcher for local scope auto-reset
      * Call this in components that use router (e.g., in App.vue or layout)
      * @param router Vue Router instance
@@ -707,6 +769,7 @@ export function useTheme() {
         getThemes,
         resetContext,
         setupLocalScopeWatcher,
+        setDomainThemeOverride,
 
         // Inverted mode
         setInverted,
