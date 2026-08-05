@@ -173,13 +173,17 @@ describe('useUiaEvents · the fallback keeps the page correct without hiding fai
         expect(error.value).toContain('500')
     })
 
-    it('falls back on an empty result — a scoping mistake reads like "no events"', async () => {
+    it('reports a SUCCESSFUL empty answer as source "empty" — HD 2026-08-06: a real state, not a failure', async () => {
+        // Until 2026-08-06 this test asserted the authored fallback here. The
+        // ruling: „empty-detection is needed … (if nothing is found)" — the page
+        // renders „Nächste Termine" + „... auf Anfrage" from this state.
         mockFetchOk([])
-        const { items, source, error, load } = useUiaEvents()
+        const { items, source, isEmpty, error, load } = useUiaEvents()
         await load()
-        expect(source.value).toBe('content')
-        expect(error.value).toBe('no events returned')
-        expect(items.value).toHaveLength(agendaItems.length)
+        expect(source.value).toBe('empty')
+        expect(isEmpty.value).toBe(true)
+        expect(error.value).toBeNull()
+        expect(items.value).toHaveLength(0)
     })
 
     it('falls back on an unexpected response shape (object, not array)', async () => {
@@ -189,11 +193,13 @@ describe('useUiaEvents · the fallback keeps the page correct without hiding fai
         expect(source.value).toBe('content')
     })
 
-    it('never leaves the agenda empty, whatever went wrong', async () => {
+    it('never leaves the agenda empty on TRANSPORT failure — the empty state is the page`s to render', async () => {
+        // Failures keep the authored rows; a successful `[]` is NOT a failure
+        // any more (see the empty-detection test above) — the PAGE renders its
+        // „... auf Anfrage" row from `isEmpty`, so the band still never blanks.
         for (const bad of [
             () => Promise.reject(new Error('x')),
             () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) }),
-            () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
         ]) {
             vi.stubGlobal('fetch', vi.fn(bad))
             const { items, load } = useUiaEvents()
@@ -242,16 +248,16 @@ describe('useUiaEvents · the „Was ansteht" band shows what is ahead', () => {
         expect(items.value).toHaveLength(1)
     })
 
-    it('falls back when everything returned is already past', async () => {
-        vi.spyOn(console, 'warn').mockImplementation(() => {})
+    it('reports "empty" when everything returned is already past — nothing ahead IS nothing found', async () => {
+        // Re-pinned 2026-08-06: previously this fell back to the authored rows;
+        // under HD's empty-detection ruling the page says „... auf Anfrage".
         mockFetchOk([cvEvent({ date_begin: '2026-06-10T19:00:00' })])
-        const { source, error, items, load } = useUiaEvents()
+        const { source, isEmpty, error, items, load } = useUiaEvents()
         await load({ today: TODAY })
-        expect(source.value).toBe('content')
-        expect(error.value).toBe('no upcoming events returned')
-        // the count that explains WHY goes to the log, not the error field
-        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('none of them ahead'))
-        expect(items.value.length).toBeGreaterThan(0)
+        expect(source.value).toBe('empty')
+        expect(isEmpty.value).toBe(true)
+        expect(error.value).toBeNull()
+        expect(items.value).toHaveLength(0)
     })
 })
 
