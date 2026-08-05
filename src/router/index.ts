@@ -43,6 +43,15 @@ const router = createRouter({
     { path: '/vision', component: () => import('@/views/Uia/StubPage.vue') },
     { path: '/blog', component: () => import('@/views/Uia/StubPage.vue') },
     { path: '/kontakt', component: () => import('@/views/Uia/StubPage.vue') },
+    // ── The fullviews (HD 2026-08-06: events/posts „open on their own page,
+    //    where they come editable if Rosa is logged in") ─────────────────────
+    // EventPage/PostPage are the MAINLINE detail components, reused not rebuilt.
+    // They read `route.params.domaincode`, so the real routes keep the
+    // /sites/:domaincode shape; the friendly single-site paths redirect into it.
+    { path: '/sites/:domaincode/events/:identifier', component: () => import('@/views/EventPage.vue') },
+    { path: '/sites/:domaincode/posts/:identifier', component: () => import('@/views/PostPage.vue') },
+    { path: '/events/:identifier', redirect: (to) => `/sites/utopiaxaction/events/${to.params.identifier}` },
+    { path: '/posts/:identifier', redirect: (to) => `/sites/utopiaxaction/posts/${to.params.identifier}` },
     // Catch-all · any other path redirects to the landing, as magnifica does
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
