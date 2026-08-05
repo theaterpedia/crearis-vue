@@ -73,6 +73,7 @@ import { useTheme } from '@/composables/useTheme'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import UiaSiteFooter from './UiaSiteFooter.vue'
 import { navItems as uiaNavItems } from './content/nav'
+import { UIA_DOMAIN_CODE } from './useUiaEvents'
 
 const props = withDefaults(
     defineProps<{
@@ -89,7 +90,7 @@ const props = withDefaults(
  */
 const navItems: TopnavParentItem[] = uiaNavItems.map((item) => ({ label: item.label, link: item.link }))
 
-const { setTheme, extractImageDimensions } = useTheme()
+const { setTheme, setDomainThemeOverride, extractImageDimensions } = useTheme()
 
 watchEffect(() => {
     if (typeof document !== 'undefined') document.title = props.title
@@ -103,6 +104,10 @@ onMounted(async () => {
         // runtime one — but a themeless uia is still readable, so never white-screen.
         console.error('uia · theme 3 could not be applied:', error)
     }
+    // HD 2026-08-06: theme 3's colors stay, but uia runs Cantarell and defaults
+    // to dark — as a per-domaincode token override, NOT a central theme edit.
+    // Survives theme-switching (HP compares); the invert-toggle still works.
+    setDomainThemeOverride(UIA_DOMAIN_CODE)
     extractImageDimensions()
 })
 </script>
