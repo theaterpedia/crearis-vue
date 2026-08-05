@@ -34,16 +34,16 @@
                 :image-alt="hero.imageAlt" :focal="hero.focal" />
         </template>
 
-        <!-- ==band-1== · the agenda above the vision-prose (HP 2026-07-27) -->
+        <!-- ==band-1== · the agenda above the vision-prose (HP 2026-07-27) ·
+             DB-BOUND since 2026-08-06 (hybrid ruling, §10.8): same events store
+             as /agenda, limit from content; authored rows only on outage. -->
         <Section id="agenda" background="default">
             <Container>
                 <Columns>
                     <Column width="1/2">
                         <UiaTaxonomyBand :heading="agendaTeaser.heading" taxonomy="veranstaltungen" />
-                        <!-- theaterpedia's own row rendering, reused: `items` + no
-                             `entity` + dataMode false = no fetch. See ./uiaItems.ts. -->
                         <ItemList :items="teaserItems" size="small" width="inherit" columns="off"
-                            interaction="static" :dataMode="false" headingLevel="h4" />
+                            interaction="static" :dataMode="false" headingLevel="h4" @item-click="openEventItem" />
                         <p class="uia-more">
                             <router-link :to="agendaTeaser.link.href">{{ agendaTeaser.link.label }}</router-link>
                         </p>
@@ -97,16 +97,28 @@
             </Container>
         </Section>
 
-        <!-- ==band-3== · the closed turns + the Kernprogramm -->
+        <!-- ==band-3== · the closed turns + the Kernprogramm ·
+             POSTS-BOUND since 2026-08-06 (HD: „posts on landing … clicking opens
+             their fullview"): db posts render as cards; the authored pastArcs
+             stay as the outage-fallback so the poster never blanks. -->
         <Section background="muted">
             <Container>
                 <Columns>
                     <Column width="1/2">
                         <UiaTaxonomyBand heading="Was schon war" taxonomy="veranstaltungen" />
                         <div class="uia-arc-stack">
-                            <UiaArcCard v-for="arc in pastArcs" :key="arc.headline" :overline="arc.overline"
-                                :headline="arc.headline" :body="arc.body" :image="arc.image"
-                                :image-alt="arc.imageAlt" />
+                            <template v-if="dbPostCards.length">
+                                <div v-for="card in dbPostCards" :key="card.id" class="uia-arc-click" role="link"
+                                    tabindex="0" @click="openPost(card.id)" @keydown.enter="openPost(card.id)">
+                                    <UiaArcCard :overline="card.overline" :headline="card.headline"
+                                        :body="card.body" :image="card.image" :image-alt="card.imageAlt" />
+                                </div>
+                            </template>
+                            <template v-else>
+                                <UiaArcCard v-for="arc in pastArcs" :key="arc.headline" :overline="arc.overline"
+                                    :headline="arc.headline" :body="arc.body" :image="arc.image"
+                                    :image-alt="arc.imageAlt" />
+                            </template>
                         </div>
                     </Column>
 
@@ -138,7 +150,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
 import Columns from '@/components/Columns.vue'
@@ -163,11 +176,73 @@ import {
     actors,
 } from './content/landing'
 // The dated rows live with the agenda, not duplicated into the landing —
-// `content/agenda.ts` is the single source.
+// `content/agenda.ts` is the single source (now the authored OUTAGE-fallback;
+// the live rows come from the same events store /agenda reads · §10.8 hybrid).
 import { agendaItems } from './content/agenda'
+import type { UiaListItem } from './uiaItems'
+import { useUiaEvents, UIA_DOMAIN_CODE } from './useUiaEvents'
+import { useUiaPosts, postRowImage } from './useUiaPosts'
+import { formatUiaDay } from './uiaDates'
 
-/** The first `agendaTeaser.limit` rows, with the `TODO HP` cimg-markers stripped. */
-const teaserItems = computed(() => toListItems(agendaItems, agendaTeaser.limit))
+const router = useRouter()
+
+// ── band-1 · the agenda teaser, db-bound (limit from content) ────────────────
+const {
+    items: teaserDbItems,
+    rows: teaserRows,
+    source: teaserSource,
+    load: loadTeaser,
+} = useUiaEvents()
+
+const {
+    rows: postRows,
+    load: loadPosts,
+} = useUiaPosts()
+
+onMounted(() => {
+    loadTeaser({ limit: agendaTeaser.limit })
+    loadPosts()
+})
+
+/**
+ * DB rows when the store answered; the authored agenda on outage AND on a
+ * successful-but-empty answer — the landing is the Aushang, and an empty teaser
+ * band on the poster would advertise nothing; the authored rows stay the
+ * truthful minimum there (unlike /agenda, whose empty-state is ruled).
+ */
+const teaserItems = computed<UiaListItem[]>(() =>
+    teaserSource.value === 'db' ? teaserDbItems.value : toListItems(agendaItems, agendaTeaser.limit))
+
+/** Fallback rows are authored — no page behind them, so no navigation. */
+function openEventItem(item: UiaListItem) {
+    if (teaserSource.value !== 'db') return
+    const index = teaserItems.value.indexOf(item)
+    const row = index >= 0 ? teaserRows.value[index] : undefined
+    if (row) router.push(`/sites/${UIA_DOMAIN_CODE}/events/${row.id}`)
+}
+
+// ── band-3 · „Was schon war" as db posts, pastArcs as outage-fallback ────────
+function toPostDay(postDate: string | null | undefined): string {
+    const match = postDate ? /^(\d{4})-(\d{2})-(\d{2})/.exec(postDate) : null
+    if (!match) return ''
+    const [, year, month, day] = match as unknown as [string, string, string, string]
+    return formatUiaDay(`${day}.${month}.${year.slice(2)}`)
+}
+
+const dbPostCards = computed(() => postRows.value.map((row) => ({
+    id: row.id,
+    overline: [toPostDay(row.post_date), row.teaser?.trim()].filter(Boolean).join(' · '),
+    headline: row.name,
+    // The post's own text is the card body — the words are the collective's,
+    // straight from the store (plain text; markdown markers do not occur in it).
+    body: row.md?.trim() || row.subtitle?.trim() || '',
+    image: postRowImage(row) ?? 'TODO HP',
+    imageAlt: row.name,
+})))
+
+function openPost(id: number) {
+    router.push(`/sites/${UIA_DOMAIN_CODE}/posts/${id}`)
+}
 </script>
 
 <style scoped>
@@ -175,6 +250,16 @@ const teaserItems = computed(() => toListItems(agendaItems, agendaTeaser.limit))
     margin: 1rem 0 0;
     font-size: 0.9375rem;
     font-weight: 700;
+}
+
+/* A db post-card is a link to its fullview. */
+.uia-arc-click {
+    cursor: pointer;
+}
+
+.uia-arc-click:focus-visible {
+    outline: 2px solid var(--color-primary-bg);
+    outline-offset: 2px;
 }
 
 .uia-live-subline {

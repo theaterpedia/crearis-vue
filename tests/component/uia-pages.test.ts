@@ -130,50 +130,87 @@ describe('the topnav belongs to uia, not to Theaterpedia', () => {
     })
 })
 
-describe('AgendaPage', () => {
-    it('mounts and renders the arc at full depth', async () => {
+describe('AgendaPage · DB-driven (HD 2026-08-06: „fully dynamically … only db-bound components")', () => {
+    // The default stub (fetch rejects) IS the outage case: authored fallback
+    // rows in the list, closedArcs cards in „Was schon war", no featured band.
+    it('mounts on outage with the authored fallback — hero, Alle Termine, the closed arcs', async () => {
         const text = (await mountPage(AgendaPage)).text()
         expect(text).toContain('Unsere Agenda')
-        expect(text).toContain('Meine Grenzen')
         expect(text).toContain('Alle Termine')
+        expect(text).toContain('Meine Grenzen')
+        expect(text).toContain('Was schon war')
     })
 
-    it('renders the full 15-Mittwoch run, first and last', async () => {
+    it('does NOT render the July sections — dropped as not-db-bound (Beitrag, Kernprogramm-prose, FLINTA, date-run)', async () => {
         const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('MI 23.09.26')
-        expect(text).toContain('MI 20.01.27')
+        expect(text).not.toContain('Kostendecker')
+        expect(text).not.toContain('Dort gibt es Theater der Unterdrückten')
+        expect(text).not.toContain('FLINTA*+ Spaces')
+        expect(text).not.toContain('MI 20.01.27')
     })
 
-    it('renders the Beitrag tiers in their 2026 vocabulary', async () => {
-        const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('Kostendecker')
-        expect(text).toContain('goldene Mitte')
-        expect(text).toContain('Möglichmacher')
-        // The older Super-Early-Bird / Solidarpreis set is explicitly NOT this.
-        expect(text).not.toContain('Early-Bird')
-        expect(text).not.toContain('Solidarpreis')
+    function mockDb(events: unknown[], posts: unknown[]) {
+        vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+            const url = String(input)
+            const respond = (payload: unknown) => Promise.resolve(new Response(JSON.stringify(payload), {
+                status: 200, headers: { 'Content-Type': 'application/json' },
+            }))
+            if (url.includes('/api/events')) return respond(events)
+            if (url.includes('/api/posts')) return respond(posts)
+            if (url.includes('/api/projects/')) return respond({ heading: '**Utopia in Action** — Theater der Unterdrückten' })
+            return Promise.reject(new Error('no backend — uia ships without one'))
+        }))
+    }
+
+    it('features the FIRST item of „Alle Termine" as the band (HD ruling ⑤), with its link', async () => {
+        mockDb(
+            [
+                { id: 8, name: 'Meine Grenzen', teaser: 'ein Tanztheater-Projekt · Anmeldung bis 10.09.26', date_begin: '2099-09-23T19:00:00', date_end: '2099-09-23T21:00:00' },
+                { id: 9, name: 'Meine Grenzen · wir zeigen es', teaser: 'Abschluss-Aufführung (vsl.)', date_begin: '2099-11-22T19:00:00' },
+            ],
+            [],
+        )
+        const wrapper = await mountPage(AgendaPage)
+        await vi.waitFor(() => expect(wrapper.text()).toContain('mehr erfahren'))
+        const text = wrapper.text()
+        expect(text).toContain('ein Tanztheater-Projekt · Anmeldung bis 10.09.26')
+        // The project's own heading (db) drives the hero, md markers stripped.
+        expect(text).toContain('Utopia in Action — Theater der Unterdrückten')
+        expect(text).not.toContain('**Utopia in Action**')
     })
 
-    it('leaves the Kernprogramm Beitrag unrendered while it is null — no invented number', async () => {
-        const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('Unser Kernprogramm')
-        expect(text).not.toMatch(/Kernprogramm[\s\S]{0,400}?\d+\s?€/)
+    it('renders db posts as rows under „Was schon war"', async () => {
+        mockDb(
+            [{ id: 8, name: 'Meine Grenzen', date_begin: '2099-09-23T19:00:00' }],
+            [{ id: 10, name: "Let's perform Utopia", teaser: 'Freiheit tanzen · Gleichberechtigung singen', post_date: '2026-07-24' }],
+        )
+        const wrapper = await mountPage(AgendaPage)
+        await vi.waitFor(() => expect(wrapper.text()).toContain("Let's perform Utopia"))
+        expect(wrapper.text()).toContain('Was schon war')
     })
 
-    it('renders the FLINTA*+ modes, both of them, plainly', async () => {
-        const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('FLINTA*+ Spaces')
-        expect(text).toContain('FLINTA*+ Sensitivität')
+    it('renders „Nächste Termine" + „... auf Anfrage" when the stores answer empty (HD, verbatim)', async () => {
+        mockDb([], [])
+        const wrapper = await mountPage(AgendaPage)
+        await vi.waitFor(() => expect(wrapper.text()).toContain('Nächste Termine'))
+        const text = wrapper.text()
+        expect(text).toContain('... auf Anfrage')
+        expect(text).not.toContain('Alle Termine')
+        // An empty posts answer HIDES the band — nothing to advertise.
+        expect(text).not.toContain('Was schon war')
     })
 })
 
 describe('the protected spellings survive rendering (§7)', () => {
+    // ⚠ Since the DB-driven turn, „wir tanzen drüber nach!" lives in TWO places:
+    // the landing's authored band-2 (pinned here) and events#8.md IN THE DB —
+    // the db copy has no mechanical gate yet (flagged in uia thread §10.7ff).
     it('keeps „wir tanzen drüber nach!" — their pun on nachdenken, not a typo', async () => {
         expect((await mountPage(LandingPage)).text()).toContain('wir tanzen drüber nach!')
-        expect((await mountPage(AgendaPage)).text()).toContain('wir tanzen drüber nach!')
     })
 
     it('keeps „dekonstruirt" — their flyer`s spelling, not a typo', async () => {
+        // Landing: the pastArcs outage-fallback · Agenda: the closedArcs fallback.
         expect((await mountPage(LandingPage)).text()).toContain('dekonstruirt')
         expect((await mountPage(AgendaPage)).text()).toContain('dekonstruirt')
     })
