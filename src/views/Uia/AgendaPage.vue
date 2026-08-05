@@ -1,92 +1,57 @@
 <!--
-  AgendaPage · uia · route `/agenda` · the ONE content-page this round (§1).
+  AgendaPage · uia · route `/agenda` — DB-DRIVEN since HD's 2026-08-06 round.
 
-  Candidates were `/agenda` and a `/meine-grenzen` project-page; they collapse,
-  because an agenda-site's agenda IS its live project plus the closed ones
-  (`content/agenda.ts` header). So: one arc live, the finished ones closed behind
-  it — never a flat date-list.
+  „It should run fully dynamically as soon as the page is online, so content
+  needs to come from db + only db-bound components can be used, therefore we
+  maximally reduced it." (HD, uia thread §10.7. The July full-depth page was the
+  shape-finding sketch — it lives on origin/alpha/uia; this is the target.)
 
-  ── SIMPLIFIED per HD's ruling, 2026-08-06 (uia thread §10.5) ─────────────────
-  Dropped from this page (the DATA stays in content/agenda.ts, unrendered):
-    „Was ansteht" heading  → the fetched list is now central, headed „Alle Termine"
-    „Beitrag" tiers        → dropped
-    „Unser Kernprogramm"   → dropped
-    „Zwei Modi" (FLINTA)   → dropped
-  The 15-Mittwochs date-run (which carried „Alle Termine" until now) is
-  Meine-Grenzen material and folds into the featured band — FABLE's cut, pulsed
-  back in the thread. Empty-detection: a successful-but-empty answer renders
-  „Nächste Termine" + one row „... auf Anfrage" (HD's wording, verbatim).
-  The featured event is ruled to always be the FIRST item of „Alle Termine" —
-  binding flagged in §10.5 (today's DB fixture cannot satisfy it yet).
+  ── The page, maximally reduced ───────────────────────────────────────────────
+    hero        → the project's own heading (db), authored chrome as fallback
+    featured    → the FIRST item of „Alle Termine" (HD ruling ⑤), as a band:
+                  date-line · name · teaser · wide image · link to its own page
+    the list    → „Alle Termine" central; empty-detection renders
+                  „Nächste Termine" + one row „... auf Anfrage" (HD, verbatim)
+    posts       → „Was schon war" — db posts; clicking opens the fullview
+    (forum / flinta / kernprogramm / beitrag: not db-bound → not on this page)
 
-  ── The cutter-commands (as they stand after the ruling) ──────────────────────
-    ==page-hero==    default · full · band               → UiaHero
-    ==live==         dark    · full · prose+highlight+run → the featured turn, at
-                     depth, now incl. the 15-Mittwochs run + performance + venue
-    ==agenda-rows==  default · full · list · veranst.     → „Alle Termine", central
-    ==closed==       muted   · full · cards · veranst.    → the finished turns
-    ==forum==        default · full · prose               → what Forum-Theater is
+  ── Fallback discipline (transport failure ONLY) ──────────────────────────────
+  The authored content keeps the page truthful when the backend does not answer:
+  the list falls back to `agendaItems`, the posts band to `closedArcs`. A
+  SUCCESSFUL empty answer is a real state and renders the empty-detection —
+  see useUiaEvents/useUiaPosts.
 
-  `section: dark` → `Section background="accent"` — see LandingPage.vue for why.
+  ── Detail pages ──────────────────────────────────────────────────────────────
+  Rows navigate to `/sites/utopiaxaction/{events,posts}/:id` — EventPage /
+  PostPage (mainline components, reused not rebuilt) carry view + edit; a
+  logged-in owner (Rosa) edits, anonymous reads. Navigation only fires for db
+  rows — authored fallback rows have no page behind them.
 -->
 
 <template>
     <UiaPageFrame :title="pageTitle">
         <template #header>
-            <UiaHero :overline="hero.overline" :headline="hero.headline" :teaser="hero.teaser" />
+            <UiaHero :overline="hero.overline" :headline="pageHeadline" />
         </template>
 
-        <!-- ==live== · the live turn -->
-        <Section background="accent">
+        <!-- ==featured== · the first item of „Alle Termine" (HD ruling ⑤) -->
+        <Section v-if="featured" background="accent">
             <Container>
-                <UiaTaxonomyBand :overline="live.overline" :heading="live.headline" />
-                <p class="uia-live-subline">{{ live.subline }}</p>
-
-                <Columns>
-                    <Column width="1/2">
-                        <ul class="uia-questions">
-                            <li v-for="(question, i) in live.questions" :key="i"
-                                :class="{ 'uia-question-last': i === live.questions.length - 1 }">
-                                {{ question }}
-                            </li>
-                        </ul>
-                        <UiaImage :src="live.image" :alt="live.imageAlt" :focal="live.focal" ratio="wide" />
-                    </Column>
-                    <Column width="auto">
-                        <Prose>
-                            <p v-for="(paragraph, i) in live.prose" :key="i">{{ paragraph }}</p>
-                        </Prose>
-                    </Column>
-                </Columns>
-
-                <!-- ==live-dates== · the 15 Mittwochs, folded in here 2026-08-06:
-                     they are THIS project's dates, and „Alle Termine" now names
-                     the fetched list below, not this run. -->
-                <UiaDateList :dates="live.dates" :time="live.time" />
-                <!-- The public beat that closes the arc · not a Mittwoch, so
-                     not run through the date-parser (`vsl.` is part of the date). -->
-                <p class="uia-performance">
-                    <span class="uia-performance-label">{{ live.performance.label }}</span>
-                    <span class="uia-performance-date">{{ live.performance.date }}</span>
-                </p>
-                <p class="uia-venue">{{ live.venue }}</p>
-
-                <!-- ==live-highlight== · the deadline and the threshold -->
-                <UiaHighlight :text="live.highlight" />
-                <p class="uia-registration">
-                    Anmeldung:
-                    <a :href="`mailto:${live.registration.email}`">{{ live.registration.email }}</a>
+                <UiaTaxonomyBand :overline="featuredOverline" :heading="featured.name" />
+                <p v-if="featuredSubline" class="uia-featured-subline">{{ featuredSubline }}</p>
+                <UiaImage v-if="featuredImage" :src="featuredImage" :alt="featured.name" ratio="wide" />
+                <p class="uia-featured-link">
+                    <a :href="eventPath(featured)" @click.prevent="openEventRow(featured)">→ mehr erfahren &amp; anmelden</a>
                 </p>
             </Container>
         </Section>
 
-        <!-- ==agenda-rows== · „Alle Termine", central (HD 2026-08-06) · DB-backed.
-             Empty answer → „Nächste Termine" + „... auf Anfrage", never a blank. -->
+        <!-- ==agenda-rows== · „Alle Termine", central · empty-detection per HD -->
         <Section background="default">
             <Container>
                 <UiaTaxonomyBand :heading="listHeading" taxonomy="veranstaltungen" />
                 <ItemList :items="listRows" size="small" width="inherit" columns="off"
-                    interaction="static" :dataMode="false" headingLevel="h3" />
+                    interaction="static" :dataMode="false" headingLevel="h3" @item-click="openEventItem" />
                 <!-- Dev-only marker. The fallback keeps the page correct, but it must
                      not be able to hide that the events endpoint stopped answering. -->
                 <p v-if="showSourceMarker" class="uia-source-marker">
@@ -95,101 +60,127 @@
             </Container>
         </Section>
 
-        <!-- ==closed== · the finished turns · „grün abgeschlossen", never red -->
-        <Section background="muted">
+        <!-- ==posts== · „Was schon war" · db posts, closedArcs only as outage-fallback -->
+        <Section v-if="showPostsBand" background="muted">
             <Container>
                 <UiaTaxonomyBand heading="Was schon war" taxonomy="veranstaltungen" />
-                <div class="uia-closed-grid">
+                <ItemList v-if="!postsFallback" :items="postItems" size="small" width="inherit" columns="off"
+                    interaction="static" :dataMode="false" headingLevel="h3" @item-click="openPostItem" />
+                <div v-else class="uia-closed-grid">
                     <UiaArcCard v-for="arc in closedArcs" :key="arc.headline" :overline="arc.overline"
                         :headline="arc.headline" :subline="arc.subline" :body="arc.body"
                         :performance="arc.performance" :image="arc.image" :image-alt="arc.imageAlt" />
                 </div>
             </Container>
         </Section>
-
-        <!-- ==forum== · what a Forum-Theater Aufführung actually is -->
-        <Section background="default">
-            <Container>
-                <UiaTaxonomyBand :overline="forumTheater.overline" :heading="forumTheater.headline" />
-                <Prose>
-                    <p v-for="(paragraph, i) in forumTheater.prose" :key="i">{{ paragraph }}</p>
-                    <p>{{ forumTheater.tickets }}</p>
-                </Prose>
-            </Container>
-        </Section>
-
-        <!-- ==flinta== dropped from this page per HD 2026-08-06 („Zwei Modi, klar
-             unterschieden"). The content stays in content/agenda.ts — the words
-             are the collective's; only the rendering was ruled. -->
     </UiaPageFrame>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
-import Columns from '@/components/Columns.vue'
-import Column from '@/components/Column.vue'
-import Prose from '@/components/Prose.vue'
 import ItemList from '@/components/clist/ItemList.vue'
 import UiaPageFrame from './UiaPageFrame.vue'
 import UiaHero from './UiaHero.vue'
 import UiaTaxonomyBand from './UiaTaxonomyBand.vue'
-import UiaDateList from './UiaDateList.vue'
-import UiaHighlight from './UiaHighlight.vue'
 import UiaImage from './UiaImage.vue'
 import UiaArcCard from './UiaArcCard.vue'
-import { useUiaEvents } from './useUiaEvents'
-import type { UiaListItem } from './content/agenda'
+import type { UiaListItem } from './uiaItems'
 import {
-    pageTitle,
-    hero,
-    live,
-    closedArcs,
-    forumTheater,
-} from './content/agenda'
+    useUiaEvents,
+    eventDateLine,
+    eventRowImage,
+    UIA_DOMAIN_CODE,
+    type CvEventRow,
+} from './useUiaEvents'
+import { useUiaPosts, type CvPostRow } from './useUiaPosts'
+import { pageTitle, hero, closedArcs } from './content/agenda'
 
-/**
- * Task A · the agenda rows come from CV's own `events` table, via
- * `/api/events?project=utopiaxaction` — the SAME endpoint `EventPanel` writes to,
- * so an edit made while logged in shows up here. (The first cut read
- * `/api/odoo/events`; that is an admin-only, unscoped, read-only surface — wrong
- * road for uia. Odoo stays in the picture as a 2-way sync *behind* this endpoint.)
- *
- * `useUiaEvents` seeds itself with the authored `agendaItems` synchronously, so
- * this band is never empty, then swaps in the DB rows once they arrive. If the
- * endpoint does not answer it keeps the authored rows — see the composable for
- * why that is a deliberate fallback rather than a swallowed error.
- *
- * 🚩 The Wednesday-slot editorial flag under `agendaItems` still stands: the
- * Kernprogramm and „Meine Grenzen" claim the same mittwochs 19–21 slot. Whether
- * that shows up here now depends on what is in the DB — it is the owners'
- * question either way, and is not resolved by guessing.
- */
-// Destructured so the refs are top-level template bindings and Vue auto-unwraps
-// them — `agenda.items.value` in a template would be a nested-ref trap.
+const router = useRouter()
+
 const {
     items: agendaRows,
+    rows: eventRows,
     isFallback,
     isEmpty,
     error: agendaError,
     load: loadAgenda,
 } = useUiaEvents()
 
-onMounted(() => {
+const {
+    rows: postRows,
+    items: postItems,
+    isEmpty: postsEmpty,
+    isFallback: postsFallback,
+    load: loadPosts,
+} = useUiaPosts()
+
+/** The project's own heading (db) — authored chrome until it answers. */
+const projectHeadline = ref<string | null>(null)
+
+onMounted(async () => {
     loadAgenda()
+    loadPosts()
+    try {
+        const response = await fetch(`/api/projects/${UIA_DOMAIN_CODE}`)
+        if (response.ok) {
+            const data = await response.json()
+            const heading = (data.heading || data.name || '') as string
+            // projects.heading is crearis-md — the hero prints plain text.
+            projectHeadline.value = heading.replace(/\*\*/g, '').trim() || null
+        }
+    } catch { /* authored fallback stays */ }
 })
 
-/**
- * Empty-detection (HD 2026-08-06, wording verbatim): when a successful answer
- * holds nothing upcoming, the heading reads „Nächste Termine" instead of
- * „Alle Termine", and one row says „... auf Anfrage". Chrome, not owner-content.
- */
+const pageHeadline = computed(() => projectHeadline.value || hero.headline)
+
+// ── featured · always the first item of „Alle Termine" (HD ruling ⑤) ────────
+const featured = computed<CvEventRow | null>(() => eventRows.value[0] ?? null)
+const featuredOverline = computed(() => {
+    if (!featured.value) return ''
+    return eventDateLine(featured.value) || featured.value.teaser?.trim() || ''
+})
+/** When the date-line leads, the teaser still gets said — as the subline. */
+const featuredSubline = computed(() => {
+    if (!featured.value) return null
+    return eventDateLine(featured.value) ? featured.value.teaser?.trim() || null : null
+})
+const featuredImage = computed(() => {
+    if (!featured.value) return undefined
+    return featured.value.img_wide?.url || eventRowImage(featured.value)
+})
+
+// ── empty-detection (HD 2026-08-06, wording verbatim) ───────────────────────
 const listHeading = computed(() => (isEmpty.value ? 'Nächste Termine' : 'Alle Termine'))
-
 const emptyRow: UiaListItem[] = [{ heading: '**... auf Anfrage**' }]
-
 const listRows = computed(() => (isEmpty.value ? emptyRow : agendaRows.value))
+
+// ── posts band · hidden when the store answers empty ────────────────────────
+const showPostsBand = computed(() => !postsEmpty.value && (postItems.value.length > 0 || postsFallback.value))
+
+// ── navigation · into the EXISTING detail pages, never a second editor ──────
+function eventPath(row: CvEventRow): string {
+    return `/sites/${UIA_DOMAIN_CODE}/events/${row.id}`
+}
+
+function openEventRow(row: CvEventRow) {
+    router.push(eventPath(row))
+}
+
+/** Fallback rows are authored — they have no page behind them, so no push. */
+function openEventItem(item: UiaListItem) {
+    const index = listRows.value.indexOf(item)
+    const row = index >= 0 ? eventRows.value[index] : undefined
+    if (row) openEventRow(row)
+}
+
+function openPostItem(item: UiaListItem) {
+    const index = postItems.value.indexOf(item)
+    const row: CvPostRow | undefined = index >= 0 ? postRows.value[index] : undefined
+    if (row) router.push(`/sites/${UIA_DOMAIN_CODE}/posts/${row.id}`)
+}
 
 /** Dev-only: never let the fallback silently mask a dead endpoint. */
 const showSourceMarker = computed(() => import.meta.env.DEV && isFallback.value)
@@ -201,56 +192,16 @@ const sourceMarkerText = computed(() =>
 </script>
 
 <style scoped>
-.uia-live-subline {
-    margin: 0 0 1.25rem;
+.uia-featured-subline {
+    margin: 0 0 1.1rem;
     font-size: clamp(0.9375rem, 1.6vw, 1.0625rem);
     font-weight: 300;
 }
 
-/* Their question-block · set apart, larger, the last line carrying the weight. */
-.uia-questions {
-    margin: 0 0 1.5rem;
-    padding: 0;
-    list-style: none;
-}
-
-.uia-questions li {
-    margin: 0 0 0.6rem;
-    font-size: clamp(1.125rem, 2.6vw, 1.625rem);
-    font-weight: 300;
-    line-height: 1.3;
-}
-
-.uia-question-last {
+.uia-featured-link {
+    margin: 1rem 0 0;
+    font-size: 1rem;
     font-weight: 700;
-}
-
-.uia-registration {
-    margin: 0.9rem 0 0;
-    font-size: 0.9375rem;
-}
-
-/* ==Performance== · the arc's public close, given its own weight */
-.uia-performance {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: space-between;
-    margin: 0.9rem 0 0;
-    padding: 0.6rem 0.8rem;
-    background-color: var(--color-muted-bg);
-    font-size: 0.9375rem;
-}
-
-.uia-performance-label {
-    font-weight: 700;
-}
-
-.uia-venue {
-    margin: 0.7rem 0 0;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: var(--color-muted-contrast);
 }
 
 .uia-closed-grid {

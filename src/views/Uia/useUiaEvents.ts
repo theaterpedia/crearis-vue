@@ -78,6 +78,10 @@ export interface CvEventRow {
     date_begin?: string | null
     date_end?: string | null
     cimg?: string | null
+    /** Registry shapes, propagated from `img_id` (migration 063 / local adapter). */
+    img_square?: { url?: string } | null
+    img_thumb?: { url?: string } | null
+    img_wide?: { url?: string } | null
     domaincode?: string | null
 }
 
@@ -140,29 +144,42 @@ export function isKnownPast(row: CvEventRow, today: Date): boolean {
     return row.date_begin.slice(0, 10) < today.toISOString().slice(0, 10)
 }
 
-/** Build the crearis-md heading, as `overline **HEADLINE**`. */
-export function composeHeading(row: CvEventRow): string {
+/** `'MI 23.09.26 · 19:00 – 21:00 Uhr'` — or null for an undated row. */
+export function eventDateLine(row: CvEventRow): string | null {
     const day = toUiaDay(row.date_begin)
     const time = toTimeRange(row.date_begin, row.date_end)
-    const dateLine = [day, day ? time : null].filter(Boolean).join(' · ')
+    return [day, day ? time : null].filter(Boolean).join(' · ') || null
+}
+
+/** Build the crearis-md heading, as `overline **HEADLINE**`. */
+export function composeHeading(row: CvEventRow): string {
     // Falls back to the teaser so an undated row still says something above its
     // headline rather than leading with nothing.
-    const overline = dateLine || row.teaser?.trim() || ''
+    const overline = eventDateLine(row) || row.teaser?.trim() || ''
     return `${overline ? `${overline} ` : ''}**${row.name}**`
+}
+
+/** Row image: the registry's square shape first, a plain cimg URL second. */
+export function eventRowImage(row: CvEventRow): string | undefined {
+    const url = row.img_square?.url || row.img_thumb?.url || row.cimg || undefined
+    // Dropped rather than emptied — ItemRow renders `<img v-else-if="cimg">`
+    // unguarded, so '' (or a TODO marker) would be a broken image.
+    if (!url || url.trim().toUpperCase().startsWith('TODO')) return undefined
+    return url
 }
 
 /** Map a CV event row onto the `ListItem` shape `ItemList` renders. */
 function toItem(row: CvEventRow): UiaListItem {
     const item: UiaListItem = { heading: composeHeading(row) }
-    // Dropped rather than emptied — ItemRow renders `<img v-else-if="cimg">`
-    // unguarded, so '' would be a broken image. img_thumb/img_square JSONB are
-    // not read here; every uia image is still 'TODO HP' (§8).
-    if (row.cimg && !row.cimg.trim().toUpperCase().startsWith('TODO')) item.cimg = row.cimg
+    const cimg = eventRowImage(row)
+    if (cimg) item.cimg = cimg
     return item
 }
 
 export function useUiaEvents() {
     const items = ref<UiaListItem[]>([])
+    /** Raw DB rows behind `items` — empty on fallback (the fallback is authored, not rows). */
+    const rows = ref<CvEventRow[]>([])
     const source = ref<UiaEventsSource>('content')
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -170,6 +187,7 @@ export function useUiaEvents() {
     /** The authored agenda — the fallback, and the pre-fetch initial state. */
     function useContentFallback(reason?: string) {
         items.value = toListItems(agendaItems)
+        rows.value = []
         source.value = 'content'
         if (reason) {
             console.warn(
@@ -197,6 +215,7 @@ export function useUiaEvents() {
             // authored fallback pretending events exist.
             if (data.length === 0) {
                 items.value = []
+                rows.value = []
                 source.value = 'empty'
                 return
             }
@@ -207,12 +226,14 @@ export function useUiaEvents() {
             const ahead = data.filter((row) => !isKnownPast(row, options.today ?? new Date()))
             if (ahead.length === 0) {
                 items.value = []
+                rows.value = []
                 source.value = 'empty'
                 return
             }
 
             const scoped = options.limit ? ahead.slice(0, options.limit) : ahead
             items.value = scoped.map(toItem)
+            rows.value = scoped
             source.value = 'db'
         } catch (cause) {
             error.value = cause instanceof Error ? cause.message : String(cause)
@@ -228,6 +249,7 @@ export function useUiaEvents() {
 
     return {
         items,
+        rows,
         source,
         loading,
         error,
