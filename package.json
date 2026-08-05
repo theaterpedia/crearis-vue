@@ -46,6 +46,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "green-gate": "node scripts/green-gate.mjs",
+    "green-gate:update": "node scripts/green-gate.mjs --update",
     "test:unit": "SKIP_MIGRATIONS=true vitest run",
     "test:coverage": "vitest run --coverage",
     "test:sqlite": "TEST_DATABASE_TYPE=sqlite vitest run",

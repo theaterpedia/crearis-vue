@@ -150,6 +150,20 @@
                         <button class="td-btn td-btn-primary" type="submit" :disabled="busy">anlegen</button>
                     </form>
 
+                    <!--
+                      Legibility, not behaviour. Post-sync is a deliberate no-op until
+                      `posts` gets migration-060's stubs (`odoo_xmlid` / `confirmed_at` /
+                      `odoo_stats`) — events have them, posts do not. The runner logs why,
+                      but from here someone sets a post to `confirmed` (512), crosses what
+                      looks like the same rubicon events cross, and sees nothing happen.
+                      Correct behaviour, silent surface. So it says so.
+                    -->
+                    <p class="td-note td-dim td-sync-note">
+                        Hinweis: Beiträge werden noch <strong>nicht</strong> mit Odoo synchronisiert —
+                        <code>posts</code> fehlen die 060-Felder. Der Status lässt sich setzen,
+                        ein Sync passiert aber nicht.
+                    </p>
+
                     <p v-if="!posts.length" class="td-note td-dim">Noch keine Beiträge.</p>
                     <ItemList v-else :items="postItems" size="small" width="inherit" columns="off"
                         interaction="static" :dataMode="false" headingLevel="h4" @item-click="openPost"
@@ -448,6 +462,16 @@ function openPost(item: DashItem) {
 
 .td-dim {
     color: var(--color-muted-contrast);
+}
+
+/* Marked as a standing caveat rather than an error — nothing is broken. */
+.td-sync-note {
+    margin-bottom: 0.9rem;
+    padding: 0.5rem 0.7rem;
+    border-left: 4px solid var(--color-secondary-bg);
+    background-color: color-mix(in oklch, var(--color-secondary-bg) 12%, transparent);
+    font-size: 0.8125rem;
+    line-height: 1.5;
 }
 
 .td-error {

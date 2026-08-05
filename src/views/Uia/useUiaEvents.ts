@@ -35,28 +35,40 @@
  * row shape (`X_Assets/UI_theaterpedia_homepage.png`, §5) is exactly this: overline
  * date-line + bold headline.
  *
- * ── Fallback · deliberate, and deliberately visible ─────────────────────────
- * On failure — or on an empty result — the agenda keeps `content/agenda.ts` →
- * `agendaItems` rather than showing an error or a blank column. A public agenda
- * that blanks because a backend hiccuped is worse than one showing the authored
- * truth, and the content files ARE that truth.
+ * ── Fallback vs. empty · two different states (HD ruling 2026-08-06) ────────
+ * On TRANSPORT failure the agenda keeps `content/agenda.ts` → `agendaItems`
+ * rather than showing an error or a blank column — a public agenda that blanks
+ * because a backend hiccuped is worse than one showing the authored truth, and
+ * on the file-backed standalone deploy `/api/events` does not exist at all.
  *
- * Empty counts as failure on purpose: a project-scoping mistake and "no events"
- * are indistinguishable from here, and rendering nothing is the worse of the two.
- * But a silent fallback would let the live agenda drift stale unnoticed, so
- * `source` is returned and the failure is logged loudly. Nothing hides it.
+ * A SUCCESSFUL empty answer is different: since HD's 2026-08-06 ruling it is a
+ * real state (`source: 'empty'`), and the page renders „Nächste Termine" +
+ * „... auf Anfrage" instead of pretending events exist. (Before, empty counted
+ * as failure because a scoping mistake and "no events" are indistinguishable
+ * from here — that concern now lives with whoever seeds the store.)
+ * `source` is returned either way and failures are logged loudly. Nothing hides.
  */
 
 import { computed, ref } from 'vue'
 import { toListItems, type UiaListItem } from './uiaItems'
 import { formatUiaDay } from './uiaDates'
+import { carriesOffset, parseToVenueWallClock } from '@/utils/displayTimezone'
 import { agendaItems } from './content/agenda'
 
 /** The ratified domaincode · CO@prod 2026-05-20, decision-record §2.5. */
 export const UIA_DOMAIN_CODE = 'utopiaxaction'
 
-/** Where the rows came from. `'content'` means the endpoint did not answer usefully. */
-export type UiaEventsSource = 'db' | 'content'
+/**
+ * Where the rows came from.
+ * - `'db'` — the endpoint answered with upcoming rows.
+ * - `'empty'` — the endpoint answered SUCCESSFULLY with nothing upcoming. A real,
+ *   renderable state since HD's 2026-08-06 ruling: the page shows „Nächste
+ *   Termine" + „... auf Anfrage" instead of the authored fallback.
+ * - `'content'` — the endpoint did not answer (transport failure / bad shape) —
+ *   the authored agenda keeps the public page truthful through a backend hiccup,
+ *   and on the file-backed standalone deploy, which has no `/api/events` at all.
+ */
+export type UiaEventsSource = 'db' | 'empty' | 'content'
 
 /** The subset of a CV `events` row this view consumes. `/api/events` returns `e.*`. */
 export interface CvEventRow {
@@ -70,9 +82,32 @@ export interface CvEventRow {
 }
 
 /** `'2026-09-23T19:00:00'` or `'2026-09-23 19:00:00'` → `'MI 23.09.26'`. */
+/**
+ * Normalise to the venue's wall-clock string, so the lexical readers below stay
+ * correct for both storage shapes.
+ *
+ * CV's own rows are naive (`2026-11-04T19:00:00`) and are ALREADY venue-time — reading
+ * them lexically is correct. Odoo's wire format carries an offset
+ * (`2026-11-04 18:00:00+00:00`, K4) and must be converted, or the UTC clock is printed
+ * as though it were the Augsburg clock. Measured before this fix: a 19:00 Berlin event
+ * rendered as `07:00 – 09:00 Uhr` in every browser, everywhere.
+ *
+ * The offset-vs-naive decision itself lives in `utils/displayTimezone` — one rule for
+ * the whole platform, not a second copy here. (Same lesson as WORKFLOW_MASK: a
+ * predicate two tiers both depend on cannot live in one of them.)
+ */
+function toVenueWallClock(value: string): string {
+    if (!carriesOffset(value)) return value
+    const zoned = parseToVenueWallClock(value)
+    if (Number.isNaN(zoned.getTime())) return value
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${zoned.getFullYear()}-${pad(zoned.getMonth() + 1)}-${pad(zoned.getDate())}`
+        + `T${pad(zoned.getHours())}:${pad(zoned.getMinutes())}:${pad(zoned.getSeconds())}`
+}
+
 function toUiaDay(dateBegin: string | null | undefined): string | null {
     if (!dateBegin) return null
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateBegin)
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(toVenueWallClock(dateBegin))
     if (!match) return null
     const [, year, month, day] = match as unknown as [string, string, string, string]
     return formatUiaDay(`${day}.${month}.${year.slice(2)}`)
@@ -81,7 +116,7 @@ function toUiaDay(dateBegin: string | null | undefined): string | null {
 /** `'…T19:00:00'` + `'…T21:00:00'` → `'19:00 – 21:00 Uhr'`. En-dash, as the flyer prints it. */
 function toTimeRange(begin: string | null | undefined, end: string | null | undefined): string | null {
     const clock = (value: string | null | undefined): string | null => {
-        const match = /[T ](\d{2}):(\d{2})/.exec(value ?? '')
+        const match = /[T ](\d{2}):(\d{2})/.exec(value ? toVenueWallClock(value) : '')
         return match ? `${match[1]}:${match[2]}` : null
     }
     const from = clock(begin)
@@ -156,19 +191,23 @@ export function useUiaEvents() {
             // Bare array, no envelope — unlike /api/odoo/events.
             if (!Array.isArray(data)) throw new Error('unexpected response shape')
 
+            // Empty-detection (HD 2026-08-06): a SUCCESSFUL empty answer is a real
+            // state, not a failure — „nothing is found" renders as „Nächste
+            // Termine" + „... auf Anfrage" (the page's call), never as the
+            // authored fallback pretending events exist.
             if (data.length === 0) {
-                error.value = 'no events returned'
-                useContentFallback(`0 events for project=${UIA_DOMAIN_CODE}`)
+                items.value = []
+                source.value = 'empty'
                 return
             }
 
             // Finished arcs have their own band („Was schon war", from `closedArcs`).
-            // Without this they would appear twice — as cards there and as rows under
-            // „Was ansteht", which says the opposite of what they are.
+            // Without this they would appear twice — as cards there and as rows in
+            // „Alle Termine", which says the opposite of what they are.
             const ahead = data.filter((row) => !isKnownPast(row, options.today ?? new Date()))
             if (ahead.length === 0) {
-                error.value = 'no upcoming events returned'
-                useContentFallback(`${data.length} events, none of them ahead`)
+                items.value = []
+                source.value = 'empty'
                 return
             }
 
@@ -195,5 +234,7 @@ export function useUiaEvents() {
         load,
         /** For a dev-visible marker; never gates content. */
         isFallback: computed(() => source.value === 'content'),
+        /** Successful-but-empty answer — the page renders its empty state. */
+        isEmpty: computed(() => source.value === 'empty'),
     }
 }

@@ -111,32 +111,19 @@ export interface SyncDecision {
 /**
  * Bits 0–16 · the ordinal workflow enum.
  *
- * ⚠ Second definition of this constant. The first is
- * `src/composables/usePostStatusV2.ts:109` — but it is a **non-exported local**
- * inside a Vue composable, so server code cannot import it, and importing a
- * composable here would be wrong anyway. Named identically so the two are findable
- * together with one grep. Lifting it into a shared module would be the real fix.
+ * ✅ **The duplication is gone (2026-07-30).** Both definitions — this one and the
+ * non-exported local at `usePostStatusV2.ts:109` — now come from
+ * `src/utils/status-constants.ts`, which already declares itself the single source
+ * of truth for status values. The cv↔odoo decision thread's D4 (below 512 CV owns,
+ * at/above 512 CV caches) makes this predicate a cross-tier invariant, so it can no
+ * longer live in one tier.
+ *
+ * Re-exported here rather than repointed at every call-site: `odooSync`'s importers
+ * and its 33 tests already take these names from this module, and moving them would
+ * be churn for no gain. The definitions are upstream; these are the same bindings.
  */
-export const WORKFLOW_MASK = (1 << 17) - 1 // 0x1FFFF
-
-/**
- * The ordinal part of `status`, with the toggles masked off.
- *
- * `status` is a **hybrid** (CV-Schema audit, 2026-07-28), one INTEGER packing two
- * regimes: bits 0–16 are an ordinal workflow ENUM (categories are powers of two,
- * **subcategories are composite ordinals in the gaps** — `new_user=3`,
- * `demo_project=24`), and bits 17–21 + 31 are *orthogonal* scope/admin TOGGLES.
- *
- * Rule of thumb from the audit: **ordinal-compare the low 17 bits; bitwise-test the
- * high bits.** Never bit-test the workflow portion — the composite subcategory
- * ordinals make that meaningless.
- *
- * Not `& 7`: that is `compute_role_visibility`'s low-3-bits hack, which collapses
- * everything ≥ demo and is part of why that function misbehaves.
- */
-export function lifecycleStatus(status: number | null | undefined): number {
-    return (status ?? 0) & WORKFLOW_MASK
-}
+export { WORKFLOW_MASK, lifecycleStatus } from '../../src/utils/status-constants'
+import { lifecycleStatus } from '../../src/utils/status-constants'
 
 /**
  * Does this event belong on the Odoo side at all?

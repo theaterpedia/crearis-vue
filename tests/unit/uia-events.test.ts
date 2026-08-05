@@ -173,13 +173,17 @@ describe('useUiaEvents · the fallback keeps the page correct without hiding fai
         expect(error.value).toContain('500')
     })
 
-    it('falls back on an empty result — a scoping mistake reads like "no events"', async () => {
+    it('reports a SUCCESSFUL empty answer as source "empty" — HD 2026-08-06: a real state, not a failure', async () => {
+        // Until 2026-08-06 this test asserted the authored fallback here. The
+        // ruling: „empty-detection is needed … (if nothing is found)" — the page
+        // renders „Nächste Termine" + „... auf Anfrage" from this state.
         mockFetchOk([])
-        const { items, source, error, load } = useUiaEvents()
+        const { items, source, isEmpty, error, load } = useUiaEvents()
         await load()
-        expect(source.value).toBe('content')
-        expect(error.value).toBe('no events returned')
-        expect(items.value).toHaveLength(agendaItems.length)
+        expect(source.value).toBe('empty')
+        expect(isEmpty.value).toBe(true)
+        expect(error.value).toBeNull()
+        expect(items.value).toHaveLength(0)
     })
 
     it('falls back on an unexpected response shape (object, not array)', async () => {
@@ -189,11 +193,13 @@ describe('useUiaEvents · the fallback keeps the page correct without hiding fai
         expect(source.value).toBe('content')
     })
 
-    it('never leaves the agenda empty, whatever went wrong', async () => {
+    it('never leaves the agenda empty on TRANSPORT failure — the empty state is the page`s to render', async () => {
+        // Failures keep the authored rows; a successful `[]` is NOT a failure
+        // any more (see the empty-detection test above) — the PAGE renders its
+        // „... auf Anfrage" row from `isEmpty`, so the band still never blanks.
         for (const bad of [
             () => Promise.reject(new Error('x')),
             () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) }),
-            () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
         ]) {
             vi.stubGlobal('fetch', vi.fn(bad))
             const { items, load } = useUiaEvents()
@@ -242,15 +248,51 @@ describe('useUiaEvents · the „Was ansteht" band shows what is ahead', () => {
         expect(items.value).toHaveLength(1)
     })
 
-    it('falls back when everything returned is already past', async () => {
-        vi.spyOn(console, 'warn').mockImplementation(() => {})
+    it('reports "empty" when everything returned is already past — nothing ahead IS nothing found', async () => {
+        // Re-pinned 2026-08-06: previously this fell back to the authored rows;
+        // under HD's empty-detection ruling the page says „... auf Anfrage".
         mockFetchOk([cvEvent({ date_begin: '2026-06-10T19:00:00' })])
-        const { source, error, items, load } = useUiaEvents()
+        const { source, isEmpty, error, items, load } = useUiaEvents()
         await load({ today: TODAY })
-        expect(source.value).toBe('content')
-        expect(error.value).toBe('no upcoming events returned')
-        // the count that explains WHY goes to the log, not the error field
-        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('none of them ahead'))
-        expect(items.value.length).toBeGreaterThan(0)
+        expect(source.value).toBe('empty')
+        expect(isEmpty.value).toBe(true)
+        expect(error.value).toBeNull()
+        expect(items.value).toHaveLength(0)
+    })
+})
+
+describe('venue time · the agenda must not print Odoo\'s UTC clock', () => {
+    // K4 (prod capture 2026-08-03): Odoo puts datetimes on the wire as
+    // 'YYYY-MM-DD HH:MM:SS+00:00' — explicit UTC, no date_tz field. uia reads the clock
+    // lexically, so before the fix a 09:00 Berlin event rendered as 07:00 for EVERY
+    // reader, including one standing in Augsburg. Venue time per HD 2026-08-03.
+    const WIRE: CvEventRow = {
+        id: 1, name: 'Odoo-shaped',
+        date_begin: '2026-09-12 07:00:00+00:00',   // = 09:00 Berlin (CEST)
+        date_end: '2026-09-12 09:00:00+00:00',     // = 11:00 Berlin
+    } as CvEventRow
+    const NAIVE: CvEventRow = {
+        id: 2, name: 'CV-shaped',
+        date_begin: '2026-09-12T09:00:00',         // already venue time
+        date_end: '2026-09-12T11:00:00',
+    } as CvEventRow
+
+    it('converts the offset-carrying wire format to the venue clock', () => {
+        expect(composeHeading(WIRE)).toContain('09:00 – 11:00 Uhr')
+    })
+
+    it('leaves naive CV rows alone — they are already venue time', () => {
+        expect(composeHeading(NAIVE)).toContain('09:00 – 11:00 Uhr')
+    })
+
+    it('renders both storage shapes identically — the pull must not change what the page says', () => {
+        expect(composeHeading(WIRE).replace('Odoo-shaped', 'X'))
+            .toBe(composeHeading(NAIVE).replace('CV-shaped', 'X'))
+    })
+
+    it('keeps the day right across the UTC midnight boundary', () => {
+        // 22:30 UTC on the 12th is 00:30 on the 13th in Berlin (CEST).
+        const late = { id: 3, name: 'late', date_begin: '2026-09-12 22:30:00+00:00' } as CvEventRow
+        expect(composeHeading(late)).toContain('13.09.26')
     })
 })
