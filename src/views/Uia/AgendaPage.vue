@@ -6,24 +6,28 @@
   (`content/agenda.ts` header). So: one arc live, the finished ones closed behind
   it — never a flat date-list.
 
-  ── The cutter-commands ───────────────────────────────────────────────────────
-    ==page-hero==    default · full · band              → UiaHero
-    ==live==         dark    · full · prose+highlight    → the live turn, at depth
-    ==kernprogramm== default · full · prose · arbeitsf.  → the weekly rhythm
-    ==closed==       muted   · full · cards · veranst.   → the finished turns
-    ==forum==        default · full · prose              → what Forum-Theater is
-    ==flinta==       muted   · full · prose              → the two modes
+  ── SIMPLIFIED per HD's ruling, 2026-08-06 (uia thread §10.5) ─────────────────
+  Dropped from this page (the DATA stays in content/agenda.ts, unrendered):
+    „Was ansteht" heading  → the fetched list is now central, headed „Alle Termine"
+    „Beitrag" tiers        → dropped
+    „Unser Kernprogramm"   → dropped
+    „Zwei Modi" (FLINTA)   → dropped
+  The 15-Mittwochs date-run (which carried „Alle Termine" until now) is
+  Meine-Grenzen material and folds into the featured band — FABLE's cut, pulsed
+  back in the thread. Empty-detection: a successful-but-empty answer renders
+  „Nächste Termine" + one row „... auf Anfrage" (HD's wording, verbatim).
+  The featured event is ruled to always be the FIRST item of „Alle Termine" —
+  binding flagged in §10.5 (today's DB fixture cannot satisfy it yet).
+
+  ── The cutter-commands (as they stand after the ruling) ──────────────────────
+    ==page-hero==    default · full · band               → UiaHero
+    ==live==         dark    · full · prose+highlight+run → the featured turn, at
+                     depth, now incl. the 15-Mittwochs run + performance + venue
+    ==agenda-rows==  default · full · list · veranst.     → „Alle Termine", central
+    ==closed==       muted   · full · cards · veranst.    → the finished turns
+    ==forum==        default · full · prose               → what Forum-Theater is
 
   `section: dark` → `Section background="accent"` — see LandingPage.vue for why.
-
-  ── The landing teases, this page books ───────────────────────────────────────
-  Same live project as the landing's band-2, at full depth: all 15 Mittwochs, the
-  venue, the Abschluss-Aufführung, the Beitrag tiers, the registration address.
-
-  ── Open, deliberately not invented ───────────────────────────────────────────
-  `kernprogramm.beitrag` is `null` pending the owners (drop-in vs. Reihe is
-  unknown; only per-project tiers exist in the material). The block renders
-  without it rather than with a made-up number.
 -->
 
 <template>
@@ -55,6 +59,18 @@
                     </Column>
                 </Columns>
 
+                <!-- ==live-dates== · the 15 Mittwochs, folded in here 2026-08-06:
+                     they are THIS project's dates, and „Alle Termine" now names
+                     the fetched list below, not this run. -->
+                <UiaDateList :dates="live.dates" :time="live.time" />
+                <!-- The public beat that closes the arc · not a Mittwoch, so
+                     not run through the date-parser (`vsl.` is part of the date). -->
+                <p class="uia-performance">
+                    <span class="uia-performance-label">{{ live.performance.label }}</span>
+                    <span class="uia-performance-date">{{ live.performance.date }}</span>
+                </p>
+                <p class="uia-venue">{{ live.venue }}</p>
+
                 <!-- ==live-highlight== · the deadline and the threshold -->
                 <UiaHighlight :text="live.highlight" />
                 <p class="uia-registration">
@@ -64,64 +80,18 @@
             </Container>
         </Section>
 
-        <!-- ==agenda-rows== · DB-backed (task A) · CV events through ItemList -->
+        <!-- ==agenda-rows== · „Alle Termine", central (HD 2026-08-06) · DB-backed.
+             Empty answer → „Nächste Termine" + „... auf Anfrage", never a blank. -->
         <Section background="default">
             <Container>
-                <UiaTaxonomyBand heading="Was ansteht" taxonomy="veranstaltungen" />
-                <ItemList :items="agendaRows" size="small" width="inherit" columns="off"
+                <UiaTaxonomyBand :heading="listHeading" taxonomy="veranstaltungen" />
+                <ItemList :items="listRows" size="small" width="inherit" columns="off"
                     interaction="static" :dataMode="false" headingLevel="h3" />
                 <!-- Dev-only marker. The fallback keeps the page correct, but it must
                      not be able to hide that the events endpoint stopped answering. -->
                 <p v-if="showSourceMarker" class="uia-source-marker">
                     {{ sourceMarkerText }}
                 </p>
-            </Container>
-        </Section>
-
-        <!-- ==live-dates== · the 15 Mittwochs of the one project, as a run -->
-        <Section background="default">
-            <Container>
-                <Columns>
-                    <Column width="1/2">
-                        <UiaTaxonomyBand heading="Alle Termine" taxonomy="veranstaltungen" />
-                        <UiaDateList :dates="live.dates" :time="live.time" />
-                        <!-- The public beat that closes the arc · not a Mittwoch, so
-                             not run through the date-parser (`vsl.` is part of the date). -->
-                        <p class="uia-performance">
-                            <span class="uia-performance-label">{{ live.performance.label }}</span>
-                            <span class="uia-performance-date">{{ live.performance.date }}</span>
-                        </p>
-                        <p class="uia-venue">{{ live.venue }}</p>
-                    </Column>
-
-                    <!-- ==live-beitrag== · their 2026 vocabulary -->
-                    <Column width="auto">
-                        <UiaTaxonomyBand heading="Beitrag" :overline="live.beitrag.note" />
-                        <ul class="uia-tiers">
-                            <li v-for="tier in live.beitrag.tiers" :key="tier.label" class="uia-tier">
-                                <span class="uia-tier-amount">{{ tier.amount }}</span>
-                                <span class="uia-tier-label">{{ tier.label }}</span>
-                                <span class="uia-tier-per">{{ tier.per }}</span>
-                            </li>
-                        </ul>
-                        <Prose>
-                            <p>{{ live.beitrag.soli }}</p>
-                        </Prose>
-                    </Column>
-                </Columns>
-            </Container>
-        </Section>
-
-        <!-- ==kernprogramm== · the weekly rhythm under the projects · green -->
-        <Section background="default">
-            <Container>
-                <UiaTaxonomyBand :overline="kernprogramm.overline" :heading="kernprogramm.headline"
-                    taxonomy="arbeitsformen" />
-                <Prose>
-                    <p>{{ kernprogramm.prose }}</p>
-                    <p>{{ kernprogramm.registration }}</p>
-                    <p v-if="kernprogramm.beitrag">{{ kernprogramm.beitrag }}</p>
-                </Prose>
             </Container>
         </Section>
 
@@ -148,21 +118,9 @@
             </Container>
         </Section>
 
-        <!-- ==flinta== · load-bearing and theirs · two modes, stated plainly -->
-        <Section background="muted">
-            <Container>
-                <UiaTaxonomyBand :overline="flinta.overline" :heading="flinta.headline" />
-                <dl class="uia-modes">
-                    <template v-for="mode in flinta.modes" :key="mode.label">
-                        <dt class="uia-mode-label">{{ mode.label }}</dt>
-                        <dd class="uia-mode-body">{{ mode.body }}</dd>
-                    </template>
-                </dl>
-                <Prose>
-                    <p class="uia-flinta-note">{{ flinta.note }}</p>
-                </Prose>
-            </Container>
-        </Section>
+        <!-- ==flinta== dropped from this page per HD 2026-08-06 („Zwei Modi, klar
+             unterschieden"). The content stays in content/agenda.ts — the words
+             are the collective's; only the rendering was ruled. -->
     </UiaPageFrame>
 </template>
 
@@ -182,14 +140,13 @@ import UiaHighlight from './UiaHighlight.vue'
 import UiaImage from './UiaImage.vue'
 import UiaArcCard from './UiaArcCard.vue'
 import { useUiaEvents } from './useUiaEvents'
+import type { UiaListItem } from './content/agenda'
 import {
     pageTitle,
     hero,
     live,
-    kernprogramm,
     closedArcs,
     forumTheater,
-    flinta,
 } from './content/agenda'
 
 /**
@@ -214,6 +171,7 @@ import {
 const {
     items: agendaRows,
     isFallback,
+    isEmpty,
     error: agendaError,
     load: loadAgenda,
 } = useUiaEvents()
@@ -221,6 +179,17 @@ const {
 onMounted(() => {
     loadAgenda()
 })
+
+/**
+ * Empty-detection (HD 2026-08-06, wording verbatim): when a successful answer
+ * holds nothing upcoming, the heading reads „Nächste Termine" instead of
+ * „Alle Termine", and one row says „... auf Anfrage". Chrome, not owner-content.
+ */
+const listHeading = computed(() => (isEmpty.value ? 'Nächste Termine' : 'Alle Termine'))
+
+const emptyRow: UiaListItem[] = [{ heading: '**... auf Anfrage**' }]
+
+const listRows = computed(() => (isEmpty.value ? emptyRow : agendaRows.value))
 
 /** Dev-only: never let the fallback silently mask a dead endpoint. */
 const showSourceMarker = computed(() => import.meta.env.DEV && isFallback.value)
@@ -284,64 +253,10 @@ const sourceMarkerText = computed(() =>
     color: var(--color-muted-contrast);
 }
 
-/* ==Beitrag tiers== */
-.uia-tiers {
-    margin: 0 0 1rem;
-    padding: 0;
-    list-style: none;
-}
-
-.uia-tier {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.75rem;
-    align-items: baseline;
-    padding: 0.55rem 0;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.uia-tier-amount {
-    min-width: 4.5rem;
-    font-size: 1.0625rem;
-    font-weight: 700;
-}
-
-.uia-tier-label {
-    flex: 1 1 auto;
-    font-size: 0.9375rem;
-}
-
-.uia-tier-per {
-    font-size: 0.8125rem;
-    color: var(--color-muted-contrast);
-}
-
 .uia-closed-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: 1.1rem;
-}
-
-/* ==FLINTA*+ modes== */
-.uia-modes {
-    margin: 0 0 1rem;
-}
-
-.uia-mode-label {
-    margin: 0.9rem 0 0.2rem;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-.uia-mode-body {
-    margin: 0;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-}
-
-.uia-flinta-note {
-    font-size: 0.8125rem;
-    color: var(--color-muted-contrast);
 }
 
 /* Dev-only source marker. Loud on purpose — it should be impossible to demo a

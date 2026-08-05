@@ -35,16 +35,18 @@
  * row shape (`X_Assets/UI_theaterpedia_homepage.png`, §5) is exactly this: overline
  * date-line + bold headline.
  *
- * ── Fallback · deliberate, and deliberately visible ─────────────────────────
- * On failure — or on an empty result — the agenda keeps `content/agenda.ts` →
- * `agendaItems` rather than showing an error or a blank column. A public agenda
- * that blanks because a backend hiccuped is worse than one showing the authored
- * truth, and the content files ARE that truth.
+ * ── Fallback vs. empty · two different states (HD ruling 2026-08-06) ────────
+ * On TRANSPORT failure the agenda keeps `content/agenda.ts` → `agendaItems`
+ * rather than showing an error or a blank column — a public agenda that blanks
+ * because a backend hiccuped is worse than one showing the authored truth, and
+ * on the file-backed standalone deploy `/api/events` does not exist at all.
  *
- * Empty counts as failure on purpose: a project-scoping mistake and "no events"
- * are indistinguishable from here, and rendering nothing is the worse of the two.
- * But a silent fallback would let the live agenda drift stale unnoticed, so
- * `source` is returned and the failure is logged loudly. Nothing hides it.
+ * A SUCCESSFUL empty answer is different: since HD's 2026-08-06 ruling it is a
+ * real state (`source: 'empty'`), and the page renders „Nächste Termine" +
+ * „... auf Anfrage" instead of pretending events exist. (Before, empty counted
+ * as failure because a scoping mistake and "no events" are indistinguishable
+ * from here — that concern now lives with whoever seeds the store.)
+ * `source` is returned either way and failures are logged loudly. Nothing hides.
  */
 
 import { computed, ref } from 'vue'
@@ -56,8 +58,17 @@ import { agendaItems } from './content/agenda'
 /** The ratified domaincode · CO@prod 2026-05-20, decision-record §2.5. */
 export const UIA_DOMAIN_CODE = 'utopiaxaction'
 
-/** Where the rows came from. `'content'` means the endpoint did not answer usefully. */
-export type UiaEventsSource = 'db' | 'content'
+/**
+ * Where the rows came from.
+ * - `'db'` — the endpoint answered with upcoming rows.
+ * - `'empty'` — the endpoint answered SUCCESSFULLY with nothing upcoming. A real,
+ *   renderable state since HD's 2026-08-06 ruling: the page shows „Nächste
+ *   Termine" + „... auf Anfrage" instead of the authored fallback.
+ * - `'content'` — the endpoint did not answer (transport failure / bad shape) —
+ *   the authored agenda keeps the public page truthful through a backend hiccup,
+ *   and on the file-backed standalone deploy, which has no `/api/events` at all.
+ */
+export type UiaEventsSource = 'db' | 'empty' | 'content'
 
 /** The subset of a CV `events` row this view consumes. `/api/events` returns `e.*`. */
 export interface CvEventRow {
@@ -180,19 +191,23 @@ export function useUiaEvents() {
             // Bare array, no envelope — unlike /api/odoo/events.
             if (!Array.isArray(data)) throw new Error('unexpected response shape')
 
+            // Empty-detection (HD 2026-08-06): a SUCCESSFUL empty answer is a real
+            // state, not a failure — „nothing is found" renders as „Nächste
+            // Termine" + „... auf Anfrage" (the page's call), never as the
+            // authored fallback pretending events exist.
             if (data.length === 0) {
-                error.value = 'no events returned'
-                useContentFallback(`0 events for project=${UIA_DOMAIN_CODE}`)
+                items.value = []
+                source.value = 'empty'
                 return
             }
 
             // Finished arcs have their own band („Was schon war", from `closedArcs`).
-            // Without this they would appear twice — as cards there and as rows under
-            // „Was ansteht", which says the opposite of what they are.
+            // Without this they would appear twice — as cards there and as rows in
+            // „Alle Termine", which says the opposite of what they are.
             const ahead = data.filter((row) => !isKnownPast(row, options.today ?? new Date()))
             if (ahead.length === 0) {
-                error.value = 'no upcoming events returned'
-                useContentFallback(`${data.length} events, none of them ahead`)
+                items.value = []
+                source.value = 'empty'
                 return
             }
 
@@ -219,5 +234,7 @@ export function useUiaEvents() {
         load,
         /** For a dev-visible marker; never gates content. */
         isFallback: computed(() => source.value === 'content'),
+        /** Successful-but-empty answer — the page renders its empty state. */
+        isEmpty: computed(() => source.value === 'empty'),
     }
 }

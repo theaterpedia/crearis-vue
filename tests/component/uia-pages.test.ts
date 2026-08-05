@@ -144,26 +144,72 @@ describe('AgendaPage', () => {
         expect(text).toContain('MI 20.01.27')
     })
 
-    it('renders the Beitrag tiers in their 2026 vocabulary', async () => {
+    // ── The 2026-08-06 simplification (HD, uia thread §10.5) ────────────────
+    // These three assertions ENCODE A RULING, exactly as their predecessors did:
+    // until 2026-08-06 this file asserted that Beitrag, Kernprogramm and the
+    // FLINTA modes RENDER. HD dropped all three from /agenda in the live round.
+    // The data stays in content/agenda.ts; if one of these goes red, someone
+    // re-added a section that was ruled off — reopen the ruling, don't loosen
+    // the test.
+
+    it('does NOT render the Beitrag tiers — dropped from /agenda (HD 2026-08-06)', async () => {
         const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('Kostendecker')
-        expect(text).toContain('goldene Mitte')
-        expect(text).toContain('Möglichmacher')
-        // The older Super-Early-Bird / Solidarpreis set is explicitly NOT this.
-        expect(text).not.toContain('Early-Bird')
-        expect(text).not.toContain('Solidarpreis')
+        expect(text).not.toContain('Kostendecker')
+        expect(text).not.toContain('goldene Mitte')
+        expect(text).not.toContain('Möglichmacher')
     })
 
-    it('leaves the Kernprogramm Beitrag unrendered while it is null — no invented number', async () => {
+    it('does NOT render the Kernprogramm SECTION — dropped from /agenda (HD 2026-08-06)', async () => {
+        // The prose SECTION is dropped; the „Unser Kernprogramm" ROW in „Alle
+        // Termine" stays — it is a Termin a visitor can act on, and the ruling
+        // named the section. FABLE's reading, flagged in uia thread §10.5 —
+        // if HD wants the row gone too, remove it from content/agenda.ts
+        // `agendaItems` and tighten this to `not.toContain('Unser Kernprogramm')`.
         const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('Unser Kernprogramm')
-        expect(text).not.toMatch(/Kernprogramm[\s\S]{0,400}?\d+\s?€/)
+        expect(text).not.toContain('Dort gibt es Theater der Unterdrückten')
+        expect(text).not.toContain('Anmelden kannst du dich unter')
     })
 
-    it('renders the FLINTA*+ modes, both of them, plainly', async () => {
+    it('does NOT render the FLINTA*+ modes — dropped from /agenda (HD 2026-08-06)', async () => {
         const text = (await mountPage(AgendaPage)).text()
-        expect(text).toContain('FLINTA*+ Spaces')
-        expect(text).toContain('FLINTA*+ Sensitivität')
+        expect(text).not.toContain('Zwei Modi, klar unterschieden')
+        expect(text).not.toContain('FLINTA*+ Spaces')
+    })
+
+    it('keeps „Was schon war" and the Forum-Theater band — NOT dropped by the ruling', async () => {
+        const text = (await mountPage(AgendaPage)).text()
+        expect(text).toContain('Was schon war')
+        expect(text).toContain("Let's rehearse reality")
+    })
+})
+
+describe('AgendaPage · empty-detection (HD 2026-08-06, wording verbatim)', () => {
+    it('renders „Nächste Termine" + „... auf Anfrage" when the endpoint answers empty', async () => {
+        // A SUCCESSFUL empty answer — not a transport failure. Everything else
+        // (themes etc.) still rejects, as in the real deploy.
+        vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+            const url = String(input)
+            if (url.includes('/api/events')) {
+                return Promise.resolve(new Response(JSON.stringify([]), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }))
+            }
+            return Promise.reject(new Error('no backend — uia ships without one'))
+        }))
+
+        const wrapper = await mountPage(AgendaPage)
+        await vi.waitFor(() => expect(wrapper.text()).toContain('Nächste Termine'))
+        const text = wrapper.text()
+        expect(text).toContain('... auf Anfrage')
+        expect(text).not.toContain('Alle Termine')
+    })
+
+    it('keeps the authored agenda on TRANSPORT failure — a hiccup must not blank a public page', async () => {
+        // The default stub (fetch rejects) IS the transport-failure case.
+        const text = (await mountPage(AgendaPage)).text()
+        expect(text).toContain('Alle Termine')
+        expect(text).not.toContain('auf Anfrage')
     })
 })
 

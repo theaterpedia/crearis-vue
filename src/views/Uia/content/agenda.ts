@@ -72,6 +72,9 @@ export const live = {
     registration: { email: 'uiacollective@gmail.com' },
 
     // ==live-beitrag== · shape: list
+    // ⚠ NOT RENDERED since 2026-08-06 — HD dropped „Beitrag" from /agenda
+    // (uia thread §10.5). The data stays: it is the collective's, and the
+    // ruling was about the page, not the words.
     // Their 2026 vocabulary — Kostendecker / goldene Mitte / Möglichmacher —
     // NOT the older Super-Early-Bird / Early-Bird / Solidarpreis set. Settled
     // with HP 2026-07-27; the /start FAQ prose still needs the matching edit.
@@ -128,6 +131,8 @@ export const agendaItems: ReadonlyArray<UiaListItem> = [
 // not claim a date the project owns. Do not resolve this by guessing.
 
 // ==kernprogramm== · section: default · col: full · shape: prose · taxonomy: arbeitsformen
+// ⚠ NOT RENDERED since 2026-08-06 — HD dropped „Unser Kernprogramm" from /agenda
+// (uia thread §10.5). Data kept, unrendered.
 // The weekly rhythm underneath the projects. Green taxonomy.
 // ⚠ OPEN (HP → owners): the Kernprogramm Beitrag (drop-in vs. Reihe) is unknown.
 // Only per-project tiers exist in the material. Leave `beitrag` null until then —
@@ -192,6 +197,9 @@ export const forumTheater = {
 }
 
 // ==flinta== · section: muted · col: full · shape: prose · taxonomy: —
+// ⚠ NOT RENDERED since 2026-08-06 — HD dropped „Zwei Modi, klar unterschieden"
+// from /agenda (uia thread §10.5). Data kept, unrendered — the July note below
+// still stands as the reason this block should find a home again somewhere.
 // Load-bearing and theirs. Two modes, stated plainly — this is the sentence
 // that decides whether a FLINTA*+ person trusts the site.
 export const flinta = {
