@@ -39,7 +39,8 @@
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="post && projectAccess.canAccess.value" :asideOptions="asideOptions"
-            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
+            :showLogo="frameShowLogo">
             <template #header>
                 <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
                 <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
@@ -145,6 +146,7 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/useSysreg'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
+import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 
 const router = useRouter()
 const route = useRoute()
@@ -177,14 +179,14 @@ const canEdit = computed(() => {
     return false
 })
 
-// Navigation items
+// Navigation items · the per-domaincode site-frame decides the PUBLIC chrome
+// (F-4, domainSiteFrames.ts); the dashboard link stays role-gated on top.
+const siteFrame = computed(() => resolveSiteFrame(domaincode.value))
+
 const navigationItems = computed(() => {
-    const items = [
-        {
-            label: 'Project',
-            link: `/sites/${domaincode.value}`
-        }
-    ]
+    const items = siteFrame.value?.navItems
+        ? [...siteFrame.value.navItems]
+        : [{ label: 'Project', link: `/sites/${domaincode.value}` }]
 
     // Add Back button for project role users
     if (user?.value?.activeRole === 'project') {
@@ -196,6 +198,8 @@ const navigationItems = computed(() => {
 
     return items
 })
+
+const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry

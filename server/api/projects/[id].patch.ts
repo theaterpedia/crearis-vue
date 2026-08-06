@@ -70,7 +70,11 @@ export default defineEventHandler(async (event) => {
         for (const field of allowedFields) {
             if (body[field] !== undefined) {
                 updates.push(`${field} = ?`)
-                values.push(body[field])
+                // JSONB fields (config) take a JSON string — the driver cannot
+                // serialize a raw JS object into the parameter (500 on write;
+                // house precedent: versions endpoints stringify snapshots).
+                const value = body[field]
+                values.push(value !== null && typeof value === 'object' ? JSON.stringify(value) : value)
             }
         }
 
