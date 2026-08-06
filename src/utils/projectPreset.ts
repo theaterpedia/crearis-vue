@@ -53,6 +53,16 @@ function isPresetKind(value: unknown): value is ProjectPresetKind {
 /**
  * Resolve a project's preset from its `config` JSONB (`{ preset: '…' }`).
  * Unset or unknown → 'default' — the everyday shape, never an error.
+ *
+ * ⚠ F-1 FINDING (2026-08-06, verified against migrations): `projects.config`
+ * is NOT JSONB — migration 036 converted it to INTEGER, with GENERATED COLUMNS
+ * depending on it (the aside_*/header_*/footer_* surface). The MAY record's
+ * intended carrier (`config.preset` as a JSONB key) ceased to exist at 036;
+ * `schema-definitions/v0.0.2.json` is stale on this. Allocating config BITS is
+ * Foundation (HM/HD) — parked, flagged in the presets thread. Until HD rules
+ * the db carrier, the binding below (domaincode-keyed, same seam and lifecycle
+ * as DOMAIN_THEME_OVERRIDES) is the operative intermediary; this function stays
+ * as the shape the future carrier plugs into.
  */
 export function resolveProjectPreset(config: unknown): ProjectPresetKind {
     if (config && typeof config === 'object') {
@@ -60,4 +70,23 @@ export function resolveProjectPreset(config: unknown): ProjectPresetKind {
         if (isPresetKind(preset)) return preset
     }
     return 'default'
+}
+
+/**
+ * The operative intermediary binding — domaincode → preset, in code, exactly
+ * like DOMAIN_THEME_OVERRIDES next door. One entry per site until the db
+ * carrier lands; the registry then becomes a fallback and empties.
+ */
+export const DOMAIN_PRESETS: Record<string, ProjectPresetKind> = {
+    // uia — the first instance of the class; what uia decides becomes the shape
+    utopiaxaction: 'initiative',
+}
+
+/** Preset for a site, by domaincode. Registry first, then config, then default. */
+export function resolvePresetForDomain(
+    domaincode: string | null | undefined,
+    config?: unknown,
+): ProjectPresetKind {
+    if (domaincode && DOMAIN_PRESETS[domaincode]) return DOMAIN_PRESETS[domaincode]
+    return resolveProjectPreset(config)
 }
