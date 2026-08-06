@@ -39,7 +39,8 @@
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="event && projectAccess.canAccess.value" :asideOptions="asideOptions"
-            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
+            :showLogo="frameShowLogo">
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
@@ -176,6 +177,7 @@ import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/us
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { formatDateTime } from '@/plugins/dateTimeFormat'
 import { useTheme } from '@/composables/useTheme'
+import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 
 const router = useRouter()
 const route = useRoute()
@@ -205,14 +207,15 @@ const canEdit = computed(() => {
     return false
 })
 
-// Navigation items
+// Navigation items · the per-domaincode site-frame decides the PUBLIC chrome
+// (F-4, domainSiteFrames.ts — kills the Theaterpedia-wordmark-on-uia catch);
+// the dashboard link stays role-gated on top.
+const siteFrame = computed(() => resolveSiteFrame(domaincode.value))
+
 const navigationItems = computed(() => {
-    const items = [
-        {
-            label: 'Project',
-            link: `/sites/${domaincode.value}`
-        }
-    ]
+    const items = siteFrame.value?.navItems
+        ? [...siteFrame.value.navItems]
+        : [{ label: 'Project', link: `/sites/${domaincode.value}` }]
 
     if (user?.value?.activeRole === 'project') {
         items.unshift({
@@ -223,6 +226,8 @@ const navigationItems = computed(() => {
 
     return items
 })
+
+const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry

@@ -18,6 +18,9 @@ const router = createRouter({
     { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
+    // /start · the project's enrollment surface — meaning arrives via the preset
+    // (F-3, HD 2026-08-06: initiative = public agenda · schule-project = school-login)
+    { path: '/sites/:domaincode/start', component: () => import('../views/ProjectStartPage.vue') },
     // Posts: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.post__{slug} or {domaincode}.post-{template}__{slug}
     { path: '/sites/:domaincode/posts/:identifier', component: () => import('../views/PostPage.vue') },
