@@ -49,6 +49,17 @@
 
   `/api/events` and `/api/posts` both return a **bare array** of raw rows — no
   `{ success, … }` envelope.
+
+  ── BREADCRUMBS for sister B (E-pass 2026-08-06) ─────────────────────────────
+  5A/5B/5C land HERE (uia thread §10.7·4): project settings · simplified image
+  upload (inspect the project-creation-stepper; per-image consent-to-publish is
+  an `initiative` PRESET PROPERTY — images thread I-6) · a `tempStartConfig`
+  component guarding the config system while using its infra.
+  Mode logic: the drafting-border sits at 64 (HD-blessed; sysreg thread §2) and
+  is NOT the Rubicon (512) — compare the MASKED category, not raw equality.
+  Discipline: „Dashboard = thin UI + state-visualizer + integer-writer" — the
+  semantics live server-side. Preset entry-point: src/utils/projectPreset.ts.
+  Never v-if on density (negative-spec class 5, mechanically greppable).
 -->
 
 <template>

@@ -10,6 +10,15 @@
  * + agenda query), this composable swaps to a real fetch behind the same
  * return-shape — consumers don't change.
  *
+ * BREADCRUMB (E-pass 2026-08-06): preset-resolution's entry-point now exists —
+ * `src/utils/projectPreset.ts` (`resolveProjectPreset(project.config)`), the
+ * originally-intended carrier per AgendaView.vue:46. The swap wires BOTH: the
+ * debug toggle → the resolver, and the mock arrays → the real events store
+ * (`/api/events`, mapping per hcv/threads/2026-08-sysreg.md §2: planned <512 ·
+ * confirmed 512-tier · active 4096-tier · documented 8192/past · cancelled 12288).
+ * Phase-1 rule: presets vary labels + dtags + themes — never the atom-shape
+ * (hcv/threads/2026-08-presets.md §7·5).
+ *
  * Per CTO-cand-2-implementation-brief §3 deliverables-shape · negative-spec
  * §3.1 row-atom decomposition · §3.4 left-edge-tint status-canonical.
  */
