@@ -56,7 +56,7 @@ function isPresetKind(value: unknown): value is ProjectPresetKind {
  *
  * ⚠ F-1 FINDING (2026-08-06, verified against migrations): `projects.config`
  * is NOT JSONB — migration 036 converted it to INTEGER, with GENERATED COLUMNS
- * depending on it (the aside_*/header_*/footer_* surface). The MAY record's
+ * depending on it (the aside_ · header_ · footer_ column surface). The MAY record's
  * intended carrier (`config.preset` as a JSONB key) ceased to exist at 036;
  * `schema-definitions/v0.0.2.json` is stale on this. Allocating config BITS is
  * Foundation (HM/HD) — parked, flagged in the presets thread. Until HD rules
