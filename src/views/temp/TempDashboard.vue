@@ -260,9 +260,12 @@ async function fetchList<T>(url: string): Promise<T[]> {
 
 async function loadRows() {
     const code = encodeURIComponent(domaincode.value)
+    // skip_alpha_filter: this IS the internal editing page the bypass exists
+    // for — since the sysreg project-visibility filter went always-on (HD
+    // 2026-08-06), a draft project's dashboard would otherwise list nothing.
     const [eventRows, postRows] = await Promise.all([
-        fetchList<CvEventRow>(`/api/events?project=${code}`),
-        fetchList<CvPostRow>(`/api/posts?project=${code}`),
+        fetchList<CvEventRow>(`/api/events?project=${code}&skip_alpha_filter=true`),
+        fetchList<CvPostRow>(`/api/posts?project=${code}&skip_alpha_filter=true`),
     ])
     events.value = eventRows
     posts.value = postRows

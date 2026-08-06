@@ -183,13 +183,14 @@
                 </button>
                 <span class="overline-domaincode">{{ projectId }}</span>
 
-                <!-- Alpha Mode: Publish Toggle (always visible for project owners in alpha) -->
-                <div v-if="isAlphaMode() && isProjectOwner" class="alpha-publish-toggle alpha-publish-toggle--inline">
-                    <button class="alpha-toggle-btn" :class="{ 'is-published': isAlphaPublished }"
-                        :disabled="isAlphaUpdating" @click="toggleAlphaPublish"
-                        :title="isAlphaPublished ? 'Öffentlich - Klicken zum Verbergen' : 'Nur Team - Klicken zum Veröffentlichen'">
-                        <span class="toggle-icon">{{ isAlphaPublished ? '🌐' : '🔒' }}</span>
-                    </button>
+                <!-- TURNED OFF (HD 2026-08-06): the status_old publish-toggle decided
+                     visibility through the retired alpha system. Publishing now runs
+                     on sysreg project.status, and its owner-facing editor is not built
+                     yet — say so honestly instead of half-working (project-status thread). -->
+                <div v-if="isProjectOwner" class="alpha-publish-toggle alpha-publish-toggle--inline">
+                    <span class="alpha-toggle-note" title="Veröffentlichen läuft jetzt über project.status (sysreg)">
+                        project.status not fully implemented yet
+                    </span>
                 </div>
             </div>
 
@@ -385,42 +386,10 @@ const STATUS_NEW = 1        // bits 0-2
 const STATUS_DEMO = 8       // bits 3-5
 const STATUS_DRAFT = 64     // bits 6-8
 
-// Alpha mode: computed project visibility status
-const alphaStatusOld = computed(() => projectData.value?.status_old || 'new')
-const isAlphaPublished = computed(() => alphaStatusOld.value === 'public')
-const isAlphaUpdating = ref(false)
-
-// Alpha mode: toggle publish status
-async function toggleAlphaPublish() {
-    if (!isAlphaMode() || !isProjectOwner.value || isAlphaUpdating.value) return
-
-    const newStatusOld = isAlphaPublished.value ? 'draft' : 'public'
-    isAlphaUpdating.value = true
-
-    try {
-        const response = await fetch(`/api/projects/${projectId.value}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status_old: newStatusOld })
-        })
-
-        if (response.ok) {
-            if (projectData.value) {
-                projectData.value.status_old = newStatusOld
-            }
-            console.log(`[Alpha Mode] Project ${newStatusOld === 'public' ? 'published' : 'unpublished'}`)
-        } else {
-            const error = await response.json()
-            console.error('Failed to update alpha publish status:', error)
-            alert('Fehler beim Ändern des Veröffentlichungsstatus')
-        }
-    } catch (error) {
-        console.error('Failed to update alpha publish status:', error)
-        alert('Fehler beim Ändern des Veröffentlichungsstatus')
-    } finally {
-        isAlphaUpdating.value = false
-    }
-}
+// TURNED OFF (HD 2026-08-06): the status_old publish-toggle is retired — sysreg
+// project.status decides visibility now (see server/api/{events,posts}/index.get.ts
+// and useProjectAccess). The sysreg publish-editor is owed; until it lands the
+// header shows an honest 'not fully implemented yet' note. Log: project-status thread.
 
 // Feature flag for new 3-column dashboard layout (alpha/dashboard branch)
 const useNewDashboard = ref(true) // Toggle to switch between old/new dashboard
@@ -564,7 +533,7 @@ async function loadProjectData() {
             console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
             console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
             console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
-            console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
+            console.log('[Alpha Debug] status_old (display-only, decides nothing):', projectData.value?.status_old)
 
             // Load project members
             await loadProjectMembers()
@@ -625,13 +594,10 @@ function completeProject() {
 // Handle project activation: change status to 'draft' and switch to navigation mode
 async function handleActivateProject() {
     try {
-        // Status 'draft' = 64 (from Migration 040: bits 6-8)
-        // In alpha mode, also set status_old = 'draft' for visibility filtering
+        // Status 'draft' = 64 (from Migration 040: bits 6-8).
+        // The parallel status_old='draft' write is TURNED OFF (HD 2026-08-06):
+        // sysreg project.status is the one visibility decider now.
         const updatePayload: Record<string, any> = { status: STATUS_DRAFT }
-        if (isAlphaMode()) {
-            updatePayload.status_old = 'draft'
-            console.log('[Alpha Mode] Also setting status_old = draft')
-        }
 
         const response = await fetch(`/api/projects/${projectId.value}`, {
             method: 'PATCH',
@@ -644,9 +610,6 @@ async function handleActivateProject() {
             projectStatus.value = STATUS_DRAFT
             if (projectData.value) {
                 projectData.value.status = STATUS_DRAFT
-                if (isAlphaMode()) {
-                    projectData.value.status_old = 'draft'
-                }
             }
             // Reset to first navigation tab
             currentNavTab.value = 'homepage'
@@ -729,8 +692,8 @@ const debugAlphaMode = () => {
     console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
     console.log('[Alpha Debug] projectData:', projectData.value)
     console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
-    console.log('[Alpha Debug] alphaStatusOld:', alphaStatusOld.value)
-    console.log('[Alpha Debug] isAlphaPublished:', isAlphaPublished.value)
+    console.log('[Alpha Debug] status_old (display-only, decides nothing):', projectData.value?.status_old)
+    console.log('[Alpha Debug] status (sysreg, the decider):', projectData.value?.status)
 }
 
 // Auth check on mount

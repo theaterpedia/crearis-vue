@@ -12,7 +12,7 @@
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import { useAuth } from './useAuth'
-import { useAlphaMode, ALPHA_STATUS_OLD } from './useAlphaMode'
+import { STATUS, lifecycleStatus } from '@/utils/status-constants'
 
 /**
  * Project access result
@@ -101,7 +101,6 @@ async function checkProjectMembership(
  */
 export function useProjectAccess(): ProjectAccessResult {
     const { user, isAuthenticated } = useAuth()
-    const { isAlpha, isProjectAccessible } = useAlphaMode()
 
     // State
     const projectData = ref<ProjectAccessData | null>(null)
@@ -112,13 +111,13 @@ export function useProjectAccess(): ProjectAccessResult {
     // Computed: project status_old
     const statusOld = computed(() => projectData.value?.status_old || null)
 
-    // Computed: is project publicly accessible
+    // Computed: is project publicly accessible.
+    // Sysreg decides (HD 2026-08-06: project.status, NOT status_old): lifecycle
+    // (masked low 17 bits) at/above RELEASED and below ARCHIVED — a raw `>= 4096`
+    // would admit archived/trash and scope-toggle-inflated values.
     const isPublic = computed(() => {
-        if (!isAlpha.value) {
-            // Non-alpha: check sysreg status (4096 = released)
-            return (projectData.value?.status || 0) >= 4096
-        }
-        return projectData.value?.status_old === ALPHA_STATUS_OLD.PUBLIC
+        const lifecycle = lifecycleStatus(projectData.value?.status || 0)
+        return lifecycle >= STATUS.RELEASED && lifecycle < STATUS.ARCHIVED
     })
 
     // Computed: is user owner
@@ -155,23 +154,15 @@ export function useProjectAccess(): ProjectAccessResult {
         return membershipResult.value.isMember
     })
 
-    // Computed: can access project
+    // Computed: can access project.
+    // The status_old alpha fork is OFF (HD 2026-08-06) — sysreg is the one road.
     const canAccess = computed(() => {
         if (!projectData.value) return false
 
         // Admin always has access
         if (user.value?.activeRole === 'admin') return true
 
-        // Use alpha mode check
-        if (isAlpha.value) {
-            return isProjectAccessible(
-                projectData.value.status_old,
-                isMember.value,
-                false // not preview mode for access check
-            )
-        }
-
-        // Non-alpha: public projects or members
+        // Published projects for everyone, unpublished for members
         return isPublic.value || isMember.value
     })
 
@@ -186,22 +177,18 @@ export function useProjectAccess(): ProjectAccessResult {
         return isOwner.value
     })
 
-    // Computed: deny reason
+    // Computed: deny reason — from sysreg lifecycle, not status_old
     const denyReason = computed(() => {
         if (canAccess.value) return null
         if (!projectData.value) return 'Projekt nicht gefunden'
 
-        if (isAlpha.value) {
-            const status = projectData.value.status_old || ALPHA_STATUS_OLD.NEW
-
-            if (status === ALPHA_STATUS_OLD.NEW) {
-                return 'Projekt wurde noch nicht aktiviert'
-            }
-            if (status === ALPHA_STATUS_OLD.DRAFT) {
-                return 'Projekt ist nur für Mitglieder sichtbar'
-            }
+        const lifecycle = lifecycleStatus(projectData.value.status || 0)
+        if (lifecycle >= STATUS.ARCHIVED) {
+            return 'Projekt ist archiviert'
         }
-
+        if (lifecycle < STATUS.RELEASED) {
+            return 'Projekt ist noch nicht veröffentlicht'
+        }
         return 'Kein Zugriff auf dieses Projekt'
     })
 

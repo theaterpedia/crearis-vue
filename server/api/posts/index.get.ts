@@ -1,7 +1,7 @@
 import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
 import { sessions } from '../../utils/session-store'
-import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mode'
+import { STATUS, WORKFLOW_MASK } from '../../../src/utils/status-constants'
 
 // GET /api/posts - List posts with optional filters
 // After Migration 019 Chapter 3B:
@@ -13,10 +13,10 @@ import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mo
 // After v0.2final:
 // - Optional visibility filtering based on user role (r_anonym, r_member, etc.)
 // - Pass ?visibility=true to enable role-based filtering
-// Alpha mode (v0.4):
-// - ?alpha_preview=true to include 'draft' projects (when in alpha mode)
-// - ?skip_alpha_filter=true to bypass alpha filtering entirely (for internal editing pages)
-// - Filters by projects.status_old instead of sysreg status
+// Sysreg visibility (HD 2026-08-06: project.status decides — status_old is OFF):
+// - default: only posts of PUBLISHED projects (lifecycle ≥ RELEASED, below ARCHIVED)
+// - ?alpha_preview=true widens the floor to DRAFT-tier (param name kept for compat)
+// - ?skip_alpha_filter=true bypasses entirely (internal editing pages / dashboards)
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
@@ -32,16 +32,16 @@ export default defineEventHandler(async (event) => {
         `
         const params: any[] = []
 
-        // Alpha mode: filter by projects.status_old
-        // skip_alpha_filter=true bypasses this entirely (for internal editing pages)
-        // TODO v0.5: Remove this block when migrating to full sysreg status
+        // Sysreg project-visibility filter (replaces the status_old alpha filter,
+        // HD 2026-08-06). `status` is a HYBRID: ordinal-compare the MASKED low
+        // 17 bits only, and bound out archived/trash — they sort above RELEASED.
+        // Always on (no VITE_APP_MODE dependence); the two escape params keep
+        // their established names and their established meanings.
         const skipAlphaFilter = query.skip_alpha_filter === 'true'
-        if (isServerAlphaMode() && !skipAlphaFilter) {
-            const alphaPreview = query.alpha_preview === 'true'
-            const validStatuses = getAlphaProjectStatuses(alphaPreview)
-            // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
-            sql += ` AND pr.status_old IN (${validStatuses.map(() => '?').join(', ')})`
-            params.push(...validStatuses)
+        if (!skipAlphaFilter) {
+            const floor = query.alpha_preview === 'true' ? STATUS.DRAFT : STATUS.RELEASED
+            sql += ` AND (pr.status & ${WORKFLOW_MASK}) >= ? AND (pr.status & ${WORKFLOW_MASK}) < ${STATUS.ARCHIVED}`
+            params.push(floor)
         }
 
         // Visibility filtering (optional - enabled with ?visibility=true)

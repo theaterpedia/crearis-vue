@@ -133,7 +133,7 @@ interface EntityItem {
 
 interface Props {
     items?: ListItem[] // Now optional
-    entity?: 'posts' | 'events' | 'instructors' | 'locations' | 'projects' | 'images' | 'all'
+    entity?: 'posts' | 'events' | 'instructors' | 'locations' | 'projects' | 'images' | 'all' | 'none'
     project?: string // domaincode filter
     images?: number[] // Specific image IDs to fetch
     filterIds?: number[] // Filter fetched entities by these IDs
@@ -232,7 +232,13 @@ watch(() => props.selectedIds, (newVal) => {
  * Determine if we're in data mode (fetching from API)
  */
 const dataModeActive = computed(() => {
-    return props.dataMode && (props.entity !== undefined || props.images !== undefined)
+    // 'none' is page-config's sentinel for "no entity behind this list"
+    // (usePageOptions list.type includes 'none') — it must behave exactly like
+    // an absent entity, i.e. no fetch. Letting it through built /api/none-ish
+    // requests whose HTML fallback produced the twin prod banners „Unexpected
+    // token '<'" + „Invalid JSON response from none API" (deploy-uia thread).
+    const entity = props.entity === 'none' ? undefined : props.entity
+    return props.dataMode && (entity !== undefined || props.images !== undefined)
 })
 
 /**
