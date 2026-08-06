@@ -23,7 +23,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="project && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectDomaincode="project.domaincode" :projectId="project.id"
-            :navItems="navigationItems">
+            :navItems="navigationItems" :showLogo="frameShowLogo">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Project Editor Link (for owners/admins) -->
@@ -225,6 +225,7 @@ import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
+import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 import { extractRouteSlug } from '@/utils/xmlid'
 
 const router = useRouter()
@@ -392,13 +393,14 @@ const canEdit = computed(() => {
 })
 
 // Navigation items
+// The per-domaincode site-frame decides the PUBLIC chrome (F-4,
+// domainSiteFrames.ts); the dashboard link stays role-gated on top.
+const siteFrame = computed(() => resolveSiteFrame(domaincode.value))
+
 const navigationItems = computed(() => {
-    const items = [
-        {
-            label: 'Blog',
-            link: '/blog'
-        }
-    ]
+    const items = siteFrame.value?.navItems
+        ? [...siteFrame.value.navItems]
+        : [{ label: 'Blog', link: '/blog' }]
 
     // Add Back button for project role users
     if (user.value?.activeRole === 'project') {
@@ -410,6 +412,8 @@ const navigationItems = computed(() => {
 
     return items
 })
+
+const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
 
 // Open edit panel
 function openEditPanel() {
