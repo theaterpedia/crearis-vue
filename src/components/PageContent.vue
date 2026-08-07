@@ -28,10 +28,16 @@ const pageSections = ref<any[]>([])
 
 async function fetchPageData() {
     try {
-        // First, fetch the page by project and page_type
-        const pageResponse = await fetch(`/api/pages?projectId=${props.projectId}&pageType=${props.pageType}`)
+        // First, fetch the page by project and page_type. The prod bundle at
+        // aeca74f had this pointing at bare `/api/pages?…` — no such handler
+        // exists (only by-project/by-type/[id]/[index.post]), so Nitro's
+        // SPA-catch-all was answering 200+empty+no-Content-Type, which
+        // triggered a "Unexpected token '<'" banner in the browser.
+        // Now points at the existing by-type handler (snake_case params).
+        const pageResponse = await fetch(`/api/pages/by-type?project_id=${props.projectId}&page_type=${props.pageType}`)
         if (!pageResponse.ok) {
-            // Silently return - no page content is valid
+            // Silently return - no page content is valid (404 is the honest
+            // "no landing page for this project" signal)
             return
         }
 
@@ -43,7 +49,11 @@ async function fetchPageData() {
 
         try {
             const pageData = JSON.parse(responseText)
-            pages.value = Array.isArray(pageData) ? pageData : [pageData]
+            // by-type returns `{ success: true, page: {...} }` · unwrap.
+            // Fall through to the older shape flexibility for any other
+            // callsite that hasn't been migrated.
+            const page = pageData?.page ?? pageData
+            pages.value = Array.isArray(page) ? page : [page]
         } catch (parseError) {
             // Invalid JSON - silently return
             return
