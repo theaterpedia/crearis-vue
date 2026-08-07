@@ -181,6 +181,55 @@
                         @item-trash="deletePost" />
                 </Container>
             </Section>
+
+            <!-- ══ 5A · Projekt-Einstellungen ══════════════════════════════════
+                 The sysreg publish-editor the project-status thread §4·1 owed.
+                 Radio-control discipline (sysreg §3b·7): thin UI + state-visualizer
+                 + integer-writer — one click writes one integer, the semantics live
+                 server-side. Open spots render as STATES, not errors (design §2b). -->
+            <Section v-if="isOwner" background="default">
+                <Container>
+                    <h2 class="td-section-title">Projekt-Einstellungen</h2>
+
+                    <!-- state-visualizer · without shame -->
+                    <p class="td-note">
+                        Status: <strong>{{ projectStatusLabel }}</strong>
+                        <span class="td-state" :class="published ? 'td-state-public' : 'td-state-private'">
+                            {{ published ? 'öffentlich sichtbar' : 'nicht öffentlich' }}
+                        </span>
+                    </p>
+                    <p v-if="beforeBorder" class="td-note td-dim">
+                        Vor der Entwurfs-Grenze (64): <code>/projects</code> zeigt dieses Projekt im Stepper-Modus.
+                    </p>
+
+                    <!-- radio-control · one click, one integer -->
+                    <fieldset class="td-radio-row">
+                        <legend>Projekt-Status setzen</legend>
+                        <label v-for="s in projectStatusChoices" :key="s.value" class="td-radio">
+                            <input type="radio" name="project-status" :value="s.value"
+                                v-model.number="projectStatusChoice" :disabled="busy"
+                                @change="saveProjectStatus" />
+                            <span>{{ s.label }} ({{ s.value }})</span>
+                        </label>
+                    </fieldset>
+
+                    <!-- heading editor · the validator answers 400 with a message
+                         worth showing verbatim (two slots, never three) -->
+                    <form class="td-form" @submit.prevent="saveHeading">
+                        <label class="td-field td-field-wide">
+                            <span>Überschrift (crearis-md · zwei Teile, nie drei)</span>
+                            <input v-model="headingDraft" placeholder="überzeile **ÜBERSCHRIFT**" />
+                        </label>
+                        <button class="td-btn td-btn-primary" type="submit" :disabled="busy">speichern</button>
+                    </form>
+
+                    <!-- the ground, read-only · honest about where it comes from -->
+                    <p class="td-note td-dim">
+                        Preset: <code>{{ presetKind }}</code> (Domaincode-Registry, Träger-Ruling offen) ·
+                        Theme 3 „Institut" + Domain-Override (Schrift · dunkel)
+                    </p>
+                </Container>
+            </Section>
         </template>
     </div>
 </template>
@@ -194,7 +243,16 @@ import ItemList from '@/components/clist/ItemList.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useProjectAccess } from '@/composables/useProjectAccess'
-import { STATUS, STATUS_LABELS_DE } from '@/utils/status-constants'
+import {
+    STATUS,
+    STATUS_LABELS_DE,
+    WORKFLOW_MASK,
+    lifecycleStatus,
+    isPublished,
+    isBeforeDraftingBorder,
+    type StatusValue,
+} from '@/utils/status-constants'
+import { resolvePresetForDomain } from '@/utils/projectPreset'
 import { composeHeading, type CvEventRow } from '@/views/Uia/useUiaEvents'
 
 interface CvPostRow {
@@ -234,6 +292,32 @@ const postForm = ref({ name: '', teaser: '', status: STATUS.DRAFT as number })
 const canAccess = computed(() => projectAccess.canAccess.value)
 const denyReason = computed(() => projectAccess.denyReason.value)
 const projectLabel = computed(() => projectHeading.value || domaincode.value || 'Projekt')
+
+// ── 5A · Projekt-Einstellungen ───────────────────────────────────────────────
+const isOwner = computed(() => projectAccess.isOwner.value)
+const projectStatus = ref<number | null>(null)
+const projectStatusChoice = ref<number | null>(null)
+const headingDraft = ref('')
+
+const published = computed(() => isPublished(projectStatus.value))
+const beforeBorder = computed(() => projectStatus.value !== null && isBeforeDraftingBorder(projectStatus.value))
+
+/** Category label from the MASKED value; a subcategory shows its number, honestly. */
+const projectStatusLabel = computed(() => {
+    if (projectStatus.value === null) return '—'
+    const lifecycle = lifecycleStatus(projectStatus.value)
+    return STATUS_LABELS_DE[lifecycle as StatusValue] ?? String(lifecycle)
+})
+
+/**
+ * The five forward categories — the ladder the radio-control walks. Archived/
+ * trash are deliberately absent: retiring a project is a different act than
+ * setting its working state, and it does not belong on a settings row.
+ */
+const projectStatusChoices = [STATUS.NEW, STATUS.DEMO, STATUS.DRAFT, STATUS.CONFIRMED, STATUS.RELEASED]
+    .map((value) => ({ value, label: STATUS_LABELS_DE[value] ?? String(value) }))
+
+const presetKind = computed(() => resolvePresetForDomain(domaincode.value) ?? '—')
 
 /**
  * The states worth reaching from here. Draft is local-only; `confirmed` is the
@@ -287,6 +371,10 @@ async function loadProject() {
     if (!response.ok) return
     const data = await response.json()
     projectHeading.value = data.heading || data.name || null
+    // 5A · the settings surface reads the same row it writes.
+    projectStatus.value = typeof data.status === 'number' ? data.status : null
+    projectStatusChoice.value = projectStatus.value === null ? null : lifecycleStatus(projectStatus.value)
+    headingDraft.value = data.heading || ''
 }
 
 async function refresh() {
@@ -403,6 +491,33 @@ async function deletePost(item: DashItem) {
     if (!row) return
     if (!window.confirm(`Beitrag „${row.name}" löschen?`)) return
     if (await send(`/api/posts/${row.id}`, 'DELETE')) await refresh()
+}
+
+// ── 5A · the two settings-writers ────────────────────────────────────────────
+
+/**
+ * Integer-writer (sysreg §3b·7): one click moves ONLY the ordinal slot. The
+ * scope/admin toggles (bits 17+) are the hybrid's other regime and stay exactly
+ * as they were — this control has no opinion about them.
+ */
+async function saveProjectStatus() {
+    if (projectStatusChoice.value === null) return
+    const next = ((projectStatus.value ?? 0) & ~WORKFLOW_MASK) | projectStatusChoice.value
+    const ok = await send(`/api/projects/${encodeURIComponent(domaincode.value)}`, 'PATCH', { status: next })
+    if (ok) {
+        await loadProject()
+    } else {
+        // The write failed — snap the radio back to the row's truth.
+        projectStatusChoice.value = projectStatus.value === null ? null : lifecycleStatus(projectStatus.value)
+    }
+}
+
+/** The heading validator answers 400 with a message worth showing verbatim. */
+async function saveHeading() {
+    const heading = headingDraft.value.trim()
+    if (!heading) return
+    const ok = await send(`/api/projects/${encodeURIComponent(domaincode.value)}`, 'PATCH', { heading })
+    if (ok) await loadProject()
 }
 
 // ── navigation · into the EXISTING detail pages, never a second editor ──────
@@ -552,5 +667,49 @@ function openPost(item: DashItem) {
     color: var(--color-contrast);
     font-size: 0.875rem;
     min-width: 12rem;
+}
+
+/* ══ 5A · Projekt-Einstellungen ══ */
+.td-field-wide input {
+    min-width: min(28rem, 80vw);
+}
+
+/* A state, not an error — same weight either way (design §2b). */
+.td-state {
+    margin-left: 0.6rem;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.td-state-public {
+    background-color: color-mix(in oklch, var(--color-positive-bg) 25%, transparent);
+}
+
+.td-state-private {
+    background-color: color-mix(in oklch, var(--color-muted-bg) 60%, transparent);
+}
+
+.td-radio-row {
+    margin: 0.9rem 0;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-border);
+}
+
+.td-radio-row legend {
+    padding: 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-muted-contrast);
+}
+
+.td-radio {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    margin-right: 1.1rem;
+    font-size: 0.875rem;
+    cursor: pointer;
 }
 </style>
