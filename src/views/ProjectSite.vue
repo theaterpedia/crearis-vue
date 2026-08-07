@@ -196,6 +196,11 @@
                 </Container>
             </Section>
         </PageLayout>
+
+        <!-- Site notices (alpha + Sommerpause) — HD-approved, utils/siteNotices.
+             After the v-if chain: the renderer teleports to body anyway. -->
+        <SiteNoticePostits v-if="domaincode && projectAccess.canAccess.value" :domaincode="domaincode"
+            surface="site" />
     </div>
 </template>
 
@@ -204,6 +209,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import PageHeading from '@/components/PageHeading.vue'
+import SiteNoticePostits from '@/components/SiteNoticePostits.vue'
 import EditLink from '@/components/EditLink.vue'
 import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'

@@ -88,6 +88,27 @@ describe('mapEventsToDayGroups · rows → the canonical day-group shape', () =>
         expect(groups[0]?.lines[0]?.overline).toBe('ein Tanztheater-Projekt')
         expect(groups[0]?.lines[0]?.location).toBe('assemblé')
     })
+
+    // The Schwelle-Silhouette (HD 2026-08-07, design-thread §3·3): r_anonym
+    // === false marks a line internal — /start renders it as form-without-
+    // content for guests. The mechanism is DORMANT until the r_* trigger fix
+    // (defect ③) produces real values; null must stay public, or the broken
+    // trigger would silhouette the whole public agenda.
+    it('flags internal ONLY on explicit r_anonym false — null/undefined stay public', () => {
+        const groups = mapEventsToDayGroups([
+            row({ id: 1, r_anonym: false }),
+            row({ id: 2, r_anonym: 0 }),
+            row({ id: 3, r_anonym: null }),
+            row({ id: 4 }),
+            row({ id: 5, r_anonym: true }),
+        ], TODAY)
+        const lines = groups[0]?.lines ?? []
+        expect(lines.find(l => l.id === '1')?.internal).toBe(true)
+        expect(lines.find(l => l.id === '2')?.internal).toBe(true)
+        expect(lines.find(l => l.id === '3')?.internal).toBeUndefined()
+        expect(lines.find(l => l.id === '4')?.internal).toBeUndefined()
+        expect(lines.find(l => l.id === '5')?.internal).toBeUndefined()
+    })
 })
 
 describe('the mock stays intact — offline fixture + no-domaincode fallback', () => {
