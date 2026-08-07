@@ -65,6 +65,22 @@
                     <Container>
                         <h2 class="start-section-title">{{ agendaHeading }}</h2>
 
+                        <!-- S3 · the promoted-first panel (option b, HD-agreed §29):
+                             HEADER ONLY — the bahn-grammar promoted-next row, finally
+                             cashable. The item stays in the list below (ruling ⑤:
+                             featured IS the first item; „Alle Termine" untouched). -->
+                        <button v-if="featured" class="start-featured" type="button" @click="openLine(featured.line)">
+                            <span class="start-featured-text">
+                                <span class="start-featured-overline">{{ featured.group.label }}<template
+                                        v-if="featured.line.timeRange"> · {{ featured.line.timeRange }}</template></span>
+                                <span class="start-featured-headline">{{ featured.line.headline }}</span>
+                                <span v-if="featured.line.overline" class="start-featured-sub">{{
+                                    featured.line.overline }}</span>
+                            </span>
+                            <img v-if="featured.line.image" class="start-featured-img" :src="featured.line.image"
+                                :alt="featured.line.headline" />
+                        </button>
+
                         <AgendaLineList v-if="lineCount > 0" :dayGroups="visibleDayGroups" density="fancy"
                             @line-click="openLine" />
 
@@ -101,6 +117,44 @@
                     </Container>
                 </Section>
             </template>
+
+            <!-- S4 · the aside: topic-posts as the pedia big-items idiom. For now
+                 UNFILTERED (HD: repeating aside/bottom content is fine until the
+                 p_event/p_topic separation bites). -->
+            <template v-if="preset !== 'schule-project'" #aside>
+                <Section>
+                    <h2 class="start-aside-title">Blog &amp; Presse</h2>
+                    <pList entity="posts" :project="domaincode" size="medium" width="inherit" columns="off"
+                        onActivate="route" />
+                </Section>
+            </template>
+
+            <!-- S5 · the bottom REGION (deliberately not PageBottom.vue — that is
+                 the T1-γ consulting widget). Renders under BOTH columns. -->
+            <template v-if="preset !== 'schule-project'" #footer>
+                <!-- ① Was schon war · p_event posts as cards-gallery — the
+                     events-2-posts conversion's OUTPUT (posts, never the events
+                     table; posts 10/11 are the manual proof, S6→B formalizes). -->
+                <Section background="muted">
+                    <Container>
+                        <Prose>
+                            <Heading overline="Veranstaltungen" level="h2" headline="Was schon war" />
+                        </Prose>
+                        <pList entity="posts" :project="domaincode" size="medium" width="inherit" columns="on"
+                            onActivate="route" />
+                    </Container>
+                </Section>
+                <!-- ② unsere Aufführungen · the p_topic carrier, fullWidth region -->
+                <Section v-if="topicPost" background="default">
+                    <Container>
+                        <Prose>
+                            <Heading :overline="topicPost.teaser || 'unsere Aufführungen'" level="h2"
+                                :headline="topicPost.name" />
+                            <div v-if="topicHtml" v-html="topicHtml"></div>
+                        </Prose>
+                    </Container>
+                </Section>
+            </template>
         </PageLayout>
 
         <!-- Site notices (alpha) — HD-approved texts, utils/siteNotices.
@@ -121,6 +175,9 @@ import HeadingParser from '@/components/HeadingParser.vue'
 import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import AgendaLineList from '@/components/agenda/AgendaLineList.vue'
 import SiteNoticePostits from '@/components/SiteNoticePostits.vue'
+import pList from '@/components/page/pList.vue'
+import Prose from '@/components/Prose.vue'
+import Heading from '@/components/Heading.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useProjectAccess } from '@/composables/useProjectAccess'
 import { useAgendaLive, type AgendaLineData } from '@/composables/useAgendaPreset'
@@ -219,10 +276,50 @@ function openLine(line: AgendaLineData) {
     router.push(`/sites/${domaincode}/events/${line.id}`)
 }
 
+/**
+ * S3 · the promoted-first: the first upcoming, guest-visible line — ruling ⑤
+ * („featured = the first item of Alle Termine") as a header-only panel. The
+ * trailing undated group (date '') and past groups never lead; a silhouette
+ * cannot be featured for guests.
+ */
+const featured = computed(() => {
+    const todayIso = new Date().toISOString().slice(0, 10)
+    for (const group of dayGroups.value) {
+        if (!group.date || group.date < todayIso) continue
+        for (const line of group.lines) {
+            if (line.internal && !user.value) continue
+            return { group, line }
+        }
+    }
+    return null
+})
+
+/** S5 ② · the p_topic carrier („unsere Aufführungen") — md rendered like ProjectSite does. */
+const topicPost = ref<{ id: number; name: string; teaser?: string | null; md?: string | null } | null>(null)
+const topicHtml = ref('')
+
+async function loadTopicPost() {
+    try {
+        const response = await fetch(`/api/posts?project=${encodeURIComponent(domaincode)}`)
+        if (!response.ok) return
+        const rows = (await response.json()) as Array<{ id: number; name: string; teaser?: string | null; md?: string | null; template?: string | null }>
+        if (!Array.isArray(rows)) return
+        const topic = rows.find((row) => row.template === 'p_topic')
+        if (!topic) return
+        topicPost.value = topic
+        if (topic.md) {
+            const { marked } = await import('marked')
+            topicHtml.value = (await marked(topic.md)) as string
+        }
+    } catch { /* the section simply stays absent */ }
+}
+
 onMounted(async () => {
     // Site theme tokens ride the same resolved domaincode as the frame —
     // one seam, three consumers (domainSiteFrames / domainThemeOverrides).
     setDomainThemeOverride(domaincode)
+
+    loadTopicPost()
 
     // The singleton trap (TempDashboard header, trap 2): checkSession BEFORE access.load.
     try { await checkSession() } catch { /* anonymous is fine */ }
@@ -268,6 +365,66 @@ onMounted(async () => {
     font-size: clamp(1.6rem, 3.2vw, 2.5rem);
     font-weight: 700;
     line-height: 1.15;
+}
+
+/* S3 · the promoted-first panel — the bahn-grammar's own move: one panel above
+   the compact list. Header-only, whole panel clickable. */
+.start-featured {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--color-primary-bg);
+    background-color: var(--color-card-bg);
+    color: var(--color-card-contrast);
+    text-align: left;
+    cursor: pointer;
+}
+
+.start-featured:hover {
+    background-color: color-mix(in oklch, var(--color-primary-bg) 8%, var(--color-card-bg));
+}
+
+.start-featured-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.start-featured-overline {
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted-contrast);
+}
+
+.start-featured-headline {
+    font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.start-featured-sub {
+    font-size: 0.9375rem;
+    color: var(--color-muted-contrast);
+}
+
+.start-featured-img {
+    flex-shrink: 0;
+    width: clamp(8rem, 18vw, 13rem);
+    height: auto;
+    display: block;
+}
+
+/* S4 · the aside's chrome label */
+.start-aside-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 700;
 }
 
 .start-section-title {

@@ -55,6 +55,8 @@ export interface AgendaLineData {
     trio?: AgendaLineTrioCounts
     /** Not anonymous-readable — guests get the SILHOUETTE (form, no content). */
     internal?: boolean
+    /** Registry image (wide preferred) — consumed by the promoted-first panel. */
+    image?: string
 }
 
 /** Day-group wrapper bundling lines under a single date. */
@@ -236,6 +238,9 @@ export interface AgendaEventRow {
      * (design-thread §3·3). `null`/`undefined` = unknown → treated as public.
      */
     r_anonym?: boolean | number | null
+    /** Registry shapes (img_id propagation) — the featured panel's image rider. */
+    img_wide?: { url?: string } | null
+    img_square?: { url?: string } | null
 }
 
 /** Venue wall-clock normalisation — same discipline as useUiaEvents. */
@@ -298,6 +303,7 @@ export function mapEventsToDayGroups(rows: AgendaEventRow[], today: Date = new D
             status: agendaLineStatus(row.status, Boolean(isoDate && isoDate < todayIso)),
             // r_anonym === false/0 marks the line internal; null stays public.
             internal: row.r_anonym === false || row.r_anonym === 0 || undefined,
+            image: row.img_wide?.url || row.img_square?.url || undefined,
         }
         if (!isoDate) {
             undated.push(line)
