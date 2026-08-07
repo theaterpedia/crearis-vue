@@ -122,7 +122,7 @@ interface EntityItem {
 
 interface Props {
     items?: GalleryItem[]
-    entity?: 'events' | 'posts' | 'images' | 'instructors' | 'projects'
+    entity?: 'events' | 'posts' | 'images' | 'instructors' | 'projects' | 'none'
     project?: string
     images?: number[]
     filterIds?: number[]
@@ -211,7 +211,14 @@ watch(() => props.selectedIds, (newVal: any) => {
 }, { immediate: true })
 
 const dataModeActive = computed(() => {
-    return props.dataMode && (props.entity !== undefined || props.images !== undefined)
+    // 'none' is page-config's sentinel for "no entity behind this gallery"
+    // (usePageOptions list.type includes 'none') — must behave exactly like
+    // an absent entity. Mirrors ItemList's `de7346f` gate to close the same
+    // defect class: an unresolved 'none' let fetch fire with an empty URL,
+    // which returned the SPA-shell HTML, and `response.json()` choked with
+    // "Unexpected token '<', '<!doctype'..." (deploy-uia thread D-1).
+    const entity = props.entity === 'none' ? undefined : props.entity
+    return props.dataMode && (entity !== undefined || props.images !== undefined)
 })
 
 const shape = computed<'card' | 'tile' | 'avatar'>(() => {
@@ -232,6 +239,12 @@ const fetchEntityData = async () => {
             console.warn('Image-specific fetching not yet implemented')
             return
         }
+
+        // NOTE: only some entities have a URL mapping below. If the entity
+        // falls through (e.g. 'projects', 'all', or an unknown value slipped
+        // past the type checker), `url` stays '' and the fetch below would
+        // hit the current page — returning HTML and crashing JSON.parse.
+        // The empty-URL guard AFTER the if-chain is the second belt.
 
         if (props.entity === 'posts') {
             url = '/api/posts'
@@ -273,6 +286,15 @@ const fetchEntityData = async () => {
         const queryString = params.toString()
         if (queryString) {
             url += `?${queryString}`
+        }
+
+        // Second belt: if no URL was assigned above (entity fell through the
+        // if-chain), skip the fetch. Prevents fetch('') → current-page-HTML →
+        // JSON.parse "Unexpected token '<'" for any future gap in the entity
+        // → URL mapping. Complements the 'none' gate in `dataModeActive` above.
+        if (!url) {
+            console.warn('[ItemGallery] no URL mapping for entity=' + String(props.entity) + ' · skipping fetch')
+            return
         }
 
         console.log('[ItemGallery] Fetching:', url)
