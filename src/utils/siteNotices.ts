@@ -36,20 +36,13 @@ export interface SiteNotice {
 
 export const DOMAIN_SITE_NOTICES: Record<string, ReadonlyArray<SiteNotice>> = {
     utopiaxaction: [
+        // The alpha notice MOVED to the page-alert banner (C1/P9 — pedia's
+        // standard-config mechanism, `page_options.alert_banner` on the landing
+        // pages-row). Only the Sommerpause stays a post-it: positive = the
+        // lived, per the grammar. Rosa is off from SA 2026-08-09, three weeks.
+        // The window gates AUTO-OPENING; the card itself stays registered so
+        // cta2 on the landing can open it any time (C1/P8).
         {
-            // muted = utility/meta per the four-color grammar.
-            key: 'uia-notice-alpha',
-            title: 'Diese Website ist neu.',
-            html: '<p>Wir bauen sie gerade erst auf — manches fehlt noch, manches ändert sich. '
-                + 'Wenn dir etwas auffällt: Schreib uns, wir freuen uns! '
-                + '<a href="mailto:uiacollective@gmail.com">uiacollective@gmail.com</a></p>',
-            color: 'muted',
-            rotation: '-rotate-1',
-            routes: ['site', 'start'],
-        },
-        {
-            // positive = the lived, per the grammar. Rosa is off from SA
-            // 2026-08-09, three weeks.
             key: 'uia-notice-sommerpause',
             title: 'Wir machen Sommerpause!',
             html: '<p>Bis Ende August sind wir schwerer erreichbar — Mails lesen wir aber durchaus. '
@@ -64,17 +57,17 @@ export const DOMAIN_SITE_NOTICES: Record<string, ReadonlyArray<SiteNotice>> = {
     ],
 }
 
-/** The notices active for a surface today (venue-day granularity). */
+/** All notices REGISTERABLE for a surface — windows do not gate registration. */
 export function resolveSiteNotices(
     domaincode: string | null | undefined,
     surface: 'site' | 'start',
-    today: Date = new Date(),
 ): SiteNotice[] {
     if (!domaincode) return []
-    const all = DOMAIN_SITE_NOTICES[domaincode] ?? []
+    return (DOMAIN_SITE_NOTICES[domaincode] ?? []).filter((notice) => notice.routes.includes(surface))
+}
+
+/** Is the notice inside its window today (venue-day granularity)? Gates AUTO-OPEN only. */
+export function isNoticeActive(notice: SiteNotice, today: Date = new Date()): boolean {
     const todayIso = today.toISOString().slice(0, 10)
-    return all.filter((notice) =>
-        notice.routes.includes(surface)
-        && (!notice.from || todayIso >= notice.from)
-        && (!notice.until || todayIso <= notice.until))
+    return (!notice.from || todayIso >= notice.from) && (!notice.until || todayIso <= notice.until)
 }

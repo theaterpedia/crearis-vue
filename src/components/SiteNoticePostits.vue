@@ -20,7 +20,7 @@
 import { onMounted } from 'vue'
 import FpostitRenderer from '@/fpostit/components/FpostitRenderer.vue'
 import { useFpostitController } from '@/fpostit/composables/useFpostitController'
-import { resolveSiteNotices } from '@/utils/siteNotices'
+import { resolveSiteNotices, isNoticeActive } from '@/utils/siteNotices'
 
 const props = defineProps<{
     domaincode: string
@@ -32,6 +32,8 @@ const controller = useFpostitController()
 onMounted(() => {
     const notices = resolveSiteNotices(props.domaincode, props.surface)
     for (const notice of notices) {
+        // Register ALWAYS (so a cta can open the card any time);
+        // auto-open only inside the notice's window.
         controller.create({
             key: notice.key,
             title: notice.title,
@@ -41,7 +43,7 @@ onMounted(() => {
             hlogic: 'default',
             actions: [{ label: 'Alles klar', handler: (close: () => void) => close() }],
         })
-        controller.openPostit(notice.key)
+        if (isNoticeActive(notice)) controller.openPostit(notice.key)
     }
 })
 </script>
