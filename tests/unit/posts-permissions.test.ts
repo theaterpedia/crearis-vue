@@ -290,6 +290,52 @@ describe('Read Rules', () => {
         })
     })
 
+    // ── DECISION PINS · the audited ordinal gate (CV-Schema §4.1 audit,
+    // applied 2026-08-07 on HD's go). These encode the fix, not behaviour:
+    // a raw `status >= X` over-admits archived/trash and scope-inflated rows.
+    // If one goes red, someone reverted the mask — reopen the audit, don't
+    // loosen the pin.
+    describe('the audited gate: masked lifecycle + archived/trash bound out', () => {
+        it('an ARCHIVED post never reads as released — archived sorts above every threshold', () => {
+            const ctx = createContext(
+                USERS.VISITOR,
+                createProject(STATUS.RELEASED),
+                createPost(STATUS.ARCHIVED, USERS.NINA)
+            )
+            expect(canReadReleased(ctx)).toBe(false)
+        })
+
+        it('a TRASH post never reads as released', () => {
+            const ctx = createContext(
+                USERS.VISITOR,
+                createProject(STATUS.RELEASED),
+                createPost(STATUS.TRASH, USERS.NINA)
+            )
+            expect(canReadReleased(ctx)).toBe(false)
+        })
+
+        it('a scope-inflated DRAFT (draft | scope-toggle bit 21) does not read as released', () => {
+            // 64 | (1<<21) = 2097216 — sorts above RELEASED on the raw integer,
+            // is a plain draft on the masked lifecycle.
+            const ctx = createContext(
+                USERS.VISITOR,
+                createProject(STATUS.RELEASED),
+                createPost(STATUS.DRAFT | (1 << 21), USERS.NINA)
+            )
+            expect(canReadReleased(ctx)).toBe(false)
+        })
+
+        it('a scope-inflated draft still counts as draft where draft suffices', () => {
+            const ctx = createContext(
+                USERS.NINA,
+                createProject(STATUS.DRAFT),
+                createPost(STATUS.DRAFT | (1 << 21), USERS.ROSA),
+                createMembership(USERS.NINA, CONFIGROLE.MEMBER)
+            )
+            expect(canReadAsMember(ctx)).toBe(true)
+        })
+    })
+
     // Rule 3: POST_READ_P_OWNER
     describe('Rule 3: canReadAsProjectOwner', () => {
         it('returns true for project owner', () => {

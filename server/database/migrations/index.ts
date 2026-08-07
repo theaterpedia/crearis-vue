@@ -76,6 +76,8 @@ import { migration as migration066 } from './066_add_header_size_columns'
 import { migration as migration067 } from './067_header_configs_system'
 import { migration as migration068 } from './068_header_configs_theme_id'
 import { migration as migration069 } from './069_xmlid_format_migration'
+import { migration as migration070 } from './070_pages_page_type_add_start'
+import { migration as migration071 } from './071_pages_flip_has_content'
 // Migrations 022-024 archived to archived_data_seeds/ (replaced by data packages)
 
 interface Migration {
@@ -167,6 +169,10 @@ const migrations: Migration[] = [
     { run: migration068.up, down: migration068.down, metadata: { id: migration068.id, description: migration068.description, version: '0.4.7', date: '2025-12-17' }, reversible: true },
     // Migration 069 - XMLID Format Migration (Odoo-aligned)
     { run: migration069.up, down: migration069.down, metadata: { id: migration069.id, description: migration069.description, version: '0.4.8', date: '2025-12-17' }, reversible: false },
+    // Migration 070 - Allow 'start' as a pages.page_type (unblocks /start persistence)
+    { run: migration070.up, down: migration070.down, metadata: { id: migration070.id, description: migration070.description, version: '0.4.9', date: '2026-08-07' }, reversible: true },
+    // Migration 071 - Flip inverted pages.*_has_content generated columns
+    { run: migration071.up, down: migration071.down, metadata: { id: migration071.id, description: migration071.description, version: '0.4.10', date: '2026-08-07' }, reversible: true },
     // Migration 024 removed (was not registered, broken trigger fix)
 ]
 
