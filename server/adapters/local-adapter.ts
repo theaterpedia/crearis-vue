@@ -59,11 +59,17 @@ export class LocalAdapter extends BaseMediaAdapter {
 
         console.log(`[LocalAdapter] Storage path: ${this.baseStoragePath}`)
 
-        // Ensure directories exist
-        this.ensureDirectories().catch(err => {
+        // Ensure directories exist. Kept as a HELD promise, not fire-and-forget:
+        // the fire-and-forget form lost the race on the very first upload of a
+        // fresh box (ENOENT on the source write — images thread I-5). Writers
+        // await `this.ready` so the first request is as safe as the hundredth.
+        this.ready = this.ensureDirectories().catch(err => {
             console.error('[LocalAdapter] Failed to create storage directories:', err)
         })
     }
+
+    /** Resolves when the storage directories exist — see constructor note (I-5). */
+    private readonly ready: Promise<void>
 
     /**
      * Create storage directories if they don't exist
@@ -114,6 +120,7 @@ export class LocalAdapter extends BaseMediaAdapter {
         xmlid: string,
         originalFilename: string
     ): Promise<string> {
+        await this.ready // I-5: never race the mkdir on a fresh box
         const filename = this.generateFilename(xmlid, originalFilename)
         const filepath = path.join(this.sourceDir, filename)
 

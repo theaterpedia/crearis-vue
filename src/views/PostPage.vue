@@ -40,7 +40,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="post && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
-            :showLogo="frameShowLogo" :brand="frameBrand">
+            :showLogo="frameShowLogo" :brand="frameBrand" :setScrollStyle="siteFrame?.scrollStyle">
             <template #header>
                 <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
                 <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"

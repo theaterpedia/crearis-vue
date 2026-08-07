@@ -43,7 +43,12 @@ export default defineEventHandler(async (event) => {
             'name', 'url', 'alt_text', 'title', 'project_id', 'status_id',
             'creator_id', 'x', 'y', 'fileformat', 'embedformat', 'license', 'length',
             'xmlid', 'author', 'shape_square', 'shape_wide', 'shape_vertical', 'shape_thumb',
-            'ctags'
+            'ctags',
+            // 5B consent-state writer (images thread I-6): the per-image
+            // consent-to-publish rides the sysreg `status` ladder — the same
+            // integer-writer discipline as every other radio-control. status_id
+            // above is the legacy column; this is the live one.
+            'status'
         ]
 
         // Helper to format composite types
