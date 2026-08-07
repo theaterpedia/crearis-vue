@@ -6,8 +6,26 @@
             @save="handleSaveProject" />
 
         <!-- PageLayout wrapper -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="page">
+        <!-- No `v-if="project"` — a legal page must render even when the project row
+             does not exist. `useImpressum` carries the root site's published imprint as
+             code-defaults precisely so both pages work against an unseeded DB; gating the
+             whole layout on the fetch defeated that and rendered `/impressum` BLANK on a
+             database without a `tp` row (measured, 2026-08-07). The project is only needed
+             for the edit-chrome, which keeps its own `v-if`. -->
+        <!-- No aside/footer options on purpose. `parseAsideOptions`/`parseFooterOptions`
+             apply page-type DEFAULTS (a TOC „Inhalt", „Weitere Beiträge", an events
+             gallery), so a legal page inherited content-page furniture it should never
+             have — and one of those entity-fetches rendered a red
+             "Unexpected token '<' … is not valid JSON" banner across the imprint
+             (measured). An Impressum has no table of contents and no related posts. -->
+        <PageLayout setSiteLayout="centered" :projectDomaincode="project?.domaincode" :navItems="navItems"
+            navbarMode="page" :showLogo="isSiteMount ? 'no' : 'default'">
+
+            <!-- Empty header on purpose. A legal page has no hero — and PageLayout's
+                 #header slot carries a DEV placeholder as its fallback ("Header slot -
+                 provide header content…"), which was invisible only while the layout was
+                 gated on `project`. Ungating it surfaced that text on a public page. -->
+            <template #header><span /></template>
 
             <!-- TopNav Actions Slot -->
             <template #topnav-actions>
@@ -101,8 +119,13 @@
             </Section>
 
             <!-- Footer -->
+            <!-- The platform footer carries Theaterpedia's identity and „© Theaterpedia.org
+                 Network. All rights reserved." — directly beneath an imprint that names a
+                 DIFFERENT Diensteanbieter. Same misrepresentation as the nav, and worse
+                 here because it is a copyright claim. Root mount keeps it; a site-mount
+                 wears none until the site-frame seam supplies its own (thread §3). -->
             <template #footer>
-                <HomeSiteFooter />
+                <HomeSiteFooter v-if="!isSiteMount" />
             </template>
         </PageLayout>
     </div>
@@ -119,7 +142,6 @@ import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
@@ -159,7 +181,25 @@ function setImpressumSeoMeta() {
     setMeta('meta[name="robots"]', { name: 'robots', content: 'noindex, follow' });
 }
 
+/**
+ * True on `/sites/:domaincode/…` and `/projects/:domaincode/…` — i.e. this page is
+ * wearing another project's legal identity, not the platform's.
+ */
+const isSiteMount = computed(() => !!route.params.domaincode)
+
+/**
+ * The platform's public nav (Home · Start · Team · Blog) belongs to Theaterpedia.
+ * On a site-mount this page names a DIFFERENT Diensteanbieter — putting the
+ * platform's nav and wordmark on it misrepresents whose site the reader is on,
+ * which is the exact confusion the per-project split exists to prevent.
+ *
+ * So a site-mount wears no platform chrome. What it SHOULD wear instead — the
+ * project's own nav, a back-link, its brand — is deliberately not decided here:
+ * the thread's §3 puts chrome on the site-frame seam, so this only stops the
+ * wrong chrome rather than inventing the right one.
+ */
 const navItems = computed<TopnavParentItem[]>(() => {
+    if (isSiteMount.value) return []
     return getPublicNavItems().map(item => ({
         label: item.label,
         link: item.link
@@ -169,16 +209,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
 const user = ref<any>(null)
 const project = ref<any>(null)
 const isEditPanelOpen = ref(false)
-
-const asideOptions = computed<AsideOptions>(() => {
-    if (!project.value) return {}
-    return parseAsideOptions(project.value)
-})
-
-const footerOptions = computed<FooterOptions>(() => {
-    if (!project.value) return {}
-    return parseFooterOptions(project.value)
-})
 
 const editPanelData = computed<EditPanelData>(() => {
     if (!project.value) {
