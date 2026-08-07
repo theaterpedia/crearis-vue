@@ -53,6 +53,8 @@ export interface AgendaLineData {
     who?: string               // "HM" · "Franzi" · "BuT-team"
     status: AgendaLineStatus
     trio?: AgendaLineTrioCounts
+    /** Not anonymous-readable — guests get the SILHOUETTE (form, no content). */
+    internal?: boolean
 }
 
 /** Day-group wrapper bundling lines under a single date. */
@@ -228,6 +230,12 @@ export interface AgendaEventRow {
     date_end?: string | null
     location?: string | null
     status?: number | null
+    /**
+     * Trigger-computed visibility (r_* matrix). `false` = not anonymous-readable
+     * — the /start Schwelle renders such lines as SILHOUETTES for guests
+     * (design-thread §3·3). `null`/`undefined` = unknown → treated as public.
+     */
+    r_anonym?: boolean | number | null
 }
 
 /** Venue wall-clock normalisation — same discipline as useUiaEvents. */
@@ -288,6 +296,8 @@ export function mapEventsToDayGroups(rows: AgendaEventRow[], today: Date = new D
             timeRange: from ? (to && to !== from ? `${from} – ${to}` : from) : '',
             location: row.location?.trim() || undefined,
             status: agendaLineStatus(row.status, Boolean(isoDate && isoDate < todayIso)),
+            // r_anonym === false/0 marks the line internal; null stays public.
+            internal: row.r_anonym === false || row.r_anonym === 0 || undefined,
         }
         if (!isoDate) {
             undated.push(line)

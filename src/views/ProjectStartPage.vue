@@ -65,7 +65,7 @@
                     <Container>
                         <h2 class="start-section-title">{{ agendaHeading }}</h2>
 
-                        <AgendaLineList v-if="lineCount > 0" :dayGroups="dayGroups" density="fancy"
+                        <AgendaLineList v-if="lineCount > 0" :dayGroups="visibleDayGroups" density="fancy"
                             @line-click="openLine" />
 
                         <!-- Empty-detection · HD's wording, verbatim -->
@@ -102,6 +102,11 @@
                 </Section>
             </template>
         </PageLayout>
+
+        <!-- Site notices (alpha) — HD-approved texts, utils/siteNotices.
+             Outside the v-if/v-else-if chain; the renderer teleports to body. -->
+        <SiteNoticePostits v-if="accessLoaded && projectAccess.canAccess.value" :domaincode="domaincode"
+            surface="start" />
     </div>
 </template>
 
@@ -115,6 +120,7 @@ import Container from '@/components/Container.vue'
 import HeadingParser from '@/components/HeadingParser.vue'
 import ProjectNotPublished from '@/views/ProjectNotPublished.vue'
 import AgendaLineList from '@/components/agenda/AgendaLineList.vue'
+import SiteNoticePostits from '@/components/SiteNoticePostits.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useProjectAccess } from '@/composables/useProjectAccess'
 import { useAgendaLive, type AgendaLineData } from '@/composables/useAgendaPreset'
@@ -178,7 +184,38 @@ const startOverline = computed(() =>
 
 const agendaHeading = computed(() => (lineCount.value > 0 ? 'Alle Termine' : 'Nächste Termine'))
 
+/**
+ * The Schwelle as SILHOUETTE (HD-ruled 2026-08-07, design-thread §3·3): a
+ * guest sees that internal lines EXIST — day, time, one status dot — but not
+ * their content. Form without content, zero new CSS: the line component
+ * renders the silhouette words like any line. Members see the full line.
+ *
+ * ⚠ Devbox semantics: this is a CLIENT-side transform — honest for the try,
+ * not for 1.0. Before go-live the SERVER must send redacted stubs for
+ * non-readable rows (the full row in the JSON payload would leak the content
+ * it hides) — named in §3·3, rides the r_* Foundation fix.
+ */
+const visibleDayGroups = computed(() => {
+    if (user.value) return dayGroups.value
+    return dayGroups.value.map((group) => ({
+        ...group,
+        lines: group.lines.map((line) =>
+            line.internal
+                ? {
+                    ...line,
+                    headline: 'Interner Termin',
+                    overline: 'für Mitwirkende · nach dem Anmelden sichtbar',
+                    location: undefined,
+                    who: undefined,
+                    trio: undefined,
+                }
+                : line),
+    }))
+})
+
 function openLine(line: AgendaLineData) {
+    // A silhouette has no page behind it for guests.
+    if (line.internal && !user.value) return
     router.push(`/sites/${domaincode}/events/${line.id}`)
 }
 
