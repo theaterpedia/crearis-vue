@@ -230,6 +230,76 @@
                     </p>
                 </Container>
             </Section>
+
+            <!-- ══ 5B · Bilder ═════════════════════════════════════════════════
+                 Simplified upload + management, inspected from the creation-
+                 stepper (ProjectStepImages → cimgImportStepper is the FULL
+                 machine; this is the thin everyday surface). Consent-to-publish
+                 (images I-6, an `initiative` preset property) rides the image's
+                 own sysreg status — one ladder, one integer-writer, and
+                 „Einverständnis steht aus" is a STATE, not an error. -->
+            <Section v-if="isOwner" background="muted">
+                <Container>
+                    <div class="td-head">
+                        <h2 class="td-section-title">Bilder <span class="td-count">{{ images.length }}</span></h2>
+                        <button class="td-btn" type="button" @click="showImageForm = !showImageForm">
+                            {{ showImageForm ? 'abbrechen' : '+ neues Bild' }}
+                        </button>
+                    </div>
+
+                    <p class="td-note td-dim">
+                        Die Galerie ist privat (Preset „initiative"): jedes Bild wird <strong>einzeln</strong>
+                        freigegeben. Hinweis: öffentliche Seiten filtern noch nicht nach Freigabe —
+                        der Zustand wird hier geführt, die Durchsetzung ist offen (Bilder-Thread I-6).
+                    </p>
+
+                    <form v-if="showImageForm" class="td-form" @submit.prevent="uploadImage">
+                        <label class="td-field">
+                            <span>Name *</span>
+                            <input v-model.trim="imageForm.name" required placeholder="Plakat Herbst" />
+                        </label>
+                        <label class="td-field">
+                            <span>Alt-Text *</span>
+                            <input v-model.trim="imageForm.alt" required placeholder="was auf dem Bild zu sehen ist" />
+                        </label>
+                        <label class="td-field">
+                            <span>Datei * (jpg · png · webp)</span>
+                            <input type="file" accept="image/jpeg,image/png,image/webp" @change="onImageFile" />
+                        </label>
+                        <button class="td-btn td-btn-primary" type="submit" :disabled="busy || !imageForm.file">hochladen</button>
+                    </form>
+
+                    <p v-if="!images.length" class="td-note td-dim">Noch keine Bilder in der Galerie.</p>
+                    <ul v-else class="td-img-grid">
+                        <li v-for="img in images" :key="img.id" class="td-img-card">
+                            <img v-if="imgThumb(img)" class="td-img-thumb" :src="imgThumb(img)"
+                                :alt="img.alt_text || img.name || img.xmlid || 'Bild'" />
+                            <div class="td-img-meta">
+                                <strong class="td-img-name">{{ img.name || img.xmlid }}</strong>
+                                <span class="td-state" :class="isPublished(img.status) ? 'td-state-public' : 'td-state-private'">
+                                    {{ isPublished(img.status) ? 'einverstanden · öffentlich' : 'privat · Einverständnis steht aus' }}
+                                </span>
+                                <label class="td-field">
+                                    <span>Freigabe</span>
+                                    <select :value="lifecycleStatus(img.status ?? 0)" :disabled="busy"
+                                        @change="saveImageConsent(img, $event)">
+                                        <option v-for="c in consentChoices" :key="c.value" :value="c.value">
+                                            {{ c.label }}
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+                        </li>
+                    </ul>
+                </Container>
+            </Section>
+
+            <!-- ══ 5C · Start-Seite ════════════════════════════════════════════
+                 tempStartConfig — guards the sophisticated config system while
+                 using the infra as designed: the pages-row's page_options
+                 key-registry (presets thread §9). -->
+            <TempStartConfig v-if="isOwner && projectId !== null" :project-id="projectId"
+                :domaincode="domaincode" />
         </template>
     </div>
 </template>
@@ -254,6 +324,7 @@ import {
 } from '@/utils/status-constants'
 import { resolvePresetForDomain } from '@/utils/projectPreset'
 import { composeHeading, type CvEventRow } from '@/views/Uia/useUiaEvents'
+import TempStartConfig from './TempStartConfig.vue'
 
 interface CvPostRow {
     id: number
@@ -272,7 +343,7 @@ interface DashItem {
 
 const route = useRoute()
 const router = useRouter()
-const { checkSession } = useAuth()
+const { checkSession, user } = useAuth()
 const projectAccess = useProjectAccess()
 
 const domaincode = ref<string>('')
@@ -318,6 +389,103 @@ const projectStatusChoices = [STATUS.NEW, STATUS.DEMO, STATUS.DRAFT, STATUS.CONF
     .map((value) => ({ value, label: STATUS_LABELS_DE[value] ?? String(value) }))
 
 const presetKind = computed(() => resolvePresetForDomain(domaincode.value) ?? '—')
+
+// ── 5B · Bilder ──────────────────────────────────────────────────────────────
+/** The subset of an `images` row this surface consumes (bare-array/enveloped GET). */
+interface CvImageRow {
+    id: number
+    xmlid?: string | null
+    name?: string | null
+    alt_text?: string | null
+    status?: number | null
+    url?: string | null
+    img_square?: { url?: string } | null
+    img_thumb?: { url?: string } | null
+}
+
+const projectId = ref<number | null>(null)
+const images = ref<CvImageRow[]>([])
+const showImageForm = ref(false)
+const imageForm = ref<{ name: string; alt: string; file: File | null }>({ name: '', alt: '', file: null })
+
+/**
+ * The consent ladder — the sysreg categories wearing their 5B meaning. One
+ * integer per click; `0` is the honest pre-ladder state fresh uploads carry.
+ */
+const consentChoices = [
+    { value: 0, label: 'roh — unbearbeitet' },
+    { value: STATUS.DRAFT, label: 'privat (Galerie)' },
+    { value: STATUS.CONFIRMED, label: 'intern freigegeben' },
+    { value: STATUS.RELEASED, label: 'einverstanden · öffentlich' },
+]
+
+function imgThumb(img: CvImageRow): string | undefined {
+    return img.img_square?.url || img.img_thumb?.url || img.url || undefined
+}
+
+/** `Plakat Herbst` → `plakat_herbst` — the dot-form xmlid's identifier part. */
+function slugForXmlid(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        || 'bild'
+}
+
+function onImageFile(event: Event) {
+    const input = event.target as HTMLInputElement
+    imageForm.value.file = input.files?.[0] ?? null
+}
+
+async function loadImages() {
+    if (projectId.value === null) return
+    const response = await fetch(`/api/images?project_id=${projectId.value}`)
+    if (!response.ok) return
+    const data = await response.json()
+    images.value = Array.isArray(data) ? data : (data?.images ?? [])
+}
+
+async function uploadImage() {
+    const { name, alt, file } = imageForm.value
+    if (!name || !alt || !file || projectId.value === null) return
+    busy.value = true
+    loadError.value = null
+    try {
+        const form = new FormData()
+        form.append('file', file)
+        // The upload validator's dot-form (images thread I-4): exactly 2 dots, no hyphens.
+        form.append('xmlid', `${domaincode.value}.image.${slugForXmlid(name)}`)
+        form.append('owner_id', String(user.value?.id ?? ''))
+        form.append('project_id', String(projectId.value))
+        form.append('alt_text', alt)
+        const response = await fetch('/api/images/upload', { method: 'POST', body: form })
+        if (!response.ok) {
+            let detail = `${response.status}`
+            try {
+                const payload = await response.json()
+                if (payload?.statusMessage || payload?.message) detail = payload.statusMessage || payload.message
+            } catch { /* keep the status */ }
+            loadError.value = `Upload → ${detail}`
+            return
+        }
+        imageForm.value = { name: '', alt: '', file: null }
+        showImageForm.value = false
+        await loadImages()
+    } catch (error) {
+        loadError.value = error instanceof Error ? error.message : 'Upload fehlgeschlagen'
+    } finally {
+        busy.value = false
+    }
+}
+
+/** Integer-writer, same discipline as 5A: move the ordinal slot, keep the toggles. */
+async function saveImageConsent(img: CvImageRow, event: Event) {
+    const value = Number((event.target as HTMLSelectElement).value)
+    const next = ((img.status ?? 0) & ~WORKFLOW_MASK) | value
+    const ok = await send(`/api/images/${img.id}`, 'PATCH', { status: next })
+    if (ok) await loadImages()
+}
 
 /**
  * The states worth reaching from here. Draft is local-only; `confirmed` is the
@@ -375,12 +543,16 @@ async function loadProject() {
     projectStatus.value = typeof data.status === 'number' ? data.status : null
     projectStatusChoice.value = projectStatus.value === null ? null : lifecycleStatus(projectStatus.value)
     headingDraft.value = data.heading || ''
+    // 5B/5C need the numeric id (images by project_id · the start pages-row).
+    projectId.value = typeof data.id === 'number' ? data.id : null
 }
 
 async function refresh() {
     loadError.value = null
     try {
         await loadRows()
+        // 5B · the gallery is an owner surface; nothing to fetch for members.
+        if (isOwner.value) await loadImages()
     } catch (error) {
         loadError.value = error instanceof Error ? error.message : 'Laden fehlgeschlagen'
     }
@@ -711,5 +883,42 @@ function openPost(item: DashItem) {
     margin-right: 1.1rem;
     font-size: 0.875rem;
     cursor: pointer;
+}
+
+/* ══ 5B · Bilder ══ */
+.td-img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 0.9rem;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.td-img-card {
+    display: flex;
+    gap: 0.7rem;
+    padding: 0.6rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card-bg);
+}
+
+.td-img-thumb {
+    width: 4rem;
+    height: 4rem;
+    object-fit: cover;
+    flex: 0 0 auto;
+}
+
+.td-img-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.td-img-name {
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
 }
 </style>

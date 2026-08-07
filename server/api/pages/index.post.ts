@@ -60,11 +60,13 @@ export default defineEventHandler(async (event) => {
             footer_options: footer_options || {}
         }
 
-        // Insert page
-        const stmt = db.prepare(`
+        // Insert page — awaited db.run, the house pattern (events/index.post.ts).
+        // The previous prepare/run form was NOT awaited: the endpoint answered
+        // success while the insert never landed (found by 5C's first save).
+        await db.run(`
             INSERT INTO pages (
-                project, 
-                page_type, 
+                project,
+                page_type,
                 header_type,
                 header_size,
                 page_options,
@@ -73,9 +75,7 @@ export default defineEventHandler(async (event) => {
                 footer_options
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `)
-
-        const result = stmt.run(
+        `, [
             pageData.project,
             pageData.page_type,
             pageData.header_type,
@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
             JSON.stringify(pageData.header_options),
             JSON.stringify(pageData.aside_options),
             JSON.stringify(pageData.footer_options)
-        )
+        ])
 
         // Get the created page
         const page = await db.get(

@@ -31,7 +31,8 @@
         <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
             :project-name="project?.heading || project?.name || undefined" :is-logged-in="!!user" />
 
-        <PageLayout v-else-if="accessLoaded" :navItems="frameNavItems" :showLogo="frameShowLogo" :brand="frameBrand">
+        <PageLayout v-else-if="accessLoaded" :navItems="frameNavItems" :showLogo="frameShowLogo" :brand="frameBrand"
+            :setSiteLayout="pageStructure.siteLayout">
             <template #header>
                 <Section background="accent">
                     <Container>
@@ -45,6 +46,15 @@
 
             <!-- ── initiative + default · the agenda ─────────────────────────── -->
             <template v-if="preset !== 'schule-project'">
+                <!-- start_intro (5C) · written only on deviation; absence = no band -->
+                <Section v-if="introParagraphs.length" background="default">
+                    <Container>
+                        <div class="start-intro">
+                            <p v-for="(paragraph, i) in introParagraphs" :key="i">{{ paragraph }}</p>
+                        </div>
+                    </Container>
+                </Section>
+
                 <Section background="default">
                     <Container>
                         <h2 class="start-section-title">{{ agendaHeading }}</h2>
@@ -104,6 +114,7 @@ import { useProjectAccess } from '@/composables/useProjectAccess'
 import { useAgendaLive, type AgendaLineData } from '@/composables/useAgendaPreset'
 import { resolvePresetForDomain } from '@/utils/projectPreset'
 import { resolveSiteFrame } from '@/utils/domainSiteFrames'
+import { resolvePageStructure, type PageStructure } from '@/utils/pageStructure'
 
 const route = useRoute()
 const router = useRouter()
@@ -122,6 +133,30 @@ const frameShowLogo = computed(() => frame?.showLogo ?? 'default')
 const frameBrand = frame?.brand ?? null
 
 const { dayGroups, lineCount, loading, error, load } = useAgendaLive(domaincode)
+
+// ── 5C · the start pages-row's options (page_options key-registry) ──────────
+const pageStructure = ref<PageStructure>({})
+const startIntro = ref<string | null>(null)
+
+/** crearis-md light: paragraphs split on blank lines — the 5C text-editor's contract. */
+const introParagraphs = computed(() =>
+    startIntro.value
+        ? startIntro.value.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean)
+        : [])
+
+async function loadStartOptions() {
+    try {
+        const response = await fetch(`/api/pages/by-project?project_id=${encodeURIComponent(domaincode)}`)
+        if (!response.ok) return
+        const data = await response.json()
+        const rows: Array<{ page_type?: string; page_options?: Record<string, unknown> }> = data?.pages ?? []
+        const startRow = rows.find((row) => row.page_type === 'start')
+        if (!startRow) return
+        const options = startRow.page_options ?? {}
+        pageStructure.value = resolvePageStructure(options)
+        startIntro.value = typeof options.start_intro === 'string' ? options.start_intro : null
+    } catch { /* absence declares the default — the registry's own rule */ }
+}
 
 const startOverline = computed(() =>
     preset === 'schule-project' ? 'Start · Anmeldung' : 'Start · Agenda')
@@ -150,6 +185,7 @@ onMounted(async () => {
 
     if (projectAccess.canAccess.value && preset !== 'schule-project') {
         load()
+        loadStartOptions()
     }
 })
 </script>
@@ -159,6 +195,12 @@ onMounted(async () => {
     min-height: 100vh;
     background-color: var(--color-bg);
     color: var(--color-contrast);
+}
+
+.start-intro p {
+    margin: 0 0 0.8rem;
+    font-size: clamp(0.9375rem, 1.6vw, 1.0625rem);
+    line-height: 1.55;
 }
 
 .start-overline {
