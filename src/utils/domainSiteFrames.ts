@@ -18,8 +18,8 @@
 export interface DomainSiteFrame {
     /** PageLayout's showLogo — 'no' = the site brings its own brand, not the platform's. */
     showLogo?: 'default' | 'desktop' | 'yes' | 'no'
-    /** The site's public nav. Editor/dashboard links stay role-gated in the pages. */
-    navItems?: ReadonlyArray<{ label: string; link: string }>
+    /** The site's public nav. `link` optional — a linkless item renders deactivated. */
+    navItems?: ReadonlyArray<{ label: string; link?: string }>
     /**
      * The site's own mark — rendered in TopNav's logo slot INSTEAD of the
      * platform wordmark. `href` is the site's home, never `/` (the portal).
@@ -48,6 +48,12 @@ export const DOMAIN_SITE_FRAMES: Record<string, DomainSiteFrame> = {
         navItems: [
             { label: 'Utopia in Action', link: '/sites/utopiaxaction' },
             { label: 'Agenda', link: '/sites/utopiaxaction/start' },
+            // C1/P1: Team from the pedia nav — anchors to the landing's team block.
+            { label: 'Team', link: '/sites/utopiaxaction#team' },
+            // C1/P2: taken from pedia, RENAMED (blog → Blog & Presse) and
+            // DEACTIVATED for now: no link = visible but not clickable — the
+            // nav does not lie, and it does not 404 either.
+            { label: 'Blog & Presse' },
         ],
     },
 }

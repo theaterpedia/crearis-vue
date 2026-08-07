@@ -63,7 +63,16 @@ export default defineEventHandler(async (event) => {
     }
 
         // Build update query dynamically
-        const allowedFields = ['status', 'status_old', 'heading', 'description', 'teaser', 'theme', 'config']
+        // cta_* + img_* joined 2026-08-07 (C1): the hero CTA and the project
+        // image are what the tempDashboard's Projekt-Einstellungen (5A) and the
+        // landing rework need writable. (Hero SIZE/TYPE deliberately absent:
+        // those columns live on the PAGES rows, not on projects — the landing
+        // pages-row is the carrier.) The heading validator keeps running.
+        const allowedFields = [
+            'status', 'status_old', 'heading', 'description', 'teaser', 'theme', 'config',
+            'cta_title', 'cta_entity', 'cta_link', 'cta_form',
+            'img_id', 'img_show',
+        ]
         const updates: string[] = []
         const values: any[] = []
 

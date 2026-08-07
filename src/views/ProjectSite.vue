@@ -24,7 +24,8 @@
         <PageLayout v-if="project && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectDomaincode="project.domaincode" :projectId="project.id"
             :navItems="navigationItems" :showLogo="frameShowLogo" :brand="frameBrand"
-            :setScrollStyle="siteFrame?.scrollStyle">
+            :setScrollStyle="siteFrame?.scrollStyle" :setSiteLayout="landingSiteLayout"
+            :alertBanner="landingAlertBanner">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Project Editor Link (for owners/admins) -->
@@ -56,17 +57,23 @@
             </template>
 
             <template #header>
-                <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
+                <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp.
+                     NO stock-photo fallback (C1/U1): a project without its own image gets the
+                     THEMED band — the platform's press photo on a member's site was the
+                     wrong-tenant-chrome catch all over again. -->
                 <PageHeading :heading="project.heading || project.name || String(project.id)"
-                    :teaserText="project.teaser || project.md || 'Explore events, posts, and team members for this project.'"
+                    :teaserText="project.teaser || project.md || ''"
                     :image_id="project.img_id || undefined"
                     :image_blur="project.img_square?.blur || undefined"
-                    :imgTmp="!project.img_id ? (project.img_wide?.url || project.cimg || 'https://res.cloudinary.com/little-papillon/image/upload/c_fill,w_1440,h_900,g_auto/v1666847011/pedia_ipsum/core/theaterpedia.jpg') : undefined"
+                    :imgTmp="!project.img_id ? (project.img_wide?.url || project.cimg || undefined) : undefined"
                     :headerType="project.header_type || 'banner'"
-                    :headerSize="project.header_size || 'prominent'"
+                    :headerSize="landingHeaderSize || project.header_size || 'prominent'"
                     :cta="ctaConfig"
                     :link="secondaryLinkConfig" />
             </template>
+
+            <!-- ── MAIN (left of the two equal cols · C1/U3+P3: fullTwo is the
+                 landing default per spec — §19: fullTwo IS „2-mains") ────────── -->
 
             <!-- Project Description Body -->
             <Section v-if="project.html || project.md" background="default">
@@ -80,94 +87,84 @@
                 </Container>
             </Section>
 
-            <!-- Project Events Section -->
-            <Section background="muted">
+            <!-- Nächste Termine · the pedia row-family, db-bound (C1/U2+P4):
+                 pList maps img_thumb/img_square itself and navigates on click. -->
+            <Section background="default">
                 <Container>
                     <Prose>
-                        <Heading overline="Project Events" level="h2" headline="Upcoming Events" />
+                        <Heading overline="Veranstaltungen" level="h2" headline="Nächste Termine" />
                     </Prose>
 
-                    <Slider v-if="events.length > 0">
-                        <Slide v-for="event in events" :key="event.id">
-                            <img v-if="event.cimg" :src="event.cimg" :alt="event.heading || event.id"
-                                style="width: 100%; height: 200px; object-fit: cover; margin-bottom: 1rem;" />
-                            <Prose>
-                                <h3>{{ event.heading || event.id }}</h3>
-                                <p v-if="event.date"><strong>Date:</strong> {{ formatDate(event.date) }}</p>
-                                <p v-if="event.location">{{ event.location }}</p>
-                                <p v-if="event.md">{{ event.md.substring(0, 100) }}...</p>
-                            </Prose>
-                        </Slide>
-                    </Slider>
-                    <Prose v-else>
-                        <p><em>No events for this project yet.</em></p>
-                    </Prose>
+                    <pList entity="events" :project="domaincode" size="small" width="inherit" columns="off"
+                        onActivate="route" />
+
+                    <!-- The CTA row (C1/P7+P8). cta1 mirrors the hero-CTA data
+                         (projects.cta_*) — the MINI header resolves to the
+                         'simple' config which hides its own cta-group, so the
+                         row carries it until a larger header size is chosen.
+                         cta2 opens the Sommerpause post-it (registered by
+                         SiteNoticePostits, windowed auto-open, always openable). -->
+                    <p class="landing-ctas">
+                        <RouterLink v-if="ctaConfig.title && ctaConfig.link" :to="ctaConfig.link"
+                            class="landing-cta1-btn">
+                            {{ ctaConfig.title }}
+                        </RouterLink>
+                        <button type="button" class="landing-cta2-btn" @click="openSommerpause">
+                            ☀ Sommerpause — was heißt das gerade?
+                        </button>
+                    </p>
                 </Container>
             </Section>
 
             <!-- Regio Content Demo Section (only shown if project has regio) -->
             <RegioContentDemo v-if="project && project.regio" :regio="project.regio" />
 
-            <!-- Blog Posts Gallery for Project -->
-            <Section background="accent">
-                <Container>
+            <!-- ── ASIDE (right of the two equal cols) · posts + team ────────── -->
+            <template #aside>
+                <Section background="default">
                     <Prose>
-                        <Heading overline="Project Updates" level="h2" headline="Latest Posts" />
+                        <Heading overline="Beiträge" level="h2" headline="Was schon war" />
                     </Prose>
-
-                    <Columns gap="medium" align="top" wrap v-if="posts.length > 0">
-                        <Column v-for="post in posts.slice(0, 6)" :key="post.id" width="1/3">
-                            <RouterLink :to="`/sites/${domaincode}/posts/${post.id}`"
-                                style="text-decoration: none; color: inherit; display: block;">
-                                <CardHero height-tmp="medium" :img-tmp="post.cimg || ''" content-align-y="bottom"
-                                    content-type="text">
-                                    <Prose>
-                                        <h3>{{ post.name || post.id }}</h3>
-                                        <p v-if="post.teaser">{{ post.teaser.substring(0, 100) }}{{ post.teaser.length >
-                                            100 ? '...'
-                                            : '' }}</p>
-                                        <p v-else-if="post.md">{{ post.md.substring(0, 100) }}...</p>
-                                        <p v-else><em>No content available</em></p>
-                                    </Prose>
-                                </CardHero>
-                            </RouterLink>
-                        </Column>
-                    </Columns>
-                    <Prose v-else>
-                        <p><em>No posts for this project yet.</em></p>
-                    </Prose>
-                </Container>
-            </Section>
-
-            <!-- Team Members Section -->
-            <Section background="muted">
-                <Container>
-                    <Prose>
-                        <Heading overline="Meet the Team" level="h2" headline="Our People" />
-                    </Prose>
-
-                    <Slider v-if="users.length > 0">
-                        <Slide v-for="teamUser in users" :key="teamUser.id">
-                            <div style="text-align: center;">
-                                <img v-if="teamUser.cimg" :src="teamUser.cimg" :alt="teamUser.username || teamUser.id"
-                                    style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;" />
-                                <div v-else
-                                    style="width: 120px; height: 120px; border-radius: 50%; background: #ddd; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #666;">
-                                    {{ (teamUser.username || teamUser.id).charAt(0).toUpperCase() }}
-                                </div>
+                    <div v-if="posts.length > 0" class="landing-post-stack">
+                        <RouterLink v-for="post in posts.slice(0, 4)" :key="post.id"
+                            :to="`/sites/${domaincode}/posts/${post.id}`" class="landing-post-card">
+                            <CardHero height-tmp="medium" :img-tmp="postImage(post)" content-align-y="bottom"
+                                content-type="text">
                                 <Prose>
-                                    <h4>{{ teamUser.username || teamUser.id }}</h4>
-                                    <p v-if="teamUser.role"><em>{{ teamUser.role }}</em></p>
-                                    <p v-if="teamUser.email">{{ teamUser.email }}</p>
+                                    <h3>{{ post.name || post.id }}</h3>
+                                    <p v-if="post.teaser">{{ post.teaser.substring(0, 100) }}{{ post.teaser.length >
+                                        100 ? '...' : '' }}</p>
                                 </Prose>
-                            </div>
-                        </Slide>
-                    </Slider>
+                            </CardHero>
+                        </RouterLink>
+                    </div>
                     <Prose v-else>
-                        <p><em>No team members listed yet.</em></p>
+                        <p><em>Noch keine Beiträge.</em></p>
                     </Prose>
-                </Container>
-            </Section>
+                </Section>
+
+                <Section id="team" background="default">
+                    <Prose>
+                        <Heading overline="Team" level="h2" headline="Wer hier arbeitet" />
+                    </Prose>
+                    <div v-if="users.length > 0" class="landing-team">
+                        <div v-for="teamUser in users" :key="teamUser.id" class="landing-team-member">
+                            <img v-if="teamUser.cimg" :src="teamUser.cimg" :alt="teamUser.username || teamUser.id"
+                                class="landing-team-avatar" />
+                            <div v-else class="landing-team-avatar landing-team-avatar-empty">
+                                {{ (teamUser.username || teamUser.id).charAt(0).toUpperCase() }}
+                            </div>
+                            <div class="landing-team-meta">
+                                <strong>{{ teamUser.username || teamUser.id }}</strong>
+                                <span v-if="teamUser.role">{{ teamUser.role }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <Prose v-else>
+                        <p><em>Noch keine Mitwirkenden eingetragen.</em></p>
+                    </Prose>
+                </Section>
+            </template>
 
             <!-- PageBottom: consulting call + email CTA lanes (T1-γ) -->
             <template #footer>
@@ -223,21 +220,21 @@ import Heading from '@/components/Heading.vue'
 import Button from '@/components/Button.vue'
 import Section from '@/components/Section.vue'
 import Container from '@/components/Container.vue'
-import Slider from '@/components/Slider.vue'
-import Slide from '@/components/Slide.vue'
-import Columns from '@/components/Columns.vue'
-import Column from '@/components/Column.vue'
 import CardHero from '@/components/CardHero.vue'
+import pList from '@/components/page/pList.vue'
 import RegioContentDemo from '@/components/RegioContentDemo.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
 import { resolveSiteFrame } from '@/utils/domainSiteFrames'
+import { resolvePageStructure, type PageStructure } from '@/utils/pageStructure'
+import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import { extractRouteSlug } from '@/utils/xmlid'
 
 const router = useRouter()
 const route = useRoute()
 const { setTheme, init: initTheme, setDomainThemeOverride } = useTheme()
+const fpostitController = useFpostitController()
 const { loadForProject, getOptions } = usePageOptions()
 
 // State
@@ -422,6 +419,50 @@ const navigationItems = computed(() => {
 
 const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
 const frameBrand = computed(() => siteFrame.value?.brand ?? null)
+
+// ── The landing pages-row (page_type='landing') · C1 ────────────────────────
+// site_layout: fullTwo is the LANDING's code-default per spec (§19: fullTwo IS
+// „2-mains") — the row carries only deviations. alert_banner: the page-alert
+// via standard-config (pedia's mechanism), replacing the alpha post-it.
+const landingStructure = ref<PageStructure>({})
+const landingAlertBanner = ref<{ message: string; alertType: 'primary' | 'secondary' | 'muted' | 'accent' | 'positive' | 'negative' | 'warning' } | null>(null)
+/** Hero size rides the LANDING pages-row (header_size lives on pages, not projects). */
+const landingHeaderSize = ref<string | null>(null)
+
+const landingSiteLayout = computed(() => landingStructure.value.siteLayout ?? 'fullTwo')
+
+async function loadLandingOptions() {
+    try {
+        const response = await fetch(`/api/pages/by-project?project_id=${encodeURIComponent(domaincode.value)}`)
+        if (!response.ok) return
+        const data = await response.json()
+        const rows: Array<{ page_type?: string; page_options?: Record<string, unknown> }> = data?.pages ?? []
+        const landingRow = rows.find((row) => row.page_type === 'landing') as
+            | { page_type?: string; page_options?: Record<string, unknown>; header_size?: string | null }
+            | undefined
+        if (!landingRow) return
+        landingHeaderSize.value = landingRow.header_size ?? null
+        const options = landingRow.page_options ?? {}
+        landingStructure.value = resolvePageStructure(options)
+        const alert = options.alert_banner as { message?: string; alertType?: string } | undefined
+        if (alert?.message) {
+            landingAlertBanner.value = {
+                message: alert.message,
+                alertType: (alert.alertType ?? 'warning') as NonNullable<typeof landingAlertBanner.value>['alertType'],
+            }
+        }
+    } catch { /* absence declares the default — the registry's own rule */ }
+}
+
+/** Post image: registry shapes first, legacy cimg second — '' keeps CardHero's placeholder. */
+function postImage(post: { img_wide?: { url?: string } | null; img_square?: { url?: string } | null; cimg?: string | null }): string {
+    return post.img_wide?.url || post.img_square?.url || post.cimg || ''
+}
+
+/** cta2 (P8): the Sommerpause post-it — registered by SiteNoticePostits, openable any time. */
+function openSommerpause(event: MouseEvent) {
+    fpostitController.openPostit('uia-notice-sommerpause', event.currentTarget as HTMLElement)
+}
 
 // Open edit panel
 function openEditPanel() {
@@ -670,6 +711,9 @@ onMounted(async () => {
     // domaincode as the frame — one seam, three consumers (domainSiteFrames).
     setDomainThemeOverride(domaincode.value)
 
+    // The landing pages-row: site_layout deviation + the alert banner.
+    loadLandingOptions()
+
     await checkAuth()
 
     if (domaincode.value) {
@@ -705,6 +749,83 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ── C1 landing pieces ─────────────────────────────────────────────────── */
+.landing-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+}
+
+.landing-cta1-btn {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border: 2px solid var(--color-primary-bg);
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary-contrast);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.landing-cta2-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--color-positive-bg);
+    background-color: color-mix(in oklch, var(--color-positive-bg) 14%, transparent);
+    color: var(--color-contrast);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.landing-post-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.landing-post-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.landing-team {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.landing-team-member {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.landing-team-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.landing-team-avatar-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-muted-bg);
+    color: var(--color-muted-contrast);
+    font-size: 1.5rem;
+}
+
+.landing-team-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    font-size: 0.9375rem;
+}
+
 .project-site-page {
     min-height: 100vh;
     display: flex;
