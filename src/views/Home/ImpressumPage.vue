@@ -15,84 +15,86 @@
                     :is-owner="isProjectOwner" @open="openEditPanel" />
             </template>
 
-            <!-- Page Content -->
+            <!-- Page Content · fields per project (useImpressum — the thread's
+                 template with its fallback chain; prose is shared, identity varies) -->
             <Section background="default">
                 <Container>
                     <Prose>
                         <div class="legal-content">
                             <h1>Impressum und Disclaimer</h1>
+                            <p>Angaben gemäß § 5 DDG</p>
 
-                            <h2>Für: Theaterpedia - Netzwerk für Theaterpädagogik</h2>
+                            <!-- Honest state for a project without keys: never render a
+                                 WRONG Diensteanbieter — the split exists for liability. -->
+                            <template v-if="missing">
+                                <p class="legal-missing">
+                                    Die Impressum-Angaben für dieses Projekt sind noch nicht hinterlegt.
+                                    Bitte wende dich an die Projekt-Verantwortlichen.
+                                </p>
+                            </template>
 
-                            <p>Gemäß § 28 BDSG widerspreche ich jeder kommerziellen Verwendung und Weitergabe meiner
-                                Daten.</p>
+                            <template v-else>
+                                <h2>Für: {{ fields.company }}</h2>
 
-                            <p><strong>Verantwortungsbereich:</strong> Das Impressum gilt nur für die Internetpräsenz
-                                unter der
-                                Adresse: <a href="https://theaterpedia.org">https://theaterpedia.org</a></p>
+                                <p>Gemäß § 28 BDSG widerspreche ich jeder kommerziellen Verwendung und Weitergabe meiner
+                                    Daten.</p>
 
-                            <p><strong>Diensteanbieter:</strong> Theaterpedia - Netzwerk für Theaterpädagogik</p>
+                                <p><strong>Verantwortungsbereich:</strong> Das Impressum gilt nur für die Internetpräsenz
+                                    unter der Adresse: <a :href="fields.homeUrl">{{ fields.homeUrl }}</a></p>
 
-                            <p><strong>Verantwortliche Ansprechperson:</strong> Hans Dönitz</p>
+                                <p><strong>Diensteanbieter:</strong> {{ fields.company }}</p>
 
-                            <p><strong>Anschrift:</strong> Fürtherstr. 174, 90429 Nürnberg</p>
+                                <p><strong>Verantwortliche Ansprechperson:</strong> {{ fields.name }}</p>
 
-                            <p><strong>Elektronische Postadresse:</strong> info @ theaterpedia .org</p>
+                                <p><strong>Anschrift:</strong> <span class="legal-address">{{ fields.address }}</span></p>
 
-                            <p><strong>Schnelle elektronische und unmittelbare Kommunikation:</strong> Tel: 0911/7808476
-                            </p>
+                                <p><strong>Elektronische Postadresse:</strong> {{ fields.email }}</p>
 
-                            <p><strong>Journalistisch-redaktionelle Verantwortung:</strong> Hans Dönitz, Fürtherstr.
-                                174, 90429
-                                Nürnberg</p>
+                                <!-- absent phone = the whole line hides (template rule) -->
+                                <p v-if="fields.phone"><strong>Schnelle elektronische und unmittelbare
+                                    Kommunikation:</strong> Tel: {{ fields.phone }}</p>
 
-                            <h2>Urheberschutz und Nutzung</h2>
+                                <p><strong>Journalistisch-redaktionelle Verantwortung:</strong>
+                                    {{ fields.responsibleContent }}</p>
 
-                            <p>Der Urheber räumt Ihnen ganz konkret das Nutzungsrecht ein, sich eine private Kopie für
-                                persönliche
-                                Zwecke anzufertigen. Nicht berechtigt sind Sie dagegen, die Materialien zu verändern
-                                und/oder weiter
-                                zu geben oder gar selbst zu veröffentlichen.</p>
+                                <h2>Urheberschutz und Nutzung</h2>
 
-                            <p>Wenn nicht ausdrücklich anders vermerkt, liegen die Urheberrechte für Texte bei: Hans
-                                Dönitz</p>
+                                <p>Der Urheber räumt Ihnen ganz konkret das Nutzungsrecht ein, sich eine private Kopie für
+                                    persönliche Zwecke anzufertigen. Nicht berechtigt sind Sie dagegen, die Materialien zu
+                                    verändern und/oder weiter zu geben oder gar selbst zu veröffentlichen.</p>
 
-                            <p>Die meisten Illustrationen unterliegen den Urheberrechten der jeweiligen Künstler*innen.
-                            </p>
+                                <p>Wenn nicht ausdrücklich anders vermerkt, liegen die Urheberrechte für Texte bei:
+                                    {{ fields.copyright }}</p>
 
-                            <h2>Datenschutz</h2>
+                                <p>Die meisten Illustrationen unterliegen den Urheberrechten der jeweiligen
+                                    Künstler*innen.</p>
 
-                            <p>Personenbezogene Daten werden nur mit Ihrem Wissen und Ihrer Einwilligung erhoben. Eine
-                                detaillierte
-                                Datenschutzerklärung finden Sie unter <a
-                                    href="/datenschutz">https://theaterpedia.org/datenschutz</a>. Auf Antrag erhalten
-                                Sie
-                                unentgeltlich Auskunft zu den über Sie gespeicherten personenbezogenen Daten. Wenden Sie
-                                sich dazu
-                                bitte an: datenschutz @ theaterpedia .org</p>
+                                <h2>Datenschutz</h2>
 
-                            <h2>Keine Haftung</h2>
+                                <p>Personenbezogene Daten werden nur mit Ihrem Wissen und Ihrer Einwilligung erhoben. Eine
+                                    detaillierte Datenschutzerklärung finden Sie unter
+                                    <RouterLink to="datenschutz">{{ fields.homeUrl }}/datenschutz</RouterLink>.
+                                    Auf Antrag erhalten Sie unentgeltlich Auskunft zu den über Sie gespeicherten
+                                    personenbezogenen Daten. Wenden Sie sich dazu bitte an: {{ fields.datenschutzEmail }}</p>
 
-                            <p>Die Inhalte dieses Webprojektes wurden sorgfältig geprüft und nach bestem Wissen
-                                erstellt. Aber für
-                                die hier dargebotenen Informationen wird kein Anspruch auf Vollständigkeit, Aktualität,
-                                Qualität und
-                                Richtigkeit erhoben. Es kann keine Verantwortung für Schäden übernommen werden, die
-                                durch das
-                                Vertrauen auf die Inhalte dieser Website oder deren Gebrauch entstehen.</p>
+                                <h2>Keine Haftung</h2>
 
-                            <h2>Schutzrechtsverletzung</h2>
+                                <p>Die Inhalte dieses Webprojektes wurden sorgfältig geprüft und nach bestem Wissen
+                                    erstellt. Aber für die hier dargebotenen Informationen wird kein Anspruch auf
+                                    Vollständigkeit, Aktualität, Qualität und Richtigkeit erhoben. Es kann keine
+                                    Verantwortung für Schäden übernommen werden, die durch das Vertrauen auf die Inhalte
+                                    dieser Website oder deren Gebrauch entstehen.</p>
 
-                            <p>Falls Sie vermuten, dass von dieser Website aus eines Ihrer Schutzrechte verletzt wird,
-                                teilen Sie
-                                das bitte umgehend per elektronischer Post mit, damit zügig Abhilfe geschafft werden
-                                kann. Bitte
-                                nehmen Sie zur Kenntnis: Die zeitaufwändigere Einschaltung eines Anwaltes zur für den
-                                Diensteanbieter kostenpflichtigen Abmahnung entspricht nicht dessen wirklichen oder
-                                mutmaßlichen
-                                Willen.</p>
+                                <h2>Schutzrechtsverletzung</h2>
 
-                            <p>&copy; 2025 Theaterpedia.org Network</p>
+                                <p>Falls Sie vermuten, dass von dieser Website aus eines Ihrer Schutzrechte verletzt wird,
+                                    teilen Sie das bitte umgehend per elektronischer Post mit, damit zügig Abhilfe
+                                    geschafft werden kann. Bitte nehmen Sie zur Kenntnis: Die zeitaufwändigere Einschaltung
+                                    eines Anwaltes zur für den Diensteanbieter kostenpflichtigen Abmahnung entspricht nicht
+                                    dessen wirklichen oder mutmaßlichen Willen.</p>
+
+                                <p>&copy; {{ fields.year }} {{ fields.company }}</p>
+                            </template>
                         </div>
                     </Prose>
                 </Container>
@@ -122,9 +124,16 @@ import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
+import { useImpressum, IMPRESSUM_ROOT_DOMAINCODE } from '@/composables/useImpressum'
 
 const router = useRouter()
 const route = useRoute()
+
+// One component, three mounts (impressum thread, B's analysis): `/impressum`
+// → the root site (tp) · `/sites/:domaincode/impressum` + `/projects/:xyz/…`
+// → that project's own legal identity. Liability is the reason for the split.
+const domaincode = String(route.params.domaincode || IMPRESSUM_ROOT_DOMAINCODE)
+const { fields, missing, load: loadImpressum } = useImpressum(domaincode)
 
 // SEO: Set meta tags
 function setImpressumSeoMeta() {
@@ -157,7 +166,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
     }))
 })
 
-const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
 const isEditPanelOpen = ref(false)
@@ -188,7 +196,7 @@ const editPanelData = computed<EditPanelData>(() => {
 
 const isProjectOwner = computed(() => {
     if (!user.value || !project.value) return false
-    return user.value.activeRole === 'project' && user.value.projectId === FIXED_PROJECT_ID
+    return user.value.activeRole === 'project' && user.value.projectId === domaincode
 })
 
 function openEditPanel() {
@@ -245,7 +253,8 @@ onMounted(async () => {
 
     setImpressumSeoMeta()
     await checkAuth()
-    await fetchProject(FIXED_PROJECT_ID)
+    await fetchProject(domaincode)
+    await loadImpressum()
 })
 </script>
 
@@ -284,5 +293,17 @@ onMounted(async () => {
 
 .legal-content a:hover {
     color: var(--color-primary-darker);
+}
+
+/* impressum_address is a MULTILINE key (the thread's template) — one span, real breaks. */
+.legal-address {
+    white-space: pre-line;
+}
+
+/* A project without keys shows the honest note — never a wrong Diensteanbieter. */
+.legal-missing {
+    padding: 0.6rem 0.8rem;
+    border-left: 4px solid var(--color-warning-bg);
+    background-color: var(--color-card-bg);
 }
 </style>

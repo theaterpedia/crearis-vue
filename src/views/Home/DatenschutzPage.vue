@@ -97,12 +97,14 @@
 
                             <p>Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:</p>
 
+                            <!-- Cross-read from the IMPRESSUM key-set (useImpressum · the
+                                 impressum thread's ruling: datenschutz holds ZERO own keys).
+                                 Absent phone = the line hides, per the template. -->
                             <p>
-                                Theaterpedia - Netzwerk für Theaterpädagogik<br>
-                                Fürtherstr. 174<br>
-                                90429 Nürnberg<br>
-                                Tel.: +49 (911) 7808476<br>
-                                E-Mail: datenschutz@theaterpedia.org
+                                {{ fields.company }}<br>
+                                <span class="legal-address">{{ fields.address }}</span><br>
+                                <template v-if="fields.phone">Tel.: {{ fields.phone }}<br></template>
+                                E-Mail: {{ fields.datenschutzEmail }}
                             </p>
 
                             <p>Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder
@@ -308,6 +310,7 @@ import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
+import { useImpressum, IMPRESSUM_ROOT_DOMAINCODE } from '@/composables/useImpressum'
 
 const router = useRouter()
 const route = useRoute()
@@ -343,7 +346,12 @@ const navItems = computed<TopnavParentItem[]>(() => {
     }))
 })
 
-const FIXED_PROJECT_ID = 'tp'
+// One component, three mounts — same pattern as ImpressumPage; the fields are
+// the IMPRESSUM set, cross-read (datenschutz holds zero own keys — HD's ruling,
+// hcv/threads/2026-08-impressum.md).
+const domaincode = String(route.params.domaincode || IMPRESSUM_ROOT_DOMAINCODE)
+const { fields, load: loadImpressum } = useImpressum(domaincode)
+
 const user = ref<any>(null)
 const project = ref<any>(null)
 const isEditPanelOpen = ref(false)
@@ -374,7 +382,7 @@ const editPanelData = computed<EditPanelData>(() => {
 
 const isProjectOwner = computed(() => {
     if (!user.value || !project.value) return false
-    return user.value.activeRole === 'project' && user.value.projectId === FIXED_PROJECT_ID
+    return user.value.activeRole === 'project' && user.value.projectId === domaincode
 })
 
 function openEditPanel() {
@@ -431,7 +439,8 @@ onMounted(async () => {
 
     setDatenschutzSeoMeta()
     await checkAuth()
-    await fetchProject(FIXED_PROJECT_ID)
+    await fetchProject(domaincode)
+    await loadImpressum()
 })
 </script>
 
@@ -491,5 +500,10 @@ onMounted(async () => {
 
 .legal-content a:hover {
     color: var(--color-primary-darker);
+}
+
+/* impressum_address is a MULTILINE key (cross-read from the impressum set). */
+.legal-address {
+    white-space: pre-line;
 }
 </style>

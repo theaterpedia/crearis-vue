@@ -16,6 +16,14 @@ const router = createRouter({
     { path: '/contact', component: () => import('../views/Home/ContactPage.vue') },
     { path: '/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
     { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
+    // Per-project legal pages (impressum thread, HD 2026-08-07): the SAME two
+    // components, mounted with `:domaincode` — they load THAT project's legal
+    // identity (Theaterpedia is not responsible for a project's content; its
+    // owner is). No param → the components fall back to the root site ('tp').
+    { path: '/sites/:domaincode/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
+    { path: '/sites/:domaincode/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
+    { path: '/projects/:domaincode/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
+    { path: '/projects/:domaincode/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
     // /start · the project's enrollment surface — meaning arrives via the preset
