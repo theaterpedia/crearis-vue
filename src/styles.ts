@@ -1,5 +1,6 @@
 import './assets/css/01-variables.css'
 import './assets/css/02-font-cantarell.css'
+import './assets/css/02-font-outfit.css'
 import './assets/css/02-fonts-roboto.css'
 import './assets/css/02-fonts-argon.css'
 import './assets/css/02-fonts-krypton.css'

@@ -20,13 +20,26 @@ export interface DomainSiteFrame {
     showLogo?: 'default' | 'desktop' | 'yes' | 'no'
     /** The site's public nav. Editor/dashboard links stay role-gated in the pages. */
     navItems?: ReadonlyArray<{ label: string; link: string }>
+    /**
+     * The site's own mark — rendered in TopNav's logo slot INSTEAD of the
+     * platform wordmark. `href` is the site's home, never `/` (the portal).
+     */
+    brand?: { src: string; alt: string; href: string }
 }
 
 export const DOMAIN_SITE_FRAMES: Record<string, DomainSiteFrame> = {
-    // uia · no platform wordmark (c95b514); the site's own nav. The logo ring
-    // (registry image id 3) lands with sister C's external-design pass.
+    // uia · never the platform wordmark (c95b514) — since 2026-08-06 the site's
+    // own ring (registry image id 3, local aspect engine square shape) sits in
+    // the corner at rest. The condensing-masthead question (ring large at rest,
+    // condensing on scroll — design-thread §4·4) is OPEN, HD decides; this is
+    // the conservative at-rest state, not the answer.
     utopiaxaction: {
-        showLogo: 'no',
+        showLogo: 'yes',
+        brand: {
+            src: '/api/images/local/shapes/utopiaxaction.image.uia_logo_ring_square.webp',
+            alt: 'Utopia in Action',
+            href: '/sites/utopiaxaction',
+        },
         navItems: [
             { label: 'Utopia in Action', link: '/sites/utopiaxaction' },
             { label: 'Agenda', link: '/sites/utopiaxaction/start' },

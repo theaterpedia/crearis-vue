@@ -154,6 +154,42 @@ export function isAtOrAboveRubicon(status: number | null | undefined): boolean {
 }
 
 /**
+ * The drafting-border — NOT the Rubicon. Two lines, two names (sysreg thread §2,
+ * HD-blessed 2026-08-06: „the switch at DRAFT (64) is the intended boundary").
+ *
+ * Below it a project is still being set up (NEW/DEMO categories → the Stepper);
+ * from DRAFT (64) on it is worked in Dashboard mode. Reasoning that travels
+ * between „drafting-border" and „Rubicon" is wrong in one direction or the other.
+ */
+export const DRAFTING_BORDER: number = STATUS.DRAFT // 64
+
+/**
+ * Is this status before the drafting-border (→ Stepper mode)?
+ *
+ * MASKED comparison, deliberately: raw equality against NEW(1)/DEMO(8) lets the
+ * 3-bit-slot subcategories (`new_user=3`, `demo_project=24`) silently fall
+ * through to Dashboard — the exact defect flagged in sysreg thread §2. A masked
+ * ordinal `< 64` keeps every value inside the new/demo slots on the Stepper side.
+ * `null`/`undefined` → `true` (a row without a status has not begun drafting).
+ */
+export function isBeforeDraftingBorder(status: number | null | undefined): boolean {
+    return lifecycleStatus(status) < DRAFTING_BORDER
+}
+
+/**
+ * Is this entity publicly visible by its own status?
+ *
+ * The one named spelling of the rotation predicate (project-status thread §1/§4):
+ * masked lifecycle at/above RELEASED (4096) and below ARCHIVED (32768). Masked,
+ * because a raw `>=` admits archived/trash and scope-inflated values — the
+ * CV-Schema audit's bug class.
+ */
+export function isPublished(status: number | null | undefined): boolean {
+    const lifecycle = lifecycleStatus(status)
+    return lifecycle >= STATUS.RELEASED && lifecycle < STATUS.ARCHIVED
+}
+
+/**
  * Map usermode string to status value (for StartPage.vue compatibility)
  */
 export function usermodeToStatus(usermode: string): StatusValue | null {

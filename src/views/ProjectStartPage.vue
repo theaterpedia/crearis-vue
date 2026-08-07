@@ -31,7 +31,7 @@
         <ProjectNotPublished v-if="accessLoaded && !projectAccess.canAccess.value" :project-domaincode="domaincode"
             :project-name="project?.heading || project?.name || undefined" :is-logged-in="!!user" />
 
-        <PageLayout v-else-if="accessLoaded" :navItems="frameNavItems" :showLogo="frameShowLogo">
+        <PageLayout v-else-if="accessLoaded" :navItems="frameNavItems" :showLogo="frameShowLogo" :brand="frameBrand">
             <template #header>
                 <Section background="accent">
                     <Container>
@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import { useRoute, useRouter } from 'vue-router'
 import PageLayout from '@/components/PageLayout.vue'
 import Section from '@/components/Section.vue'
@@ -110,6 +111,7 @@ const { user, checkSession } = useAuth()
 const projectAccess = useProjectAccess()
 
 const domaincode = String(route.params.domaincode || '')
+const { setDomainThemeOverride } = useTheme()
 const accessLoaded = ref(false)
 const project = ref<{ heading?: string | null; name?: string | null } | null>(null)
 
@@ -117,6 +119,7 @@ const preset = resolvePresetForDomain(domaincode)
 const frame = resolveSiteFrame(domaincode)
 const frameNavItems = computed(() => (frame?.navItems ? [...frame.navItems] : []))
 const frameShowLogo = computed(() => frame?.showLogo ?? 'default')
+const frameBrand = frame?.brand ?? null
 
 const { dayGroups, lineCount, loading, error, load } = useAgendaLive(domaincode)
 
@@ -130,6 +133,10 @@ function openLine(line: AgendaLineData) {
 }
 
 onMounted(async () => {
+    // Site theme tokens ride the same resolved domaincode as the frame —
+    // one seam, three consumers (domainSiteFrames / domainThemeOverrides).
+    setDomainThemeOverride(domaincode)
+
     // The singleton trap (TempDashboard header, trap 2): checkSession BEFORE access.load.
     try { await checkSession() } catch { /* anonymous is fine */ }
 

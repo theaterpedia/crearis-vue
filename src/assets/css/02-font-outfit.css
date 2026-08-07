@@ -1,0 +1,16 @@
+/*
+ * Outfit · SIL OFL (see ../fonts/Outfit-OFL.txt, shipped alongside per the license).
+ * Variable font — one file carries weights 100–900.
+ *
+ * uia's font since 2026-08-06 (HD cleared it with the owner — uia thread §14·2),
+ * replacing Cantarell in the per-domaincode override (domainThemeOverrides.ts).
+ * The base themes keep their own fonts; a site opts in via `--font`.
+ */
+
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(../fonts/Outfit-VariableFont_wght.ttf) format('truetype-variations');
+}

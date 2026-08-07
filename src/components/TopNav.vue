@@ -12,10 +12,11 @@
           :class="['topnav-back-action', { 'topnav-back-action-hidden': navbarMode === 'home' }]"
           @click="handleBackClick" />
 
-        <!-- Logo -->
-        <router-link v-if="shouldShowLogo" to="/"
+        <!-- Logo · a site-frame brand replaces the platform wordmark -->
+        <router-link v-if="shouldShowLogo" :to="brand?.href ?? '/'"
           :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
-          <Logo logoSize="small" />
+          <img v-if="brand" class="topnav-brand-img" :src="brand.src" :alt="brand.alt" />
+          <Logo v-else logoSize="small" />
         </router-link>
 
         <!-- Command Prompt in dashboard -->
@@ -90,10 +91,11 @@
         :class="['topnav-back-action', { 'topnav-back-action-hidden': navbarMode === 'home' }]"
         @click="handleBackClick" />
 
-      <!-- Logo -->
-      <router-link v-if="shouldShowLogo" to="/"
+      <!-- Logo · a site-frame brand replaces the platform wordmark -->
+      <router-link v-if="shouldShowLogo" :to="brand?.href ?? '/'"
         :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
-        <Logo />
+        <img v-if="brand" class="topnav-brand-img" :src="brand.src" :alt="brand.alt" />
+        <Logo v-else />
       </router-link>
 
       <!-- Main Menu -->
@@ -181,10 +183,11 @@
 
         <!-- Logo + Header in one row -->
         <div class="topnav-mobile-menu-header-row">
-          <!-- Logo  -->
-          <router-link v-if="shouldShowLogo" to="/"
+          <!-- Logo · a site-frame brand replaces the platform wordmark -->
+          <router-link v-if="shouldShowLogo" :to="brand?.href ?? '/'"
             :class="['topnav-logo', { 'topnav-logo-desktop-only': showLogo === 'desktop' }]">
-            <Logo />
+            <img v-if="brand" class="topnav-brand-img" :src="brand.src" :alt="brand.alt" />
+            <Logo v-else />
           </router-link>
           <!-- Header -->
           <div class="topnav-mobile-menu-header">
@@ -407,6 +410,18 @@ const props = defineProps({
   showLogo: {
     type: String as PropType<'default' | 'desktop' | 'yes' | 'no'>,
     default: 'default',
+  },
+
+  /**
+   * A site's own mark, rendered in the logo slot INSTEAD of the platform
+   * wordmark when provided (per-domaincode site-frame · domainSiteFrames.ts).
+   * `showLogo` keeps ruling the SLOT; `brand` only replaces its content.
+   * `href` is the site's home — deliberately not `/`, which is the portal on
+   * the one-instance deployment.
+   */
+  brand: {
+    type: Object as PropType<{ src: string; alt: string; href: string } | null>,
+    default: null,
   },
 
   /**
@@ -1139,6 +1154,14 @@ onUnmounted(() => {
 .topnav-command-prompt,
 .topnav-cancel-action {
   flex-shrink: 0;
+}
+
+/* A site's own mark in the logo slot (site-frame brand) — corner-sized at
+   rest; the condensing-masthead question is open (design-thread §4·4). */
+.topnav-brand-img {
+  display: block;
+  height: 2rem;
+  width: auto;
 }
 
 /* Desktop-only visibility */

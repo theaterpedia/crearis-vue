@@ -12,7 +12,7 @@
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import { useAuth } from './useAuth'
-import { STATUS, lifecycleStatus } from '@/utils/status-constants'
+import { STATUS, lifecycleStatus, isPublished } from '@/utils/status-constants'
 
 /**
  * Project access result
@@ -112,13 +112,10 @@ export function useProjectAccess(): ProjectAccessResult {
     const statusOld = computed(() => projectData.value?.status_old || null)
 
     // Computed: is project publicly accessible.
-    // Sysreg decides (HD 2026-08-06: project.status, NOT status_old): lifecycle
-    // (masked low 17 bits) at/above RELEASED and below ARCHIVED — a raw `>= 4096`
-    // would admit archived/trash and scope-toggle-inflated values.
-    const isPublic = computed(() => {
-        const lifecycle = lifecycleStatus(projectData.value?.status || 0)
-        return lifecycle >= STATUS.RELEASED && lifecycle < STATUS.ARCHIVED
-    })
+    // Sysreg decides (HD 2026-08-06: project.status, NOT status_old) — the named
+    // rotation predicate: masked lifecycle at/above RELEASED, below ARCHIVED
+    // (project-status thread §4·4 asked for the one spelling; this is it).
+    const isPublic = computed(() => isPublished(projectData.value?.status))
 
     // Computed: is user owner
     const isOwner = computed(() => {

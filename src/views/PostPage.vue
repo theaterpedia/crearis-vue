@@ -40,7 +40,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="post && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
-            :showLogo="frameShowLogo">
+            :showLogo="frameShowLogo" :brand="frameBrand">
             <template #header>
                 <!-- Use image_id if available (API-based loading), otherwise fallback to imgTmp -->
                 <PageHeading :heading="post.name || String(post.id)" :image_id="post.img_id || undefined"
@@ -151,7 +151,7 @@ import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
-const { setTheme, init: initTheme } = useTheme()
+const { setTheme, init: initTheme, setDomainThemeOverride } = useTheme()
 const { loadForProject, getOptions, parseXmlid } = usePageOptions()
 
 // Alpha mode access control
@@ -200,6 +200,7 @@ const navigationItems = computed(() => {
 })
 
 const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
+const frameBrand = computed(() => siteFrame.value?.brand ?? null)
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry
@@ -281,6 +282,9 @@ const projectDataForPermissions = computed(() => {
 async function loadPost() {
     const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
+
+    // Site theme tokens ride the same resolved domaincode as the frame.
+    setDomainThemeOverride(domaincode.value)
 
     console.log('[PostPage] Loading post:', { identifier, domaincode: domaincode.value })
 

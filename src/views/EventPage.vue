@@ -40,7 +40,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="event && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
-            :showLogo="frameShowLogo">
+            :showLogo="frameShowLogo" :brand="frameBrand">
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
@@ -182,7 +182,7 @@ import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
-const { setTheme, init: initTheme } = useTheme()
+const { setTheme, init: initTheme, setDomainThemeOverride } = useTheme()
 const { loadForProject, getOptions, parseXmlid } = usePageOptions()
 
 // Alpha mode access control
@@ -228,6 +228,7 @@ const navigationItems = computed(() => {
 })
 
 const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
+const frameBrand = computed(() => siteFrame.value?.brand ?? null)
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry
@@ -321,6 +322,9 @@ const projectDataForPermissions = computed(() => {
 async function loadEvent() {
     const identifier = route.params.identifier as string
     domaincode.value = route.params.domaincode as string
+
+    // Site theme tokens ride the same resolved domaincode as the frame.
+    setDomainThemeOverride(domaincode.value)
 
     console.log('[EventPage] Loading event:', { identifier, domaincode: domaincode.value })
 
