@@ -23,7 +23,8 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="project && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectDomaincode="project.domaincode" :projectId="project.id"
-            :navItems="navigationItems" :showLogo="frameShowLogo" :brand="frameBrand">
+            :navItems="navigationItems" :showLogo="frameShowLogo" :brand="frameBrand"
+            :setScrollStyle="siteFrame?.scrollStyle">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Project Editor Link (for owners/admins) -->

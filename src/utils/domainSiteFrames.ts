@@ -25,14 +25,18 @@ export interface DomainSiteFrame {
      * platform wordmark. `href` is the site's home, never `/` (the portal).
      */
     brand?: { src: string; alt: string; href: string }
+    /**
+     * Topnav scroll behavior. O-2 (the condensing masthead) needs a sticky
+     * nav so the corner ring has somewhere to arrive: 'overlay'.
+     */
+    scrollStyle?: 'simple' | 'overlay' | 'overlay_reappear'
 }
 
 export const DOMAIN_SITE_FRAMES: Record<string, DomainSiteFrame> = {
-    // uia · never the platform wordmark (c95b514) — since 2026-08-06 the site's
-    // own ring (registry image id 3, local aspect engine square shape) sits in
-    // the corner at rest. The condensing-masthead question (ring large at rest,
-    // condensing on scroll — design-thread §4·4) is OPEN, HD decides; this is
-    // the conservative at-rest state, not the answer.
+    // uia · never the platform wordmark (c95b514). O-2 RULED (HD 2026-08-07,
+    // design-thread §3·1): the condensing masthead — ring + wordmark large at
+    // rest (PageLayout's site-brand-banner), collapsing past scrollBreak with
+    // the ring arriving in the sticky topnav corner.
     utopiaxaction: {
         showLogo: 'yes',
         brand: {
@@ -40,6 +44,7 @@ export const DOMAIN_SITE_FRAMES: Record<string, DomainSiteFrame> = {
             alt: 'Utopia in Action',
             href: '/sites/utopiaxaction',
         },
+        scrollStyle: 'overlay',
         navItems: [
             { label: 'Utopia in Action', link: '/sites/utopiaxaction' },
             { label: 'Agenda', link: '/sites/utopiaxaction/start' },

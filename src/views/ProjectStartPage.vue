@@ -32,12 +32,18 @@
             :project-name="project?.heading || project?.name || undefined" :is-logged-in="!!user" />
 
         <PageLayout v-else-if="accessLoaded" :navItems="frameNavItems" :showLogo="frameShowLogo" :brand="frameBrand"
-            :setSiteLayout="pageStructure.siteLayout">
+            :setScrollStyle="frame?.scrollStyle" :setSiteLayout="pageStructure.siteLayout">
             <template #header>
                 <Section background="accent">
                     <Container>
                         <p class="start-overline">{{ startOverline }}</p>
-                        <HeadingParser v-if="project?.heading" class="start-title" :content="project.heading"
+                        <!-- Beat 2 of the hero-pair composition (design-thread §3·2,
+                             HD-ruled: their words). A page_options.start_heading
+                             replaces the project heading — the site's NAME lives in
+                             the O-2 brand banner now, so the hero is free to be the
+                             page's own beat. Absent key = the previous behavior. -->
+                        <h1 v-if="startHeading" class="start-title">{{ startHeading }}</h1>
+                        <HeadingParser v-else-if="project?.heading" class="start-title" :content="project.heading"
                             as="h1" />
                         <h1 v-else class="start-title">{{ project?.name || domaincode }}</h1>
                     </Container>
@@ -155,11 +161,20 @@ async function loadStartOptions() {
         const options = startRow.page_options ?? {}
         pageStructure.value = resolvePageStructure(options)
         startIntro.value = typeof options.start_intro === 'string' ? options.start_intro : null
+        // Beat 2 (hero-pair, §3·2) — per-PROJECT words live in the db, never as
+        // preset defaults: another 'initiative' project must not inherit uia's
+        // Wednesday.
+        startHeading.value = typeof options.start_heading === 'string' ? options.start_heading : null
+        startOverlineOption.value = typeof options.start_overline === 'string' ? options.start_overline : null
     } catch { /* absence declares the default — the registry's own rule */ }
 }
 
+const startHeading = ref<string | null>(null)
+const startOverlineOption = ref<string | null>(null)
+
 const startOverline = computed(() =>
-    preset === 'schule-project' ? 'Start · Anmeldung' : 'Start · Agenda')
+    startOverlineOption.value
+    ?? (preset === 'schule-project' ? 'Start · Anmeldung' : 'Start · Agenda'))
 
 const agendaHeading = computed(() => (lineCount.value > 0 ? 'Alle Termine' : 'Nächste Termine'))
 

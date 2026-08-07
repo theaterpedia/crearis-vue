@@ -40,7 +40,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="event && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
-            :showLogo="frameShowLogo" :brand="frameBrand">
+            :showLogo="frameShowLogo" :brand="frameBrand" :setScrollStyle="siteFrame?.scrollStyle">
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
