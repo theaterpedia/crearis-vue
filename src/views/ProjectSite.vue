@@ -23,7 +23,7 @@
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="project && projectAccess.canAccess.value" :asideOptions="asideOptions"
             :footerOptions="footerOptions" :projectDomaincode="project.domaincode" :projectId="project.id"
-            :navItems="navigationItems" :showLogo="frameShowLogo">
+            :navItems="navigationItems" :showLogo="frameShowLogo" :brand="frameBrand">
             <!-- TopNav Actions Slot - Edit and Config buttons -->
             <template #topnav-actions>
                 <!-- Project Editor Link (for owners/admins) -->
@@ -230,7 +230,7 @@ import { extractRouteSlug } from '@/utils/xmlid'
 
 const router = useRouter()
 const route = useRoute()
-const { setTheme, init: initTheme } = useTheme()
+const { setTheme, init: initTheme, setDomainThemeOverride } = useTheme()
 const { loadForProject, getOptions } = usePageOptions()
 
 // State
@@ -414,6 +414,7 @@ const navigationItems = computed(() => {
 })
 
 const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
+const frameBrand = computed(() => siteFrame.value?.brand ?? null)
 
 // Open edit panel
 function openEditPanel() {
@@ -657,6 +658,10 @@ function setProjectSeoMeta() {
 
 onMounted(async () => {
     domaincode.value = route.params.domaincode as string
+
+    // The site's theme tokens (font, dark default) ride the same resolved
+    // domaincode as the frame — one seam, three consumers (domainSiteFrames).
+    setDomainThemeOverride(domaincode.value)
 
     await checkAuth()
 

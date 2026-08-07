@@ -25,7 +25,7 @@
     <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }"
       v-show="!isSideNav">
       <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode"
-        :showLogo="showLogo" :allowActions="allowActions">
+        :showLogo="showLogo" :allowActions="allowActions" :brand="brand ?? null">
         <!-- Actions Slot -->
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
@@ -260,6 +260,8 @@ interface Props {
   // every existing caller keeps navbarMode-derived behaviour exactly as before.
   showLogo?: 'default' | 'desktop' | 'yes' | 'no'
   allowActions?: 'default' | 'yes' | 'no'
+  /** Site-frame brand — replaces the platform wordmark in TopNav's logo slot. */
+  brand?: { src: string; alt: string; href: string } | null
 }
 
 const props = withDefaults(defineProps<Props>(), {

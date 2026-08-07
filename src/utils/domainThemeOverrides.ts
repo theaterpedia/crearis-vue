@@ -34,10 +34,12 @@ export interface DomainThemeOverride {
 }
 
 export const DOMAIN_THEME_OVERRIDES: Record<string, DomainThemeOverride> = {
-    // uia · HD 2026-08-06: theme 3 „Institut" colors as on the uia_demo tag,
-    // but Cantarell instead of Roboto, and the site defaults to dark.
+    // uia · theme 3 „Institut" colors as on the uia_demo tag, site defaults to
+    // dark. Font: OUTFIT since 2026-08-06 — HD cleared it with the owner (uia
+    // thread §14·2); it replaced Cantarell, which stays registered for other
+    // sites. Variable font, weights 100–900 (02-font-outfit.css).
     utopiaxaction: {
-        vars: { '--font': "'Cantarell', sans-serif" },
+        vars: { '--font': "'Outfit', sans-serif" },
         inverted: true,
     },
 }
