@@ -157,6 +157,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { resolveDomaincode } from '@/composables/useHostMode'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useProjectAccess } from '@/composables/useProjectAccess'
@@ -193,7 +194,8 @@ const accessLoaded = ref(false)
 const event = ref<any>(null)
 const project = ref<any>(null)
 const projectId = ref<number | null>(null)
-const domaincode = ref<string>('')
+/** Project scope · route segment, else the host (route-space contract §3). */
+const domaincode = computed<string>(() => resolveDomaincode(route.params.domaincode))
 const isEditPanelOpen = ref(false)
 const showConfigPanel = ref(false)
 
@@ -321,7 +323,6 @@ const projectDataForPermissions = computed(() => {
 // Methods
 async function loadEvent() {
     const identifier = route.params.identifier as string
-    domaincode.value = route.params.domaincode as string
 
     // Site theme tokens ride the same resolved domaincode as the frame.
     setDomainThemeOverride(domaincode.value)

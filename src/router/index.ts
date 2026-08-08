@@ -9,7 +9,9 @@ const router = createRouter({
     { path: '/auth/reset', component: () => import('../views/Auth/PasswordResetPage.vue'), meta: { public: true } },
     // Phase-A C8 · creator-tier registration form (instructor / organiser)
     { path: '/auth/register', component: () => import('../views/Auth/RegisterPage.vue'), meta: { public: true } },
-    { path: '/', component: () => import('../views/Home/HomePage.vue') },
+    // `/` is host-aware (route-space contract §3): the portal renders HomePage,
+    // a project's own domain renders ITS landing — same URL, no redirect.
+    { path: '/', component: () => import('../views/HostAwareRoot.vue') },
     { path: '/start', component: () => import('../views/Home/StartPage.vue') },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
     { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
@@ -31,10 +33,20 @@ const router = createRouter({
     { path: '/sites/:domaincode/start', component: () => import('../views/ProjectStartPage.vue') },
     // Posts: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.post__{slug} or {domaincode}.post-{template}__{slug}
-    { path: '/sites/:domaincode/posts/:identifier', component: () => import('../views/PostPage.vue') },
+    // The `alias` is the site-shape URL: on a project's own domain the path
+    // carries no :domaincode — the component resolves it from the host.
+    {
+        path: '/sites/:domaincode/posts/:identifier',
+        alias: ['/posts/:identifier'],
+        component: () => import('../views/PostPage.vue'),
+    },
     // Events: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.event__{slug} or {domaincode}.event-{template}__{slug}
-    { path: '/sites/:domaincode/events/:identifier', component: () => import('../views/EventPage.vue') },
+    {
+        path: '/sites/:domaincode/events/:identifier',
+        alias: ['/events/:identifier'],
+        component: () => import('../views/EventPage.vue'),
+    },
     // Intermediary content dashboard (HD 2026-07-28) — lists events + posts, add-new
     // and delete, linking into the EventPage/PostPage editors above. Additive and
     // temporary: it exists so content can be driven from a browser while the real

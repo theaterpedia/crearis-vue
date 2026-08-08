@@ -227,6 +227,7 @@ import type { EditPanelData } from '@/components/EditPanel.vue'
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { useTheme } from '@/composables/useTheme'
 import { resolveSiteFrame } from '@/utils/domainSiteFrames'
+import { resolveDomaincode } from '@/composables/useHostMode'
 import { resolvePageStructure, type PageStructure } from '@/utils/pageStructure'
 import { useFpostitController } from '@/fpostit/composables/useFpostitController'
 import { extractRouteSlug } from '@/utils/xmlid'
@@ -243,7 +244,13 @@ const project = ref<any>(null)
 const posts = ref<any[]>([])
 const events = ref<any[]>([])
 const users = ref<any[]>([])
-const domaincode = ref<string>('')
+/**
+ * Project scope · route-space contract §3: the URL segment when the path has
+ * one (portal-shape `/:…/sites/:domaincode`), else the HOST (site-shape `/` on
+ * the project's own domain). A computed, not a ref — the value is derived, and
+ * making it assignable is how the two shapes drift apart.
+ */
+const domaincode = computed<string>(() => resolveDomaincode(route.params.domaincode))
 const isEditPanelOpen = ref(false)
 const isConfigPanelOpen = ref(false)
 const renderedBodyHtml = ref<string>('')
@@ -705,8 +712,6 @@ function setProjectSeoMeta() {
 }
 
 onMounted(async () => {
-    domaincode.value = route.params.domaincode as string
-
     // The site's theme tokens (font, dark default) ride the same resolved
     // domaincode as the frame — one seam, three consumers (domainSiteFrames).
     setDomainThemeOverride(domaincode.value)
