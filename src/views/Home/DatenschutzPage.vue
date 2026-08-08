@@ -337,6 +337,7 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
 import { useImpressum, IMPRESSUM_ROOT_DOMAINCODE } from '@/composables/useImpressum'
+import { resolveDomaincode } from '@/composables/useHostMode'
 
 const router = useRouter()
 const route = useRoute()
@@ -365,11 +366,18 @@ function setDatenschutzSeoMeta() {
     setMeta('meta[name="robots"]', { name: 'robots', content: 'noindex, follow' });
 }
 
+// One component, FOUR mounts — same pattern as ImpressumPage (path OR host);
+// the fields are the IMPRESSUM set, cross-read (datenschutz holds zero own keys
+// — HD's ruling, hcv/threads/2026-08-impressum.md).
+const domaincode = resolveDomaincode(route.params.domaincode) || IMPRESSUM_ROOT_DOMAINCODE
+const { fields, load: loadImpressum } = useImpressum(domaincode)
+
 /**
- * True on `/sites/:domaincode/…` and `/projects/:domaincode/…` — i.e. this page is
- * wearing another project's legal identity, not the platform's.
+ * True whenever this page wears another project's legal identity rather than the
+ * platform's — by path OR by host (drives wordmark · public nav · TP footer).
+ * Derived from the RESOLVED scope so identity and chrome cannot disagree.
  */
-const isSiteMount = computed(() => !!route.params.domaincode)
+const isSiteMount = computed(() => domaincode !== IMPRESSUM_ROOT_DOMAINCODE)
 
 /**
  * The platform's public nav (Home · Start · Team · Blog) belongs to Theaterpedia.
@@ -389,12 +397,6 @@ const navItems = computed<TopnavParentItem[]>(() => {
         link: item.link
     }))
 })
-
-// One component, three mounts — same pattern as ImpressumPage; the fields are
-// the IMPRESSUM set, cross-read (datenschutz holds zero own keys — HD's ruling,
-// hcv/threads/2026-08-impressum.md).
-const domaincode = String(route.params.domaincode || IMPRESSUM_ROOT_DOMAINCODE)
-const { fields, load: loadImpressum } = useImpressum(domaincode)
 
 const user = ref<any>(null)
 const project = ref<any>(null)

@@ -147,14 +147,20 @@ import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
 import { useImpressum, IMPRESSUM_ROOT_DOMAINCODE } from '@/composables/useImpressum'
+import { resolveDomaincode } from '@/composables/useHostMode'
 
 const router = useRouter()
 const route = useRoute()
 
-// One component, three mounts (impressum thread, B's analysis): `/impressum`
-// → the root site (tp) · `/sites/:domaincode/impressum` + `/projects/:xyz/…`
-// → that project's own legal identity. Liability is the reason for the split.
-const domaincode = String(route.params.domaincode || IMPRESSUM_ROOT_DOMAINCODE)
+// One component, FOUR mounts (impressum thread · route-space contract §3):
+// `/impressum` on the portal → the root site (tp) · `/sites/:domaincode/…` +
+// `/projects/:xyz/…` → that project by PATH · `/impressum` on a project's own
+// domain → that project by HOST. Liability is the reason for the split, so the
+// host-shape must resolve like every other page: `eeb099b` gave EventPage,
+// PostPage and ProjectSite the host-fallback and the legal pages were not in
+// that set — which left uia's own domain naming Theaterpedia as Diensteanbieter
+// while every other page on the same host said uia (uia thread §21·4).
+const domaincode = resolveDomaincode(route.params.domaincode) || IMPRESSUM_ROOT_DOMAINCODE
 const { fields, missing, load: loadImpressum } = useImpressum(domaincode)
 
 // SEO: Set meta tags
@@ -182,10 +188,13 @@ function setImpressumSeoMeta() {
 }
 
 /**
- * True on `/sites/:domaincode/…` and `/projects/:domaincode/…` — i.e. this page is
- * wearing another project's legal identity, not the platform's.
+ * True whenever this page wears another project's legal identity rather than the
+ * platform's — by path OR by host. It drives the wordmark, the public nav and the
+ * Theaterpedia footer, so reading only `route.params` put all three back on a
+ * project's own domain (the `c95b514` no-wordmark rule, broken on the host-shape).
+ * Derived from the RESOLVED scope so identity and chrome can never disagree.
  */
-const isSiteMount = computed(() => !!route.params.domaincode)
+const isSiteMount = computed(() => domaincode !== IMPRESSUM_ROOT_DOMAINCODE)
 
 /**
  * The platform's public nav (Home · Start · Team · Blog) belongs to Theaterpedia.
