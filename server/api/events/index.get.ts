@@ -1,6 +1,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
-import { STATUS, WORKFLOW_MASK } from '../../../src/utils/status-constants'
+import { STATUS } from '../../../src/utils/status-constants'
+import { projectVisibility } from '../../utils/visibility-sql'
 
 // GET /api/events - List events with optional filters
 // After Migration 019 Chapter 3B:
@@ -29,15 +30,23 @@ export default defineEventHandler(async (event) => {
         const params: any[] = []
 
         // Sysreg project-visibility filter (replaces the status_old alpha filter,
-        // HD 2026-08-06). `status` is a HYBRID: ordinal-compare the MASKED low
-        // 17 bits only, and bound out archived/trash — they sort above RELEASED.
-        // Always on (no VITE_APP_MODE dependence); the two escape params keep
-        // their established names and their established meanings.
+        // HD 2026-08-06). Always on (no VITE_APP_MODE dependence). The predicate
+        // itself lives in `server/utils/visibility-sql.ts` — it was a hand-written
+        // SQL twin of the posts endpoint's copy, which is the shape R·4·4 had just
+        // removed one layer up (system-architecture C2b·3·①).
+        //
+        // ⚠ NAMING DEBT, recorded where the mechanism is: alpha-mode is retired
+        // (the helper is deleted, the env flag decides nothing). These two param
+        // NAMES are the last of that vocabulary and they are kept deliberately —
+        // `skip_alpha_filter` is TempDashboard's documented internal bypass and
+        // `alpha_preview` has three callers, so renaming mid-flight breaks a live
+        // surface for a word. Rename as ONE sweep with the callers.
         const skipAlphaFilter = query.skip_alpha_filter === 'true'
         if (!skipAlphaFilter) {
             const floor = query.alpha_preview === 'true' ? STATUS.DRAFT : STATUS.RELEASED
-            sql += ` AND (p.status & ${WORKFLOW_MASK}) >= ? AND (p.status & ${WORKFLOW_MASK}) < ${STATUS.ARCHIVED}`
-            params.push(floor)
+            const visible = projectVisibility('p', floor)
+            sql += visible.sql
+            params.push(...visible.params)
         }
 
         // Filter by isbase (if this field exists)

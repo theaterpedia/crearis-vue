@@ -1,7 +1,8 @@
 import { defineEventHandler, getQuery, createError, getCookie } from 'h3'
 import { db } from '../../database/init'
 import { sessions } from '../../utils/session-store'
-import { STATUS, WORKFLOW_MASK } from '../../../src/utils/status-constants'
+import { STATUS } from '../../../src/utils/status-constants'
+import { projectVisibility } from '../../utils/visibility-sql'
 
 // GET /api/posts - List posts with optional filters
 // After Migration 019 Chapter 3B:
@@ -32,16 +33,17 @@ export default defineEventHandler(async (event) => {
         `
         const params: any[] = []
 
-        // Sysreg project-visibility filter (replaces the status_old alpha filter,
-        // HD 2026-08-06). `status` is a HYBRID: ordinal-compare the MASKED low
-        // 17 bits only, and bound out archived/trash — they sort above RELEASED.
-        // Always on (no VITE_APP_MODE dependence); the two escape params keep
-        // their established names and their established meanings.
+        // Sysreg project-visibility filter — the twin of the events endpoint's,
+        // now sharing one predicate (`server/utils/visibility-sql.ts`). See the
+        // naming-debt note there and at the events call site: the two param names
+        // are the last of the retired alpha-mode vocabulary, kept until they can
+        // be renamed together with their callers.
         const skipAlphaFilter = query.skip_alpha_filter === 'true'
         if (!skipAlphaFilter) {
             const floor = query.alpha_preview === 'true' ? STATUS.DRAFT : STATUS.RELEASED
-            sql += ` AND (pr.status & ${WORKFLOW_MASK}) >= ? AND (pr.status & ${WORKFLOW_MASK}) < ${STATUS.ARCHIVED}`
-            params.push(floor)
+            const visible = projectVisibility('pr', floor)
+            sql += visible.sql
+            params.push(...visible.params)
         }
 
         // Visibility filtering (optional - enabled with ?visibility=true)
