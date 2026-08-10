@@ -17,6 +17,16 @@ const router = createRouter({
     // cannot win against this static path (first-registered wins). The
     // dispatcher decides; the portal branch is what T3's reversal deletes.
     { path: '/start', component: () => import('../views/HostAwareStart.vue') },
+    // `/agenda` resolved to NOTHING before this (200, empty body, no h1) — the
+    // one state a visitor cannot read. External links to it exist in the record,
+    // and the route-space contract has it as the future canonical project-agenda
+    // URL (§1 · T3). Until T3 lands it redirects to `/start`, which inherits the
+    // host-awareness above for free: on a project's own domain that IS the
+    // project's agenda, on the portal it is the portal's own start page.
+    // ⭐ When T3 makes `/agenda` canonical, THIS LINE FLIPS DIRECTION — the
+    // redirect becomes `/start` → `/agenda` and the component moves. One line,
+    // named here so the reversal is a rewrite of a redirect, not a hunt.
+    { path: '/agenda', redirect: '/start' },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
     { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
     { path: '/contact', component: () => import('../views/Home/ContactPage.vue') },
