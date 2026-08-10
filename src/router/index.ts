@@ -12,7 +12,11 @@ const router = createRouter({
     // `/` is host-aware (route-space contract §3): the portal renders HomePage,
     // a project's own domain renders ITS landing — same URL, no redirect.
     { path: '/', component: () => import('../views/HostAwareRoot.vue') },
-    { path: '/start', component: () => import('../views/Home/StartPage.vue') },
+    // `/start` is host-aware for the same reason `/` is (contract §17·2): the
+    // frame mints `Agenda → /start` on a project's own domain, and an alias
+    // cannot win against this static path (first-registered wins). The
+    // dispatcher decides; the portal branch is what T3's reversal deletes.
+    { path: '/start', component: () => import('../views/HostAwareStart.vue') },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
     { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
     { path: '/contact', component: () => import('../views/Home/ContactPage.vue') },
