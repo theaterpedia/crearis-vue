@@ -128,6 +128,26 @@
                     <ItemList v-else :items="eventItems" size="small" width="inherit" columns="off"
                         interaction="static" :dataMode="false" headingLevel="h4" @item-click="openEvent"
                         @item-trash="deleteEvent" />
+
+                    <!-- Per-event image attach · the avatars on the landing's event
+                         rows come from `events.img_id` (C1's landing reads the
+                         registry shapes). ItemList's own rows are not editable, so
+                         the attach sits beside the list rather than inside it. -->
+                    <details v-if="events.length && isOwner" class="td-attach">
+                        <summary>Bilder zuordnen ({{ events.filter(e => e.img_id).length }}/{{ events.length }})</summary>
+                        <ul class="td-attach-list">
+                            <li v-for="row in events" :key="row.id" class="td-attach-row">
+                                <span class="td-attach-name">{{ row.name }}</span>
+                                <select :value="row.img_id ?? 0" :disabled="busy"
+                                    @change="saveEventImage(row, $event)">
+                                    <option :value="0">kein Bild</option>
+                                    <option v-for="img in images" :key="img.id" :value="img.id">
+                                        {{ img.name || img.xmlid }}
+                                    </option>
+                                </select>
+                            </li>
+                        </ul>
+                    </details>
                 </Container>
             </Section>
 
@@ -223,6 +243,59 @@
                         <button class="td-btn td-btn-primary" type="submit" :disabled="busy">speichern</button>
                     </form>
 
+                    <!-- ── Hero + CTA · the projects-row half of HD's forwarded
+                         landing list. header_SIZE is deliberately NOT here: it
+                         rides the landing pages-row and ProjectSite reads that
+                         with precedence, so it lives in the 5C landing editor. -->
+                    <form class="td-form" @submit.prevent="saveHero">
+                        <label class="td-field">
+                            <span>Hero-Typ (<code>header_type</code>)</span>
+                            <select v-model="heroForm.header_type">
+                                <option value="">— (Seite entscheidet)</option>
+                                <option v-for="t in HEADER_TYPES" :key="t" :value="t">{{ t }}</option>
+                            </select>
+                        </label>
+                        <label class="td-field">
+                            <span>Hero-Bild</span>
+                            <select v-model.number="heroForm.img_id">
+                                <option :value="0">kein Bild (nur Hintergrund-Effekt)</option>
+                                <option v-for="img in images" :key="img.id" :value="img.id">
+                                    {{ img.name || img.xmlid }}
+                                </option>
+                            </select>
+                        </label>
+                        <label class="td-field td-field-check">
+                            <span>Bild zeigen (<code>img_show</code>)</span>
+                            <input type="checkbox" v-model="heroForm.img_show" />
+                        </label>
+                        <button class="td-btn td-btn-primary" type="submit" :disabled="busy">Hero speichern</button>
+                    </form>
+
+                    <form class="td-form" @submit.prevent="saveCta">
+                        <label class="td-field">
+                            <span>CTA-Text (<code>cta_title</code>)</span>
+                            <input v-model.trim="ctaForm.cta_title" placeholder="mittwochs dabei sein" />
+                        </label>
+                        <label class="td-field">
+                            <span>Ziel-Art (<code>cta_entity</code>)</span>
+                            <select v-model="ctaForm.cta_entity">
+                                <option value="">Direkt-Link</option>
+                                <option value="event">Veranstaltung</option>
+                                <option value="post">Beitrag</option>
+                            </select>
+                        </label>
+                        <label class="td-field">
+                            <span>{{ ctaForm.cta_entity ? 'Ziel-ID (cta_link)' : 'Link (cta_form)' }}</span>
+                            <input v-model.trim="ctaForm.cta_target" placeholder="/login" />
+                        </label>
+                        <button class="td-btn td-btn-primary" type="submit" :disabled="busy">CTA speichern</button>
+                    </form>
+                    <p class="td-note td-dim">
+                        Der zweite CTA (Sommerpause-Post-it) ist bundle-registriert
+                        (<code>siteNotices.ts</code>) und hier bewusst nicht editierbar —
+                        er ist Code, keine Projekt-Einstellung.
+                    </p>
+
                     <!-- the ground, read-only · honest about where it comes from -->
                     <p class="td-note td-dim">
                         Preset: <code>{{ presetKind }}</code> (Domaincode-Registry, Träger-Ruling offen) ·
@@ -294,12 +367,16 @@
                 </Container>
             </Section>
 
-            <!-- ══ 5C · Start-Seite ════════════════════════════════════════════
-                 tempStartConfig — guards the sophisticated config system while
-                 using the infra as designed: the pages-row's page_options
-                 key-registry (presets thread §9). -->
-            <TempStartConfig v-if="isOwner && projectId !== null" :project-id="projectId"
-                :domaincode="domaincode" />
+            <!-- ══ 5C · the two page-configs ═══════════════════════════════════
+                 One guard component, two instances (uia §21·3): it guards the
+                 sophisticated config system while using the infra as designed —
+                 the pages-row's page_options key-registry (presets §9) plus the
+                 landing row's own header_size column. The LANDING half is HD's
+                 forwarded task after C1 composed that page. -->
+            <template v-if="isOwner && projectId !== null">
+                <TempPageConfig :project-id="projectId" :domaincode="domaincode" page-type="landing" />
+                <TempPageConfig :project-id="projectId" :domaincode="domaincode" page-type="start" />
+            </template>
         </template>
     </div>
 </template>
@@ -324,7 +401,7 @@ import {
 } from '@/utils/status-constants'
 import { resolvePresetForDomain } from '@/utils/projectPreset'
 import { composeHeading, type CvEventRow } from '@/views/Uia/useUiaEvents'
-import TempStartConfig from './TempStartConfig.vue'
+import TempPageConfig from './TempPageConfig.vue'
 
 interface CvPostRow {
     id: number
@@ -389,6 +466,40 @@ const projectStatusChoices = [STATUS.NEW, STATUS.DEMO, STATUS.DRAFT, STATUS.CONF
     .map((value) => ({ value, label: STATUS_LABELS_DE[value] ?? String(value) }))
 
 const presetKind = computed(() => resolvePresetForDomain(domaincode.value) ?? '—')
+
+// ── 5A · hero + CTA on the projects row (HD's forwarded landing list) ────────
+/** `PageHeading`'s types as ProjectSite consumes them (it defaults to 'banner'). */
+const HEADER_TYPES = ['simple', 'banner', 'card', 'hero'] as const
+
+const heroForm = ref({ header_type: '', img_id: 0, img_show: false })
+const ctaForm = ref({ cta_title: '', cta_entity: '', cta_target: '' })
+
+/** Hero: `img_id: 0` means „no image" — sent as null so the column clears. */
+async function saveHero() {
+    const ok = await send(`/api/projects/${encodeURIComponent(domaincode.value)}`, 'PATCH', {
+        header_type: heroForm.value.header_type || null,
+        img_id: heroForm.value.img_id || null,
+        img_show: heroForm.value.img_show,
+    })
+    if (ok) await loadProject()
+}
+
+/**
+ * CTA: one target field, routed by `cta_entity` — an entity target writes
+ * `cta_link` (ProjectSite resolves it to the entity's route), a bare link writes
+ * `cta_form`. Writing both would let two rules disagree about one button.
+ */
+async function saveCta() {
+    const entity = ctaForm.value.cta_entity
+    const target = ctaForm.value.cta_target.trim()
+    const ok = await send(`/api/projects/${encodeURIComponent(domaincode.value)}`, 'PATCH', {
+        cta_title: ctaForm.value.cta_title || null,
+        cta_entity: entity || null,
+        cta_link: entity ? target || null : null,
+        cta_form: entity ? null : target || null,
+    })
+    if (ok) await loadProject()
+}
 
 // ── 5B · Bilder ──────────────────────────────────────────────────────────────
 /** The subset of an `images` row this surface consumes (bare-array/enveloped GET). */
@@ -479,6 +590,13 @@ async function uploadImage() {
     }
 }
 
+/** Attach a registry image to an event — `0` clears it (sent as null). */
+async function saveEventImage(row: CvEventRow, event: Event) {
+    const value = Number((event.target as HTMLSelectElement).value)
+    const ok = await send(`/api/events/${row.id}`, 'PATCH', { img_id: value || null })
+    if (ok) await refresh()
+}
+
 /** Integer-writer, same discipline as 5A: move the ordinal slot, keep the toggles. */
 async function saveImageConsent(img: CvImageRow, event: Event) {
     const value = Number((event.target as HTMLSelectElement).value)
@@ -543,8 +661,19 @@ async function loadProject() {
     projectStatus.value = typeof data.status === 'number' ? data.status : null
     projectStatusChoice.value = projectStatus.value === null ? null : lifecycleStatus(projectStatus.value)
     headingDraft.value = data.heading || ''
-    // 5B/5C need the numeric id (images by project_id · the start pages-row).
+    // 5B/5C need the numeric id (images by project_id · the pages-rows).
     projectId.value = typeof data.id === 'number' ? data.id : null
+    // 5A hero + CTA read the same row they write.
+    heroForm.value = {
+        header_type: data.header_type || '',
+        img_id: typeof data.img_id === 'number' ? data.img_id : 0,
+        img_show: data.img_show === true,
+    }
+    ctaForm.value = {
+        cta_title: data.cta_title || '',
+        cta_entity: data.cta_entity || '',
+        cta_target: data.cta_entity ? (data.cta_link || '') : (data.cta_form || ''),
+    }
 }
 
 async function refresh() {
@@ -883,6 +1012,52 @@ function openPost(item: DashItem) {
     margin-right: 1.1rem;
     font-size: 0.875rem;
     cursor: pointer;
+}
+
+/* Inline checkbox — the label reads as a row, not a stacked field. */
+.td-field-check {
+    flex-direction: row;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+/* ══ Per-event image attach ══ */
+.td-attach {
+    margin: 0.9rem 0 0;
+    font-size: 0.875rem;
+}
+
+.td-attach summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--color-muted-contrast);
+}
+
+.td-attach-list {
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.td-attach-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.td-attach-name {
+    flex: 1 1 12rem;
+}
+
+.td-attach-row select {
+    padding: 0.3rem 0.45rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+    color: var(--color-contrast);
+    font-size: 0.8125rem;
 }
 
 /* ══ 5B · Bilder ══ */

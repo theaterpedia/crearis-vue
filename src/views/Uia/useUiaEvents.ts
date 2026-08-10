@@ -78,6 +78,8 @@ export interface CvEventRow {
     date_begin?: string | null
     date_end?: string | null
     cimg?: string | null
+    /** The registry image this row points at — what the dashboard's attach writes. */
+    img_id?: number | null
     /** Registry shapes, propagated from `img_id` (migration 063 / local adapter). */
     img_square?: { url?: string } | null
     img_thumb?: { url?: string } | null
