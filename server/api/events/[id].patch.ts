@@ -105,9 +105,41 @@ export default defineEventHandler(async (event) => {
             'seats_max', 'seats_available',
             // Tag fields (integer bitmasks)
             'status', 'dtags', 'ctags', 'ttags', 'rtags',
-            // Visibility (usually set by triggers, but allow manual override)
-            'r_anonym', 'r_partner', 'r_participant', 'r_member', 'r_owner'
         ]
+
+        /**
+         * ⚠ `events` HAS NO `r_*` COLUMNS — measured 2026-08-10 against the live
+         * schema: the role-visibility columns and their trigger exist on `posts`
+         * and `projects` only (`trigger_posts_role_visibility` ·
+         * `trigger_projects_role_visibility`; nothing on `events`).
+         *
+         * These five were in `allowedFields` above with the comment „usually set
+         * by triggers, but allow manual override". They could never work: the
+         * generated `SET r_anonym = ?` hit a non-existent column, so ANY client
+         * sending one got **500 „Failed to update event"** — a wrong-shaped
+         * failure for what is really *„this table has no such concept"*.
+         *
+         * Refused explicitly instead, because the brief for these pieces is
+         * *fail loudly and locally*: a 400 that names the reason is readable by
+         * the client that sent it, where a 500 sends the reader into the server
+         * log for a schema fact. Deliberately NOT silent-ignore — that would
+         * hide the caller's wrong model of the entity.
+         *
+         * When event-visibility is ruled (it is Foundation — Defect ③'s
+         * trigger-side work, system-architecture R·2), this block is what gets
+         * deleted and the fields return to `allowedFields`.
+         */
+        const eventVisibilityFields = ['r_anonym', 'r_partner', 'r_participant', 'r_member', 'r_owner']
+        const sentVisibilityFields = eventVisibilityFields.filter((field) => body[field] !== undefined)
+        if (sentVisibilityFields.length > 0) {
+            throw createError({
+                statusCode: 400,
+                message: `events carry no role-visibility columns (${sentVisibilityFields.join(', ')}); `
+                    + 'visibility is computed for posts and projects only. Event visibility follows '
+                    + 'the project gate plus the event status — see system-architecture Defect ③.',
+            })
+        }
+
         const updates: string[] = []
         const values: any[] = []
 
