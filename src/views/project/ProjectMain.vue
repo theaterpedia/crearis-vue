@@ -272,7 +272,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
-import { isAlphaMode } from '@/composables/useAlphaMode'
 import { isBeforeDraftingBorder } from '@/utils/status-constants'
 import Navbar from '@/components/Navbar.vue'
 import ProjectStepper from './ProjectStepper.vue'
@@ -533,12 +532,6 @@ async function loadProjectData() {
             // Use status field (integer, Migration 040 values)
             projectStatus.value = projectData.value.status ?? null
 
-            // Debug alpha mode after loading project
-            console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
-            console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
-            console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
-            console.log('[Alpha Debug] status_old (display-only, decides nothing):', projectData.value?.status_old)
-
             // Load project members
             await loadProjectMembers()
         }
@@ -689,16 +682,6 @@ function handleDashboardOpenExternal(url: string) {
 
 // Initialize theme system
 const { init: initTheme } = useTheme()
-
-// Debug: Log alpha mode state
-const debugAlphaMode = () => {
-    console.log('[Alpha Debug] isAlphaMode():', isAlphaMode())
-    console.log('[Alpha Debug] isProjectOwner:', isProjectOwner.value)
-    console.log('[Alpha Debug] projectData:', projectData.value)
-    console.log('[Alpha Debug] projectData._userRole:', projectData.value?._userRole)
-    console.log('[Alpha Debug] status_old (display-only, decides nothing):', projectData.value?.status_old)
-    console.log('[Alpha Debug] status (sysreg, the decider):', projectData.value?.status)
-}
 
 // Auth check on mount
 onMounted(async () => {
