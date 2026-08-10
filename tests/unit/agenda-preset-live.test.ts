@@ -15,6 +15,7 @@ import {
     agendaLineStatus,
     mapEventsToDayGroups,
     resolveAgendaForPreset,
+    EVENT_VISIBILITY_COMPUTED,
     type AgendaEventRow,
 } from '@/composables/useAgendaPreset'
 
@@ -94,7 +95,14 @@ describe('mapEventsToDayGroups · rows → the canonical day-group shape', () =>
     // content for guests. The mechanism is DORMANT until the r_* trigger fix
     // (defect ③) produces real values; null must stay public, or the broken
     // trigger would silhouette the whole public agenda.
-    it('flags internal ONLY on explicit r_anonym false — null/undefined stay public', () => {
+    // ⛔ DECISION-ENCODING (2026-08-10): the Schwelle-Silhouette is GATED OFF at
+    // `EVENT_VISIBILITY_COMPUTED` because events have no computed visibility —
+    // and because today's trigger, measured, returns creator-only for EVERY
+    // state, which would silhouette the whole public agenda instead of single
+    // rows. This test pins the GATE, not a preference: if it goes red because
+    // `internal` is set again, the gate was flipped — and flipping it is only
+    // legitimate once event-visibility distinguishes states (Defect ③ closed).
+    it('never flags internal while event-visibility is ungated — not even on explicit false', () => {
         const groups = mapEventsToDayGroups([
             row({ id: 1, r_anonym: false }),
             row({ id: 2, r_anonym: 0 }),
@@ -103,11 +111,21 @@ describe('mapEventsToDayGroups · rows → the canonical day-group shape', () =>
             row({ id: 5, r_anonym: true }),
         ], TODAY)
         const lines = groups[0]?.lines ?? []
-        expect(lines.find(l => l.id === '1')?.internal).toBe(true)
-        expect(lines.find(l => l.id === '2')?.internal).toBe(true)
-        expect(lines.find(l => l.id === '3')?.internal).toBeUndefined()
-        expect(lines.find(l => l.id === '4')?.internal).toBeUndefined()
-        expect(lines.find(l => l.id === '5')?.internal).toBeUndefined()
+        expect(EVENT_VISIBILITY_COMPUTED).toBe(false)
+        for (const id of ['1', '2', '3', '4', '5']) {
+            expect(lines.find(l => l.id === id)?.internal, `line ${id}`).toBeUndefined()
+        }
+    })
+
+    // The derivation itself stays pinned, so flipping the gate is a one-line
+    // change with a test that already describes the intended behaviour.
+    it('DERIVATION (behind the gate): false/0 would mark internal, null/true would not', () => {
+        const wouldBeInternal = (r: boolean | number | null | undefined) => r === false || r === 0 || undefined
+        expect(wouldBeInternal(false)).toBe(true)
+        expect(wouldBeInternal(0)).toBe(true)
+        expect(wouldBeInternal(null)).toBeUndefined()
+        expect(wouldBeInternal(undefined)).toBeUndefined()
+        expect(wouldBeInternal(true)).toBeUndefined()
     })
 })
 

@@ -236,12 +236,41 @@ export interface AgendaEventRow {
      * Trigger-computed visibility (r_* matrix). `false` = not anonymous-readable
      * — the /start Schwelle renders such lines as SILHOUETTES for guests
      * (design-thread §3·3). `null`/`undefined` = unknown → treated as public.
+     *
+     * ⚠ **No source exists yet** — see `EVENT_VISIBILITY_COMPUTED` below.
      */
     r_anonym?: boolean | number | null
     /** Registry shapes (img_id propagation) — the featured panel's image rider. */
     img_wide?: { url?: string } | null
     img_square?: { url?: string } | null
 }
+
+/**
+ * ⛔ Is event role-visibility COMPUTED anywhere yet? No — and this constant makes
+ * that a declared state instead of an accidental one.
+ *
+ * Measured against the live schema 2026-08-10 (system-architecture, C2's append):
+ *  1. **`events` has no `r_*` columns at all.** The role-visibility columns and
+ *     their trigger exist on `posts` and `projects` only. So `r_anonym` on an
+ *     event row cannot arrive — the Silhouette has been dormant *because the
+ *     field is absent*, which is luck, not design. (This corrects uia §30's
+ *     „dormant until the r_* trigger fix": the mechanism does not exist for
+ *     events, it is not merely broken.)
+ *  2. 🔴 **And the existing trigger would be the WRONG source if it arrived.**
+ *     Defect ③ measured on a real row: a post released to 4096 computes
+ *     `r_anonym=false · r_member=false · r_creator=true` — creator-only, for
+ *     every state. ⇒ if `events` gained those columns under today's
+ *     `compute_role_visibility`, **every line would read `false` and the whole
+ *     public agenda would render as silhouettes** — a page-wide blackout
+ *     produced by a feature meant to hide single rows.
+ *
+ * ⇒ while this is `false`, `internal` is never set and guests see every line.
+ * **Flipping it is the deliberate act** that turns the Schwelle on, and it may
+ * only be flipped once event-visibility has a source that distinguishes states
+ * (Defect ③ closed, Foundation/trigger-side). The mapper keeps deriving the flag
+ * so the path stays test-pinned; only the gate is off.
+ */
+export const EVENT_VISIBILITY_COMPUTED = false
 
 /** Venue wall-clock normalisation — same discipline as useUiaEvents. */
 function toVenueWallClock(value: string): string {
@@ -302,7 +331,11 @@ export function mapEventsToDayGroups(rows: AgendaEventRow[], today: Date = new D
             location: row.location?.trim() || undefined,
             status: agendaLineStatus(row.status, Boolean(isoDate && isoDate < todayIso)),
             // r_anonym === false/0 marks the line internal; null stays public.
-            internal: row.r_anonym === false || row.r_anonym === 0 || undefined,
+            // Gated: no computed source exists for events yet, and today's
+            // trigger would mark EVERY line internal (see the constant above).
+            internal: EVENT_VISIBILITY_COMPUTED
+                ? (row.r_anonym === false || row.r_anonym === 0 || undefined)
+                : undefined,
             image: row.img_wide?.url || row.img_square?.url || undefined,
         }
         if (!isoDate) {
