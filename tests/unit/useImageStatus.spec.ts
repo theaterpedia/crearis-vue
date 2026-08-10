@@ -53,11 +53,20 @@ describe('useImageStatus - Image Lifecycle Management', () => {
             expect(statusLabel.value).toBe('Approved')
         })
 
-        it('tracks if image is published', () => {
-            const publishedImage = createImageWithStatus('published')
-            const { isPublished } = useImageStatus(ref(publishedImage))
+        // ⚠ RE-PINNED 2026-08-10 (R·4·4). This asserted
+        // `createImageWithStatus('published')` → `isPublished === true`, and it
+        // passed because BOTH sides spoke the dead BYTEA vocabulary: the helper
+        // mints `status = 4` and the composable compared against `0x04`. Four is
+        // not a sysreg category (1 · 8 · 64 · 256 · 512 · 4096 · 32768 · 65536),
+        // so the test confirmed the staleness instead of catching it — which is
+        // how the bug survived. Publication now delegates to the one canonical
+        // predicate, so the fixture speaks sysreg here.
+        it('tracks publication by sysreg, and bounds out archived', () => {
+            const released = createTestImage({ status: 4096 })   // RELEASED
+            const archived = createTestImage({ status: 32768 })  // ARCHIVED
 
-            expect(isPublished.value).toBe(true)
+            expect(useImageStatus(ref(released)).isPublished.value).toBe(true)
+            expect(useImageStatus(ref(archived)).isPublished.value).toBe(false)
         })
     })
 

@@ -10,7 +10,7 @@
 
 import { computed, ref, type Ref } from 'vue'
 import { useCapabilities, STATUS, type EntityData, type ProjectData, type MembershipData } from './useCapabilities'
-import { lifecycleStatus } from '@/utils/status-constants'
+import { lifecycleStatus, isPublished as isPublishedStatus } from '@/utils/status-constants'
 
 // Re-export for compatibility
 export { STATUS }
@@ -239,7 +239,16 @@ export function usePostStatusV2(
     })
 
     const isAwaitingApproval = computed(() => currentStatus.value === STATUS.REVIEW)
-    const isPublished = computed(() => currentStatus.value >= STATUS.RELEASED)
+    /**
+     * Publication · delegated to the ONE implementation (R·4·4).
+     *
+     * This read `currentStatus.value >= STATUS.RELEASED` — raw and unbounded,
+     * so an ARCHIVED (32768) or TRASH (65536) post reported as published, and
+     * so did any released post carrying a scope-toggle in bits 17–21. The
+     * canonical predicate masks the lifecycle word AND bounds it below
+     * ARCHIVED; there is now one place where that pair can be got wrong.
+     */
+    const isPublished = computed(() => isPublishedStatus(currentStatus.value))
     const isTrashed = computed(() => currentStatus.value === STATUS.TRASH)
     const isEditable = computed(() => caps.canEdit.value && !isTrashed.value)
 
