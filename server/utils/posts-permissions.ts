@@ -26,6 +26,8 @@
  * 15. POST_TRANSITION_P_OWNER_SKIP - Owner skips review if team ≤ 3
  */
 
+import { lifecycleStatus } from '../../src/utils/status-constants'
+
 // Status bit values (from sysreg)
 export const STATUS = {
     NEW: 1,
@@ -37,6 +39,20 @@ export const STATUS = {
     ARCHIVED: 32768,
     TRASH: 65536
 } as const
+
+/**
+ * The audited ordinal gate (CV-Schema's §4.1 audit, applied here 2026-08-07 on
+ * HD's go — this file is a TEST ORACLE, not a live path, but a wrong oracle
+ * teaches a wrong spec): ordinal-compare the MASKED lifecycle (bits 0–16) and
+ * bound out ARCHIVED/TRASH. A raw `status >= X` over-admits archived (32768),
+ * trash (65536) and scope-inflated rows (a draft carrying scope_public is
+ * 2097216, which sorts above every threshold) — the exact bug the rubicon
+ * predicate had before WORKFLOW_MASK.
+ */
+function atLeast(status: number, threshold: number): boolean {
+    const lifecycle = lifecycleStatus(status)
+    return lifecycle >= threshold && lifecycle < STATUS.ARCHIVED
+}
 
 // Project role configrole values
 export const CONFIGROLE = {
@@ -113,7 +129,7 @@ export function hasAnyProjectRole(ctx: PermissionContext): boolean {
  */
 export function canReadReleased(ctx: PermissionContext): boolean {
     if (!ctx.post) return false
-    return ctx.post.status >= STATUS.RELEASED && ctx.project.status >= STATUS.RELEASED
+    return atLeast(ctx.post.status, STATUS.RELEASED) && atLeast(ctx.project.status, STATUS.RELEASED)
 }
 
 /**
@@ -130,7 +146,7 @@ export function canReadAsProjectOwner(ctx: PermissionContext): boolean {
  */
 export function canReadAsMember(ctx: PermissionContext): boolean {
     if (!ctx.post) return false
-    return isMember(ctx) && ctx.post.status >= STATUS.DRAFT
+    return isMember(ctx) && atLeast(ctx.post.status, STATUS.DRAFT)
 }
 
 /**
@@ -139,7 +155,7 @@ export function canReadAsMember(ctx: PermissionContext): boolean {
  */
 export function canReadAsParticipant(ctx: PermissionContext): boolean {
     if (!ctx.post) return false
-    return isParticipant(ctx) && ctx.post.status >= STATUS.REVIEW
+    return isParticipant(ctx) && atLeast(ctx.post.status, STATUS.REVIEW)
 }
 
 /**
@@ -148,7 +164,7 @@ export function canReadAsParticipant(ctx: PermissionContext): boolean {
  */
 export function canReadAsPartner(ctx: PermissionContext): boolean {
     if (!ctx.post) return false
-    return isPartner(ctx) && ctx.post.status >= STATUS.CONFIRMED
+    return isPartner(ctx) && atLeast(ctx.post.status, STATUS.CONFIRMED)
 }
 
 /**
@@ -239,8 +255,8 @@ export function canEditAsProjectOwner(ctx: PermissionContext): boolean {
 export function canEditAsMemberEditor(ctx: PermissionContext): boolean {
     if (!ctx.post) return false
     return isMember(ctx) &&
-        ctx.project.status >= STATUS.DRAFT &&
-        ctx.post.status >= STATUS.DRAFT
+        atLeast(ctx.project.status, STATUS.DRAFT) &&
+        atLeast(ctx.post.status, STATUS.DRAFT)
 }
 
 /**
@@ -269,7 +285,7 @@ export function canCreatePost(ctx: PermissionContext): boolean {
     if (isProjectOwner(ctx)) return true
 
     // Members can create in draft+ projects
-    if (isMember(ctx) && ctx.project.status >= STATUS.DRAFT) return true
+    if (isMember(ctx) && atLeast(ctx.project.status, STATUS.DRAFT)) return true
 
     return false
 }

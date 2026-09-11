@@ -196,6 +196,15 @@ export function parseLegacyXmlid(xmlid: string): XmlidComponents | null {
         // Format: {domaincode}.{slug} - minimal legacy format
         const slug = parts[1]
         if (!slug) return null
+        // R·4·5: this ASSUMES `post` for a shape that names no entity. Kept
+        // (legacy rows rely on it) but no longer silent — an unrecognised cid
+        // arriving here comes back looking like a perfectly good post, which is
+        // the failure mode that hides the next one underneath it.
+        console.warn(
+            `[xmlid] "${xmlid}" names no entity — assuming 'post'. `
+            + 'If this is an Odoo cid (e.g. the domainuser shape `{domain}.user-{role}.{id}`), '
+            + 'it is being misread: those are not CV xmlids.',
+        )
         return {
             domaincode,
             entity: 'post', // default
@@ -224,9 +233,15 @@ export function parseLegacyXmlid(xmlid: string): XmlidComponents | null {
 
     // Validate entity - be lenient for legacy
     if (!VALID_ENTITIES.includes(entity as EntityType)) {
-        // Try to extract entity from compound
+        // Try to extract entity from compound `{entity}_{template}`.
+        //
+        // R·4·5: the boundary is required. A bare `startsWith` coerced
+        // `postcard` → entity `post` + template `rd`, i.e. it INVENTED a
+        // plausible parse for a word that merely begins with an entity name.
+        // The compound form this loop exists for always carries the separator,
+        // so requiring it loses nothing real and refuses the guess.
         for (const validEntity of VALID_ENTITIES) {
-            if (entity.startsWith(validEntity)) {
+            if (entity.startsWith(`${validEntity}_`)) {
                 template = entity.substring(validEntity.length + 1) || template
                 entity = validEntity
                 break

@@ -1,6 +1,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '../../database/init'
-import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mode'
+import { STATUS } from '../../../src/utils/status-constants'
+import { projectVisibility } from '../../utils/visibility-sql'
 
 // GET /api/events - List events with optional filters
 // After Migration 019 Chapter 3B:
@@ -9,10 +10,10 @@ import { isServerAlphaMode, getAlphaProjectStatuses } from '../../utils/alpha-mo
 // - events.project_id stores INTEGER FK to projects.id
 // - query.project accepts domaincode (TEXT) for filtering
 // - response includes domaincode from joined projects table
-// Alpha mode (v0.4):
-// - ?alpha_preview=true to include 'draft' projects (when in alpha mode)
-// - ?skip_alpha_filter=true to bypass alpha filtering entirely (for internal editing pages)
-// - Filters by projects.status_old instead of sysreg status
+// Sysreg visibility (HD 2026-08-06: project.status decides — status_old is OFF):
+// - default: only events of PUBLISHED projects (lifecycle ≥ RELEASED, below ARCHIVED)
+// - ?alpha_preview=true widens the floor to DRAFT-tier (param name kept for compat)
+// - ?skip_alpha_filter=true bypasses entirely (internal editing pages / dashboards)
 export default defineEventHandler(async (event) => {
     try {
         const query = getQuery(event)
@@ -28,16 +29,24 @@ export default defineEventHandler(async (event) => {
         `
         const params: any[] = []
 
-        // Alpha mode: filter by projects.status_old
-        // skip_alpha_filter=true bypasses this entirely (for internal editing pages)
-        // TODO v0.5: Remove this block when migrating to full sysreg status
+        // Sysreg project-visibility filter (replaces the status_old alpha filter,
+        // HD 2026-08-06). Always on (no VITE_APP_MODE dependence). The predicate
+        // itself lives in `server/utils/visibility-sql.ts` — it was a hand-written
+        // SQL twin of the posts endpoint's copy, which is the shape R·4·4 had just
+        // removed one layer up (system-architecture C2b·3·①).
+        //
+        // ⚠ NAMING DEBT, recorded where the mechanism is: alpha-mode is retired
+        // (the helper is deleted, the env flag decides nothing). These two param
+        // NAMES are the last of that vocabulary and they are kept deliberately —
+        // `skip_alpha_filter` is TempDashboard's documented internal bypass and
+        // `alpha_preview` has three callers, so renaming mid-flight breaks a live
+        // surface for a word. Rename as ONE sweep with the callers.
         const skipAlphaFilter = query.skip_alpha_filter === 'true'
-        if (isServerAlphaMode() && !skipAlphaFilter) {
-            const alphaPreview = query.alpha_preview === 'true'
-            const validStatuses = getAlphaProjectStatuses(alphaPreview)
-            // Use ? placeholders - adapter converts to $1, $2 for PostgreSQL
-            sql += ` AND p.status_old IN (${validStatuses.map(() => '?').join(', ')})`
-            params.push(...validStatuses)
+        if (!skipAlphaFilter) {
+            const floor = query.alpha_preview === 'true' ? STATUS.DRAFT : STATUS.RELEASED
+            const visible = projectVisibility('p', floor)
+            sql += visible.sql
+            params.push(...visible.params)
         }
 
         // Filter by isbase (if this field exists)

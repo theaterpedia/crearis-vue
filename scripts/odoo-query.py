@@ -37,16 +37,27 @@ DEFAULTS = {
     'url': 'http://localhost:8069',
     'database': 'crearis',
     'username': 'admin',
-    'api_key': '306861a0b7a9d3838f4bb074f9d34179d0021833'
+    # No default api_key. A credential in a git-tracked file on a public repo is
+    # published, not configured — this one sat here from 2025-12-08 until it was
+    # removed 2026-07-28. ODOO_API_KEY must come from the environment.
+    'api_key': None
 }
 
 def get_config():
     """Get configuration from environment or defaults."""
+    api_key = os.environ.get('ODOO_API_KEY')
+    if not api_key:
+        sys.exit(
+            'ODOO_API_KEY is not set.\n'
+            'Export it (or put it in a gitignored .env and source that) before running:\n'
+            '    export ODOO_API_KEY=<your-key>\n'
+            'There is deliberately no default — see the note in DEFAULTS.'
+        )
     return {
         'url': os.environ.get('ODOO_URL', DEFAULTS['url']),
         'database': os.environ.get('ODOO_DATABASE', DEFAULTS['database']),
         'username': os.environ.get('ODOO_USERNAME', DEFAULTS['username']),
-        'api_key': os.environ.get('ODOO_API_KEY', DEFAULTS['api_key'])
+        'api_key': api_key
     }
 
 # ============================================================================

@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
+import { validateHeadingFields } from '../../utils/heading-validation'
 import { db } from '../../database/init'
 import { getStatusByName } from '../../utils/status-helpers'
 import type { ProjectsTableFields } from '../../types/database'
@@ -23,6 +24,14 @@ export default defineEventHandler(async (event) => {
         img_id?: number
     }
 
+
+    // Reject a three-part crearis-md heading rather than let HeadingParser drop the
+    // third part silently (HD 2026-07-28: reject, do not truncate — the authored text
+    // IS the data). See server/utils/heading-validation.ts.
+    const headingCheck = validateHeadingFields({ heading: body.heading })
+    if (!headingCheck.ok) {
+        throw createError({ statusCode: 400, message: headingCheck.reason })
+    }
     try {
         // Domaincode is required - can be provided as 'domaincode' or fallback to old 'id' field
         const domaincode = body.domaincode

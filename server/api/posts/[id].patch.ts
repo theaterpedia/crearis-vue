@@ -1,6 +1,8 @@
 import { defineEventHandler, getRouterParam, createError, readBody, getCookie } from 'h3'
 import { db } from '../../database/init'
+import { POST_SYNC, syncAfterWrite } from '../../utils/odooSyncRunner'
 import { sessions } from '../../utils/session-store'
+import { assertRubiconWrite } from '../../utils/rubicon-guard'
 
 // PATCH /api/posts/:id - Update post fields
 // Supports updating: name, subtitle, teaser, status, dtags, ctags, ttags, rtags, etc.
@@ -73,6 +75,18 @@ export default defineEventHandler(async (event) => {
             })
         }
 
+        // D4 · the ownership line. The check above answers "may THIS USER write?";
+        // this one answers "may CV write AT ALL?" — at/above sysreg 512 Odoo is the
+        // system of record and CV holds a read copy. Two different questions, and
+        // only the first was being asked. See server/utils/rubicon-guard.ts.
+        assertRubiconWrite({
+            kind: 'update',
+            currentStatus: post.status,
+            entity: 'posts',
+            id: post.id,
+            createError,
+        })
+
         // Read update body
         const body = await readBody(event) as Record<string, any>
 
@@ -115,6 +129,11 @@ export default defineEventHandler(async (event) => {
             `UPDATE posts SET ${updates.join(', ')} WHERE id = ?`,
             values
         )
+
+        // Odoo sync · fire-and-forget, no-op unless ODOO_SYNC_MOCK=1.
+        // ⚠ AHEAD: posts ride on `xmlid`, not `odoo_xmlid` — see the note in
+        // index.post.ts and the devbox doc.
+        syncAfterWrite(POST_SYNC, Number(id))
 
         // Return updated post with domaincode
         const updatedPost = await db.get(`

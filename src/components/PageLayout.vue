@@ -21,16 +21,33 @@
     </UiNavbarTop>    
     -->
 
-    <!-- Top Navigation -->
-    <div class="topnav-wrapper" :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav }"
+    <!-- Top Navigation · the wrapper must carry the sticky when overlay is
+         asked for: TopNav's own `position: sticky` can only travel within its
+         parent, and this wrapper is exactly nav-height — sticky on the child
+         alone goes nowhere (found by driving O-2, not by reading). -->
+    <div class="topnav-wrapper"
+      :class="{ 'fullwidth-padded': fullwidthMode && fullwidthPadding && wideTopnav, 'topnav-wrapper-sticky': (setScrollStyle ?? scrollStyle) === 'overlay' }"
       v-show="!isSideNav">
-      <TopNav :items="mainMenuItems" :scrollStyle="scrollStyle" :wide="wideTopnav" :navbarMode="navbarMode">
+      <TopNav :items="mainMenuItems" :scrollStyle="setScrollStyle ?? scrollStyle" :wide="wideTopnav"
+        :navbarMode="navbarMode" :showLogo="topnavShowLogo" :allowActions="allowActions" :brand="topnavBrand">
         <!-- Actions Slot -->
         <template #actions>
           <!-- Pass through topnav-actions slot from parent -->
           <slot name="topnav-actions" />
         </template>
       </TopNav>
+    </div>
+
+    <!-- O-2 · the condensing masthead (design-thread §3·1, HD-ruled 2026-08-07):
+         a site's brand rides LARGE at rest — ring + wordmark — and hands the
+         page back to the content after the first gesture: past scrollBreak the
+         banner collapses and the corner ring appears in the (sticky) topnav.
+         Sites without a brand (the portal) never render this. -->
+    <div v-if="brand" class="site-brand-banner" :class="{ 'site-brand-banner-condensed': brandCondensed }">
+      <router-link :to="brand.href" class="site-brand-link">
+        <img :src="brand.src" :alt="brand.alt" class="site-brand-img" />
+        <span class="site-brand-word">{{ brand.alt }}</span>
+      </router-link>
     </div>
 
     <Sidebar v-show="isSideNav" footerText="30 Jahre Theaterpädagogik Bayern"
@@ -229,6 +246,15 @@ const scrollBreak = computed(() => {
   return headerSize.value === 'full' || headerSize.value === 'prominent' ? 400 : 250
 })
 
+// O-2 · the condensing masthead. At rest the banner holds the brand and the
+// topnav corner stays EMPTY (showLogo 'no' — never the platform wordmark on a
+// branded site); past scrollBreak the banner collapses and the corner ring
+// takes over. Brandless sites (the portal) pass through untouched.
+const brandCondensed = computed(() => y.value > scrollBreak.value)
+const topnavBrand = computed(() => (props.brand && brandCondensed.value ? props.brand : null))
+const topnavShowLogo = computed(() =>
+  props.brand && !brandCondensed.value ? 'no' as const : props.showLogo)
+
 // ============================================================================
 // END TODO SECTION
 // ============================================================================
@@ -251,6 +277,18 @@ interface Props {
   // If not provided, uses the global layout from layoutSettings
   // Available options: 'default' | 'centered' | 'fullTwo' | 'fullThree' | 'sidebar' | 'fullSidebar'
   setSiteLayout?: SiteLayout
+  // Pass-throughs to TopNav. Both already existed there but had no way in from a
+  // page, which forced a choice between navbarMode's bundled defaults:
+  // 'home' hides the logo AND the actions-slot, 'page' shows both. A destructive
+  // content-site needs them decoupled — no Theaterpedia wordmark, but keep the
+  // actions-slot — so the two knobs are forwarded. Default 'default' on both, i.e.
+  // every existing caller keeps navbarMode-derived behaviour exactly as before.
+  showLogo?: 'default' | 'desktop' | 'yes' | 'no'
+  allowActions?: 'default' | 'yes' | 'no'
+  /** Site-frame brand — replaces the platform wordmark in TopNav's logo slot. */
+  brand?: { src: string; alt: string; href: string } | null
+  /** Site-frame override for the topnav's scroll behavior (O-2 needs sticky). */
+  setScrollStyle?: 'simple' | 'overlay' | 'overlay_reappear'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -259,7 +297,9 @@ const props = withDefaults(defineProps<Props>(), {
   navItems: undefined,
   navbarMode: 'default',
   alertBanner: undefined,
-  setSiteLayout: undefined
+  setSiteLayout: undefined,
+  showLogo: 'default',
+  allowActions: 'default'
 })
 
 // Computed: Use prop if provided, otherwise fall back to pageSettings
@@ -391,6 +431,55 @@ function handleArrayOptionUpdate(option: ArrayOption, newState: boolean) {
 </script>
 
 <style scoped>
+/* The sticky home for an overlay topnav — see the template note: sticky on
+   the nav alone cannot travel beyond its nav-height wrapper. */
+.topnav-wrapper-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* O-2 · the condensing masthead — large at rest, gone once reading begins.
+   The transition collapses height AND fades, so the hero slides up under the
+   sticky topnav instead of jumping. */
+.site-brand-banner {
+  display: flex;
+  align-items: center;
+  max-height: 9rem;
+  padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.25s ease;
+}
+
+.site-brand-banner-condensed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
+
+.site-brand-link {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-contrast);
+}
+
+.site-brand-img {
+  display: block;
+  width: auto;
+  height: clamp(3rem, 6vw, 4rem);
+}
+
+.site-brand-word {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
 /* NEW LAYOUT SYSTEM: Page wrapper and background colors */
 .page-wrapper {
   display: flex;

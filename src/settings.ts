@@ -36,7 +36,13 @@ export const pageSettings = {
 // LAYOUT SETTINGS
 // ============================================================================
 
-export type SiteLayout = 'default' | 'sidebar' | 'fullSidebar' | 'fullTwo' | 'fullThree'
+// Single-sourced from layoutsettings.ts (G-1, uia thread §19·5/§20·1): the two
+// definitions had drifted — this one lacked 'centered', the value the fullviews
+// live-pass. layoutsettings.ts is the truth (PageLayout, the consumer of
+// setSiteLayout, imports from there); this re-export keeps the six importers
+// of settings.ts working unchanged.
+export type { SiteLayout } from './layoutsettings'
+import type { SiteLayout } from './layoutsettings'
 
 export const layoutSettings = {
   /**

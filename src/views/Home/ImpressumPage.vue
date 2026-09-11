@@ -6,8 +6,26 @@
             @save="handleSaveProject" />
 
         <!-- PageLayout wrapper -->
-        <PageLayout v-if="project" :asideOptions="asideOptions" :footerOptions="footerOptions"
-            :projectDomaincode="project.domaincode" :navItems="navItems" navbarMode="page">
+        <!-- No `v-if="project"` — a legal page must render even when the project row
+             does not exist. `useImpressum` carries the root site's published imprint as
+             code-defaults precisely so both pages work against an unseeded DB; gating the
+             whole layout on the fetch defeated that and rendered `/impressum` BLANK on a
+             database without a `tp` row (measured, 2026-08-07). The project is only needed
+             for the edit-chrome, which keeps its own `v-if`. -->
+        <!-- No aside/footer options on purpose. `parseAsideOptions`/`parseFooterOptions`
+             apply page-type DEFAULTS (a TOC „Inhalt", „Weitere Beiträge", an events
+             gallery), so a legal page inherited content-page furniture it should never
+             have — and one of those entity-fetches rendered a red
+             "Unexpected token '<' … is not valid JSON" banner across the imprint
+             (measured). An Impressum has no table of contents and no related posts. -->
+        <PageLayout setSiteLayout="centered" :projectDomaincode="project?.domaincode" :navItems="navItems"
+            navbarMode="page" :showLogo="isSiteMount ? 'no' : 'default'">
+
+            <!-- Empty header on purpose. A legal page has no hero — and PageLayout's
+                 #header slot carries a DEV placeholder as its fallback ("Header slot -
+                 provide header content…"), which was invisible only while the layout was
+                 gated on `project`. Ungating it surfaced that text on a public page. -->
+            <template #header><span /></template>
 
             <!-- TopNav Actions Slot -->
             <template #topnav-actions>
@@ -15,92 +33,99 @@
                     :is-owner="isProjectOwner" @open="openEditPanel" />
             </template>
 
-            <!-- Page Content -->
+            <!-- Page Content · fields per project (useImpressum — the thread's
+                 template with its fallback chain; prose is shared, identity varies) -->
             <Section background="default">
                 <Container>
                     <Prose>
                         <div class="legal-content">
                             <h1>Impressum und Disclaimer</h1>
+                            <p>Angaben gemäß § 5 DDG</p>
 
-                            <h2>Für: Theaterpedia - Netzwerk für Theaterpädagogik</h2>
+                            <!-- Honest state for a project without keys: never render a
+                                 WRONG Diensteanbieter — the split exists for liability. -->
+                            <template v-if="missing">
+                                <p class="legal-missing">
+                                    Die Impressum-Angaben für dieses Projekt sind noch nicht hinterlegt.
+                                    Bitte wende dich an die Projekt-Verantwortlichen.
+                                </p>
+                            </template>
 
-                            <p>Gemäß § 28 BDSG widerspreche ich jeder kommerziellen Verwendung und Weitergabe meiner
-                                Daten.</p>
+                            <template v-else>
+                                <h2>Für: {{ fields.company }}</h2>
 
-                            <p><strong>Verantwortungsbereich:</strong> Das Impressum gilt nur für die Internetpräsenz
-                                unter der
-                                Adresse: <a href="https://theaterpedia.org">https://theaterpedia.org</a></p>
+                                <p>Gemäß § 28 BDSG widerspreche ich jeder kommerziellen Verwendung und Weitergabe meiner
+                                    Daten.</p>
 
-                            <p><strong>Diensteanbieter:</strong> Theaterpedia - Netzwerk für Theaterpädagogik</p>
+                                <p><strong>Verantwortungsbereich:</strong> Das Impressum gilt nur für die Internetpräsenz
+                                    unter der Adresse: <a :href="fields.homeUrl">{{ fields.homeUrl }}</a></p>
 
-                            <p><strong>Verantwortliche Ansprechperson:</strong> Hans Dönitz</p>
+                                <p><strong>Diensteanbieter:</strong> {{ fields.company }}</p>
 
-                            <p><strong>Anschrift:</strong> Fürtherstr. 174, 90429 Nürnberg</p>
+                                <p><strong>Verantwortliche Ansprechperson:</strong> {{ fields.name }}</p>
 
-                            <p><strong>Elektronische Postadresse:</strong> info @ theaterpedia .org</p>
+                                <p><strong>Anschrift:</strong> <span class="legal-address">{{ fields.address }}</span></p>
 
-                            <p><strong>Schnelle elektronische und unmittelbare Kommunikation:</strong> Tel: 0911/7808476
-                            </p>
+                                <p><strong>Elektronische Postadresse:</strong> {{ fields.email }}</p>
 
-                            <p><strong>Journalistisch-redaktionelle Verantwortung:</strong> Hans Dönitz, Fürtherstr.
-                                174, 90429
-                                Nürnberg</p>
+                                <!-- absent phone = the whole line hides (template rule) -->
+                                <p v-if="fields.phone"><strong>Schnelle elektronische und unmittelbare
+                                    Kommunikation:</strong> Tel: {{ fields.phone }}</p>
 
-                            <h2>Urheberschutz und Nutzung</h2>
+                                <p><strong>Journalistisch-redaktionelle Verantwortung:</strong>
+                                    {{ fields.responsibleContent }}</p>
 
-                            <p>Der Urheber räumt Ihnen ganz konkret das Nutzungsrecht ein, sich eine private Kopie für
-                                persönliche
-                                Zwecke anzufertigen. Nicht berechtigt sind Sie dagegen, die Materialien zu verändern
-                                und/oder weiter
-                                zu geben oder gar selbst zu veröffentlichen.</p>
+                                <h2>Urheberschutz und Nutzung</h2>
 
-                            <p>Wenn nicht ausdrücklich anders vermerkt, liegen die Urheberrechte für Texte bei: Hans
-                                Dönitz</p>
+                                <p>Der Urheber räumt Ihnen ganz konkret das Nutzungsrecht ein, sich eine private Kopie für
+                                    persönliche Zwecke anzufertigen. Nicht berechtigt sind Sie dagegen, die Materialien zu
+                                    verändern und/oder weiter zu geben oder gar selbst zu veröffentlichen.</p>
 
-                            <p>Die meisten Illustrationen unterliegen den Urheberrechten der jeweiligen Künstler*innen.
-                            </p>
+                                <p>Wenn nicht ausdrücklich anders vermerkt, liegen die Urheberrechte für Texte bei:
+                                    {{ fields.copyright }}</p>
 
-                            <h2>Datenschutz</h2>
+                                <p>Die meisten Illustrationen unterliegen den Urheberrechten der jeweiligen
+                                    Künstler*innen.</p>
 
-                            <p>Personenbezogene Daten werden nur mit Ihrem Wissen und Ihrer Einwilligung erhoben. Eine
-                                detaillierte
-                                Datenschutzerklärung finden Sie unter <a
-                                    href="/datenschutz">https://theaterpedia.org/datenschutz</a>. Auf Antrag erhalten
-                                Sie
-                                unentgeltlich Auskunft zu den über Sie gespeicherten personenbezogenen Daten. Wenden Sie
-                                sich dazu
-                                bitte an: datenschutz @ theaterpedia .org</p>
+                                <h2>Datenschutz</h2>
 
-                            <h2>Keine Haftung</h2>
+                                <p>Personenbezogene Daten werden nur mit Ihrem Wissen und Ihrer Einwilligung erhoben. Eine
+                                    detaillierte Datenschutzerklärung finden Sie unter
+                                    <RouterLink to="datenschutz">{{ fields.homeUrl }}/datenschutz</RouterLink>.
+                                    Auf Antrag erhalten Sie unentgeltlich Auskunft zu den über Sie gespeicherten
+                                    personenbezogenen Daten. Wenden Sie sich dazu bitte an: {{ fields.datenschutzEmail }}</p>
 
-                            <p>Die Inhalte dieses Webprojektes wurden sorgfältig geprüft und nach bestem Wissen
-                                erstellt. Aber für
-                                die hier dargebotenen Informationen wird kein Anspruch auf Vollständigkeit, Aktualität,
-                                Qualität und
-                                Richtigkeit erhoben. Es kann keine Verantwortung für Schäden übernommen werden, die
-                                durch das
-                                Vertrauen auf die Inhalte dieser Website oder deren Gebrauch entstehen.</p>
+                                <h2>Keine Haftung</h2>
 
-                            <h2>Schutzrechtsverletzung</h2>
+                                <p>Die Inhalte dieses Webprojektes wurden sorgfältig geprüft und nach bestem Wissen
+                                    erstellt. Aber für die hier dargebotenen Informationen wird kein Anspruch auf
+                                    Vollständigkeit, Aktualität, Qualität und Richtigkeit erhoben. Es kann keine
+                                    Verantwortung für Schäden übernommen werden, die durch das Vertrauen auf die Inhalte
+                                    dieser Website oder deren Gebrauch entstehen.</p>
 
-                            <p>Falls Sie vermuten, dass von dieser Website aus eines Ihrer Schutzrechte verletzt wird,
-                                teilen Sie
-                                das bitte umgehend per elektronischer Post mit, damit zügig Abhilfe geschafft werden
-                                kann. Bitte
-                                nehmen Sie zur Kenntnis: Die zeitaufwändigere Einschaltung eines Anwaltes zur für den
-                                Diensteanbieter kostenpflichtigen Abmahnung entspricht nicht dessen wirklichen oder
-                                mutmaßlichen
-                                Willen.</p>
+                                <h2>Schutzrechtsverletzung</h2>
 
-                            <p>&copy; 2025 Theaterpedia.org Network</p>
+                                <p>Falls Sie vermuten, dass von dieser Website aus eines Ihrer Schutzrechte verletzt wird,
+                                    teilen Sie das bitte umgehend per elektronischer Post mit, damit zügig Abhilfe
+                                    geschafft werden kann. Bitte nehmen Sie zur Kenntnis: Die zeitaufwändigere Einschaltung
+                                    eines Anwaltes zur für den Diensteanbieter kostenpflichtigen Abmahnung entspricht nicht
+                                    dessen wirklichen oder mutmaßlichen Willen.</p>
+
+                                <p>&copy; {{ fields.year }} {{ fields.company }}</p>
+                            </template>
                         </div>
                     </Prose>
                 </Container>
             </Section>
 
             <!-- Footer -->
+            <!-- The platform footer carries Theaterpedia's identity and „© Theaterpedia.org
+                 Network. All rights reserved." — directly beneath an imprint that names a
+                 DIFFERENT Diensteanbieter. Same misrepresentation as the nav, and worse
+                 here because it is a copyright claim. Root mount keeps it; a site-mount
+                 wears none until the site-frame seam supplies its own (thread §3). -->
             <template #footer>
-                <HomeSiteFooter />
+                <HomeSiteFooter v-if="!isSiteMount" />
             </template>
         </PageLayout>
     </div>
@@ -117,14 +142,26 @@ import EditPanel from '@/components/EditPanel.vue'
 import EditPanelButton from '@/components/EditPanelButton.vue'
 import HomeSiteFooter from '@/views/Home/HomeComponents/homeSiteFooter.vue'
 import type { EditPanelData } from '@/components/EditPanel.vue'
-import { parseAsideOptions, parseFooterOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { getPublicNavItems } from '@/config/navigation'
 import type { TopnavParentItem } from '@/components/TopNav.vue'
 import { pageSettings } from '@/settings'
 import { useTheme } from '@/composables/useTheme'
+import { useImpressum, IMPRESSUM_ROOT_DOMAINCODE } from '@/composables/useImpressum'
+import { resolveDomaincode } from '@/composables/useHostMode'
 
 const router = useRouter()
 const route = useRoute()
+
+// One component, FOUR mounts (impressum thread · route-space contract §3):
+// `/impressum` on the portal → the root site (tp) · `/sites/:domaincode/…` +
+// `/projects/:xyz/…` → that project by PATH · `/impressum` on a project's own
+// domain → that project by HOST. Liability is the reason for the split, so the
+// host-shape must resolve like every other page: `eeb099b` gave EventPage,
+// PostPage and ProjectSite the host-fallback and the legal pages were not in
+// that set — which left uia's own domain naming Theaterpedia as Diensteanbieter
+// while every other page on the same host said uia (uia thread §21·4).
+const domaincode = resolveDomaincode(route.params.domaincode) || IMPRESSUM_ROOT_DOMAINCODE
+const { fields, missing, load: loadImpressum } = useImpressum(domaincode)
 
 // SEO: Set meta tags
 function setImpressumSeoMeta() {
@@ -150,27 +187,37 @@ function setImpressumSeoMeta() {
     setMeta('meta[name="robots"]', { name: 'robots', content: 'noindex, follow' });
 }
 
+/**
+ * True whenever this page wears another project's legal identity rather than the
+ * platform's — by path OR by host. It drives the wordmark, the public nav and the
+ * Theaterpedia footer, so reading only `route.params` put all three back on a
+ * project's own domain (the `c95b514` no-wordmark rule, broken on the host-shape).
+ * Derived from the RESOLVED scope so identity and chrome can never disagree.
+ */
+const isSiteMount = computed(() => domaincode !== IMPRESSUM_ROOT_DOMAINCODE)
+
+/**
+ * The platform's public nav (Home · Start · Team · Blog) belongs to Theaterpedia.
+ * On a site-mount this page names a DIFFERENT Diensteanbieter — putting the
+ * platform's nav and wordmark on it misrepresents whose site the reader is on,
+ * which is the exact confusion the per-project split exists to prevent.
+ *
+ * So a site-mount wears no platform chrome. What it SHOULD wear instead — the
+ * project's own nav, a back-link, its brand — is deliberately not decided here:
+ * the thread's §3 puts chrome on the site-frame seam, so this only stops the
+ * wrong chrome rather than inventing the right one.
+ */
 const navItems = computed<TopnavParentItem[]>(() => {
+    if (isSiteMount.value) return []
     return getPublicNavItems().map(item => ({
         label: item.label,
         link: item.link
     }))
 })
 
-const FIXED_PROJECT_ID = 'tp'
 const user = ref<any>(null)
 const project = ref<any>(null)
 const isEditPanelOpen = ref(false)
-
-const asideOptions = computed<AsideOptions>(() => {
-    if (!project.value) return {}
-    return parseAsideOptions(project.value)
-})
-
-const footerOptions = computed<FooterOptions>(() => {
-    if (!project.value) return {}
-    return parseFooterOptions(project.value)
-})
 
 const editPanelData = computed<EditPanelData>(() => {
     if (!project.value) {
@@ -188,7 +235,7 @@ const editPanelData = computed<EditPanelData>(() => {
 
 const isProjectOwner = computed(() => {
     if (!user.value || !project.value) return false
-    return user.value.activeRole === 'project' && user.value.projectId === FIXED_PROJECT_ID
+    return user.value.activeRole === 'project' && user.value.projectId === domaincode
 })
 
 function openEditPanel() {
@@ -245,7 +292,8 @@ onMounted(async () => {
 
     setImpressumSeoMeta()
     await checkAuth()
-    await fetchProject(FIXED_PROJECT_ID)
+    await fetchProject(domaincode)
+    await loadImpressum()
 })
 </script>
 
@@ -284,5 +332,17 @@ onMounted(async () => {
 
 .legal-content a:hover {
     color: var(--color-primary-darker);
+}
+
+/* impressum_address is a MULTILINE key (the thread's template) — one span, real breaks. */
+.legal-address {
+    white-space: pre-line;
+}
+
+/* A project without keys shows the honest note — never a wrong Diensteanbieter. */
+.legal-missing {
+    padding: 0.6rem 0.8rem;
+    border-left: 4px solid var(--color-warning-bg);
+    background-color: var(--color-card-bg);
 }
 </style>

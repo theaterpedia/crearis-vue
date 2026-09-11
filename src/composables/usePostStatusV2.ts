@@ -10,6 +10,7 @@
 
 import { computed, ref, type Ref } from 'vue'
 import { useCapabilities, STATUS, type EntityData, type ProjectData, type MembershipData } from './useCapabilities'
+import { lifecycleStatus, isPublished as isPublishedStatus } from '@/utils/status-constants'
 
 // Re-export for compatibility
 export { STATUS }
@@ -105,14 +106,17 @@ export function usePostStatusV2(
     // STATUS INFO
     // ============================================================
 
-    // Mask for workflow status bits (0-16), excludes scope bits (17-21)
-    const WORKFLOW_MASK = (1 << 17) - 1  // 0x1FFFF = bits 0-16
+    // WORKFLOW_MASK was defined here as a non-exported local, which meant server code
+    // could not import it and the same constant existed twice. It now comes from
+    // `@/utils/status-constants` — the cv↔odoo thread's D4 makes this predicate a
+    // cross-tier invariant (below 512 CV owns, at/above 512 CV caches), so it cannot
+    // live inside one composable. `lifecycleStatus()` is the same masking, named.
 
     const currentStatus = computed(() => {
         const status = post.value?.status
         if (!status || status <= 0) return STATUS.NEW
         // Extract only workflow bits, ignore scope bits
-        const workflowStatus = status & WORKFLOW_MASK
+        const workflowStatus = lifecycleStatus(status)
         return workflowStatus > 0 ? workflowStatus : STATUS.NEW
     })
 
@@ -235,7 +239,16 @@ export function usePostStatusV2(
     })
 
     const isAwaitingApproval = computed(() => currentStatus.value === STATUS.REVIEW)
-    const isPublished = computed(() => currentStatus.value >= STATUS.RELEASED)
+    /**
+     * Publication · delegated to the ONE implementation (R·4·4).
+     *
+     * This read `currentStatus.value >= STATUS.RELEASED` — raw and unbounded,
+     * so an ARCHIVED (32768) or TRASH (65536) post reported as published, and
+     * so did any released post carrying a scope-toggle in bits 17–21. The
+     * canonical predicate masks the lifecycle word AND bounds it below
+     * ARCHIVED; there is now one place where that pair can be got wrong.
+     */
+    const isPublished = computed(() => isPublishedStatus(currentStatus.value))
     const isTrashed = computed(() => currentStatus.value === STATUS.TRASH)
     const isEditable = computed(() => caps.canEdit.value && !isTrashed.value)
 

@@ -23,7 +23,7 @@
  * Per CTO-WED-package §3.3 + CV@wsl-1 Option-A-recommendation 2026-05-19.
  */
 
-import { defineEventHandler, getRequestURL, setResponseHeader } from 'h3'
+import { defineEventHandler, getRequestURL, setResponseHeader, setResponseStatus } from 'h3'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseHTML } from 'linkedom'
@@ -240,7 +240,31 @@ export default defineEventHandler(async (event) => {
     if (!match) return
 
     const project = await lookupProjectByDomaincode(match.domaincode)
-    if (!project) return // pass through — non-matched domaincode
+
+    /**
+     * ── Positive enumeration on `/sites/:domaincode` (R·4·3 / NA-g) ──────────
+     *
+     * `/sites/<anything>` used to answer 200 with the SPA shell, so the
+     * project-space did not disjoin by STATUS — only by body-size (977 bytes
+     * populated vs 452 shell), which is a distinction no crawler, cache,
+     * monitor or probe makes. An unknown project now answers **404**, and the
+     * shell is still served as the body: machines read the status, humans read
+     * the SPA's own not-found page. Nothing else about the response changes.
+     *
+     * ⭐ The enumeration is the `projects` TABLE, deliberately — not a list in
+     * the bundle. Adding a site is adding a ROW; this guard is never edited,
+     * which is the property R·4·3 asks for ("adding a site is adding a value").
+     * It therefore also covers Phase-1 projects, which live at portal-path and
+     * have no HOST_PROJECT entry — enumerating against that bundle constant
+     * would have 404'd every project without its own domain.
+     */
+    if (!project) {
+        const notFoundShell = await readIndexHtmlShell()
+        if (!notFoundShell) return // no shell on disk — leave Nitro's default
+        setResponseStatus(event, 404)
+        setResponseHeader(event, 'Content-Type', 'text/html; charset=utf-8')
+        return notFoundShell
+    }
 
     const shell = await readIndexHtmlShell()
     if (!shell) return // no shell on disk — fall through to default Nitro serving

@@ -27,7 +27,18 @@ export const pageSettings = {
 // LAYOUT SETTINGS
 // ============================================================================
 
-export type SiteLayout = 'default' | 'sidebar' | 'fullSidebar' | 'fullTwo' | 'fullThree'
+/**
+ * `'centered'` was implemented but never declared: `PageLayout.vue` documents it
+ * in its `setSiteLayout` prop-comment, branches on it at `showRightSidebar`
+ * (centered → no aside), and three call-sites already pass it
+ * (`Home/HomePage.vue`, `images/cimgRegistry.vue`, `Uia/UiaPageFrame.vue`).
+ * The type was the thing out of date, not the usage.
+ */
+// The runtime array is the single source; the type derives from it. Needed so
+// data-driven layout keys (pageStructure.ts, uia thread §19·4) can VALIDATE
+// against the enum instead of trusting whatever a JSONB field carries.
+export const SITE_LAYOUTS = ['default', 'centered', 'sidebar', 'fullSidebar', 'fullTwo', 'fullThree'] as const
+export type SiteLayout = (typeof SITE_LAYOUTS)[number]
 
 export const layoutSettings = {
   /**

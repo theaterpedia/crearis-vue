@@ -29,6 +29,7 @@ import {
     toggleBit
 } from './useSysregTags'
 import { useSysregOptions } from './useSysregOptions'
+import { isPublished as isPublishedStatus } from '@/utils/status-constants'
 
 export interface Image {
     id: number
@@ -81,13 +82,36 @@ export function useImageStatus(image: Ref<Image | null>, emit?: EmitFunction) {
         return [val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]
     })
 
-    // Status checks
+    // ── Status checks ────────────────────────────────────────────────────────
+    //
+    // 🔴 THE FIVE BELOW ARE DEAD CODE AND SHOULD BE READ AS SUCH (R·4·4).
+    // `statusByteValue` is not a byte — it IS the whole sysreg integer (see its
+    // definition above). These compare it against BYTEA-era constants
+    // (0x00…0x10), and no sysreg category has those values: the ladder is
+    // 1 · 8 · 64 · 256 · 512 · 4096 · 32768 · 65536. So every one of them is
+    // permanently FALSE for real data — a silent failure, which is why it
+    // survived. They are left in place, loudly marked, rather than re-mapped:
+    // the image vocabulary (raw/processing/approved/deprecated) has no ruled
+    // sysreg equivalent, and inventing one here would be a vocabulary decision
+    // taken in the wrong seat. Whoever owns image-lifecycle rules it; until
+    // then a caller reading `isApproved` gets `false` and can see why.
     const isRaw = computed(() => statusByteValue.value === 0x00)
     const isProcessing = computed(() => statusByteValue.value === 0x01)
     const isApproved = computed(() => statusByteValue.value === 0x02)
-    const isPublished = computed(() => statusByteValue.value === 0x04)
     const isDeprecated = computed(() => statusByteValue.value === 0x08)
     const isArchived = computed(() => statusByteValue.value === 0x10)
+
+    /**
+     * Publication · delegated to the ONE implementation (R·4·4).
+     *
+     * The exception among the five: publication DOES have a ruled sysreg
+     * answer, and images already ride it — the consent-to-publish state
+     * (images I-6) is written as the image's own sysreg status by 5B, and
+     * TempDashboard already reads it through the canonical predicate. This
+     * composable claimed `status === 0x04` and therefore reported „not
+     * published" for every consented image.
+     */
+    const isPublished = computed(() => isPublishedStatus(currentStatus.value))
 
     // Config bit checks
     const isPublic = computed(() => hasBit(currentConfig.value, 0))

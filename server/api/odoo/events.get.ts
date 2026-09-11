@@ -16,6 +16,7 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { getOdooRpc } from '../../utils/odooRpc'
+import { buildUiaMockEvents, filterMockEvents } from '../../utils/odooEventsMock'
 
 // Fields to fetch from Odoo (standard + Crearis custom fields)
 // Note: 'state' field doesn't exist in Odoo 16 event.event - use 'stage_id' instead
@@ -73,6 +74,31 @@ export default defineEventHandler(async (event) => {
     const limit = Math.min(100, Math.max(1, parseInt(String(query.limit || '50'), 10)))
     const offset = Math.max(0, parseInt(String(query.offset || '0'), 10))
     const upcoming = query.upcoming === 'true'
+    // Website/domain scoping. `domain_code` on event.event is a many2one to the
+    // Odoo `website` row (uia = 'utopiaxaction', id=10 — one of 7 live rows).
+    const domainCode = query.domain_code ? String(query.domain_code) : undefined
+
+    // ── MOCK PATH ───────────────────────────────────────────────────────────
+    // HD 2026-07-28: "the devbox never reaches Odoo, we only mock this."
+    //
+    // Opt-in via ODOO_MOCK=1, and refused outright in production. Deliberately
+    // NOT "mock whenever ODOO_API_KEY is missing": that would make a prod
+    // mis-configuration silently serve fabricated events instead of failing, and
+    // fake data that looks real is the worst outcome available here.
+    if (process.env.ODOO_MOCK === '1') {
+        if (process.env.NODE_ENV === 'production') {
+            throw createError({
+                statusCode: 500,
+                message: 'ODOO_MOCK is set in production. Refusing to serve fabricated events.',
+            })
+        }
+        const { events: mocked, total } = filterMockEvents(buildUiaMockEvents(), {
+            domainCode, upcoming, limit, offset,
+        })
+        console.log(`[/api/odoo/events] MOCK · ${mocked.length}/${total} events`
+            + `${domainCode ? ` · domain_code=${domainCode}` : ''}`)
+        return { success: true, mock: true, events: mocked, total, limit, offset, hasMore: offset + mocked.length < total }
+    }
 
     try {
         const odoo = getOdooRpc()
@@ -85,10 +111,24 @@ export default defineEventHandler(async (event) => {
             domain.push(['date_begin', '>=', now])
         }
 
+        if (domainCode) {
+            // Dot-traversal through the many2one to the website row's own
+            // `domain_code` string, so no Odoo row-id has to be hardcoded here.
+            // Grounded in CO@prod's 2026-05-20 probe, which lists website.domain_code
+            // values tp / dasei / dasei0..3 / utopiaxaction.
+            //
+            // ⚠ UNVERIFIED against live Odoo — this box has no Odoo by decision, so
+            // the first real proof of this line happens on prod. If it errors there,
+            // the fallback is the id form: ['domain_code', '=', 10].
+            domain.push(['domain_code.domain_code', '=', domainCode])
+        }
+
         if (projectId) {
-            // Project filtering would require a custom field in Odoo
-            // For now, we skip this filter - events are not linked to projects yet
-            console.log('[/api/odoo/events] Project filter not yet implemented:', projectId)
+            // Superseded by `domain_code` above: uia scoping is per Odoo *website*,
+            // not per CV project. Kept accepting the param so existing callers do
+            // not break, but it no longer silently does nothing without saying so.
+            console.log('[/api/odoo/events] project_id is not an Odoo concept here; '
+                + `use ?domain_code= instead (got project_id=${projectId})`)
         }
 
         // Fetch events from Odoo

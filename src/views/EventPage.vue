@@ -39,7 +39,8 @@
 
         <!-- PageLayout wrapper with PageHeading in header slot -->
         <PageLayout v-if="event && projectAccess.canAccess.value" :asideOptions="asideOptions"
-            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems">
+            :footerOptions="footerOptions" :projectId="projectId" :navItems="navigationItems"
+            :showLogo="frameShowLogo" :brand="frameBrand" :setScrollStyle="siteFrame?.scrollStyle">
             <template #header>
                 <PageHeading :heading="event.name || String(event.id)"
                     :imgTmp="event.img_wide?.url || event.cimg || 'https://picsum.photos/1440/900?random=event'"
@@ -156,6 +157,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { resolveDomaincode } from '@/composables/useHostMode'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useProjectAccess } from '@/composables/useProjectAccess'
@@ -176,11 +178,12 @@ import { sanitizeStatusVal, bufferToHex, getStatusLabel } from '@/composables/us
 import { usePageOptions, type AsideOptions, type FooterOptions } from '@/composables/usePageOptions'
 import { formatDateTime } from '@/plugins/dateTimeFormat'
 import { useTheme } from '@/composables/useTheme'
+import { resolveSiteFrame } from '@/utils/domainSiteFrames'
 
 const router = useRouter()
 const route = useRoute()
 const { user, checkSession, isLoading: authLoading } = useAuth()
-const { setTheme, init: initTheme } = useTheme()
+const { setTheme, init: initTheme, setDomainThemeOverride } = useTheme()
 const { loadForProject, getOptions, parseXmlid } = usePageOptions()
 
 // Alpha mode access control
@@ -191,7 +194,8 @@ const accessLoaded = ref(false)
 const event = ref<any>(null)
 const project = ref<any>(null)
 const projectId = ref<number | null>(null)
-const domaincode = ref<string>('')
+/** Project scope · route segment, else the host (route-space contract §3). */
+const domaincode = computed<string>(() => resolveDomaincode(route.params.domaincode))
 const isEditPanelOpen = ref(false)
 const showConfigPanel = ref(false)
 
@@ -205,14 +209,15 @@ const canEdit = computed(() => {
     return false
 })
 
-// Navigation items
+// Navigation items · the per-domaincode site-frame decides the PUBLIC chrome
+// (F-4, domainSiteFrames.ts — kills the Theaterpedia-wordmark-on-uia catch);
+// the dashboard link stays role-gated on top.
+const siteFrame = computed(() => resolveSiteFrame(domaincode.value))
+
 const navigationItems = computed(() => {
-    const items = [
-        {
-            label: 'Project',
-            link: `/sites/${domaincode.value}`
-        }
-    ]
+    const items = siteFrame.value?.navItems
+        ? [...siteFrame.value.navItems]
+        : [{ label: 'Project', link: `/sites/${domaincode.value}` }]
 
     if (user?.value?.activeRole === 'project') {
         items.unshift({
@@ -223,6 +228,9 @@ const navigationItems = computed(() => {
 
     return items
 })
+
+const frameShowLogo = computed(() => siteFrame.value?.showLogo ?? 'default')
+const frameBrand = computed(() => siteFrame.value?.brand ?? null)
 
 // Parse options for PageLayout using usePageOptions composable
 // This applies: hardcoded defaults → project fields → pages table entry
@@ -315,7 +323,9 @@ const projectDataForPermissions = computed(() => {
 // Methods
 async function loadEvent() {
     const identifier = route.params.identifier as string
-    domaincode.value = route.params.domaincode as string
+
+    // Site theme tokens ride the same resolved domaincode as the frame.
+    setDomainThemeOverride(domaincode.value)
 
     console.log('[EventPage] Loading event:', { identifier, domaincode: domaincode.value })
 

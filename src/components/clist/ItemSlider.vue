@@ -161,7 +161,7 @@ interface EntityItem {
 
 interface Props {
     items?: SliderItem[]
-    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all'
+    entity?: 'posts' | 'events' | 'instructors' | 'projects' | 'images' | 'all' | 'none'
     project?: string
     images?: number[]
     filterIds?: number[]
@@ -257,7 +257,10 @@ watch(() => props.selectedIds, (newVal) => {
  * Determine if we're in data mode
  */
 const dataModeActive = computed(() => {
-    return props.dataMode && (props.entity !== undefined || props.images !== undefined)
+    // 'none' = page-config's "no entity" sentinel — no fetch (same fix as
+    // ItemList; the twin prod banners came from exactly this gate letting it by).
+    const entity = props.entity === 'none' ? undefined : props.entity
+    return props.dataMode && (entity !== undefined || props.images !== undefined)
 })
 
 /**

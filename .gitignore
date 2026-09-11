@@ -95,3 +95,9 @@ docs/.vitepress/cache/
 
 # Pseudonymisation — clearnames stay local (scripts/pseudonyms.py)
 .pseudonyms.env
+
+# Local seed data with real identities (PII) — never commit to the public repo
+server/database/seed-data/*.local.ts
+
+# green-gate transient vitest report (baseline lives in tests/baseline/)
+.green-gate.vitest.json

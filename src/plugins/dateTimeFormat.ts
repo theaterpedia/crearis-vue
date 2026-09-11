@@ -10,6 +10,7 @@
  */
 
 import type { App } from 'vue'
+import { parseToVenueWallClock, displayZoneSuffix } from '@/utils/displayTimezone'
 
 export type DateTimeFormat =
     | 'compact'      // "FR 7.11 0:00"
@@ -58,13 +59,19 @@ const DAY_NAMES: Record<DateTimeLang, DayNames> = {
  * Format a single date according to format specification
  */
 function formatSingleDate(
-    date: Date,
+    instant: Date,
     format: DateTimeFormat,
     lang: DateTimeLang,
     showTime: boolean,
     showYear: boolean = false,
     showMonth: boolean = true
 ): string {
+    // `instant` is already a VENUE WALL-CLOCK CARRIER — normalised at the parse
+    // boundary in formatInDisplayZone(), because only there is the original string
+    // (and therefore whether it carried an offset) still known. Every getter below is
+    // a local-time getter, and that is correct on a carrier.
+    const date = instant
+
     const dayNames = format === 'verbose'
         ? DAY_NAMES[lang].verbose
         : DAY_NAMES[lang].compact
@@ -146,7 +153,28 @@ function isSameYear(date1: Date, date2: Date): boolean {
 /**
  * Main formatting function
  */
+/**
+ * Public entry point. Formats in the display zone (venue time) and appends a CET/CEST
+ * marker ONLY when the reader's clock is outside that band — per HD 2026-08-03:
+ * *"nobody cares about these things on the continent"*, but a reader elsewhere needs
+ * to know which frame the number is in.
+ *
+ * The marker is attached only when a time is actually shown; a bare date carries no
+ * zone claim worth marking.
+ */
 export function formatDateTime(options: DateTimeOptions): string {
+    const rendered = formatInDisplayZone(options)
+    if (!rendered || options.showTime === false) return rendered
+
+    const anchor = options.start || options.end
+    if (!anchor) return rendered
+    const instant = new Date(anchor)
+    if (Number.isNaN(instant.getTime())) return rendered
+
+    return rendered + displayZoneSuffix(instant)
+}
+
+function formatInDisplayZone(options: DateTimeOptions): string {
     const {
         start,
         end,
@@ -162,8 +190,16 @@ export function formatDateTime(options: DateTimeOptions): string {
         return ''
     }
 
-    const startDate = start ? new Date(start) : null
-    const endDate = end ? new Date(end) : null
+    // Venue time (HD 2026-08-03): render the venue's clock, identically for every
+    // reader. Naive strings are already venue-time and are left alone; offset-carrying
+    // ones (Odoo's wire format) are shifted. See utils/displayTimezone.ts.
+    //
+    // ⚠ These are wall-clock carriers, not instants. isInPast()/isCurrentYear() below
+    // therefore compare a venue calendar against the reader's `now`, which can differ
+    // by hours near midnight for a distant reader. They only decide whether to show a
+    // YEAR, so the imprecision is cosmetic — noted rather than hidden.
+    const startDate = start ? parseToVenueWallClock(start) : null
+    const endDate = end ? parseToVenueWallClock(end) : null
 
     // Single date case
     if (!startDate || !endDate) {

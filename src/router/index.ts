@@ -9,21 +9,66 @@ const router = createRouter({
     { path: '/auth/reset', component: () => import('../views/Auth/PasswordResetPage.vue'), meta: { public: true } },
     // Phase-A C8 · creator-tier registration form (instructor / organiser)
     { path: '/auth/register', component: () => import('../views/Auth/RegisterPage.vue'), meta: { public: true } },
-    { path: '/', component: () => import('../views/Home/HomePage.vue') },
-    { path: '/start', component: () => import('../views/Home/StartPage.vue') },
+    // `/` is host-aware (route-space contract §3): the portal renders HomePage,
+    // a project's own domain renders ITS landing — same URL, no redirect.
+    { path: '/', component: () => import('../views/HostAwareRoot.vue') },
+    // `/start` is host-aware for the same reason `/` is (contract §17·2): the
+    // frame mints `Agenda → /start` on a project's own domain, and an alias
+    // cannot win against this static path (first-registered wins). The
+    // dispatcher decides; the portal branch is what T3's reversal deletes.
+    { path: '/start', component: () => import('../views/HostAwareStart.vue') },
+    // `/agenda` resolved to NOTHING before this (200, empty body, no h1) — the
+    // one state a visitor cannot read. External links to it exist in the record,
+    // and the route-space contract has it as the future canonical project-agenda
+    // URL (§1 · T3). Until T3 lands it redirects to `/start`, which inherits the
+    // host-awareness above for free: on a project's own domain that IS the
+    // project's agenda, on the portal it is the portal's own start page.
+    // ⭐ When T3 makes `/agenda` canonical, THIS LINE FLIPS DIRECTION — the
+    // redirect becomes `/start` → `/agenda` and the component moves. One line,
+    // named here so the reversal is a rewrite of a redirect, not a hunt.
+    { path: '/agenda', redirect: '/start' },
     { path: '/team', component: () => import('../views/Home/TeamPage.vue') },
     { path: '/blog', component: () => import('../views/Home/BlogPage.vue') },
     { path: '/contact', component: () => import('../views/Home/ContactPage.vue') },
     { path: '/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
     { path: '/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
+    // Per-project legal pages (impressum thread, HD 2026-08-07): the SAME two
+    // components, mounted with `:domaincode` — they load THAT project's legal
+    // identity (Theaterpedia is not responsible for a project's content; its
+    // owner is). No param → the components fall back to the root site ('tp').
+    { path: '/sites/:domaincode/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
+    { path: '/sites/:domaincode/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
+    { path: '/projects/:domaincode/impressum', component: () => import('../views/Home/ImpressumPage.vue') },
+    { path: '/projects/:domaincode/datenschutz', component: () => import('../views/Home/DatenschutzPage.vue') },
     { path: '/getstarted', component: () => import('../views/GetStarted.vue') },
     { path: '/sites/:domaincode', component: () => import('../views/ProjectSite.vue') },
+    // /start · the project's enrollment surface — meaning arrives via the preset
+    // (F-3, HD 2026-08-06: initiative = public agenda · schule-project = school-login)
+    { path: '/sites/:domaincode/start', component: () => import('../views/ProjectStartPage.vue') },
     // Posts: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.post__{slug} or {domaincode}.post-{template}__{slug}
-    { path: '/sites/:domaincode/posts/:identifier', component: () => import('../views/PostPage.vue') },
+    // The `alias` is the site-shape URL: on a project's own domain the path
+    // carries no :domaincode — the component resolves it from the host.
+    {
+        path: '/sites/:domaincode/posts/:identifier',
+        alias: ['/posts/:identifier'],
+        component: () => import('../views/PostPage.vue'),
+    },
     // Events: Support both numeric ID and slug-based URLs
     // Slug format: {slug} or {template}__{slug} → resolved to xmlid: {domaincode}.event__{slug} or {domaincode}.event-{template}__{slug}
-    { path: '/sites/:domaincode/events/:identifier', component: () => import('../views/EventPage.vue') },
+    {
+        path: '/sites/:domaincode/events/:identifier',
+        alias: ['/events/:identifier'],
+        component: () => import('../views/EventPage.vue'),
+    },
+    // Intermediary content dashboard (HD 2026-07-28) — lists events + posts, add-new
+    // and delete, linking into the EventPage/PostPage editors above. Additive and
+    // temporary: it exists so content can be driven from a browser while the real
+    // dashboard's beta-implementation catches up. Deliberately NOT under /projects,
+    // which renders the project listing and is set up properly — per HD, "no other
+    // implementation may go there. Eventual parallel implementation should go to a
+    // new temp-route."
+    { path: '/sites/:domaincode/tempdashboard', component: () => import('../views/temp/TempDashboard.vue') },
 
     // Protected routes - User Home (cross-project overview)
     // HACK: Using HomeLayoutHack.vue for onboarding flow testing (TODO v0.5: revert to HomeLayout.vue)
