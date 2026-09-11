@@ -10,8 +10,14 @@ import { describe, it, expect } from 'vitest'
 import { resolveHostMode, PUBLIC_HOSTS } from '../../src/composables/useHostMode'
 
 describe('resolveHostMode', () => {
-    it("returns 'public' for utopia-in-action.de", () => {
-        expect(resolveHostMode('utopia-in-action.de')).toBe('public')
+    it("returns 'public' for utopiaxaction.theaterpedia.org", () => {
+        expect(resolveHostMode('utopiaxaction.theaterpedia.org')).toBe('public')
+    })
+
+    it("returns 'app' for the retired utopia-in-action.de host", () => {
+        // Freed 2026-09-11. Should it ever resolve here again, the safe
+        // default must catch it — not a stale public-mode allowlist entry.
+        expect(resolveHostMode('utopia-in-action.de')).toBe('app')
     })
 
     it("returns 'app' for my.theaterpedia.org", () => {
@@ -26,17 +32,18 @@ describe('resolveHostMode', () => {
         expect(resolveHostMode('')).toBe('app')
     })
 
-    it("does NOT promote subdomains to 'public' mode by accident", () => {
-        // e.g. an attacker registering test.utopia-in-action.de would NOT
-        // get public-mode without an explicit allowlist entry.
-        expect(resolveHostMode('test.utopia-in-action.de')).toBe('app')
-        expect(resolveHostMode('my.utopia-in-action.de')).toBe('app')
+    it("does NOT promote neighbouring hosts to 'public' mode by accident", () => {
+        // The public host now sits UNDER theaterpedia.org, so the blast-radius
+        // of a sloppy match is the whole family — not just one foreign domain.
+        expect(resolveHostMode('test.utopiaxaction.theaterpedia.org')).toBe('app')
+        expect(resolveHostMode('theaterpedia.org')).toBe('app')
+        expect(resolveHostMode('utopiaxaction.theaterpedia.org.evil.test')).toBe('app')
     })
 
     it('PUBLIC_HOSTS contains only the v1 public-mode host', () => {
         // Reference-test: keeps the allowlist explicit + greppable + auditable.
         // Extending PUBLIC_HOSTS (e.g. freundes-kreis.de when its DNS lands)
         // should land in a deliberate commit — this test surfaces the change.
-        expect(Array.from(PUBLIC_HOSTS).sort()).toEqual(['utopia-in-action.de'])
+        expect(Array.from(PUBLIC_HOSTS).sort()).toEqual(['utopiaxaction.theaterpedia.org'])
     })
 })

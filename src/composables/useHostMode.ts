@@ -30,7 +30,7 @@ export type HostMode = 'public' | 'app'
  * will source this list dynamically in the future-state.
  */
 export const PUBLIC_HOSTS: ReadonlySet<string> = new Set([
-    'utopia-in-action.de',
+    'utopiaxaction.theaterpedia.org',
 ])
 
 /** Pure decision — host string → mode. */
@@ -58,9 +58,11 @@ export function resolveHostMode(host: string): HostMode {
  * here per site.
  */
 export const HOST_PROJECT: Record<string, string> = {
-    'utopia-in-action.de': 'utopiaxaction',
+    'utopiaxaction.theaterpedia.org': 'utopiaxaction',
     // 'mariamueller.de': 'mariamueller',   // added on activation
-    // '<domaincode>.theaterpedia.org' variants live here too
+    // A project's own registered domain lives here too, beside its
+    // `<domaincode>.theaterpedia.org` form — utopiaxaction moved off
+    // utopia-in-action.de on 2026-09-11 when that domain was freed.
 }
 
 /**

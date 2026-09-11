@@ -3,7 +3,7 @@
 
   One URL, two meanings, decided by host (route-space contract §1 · §3):
     theaterpedia.org/start      → Home/StartPage.vue      (the portal campaign)
-    utopia-in-action.de/start   → ProjectStartPage.vue     (THAT project's start)
+    utopiaxaction.theaterpedia.org/start   → ProjectStartPage.vue     (THAT project's start)
 
   ── Why this exists (contract §17·2) ─────────────────────────────────────────
   `/start` had no site-shape route: the tonight-narrow recreation (`eeb099b`)

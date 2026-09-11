@@ -40,7 +40,7 @@ export default defineConfig({
      * domain a different URL-shape than the portal — `/` is the project's
      * landing, `/events/:id` needs no `:domaincode`. That branch can only be
      * DRIVEN if the dev server answers to the site's hostname, so map it
-     * locally (`--host-resolver-rules="MAP utopia-in-action.de 127.0.0.1"`,
+     * locally (`--host-resolver-rules="MAP utopiaxaction.theaterpedia.org 127.0.0.1"`,
      * or an /etc/hosts line) and let vite accept it.
      *
      * Named hosts only — never `true`: vite's check is a DNS-rebinding guard,
@@ -48,7 +48,7 @@ export default defineConfig({
      * Production serves the built bundle through nitro + nginx; this list is
      * not part of it. Grows one line per site whose shape someone must drive.
      */
-    allowedHosts: ['utopia-in-action.de', 'localhost', '127.0.0.1'],
+    allowedHosts: ['utopiaxaction.theaterpedia.org', 'localhost', '127.0.0.1'],
     proxy: {
       // Proxy API calls to Nitro server during development
       '/api': {

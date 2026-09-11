@@ -14,7 +14,7 @@
  * EditLink — Phase-A C11 · plan §9b.
  *
  * Always-visible "Edit this page" cross-domain anchor for public-mode SPA
- * surfaces (utopia-in-action.de). Hidden in app-mode (my.theaterpedia.org)
+ * surfaces (utopiaxaction.theaterpedia.org). Hidden in app-mode (my.theaterpedia.org)
  * — there the user is already on the auth-gated app and the edit-perspective
  * is the canonical render-mode.
  *
@@ -24,10 +24,10 @@
  *
  * Path-construction note · grounded-theory deviation from plan §9b.2 sketch:
  * the plan's sketch uses `my.theaterpedia.org/sites/uia/${path-without-slash}`
- * which assumes future-state host-aware routing (utopia-in-action.de serves
+ * which assumes future-state host-aware routing (utopiaxaction.theaterpedia.org serves
  * `/posts/foo` style URLs without the `/sites/uia/` prefix · plan §15 step 1
  * framing). The CURRENT SPA routes are `/sites/:domaincode/...` (see
- * src/router/index.ts) so utopia-in-action.de URLs today are
+ * src/router/index.ts) so utopiaxaction.theaterpedia.org URLs today are
  * `/sites/uia/posts/foo` style. To make the Edit-link work TODAY without
  * blocking on Phase-B host-aware routing, this component uses
  * `my.theaterpedia.org${route.path}` — host-rewrite only, no path-prefix

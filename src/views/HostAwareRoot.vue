@@ -3,7 +3,7 @@
 
   One URL, two meanings, decided by host:
     theaterpedia.org/        → HomePage      (the portal landing)
-    utopia-in-action.de/     → ProjectSite   (that project's landing)
+    utopiaxaction.theaterpedia.org/     → ProjectSite   (that project's landing)
 
   Why a dispatcher and not a router guard (contract §8·T1): a guard would have to
   redirect, which changes the URL bar — and a project's own domain must keep its
